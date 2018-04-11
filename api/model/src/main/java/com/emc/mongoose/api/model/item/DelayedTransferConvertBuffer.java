@@ -96,12 +96,12 @@ implements TransferConvertBuffer<I, O> {
 		}
 		int n;
 		O ioResult;
-		for(int i = from; i < to; i ++) {
+		for(var i = from; i < to; i ++) {
 			if(lock.tryLock()) {
 				try {
 					n = Math.min(to - i, ioResultsBuffLimit - ioResultsBuffSize);
 					if(n > 0) {
-						for(int j = 0; j < n; j ++) {
+						for(var j = 0; j < n; j ++) {
 							ioResult = ioResults.get(i + j);
 							if(ioResult == null) {
 								poisonedFlag = true;
@@ -155,7 +155,7 @@ implements TransferConvertBuffer<I, O> {
 
 				O nextIoResult;
 				long nextFinishTime, currTime;
-				final ListIterator<O> ioResultsIter = ioResultsBuff.listIterator();
+				final var ioResultsIter = ioResultsBuff.listIterator();
 				while(ioResultsIter.hasNext()) {
 					nextIoResult = ioResultsIter.next();
 					if(delayMicroseconds > 0) {
@@ -192,7 +192,7 @@ implements TransferConvertBuffer<I, O> {
 	public final int get(final List<I> buffer, final int limit)
 	throws IOException {
 
-		int n = 0;
+		var n = 0;
 
 		if(lock.tryLock()) {
 			try {
@@ -202,7 +202,7 @@ implements TransferConvertBuffer<I, O> {
 
 				O nextIoResult;
 				long nextFinishTime, currTime;
-				final ListIterator<O> ioResultsIter = ioResultsBuff.listIterator();
+				final var ioResultsIter = ioResultsBuff.listIterator();
 				if(delayMicroseconds > 0) {
 					while(ioResultsIter.hasNext() && n < limit) {
 						nextIoResult = ioResultsIter.next();
@@ -244,7 +244,7 @@ implements TransferConvertBuffer<I, O> {
 		long n = 0;
 		if(lock.tryLock()) {
 			try {
-				final Iterator<O> ioResultsIter = ioResultsBuff.iterator();
+				final var ioResultsIter = ioResultsBuff.iterator();
 				while(n < count && ioResultsIter.hasNext()) {
 					ioResultsIter.remove();
 					n ++;

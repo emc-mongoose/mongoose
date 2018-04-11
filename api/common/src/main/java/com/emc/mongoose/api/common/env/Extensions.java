@@ -19,7 +19,7 @@ public abstract class Extensions {
 
 	static {
 
-		final File dirExt = new File(DIR_EXT);
+		final var dirExt = new File(DIR_EXT);
 
 		if(!dirExt.exists() || !dirExt.isDirectory()) {
 
@@ -28,7 +28,7 @@ public abstract class Extensions {
 
 		} else {
 
-			final File[] extFiles = dirExt.listFiles();
+			final var extFiles = dirExt.listFiles();
 
 			if(extFiles == null) {
 				CLS_LOADER = new URLClassLoader(new URL[] {});
@@ -38,10 +38,10 @@ public abstract class Extensions {
 				);
 			} else {
 
-				final URL[] extFileUrls = new URL[extFiles.length];
-				final JarFile[] extFileJars = new JarFile[extFiles.length];
+				final var extFileUrls = new URL[extFiles.length];
+				final var extFileJars = new JarFile[extFiles.length];
 
-				for(int i = 0; i < extFiles.length; i ++) {
+				for(var i = 0; i < extFiles.length; i ++) {
 					try {
 						extFileUrls[i] = extFiles[i].toURI().toURL();
 						LOG.config("Loading the extension from the file: \"" + extFiles[i] + "\"");

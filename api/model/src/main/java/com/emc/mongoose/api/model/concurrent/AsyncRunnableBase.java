@@ -10,12 +10,16 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class AsyncRunnableBase
 implements AsyncRunnable {
 
 	private final AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
-	protected final Object state = new Object();
+	private final Lock stateLock = new ReentrantLock();
+	private final Condition stateChangeCond = stateLock.newCondition();
 
 	@Override
 	public final State state() {
@@ -56,9 +60,12 @@ implements AsyncRunnable {
 	public final AsyncRunnableBase start()
 	throws IllegalStateException {
 		if(stateRef.compareAndSet(INITIAL, STARTED) || stateRef.compareAndSet(STOPPED, STARTED)) {
-			synchronized(state) {
+			stateLock.lock();
+			try {
 				doStart();
-				state.notifyAll();
+				stateChangeCond.signalAll();
+			} finally {
+				stateLock.unlock();
 			}
 		} else {
 			throw new IllegalStateException(
@@ -72,9 +79,12 @@ implements AsyncRunnable {
 	public final AsyncRunnableBase shutdown()
 	throws IllegalStateException {
 		if(stateRef.compareAndSet(STARTED, SHUTDOWN)) {
-			synchronized(state) {
+			stateLock.lock();
+			try {
 				doShutdown();
-				state.notifyAll();
+				stateChangeCond.signalAll();
+			} finally {
+				stateLock.unlock();
 			}
 		} else {
 			throw new IllegalStateException(
@@ -92,9 +102,12 @@ implements AsyncRunnable {
 		} catch(final IllegalStateException ignored) {
 		}
 		if(stateRef.compareAndSet(STARTED, STOPPED) || stateRef.compareAndSet(SHUTDOWN, STOPPED)) {
-			synchronized(state) {
+			stateLock.lock();
+			try {
 				doStop();
-				state.notifyAll();
+				stateChangeCond.signalAll();
+			} finally {
+				stateLock.unlock();
 			}
 		} else {
 			throw new IllegalStateException(
@@ -114,17 +127,12 @@ implements AsyncRunnable {
 	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws IllegalStateException, InterruptedException {
-		long t, timeOutMilliSec = timeUnit.toMillis(timeout);
-		t = System.currentTimeMillis();
-		while(isStarted() || isShutdown()) {
-			if(System.currentTimeMillis() - t >= timeOutMilliSec) {
-				return false;
-			}
-			synchronized(state) {
-				state.wait(100);
-			}
+		stateLock.lock();
+		try {
+			return stateChangeCond.await(timeout, timeUnit);
+		} finally {
+			stateLock.unlock();
 		}
-		return true;
 	}
 
 	@Override
@@ -136,10 +144,13 @@ implements AsyncRunnable {
 		} catch(final IllegalStateException ignored) {
 		}
 		// then close actually
-		synchronized(state) {
+		stateLock.lock();
+		try {
 			doClose();
 			stateRef.set(null);
-			state.notifyAll();
+			stateChangeCond.signalAll();
+		} finally {
+			stateLock.unlock();
 		}
 	}
 

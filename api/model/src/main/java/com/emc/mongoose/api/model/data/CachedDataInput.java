@@ -1,7 +1,6 @@
 package com.emc.mongoose.api.model.data;
 
 import static com.github.akurilov.commons.math.MathUtil.xorShift;
-import com.github.akurilov.commons.system.DirectMemUtil;
 
 import static com.emc.mongoose.api.model.data.DataInput.generateData;
 
@@ -23,7 +22,7 @@ public class CachedDataInput
 extends DataInputBase {
 
 	private int layersCacheCountLimit;
-	private transient final ThreadLocal<Int2ObjectOpenHashMap<MappedByteBuffer>>
+	private final transient ThreadLocal<Int2ObjectOpenHashMap<MappedByteBuffer>>
 		thrLocLayersCache = new ThreadLocal<>();
 
 	public CachedDataInput() {
@@ -54,19 +53,18 @@ extends DataInputBase {
 		if(layerIndex == 0) {
 			return inputBuff;
 		}
-
-		Int2ObjectOpenHashMap<MappedByteBuffer> layersCache = thrLocLayersCache.get();
+		var layersCache = thrLocLayersCache.get();
 		if(layersCache == null) {
 			layersCache = new Int2ObjectOpenHashMap<>(layersCacheCountLimit - 1);
 			thrLocLayersCache.set(layersCache);
 		}
 
 		// check if layer exists
-		MappedByteBuffer layer = layersCache.get(layerIndex - 1);
+		var layer = layersCache.get(layerIndex - 1);
 		if(layer == null) {
 			// check if it's necessary to free the space first
-			int layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
-			final int layerSize = inputBuff.capacity();
+			var layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
+			final var layerSize = inputBuff.capacity();
 			if(layersCountToFree > 0) {
 				for(final int i : layersCache.keySet()) {
 					layer = layersCache.remove(i);
@@ -82,7 +80,7 @@ extends DataInputBase {
 			}
 			// generate the layer
 			layer = (MappedByteBuffer) ByteBuffer.allocateDirect(layerSize);
-			final long layerSeed = Long.reverseBytes(
+			final var layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
 			);
 			generateData(layer, layerSeed);
@@ -94,8 +92,7 @@ extends DataInputBase {
 	public void close()
 	throws IOException {
 		super.close();
-		final Int2ObjectOpenHashMap<MappedByteBuffer>
-			layersCache = thrLocLayersCache.get();
+		final var layersCache = thrLocLayersCache.get();
 		if(layersCache != null) {
 			layersCache.clear();
 			thrLocLayersCache.set(null);

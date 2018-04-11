@@ -19,7 +19,7 @@ implements RangeDefinedSupplier<Double> {
 	) {
 		super(seed, min, max);
 		this.format = formatStr == null || formatStr.isEmpty() ?
-			null : new DecimalFormat(formatStr);
+					  null : new DecimalFormat(formatStr);
 	}
 	
 	@Override
@@ -29,14 +29,14 @@ implements RangeDefinedSupplier<Double> {
 	
 	@Override
 	public final int get(final List<String> buffer, final int limit) {
-		final double numbers[] = new double[limit];
-		final int n = super.get(numbers, limit);
+		final var numbers = new double[limit];
+		final var n = super.get(numbers, limit);
 		if(format == null) {
-			for(int i = 0; i < n; i ++) {
+			for(var i = 0; i < n; i ++) {
 				buffer.add(Double.toString(numbers[i]));
 			}
 		} else {
-			for(int i = 0; i < n; i ++) {
+			for(var i = 0; i < n; i ++) {
 				buffer.add(format.format(numbers[i]));
 			}
 		}

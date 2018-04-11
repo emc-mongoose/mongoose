@@ -1,7 +1,6 @@
-module com.emc.mongoose.load.controller {
+module com.emc.mongoose.load.generator {
 
 	requires com.emc.mongoose.api.common;
-	requires com.emc.mongoose.api.metrics;
 	requires com.emc.mongoose.api.model;
 	requires com.emc.mongoose.ui;
 	requires com.github.akurilov.commons;
@@ -10,5 +9,5 @@ module com.emc.mongoose.load.controller {
 	requires java.base;
 	requires java.rmi;
 
-	exports com.emc.mongoose.load.controller;
+	exports com.emc.mongoose.load.generator;
 }

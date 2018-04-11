@@ -3,7 +3,6 @@ package com.emc.mongoose.api.common;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -11,7 +10,7 @@ import java.util.regex.Pattern;
  */
 public abstract class TimeUtil {
 	
-	private static final Map<String, TimeUnit> TIME_UNIT_SHORTCUTS = new HashMap<String, TimeUnit>() {
+	private static final Map<String, TimeUnit> TIME_UNIT_SHORTCUTS = new HashMap<>() {
 		{
 			put("s", TimeUnit.SECONDS);
 			put("m", TimeUnit.MINUTES);
@@ -26,7 +25,7 @@ public abstract class TimeUtil {
 	throws IllegalArgumentException {
 		
 		final String timeValueSpec;
-		Matcher m = PATTERN_TIME.matcher(rawValue);
+		var m = PATTERN_TIME.matcher(rawValue);
 		
 		if(m.matches()) {
 			timeValueSpec = m.group(1);
@@ -52,12 +51,12 @@ public abstract class TimeUtil {
 	}
 	
 	public static TimeUnit getTimeUnit(final String rawValue) {
-		
-		TimeUnit result = TimeUnit.SECONDS;
-		Matcher m = PATTERN_TIME.matcher(rawValue);
+
+		var result = TimeUnit.SECONDS;
+		var m = PATTERN_TIME.matcher(rawValue);
 		
 		if(m.matches()) {
-			final String t = m.group(2).toLowerCase();
+			final var t = m.group(2).toLowerCase();
 			if(TIME_UNIT_SHORTCUTS.containsKey(t)) {
 				result = TIME_UNIT_SHORTCUTS.get(t);
 			}
@@ -79,7 +78,7 @@ public abstract class TimeUtil {
 	}
 	
 	public static long getTimeInSeconds(final String rawValue) {
-		final TimeUnit timeUnit = TimeUtil.getTimeUnit(rawValue);
+		final var timeUnit = TimeUtil.getTimeUnit(rawValue);
 		if(timeUnit == null) {
 			return TimeUtil.getTimeValue(rawValue);
 		} else {

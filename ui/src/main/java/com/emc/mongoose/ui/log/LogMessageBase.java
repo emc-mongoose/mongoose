@@ -15,7 +15,7 @@ implements Message, StringBuilderFormattable {
 	
 	@Override
 	public final String getFormattedMessage() {
-		final StringBuilder strb = THRLOC_STRB.get();
+		final var strb = THRLOC_STRB.get();
 		strb.setLength(0);
 		formatTo(strb);
 		return strb.toString();
@@ -37,7 +37,7 @@ implements Message, StringBuilderFormattable {
 	}
 	
 	protected static String formatFixedWidth(final double value, final int count) {
-		final String valueStr = Double.toString(value);
+		final var valueStr = Double.toString(value);
 		if(value < Math.pow(10, count) && valueStr.length() > count) {
 			return valueStr.substring(0, count);
 		} else if(value < Math.pow(10, - count + 2)) {

@@ -35,8 +35,8 @@ extends CachedDataInput {
 		}
 
 		// if there's not enough data read from the given input, repeat it
-		final int inputSize = doneByteCount;
-		final ByteBuffer initialData = inputBuff.asReadOnlyBuffer();
+		final var inputSize = doneByteCount;
+		final var initialData = inputBuff.asReadOnlyBuffer();
 		while(doneByteCount < layerSize) {
 			n = Math.min(inputBuff.remaining(), inputSize);
 			initialData.position(0).limit(n);

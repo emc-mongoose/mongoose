@@ -43,12 +43,12 @@ extends BufferingInputBase<I> {
 		if(poisonedFlag) {
 			return 0;
 		}
-		final List<I> newItems = storageDriver.list(
+		final var newItems = storageDriver.list(
 			itemFactory, path, prefix, idRadix, lastItem, capacity
 		);
-		final int n = newItems.size();
+		final var n = newItems.size();
 		I nextItem;
-		for(int i = 0; i < n; i ++) {
+		for(var i = 0; i < n; i ++) {
 			nextItem = newItems.get(i);
 			if(null == nextItem) {
 				poisonedFlag = true;

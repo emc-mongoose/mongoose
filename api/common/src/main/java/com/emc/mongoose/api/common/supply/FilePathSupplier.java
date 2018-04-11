@@ -39,19 +39,14 @@ implements BatchSupplier<String> {
 	}
 	
 	private static final ThreadLocal<StringBuilder>
-		THREAD_LOCAL_PATH_BUILDER = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
+		THREAD_LOCAL_PATH_BUILDER = ThreadLocal.withInitial(StringBuilder::new);
 
 	@Override
 	public final String get() {
-		final StringBuilder pathBuilder = THREAD_LOCAL_PATH_BUILDER.get();
+		final var pathBuilder = THREAD_LOCAL_PATH_BUILDER.get();
 		pathBuilder.setLength(0);
-		final int newDepth = rnd.nextInt(depth) + 1;
-		for(int i = 0; i < newDepth; i++) {
+		final var newDepth = rnd.nextInt(depth) + 1;
+		for(var i = 0; i < newDepth; i++) {
 			pathBuilder.append(nextDirName(width));
 			pathBuilder.append(File.separatorChar);
 		}
@@ -61,11 +56,11 @@ implements BatchSupplier<String> {
 	@Override
 	public final int get(final List<String> buffer, final int limit) {
 		int count = 0, newDepth;
-		final StringBuilder pathBuilder = THREAD_LOCAL_PATH_BUILDER.get();
+		final var pathBuilder = THREAD_LOCAL_PATH_BUILDER.get();
 		for(; count < limit; count ++) {
 			pathBuilder.setLength(0);
 			newDepth = rnd.nextInt(depth) + 1;
-			for(int i = 0; i < newDepth; i++) {
+			for(var i = 0; i < newDepth; i++) {
 				pathBuilder.append(nextDirName(width));
 				pathBuilder.append(File.separatorChar);
 			}

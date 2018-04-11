@@ -11,17 +11,17 @@ public final class ThreadDump {
 
 	@Override
 	public final String toString() {
-		final StringBuilder threadDumpStr = new StringBuilder();
-		final String lineSep = System.lineSeparator();
-		for(final Thread thread : threadDumpData.keySet()) {
+		final var threadDumpStr = new StringBuilder();
+		final var lineSep = System.lineSeparator();
+		for(final var thread : threadDumpData.keySet()) {
 			threadDumpStr
 				.append(thread.getName())
 				.append(" (state: ")
 				.append(thread.getState())
 				.append("):")
 				.append(lineSep);
-			final StackTraceElement[] threadStackTrace = threadDumpData.get(thread);
-			for(final StackTraceElement ste : threadStackTrace) {
+			final var threadStackTrace = threadDumpData.get(thread);
+			for(final var ste : threadStackTrace) {
 				threadDumpStr
 					.append('\t')
 					.append(ste)

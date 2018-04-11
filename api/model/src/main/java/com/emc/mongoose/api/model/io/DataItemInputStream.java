@@ -47,7 +47,7 @@ extends InputStream {
 				buffWrapper = ByteBuffer.wrap(buff);
 			}
 			buffWrapper.position(offset).limit(offset + length);
-			final int n = dataItem.read(buffWrapper);
+			final var n = dataItem.read(buffWrapper);
 			doneSize += n;
 			return n;
 		} else {

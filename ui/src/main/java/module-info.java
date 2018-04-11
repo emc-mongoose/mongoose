@@ -1,17 +1,20 @@
 module com.emc.mongoose.ui {
 
-	requires java.base;
-	requires java.commons;
+	requires com.emc.mongoose.api.common;
 	requires com.emc.mongoose.api.model;
+	requires com.github.akurilov.commons;
 	requires commons.lang;
 	requires log4j.api;
 	requires log4j.core;
 	requires log4j.iostreams;
 	requires log4j.jul;
 	requires com.fasterxml.jackson.annotation;
+	requires com.fasterxml.jackson.core;
 	requires com.fasterxml.jackson.databind;
+	requires java.base;
 
 	exports com.emc.mongoose.ui.cli;
+	exports com.emc.mongoose.ui.config;
 	exports com.emc.mongoose.ui.config.item;
 	exports com.emc.mongoose.ui.config.item.data;
 	exports com.emc.mongoose.ui.config.item.data.input;
@@ -46,4 +49,5 @@ module com.emc.mongoose.ui {
 	exports com.emc.mongoose.ui.config.test.step.limit;
 	exports com.emc.mongoose.ui.config.test.step.limit.fail;
 	exports com.emc.mongoose.ui.config.test.step.node;
+	exports com.emc.mongoose.ui.log;
 }

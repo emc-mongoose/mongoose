@@ -7,7 +7,7 @@ import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
-import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
+
 import com.emc.mongoose.ui.config.test.step.StepConfig;
 
 import java.util.List;
@@ -22,8 +22,8 @@ public interface StorageDriverUtil {
 		final AverageConfig avgMetricsConfig, final StorageConfig storageConfig,
 		final StepConfig stepConfig, final DataInput contentSrc
 	) throws InterruptedException {
-		final DriverConfig driverConfig = storageConfig.getDriverConfig();
-		final String testStepName = stepConfig.getId();
+		final var driverConfig = storageConfig.getDriverConfig();
+		final var testStepName = stepConfig.getId();
 		try {
 			drivers.add(
 				new BasicStorageDriverBuilder<>()

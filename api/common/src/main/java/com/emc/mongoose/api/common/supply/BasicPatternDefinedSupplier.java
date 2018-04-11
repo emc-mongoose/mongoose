@@ -14,12 +14,7 @@ public class BasicPatternDefinedSupplier
 implements PatternDefinedSupplier {
 
 	private static final ThreadLocal<StringBuilder>
-		OUTPUT_BUILDER = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
+		OUTPUT_BUILDER = ThreadLocal.withInitial(StringBuilder::new);
 
 	// A factory for getting of value suppliers (see below)
 	private final SupplierFactory<String, ? extends BatchSupplier<String>> supplierFactory;
@@ -67,12 +62,7 @@ implements PatternDefinedSupplier {
 	}
 	
 	private static final ThreadLocal<StringBuilder>
-		STRING_BULDER = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
+		STRING_BULDER = ThreadLocal.withInitial(StringBuilder::new);
 	/**
 	 * In this method the class fields are being filled
 	 */
@@ -82,13 +72,13 @@ implements PatternDefinedSupplier {
 		if(pattern.charAt(0) != PATTERN_CHAR) {
 			throw new OmgShootMyFootException();
 		}
-		final StringBuilder patternBuilder = STRING_BULDER.get();
+		final var patternBuilder = STRING_BULDER.get();
 		patternBuilder.setLength(0);
 		patternBuilder.append(pattern);
 		patternBuilder.delete(0, 1);
-		final char type = patternBuilder.charAt(0);
-		final String formatStr = initParameter(patternBuilder, FORMAT_BRACKETS);
-		final String seedStr = initParameter(patternBuilder, SEED_BRACKETS);
+		final var type = patternBuilder.charAt(0);
+		final var formatStr = initParameter(patternBuilder, FORMAT_BRACKETS);
+		final var seedStr = initParameter(patternBuilder, SEED_BRACKETS);
 		setSuppliers(
 			new BatchSupplier[] {
 				supplierFactory.createSupplier(type, seedStr, formatStr, null)
@@ -117,8 +107,8 @@ implements PatternDefinedSupplier {
 	protected final String getParameter(
 		final StringBuilder expression, final char[] binarySymbols
 	) {
-		final int closingSymbolPos = expression.indexOf(String.valueOf(binarySymbols[1]));
-		final String parameter = expression.substring(2, closingSymbolPos);
+		final var closingSymbolPos = expression.indexOf(String.valueOf(binarySymbols[1]));
+		final var parameter = expression.substring(2, closingSymbolPos);
 		expression.delete(1, closingSymbolPos + 1);
 		return parameter;
 	}
@@ -168,15 +158,15 @@ implements PatternDefinedSupplier {
 	 */
 	@Override
 	public final String get() {
-		final StringBuilder result = OUTPUT_BUILDER.get();
+		final var result = OUTPUT_BUILDER.get();
 		result.setLength(0);
 		return format(result);
 	}
 	
 	@Override
 	public final int get(final List<String> buffer, final int limit) {
-		int count = 0;
-		final StringBuilder result = OUTPUT_BUILDER.get();
+		var count = 0;
+		final var result = OUTPUT_BUILDER.get();
 		if(suppliers == null) {
 			for(; count < limit; count++) {
 				result.setLength(0);
@@ -194,7 +184,7 @@ implements PatternDefinedSupplier {
 	@Override
 	public final long skip(final long count) {
 		if(suppliers != null) {
-			for(int i = 0; i < suppliers.length; i++) {
+			for(var i = 0; i < suppliers.length; i++) {
 				suppliers[i].skip(count);
 			}
 		}
@@ -204,7 +194,7 @@ implements PatternDefinedSupplier {
 	@Override
 	public final void reset() {
 		if(suppliers != null) {
-			for(int i = 0; i < suppliers.length; i ++) {
+			for(var i = 0; i < suppliers.length; i ++) {
 				suppliers[i].reset();
 			}
 		}
@@ -214,7 +204,7 @@ implements PatternDefinedSupplier {
 	public final void close()
 	throws IOException {
 		if(suppliers != null) {
-			for(int i = 0; i < suppliers.length; i ++) {
+			for(var i = 0; i < suppliers.length; i ++) {
 				suppliers[i].close();
 				suppliers[i] = null;
 			}

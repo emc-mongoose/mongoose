@@ -57,7 +57,7 @@ implements Item {
 		if(!(o instanceof BasicItem)) {
 			return false;
 		}
-		final BasicItem other = (BasicItem) o;
+		final var other = (BasicItem) o;
 		if(name == null) {
 			return other.name == null;
 		}

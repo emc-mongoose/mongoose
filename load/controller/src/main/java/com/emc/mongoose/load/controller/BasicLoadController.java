@@ -3,19 +3,6 @@ package com.emc.mongoose.load.controller;
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
-import com.github.akurilov.commons.system.SizeInBytes;
-import com.github.akurilov.concurrent.RateThrottle;
-import com.github.akurilov.concurrent.Throttle;
-import com.github.akurilov.commons.io.Output;
-import com.github.akurilov.concurrent.ThreadUtil;
-import com.github.akurilov.concurrent.WeightThrottle;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
-import com.github.akurilov.concurrent.coroutines.Coroutine;
-import com.github.akurilov.concurrent.coroutines.TransferCoroutine;
-
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvLogMessage;
 import com.emc.mongoose.api.model.load.LoadController;
 import com.emc.mongoose.api.model.io.task.IoTask.Status;
@@ -37,6 +24,19 @@ import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.Loggers;
+
+import com.github.akurilov.commons.system.SizeInBytes;
+
+import com.github.akurilov.concurrent.RateThrottle;
+import com.github.akurilov.concurrent.Throttle;
+import com.github.akurilov.commons.io.Output;
+import com.github.akurilov.concurrent.ThreadUtil;
+import com.github.akurilov.concurrent.WeightThrottle;
+import com.github.akurilov.concurrent.coroutines.Coroutine;
+import com.github.akurilov.concurrent.coroutines.TransferCoroutine;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;

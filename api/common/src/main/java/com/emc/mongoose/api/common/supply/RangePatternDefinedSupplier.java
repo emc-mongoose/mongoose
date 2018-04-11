@@ -1,7 +1,6 @@
 package com.emc.mongoose.api.common.supply;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-
 import static com.emc.mongoose.api.common.supply.RangeDefinedSupplier.RANGE_BRACKETS;
 import static com.emc.mongoose.api.common.supply.RangeDefinedSupplier.SEED_BRACKETS;
 
@@ -30,36 +29,26 @@ extends BasicPatternDefinedSupplier {
 	}
 	
 	private static final ThreadLocal<StringBuilder>
-		THREAD_SB_0 = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		},
-		THREAD_SB_1 = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
+		THREAD_SB_0 = ThreadLocal.withInitial(StringBuilder::new),
+		THREAD_SB_1 = ThreadLocal.withInitial(StringBuilder::new);
 	/**
 	 * see the description of the parent class (SimpleFormattingGenerator)
 	 */
 	@Override
 	protected final void initialize()
 	throws OmgShootMyFootException {
-		final int patternSymbolsNum = countPatternSymbols(getPattern());
+		final var patternSymbolsNum = countPatternSymbols(getPattern());
 		if(patternSymbolsNum > 0) {
 			setSuppliers(new BatchSupplier[patternSymbolsNum]);
 			setSegments(new String[patternSymbolsNum + 1]);
-			final StringBuilder segmentsBuilder = THREAD_SB_0.get();
+			final var segmentsBuilder = THREAD_SB_0.get();
 			segmentsBuilder.setLength(0);
-			final StringBuilder patternBuilder = THREAD_SB_1.get();
+			final var patternBuilder = THREAD_SB_1.get();
 			patternBuilder.setLength(0);
 			patternBuilder.append(getPattern());
-			int segmentCounter = 0;
-			for(int j = 0; j < patternSymbolsNum; j ++) {
-				int i = 0;
+			var segmentCounter = 0;
+			for(var j = 0; j < patternSymbolsNum; j ++) {
+				var i = 0;
 				while(patternBuilder.charAt(i) != PATTERN_CHAR) {
 					segmentsBuilder.append(patternBuilder.charAt(i)); // building of the segment by character
 					i ++;
@@ -80,14 +69,14 @@ extends BasicPatternDefinedSupplier {
 	 * @return a number of PATTERN_SYMBOLs in the input pattern string
 	 */
 	public static int countPatternSymbols(final String pattern) {
-		int counter = 0;
+		var counter = 0;
 		if(!pattern.isEmpty()) {
-			final int lastPatternIndex = pattern.length() - 1;
+			final var lastPatternIndex = pattern.length() - 1;
 			if(pattern.charAt(lastPatternIndex) == PATTERN_CHAR) {
 				throw new IllegalArgumentException();
 			}
-			final char[] patternChars = pattern.toCharArray();
-			for(int i = 0; i < lastPatternIndex; i++) {
+			final var patternChars = pattern.toCharArray();
+			for(var i = 0; i < lastPatternIndex; i++) {
 				if(patternChars[i] == PATTERN_CHAR) {
 					counter++;
 					if(patternChars[i + 1] == PATTERN_CHAR) {
@@ -107,10 +96,10 @@ extends BasicPatternDefinedSupplier {
 	 */
 	private void addExpressionParams(final StringBuilder expression, final int index)
 	throws OmgShootMyFootException {
-		final char type = expression.charAt(0);
-		final String seed = initParameter(expression, SEED_BRACKETS);
-		final String format = initParameter(expression, FORMAT_BRACKETS);
-		final String range = initParameter(expression, RANGE_BRACKETS);
+		final var type = expression.charAt(0);
+		final var seed = initParameter(expression, SEED_BRACKETS);
+		final var format = initParameter(expression, FORMAT_BRACKETS);
+		final var range = initParameter(expression, RANGE_BRACKETS);
 		expression.delete(0, 1);
 		getSuppliers()[index] = getSupplierFactory().createSupplier(type, seed, format, range);
 	}
@@ -128,18 +117,18 @@ extends BasicPatternDefinedSupplier {
 	 */
 	@Override
 	public String toString() {
-		final StringBuilder result = STRING_BULDER.get();
+		final var result = STRING_BULDER.get();
 		result.setLength(0); // clean
 		result.append("Generators: ");
 		if(getSuppliers() != null) {
-			for(final BatchSupplier<String> input : getSuppliers()) {
+			for(final var input : getSuppliers()) {
 				result.append(input.getClass().getName()).append(";");
 			}
 		}
 		result.append("\n");
 		result.append("Segments: ");
 		if(segments != null) {
-			for(final String segment : segments) {
+			for(final var segment : segments) {
 				result.append(segment).append(";");
 			}
 		}
@@ -154,7 +143,7 @@ extends BasicPatternDefinedSupplier {
 	 */
 	@Override
 	protected final String assembleOutputString(final StringBuilder result) {
-		for(int i = 0; i < segments.length - 1; i ++) {
+		for(var i = 0; i < segments.length - 1; i ++) {
 			result.append(segments[i]);
 			if(getSuppliers()[i] != null) {
 				result.append(getSuppliers()[i].get());

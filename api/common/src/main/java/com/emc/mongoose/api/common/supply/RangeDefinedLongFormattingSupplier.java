@@ -29,14 +29,14 @@ implements RangeDefinedSupplier<Long> {
 	
 	@Override
 	public int get(final List<String> buffer, final int limit) {
-		final long numbers[] = new long[limit];
-		final int n = super.get(numbers, limit);
+		final var numbers = new long[limit];
+		final var n = super.get(numbers, limit);
 		if(format == null) {
-			for(int i = 0; i < n; i ++) {
+			for(var i = 0; i < n; i ++) {
 				buffer.add(Long.toString(numbers[i]));
 			}
 		} else {
-			for(int i = 0; i < n; i ++) {
+			for(var i = 0; i < n; i ++) {
 				buffer.add(format.format(numbers[i]));
 			}
 		}

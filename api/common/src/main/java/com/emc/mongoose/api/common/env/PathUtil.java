@@ -27,7 +27,7 @@ public abstract class PathUtil {
 	private static String getBasePathForClass(final Class<?> cls) {
 		try {
 			File basePath;
-			final File clsFile = new File(getBaseUriForClass(cls).getPath());
+			final var clsFile = new File(getBaseUriForClass(cls).getPath());
 			if(
 				!clsFile.isDirectory() || clsFile.getPath().endsWith(".jar") ||
 					clsFile.getPath().endsWith(".zip")
@@ -36,7 +36,7 @@ public abstract class PathUtil {
 			} else {
 				basePath = clsFile;
 			}
-			String basePathStr = basePath.toString();
+			final var basePathStr = basePath.toString();
 			// bandage for eclipse
 			if(
 				basePathStr.endsWith(File.separator + "lib") ||

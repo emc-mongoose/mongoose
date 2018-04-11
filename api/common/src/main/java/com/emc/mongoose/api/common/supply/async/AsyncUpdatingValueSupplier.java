@@ -74,7 +74,7 @@ extends BasicUpdatingValueSupplier<T> {
 	
 	@Override
 	public final int get(final List<T> buffer, final int limit) {
-		int count = 0;
+		var count = 0;
 		for(; count < limit; count ++) {
 			buffer.add(lastValue);
 		}

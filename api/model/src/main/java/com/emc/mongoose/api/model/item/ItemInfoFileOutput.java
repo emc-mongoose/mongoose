@@ -37,10 +37,10 @@ implements Output<O> {
 	@Override
 	public final int put(final List<O> ioResults, final int from, final int to)
 	throws IOException {
-		final int n = to - from;
+		final var n = to - from;
 		final List<String> itemsInfo = new ArrayList<>(n);
 		O ioResult;
-		for(int i = from; i < to; i ++) {
+		for(var i = from; i < to; i ++) {
 			ioResult = ioResults.get(i);
 			if(ioResult == null) { // poison
 				try {
@@ -58,7 +58,7 @@ implements Output<O> {
 	public final int put(final List<O> ioResults)
 	throws IOException {
 		final List<String> itemsInfo = new ArrayList<>(ioResults.size());
-		for(final O nextIoResult : ioResults) {
+		for(final var nextIoResult : ioResults) {
 			if(nextIoResult == null) { // poison
 				try {
 					return itemInfoOutput.put(itemsInfo);

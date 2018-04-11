@@ -5,7 +5,8 @@ import com.github.akurilov.commons.io.file.FileOutput;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 /**
  Created by kurila on 30.06.15.
@@ -18,12 +19,7 @@ implements FileOutput<I> {
 	
 	public CsvFileItemOutput(final Path itemsFilePath, final ItemFactory<I> itemFactory)
 	throws IOException {
-		super(
-			Files.newOutputStream(
-				itemsFilePath, StandardOpenOption.WRITE, StandardOpenOption.CREATE
-			),
-			itemFactory
-		);
+		super(Files.newOutputStream(itemsFilePath, WRITE, CREATE), itemFactory);
 		this.itemsFilePath = itemsFilePath;
 	}
 	

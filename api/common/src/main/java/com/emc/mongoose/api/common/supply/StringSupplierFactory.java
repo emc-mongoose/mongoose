@@ -26,7 +26,7 @@ implements SupplierFactory<String, G> {
 		final char type, final String seedStr, final String formatStr, final String rangeStr
 	) throws OmgShootMyFootException {
 
-		long seed = System.nanoTime() ^ System.currentTimeMillis();
+		var seed = System.nanoTime() ^ System.currentTimeMillis();
 		if(seedStr != null && !seedStr.isEmpty()) {
 			try {
 				seed = Long.parseLong(seedStr);
@@ -40,10 +40,10 @@ implements SupplierFactory<String, G> {
 		switch(type) {
 
 			case 'd' : {
-				long min = Long.MIN_VALUE;
-				long max = Long.MAX_VALUE;
+				var min = Long.MIN_VALUE;
+				var max = Long.MAX_VALUE;
 				if(rangeStr != null && !rangeStr.isEmpty()) {
-					final Matcher matcher = LONG_PATTERN.matcher(rangeStr);
+					final var matcher = LONG_PATTERN.matcher(rangeStr);
 					if(matcher.find()) {
 						min = Long.parseLong(matcher.group(1));
 						max = Long.parseLong(matcher.group(2));
@@ -58,7 +58,7 @@ implements SupplierFactory<String, G> {
 				double min = 0;
 				double max = 1;
 				if(rangeStr != null && !rangeStr.isEmpty()) {
-					final Matcher matcher = DOUBLE_PATTERN.matcher(rangeStr);
+					final var matcher = DOUBLE_PATTERN.matcher(rangeStr);
 					if(matcher.find()) {
 						min = Double.parseDouble(matcher.group(1));
 						max = Double.parseDouble(matcher.group(2));
@@ -70,10 +70,10 @@ implements SupplierFactory<String, G> {
 			}
 
 			case 'D': {
-				Date min = new Date(0);
-				Date max = new Date();
+				var min = new Date(0);
+				var max = new Date();
 				if(rangeStr != null && !rangeStr.isEmpty()) {
-					final Matcher matcher = DATE_PATTERN.matcher(rangeStr);
+					final var matcher = DATE_PATTERN.matcher(rangeStr);
 					if(matcher.find()) {
 						try {
 							min = parseDate(matcher.group(1), INPUT_DATE_FMT_STRINGS);

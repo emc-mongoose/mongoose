@@ -87,7 +87,7 @@ implements LoadGenerator<I, O> {
 		this.shuffleFlag = shuffleFlag;
 		this.rnd = shuffleFlag ? new Random() : null;
 
-		final String ioStr = ioTaskBuilder.getIoType().toString();
+		final var ioStr = ioTaskBuilder.getIoType().toString();
 		name = Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
 			(countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "") +
 			itemInput.toString();
@@ -111,9 +111,9 @@ implements LoadGenerator<I, O> {
 			protected final void invokeTimed(final long startTimeNanos) {
 
 				ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
-				final OptLockBuffer<O> tasksBuff = threadLocalTasksBuff.get();
-				int pendingTasksCount = tasksBuff.size();
-				int n = batchSize - pendingTasksCount;
+				final var tasksBuff = threadLocalTasksBuff.get();
+				var pendingTasksCount = tasksBuff.size();
+				var n = batchSize - pendingTasksCount;
 
 				try {
 
@@ -123,7 +123,7 @@ implements LoadGenerator<I, O> {
 							if(inputLock.tryLock()) {
 								try {
 									// find the remaining count of the tasks to generate
-									final long remainingTasksCount = _countLimit -
+									final var remainingTasksCount = _countLimit -
 										getGeneratedTasksCount();
 									if(remainingTasksCount > 0) {
 										// make the limit not more than batch size
@@ -247,7 +247,7 @@ implements LoadGenerator<I, O> {
 	private List<I> getItems(final Input<I> itemInput, final int n)
 	throws IOException {
 		// prepare the items buffer
-		final List<I> items = new ArrayList<>(n);
+		final var items = new ArrayList<I>(n);
 		try {
 			// get the items from the input
 			itemInput.get(items, n);

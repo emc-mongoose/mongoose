@@ -58,7 +58,7 @@ implements IdStringInput {
 			throw new OmgShootMyFootException("Invalid radix: " + radix);
 		}
 		this.radix = radix;
-		final double _maxValue = Math.pow(this.radix, this.length) - 1;
+		final var _maxValue = Math.pow(this.radix, this.length) - 1;
 		if(Long.MAX_VALUE < _maxValue) {
 			this.maxValue = Long.MAX_VALUE;
 		} else {
@@ -102,8 +102,8 @@ implements IdStringInput {
 				break;
 		}
 		//
-		final String numStr = Long.toString(lastValue, radix);
-		final int nZeros = length - prefixLength - numStr.length();
+		final var numStr = Long.toString(lastValue, radix);
+		final var nZeros = length - prefixLength - numStr.length();
 		if(nZeros > 0) {
 			for(int i = 0; i < nZeros; i ++) {
 				strb.append('0');

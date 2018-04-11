@@ -48,7 +48,7 @@ implements DataInput {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		// write buffer capacity and data
-		final byte buff[] = new byte[inputBuff.capacity()];
+		final var buff = new byte[inputBuff.capacity()];
 		inputBuff.clear(); // reset the position
 		inputBuff.get(buff);
 		out.writeInt(buff.length);
@@ -59,8 +59,8 @@ implements DataInput {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		// read buffer data and wrap with ByteBuffer
-		final int size = in.readInt();
-		final byte buff[] = new byte[size];
+		final var size = in.readInt();
+		final var buff = new byte[size];
 		for(int i, j = 0; j < size;) {
 			i = in.read(buff, j, size - j);
 			if(i == -1) {

@@ -14,7 +14,6 @@ import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
 import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  Created by andrey on 12.11.16.

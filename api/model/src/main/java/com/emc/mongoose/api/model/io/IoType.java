@@ -9,5 +9,5 @@ public enum IoType {
 	READ, // 2
 	UPDATE, // 3
 	DELETE, // 4
-	LIST; // 5
+	LIST, // 5
 }

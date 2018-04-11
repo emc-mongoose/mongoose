@@ -35,13 +35,13 @@ implements BatchLongSupplier {
 	
 	@Override
 	public final int get(final long[] buffer, final int limit) {
-		final int _limit = Math.min(buffer.length, limit);
+		final var _limit = Math.min(buffer.length, limit);
 		if(range < 0) {
-			for(int i = 0; i < _limit; i ++) {
+			for(var i = 0; i < _limit; i ++) {
 				buffer[i] = rnd.nextLong();
 			}
 		} else {
-			for(int i = 0; i < _limit; i ++) {
+			for(var i = 0; i < _limit; i ++) {
 				buffer[i] = min + rnd.nextLong(range);
 			}
 		}

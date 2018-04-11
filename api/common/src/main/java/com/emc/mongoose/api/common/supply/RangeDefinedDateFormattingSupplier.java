@@ -23,32 +23,27 @@ implements RangeDefinedSupplier<Date> {
 			null : FastDateFormat.getInstance(formatStr);
 	}
 	
-	private static ThreadLocal<Date> DATE = new ThreadLocal<Date>() {
-		@Override
-		protected final Date initialValue() {
-			return new Date();
-		}
-	};
+	private static ThreadLocal<Date> DATE = ThreadLocal.withInitial(Date::new);
 	
 	@Override
 	public final String get() {
-		final Date date = DATE.get();
+		final var date = DATE.get();
 		date.setTime(getAsLong());
 		return format == null ? date.toString() : format.format(date);
 	}
 	
 	@Override
 	public final int get(final List<String> buffer, final int limit) {
-		final long numbers[] = new long[limit];
-		final int n = super.get(numbers, limit);
-		final Date date = DATE.get();
+		final var numbers = new long[limit];
+		final var n = super.get(numbers, limit);
+		final var date = DATE.get();
 		if(format == null) {
-			for(int i = 0; i < n; i ++) {
+			for(var i = 0; i < n; i ++) {
 				date.setTime(numbers[i]);
 				buffer.add(date.toString());
 			}
 		} else {
-			for(int i = 0; i < n; i ++) {
+			for(var i = 0; i < n; i ++) {
 				date.setTime(numbers[i]);
 				buffer.add(format.format(date));
 			}

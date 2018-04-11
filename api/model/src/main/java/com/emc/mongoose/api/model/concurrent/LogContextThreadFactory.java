@@ -3,7 +3,6 @@ package com.emc.mongoose.api.model.concurrent;
 import com.github.akurilov.concurrent.ContextAwareThreadFactory;
 
 import org.apache.logging.log4j.CloseableThreadContext;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.ThreadContext;
 
 import java.util.Map;
@@ -38,7 +37,7 @@ extends ContextAwareThreadFactory {
 
 		@Override
 		public final void run() {
-			try(final Instance ctx = CloseableThreadContext.putAll(threadContext)) {
+			try(final var ctx = CloseableThreadContext.putAll(threadContext)) {
 				super.run();
 			} catch(final Throwable cause) {
 				LOG.log(Level.SEVERE, "Unhandled thread failure", cause);

@@ -1,6 +1,7 @@
 package com.emc.mongoose.api.model.item;
 
 import com.emc.mongoose.api.common.Constants;
+
 import com.github.akurilov.commons.io.Output;
 
 import java.io.BufferedWriter;
@@ -9,6 +10,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
 /**
  The data item output writing into the specified file human-readable data item records using the CSV
  format
@@ -38,7 +40,7 @@ implements Output<I> {
 	@Override
 	public int put(final List<I> buffer, final int from, final int to)
 	throws IOException {
-		int i = from;
+		var i = from;
 		while(i < to && put(buffer.get(i))) {
 			i ++;
 		}

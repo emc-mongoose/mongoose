@@ -7,7 +7,6 @@ import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 
 import java.rmi.RemoteException;
