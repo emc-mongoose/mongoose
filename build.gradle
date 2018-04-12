@@ -34,6 +34,19 @@ allprojects {
 	check.dependsOn -= test
 }
 
+String defineVersion() {
+	def configFilePath = [rootDir, "config", "defaults.json"].join(File.separator);
+	def inputFile = new File(configFilePath)
+	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
+	json.version
+}
+
+task printVersion {
+	group = "versioning"
+	description = "Prints Mongoose version."
+	doLast { logger.quiet "Mongoose version: $version" }
+}
+
 ext {
 
 	isExt = false
@@ -83,6 +96,13 @@ def classPathString(final configuration, final isExt) {
 				}
 		}
 		.join(" ")
+}
+
+void collectName(Project p, LinkedList<String> names) {
+	names.addFirst p.name
+	if(p.parent != null) {
+		collectName(p.parent, names)
+	}
 }
 
 subprojects {
@@ -335,22 +355,38 @@ task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 	}
 }
 
-task printVersion {
-	group = "versioning"
-	description = "Prints Mongoose version."
-	doLast { logger.quiet "Mongoose version: $version" }
-}
+task image(dependsOn: tasks.withType(Jar)) {
 
-void collectName(Project p, LinkedList<String> names) {
-	names.addFirst p.name
-	if(p.parent != null) {
-		collectName(p.parent, names)
+	doLast {
+
+		ext.javaHome = System.properties["java.home"]
+		ext.moduleNames = leafProjects.collect {
+			p -> p.moduleName
+		}
+		ext.modulePaths = new ArrayList<>()
+		leafProjects.each {
+			p -> p.jar.outputs.files.each {
+				jarFile -> modulePaths.add(jarFile)
+			}
+		}
+		ext.runtimeDeps = new HashSet<>()
+		leafProjects.each {
+			p -> p.configurations.runtime.each {
+				runtimeDeps.add(it)
+			}
+		}
+
+		exec {
+			executable "${javaHome}/bin/jlink"
+			args = [
+			    "--module-path", (["$javaHome/jmods"] + ext.modulePaths + ext.runtimeDeps).grep().join(':'),
+				"--add-modules", moduleNames.join(','),
+				"--output", "image",
+				"--compress=2",
+				"--no-header-files",
+				"--no-man-pages",
+
+			]
+		}
 	}
-}
-
-String defineVersion() {
-	def configFilePath = [rootDir, "config", "defaults.json"].join(File.separator);
-	def inputFile = new File(configFilePath)
-	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
-	json.version
 }
