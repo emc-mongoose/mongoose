@@ -43,8 +43,8 @@ extends SimpleChannelInboundHandler<M> {
 
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
-		final Channel channel = ctx.channel();
-		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
+		final var channel = ctx.channel();
+		final var ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
 		handle(channel, ioTask, msg);
 	}
 	
@@ -54,8 +54,8 @@ extends SimpleChannelInboundHandler<M> {
 	@Override @SuppressWarnings("unchecked")
 	public final void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause)
 	throws IOException {
-		final Channel channel = ctx.channel();
-		final O ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
+		final var channel = ctx.channel();
+		final var ioTask = (O) channel.attr(NetStorageDriver.ATTR_KEY_IOTASK).get();
 		if(ioTask != null) {
 			if(driver.isStopped() || driver.isClosed()) {
 				ioTask.status(INTERRUPTED);

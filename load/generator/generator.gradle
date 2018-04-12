@@ -1,5 +1,10 @@
 description = "mongoose-load-generator"
 
+ext.isExt = false
+ext.jarFileName = description
+ext.mainClass = null
+ext.moduleName = "${rootPkg}.load.generator"
+
 dependencies {
 
 	compile(
@@ -16,12 +21,4 @@ dependencies {
 		"org.slf4j:slf4j-api:${depVersion.slf4j}",
 		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
 	)
-}
-
-jar {
-	manifest {
-		attributes (
-            "Class-Path": classPathString(configurations.runtime),
-		)
-	}
 }

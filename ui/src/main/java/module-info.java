@@ -3,6 +3,7 @@ module com.emc.mongoose.ui {
 	requires com.emc.mongoose.api.common;
 	requires com.emc.mongoose.api.model;
 	requires com.github.akurilov.commons;
+	requires com.github.akurilov.concurrent;
 	requires commons.lang;
 	requires log4j.api;
 	requires log4j.core;

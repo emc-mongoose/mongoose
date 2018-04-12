@@ -8,5 +8,7 @@ module com.emc.mongoose.storage.driver.builder {
 	requires java.base;
 	requires java.rmi;
 
+	uses com.emc.mongoose.storage.driver.base.StorageDriverFactory;
+
 	exports com.emc.mongoose.storage.driver.builder;
 }

@@ -1,5 +1,10 @@
 description = "mongoose-storage-driver-net"
 
+ext.isExt = false
+ext.jarFileName = description
+ext.mainClass = null
+ext.moduleName = "${rootPkg}.storage.driver.net"
+
 dependencies {
 
 	compile(
@@ -28,12 +33,4 @@ dependencies {
 		"io.netty:netty-transport-native-epoll:${depVersion.netty}:linux-x86_64",
 		"io.netty:netty-transport-native-kqueue:${depVersion.netty}:osx-x86_64",
 	)
-}
-
-jar {
-	manifest {
-		attributes (
-            "Class-Path": classPathString(configurations.runtime),
-		)
-	}
 }

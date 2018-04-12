@@ -4,10 +4,10 @@ module com.emc.mongoose.api.model {
 	requires com.github.akurilov.concurrent;
 	requires com.emc.mongoose.api.common;
 	requires org.apache.commons.codec;
-	requires slf4j.api;
 	requires log4j.api;
 	requires java.base;
 	requires java.logging;
+	requires java.management;
 	requires java.rmi;
 
 	exports com.emc.mongoose.api.model.concurrent;

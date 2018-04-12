@@ -1,5 +1,10 @@
 description = "mongoose-scenario"
 
+ext.isExt = false
+ext.jarFileName = rootProject.name
+ext.mainClass = "com.emc.mongoose.scenario.Main"
+ext.moduleName = "${rootPkg}.scenario"
+
 dependencies {
 
 	compile(
@@ -19,14 +24,4 @@ dependencies {
 		"org.slf4j:slf4j-api:${depVersion.slf4j}",
 		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
 	)
-}
-
-jar {
-	archiveName = "mongoose.jar"
-	manifest {
-		attributes (
-            "Class-Path": classPathString(configurations.runtime),
-			"Main-Class": "com.emc.mongoose.scenario.Main",
-		)
-	}
 }

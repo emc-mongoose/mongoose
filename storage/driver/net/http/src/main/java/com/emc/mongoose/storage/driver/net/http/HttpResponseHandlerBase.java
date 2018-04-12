@@ -6,7 +6,6 @@ import com.emc.mongoose.api.model.io.task.path.PathIoTask;
 import com.emc.mongoose.api.model.io.task.token.TokenIoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.storage.driver.net.ResponseHandlerBase;
 import static com.emc.mongoose.storage.driver.net.data.ResponseContentUtil.verifyChunk;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.FAIL_TIMEOUT;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.FAIL_UNKNOWN;
@@ -17,8 +16,10 @@ import static com.emc.mongoose.api.model.io.task.IoTask.Status.RESP_FAIL_NOT_FOU
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.RESP_FAIL_SPACE;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.RESP_FAIL_SVC;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.SUCC;
+import com.emc.mongoose.storage.driver.net.ResponseHandlerBase;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -104,8 +105,8 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 	) throws IOException {
 		if(IoType.READ.equals(ioTask.ioType())) {
 			if(ioTask instanceof DataIoTask) {
-				final DataIoTask dataIoTask = (DataIoTask) ioTask;
-				final long countBytesDone = dataIoTask.countBytesDone();
+				final var dataIoTask = (DataIoTask) ioTask;
+				final var countBytesDone = dataIoTask.countBytesDone();
 				if(dataIoTask.respDataTimeStart() == 0) { // if not set yet - 1st time
 					try {
 						dataIoTask.startDataResponse();
@@ -113,7 +114,7 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 						LogUtil.exception(Level.DEBUG, e, "{}", dataIoTask.toString());
 					}
 				}
-				final int chunkSize = contentChunk.readableBytes();
+				final var chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
 					if(verifyFlag) {
 						if(!RESP_FAIL_CORRUPT.equals(ioTask.status())) {
@@ -124,22 +125,22 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 					}
 				}
 			} else if(ioTask instanceof PathIoTask) {
-				final PathIoTask pathIoTask = (PathIoTask) ioTask;
-				final long countBytesDone = pathIoTask.getCountBytesDone();
+				final var pathIoTask = (PathIoTask) ioTask;
+				final var countBytesDone = pathIoTask.getCountBytesDone();
 				if(pathIoTask.getRespDataTimeStart() == 0) { // if not set yet - 1st time
 					pathIoTask.startDataResponse();
 				}
-				final int chunkSize = contentChunk.readableBytes();
+				final var chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
 					pathIoTask.setCountBytesDone(countBytesDone + chunkSize);
 				}
 			} else if(ioTask instanceof TokenIoTask) {
-				final TokenIoTask tokenIoTask = (TokenIoTask) ioTask;
-				final long countBytesDone = tokenIoTask.getCountBytesDone();
+				final var tokenIoTask = (TokenIoTask) ioTask;
+				final var countBytesDone = tokenIoTask.getCountBytesDone();
 				if(tokenIoTask.getRespDataTimeStart() == 0) { // if not set yet - 1st time
 					tokenIoTask.startDataResponse();
 				}
-				final int chunkSize = contentChunk.readableBytes();
+				final var chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
 					tokenIoTask.setCountBytesDone(countBytesDone + chunkSize);
 				}
@@ -163,15 +164,15 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 			} catch(final IllegalStateException e) {
 				LogUtil.exception(Level.DEBUG, e, "{}", ioTask.toString());
 			}
-			final HttpResponse httpResponse = (HttpResponse) msg;
+			final var httpResponse = (HttpResponse) msg;
 			if(Loggers.MSG.isTraceEnabled()) {
 				Loggers.MSG.trace("{} <<<< {}", ioTask.hashCode(), httpResponse.status());
 			}
-			final HttpResponseStatus httpResponseStatus = httpResponse.status();
+			final var httpResponseStatus = httpResponse.status();
 			handleResponseStatus(ioTask, httpResponseStatus.codeClass(), httpResponseStatus);
 			handleResponseHeaders(ioTask, httpResponse.headers());
 			if(msg instanceof FullHttpResponse) {
-				final ByteBuf fullRespContent = ((FullHttpResponse) msg).content();
+				final var fullRespContent = ((FullHttpResponse) msg).content();
 				handleResponseContentChunk(channel, ioTask, fullRespContent);
 			}
 		}

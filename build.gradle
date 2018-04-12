@@ -2,7 +2,7 @@ import groovy.json.JsonSlurper
 import groovy.json.JsonParserType
 
 import java.nio.file.Paths
-
+import java.util.regex.Pattern
 description = "Mongoose is a high-load storage performance testing tool"
 
 buildscript {
@@ -36,6 +36,10 @@ allprojects {
 
 ext {
 
+	isExt = false
+	jarFileName = project.name
+	rootPkg = "com.emc.mongoose"
+
 	depVersion = [
 		commonsCodec : "1.11",
 		commonsLang : "2.6",
@@ -52,35 +56,30 @@ ext {
 		nettyConnectionPool : "[1.0.0,)"
 	]
 
-	mutualProjects = subprojects.findAll {
-		it != project("api") && it != project("load") && it != project("storage") &&
-			it != project("tests")
+	leafProjects = subprojects.findAll {
+		it != project("api") && it != project("load") && it != project("storage")// &&
+			//it != project("tests")
 	}
 }
 
-def classPathString(final configuration) {
+def classPathString(final configuration, final isExt) {
 	return configuration
 		.collect {
 			file ->
-				// it's 3rd party if jar file name doesn't contain the root project name
-				if(-1 == file.name.indexOf(rootProject.name)) {
-					["lib", file.name].join(File.separator)
+				if(isExt) {
+					// it's 3rd party if jar file name doesn't contain the root project name
+					if(-1 == file.name.indexOf(rootProject.name)) {
+						["..", "lib", file.name].join(File.separator)
+					} else {
+						["..", file.name].join(File.separator)
+					}
 				} else {
-					file.name
-				}
-		}
-		.join(" ")
-}
-
-def extClassPathString(final configuration) {
-	return configuration
-		.collect {
-			file ->
-				// it's 3rd party if jar file name doesn't contain the root project name
-				if(-1 == file.name.indexOf(rootProject.name)) {
-					["..", "lib", file.name].join(File.separator)
-				} else {
-					["..", file.name].join(File.separator)
+					// it's 3rd party if jar file name doesn't contain the root project name
+					if(-1 == file.name.indexOf(rootProject.name)) {
+						["lib", file.name].join(File.separator)
+					} else {
+						file.name
+					}
 				}
 		}
 		.join(" ")
@@ -88,51 +87,112 @@ def extClassPathString(final configuration) {
 
 subprojects {
 
-	tasks.withType(JavaCompile) {
-		sourceCompatibility = JavaVersion.VERSION_1_10
-		targetCompatibility = JavaVersion.VERSION_1_10
-	}
-
-	task("create-dirs").doLast(
-		{
-			sourceSets*.java.srcDirs*.each { it.mkdirs() }
-			sourceSets*.resources.srcDirs*.each { it.mkdirs() }
-		}
-	)
-
 	repositories {
 		mavenCentral()
 	}
 
-	jar {
-		LinkedList names = new LinkedList()
-		collectName(project, names)
-		def name = names.join("-")
-		archiveName "$name.$extension"
-		manifest {
-			attributes (
-				"Implementation-Version": version,
-				"Implementation-Title": "$name"
-			)
+	afterEvaluate {
+
+		compileJava {
+			if(project in leafProjects) {
+				sourceCompatibility = JavaVersion.VERSION_1_10
+				targetCompatibility = JavaVersion.VERSION_1_10
+				inputs.property("moduleName", moduleName)
+				doFirst {
+					options.compilerArgs = [
+						"--module-path", classpath.asPath,
+					]
+					classpath = files()
+				}
+			}
+		}
+
+		compileTestJava {
+			if(project in leafProjects) {
+				sourceCompatibility = JavaVersion.VERSION_1_10
+				targetCompatibility = JavaVersion.VERSION_1_10
+				inputs.property("moduleName", moduleName)
+				doFirst {
+					options.compilerArgs = [
+						"--module-path", classpath.asPath,
+						"--add-modules", "junit",
+						"--add-reads", "${moduleName}.test=junit",
+						"--patch-module", "${moduleName}=" + files(sourceSets.test.java.srcDirs).asPath,
+					]
+					classpath = files()
+				}
+			}
+		}
+
+		jar {
+			if(project in leafProjects) {
+				archiveName "${project.jarFileName}.${extension}"
+				inputs.property("moduleName", moduleName)
+				manifest {
+					attributes(
+						"Automatic-Module-Name": moduleName,
+						"Class-Path": classPathString(configurations.runtime, project.isExt),
+						"Implementation-Version": version,
+						"Implementation-Title": "$name",
+					)
+				}
+				if(null != project.mainClass) {
+					manifest {
+						attributes(
+							"Main-Class": project.mainClass,
+						)
+					}
+				}
+			}
+		}
+
+		test {
+			if(project in leafProjects) {
+				inputs.property("moduleName", moduleName)
+				doFirst {
+					jvmArgs = [
+						//"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005",
+						"-XX:+HeapDumpOnOutOfMemoryError",
+						"--module-path", classpath.asPath,
+						'--add-exports', "${moduleName}/${moduleName}.test=junit",
+						"--add-modules", "ALL-MODULE-PATH",
+						"--add-reads", "${moduleName}.test=junit",
+						"--patch-module", "${moduleName}=" + files(sourceSets.test.java.outputDir).asPath,
+					]
+					classpath = files()
+				}
+				maxHeapSize "1g"
+				/*
+				systemProperty "com.sun.management.jmxremote", "true"
+				systemProperty "com.sun.management.jmxremote.port", "9010"
+				systemProperty "com.sun.management.jmxremote.rmi.port", "9010"
+				systemProperty "com.sun.management.jmxremote.local.only", "false"
+				systemProperty "com.sun.management.jmxremote.authenticate", "false"
+				systemProperty "com.sun.management.jmxremote.ssl", "false"
+				*/
+				testLogging {
+					events "passed", "skipped", "failed", "standardOut"
+					showExceptions = true
+					showStandardStreams = true
+				}
+			}
 		}
 	}
 
 	task sourcesJar(type: Jar, dependsOn: classes) {
-		LinkedList names = new LinkedList()
-		collectName(project, names)
-		def name = names.join("-")
-		classifier = "sources"
-		archiveName "$name-$classifier.$extension"
-		from sourceSets.main.allSource
+		if(project in leafProjects) {
+			classifier = "sources"
+			archiveName "${project.jarFileName}-$classifier.$extension"
+			from sourceSets.main.allSource
+		}
 	}
 
 	task javadocJar(type: Jar, dependsOn: javadoc) {
-		LinkedList names = new LinkedList()
-		collectName(project, names)
-		def name = names.join("-")
-		classifier = "javadoc"
-		archiveName "$name-$classifier.$extension"
-		from javadoc.destinationDir
+		if(project in leafProjects) {
+			classifier = "javadoc"
+			archiveName "${project.jarFileName}-$classifier.$extension"
+			from javadoc.destinationDir
+		}
 	}
 
 	artifacts {
@@ -141,29 +201,11 @@ subprojects {
 		archives javadocJar
 	}
 
-	test {
-		///jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
-		jvmArgs "-XX:MaxDirectMemorySize=2g"
-		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
-		maxHeapSize "2g"
-		//systemProperty "com.sun.management.jmxremote", "true"
-		//systemProperty "com.sun.management.jmxremote.port", "9010"
-		//systemProperty "com.sun.management.jmxremote.rmi.port", "9010"
-		//systemProperty "com.sun.management.jmxremote.local.only", "false"
-		//systemProperty "com.sun.management.jmxremote.authenticate", "false"
-		//systemProperty "com.sun.management.jmxremote.ssl", "false"
-		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
-			showExceptions = true
-			showStandardStreams = true
-		}
-	}
-
 	// see http://central.sonatype.org/pages/gradle.html for details
 	uploadArchives {
 
 		// prevent the execution for empty (not leaf) subprojects and tests packages
-		if(project.path.contains("tests") || !(project in mutualProjects)) {
+		if(project.path.contains("tests") || !(project in leafProjects)) {
 			return
 		}
 
@@ -232,8 +274,17 @@ task wrapper(type: Wrapper) {
 }
 
 static def isExtProject(final Project p) {
-    final f = Paths.get(p.projectDir.toString(), "src", "main", "resources", "META-INF", "services").toFile()
-    return f.exists() && f.isDirectory() && f.listFiles().length > 0
+	final moduleInfoJavaFile = Paths
+		.get(p.projectDir.toString(), "src", "main", "java", "module-info.java")
+		.toFile()
+	if(moduleInfoJavaFile.exists()) {
+		return 0 < moduleInfoJavaFile
+			.readLines()
+			.findAll { line -> line =~ /\s+provides\s+[\w\\.]+/ }
+			.size()
+	} else {
+		return false
+	}
 }
 
 static def isTestsProject(final Project p) {
@@ -260,8 +311,8 @@ task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 		into("example") {
 			from { "example" }
 		}
-		final extProjects = mutualProjects.findAll { isExtProject(it) }
-		final nonExtNonTestProjects = mutualProjects.findAll {
+		final extProjects = leafProjects.findAll { isExtProject(it) }
+		final nonExtNonTestProjects = leafProjects.findAll {
 			!isExtProject(it) && !isTestsProject(it)
 		}
 		into("ext") {
@@ -270,7 +321,7 @@ task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 			}
 		}
 		into("lib") {
-			for(Project p: mutualProjects) {
+			for(final Project p: leafProjects) {
 				from p.configurations.runtime {
 					exclude "${rootProject.name}*.jar"
 				}

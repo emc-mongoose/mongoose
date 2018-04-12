@@ -36,7 +36,7 @@ implements StorageDriver<I,O> {
 					+ " concurrency limit (" + concurrencyLevel + ")"
 			);
 		}
-		final int inQueueSize = storageConfig.getDriverConfig().getQueueConfig().getInput();
+		final var inQueueSize = storageConfig.getDriverConfig().getQueueConfig().getInput();
 		ioExecutor = new ThreadPoolExecutor(
 			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(inQueueSize),
@@ -64,7 +64,7 @@ implements StorageDriver<I,O> {
 		if(!isStarted() || ioExecutor.isShutdown() || ioExecutor.isTerminated()) {
 			throw new EOFException();
 		}
-		int i = from;
+		var i = from;
 		try {
 			while(i < to) {
 				ioExecutor.execute(blockingIoTask(ioTasks.get(i)));

@@ -7,9 +7,10 @@ import com.emc.mongoose.scenario.sna.LoadStepService;
 import com.emc.mongoose.scenario.sna.LoadStep;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
-
 import com.emc.mongoose.ui.log.Loggers;
+
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;

@@ -2,15 +2,12 @@ package com.emc.mongoose.scenario.step;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.item.DelayedTransferConvertBuffer;
 import com.emc.mongoose.api.model.item.ItemFactory;
-import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.api.model.item.ItemType;
 import com.emc.mongoose.api.model.item.TransferConvertBuffer;
 import com.emc.mongoose.api.model.load.LoadController;
 import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.model.storage.StorageDriver;
-import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverUtil;
 import com.emc.mongoose.ui.config.Config;

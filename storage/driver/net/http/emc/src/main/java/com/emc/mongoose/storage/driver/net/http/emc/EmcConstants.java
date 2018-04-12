@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.net.http.emc.base;
+package com.emc.mongoose.storage.driver.net.http.emc;
 
 /**
  Created by kurila on 11.11.16.

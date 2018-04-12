@@ -1,18 +1,12 @@
 description = "mongoose-node"
 
-dependencies {
+ext.isExt = false
+ext.jarFileName = description
+ext.mainClass = "com.emc.mongoose.node.Main"
+ext.moduleName = "${rootPkg}.node"
 
+dependencies {
 	compile(
 		project(":scenario"),
 	)
 }
-
-jar {
-	manifest {
-		attributes (
-			"Class-Path": classPathString(configurations.runtime),
-			"Main-Class": "com.emc.mongoose.node.Main",
-		)
-	}
-}
-

@@ -2,13 +2,10 @@ package com.emc.mongoose.node;
 
 import com.emc.mongoose.api.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.sna.FileManagerService;
-import com.emc.mongoose.scenario.sna.FileService;
 import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
 import org.apache.logging.log4j.core.async.AsyncLogger;
 

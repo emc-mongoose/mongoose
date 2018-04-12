@@ -1,9 +1,9 @@
 package com.emc.mongoose.storage.driver.net.http;
 
-import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
 import com.github.akurilov.commons.collection.Range;
 
+import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
+import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.common.supply.BatchSupplier;
 import com.emc.mongoose.api.common.supply.async.AsyncPatternDefinedSupplier;
@@ -107,15 +107,15 @@ implements HttpStorageDriver<I, O> {
 
 		super(testStepId, itemDataInput, loadConfig, storageConfig, verifyFlag);
 		
-		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
+		final var httpConfig = storageConfig.getNetConfig().getHttpConfig();
 		
 		namespace = httpConfig.getNamespace();
 		fsAccess = httpConfig.getFsAccess();
 		versioning = httpConfig.getVersioning();
 		
-		final Map<String, String> headersMap = httpConfig.getHeaders();
+		final var headersMap = httpConfig.getHeaders();
 		String headerValue;
-		for(final String headerName : headersMap.keySet()) {
+		for(final var headerName : headersMap.keySet()) {
 			headerValue = headersMap.get(headerName);
 			if(-1 < headerName.indexOf(PATTERN_CHAR) || -1 < headerValue.indexOf(PATTERN_CHAR)) {
 				dynamicHeaders.add(headerName, headerValue);
@@ -131,9 +131,9 @@ implements HttpStorageDriver<I, O> {
 		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
-		final Channel channel = getUnpooledConnection();
+		final var channel = getUnpooledConnection();
 		try {
-			final ChannelPipeline pipeline = channel.pipeline();
+			final var pipeline = channel.pipeline();
 			Loggers.MSG.debug(
 				"{}: execute the HTTP request using the channel {} w/ pipeline: {}", stepId,
 				channel.hashCode(), pipeline
@@ -170,9 +170,9 @@ implements HttpStorageDriver<I, O> {
 	protected HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
 	throws URISyntaxException {
 
-		final I item = ioTask.item();
-		final IoType ioType = ioTask.ioType();
-		final String srcPath = ioTask.srcPath();
+		final var item = ioTask.item();
+		final var ioType = ioTask.ioType();
+		final var srcPath = ioTask.srcPath();
 
 		final HttpMethod httpMethod;
 		final String uriPath;
@@ -223,7 +223,7 @@ implements HttpStorageDriver<I, O> {
 				}
 				break;
 			case UPDATE:
-				final DataIoTask dataIoTask = (DataIoTask) ioTask;
+				final var dataIoTask = (DataIoTask) ioTask;
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, dataIoTask.markedRangesSize());
 				applyRangesHeaders(httpHeaders, dataIoTask);
 				break;
@@ -258,7 +258,7 @@ implements HttpStorageDriver<I, O> {
 	protected String getDataUriPath(
 		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
-		final String itemName = item.getName();
+		final var itemName = item.getName();
 		if(dstPath == null) {
 			if(srcPath == null) {
 				if(itemName.startsWith(SLASH)) {
@@ -304,16 +304,16 @@ implements HttpStorageDriver<I, O> {
 			throw new AssertionError(e);
 		}
 		final List<Range> fixedRanges = dataIoTask.fixedRanges();
-		final StringBuilder strb = THR_LOC_RANGES_BUILDER.get();
+		final var strb = THR_LOC_RANGES_BUILDER.get();
 		strb.setLength(0);
 
 		if(fixedRanges == null || fixedRanges.isEmpty()) {
-			final BitSet rangesMaskPair[] = dataIoTask.markedRangesMaskPair();
+			final var rangesMaskPair = dataIoTask.markedRangesMaskPair();
 			if(rangesMaskPair[0].isEmpty() && rangesMaskPair[1].isEmpty()) {
 				return; // do not set the ranges header
 			}
 			// current layer first
-			for(int i = 0; i < getRangeCount(baseItemSize); i++) {
+			for(var i = 0; i < getRangeCount(baseItemSize); i++) {
 				if(rangesMaskPair[0].get(i)) {
 					if(strb.length() > 0) {
 						strb.append(',');
@@ -325,7 +325,7 @@ implements HttpStorageDriver<I, O> {
 				}
 			}
 			// then next layer ranges if any
-			for(int i = 0; i < getRangeCount(baseItemSize); i++) {
+			for(var i = 0; i < getRangeCount(baseItemSize); i++) {
 				if(rangesMaskPair[1].get(i)) {
 					if(strb.length() > 0) {
 						strb.append(',');
@@ -348,7 +348,7 @@ implements HttpStorageDriver<I, O> {
 	) {
 		Range nextFixedRange;
 		long nextRangeSize;
-		for(int i = 0; i < ranges.size(); i ++) {
+		for(var i = 0; i < ranges.size(); i ++) {
 			nextFixedRange = ranges.get(i);
 			nextRangeSize = nextFixedRange.getSize();
 			if(i > 0) {
@@ -363,7 +363,7 @@ implements HttpStorageDriver<I, O> {
 	}
 
 	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
-		for(final Map.Entry<String, String> sharedHeader : sharedHeaders) {
+		for(final var sharedHeader : sharedHeaders) {
 			httpHeaders.add(sharedHeader.getKey(), sharedHeader.getValue());
 		}
 	}
@@ -375,7 +375,7 @@ implements HttpStorageDriver<I, O> {
 		BatchSupplier<String> headerNameSupplier;
 		BatchSupplier<String> headerValueSupplier;
 
-		for(final Map.Entry<String, String> nextHeader : dynamicHeaders) {
+		for(final var nextHeader : dynamicHeaders) {
 
 			headerName = nextHeader.getKey();
 			// header name is a generator pattern
@@ -422,9 +422,9 @@ implements HttpStorageDriver<I, O> {
 		final Channel channel, final ChannelPromise channelPromise, final O ioTask
 	) {
 
-		final String nodeAddr = ioTask.nodeAddr();
+		final var nodeAddr = ioTask.nodeAddr();
 		try {
-			final HttpRequest httpRequest = getHttpRequest(ioTask, nodeAddr);
+			final var httpRequest = getHttpRequest(ioTask, nodeAddr);
 			if(channel == null) {
 				return;
 			} else {
