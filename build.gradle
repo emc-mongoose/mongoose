@@ -324,7 +324,65 @@ static def isTestsProject(final Project p) {
 	}
 }
 
-task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
+task mainJar(type: Jar) {
+
+	leafProjects.each {
+		dependsOn("${it.path}:compileJava")
+	}
+
+	archiveName = "${baseName}.${extension}"
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	excludes = [
+		"module-info.class",
+		"*.html",
+		"META-INF/*.DSA",
+		"META-INF/*.RSA",
+		"META-INF/*.SF",
+		"META-INF/*.LIST",
+	]
+	manifest {
+		attributes "Implementation-Title": rootProject.name
+		attributes "Implementation-Version": version
+	}
+
+	leafProjects
+		.findAll { !isExtProject(it) && !isTestsProject(it) }
+		.each {
+			from it.compileJava.outputs.files
+			from it.sourceSets.main.resources
+		}
+
+	doFirst {
+		final extRuntimeDeps = new HashSet<>()
+		leafProjects
+			.findAll {
+				!isTestsProject(it)
+			}
+			.each {
+				it.configurations.runtime
+					.findAll {
+						!it.name.startsWith(rootProject.name)
+					}
+					.each {
+						extRuntimeDeps.add(it)
+					}
+			}
+		extRuntimeDeps.each {
+			from zipTree(it.path)
+		}
+	}
+}
+
+task mainModule(type: Exec, dependsOn: mainJar) {
+	executable = "${javaHome}/bin/jdeps"
+	args = [
+		"--module-path", "${javaHome}/jmods",
+		"--generate-module-info", "modInfo",
+		mainJar.outputs.files.iterator().next().path,
+	]
+}
+
+task dist(type: Tar, dependsOn: mainJar) {
 	group = "distribution"
 	description = "Collect Mongoose as an archive"
 	baseName = "$rootProject.name-base"
@@ -355,79 +413,12 @@ task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 			}
 		}
 		for(final Project p: nonExtNonTestProjects) {
-			if(!p.displayName.contains(":storage:driver:service")) {
-				from p.jar.outputs.files
-			}
+			from p.jar.outputs.files
 		}
 	}
 }
 
-task depMods {
-
-	doLast {
-
-		/*final depAutoModNames = new HashSet<String>()
-		leafProjects.each {
-			project ->
-				final moduleInfoJavaFile = Paths
-					.get(project.projectDir.toString(), "src", "main", "java", "module-info.java")
-					.toFile()
-				if(moduleInfoJavaFile.exists()) {
-					moduleInfoJavaFile
-						.readLines()
-						.each {
-							line ->
-								final m = (line =~ /\s+requires\s+([\w\\.]+);/)
-								if(m.matches()) {
-									final String moduleName = m[0][1]
-									if(
-										! readyModNamePrefixes.any {
-											readyModNamePrefix ->
-												moduleName.startsWith(readyModNamePrefix)
-										}
-									) {
-										depAutoModNames.add(moduleName)
-									}
-								}
-						}
-				}
-		}*/
-
-		ext.runtimeDeps = new HashSet<>()
-		leafProjects.each {
-			p -> p.configurations.runtime.each {
-				runtimeDeps.add(it)
-			}
-		}
-		ext.nonModularDeps = new HashSet<>()
-		leafProjects.each {
-			p -> p.configurations.runtime.each {
-				extDep ->
-					if(
-						! modularDepNamePrefixes.any {
-							extDep.name.startsWith(it)
-						}
-					) {
-						nonModularDeps.add(extDep)
-					}
-			}
-		}
-		nonModularDeps.each {
-			ext.dep = it
-			println "Running jdeps for ${dep.name}..."
-			exec {
-				executable "${javaHome}/bin/jdeps"
-				args = [
-					"--api-only", "--compile-time",
-					"--module-path", (["$javaHome/jmods"] + runtimeDeps).grep().join(':'),
-					"--generate-module-info", "modInfo", dep
-				]
-			}
-		}
-	}
-}
-
-task image(dependsOn: depMods) {
+task image(dependsOn: mainJar) {
 
 	leafProjects.each {
 		dependsOn("${it.path}:jar")
