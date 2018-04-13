@@ -15,7 +15,7 @@ implements StorageDriverFactory<I, O, T> {
 
 	@Override
 	public final String getName() {
-		return "mock-nio";
+		return "nio-mock";
 	}
 
 	@Override @SuppressWarnings("unchecked")

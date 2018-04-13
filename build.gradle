@@ -51,27 +51,34 @@ ext {
 
 	isExt = false
 	jarFileName = project.name
+	javaHome = System.properties["java.home"]
 	rootPkg = "com.emc.mongoose"
+	modularDepNamePrefixes = [
+	    rootProject.name,
+		"java-",
+		"netty-",
+		"slf4j-"
+	]
 
 	depVersion = [
 		commonsCodec : "1.11",
 		commonsLang : "2.6",
 		disruptor : "3.4.1",
-		jackson : "2.9.4",
+		jackson : "2.9.5",
 		javaCommons : "[2.0.0,)",
 		javaConcurrent : "[2.0.0,)",
 		javassist : "3.22.0-GA",
-		slf4j : "1.8.0-beta2",
+		slf4j : "1.7.25",
 		log4j : "2.8.2",
 		metrics : "4.0.2",
 		nagaina : "[3.6.10,)",
 		netty : "4.1.23.Final",
-		nettyConnectionPool : "[1.0.0,)"
+		nettyConnectionPool : "[1.0.0,)",
 	]
 
 	leafProjects = subprojects.findAll {
-		it != project("api") && it != project("load") && it != project("storage")// &&
-			//it != project("tests")
+		it != project("api") && it != project("load") && it != project("storage") &&
+			it != project("storage:driver") //&& it != project("tests")
 	}
 }
 
@@ -355,11 +362,79 @@ task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 	}
 }
 
-task image(dependsOn: tasks.withType(Jar)) {
+task depMods {
 
 	doLast {
 
-		ext.javaHome = System.properties["java.home"]
+		/*final depAutoModNames = new HashSet<String>()
+		leafProjects.each {
+			project ->
+				final moduleInfoJavaFile = Paths
+					.get(project.projectDir.toString(), "src", "main", "java", "module-info.java")
+					.toFile()
+				if(moduleInfoJavaFile.exists()) {
+					moduleInfoJavaFile
+						.readLines()
+						.each {
+							line ->
+								final m = (line =~ /\s+requires\s+([\w\\.]+);/)
+								if(m.matches()) {
+									final String moduleName = m[0][1]
+									if(
+										! readyModNamePrefixes.any {
+											readyModNamePrefix ->
+												moduleName.startsWith(readyModNamePrefix)
+										}
+									) {
+										depAutoModNames.add(moduleName)
+									}
+								}
+						}
+				}
+		}*/
+
+		ext.runtimeDeps = new HashSet<>()
+		leafProjects.each {
+			p -> p.configurations.runtime.each {
+				runtimeDeps.add(it)
+			}
+		}
+		ext.nonModularDeps = new HashSet<>()
+		leafProjects.each {
+			p -> p.configurations.runtime.each {
+				extDep ->
+					if(
+						! modularDepNamePrefixes.any {
+							extDep.name.startsWith(it)
+						}
+					) {
+						nonModularDeps.add(extDep)
+					}
+			}
+		}
+		nonModularDeps.each {
+			ext.dep = it
+			println "Running jdeps for ${dep.name}..."
+			exec {
+				executable "${javaHome}/bin/jdeps"
+				args = [
+					"--api-only", "--compile-time",
+					"--module-path", (["$javaHome/jmods"] + runtimeDeps).grep().join(':'),
+					"--generate-module-info", "modInfo", dep
+				]
+			}
+		}
+	}
+}
+
+task image(dependsOn: depMods) {
+
+	leafProjects.each {
+		dependsOn("${it.path}:jar")
+	}
+
+	doLast {
+
 		ext.moduleNames = leafProjects.collect {
 			p -> p.moduleName
 		}
@@ -379,13 +454,14 @@ task image(dependsOn: tasks.withType(Jar)) {
 		exec {
 			executable "${javaHome}/bin/jlink"
 			args = [
-			    "--module-path", (["$javaHome/jmods"] + ext.modulePaths + ext.runtimeDeps).grep().join(':'),
+			    "--module-path", (["$javaHome/jmods"] + modulePaths + runtimeDeps).grep().join(':'),
 				"--add-modules", moduleNames.join(','),
 				"--output", "image",
 				"--compress=2",
 				"--no-header-files",
 				"--no-man-pages",
-
+				"--ignore-signing-information",
+				"--vm=server"
 			]
 		}
 	}

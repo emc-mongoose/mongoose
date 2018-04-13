@@ -6,7 +6,13 @@ ext.mainClass = "com.emc.mongoose.node.Main"
 ext.moduleName = "${rootPkg}.node"
 
 dependencies {
+
 	compile(
 		project(":scenario"),
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 	)
+
+	runtime("org.eclipse.persistence:javax.persistence:2.2.0") {
+		transitive = false
+	}
 }

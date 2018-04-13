@@ -4,12 +4,14 @@ import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
+import com.emc.mongoose.api.model.io.task.data.DataIoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.storage.driver.nio.NioStorageDriverBase;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.math.Random;
 
 import java.io.IOException;
@@ -29,7 +31,41 @@ extends NioStorageDriverBase<I, O> {
 
 	@Override
 	protected void invokeNio(final O ioTask) {
-
+		ioTask.startResponse();
+		if(ioTask instanceof DataIoTask) {
+			final var dataIoTask = (DataIoTask) ioTask;
+			final var dataItem = dataIoTask.item();
+			switch(dataIoTask.ioType()) {
+				case CREATE:
+					try {
+						dataIoTask.countBytesDone(dataItem.size());
+					} catch(final IOException ignored) {
+					}
+					break;
+				case READ:
+					dataIoTask.startDataResponse();
+				case UPDATE:
+					final List<Range> fixedRanges = dataIoTask.fixedRanges();
+					if(fixedRanges == null || fixedRanges.isEmpty()) {
+						if(dataIoTask.hasMarkedRanges()) {
+							dataIoTask.countBytesDone(dataIoTask.markedRangesSize());
+						} else {
+							try {
+								dataIoTask.countBytesDone(dataItem.size());
+							} catch(final IOException ignored) {
+							}
+						}
+					} else {
+						dataIoTask.countBytesDone(dataIoTask.markedRangesSize());
+					}
+					break;
+				default:
+					break;
+			}
+			dataIoTask.startDataResponse();
+		}
+		ioTask.finishResponse();
+		ioTask.status(IoTask.Status.SUCC);
 	}
 
 	@Override

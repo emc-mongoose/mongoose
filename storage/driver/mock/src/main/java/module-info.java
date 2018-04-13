@@ -1,4 +1,6 @@
-module com.emc.mongoose.storage.driver.mock.dummy {
+import com.emc.mongoose.storage.driver.mock.DummyStorageDriverMockFactory;
+
+module com.emc.mongoose.storage.driver.mock {
 
 	requires com.emc.mongoose.storage.driver.base;
 	requires com.emc.mongoose.api.common;
@@ -9,8 +11,8 @@ module com.emc.mongoose.storage.driver.mock.dummy {
 	requires log4j.api;
 	requires java.base;
 
-	exports com.emc.mongoose.storage.driver.mock.dummy;
+	exports com.emc.mongoose.storage.driver.mock;
 
 	provides com.emc.mongoose.storage.driver.base.StorageDriverFactory
-		with com.emc.mongoose.storage.driver.mock.dummy.DummyStorageDriverMockFactory;
+		with DummyStorageDriverMockFactory;
 }

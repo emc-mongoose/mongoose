@@ -1,1 +1,1 @@
-com.emc.mongoose.storage.driver.nio.mock.
+com.emc.mongoose.storage.driver.nio.mock.NioStorageDriverMockFactory

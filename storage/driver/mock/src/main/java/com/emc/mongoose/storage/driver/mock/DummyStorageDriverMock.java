@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.mock.dummy;
+package com.emc.mongoose.storage.driver.mock;
 
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.data.DataInput;

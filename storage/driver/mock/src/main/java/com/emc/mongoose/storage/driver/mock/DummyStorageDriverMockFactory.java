@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.mock.dummy;
+package com.emc.mongoose.storage.driver.mock;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -18,7 +18,7 @@ implements StorageDriverFactory<I, O, T> {
 
 	@Override
 	public final String getName() {
-		return "mock-dummy";
+		return "dummy-mock";
 	}
 
 	@Override @SuppressWarnings("unchecked")
