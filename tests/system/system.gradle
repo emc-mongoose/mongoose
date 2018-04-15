@@ -1,5 +1,9 @@
 description = "mongoose-tests-system"
 
+ext.isExt = false
+ext.jarFileName = description
+ext.mainClass = "junit.textui.TestRunner"
+
 dependencies {
 
 	testCompile(
@@ -44,8 +48,7 @@ dependencies {
 jar {
 	manifest {
 		attributes (
-            "Class-Path": classPathString(configurations.testRuntime),
-            "Main-Class": "junit.textui.TestRunner",
+            "Class-Path": classPathString(configurations.testRuntime, isExt),
 		)
 	}
 	from sourceSets.test.output

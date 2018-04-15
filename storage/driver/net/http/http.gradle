@@ -3,7 +3,6 @@ description = "mongoose-storage-driver-net-http"
 ext.isExt = false
 ext.jarFileName = description
 ext.mainClass = null
-ext.moduleName = "${rootPkg}.storage.driver.net.http"
 
 dependencies {
 

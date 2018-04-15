@@ -3,7 +3,6 @@ description = "mongoose-storage-driver-mock"
 ext.isExt = true
 ext.jarFileName = description
 ext.mainClass = null
-ext.moduleName = "${rootPkg}.storage.driver.base.mock"
 
 dependencies {
 	compile(

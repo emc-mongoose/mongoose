@@ -16,6 +16,10 @@ buildscript {
 
 allprojects {
 
+	repositories {
+		mavenCentral()
+	}
+
 	apply plugin: "java"
 	apply plugin: "maven"
 	apply plugin: "signing"
@@ -50,15 +54,9 @@ task printVersion {
 ext {
 
 	isExt = false
-	jarFileName = project.name
+	jarFileName = rootProject.name
 	javaHome = System.properties["java.home"]
 	rootPkg = "com.emc.mongoose"
-	modularDepNamePrefixes = [
-	    rootProject.name,
-		"java-",
-		"netty-",
-		"slf4j-"
-	]
 
 	depVersion = [
 		commonsCodec : "1.11",
@@ -78,7 +76,7 @@ ext {
 
 	leafProjects = subprojects.findAll {
 		it != project("api") && it != project("load") && it != project("storage") &&
-			it != project("storage:driver") //&& it != project("tests")
+			it != project("storage:driver") && it != project("tests")
 	}
 }
 
@@ -114,50 +112,23 @@ void collectName(Project p, LinkedList<String> names) {
 
 subprojects {
 
-	repositories {
-		mavenCentral()
-	}
-
 	afterEvaluate {
 
 		compileJava {
-			if(project in leafProjects) {
-				sourceCompatibility = JavaVersion.VERSION_1_10
-				targetCompatibility = JavaVersion.VERSION_1_10
-				inputs.property("moduleName", moduleName)
-				doFirst {
-					options.compilerArgs = [
-						"--module-path", classpath.asPath,
-					]
-					classpath = files()
-				}
-			}
+			sourceCompatibility = JavaVersion.VERSION_1_10
+			targetCompatibility = JavaVersion.VERSION_1_10
 		}
 
 		compileTestJava {
-			if(project in leafProjects) {
-				sourceCompatibility = JavaVersion.VERSION_1_10
-				targetCompatibility = JavaVersion.VERSION_1_10
-				inputs.property("moduleName", moduleName)
-				doFirst {
-					options.compilerArgs = [
-						"--module-path", classpath.asPath,
-						"--add-modules", "junit",
-						"--add-reads", "${moduleName}.test=junit",
-						"--patch-module", "${moduleName}=" + files(sourceSets.test.java.srcDirs).asPath,
-					]
-					classpath = files()
-				}
-			}
+			sourceCompatibility = JavaVersion.VERSION_1_10
+			targetCompatibility = JavaVersion.VERSION_1_10
 		}
 
 		jar {
 			if(project in leafProjects) {
 				archiveName "${project.jarFileName}.${extension}"
-				inputs.property("moduleName", moduleName)
 				manifest {
 					attributes(
-						"Automatic-Module-Name": moduleName,
 						"Class-Path": classPathString(configurations.runtime, project.isExt),
 						"Implementation-Version": version,
 						"Implementation-Title": "$name",
@@ -175,18 +146,11 @@ subprojects {
 
 		test {
 			if(project in leafProjects) {
-				inputs.property("moduleName", moduleName)
 				doFirst {
 					jvmArgs = [
 						//"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005",
 						"-XX:+HeapDumpOnOutOfMemoryError",
-						"--module-path", classpath.asPath,
-						'--add-exports', "${moduleName}/${moduleName}.test=junit",
-						"--add-modules", "ALL-MODULE-PATH",
-						"--add-reads", "${moduleName}.test=junit",
-						"--patch-module", "${moduleName}=" + files(sourceSets.test.java.outputDir).asPath,
 					]
-					classpath = files()
 				}
 				maxHeapSize "1g"
 				/*
@@ -301,17 +265,8 @@ task wrapper(type: Wrapper) {
 }
 
 static def isExtProject(final Project p) {
-	final moduleInfoJavaFile = Paths
-		.get(p.projectDir.toString(), "src", "main", "java", "module-info.java")
-		.toFile()
-	if(moduleInfoJavaFile.exists()) {
-		return 0 < moduleInfoJavaFile
-			.readLines()
-			.findAll { line -> line =~ /\s+provides\s+[\w\\.]+/ }
-			.size()
-	} else {
-		return false
-	}
+    final f = Paths.get(p.projectDir.toString(), "src", "main", "resources", "META-INF", "services").toFile()
+    return f.exists() && f.isDirectory() && f.listFiles().length > 0
 }
 
 static def isTestsProject(final Project p) {
@@ -324,65 +279,7 @@ static def isTestsProject(final Project p) {
 	}
 }
 
-task mainJar(type: Jar) {
-
-	leafProjects.each {
-		dependsOn("${it.path}:compileJava")
-	}
-
-	archiveName = "${baseName}.${extension}"
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-	excludes = [
-		"module-info.class",
-		"*.html",
-		"META-INF/*.DSA",
-		"META-INF/*.RSA",
-		"META-INF/*.SF",
-		"META-INF/*.LIST",
-	]
-	manifest {
-		attributes "Implementation-Title": rootProject.name
-		attributes "Implementation-Version": version
-	}
-
-	leafProjects
-		.findAll { !isExtProject(it) && !isTestsProject(it) }
-		.each {
-			from it.compileJava.outputs.files
-			from it.sourceSets.main.resources
-		}
-
-	doFirst {
-		final extRuntimeDeps = new HashSet<>()
-		leafProjects
-			.findAll {
-				!isTestsProject(it)
-			}
-			.each {
-				it.configurations.runtime
-					.findAll {
-						!it.name.startsWith(rootProject.name)
-					}
-					.each {
-						extRuntimeDeps.add(it)
-					}
-			}
-		extRuntimeDeps.each {
-			from zipTree(it.path)
-		}
-	}
-}
-
-task mainModule(type: Exec, dependsOn: mainJar) {
-	executable = "${javaHome}/bin/jdeps"
-	args = [
-		"--module-path", "${javaHome}/jmods",
-		"--generate-module-info", "modInfo",
-		mainJar.outputs.files.iterator().next().path,
-	]
-}
-
-task dist(type: Tar, dependsOn: mainJar) {
+task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 	group = "distribution"
 	description = "Collect Mongoose as an archive"
 	baseName = "$rootProject.name-base"
@@ -414,46 +311,6 @@ task dist(type: Tar, dependsOn: mainJar) {
 		}
 		for(final Project p: nonExtNonTestProjects) {
 			from p.jar.outputs.files
-		}
-	}
-}
-
-task image(dependsOn: mainJar) {
-
-	leafProjects.each {
-		dependsOn("${it.path}:jar")
-	}
-
-	doLast {
-
-		ext.moduleNames = leafProjects.collect {
-			p -> p.moduleName
-		}
-		ext.modulePaths = new ArrayList<>()
-		leafProjects.each {
-			p -> p.jar.outputs.files.each {
-				jarFile -> modulePaths.add(jarFile)
-			}
-		}
-		ext.runtimeDeps = new HashSet<>()
-		leafProjects.each {
-			p -> p.configurations.runtime.each {
-				runtimeDeps.add(it)
-			}
-		}
-
-		exec {
-			executable "${javaHome}/bin/jlink"
-			args = [
-			    "--module-path", (["$javaHome/jmods"] + modulePaths + runtimeDeps).grep().join(':'),
-				"--add-modules", moduleNames.join(','),
-				"--output", "image",
-				"--compress=2",
-				"--no-header-files",
-				"--no-man-pages",
-				"--ignore-signing-information",
-				"--vm=server"
-			]
 		}
 	}
 }

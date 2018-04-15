@@ -3,7 +3,6 @@ description = "mongoose-api-model"
 ext.isExt = false
 ext.jarFileName = description
 ext.mainClass = null
-ext.moduleName = "${rootPkg}.api.model"
 
 dependencies {
 	compile(
