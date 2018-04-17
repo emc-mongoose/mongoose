@@ -13,13 +13,17 @@ import java.util.List;
 public class BasicPathIoTaskBuilder<I extends PathItem, O extends PathIoTask<I>>
 extends BasicIoTaskBuilder<I, O>
 implements PathIoTaskBuilder<I, O> {
-	
+
+	public BasicPathIoTaskBuilder(final int originIndex) {
+		super(originIndex);
+	}
+
 	@Override @SuppressWarnings("unchecked")
 	public O getInstance(final I pathItem)
 	throws IOException {
 		final String uid;
 		return (O) new BasicPathIoTask<>(
-			originCode, ioType, pathItem,
+			originIndex, ioType, pathItem,
 			Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 		);
 	}
@@ -31,7 +35,7 @@ implements PathIoTaskBuilder<I, O> {
 		for(final I nextItem : items) {
 			buff.add(
 				(O) new BasicPathIoTask<>(
-					originCode, ioType, nextItem,
+					originIndex, ioType, nextItem,
 					Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 				)
 			);

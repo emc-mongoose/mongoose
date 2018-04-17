@@ -2,12 +2,9 @@ package com.emc.mongoose.scenario.step;
 
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.item.ItemFactory;
-import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.api.model.item.ItemType;
-import com.emc.mongoose.api.model.load.LoadController;
 import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.model.storage.StorageDriver;
-import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverUtil;
 import com.emc.mongoose.ui.config.Config;
@@ -22,23 +19,14 @@ import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
-import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
-import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.system.SizeInBytes;
 
-import org.apache.logging.log4j.Level;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  Created by andrey on 14.09.17.
@@ -101,13 +89,13 @@ implements Step {
 		Loggers.MSG.info("Work on the " + itemType.toString().toLowerCase() + " items");
 
 		final LoadGenerator loadGenerator = new BasicLoadGeneratorBuilder<>()
-			.setItemConfig(itemConfig)
-			.setLoadConfig(loadConfig)
-			.setLimitConfig(limitConfig)
-			.setItemType(itemType)
-			.setItemFactory(itemFactory)
-			//.setStorageDriver(drivers)
-			.setAuthConfig(storageConfig.getAuthConfig())
+			.itemConfig(itemConfig)
+			.loadConfig(loadConfig)
+			.limitConfig(limitConfig)
+			.itemType(itemType)
+			.itemFactory(itemFactory)
+			//.storageDriver(drivers)
+			.authConfig(storageConfig.getAuthConfig())
 			.build();
 		Loggers.MSG.info("Load generators initialized");
 

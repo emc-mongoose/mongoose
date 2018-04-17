@@ -24,15 +24,11 @@ import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
-import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -127,24 +123,24 @@ extends ConfigurableStepBase {
 				final LoadGenerator loadGenerator;
 				if(nextItemBuff == null) {
 					loadGenerator = new BasicLoadGeneratorBuilder<>()
-						.setItemConfig(itemConfig)
-						.setItemFactory(itemFactory)
-						.setItemType(itemType)
-						.setLoadConfig(loadConfig)
-						.setLimitConfig(sharedTestStepConfig.getLimitConfig())
-						//.setStorageDriver(drivers)
-						.setAuthConfig(storageConfig.getAuthConfig())
+						.itemConfig(itemConfig)
+						.itemFactory(itemFactory)
+						.itemType(itemType)
+						.loadConfig(loadConfig)
+						.limitConfig(sharedTestStepConfig.getLimitConfig())
+						//.storageDriver(drivers)
+						.authConfig(storageConfig.getAuthConfig())
 						.build();
 				} else {
 					loadGenerator = new BasicLoadGeneratorBuilder<>()
-						.setItemConfig(itemConfig)
-						.setItemFactory(itemFactory)
-						.setItemType(itemType)
-						.setLoadConfig(loadConfig)
-						.setLimitConfig(sharedTestStepConfig.getLimitConfig())
-						//.setStorageDriver(drivers)
-						.setAuthConfig(storageConfig.getAuthConfig())
-						.setItemInput(nextItemBuff)
+						.itemConfig(itemConfig)
+						.itemFactory(itemFactory)
+						.itemType(itemType)
+						.loadConfig(loadConfig)
+						.limitConfig(sharedTestStepConfig.getLimitConfig())
+						//.storageDriver(drivers)
+						.authConfig(storageConfig.getAuthConfig())
+						.itemInput(nextItemBuff)
 						.build();
 				}
 

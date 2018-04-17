@@ -7,5 +7,5 @@ import java.util.List;
 public interface LoadStepClient
 extends LoadStep {
 
-	List<MetricsSnapshot> remoteMetricsSnapshots(final int originCode);
+	List<MetricsSnapshot> remoteMetricsSnapshots(final int originIndex);
 }

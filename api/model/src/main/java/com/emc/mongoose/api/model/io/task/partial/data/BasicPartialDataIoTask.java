@@ -25,11 +25,11 @@ implements PartialDataIoTask<I> {
 	}
 
 	public BasicPartialDataIoTask(
-		final int originCode, final IoType ioType, final I part, final String srcPath,
+		final int originIndex, final IoType ioType, final I part, final String srcPath,
 		final String dstPath, final Credential credential, final int partNumber,
 		final CompositeDataIoTask<I> parent
 	) {
-		super(originCode, ioType, part, srcPath, dstPath, credential, null, 0);
+		super(originIndex, ioType, part, srcPath, dstPath, credential, null, 0);
 		this.partNumber = partNumber;
 		this.parent = parent;
 	}

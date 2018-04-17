@@ -15,7 +15,7 @@ import java.util.Map;
 public interface IoTaskBuilder<I extends Item, O extends IoTask<I>>
 extends Closeable {
 	
-	int getOriginCode();
+	int getOriginIndex();
 	
 	IoType getIoType();
 

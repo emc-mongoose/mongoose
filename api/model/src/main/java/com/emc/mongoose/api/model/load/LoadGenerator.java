@@ -34,13 +34,7 @@ extends AsyncRunnable {
 	long getTransferSizeEstimate();
 
 	IoType getIoType();
-
-	/**
-	 @return the origin code shared by the generated tasks
-	 */
-	@Override
-	int hashCode();
-
+	
 	/**
 	 @return true if the load generator is configured to recycle the tasks, false otherwise
 	 */

@@ -63,7 +63,6 @@ implements LoadGenerator<I, O> {
 	private final boolean shuffleFlag;
 	private final Random rnd;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
-	private final int originCode;
 
 	private final LongAdder builtTasksCounter = new LongAdder();
 	private final LongAdder recycledTasksCounter = new LongAdder();
@@ -81,7 +80,6 @@ implements LoadGenerator<I, O> {
 		this.itemInput = itemInput;
 		this.transferSizeEstimate = transferSizeEstimate;
 		this.ioTaskBuilder = ioTaskBuilder;
-		this.originCode = ioTaskBuilder.getOriginCode();
 		this.recycleQueue = recycleQueueSize > 0 ?
 			new ArrayBlockingQueue<>(recycleQueueSize) : null;
 		this.shuffleFlag = shuffleFlag;
@@ -106,6 +104,7 @@ implements LoadGenerator<I, O> {
 					this._countLimit = Long.MAX_VALUE;
 				}
 			}
+			private final int originIndex = ioTaskBuilder.getOriginIndex();
 
 			@Override
 			protected final void invokeTimed(final long startTimeNanos) {
@@ -161,10 +160,10 @@ implements LoadGenerator<I, O> {
 						// acquire the throttles permit
 						n = pendingTasksCount;
 						if(weightThrottle != null) {
-							n = weightThrottle.tryAcquire(originCode, n);
+							n = weightThrottle.tryAcquire(originIndex, n);
 						}
 						if(rateThrottle != null) {
-							n = rateThrottle.tryAcquire(originCode, n);
+							n = rateThrottle.tryAcquire(originIndex, n);
 						}
 						// try to output
 						if(n > 0) {
@@ -379,10 +378,5 @@ implements LoadGenerator<I, O> {
 	@Override
 	public final String toString() {
 		return name;
-	}
-	
-	@Override
-	public final int hashCode() {
-		return originCode;
 	}
 }

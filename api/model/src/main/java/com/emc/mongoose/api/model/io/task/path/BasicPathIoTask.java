@@ -25,9 +25,9 @@ implements PathIoTask<I> {
 	}
 	
 	public BasicPathIoTask(
-		final int originCode, final IoType ioType, final I item, final Credential credential
+		final int originIndex, final IoType ioType, final I item, final Credential credential
 	) {
-		super(originCode, ioType, item, null, null, credential);
+		super(originIndex, ioType, item, null, null, credential);
 		item.reset();
 	}
 	

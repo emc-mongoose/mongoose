@@ -16,7 +16,7 @@ import java.util.Map;
 public class BasicIoTaskBuilder<I extends Item, O extends IoTask<I>>
 implements IoTaskBuilder<I, O> {
 	
-	protected final int originCode = hashCode();
+	protected final int originIndex;
 	
 	protected IoType ioType = IoType.CREATE; // by default
 	protected String inputPath = null;
@@ -34,10 +34,14 @@ implements IoTaskBuilder<I, O> {
 	protected String constantSecret;
 	
 	protected Map<String, String> credentialsMap = null;
+
+	public BasicIoTaskBuilder(final int originIndex) {
+		this.originIndex = originIndex;
+	}
 	
 	@Override
-	public final int getOriginCode() {
-		return originCode;
+	public final int getOriginIndex() {
+		return originIndex;
 	}
 	
 	@Override
@@ -122,7 +126,7 @@ implements IoTaskBuilder<I, O> {
 	throws IOException {
 		final String uid;
 		return (O) new BasicIoTask<>(
-			originCode, ioType, item, inputPath, getNextOutputPath(),
+			originIndex, ioType, item, inputPath, getNextOutputPath(),
 			Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 		);
 	}
@@ -134,7 +138,7 @@ implements IoTaskBuilder<I, O> {
 		for(final I item : items) {
 			buff.add(
 				(O) new BasicIoTask<>(
-					originCode, ioType, item, inputPath, getNextOutputPath(),
+					originIndex, ioType, item, inputPath, getNextOutputPath(),
 					Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 				)
 			);

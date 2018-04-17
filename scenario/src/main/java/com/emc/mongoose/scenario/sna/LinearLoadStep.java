@@ -2,7 +2,6 @@ package com.emc.mongoose.scenario.sna;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.metrics.BasicMetricsContext;
-import com.emc.mongoose.api.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
@@ -23,7 +22,6 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
 import com.github.akurilov.commons.io.Output;
-import com.github.akurilov.commons.system.SizeInBytes;
 
 import org.apache.logging.log4j.Level;
 
@@ -31,7 +29,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -41,6 +39,7 @@ public class LinearLoadStep
 extends LoadStepBase {
 
 	public static final String TYPE = "Load";
+	private static final int ORIGIN_INDEX = 0;
 
 	private volatile LoadGenerator<? extends Item, ? extends IoTask> generator = null;
 	private volatile StorageDriver<? extends Item, ? extends IoTask> driver = null;
@@ -103,11 +102,11 @@ extends LoadStepBase {
 
 		try {
 			driver = new BasicStorageDriverBuilder<>()
-				.setTestStepName(testStepId)
-				.setItemConfig(itemConfig)
-				.setContentSource(dataInput)
-				.setLoadConfig(loadConfig)
-				.setStorageConfig(storageConfig)
+				.testStepId(testStepId)
+				.itemConfig(itemConfig)
+				.dataInput(dataInput)
+				.loadConfig(loadConfig)
+				.storageConfig(storageConfig)
 				.build();
 		} catch(final OmgShootMyFootException e) {
 			LogUtil.exception(Level.FATAL, e, "Failed to initialize the storage driver");
@@ -118,13 +117,14 @@ extends LoadStepBase {
 
 		try {
 			generator = new BasicLoadGeneratorBuilder<>()
-				.setItemConfig(itemConfig)
-				.setLoadConfig(loadConfig)
-				.setLimitConfig(limitConfig)
-				.setItemType(itemType)
-				.setItemFactory((ItemFactory) itemFactory)
-				.setStorageDriver(driver)
-				.setAuthConfig(storageConfig.getAuthConfig())
+				.itemConfig(itemConfig)
+				.loadConfig(loadConfig)
+				.limitConfig(limitConfig)
+				.itemType(itemType)
+				.itemFactory((ItemFactory) itemFactory)
+				.storageDriver(driver)
+				.authConfig(storageConfig.getAuthConfig())
+				.originIndex(ORIGIN_INDEX)
 				.build();
 		} catch(final OmgShootMyFootException e) {
 			LogUtil.exception(Level.FATAL, e, "Failed to initialize the load generator");
@@ -134,12 +134,11 @@ extends LoadStepBase {
 		final var outputConfig = actualConfig.getOutputConfig();
 		final var metricsConfig = outputConfig.getMetricsConfig();
 		final var ioType = IoType.valueOf(actualConfig.getLoadConfig().getType().toUpperCase());
-		final var originCode = generator.hashCode();
 		final var itemDataSize = actualConfig.getItemConfig().getDataConfig().getSize();
 		final var concurrency = actualConfig.getLoadConfig().getLimitConfig().getConcurrency();
 		final var id = stepConfig.getId();
-		metricsByOrigin.put(
-			originCode,
+		metricsContexts.set(
+			ORIGIN_INDEX,
 			new BasicMetricsContext(
 				id,
 				ioType,
@@ -155,18 +154,18 @@ extends LoadStepBase {
 			)
 		);
 
-		final var driverByGenerator = new HashMap<LoadGenerator, StorageDriver>();
-		driverByGenerator.put(generator, driver);
-		final var itemDataSizes = new HashMap<LoadGenerator, SizeInBytes>();
-		itemDataSizes.put(generator, dataConfig.getSize());
-		final var loadConfigMap = new HashMap<LoadGenerator, LoadConfig>();
-		loadConfigMap.put(generator, loadConfig);
-		final var outputConfigMap = new HashMap<LoadGenerator, OutputConfig>();
-		outputConfigMap.put(generator, outputConfig);
+		final var generators = new ArrayList<LoadGenerator>();
+		generators.set(ORIGIN_INDEX, generator);
+		final var drivers = new ArrayList<StorageDriver>();
+		drivers.set(ORIGIN_INDEX, driver);
+		final var loadConfigs = new ArrayList<LoadConfig>();
+		loadConfigs.set(ORIGIN_INDEX, loadConfig);
+		final var outputConfigs = new ArrayList<OutputConfig>();
+		outputConfigs.set(ORIGIN_INDEX, outputConfig);
 
 		controller = new BasicLoadController(
-			testStepId, driverByGenerator, null, metricsByOrigin, loadConfigMap, stepConfig,
-			outputConfigMap
+			testStepId, generators, drivers, null, metricsContexts, loadConfigs, stepConfig,
+			outputConfigs
 		);
 
 		final var itemOutputFile = itemConfig.getOutputConfig().getFile();

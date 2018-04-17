@@ -14,12 +14,16 @@ public class BasicTokenIoTaskBuilder<I extends TokenItem, O extends TokenIoTask<
 extends BasicIoTaskBuilder<I, O>
 implements TokenIoTaskBuilder<I, O> {
 
+	public BasicTokenIoTaskBuilder(final int originIndex) {
+		super(originIndex);
+	}
+
 	@Override @SuppressWarnings("unchecked")
 	public O getInstance(final I item)
 	throws IOException {
 		final String uid;
 		return (O) new BasicTokenIoTask<>(
-			originCode, ioType, item, Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
+			originIndex, ioType, item, Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 		);
 	}
 
@@ -30,7 +34,7 @@ implements TokenIoTaskBuilder<I, O> {
 		for(final I item : items) {
 			buff.add(
 				(O) new BasicTokenIoTask<>(
-					originCode, ioType, item,
+					originIndex, ioType, item,
 					Credential.getInstance(uid = getNextUid(), getNextSecret(uid))
 				)
 			);

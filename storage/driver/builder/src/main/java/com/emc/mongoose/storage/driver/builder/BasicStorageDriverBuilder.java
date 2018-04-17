@@ -52,31 +52,31 @@ public class BasicStorageDriverBuilder<
 	}
 
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setTestStepName(final String jobName) {
+	public BasicStorageDriverBuilder<I, O, T> testStepId(final String jobName) {
 		this.stepName = jobName;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setContentSource(final DataInput contentSrc) {
+	public BasicStorageDriverBuilder<I, O, T> dataInput(final DataInput contentSrc) {
 		this.contentSrc = contentSrc;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig) {
+	public BasicStorageDriverBuilder<I, O, T> itemConfig(final ItemConfig itemConfig) {
 		this.itemConfig = itemConfig;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig) {
+	public BasicStorageDriverBuilder<I, O, T> loadConfig(final LoadConfig loadConfig) {
 		this.loadConfig = loadConfig;
 		return this;
 	}
 
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setStorageConfig(final StorageConfig storageConfig) {
+	public BasicStorageDriverBuilder<I, O, T> storageConfig(final StorageConfig storageConfig) {
 		this.storageConfig = storageConfig;
 		return this;
 	}

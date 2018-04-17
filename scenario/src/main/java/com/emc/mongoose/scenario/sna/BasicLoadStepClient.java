@@ -24,8 +24,6 @@ import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.net.NetUtil;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-
 import org.apache.logging.log4j.Level;
 
 import java.io.ByteArrayOutputStream;
@@ -313,11 +311,11 @@ implements LoadStepClient {
 						dataLayerConfig.getSize(), dataLayerConfig.getCache()
 					);
 					final var storageDriver = new BasicStorageDriverBuilder<>()
-						.setTestStepName(config.getTestConfig().getStepConfig().getId())
-						.setItemConfig(itemConfig)
-						.setContentSource(dataInput)
-						.setLoadConfig(config.getLoadConfig())
-						.setStorageConfig(config.getStorageConfig())
+						.testStepId(config.getTestConfig().getStepConfig().getId())
+						.itemConfig(itemConfig)
+						.dataInput(dataInput)
+						.loadConfig(config.getLoadConfig())
+						.storageConfig(config.getStorageConfig())
 						.build();
 					final var namingConfig = itemConfig.getNamingConfig();
 					final var namingPrefix = namingConfig.getPrefix();
@@ -925,18 +923,18 @@ implements LoadStepClient {
 	}
 
 	@Override
-	public final Int2ObjectMap<MetricsSnapshot> metricsSnapshots() {
+	public final List<MetricsSnapshot> metricsSnapshots() {
 		throw new IllegalStateException();
 	}
 
 	@Override
-	public final List<MetricsSnapshot> remoteMetricsSnapshots(final int originCode) {
+	public final List<MetricsSnapshot> remoteMetricsSnapshots(final int originIndex) {
 		return metricsSnapshotsSuppliers
 			.values()
 			.stream()
 			.map(Supplier::get)
 			.filter(Objects::nonNull)
-			.map(metricsSnapshots -> metricsSnapshots.get(originCode))
+			.map(metricsSnapshots -> metricsSnapshots.get(originIndex))
 			.filter(Objects::nonNull)
 			.collect(Collectors.toList());
 	}

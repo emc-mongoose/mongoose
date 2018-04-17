@@ -15,7 +15,7 @@ import static java.lang.System.nanoTime;
 public class BasicIoTask<I extends Item>
 implements IoTask<I> {
 	
-	protected int originCode;
+	protected int originIndex;
 	protected IoType ioType;
 	protected I item;
 	protected String srcPath;
@@ -33,10 +33,10 @@ implements IoTask<I> {
 	}
 	
 	public BasicIoTask(
-		final int originCode, final IoType ioType, final I item, final String srcPath,
+		final int originIndex, final IoType ioType, final I item, final String srcPath,
 		final String dstPath, final Credential credential
 	) {
-		this.originCode = originCode;
+		this.originIndex = originIndex;
 		this.ioType = ioType;
 		this.item = item;
 
@@ -64,7 +64,7 @@ implements IoTask<I> {
 	}
 
 	protected BasicIoTask(final BasicIoTask<I> other) {
-		this.originCode = other.originCode;
+		this.originIndex = other.originIndex;
 		this.ioType = other.ioType;
 		this.item = other.item;
 		this.srcPath = other.srcPath;
@@ -93,8 +93,8 @@ implements IoTask<I> {
 	}
 	
 	@Override
-	public final int originCode() {
-		return originCode;
+	public final int originIndex() {
+		return originIndex;
 	}
 	
 	@Override
@@ -244,7 +244,7 @@ implements IoTask<I> {
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
-		out.writeInt(originCode);
+		out.writeInt(originIndex);
 		out.writeInt(ioType.ordinal());
 		out.writeObject(item);
 		out.writeUTF(srcPath == null ? "" : srcPath);
@@ -261,7 +261,7 @@ implements IoTask<I> {
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		originCode = in.readInt();
+		originIndex = in.readInt();
 		ioType = IoType.values()[in.readInt()];
 		item = (I) in.readObject();
 		srcPath = in.readUTF();
@@ -277,6 +277,6 @@ implements IoTask<I> {
 
 	@Override
 	public final int hashCode() {
-		return originCode ^ ioType.ordinal() ^ item.hashCode();
+		return originIndex ^ ioType.ordinal() ^ item.hashCode();
 	}
 }

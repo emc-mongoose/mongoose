@@ -22,21 +22,23 @@ public interface LoadGeneratorBuilder<
 	I extends Item, O extends IoTask<I>, T extends LoadGenerator<I, O>
 > {
 
-	LoadGeneratorBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig);
+	LoadGeneratorBuilder<I, O, T> itemConfig(final ItemConfig itemConfig);
 
-	LoadGeneratorBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig);
+	LoadGeneratorBuilder<I, O, T> loadConfig(final LoadConfig loadConfig);
 
-	LoadGeneratorBuilder<I, O, T> setLimitConfig(final LimitConfig limitConfig);
+	LoadGeneratorBuilder<I, O, T> limitConfig(final LimitConfig limitConfig);
 
-	LoadGeneratorBuilder<I, O, T> setItemType(final ItemType itemType);
+	LoadGeneratorBuilder<I, O, T> itemType(final ItemType itemType);
 
-	LoadGeneratorBuilder<I, O, T> setItemFactory(final ItemFactory<I> itemFactory);
+	LoadGeneratorBuilder<I, O, T> itemFactory(final ItemFactory<I> itemFactory);
 	
-	LoadGeneratorBuilder<I, O, T> setAuthConfig(final AuthConfig authConfig);
+	LoadGeneratorBuilder<I, O, T> authConfig(final AuthConfig authConfig);
 	
-	LoadGeneratorBuilder<I, O, T> setStorageDriver(StorageDriver<I, O> storageDriver);
+	LoadGeneratorBuilder<I, O, T> storageDriver(StorageDriver<I, O> storageDriver);
 	
-	LoadGeneratorBuilder<I, O, T> setItemInput(final Input<I> itemInput);
+	LoadGeneratorBuilder<I, O, T> itemInput(final Input<I> itemInput);
+
+	LoadGeneratorBuilder<I, O, T> originIndex(final int originIndex);
 
 	T build()
 	throws OmgShootMyFootException, IOException;

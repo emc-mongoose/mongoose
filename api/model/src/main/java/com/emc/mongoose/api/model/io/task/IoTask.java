@@ -18,7 +18,7 @@ extends Externalizable {
 
 	String SLASH = "/";
 	
-	int originCode();
+	int originIndex();
 
 	enum Status {
 		PENDING, // 0

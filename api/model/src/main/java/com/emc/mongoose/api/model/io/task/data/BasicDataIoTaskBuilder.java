@@ -30,7 +30,11 @@ implements DataIoTaskBuilder<I, O> {
 	protected volatile List<Range> fixedRanges = null;
 	protected volatile int randomRangesCount = 0;
 	protected volatile long sizeThreshold = 0;
-	
+
+	public BasicDataIoTaskBuilder(final int originIndex) {
+		super(originIndex);
+	}
+
 	@Override
 	public BasicDataIoTaskBuilder<I, O> setFixedRanges(final List<Range> fixedRanges) {
 		this.fixedRanges = fixedRanges;
@@ -91,13 +95,13 @@ implements DataIoTaskBuilder<I, O> {
 				);
 			}
 			return (O) new BasicCompositeDataIoTask<>(
-				originCode, ioType, dataItem, inputPath, getNextOutputPath(),
+				originIndex, ioType, dataItem, inputPath, getNextOutputPath(),
 				Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
 				fixedRanges, randomRangesCount, sizeThreshold
 			);
 		} else if(srcItemsCount > 0) {
 			return (O) new BasicDataIoTask<>(
-				originCode, ioType, dataItem, inputPath, getNextOutputPath(),
+				originIndex, ioType, dataItem, inputPath, getNextOutputPath(),
 				Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
 				fixedRanges, randomRangesCount, getNextSrcItemsForConcat()
 			);
@@ -109,7 +113,7 @@ implements DataIoTaskBuilder<I, O> {
 				);
 			}
 			return (O) new BasicDataIoTask<>(
-				originCode, ioType, dataItem, inputPath, getNextOutputPath(),
+				originIndex, ioType, dataItem, inputPath, getNextOutputPath(),
 				Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
 				fixedRanges, randomRangesCount
 			);
@@ -129,7 +133,7 @@ implements DataIoTaskBuilder<I, O> {
 				}
 				buff.add(
 					(O) new BasicCompositeDataIoTask<>(
-						originCode, ioType, nextItem, inputPath, getNextOutputPath(),
+						originIndex, ioType, nextItem, inputPath, getNextOutputPath(),
 						Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
 						fixedRanges, randomRangesCount, sizeThreshold
 					)
@@ -137,7 +141,7 @@ implements DataIoTaskBuilder<I, O> {
 			} else if(srcItemsCount > 0) {
 				buff.add(
 					(O) new BasicDataIoTask<>(
-						originCode, ioType, nextItem, inputPath, getNextOutputPath(),
+						originIndex, ioType, nextItem, inputPath, getNextOutputPath(),
 						Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
 						fixedRanges, randomRangesCount, getNextSrcItemsForConcat()
 					)
@@ -151,7 +155,7 @@ implements DataIoTaskBuilder<I, O> {
 				}
 				buff.add(
 					(O) new BasicDataIoTask<>(
-						originCode, ioType, nextItem, inputPath, getNextOutputPath(),
+						originIndex, ioType, nextItem, inputPath, getNextOutputPath(),
 						Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
 						fixedRanges, randomRangesCount
 					)

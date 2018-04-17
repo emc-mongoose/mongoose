@@ -44,11 +44,11 @@ implements DataIoTask<T> {
 	}
 	
 	public BasicDataIoTask(
-		final int originCode, final IoType ioType, final T item, final String srcPath,
+		final int originIndex, final IoType ioType, final T item, final String srcPath,
 		final String dstPath, final Credential credential, final List<Range> fixedRanges,
 		final int randomRangesCount
 	) throws IllegalArgumentException {
-		super(originCode, ioType, item, srcPath, dstPath, credential);
+		super(originIndex, ioType, item, srcPath, dstPath, credential);
 		this.fixedRanges = fixedRanges;
 		this.randomRangesCount = randomRangesCount;
 		reset();
@@ -56,12 +56,12 @@ implements DataIoTask<T> {
 	}
 
 	public BasicDataIoTask(
-		final int originCode, final IoType ioType, final T item, final String srcPath,
+		final int originIndex, final IoType ioType, final T item, final String srcPath,
 		final String dstPath, final Credential credential, final List<Range> fixedRanges,
 		final int randomRangesCount, final List<T> srcItemsToConcat
 	) throws IllegalArgumentException {
 		this(
-			originCode, ioType, item, srcPath, dstPath, credential, fixedRanges, randomRangesCount
+			originIndex, ioType, item, srcPath, dstPath, credential, fixedRanges, randomRangesCount
 		);
 		this.srcItemsToConcat = srcItemsToConcat;
 	}

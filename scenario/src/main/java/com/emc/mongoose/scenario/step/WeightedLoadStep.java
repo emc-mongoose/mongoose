@@ -2,12 +2,9 @@ package com.emc.mongoose.scenario.step;
 
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.item.ItemFactory;
-import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.api.model.item.ItemType;
-import com.emc.mongoose.api.model.load.LoadController;
 import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.model.storage.StorageDriver;
-import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.storage.driver.builder.StorageDriverUtil;
 import com.emc.mongoose.ui.config.Config;
@@ -25,7 +22,6 @@ import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
-import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -34,15 +30,10 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  Created by andrey on 08.11.16.
@@ -129,13 +120,13 @@ extends ConfigurableStepBase {
 				);
 
 				final LoadGenerator loadGenerator = new BasicLoadGeneratorBuilder<>()
-					.setItemConfig(itemConfig)
-					.setItemFactory(itemFactory)
-					.setItemType(itemType)
-					.setLoadConfig(loadConfig)
-					.setLimitConfig(limitConfig)
-					//.setStorageDriver(drivers)
-					.setAuthConfig(storageConfig.getAuthConfig())
+					.itemConfig(itemConfig)
+					.itemFactory(itemFactory)
+					.itemType(itemType)
+					.loadConfig(loadConfig)
+					.limitConfig(limitConfig)
+					//.storageDriver(drivers)
+					.authConfig(storageConfig.getAuthConfig())
 					.build();
 				
 				driverMap.put(loadGenerator, drivers);

@@ -13,9 +13,6 @@ import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.ui.log.Loggers;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 
@@ -26,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public abstract class LoadStepBase
 extends DaemonBase
@@ -33,7 +31,7 @@ implements LoadStep, Runnable {
 
 	protected final Config baseConfig;
 	protected final List<Map<String, Object>> stepConfigs;
-	protected final Int2ObjectMap<MetricsContext> metricsByOrigin = new Int2ObjectOpenHashMap<>();
+	protected final List<MetricsContext> metricsContexts = new ArrayList<>();
 
 	private volatile LoadStepClient stepClient = null;
 	private volatile Config actualConfig = null;
@@ -108,8 +106,8 @@ implements LoadStep, Runnable {
 			LogUtil.exception(Level.WARN, cause, "{} step failed to start", id);
 		}
 
-		metricsByOrigin.forEach(
-			(ioTypeCode, metricsCtx) -> {
+		metricsContexts.forEach(
+			metricsCtx -> {
 				metricsCtx.start();
 				try {
 					MetricsManager.register(id, metricsCtx);
@@ -136,8 +134,8 @@ implements LoadStep, Runnable {
 		final var metricsConfig = outputConfig.getMetricsConfig();
 		final var itemDataSize = actualConfig.getItemConfig().getDataConfig().getSize();
 
-		metricsByOrigin.put(
-			0,
+		metricsContexts.set(
+			ORIG,
 			new AggregatingMetricsContext(
 				id,
 				ioType,
@@ -189,8 +187,7 @@ implements LoadStep, Runnable {
 			}
 		}
 
-		metricsByOrigin
-			.values()
+		metricsContexts
 			.forEach(
 				metricsCtx -> {
 					try {
@@ -227,8 +224,7 @@ implements LoadStep, Runnable {
 	protected void doClose()
 	throws IOException {
 
-		metricsByOrigin
-			.values()
+		metricsContexts
 			.forEach(
 				metricsCtx -> {
 					try {
@@ -266,16 +262,15 @@ implements LoadStep, Runnable {
 	}
 
 	@Override @SuppressWarnings("deprecation")
-	public final Int2ObjectMap<MetricsSnapshot> metricsSnapshots() {
-		final var metricsSnapshots = new Int2ObjectOpenHashMap<MetricsSnapshot>(
-			metricsByOrigin.size()
-		);
-		metricsByOrigin.forEach((key, value) -> metricsSnapshots.put(key, value.lastSnapshot()));
-		return metricsSnapshots;
+	public final List<MetricsSnapshot> metricsSnapshots() {
+		return metricsContexts
+			.stream()
+			.map(MetricsContext::lastSnapshot)
+			.collect(Collectors.toList());
 	}
 
-	protected final List<MetricsSnapshot> remoteMetricsSnapshots(final int originCode) {
-		return stepClient.remoteMetricsSnapshots(originCode);
+	protected final List<MetricsSnapshot> remoteMetricsSnapshots(final int originIndex) {
+		return stepClient.remoteMetricsSnapshots(originIndex);
 	}
 
 	protected abstract int actualConcurrencyLocal();

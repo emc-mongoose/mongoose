@@ -27,19 +27,19 @@ public interface StorageDriverBuilder<
 	StorageConfig getStorageConfig()
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setTestStepName(final String runId)
+	StorageDriverBuilder<I, O, T> testStepId(final String runId)
 	throws RemoteException;
 	
-	StorageDriverBuilder<I, O, T> setContentSource(final DataInput contentSrc)
+	StorageDriverBuilder<I, O, T> dataInput(final DataInput contentSrc)
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig)
+	StorageDriverBuilder<I, O, T> itemConfig(final ItemConfig itemConfig)
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig)
+	StorageDriverBuilder<I, O, T> loadConfig(final LoadConfig loadConfig)
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setStorageConfig(final StorageConfig storageConfig)
+	StorageDriverBuilder<I, O, T> storageConfig(final StorageConfig storageConfig)
 	throws RemoteException;
 
 	T build()

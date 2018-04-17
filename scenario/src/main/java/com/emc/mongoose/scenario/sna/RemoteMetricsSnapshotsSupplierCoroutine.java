@@ -6,18 +6,17 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
 import com.github.akurilov.concurrent.coroutines.ExclusiveCoroutineBase;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-
 import org.apache.logging.log4j.Level;
 
 import java.rmi.RemoteException;
+import java.util.List;
 
 public final class RemoteMetricsSnapshotsSupplierCoroutine
 extends ExclusiveCoroutineBase
 implements MetricsSnapshotsSupplierCoroutine {
 
 	private final LoadStepService loadStepSvc;
-	private volatile Int2ObjectMap<MetricsSnapshot> snapshotsByOrigin;
+	private volatile List<MetricsSnapshot> snapshotsByOrigin;
 
 	public RemoteMetricsSnapshotsSupplierCoroutine(
 		final CoroutinesExecutor executor, final LoadStepService loadStepSvc
@@ -38,7 +37,7 @@ implements MetricsSnapshotsSupplierCoroutine {
 	}
 
 	@Override
-	public final Int2ObjectMap<MetricsSnapshot> get() {
+	public final List<MetricsSnapshot> get() {
 		return snapshotsByOrigin;
 	}
 }

@@ -84,46 +84,47 @@ implements LoadGeneratorBuilder<I, O, T> {
 	private Input<I> itemInput = null;
 	private long sizeEstimate = 0;
 	private int batchSize;
+	private int originIndex;
 	
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig) {
+	public BasicLoadGeneratorBuilder<I, O, T> itemConfig(final ItemConfig itemConfig) {
 		this.itemConfig = itemConfig;
 		return this;
 	}
 
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig) {
+	public BasicLoadGeneratorBuilder<I, O, T> loadConfig(final LoadConfig loadConfig) {
 		this.loadConfig = loadConfig;
 		this.batchSize = loadConfig.getBatchConfig().getSize();
 		return this;
 	}
 
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> setLimitConfig(final LimitConfig limitConfig) {
+	public BasicLoadGeneratorBuilder<I, O, T> limitConfig(final LimitConfig limitConfig) {
 		this.limitConfig = limitConfig;
 		return this;
 	}
 
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> setItemType(final ItemType itemType) {
+	public BasicLoadGeneratorBuilder<I, O, T> itemType(final ItemType itemType) {
 		this.itemType = itemType;
 		return this;
 	}
 
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> setItemFactory(final ItemFactory<I> itemFactory) {
+	public BasicLoadGeneratorBuilder<I, O, T> itemFactory(final ItemFactory<I> itemFactory) {
 		this.itemFactory = itemFactory;
 		return this;
 	}
 	
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> setAuthConfig(final AuthConfig authConfig) {
+	public BasicLoadGeneratorBuilder<I, O, T> authConfig(final AuthConfig authConfig) {
 		this.authConfig = authConfig;
 		return this;
 	}
 	
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> setStorageDriver(
+	public BasicLoadGeneratorBuilder<I, O, T> storageDriver(
 		final StorageDriver<I, O> storageDriver
 	) {
 		this.storageDriver = storageDriver;
@@ -131,7 +132,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	}
 	
 	@Override @SuppressWarnings("unchecked")
-	public BasicLoadGeneratorBuilder<I, O, T> setItemInput(final Input<I> itemInput) {
+	public BasicLoadGeneratorBuilder<I, O, T> itemInput(final Input<I> itemInput) {
 		/*if(this.itemInput != null) {
 			try {
 				this.itemInput.close();
@@ -147,7 +148,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 		return this;
 	}
-	
+
+	@Override
+	public BasicLoadGeneratorBuilder<I, O, T> originIndex(final int originIndex) {
+		this.originIndex = originIndex;
+		return this;
+	}
+
 	@SuppressWarnings("unchecked")
 	public T build()
 	throws OmgShootMyFootException {
@@ -173,14 +180,14 @@ implements LoadGeneratorBuilder<I, O, T> {
 			} else {
 				fixedRanges = Collections.EMPTY_LIST;
 			}
-			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicDataIoTaskBuilder()
+			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicDataIoTaskBuilder(originIndex)
 				.setFixedRanges(fixedRanges)
 				.setRandomRangesCount(rangesConfig.getRandom())
 				.setSizeThreshold(rangesConfig.getThreshold().get());
 		} else if(ItemType.PATH.equals(itemType)){
-			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicPathIoTaskBuilder();
+			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicPathIoTaskBuilder(originIndex);
 		} else {
-			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicTokenIoTaskBuilder();
+			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicTokenIoTaskBuilder(originIndex);
 		}
 
 		// determine the operations type

@@ -27,11 +27,11 @@ public interface StorageDriverUtil {
 		try {
 			drivers.add(
 				new BasicStorageDriverBuilder<>()
-					.setTestStepName(testStepName)
-					.setItemConfig(itemConfig)
-					.setContentSource(contentSrc)
-					.setLoadConfig(loadConfig)
-					.setStorageConfig(storageConfig)
+					.testStepId(testStepName)
+					.itemConfig(itemConfig)
+					.dataInput(contentSrc)
+					.loadConfig(loadConfig)
+					.storageConfig(storageConfig)
 					.build()
 			);
 		} catch(final OmgShootMyFootException e) {
