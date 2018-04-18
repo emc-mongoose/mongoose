@@ -7,7 +7,7 @@ import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
 import com.github.akurilov.concurrent.coroutines.Coroutine;
 import com.github.akurilov.concurrent.coroutines.ExclusiveCoroutineBase;
 
-import com.emc.mongoose.storage.driver.cooperative.CooperativeStorageDriverBase;
+import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.ACTIVE;
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
  Note that this kind of storage driver uses the service coroutines facility to execute the I/O
  */
 public abstract class NioStorageDriverBase<I extends Item, O extends IoTask<I>>
-extends CooperativeStorageDriverBase<I, O>
+extends CoopStorageDriverBase<I, O>
 implements NioStorageDriver<I, O> {
 
 	private final static String CLS_NAME = NioStorageDriverBase.class.getSimpleName();

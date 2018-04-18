@@ -11,7 +11,7 @@ import com.github.akurilov.netty.connection.pool.BasicMultiNodeConnPool;
 import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;
 import static com.github.akurilov.netty.connection.pool.NonBlockingConnPool.ATTR_KEY_NODE;
 
-import com.emc.mongoose.storage.driver.cooperative.CooperativeStorageDriverBase;
+import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.data.DataItemFileRegion;
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.concurrent.ThreadDump;
@@ -64,7 +64,7 @@ import java.util.concurrent.locks.ReentrantLock;
  Created by kurila on 30.09.16.
  */
 public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
-extends CooperativeStorageDriverBase<I, O>
+extends CoopStorageDriverBase<I, O>
 implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	private static final String CLS_NAME = NetStorageDriverBase.class.getSimpleName();

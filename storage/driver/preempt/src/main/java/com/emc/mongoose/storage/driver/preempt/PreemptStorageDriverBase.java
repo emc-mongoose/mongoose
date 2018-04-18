@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.preemptive;
+package com.emc.mongoose.storage.driver.preempt;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
@@ -19,13 +19,13 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public abstract class PreemptiveStorageDriverBase<I extends Item, O extends IoTask<I>>
+public abstract class PreemptStorageDriverBase<I extends Item, O extends IoTask<I>>
 extends StorageDriverBase<I, O>
 implements StorageDriver<I,O> {
 
 	private final ThreadPoolExecutor ioExecutor;
 
-	protected PreemptiveStorageDriverBase(
+	protected PreemptStorageDriverBase(
 		final String stepId, final DataInput itemDataInput, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
