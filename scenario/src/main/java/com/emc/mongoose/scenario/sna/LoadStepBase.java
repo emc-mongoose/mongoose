@@ -1,11 +1,14 @@
 package com.emc.mongoose.scenario.sna;
 
-import com.emc.mongoose.api.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.api.metrics.MetricsManager;
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
-import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
+import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.load.LoadController;
+import com.emc.mongoose.api.model.load.LoadGenerator;
+import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.log.LogUtil;
@@ -22,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -32,18 +37,48 @@ implements LoadStep, Runnable {
 	protected final Config baseConfig;
 	protected final List<Map<String, Object>> stepConfigs;
 	protected final List<MetricsContext> metricsContexts = new ArrayList<>();
+	protected final List<LoadGenerator> generators = new ArrayList<>();
+	protected final List<StorageDriver> drivers = new ArrayList<>();
+	protected final List<LoadController> controllers = new ArrayList<>();
+	protected final List<DataInput> dataInputs = new ArrayList<>();
 
-	private volatile LoadStepClient stepClient = null;
+	protected boolean distributedFlag = false;
+	protected volatile LoadStepClient stepClient = null;
+
 	private volatile Config actualConfig = null;
 	private volatile long timeLimitSec = Long.MAX_VALUE;
 	private volatile long startTimeSec = -1;
 	private String id = null;
-	private boolean distributedFlag = false;
 
 	protected LoadStepBase(final Config baseConfig, final List<Map<String, Object>> stepConfigs) {
 		this.baseConfig = baseConfig;
 		this.stepConfigs = stepConfigs;
 	}
+
+	@Override
+	public LoadStepBase config(final Map<String, Object> config) {
+		final var stepConfigsCopy = new ArrayList<Map<String, Object>>();
+		if(stepConfigs != null) {
+			stepConfigsCopy.addAll(stepConfigs);
+		}
+		stepConfigsCopy.add(config);
+		return copyInstance(stepConfigsCopy);
+	}
+
+	@Override
+	public final String id() {
+		return id;
+	}
+
+	@Override @SuppressWarnings("deprecation")
+	public final List<MetricsSnapshot> metricsSnapshots() {
+		return metricsContexts
+			.stream()
+			.map(MetricsContext::lastSnapshot)
+			.collect(Collectors.toList());
+	}
+
+	protected abstract LoadStepBase copyInstance(final List<Map<String, Object>> stepConfigs);
 
 	protected final void actualConfig(final Config actualConfig) {
 		this.actualConfig = actualConfig;
@@ -118,45 +153,21 @@ implements LoadStep, Runnable {
 		);
 	}
 
+	/**
+	 * Initializes the actual configuration and metrics contexts
+	 */
 	protected abstract void init();
 
 	private void doStartRemote(final Config actualConfig)
 	throws RemoteException {
-
-		final var stepConfig = actualConfig.getTestConfig().getStepConfig();
-		final var nodeCount = stepConfig.getNodeConfig().getAddrs().size();
-		final var ioType = IoType.valueOf(
-			actualConfig.getLoadConfig().getType().toUpperCase()
-		);
-		final var concurrency = actualConfig
-			.getLoadConfig().getLimitConfig().getConcurrency();
-		final var outputConfig = actualConfig.getOutputConfig();
-		final var metricsConfig = outputConfig.getMetricsConfig();
-		final var itemDataSize = actualConfig.getItemConfig().getDataConfig().getSize();
-
-		metricsContexts.set(
-			ORIG,
-			new AggregatingMetricsContext(
-				id,
-				ioType,
-				nodeCount,
-				concurrency * nodeCount,
-				(int) (concurrency * nodeCount * metricsConfig.getThreshold()),
-				itemDataSize,
-				(int) metricsConfig.getAverageConfig().getPeriod(),
-				outputConfig.getColor(),
-				metricsConfig.getAverageConfig().getPersist(),
-				metricsConfig.getSummaryConfig().getPersist(),
-				metricsConfig.getSummaryConfig().getPerfDbResultsFile(),
-				() -> remoteMetricsSnapshots(0)
-			)
-		);
-
 		stepClient = new BasicLoadStepClient(this, actualConfig);
 		stepClient.start();
 	}
 
 	protected abstract void doStartLocal(final Config actualConfig);
+
+	protected void doShutdown() {
+	}
 
 	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
@@ -173,8 +184,37 @@ implements LoadStep, Runnable {
 		}
 	}
 
-	protected abstract boolean awaitLocal(final long timeout, final TimeUnit timeUnit)
-	throws IllegalStateException, InterruptedException;
+	protected boolean awaitLocal(final long timeout, final TimeUnit timeUnit)
+	throws IllegalStateException, InterruptedException {
+		final var awaitExecutor = Executors.newFixedThreadPool(
+			controllers.size(), new LogContextThreadFactory(id)
+		);
+		final var latch = new CountDownLatch(controllers.size());
+		controllers
+			.forEach(
+				controller -> {
+					awaitExecutor.submit(
+						() -> {
+							try {
+								if(controller.await(timeout, timeUnit)) {
+									latch.countDown();
+								}
+							} catch(final InterruptedException e) {
+								throw new CancellationException();
+							} catch(final RemoteException ignored) {
+							}
+						}
+					);
+				}
+			);
+		awaitExecutor.shutdown();
+		try {
+			awaitExecutor.awaitTermination(timeout, timeUnit);
+		} finally {
+			awaitExecutor.shutdownNow();
+		}
+		return 0 == latch.getCount();
+	}
 
 	@Override
 	protected void doStop() {
@@ -191,7 +231,7 @@ implements LoadStep, Runnable {
 			.forEach(
 				metricsCtx -> {
 					try {
-						MetricsManager.unregister(id(), metricsCtx);
+						MetricsManager.unregister(id, metricsCtx);
 					} catch(final InterruptedException e) {
 						throw new CancellationException(e.getMessage());
 					}
@@ -218,7 +258,16 @@ implements LoadStep, Runnable {
 		}
 	}
 
-	protected abstract void doStopLocal();
+	protected void doStopLocal() {
+		controllers.forEach(
+			controller -> {
+				try {
+					controller.stop();
+				} catch(final RemoteException ignored) {
+				}
+			}
+		);
+	}
 
 	@Override
 	protected void doClose()
@@ -244,36 +293,62 @@ implements LoadStep, Runnable {
 		}
 	}
 
-	protected abstract void doCloseLocal();
+	protected void doCloseLocal() {
 
-	@Override
-	public LoadStepBase config(final Map<String, Object> config) {
-		final var stepConfigsCopy = new ArrayList<Map<String, Object>>();
-		if(stepConfigs != null) {
-			stepConfigsCopy.addAll(stepConfigs);
-		}
-		stepConfigsCopy.add(config);
-		return copyInstance(stepConfigsCopy);
+		drivers.forEach(
+			driver -> {
+				try {
+					driver.close();
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.ERROR, e, "Failed to close the storage driver \"{}\"",
+						driver.toString()
+					);
+				}
+			}
+		);
+		drivers.clear();
+
+		generators.forEach(
+			generator -> {
+				try {
+					generator.close();
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.ERROR, e, "Failed to close the load generator \"{}\"",
+						generator.toString()
+					);
+				}
+			}
+		);
+		generators.clear();
+
+		controllers.forEach(
+			controller -> {
+				try {
+					controller.close();
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.ERROR, e, "Failed to close the load controller \"{}\"",
+						controller.toString()
+					);
+				}
+			}
+		);
+		controllers.clear();
+
+		dataInputs.forEach(
+			dataInput -> {
+				try {
+					dataInput.close();
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.ERROR, e, "Failed to close the data input \"{}\"",
+						dataInput.toString()
+					);
+				}
+			}
+		);
+		dataInputs.clear();
 	}
-
-	@Override
-	public final String id() {
-		return id;
-	}
-
-	@Override @SuppressWarnings("deprecation")
-	public final List<MetricsSnapshot> metricsSnapshots() {
-		return metricsContexts
-			.stream()
-			.map(MetricsContext::lastSnapshot)
-			.collect(Collectors.toList());
-	}
-
-	protected final List<MetricsSnapshot> remoteMetricsSnapshots(final int originIndex) {
-		return stepClient.remoteMetricsSnapshots(originIndex);
-	}
-
-	protected abstract int actualConcurrencyLocal();
-
-	protected abstract LoadStepBase copyInstance(final List<Map<String, Object>> stepConfigs);
 }
