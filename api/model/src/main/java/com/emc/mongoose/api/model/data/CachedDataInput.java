@@ -53,18 +53,19 @@ extends DataInputBase {
 		if(layerIndex == 0) {
 			return inputBuff;
 		}
-		var layersCache = thrLocLayersCache.get();
+
+		Int2ObjectOpenHashMap<MappedByteBuffer> layersCache = thrLocLayersCache.get();
 		if(layersCache == null) {
 			layersCache = new Int2ObjectOpenHashMap<>(layersCacheCountLimit - 1);
 			thrLocLayersCache.set(layersCache);
 		}
 
 		// check if layer exists
-		var layer = layersCache.get(layerIndex - 1);
+		MappedByteBuffer layer = layersCache.get(layerIndex - 1);
 		if(layer == null) {
 			// check if it's necessary to free the space first
-			var layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
-			final var layerSize = inputBuff.capacity();
+			int layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
+			final int layerSize = inputBuff.capacity();
 			if(layersCountToFree > 0) {
 				for(final int i : layersCache.keySet()) {
 					layer = layersCache.remove(i);
@@ -80,7 +81,7 @@ extends DataInputBase {
 			}
 			// generate the layer
 			layer = (MappedByteBuffer) ByteBuffer.allocateDirect(layerSize);
-			final var layerSeed = Long.reverseBytes(
+			final long layerSeed = Long.reverseBytes(
 				(xorShift(getInitialSeed()) << layerIndex) ^ layerIndex
 			);
 			generateData(layer, layerSeed);
@@ -92,7 +93,8 @@ extends DataInputBase {
 	public void close()
 	throws IOException {
 		super.close();
-		final var layersCache = thrLocLayersCache.get();
+		final Int2ObjectOpenHashMap<MappedByteBuffer>
+			layersCache = thrLocLayersCache.get();
 		if(layersCache != null) {
 			layersCache.clear();
 			thrLocLayersCache.set(null);

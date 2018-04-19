@@ -22,7 +22,7 @@ implements PathItem {
 		if(!(o instanceof BasicPathItem)) {
 			return false;
 		}
-		final var other = (BasicPathItem) o;
+		final BasicPathItem other = (BasicPathItem) o;
 		if(name == null) {
 			return other.name == null;
 		}

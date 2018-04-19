@@ -31,13 +31,13 @@ implements BatchDoubleSupplier {
 	
 	@Override
 	public final int get(final double[] buffer, final int limit) {
-		final var _limit = Math.min(buffer.length, limit);
+		final int _limit = Math.min(buffer.length, limit);
 		if(range < 0) {
-			for(var i = 0; i < _limit; i ++) {
+			for(int i = 0; i < _limit; i ++) {
 				buffer[i] = rnd.nextDouble();
 			}
 		} else {
-			for(var i = 0; i < _limit; i ++) {
+			for(int i = 0; i < _limit; i ++) {
 				buffer[i] = min + range * rnd.nextDouble();
 			}
 		}

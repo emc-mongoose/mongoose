@@ -3,7 +3,6 @@ description = "mongoose-ui"
 ext.isExt = false
 ext.jarFileName = description
 ext.mainClass = null
-ext.moduleName = "${rootPkg}.ui"
 
 dependencies {
 

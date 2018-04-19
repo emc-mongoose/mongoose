@@ -59,7 +59,7 @@ implements NioStorageDriver<I, O> {
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
 		super(testStepId, dataInput, loadConfig, storageConfig, verifyFlag);
-		final var confWorkerCount = storageConfig.getDriverConfig().getThreads();
+		final int confWorkerCount = storageConfig.getDriverConfig().getThreads();
 		if(confWorkerCount > 0) {
 			ioWorkerCount = confWorkerCount;
 		} else if(concurrencyLevel > 0) {
@@ -70,7 +70,7 @@ implements NioStorageDriver<I, O> {
 		ioCoroutines = new ArrayList<>(ioWorkerCount);
 		ioTaskBuffs = new OptLockBuffer[ioWorkerCount];
 		ioTaskBuffCapacity = Math.max(MIN_TASK_BUFF_CAPACITY, concurrencyLevel / ioWorkerCount);
-		for(var i = 0; i < ioWorkerCount; i ++) {
+		for(int i = 0; i < ioWorkerCount; i ++) {
 			ioTaskBuffs[i] = new OptLockArrayBuffer<>(ioTaskBuffCapacity);
 			ioCoroutines.add(new NioCoroutine(IO_EXECUTOR, ioTaskBuffs[i]));
 		}
@@ -104,7 +104,7 @@ implements NioStorageDriver<I, O> {
 			ioTaskBuffSize = ioTaskBuff.size();
 			if(ioTaskBuffSize > 0) {
 				try {
-					for(var i = 0; i < ioTaskBuffSize; i ++) {
+					for(int i = 0; i < ioTaskBuffSize; i ++) {
 						ioTask = ioTaskBuff.get(i);
 						// if timeout, put the task into the temporary buffer
 						if(System.nanoTime() - startTimeNanos >= TIMEOUT_NANOS) {
@@ -144,7 +144,7 @@ implements NioStorageDriver<I, O> {
 					ioTaskBuff.clear();
 					ioTaskBuffSize = ioTaskLocalBuff.size();
 					if(ioTaskBuffSize > 0) {
-						for(var i = 0; i < ioTaskBuffSize; i ++) {
+						for(int i = 0; i < ioTaskBuffSize; i ++) {
 							ioTaskBuff.add(ioTaskLocalBuff.get(i));
 						}
 						ioTaskLocalBuff.clear();
@@ -157,7 +157,7 @@ implements NioStorageDriver<I, O> {
 		protected final void doClose() {
 			ioTaskBuffSize = ioTaskBuff.size();
 			Loggers.MSG.debug("Finish {} remaining active tasks finally", ioTaskBuffSize);
-			for(var i = 0; i < ioTaskBuffSize; i ++) {
+			for(int i = 0; i < ioTaskBuffSize; i ++) {
 				ioTask = ioTaskBuff.get(i);
 				if(ACTIVE.equals(ioTask.status())) {
 					ioTask.status(INTERRUPTED);
@@ -181,7 +181,7 @@ implements NioStorageDriver<I, O> {
 	protected final void doStart()
 	throws IllegalStateException {
 		super.doStart();
-		for(final var ioCoroutine : ioCoroutines) {
+		for(final Coroutine ioCoroutine : ioCoroutines) {
 			try {
 				ioCoroutine.start();
 			} catch(final RemoteException ignored) {
@@ -192,7 +192,7 @@ implements NioStorageDriver<I, O> {
 	@Override
 	protected final void doStop()
 	throws IllegalStateException {
-		for(final var ioCoroutine : ioCoroutines) {
+		for(final Coroutine ioCoroutine : ioCoroutines) {
 			try {
 				ioCoroutine.stop();
 			} catch(final RemoteException ignored) {
@@ -204,7 +204,7 @@ implements NioStorageDriver<I, O> {
 	protected final boolean submit(final O ioTask)
 	throws IllegalStateException {
 		OptLockBuffer<O> ioTaskBuff;
-		for(var i = 0; i < ioWorkerCount; i ++) {
+		for(int i = 0; i < ioWorkerCount; i ++) {
 			if(!isStarted()) {
 				throw new IllegalStateException();
 			}
@@ -226,9 +226,10 @@ implements NioStorageDriver<I, O> {
 	protected final int submit(final List<O> ioTasks, final int from, final int to)
 	throws IllegalStateException {
 		OptLockBuffer<O> ioTaskBuff;
-		var j = from;
-		int k, n;
-		for(var i = 0; i < ioWorkerCount; i ++) {
+		int j = from;
+		int k;
+		int n;
+		for(int i = 0; i < ioWorkerCount; i ++) {
 			if(!isStarted()) {
 				throw new IllegalStateException();
 			}
@@ -272,11 +273,11 @@ implements NioStorageDriver<I, O> {
 	protected void doClose()
 	throws IOException {
 		super.doClose();
-		for(final var ioCoroutine : ioCoroutines) {
+		for(final Coroutine ioCoroutine : ioCoroutines) {
 			ioCoroutine.close();
 		}
-		for(var i = 0; i < ioWorkerCount; i ++) {
-			try(final var logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
+		for(int i = 0; i < ioWorkerCount; i ++) {
+			try(final CloseableThreadContext.Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
 				if(ioTaskBuffs[i].tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 					ioTaskBuffs[i].clear();
 				} else if(ioTaskBuffs[i].size() > 0){

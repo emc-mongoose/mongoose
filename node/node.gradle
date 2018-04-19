@@ -3,7 +3,6 @@ description = "mongoose-node"
 ext.isExt = false
 ext.jarFileName = description
 ext.mainClass = "com.emc.mongoose.node.Main"
-ext.moduleName = "${rootPkg}.node"
 
 dependencies {
 

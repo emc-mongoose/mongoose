@@ -53,12 +53,7 @@ task printVersion {
 
 ext {
 
-	isExt = false
-	jarFileName = rootProject.name
-	javaHome = System.properties["java.home"]
-	jreOutDir = "${rootProject.buildDir}${File.separator}jre"
-	rootPkg = "com.emc.mongoose"
-	optDepsDir = "${rootProject.buildDir}${File.separator}optDeps"
+	jarFileName = null
 
 	depVersion = [
 		commonsCodec : "1.11",
@@ -78,65 +73,8 @@ ext {
 
 	leafProjects = subprojects.findAll {
 		it != project("api") && it != project("load") && it != project("storage") &&
-			it != project("storage:driver")// && it != project("tests")
+			it != project("storage:driver") && it != project("tests")
 	}
-}
-
-configurations {
-	moduleOpt
-}
-
-dependencies {
-	moduleOpt(group: "avalon-framework", name: "avalon-framework", version: "4.1.5") { transitive = false }
-	moduleOpt(group: "ch.qos.cal10n", name: "cal10n-api", version: "0.8.1") { transitive = false }
-	moduleOpt(group: "com.beust", name: "jcommander", version: "1.72") { transitive = false }
-	moduleOpt(group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-xml", version: "${depVersion.jackson}") { transitive = false }
-	moduleOpt(group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-yaml", version: "${depVersion.jackson}") { transitive = false }
-	moduleOpt(group: "com.fasterxml.jackson.module", name: "jackson-module-jaxb-annotations", version: "${depVersion.jackson}") { transitive = false }
-	moduleOpt(group: "com.github.jponge", name: "lzma-java", version: "1.3") { transitive = false }
-	moduleOpt(group: "com.github.luben", name: "zstd-jni", version: "1.3.4-2") { transitive = false }
-	moduleOpt(group: "com.google.protobuf", name: "protobuf-java", version: "3.5.1") { transitive = false }
-	moduleOpt(group: "com.google.protobuf", name: "protobuf-java", version: "3.5.1") { transitive = false }
-	moduleOpt(group: "com.google.protobuf.nano", name: "protobuf-javanano", version: "3.1.0") { transitive = false }
-	moduleOpt(group: "com.jcraft", name: "jzlib", version: "1.1.3") { transitive = false }
-	moduleOpt(group: "commons-logging", name: "commons-logging", version: "1.2") { transitive = false }
-	moduleOpt(group: "com.ning", name: "compress-lzf", version: "1.0.4") { transitive = false }
-	moduleOpt(group: "com.sun.mail", name: "javax.mail", version: "1.6.1") { transitive = false }
-	moduleOpt(group: "io.netty", name: "netty-tcnative", version: "2.0.8.Final") { transitive = false }
-	moduleOpt(group: "javax.servlet", name: "javax.servlet-api", version: "4.0.0") { transitive = false }
-	moduleOpt(group: "log4j", name: "log4j", version: "1.2.17") { transitive = false }
-	moduleOpt(group: "logkit", name: "logkit", version: "2.0") { transitive = false }
-	moduleOpt(group: "net.jpountz.lz4", name: "lz4", version: "1.3.0") { transitive = false }
-	moduleOpt(group: "org.apache.commons", name: "commons-compress", version: "1.16.1") { transitive = false }
-	moduleOpt(group: "org.apache.commons", name: "commons-csv", version: "1.5") { transitive = false }
-	moduleOpt(group: "org.apache.kafka", name: "kafka-clients", version: "1.1.0") { transitive = false }
-	moduleOpt(group: "org.bouncycastle", name: "bcpkix-jdk15on", version: "1.59") { transitive = false }
-	moduleOpt(group: "org.bouncycastle", name: "bcprov-jdk15on", version: "1.59") { transitive = false }
-	moduleOpt(group: "org.brotli", name: "dec", version: "0.1.2") { transitive = false }
-	moduleOpt(group: "org.codehaus.woodstox", name: "stax2-api", version: "4.1") { transitive = false }
-	moduleOpt(group: "org.conscrypt", name: "conscrypt-openjdk-uber", version: "1.1.0") { transitive = false }
-	moduleOpt(group: "org.eclipse.jetty.alpn", name: "alpn-api", version: "1.1.3.v20160715") { transitive = false }
-	moduleOpt(group: "org.eclipse.jetty", name: "jetty-alpn-client", version: "9.4.9.v20180320") { transitive = false }
-	moduleOpt(group: "org.eclipse.jetty", name: "jetty-alpn-server", version: "9.4.9.v20180320") { transitive = false }
-	moduleOpt(group: "org.eclipse.jetty", name: "jetty-http", version: "9.4.9.v20180320") { transitive = false }
-	moduleOpt(group: "org.eclipse.jetty", name: "jetty-io", version: "9.4.9.v20180320") { transitive = false }
-	moduleOpt(group: "org.eclipse.jetty", name: "jetty-jmx", version: "9.4.9.v20180320") { transitive = false }
-	moduleOpt(group: "org.eclipse.jetty", name: "jetty-npn-server", version: "9.3.0.M1") { transitive = false }
-	moduleOpt(group: "org.eclipse.jetty", name: "jetty-server", version: "9.4.9.v20180320") { transitive = false }
-	moduleOpt(group: "org.eclipse.jetty", name: "jetty-util", version: "9.4.9.v20180320") { transitive = false }
-	moduleOpt(group: "org.eclipse.jetty.npn", name: "npn-api", version: "8.1.2.v20120308") { transitive = false }
-	moduleOpt(group: "org.eclipse.persistence", name: "javax.persistence", version: "2.2.0") { transitive = false }
-	moduleOpt(group: "org.fusesource.jansi", name: "jansi", version: "1.17") { transitive = false }
-	moduleOpt(group: "org.jboss.marshalling", name: "jboss-marshalling", version: "2.0.5.Final") { transitive = false }
-	moduleOpt(group: "org.jboss.modules", name: "jboss-modules", version: "1.8.1.Final") { transitive = false }
-	moduleOpt(group: "org.jboss.spec.javax.jms", name: "jboss-jms-api_1.1_spec", version: "1.0.1.Final") { transitive = false }
-	moduleOpt(group: "org.jctools", name: "jctools-core", version: "2.1.2") { transitive = false }
-	moduleOpt(group: "org.osgi", name: "org.osgi.core", version: "6.0.0") { transitive = false }
-	moduleOpt(group: "org.slf4j", name: "slf4j-ext", version: "${depVersion.slf4j}") { transitive = false }
-	moduleOpt(group: "org.tukaani", name: "xz", version: "1.8") { transitive = false }
-	moduleOpt(group: "org.yaml", name: "snakeyaml", version: "1.20") { transitive = false }
-	moduleOpt(group: "org.zeromq", name: "jeromq", version: "0.4.3") { transitive = false }
-	moduleOpt(group: "org.zeromq", name: "jnacl", version: "0.1.0") { transitive = false }
 }
 
 def classPathString(final configuration, final isExt) {
@@ -174,43 +112,20 @@ subprojects {
 	afterEvaluate {
 
 		compileJava {
-			if(project in leafProjects) {
-				sourceCompatibility = JavaVersion.VERSION_1_10
-				targetCompatibility = JavaVersion.VERSION_1_10
-				inputs.property("moduleName", moduleName)
-				doFirst {
-					options.compilerArgs = [
-						"--module-path", classpath.asPath,
-					]
-					classpath = files()
-				}
-			}
+			sourceCompatibility = JavaVersion.VERSION_1_8
+			targetCompatibility = JavaVersion.VERSION_1_8
 		}
 
 		compileTestJava {
-			if(project in leafProjects) {
-				sourceCompatibility = JavaVersion.VERSION_1_10
-				targetCompatibility = JavaVersion.VERSION_1_10
-				inputs.property("moduleName", moduleName)
-				doFirst {
-					options.compilerArgs = [
-						"--module-path", classpath.asPath,
-						"--add-modules", "junit",
-						"--add-reads", "${moduleName}.test=junit",
-						"--patch-module", "${moduleName}=" + files(sourceSets.test.java.srcDirs).asPath,
-					]
-					classpath = files()
-				}
-			}
+			sourceCompatibility = JavaVersion.VERSION_1_8
+			targetCompatibility = JavaVersion.VERSION_1_8
 		}
 
 		jar {
 			if(project in leafProjects) {
 				archiveName "${project.jarFileName}.${extension}"
-				inputs.property("moduleName", moduleName)
 				manifest {
 					attributes(
-						"Automatic-Module-Name": moduleName,
 						"Class-Path": classPathString(configurations.runtime, project.isExt),
 						"Implementation-Version": version,
 						"Implementation-Title": "$name",
@@ -228,7 +143,6 @@ subprojects {
 
 		test {
 			if(project in leafProjects) {
-				inputs.property("moduleName", moduleName)
 				doFirst {
 					jvmArgs = [
 						//"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005",
@@ -239,7 +153,6 @@ subprojects {
 						"--add-reads", "${moduleName}.test=junit",
 						"--patch-module", "${moduleName}=" + files(sourceSets.test.java.outputDir).asPath,
 					]
-					classpath = files()
 				}
 				maxHeapSize "1g"
 				/*
@@ -262,7 +175,7 @@ subprojects {
 	task sourcesJar(type: Jar, dependsOn: classes) {
 		if(project in leafProjects) {
 			classifier = "sources"
-			archiveName "${project.jarFileName}-$classifier.$extension"
+			archiveName = "${project.jarFileName}-$classifier.$extension"
 			from sourceSets.main.allSource
 		}
 	}
@@ -270,7 +183,7 @@ subprojects {
 	task javadocJar(type: Jar, dependsOn: javadoc) {
 		if(project in leafProjects) {
 			classifier = "javadoc"
-			archiveName "${project.jarFileName}-$classifier.$extension"
+			archiveName = "${project.jarFileName}-$classifier.$extension"
 			from javadoc.destinationDir
 		}
 	}
@@ -354,17 +267,8 @@ task wrapper(type: Wrapper) {
 }
 
 static def isExtProject(final Project p) {
-	final moduleInfoJavaFile = Paths
-		.get(p.projectDir.toString(), "src", "main", "java", "module-info.java")
-		.toFile()
-	if(moduleInfoJavaFile.exists()) {
-		return 0 < moduleInfoJavaFile
-			.readLines()
-			.findAll { line -> line =~ /\s+provides\s+[\w\\.]+/ }
-			.size()
-	} else {
-		return false
-	}
+    final f = Paths.get(p.projectDir.toString(), "src", "main", "resources", "META-INF", "services").toFile()
+    return f.exists() && f.isDirectory() && f.listFiles().length > 0
 }
 
 static def isTestsProject(final Project p) {
@@ -377,140 +281,7 @@ static def isTestsProject(final Project p) {
 	}
 }
 
-task collectOptDeps(type: Copy) {
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-	excludes = [
-		"**/*.css",
-		"**/*.dll",
-		"**/*.h",
-		"**/*.html",
-		"**/*.java",
-		"**/pom.properties",
-		"**/pom.xml",
-		"aix/**",
-		"darwin/**",
-		"include/**",
-		"jdk-module-paths/**",
-		"kafka/**",
-		"module-info.class",
-		"schema/**",
-		"win/**",
-		"win32/**",
-		"META-INF/*.DSA",
-		"META-INF/*.RSA",
-		"META-INF/*.SF",
-		"META-INF/*.LIST",
-		"META-INF/versions/**",
-		"OSGI-OPT/**",
-	]
-	into optDepsDir
-	configurations.moduleOpt.each {
-		from zipTree(it.path)
-	}
-}
-
-task mainJar(type: Jar, dependsOn: collectOptDeps) {
-
-	leafProjects.each {
-		dependsOn("${it.path}:compileJava")
-	}
-
-	archiveName = "${baseName}.${extension}"
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-	excludes = [
-		"module-info.class",
-		"**/*.html",
-		"META-INF/*.DSA",
-		"META-INF/*.RSA",
-		"META-INF/*.SF",
-		"META-INF/*.LIST",
-		"org/apache/commons/lang/enum/**"
-	]
-	manifest {
-		attributes "Automatic-Module-Name": "${rootPkg}"
-		attributes "Implementation-Title": rootProject.name
-		attributes "Implementation-Version": version
-	}
-
-	// project classes and resources
-	leafProjects
-		.findAll {
-			!isExtProject(it) && !isTestsProject(it)
-		}
-		.each {
-			from it.compileJava.outputs.files
-			from it.sourceSets.main.resources
-		}
-
-	// dependencies
-	doFirst {
-		final extRuntimeDeps = new HashSet<>()
-		leafProjects
-			.findAll {
-				!isTestsProject(it)
-			}
-		.each {
-			it.configurations.runtime
-				.findAll {
-					!it.name.startsWith(rootProject.name)
-				}
-				.each {
-					extRuntimeDeps.add(it)
-				}
-		}
-		extRuntimeDeps.each {
-			from zipTree(it.path)
-		}
-	}
-
-	// optional dependencies
-	from optDepsDir
-}
-
-task genMainModuleInfo(type: Exec, dependsOn: mainJar) {
-	executable = "${javaHome}${File.separator}bin${File.separator}jdeps"
-	args = [
-		"--module-path", "${javaHome}${File.separator}jmods",
-		"--generate-module-info", "${rootProject.buildDir}",
-		mainJar.outputs.files.iterator().next().path,
-	]
-}
-
-task compileMainModuleInfo(type: Exec, dependsOn: genMainModuleInfo) {
-	executable = "${javaHome}${File.separator}bin${File.separator}javac"
-	args = [
-		"--patch-module",
-		"${rootPkg}=${mainJar.outputs.files.iterator().next().path}",
-		"${rootProject.buildDir}${File.separator}${rootPkg}${File.separator}module-info.java",
-		"-d", "${rootProject.buildDir}${File.separator}${rootPkg}"
-	]
-}
-
-task mainModule(type: Exec, dependsOn: compileMainModuleInfo) {
-	executable = "${javaHome}${File.separator}bin${File.separator}jar"
-	workingDir = "${rootProject.buildDir}${File.separator}${rootPkg}"
-	args = [
-		"-uf",
-		mainJar.outputs.files.iterator().next(),
-		"module-info.class",
-	]
-}
-
-task buildJre(type: Exec, dependsOn: mainModule) {
-	executable = "${javaHome}${File.separator}bin${File.separator}jlink"
-	args = [
-		"--module-path",
-		"${javaHome}${File.separator}jmods:${mainJar.outputs.files.iterator().next()}",
-		"--add-modules", rootPkg,
-		"--output", jreOutDir,
-		"--compress=2",
-		"--no-header-files",
-		"--no-man-pages",
-		"--strip-debug",
-	]
-}
-
-task dist(type: Tar, dependsOn: buildJre) {
+task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
 	group = "distribution"
 	description = "Collect Mongoose as an archive"
 	baseName = "$rootProject.name-base"
@@ -532,9 +303,6 @@ task dist(type: Tar, dependsOn: buildJre) {
 			for(final Project p: extProjects) {
 				from p.jar.outputs.files
 			}
-		}
-		into("jre") {
-			from jreOutDir
 		}
 		into("lib") {
 			for(final Project p: leafProjects) {

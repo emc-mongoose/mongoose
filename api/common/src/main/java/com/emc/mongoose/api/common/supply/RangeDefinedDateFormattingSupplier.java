@@ -27,23 +27,23 @@ implements RangeDefinedSupplier<Date> {
 	
 	@Override
 	public final String get() {
-		final var date = DATE.get();
+		final Date date = DATE.get();
 		date.setTime(getAsLong());
 		return format == null ? date.toString() : format.format(date);
 	}
 	
 	@Override
 	public final int get(final List<String> buffer, final int limit) {
-		final var numbers = new long[limit];
-		final var n = super.get(numbers, limit);
-		final var date = DATE.get();
+		final long numbers[] = new long[limit];
+		final int n = super.get(numbers, limit);
+		final Date date = DATE.get();
 		if(format == null) {
-			for(var i = 0; i < n; i ++) {
+			for(int i = 0; i < n; i ++) {
 				date.setTime(numbers[i]);
 				buffer.add(date.toString());
 			}
 		} else {
-			for(var i = 0; i < n; i ++) {
+			for(int i = 0; i < n; i ++) {
 				date.setTime(numbers[i]);
 				buffer.add(format.format(date));
 			}

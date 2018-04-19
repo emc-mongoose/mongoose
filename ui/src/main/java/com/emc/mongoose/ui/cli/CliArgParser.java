@@ -2,6 +2,7 @@ package com.emc.mongoose.ui.cli;
 
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
+
 import org.apache.commons.lang.WordUtils;
 
 import java.io.Serializable;
@@ -43,7 +44,7 @@ public final class CliArgParser {
 			argValPair = arg.split("=", 2);
 
 			if(aliasingConfig != null) {
-				for(final var aliasingNode : aliasingConfig) {
+				for(final Map<String, Object> aliasingNode : aliasingConfig) {
 					nextAliasName = ARG_PREFIX + aliasingNode.get(Config.NAME);
 					nextAliasTarget = (String) aliasingNode.get(Config.TARGET);
 					nextAliasTarget = nextAliasTarget == null ? null : ARG_PREFIX + nextAliasTarget;
@@ -90,12 +91,12 @@ public final class CliArgParser {
 	) throws IllegalArgumentException {
 		if(arg.startsWith(ARG_PREFIX) && arg.length() > ARG_PREFIX.length()) {
 			final String argParts[] = arg.substring(ARG_PREFIX.length()).split(Config.PATH_SEP);
-			var subTree = tree;
+			Map<String, Object> subTree = tree;
 			String argPart;
-			for(var i = 0; i < argParts.length; i ++) {
+			for(int i = 0; i < argParts.length; i ++) {
 				argPart = argParts[i];
 				if(i < argParts.length - 1) {
-					final var node = subTree.computeIfAbsent(argPart, k -> new TreeMap<>());
+					final Object node = subTree.computeIfAbsent(argPart, k -> new TreeMap<>());
 					subTree = (Map<String, Object>) node;
 				} else { // last part
 					subTree.put(argPart, value);
@@ -111,8 +112,8 @@ public final class CliArgParser {
 	}
 	
 	public static String formatCliArgsList(final Map<String, Class> argsWithTypes) {
-		final var strb = new StringBuilder();
-		for(final var arg : argsWithTypes.keySet()) {
+		final StringBuilder strb = new StringBuilder();
+		for(final String arg : argsWithTypes.keySet()) {
 			strb
 				.append('\t')
 				.append(arg)
@@ -127,15 +128,15 @@ public final class CliArgParser {
 	throws ReflectiveOperationException {
 
 		final Map<String, Class> argsWithTypes = new TreeMap<>();
-		final var configRootPkg = Config.class.getPackage();
-		final var configRootPkgName = configRootPkg.getName();
-		final var allPkgs = Package.getPackages();
+		final Package configRootPkg = Config.class.getPackage();
+		final String configRootPkgName = configRootPkg.getName();
+		final Package[] allPkgs = Package.getPackages();
 
-		for(final var subPkg : allPkgs) {
-			final var subPkgName = subPkg.getName();
+		for(final Package subPkg : allPkgs) {
+			final String subPkgName = subPkg.getName();
 			if(subPkgName.startsWith(configRootPkgName)) {
 
-				final var configBranchPrefix = subPkgName
+				final String configBranchPrefix = subPkgName
 					.substring(configRootPkgName.length())
 					.replaceAll(Pattern.quote("."), Config.PATH_SEP);
 				final String configBranchClsNamePrefix;
@@ -149,33 +150,33 @@ public final class CliArgParser {
 
 				try {
 
-					final var configBranchCls = (Class<Serializable>) Class.forName(
+					final Class configBranchCls = (Class<Serializable>) Class.forName(
 						subPkgName + '.' + configBranchClsNamePrefix + CONFIG_CLS_SUFFIX
 					);
 
-					final var fields = configBranchCls.getFields();
-					for(final var field : fields) {
+					final Field[] fields = configBranchCls.getFields();
+					for(final Field field : fields) {
 						if(field.getType().equals(String.class)) {
-							final var fieldName = field.getName();
+							final String fieldName = field.getName();
 							if(fieldName.startsWith(FIELD_PREFIX)) {
 
-								final var rawArgName = fieldName
+								final String rawArgName = fieldName
 									.substring(FIELD_PREFIX.length())
 									.toLowerCase();
 
 								try {
-									final var argNameParts = rawArgName.split("_");
-									final var argNameBuilder = new StringBuilder();
-									for(final var argNamePart : argNameParts) {
+									final String[] argNameParts = rawArgName.split("_");
+									final StringBuilder argNameBuilder = new StringBuilder();
+									for(final String argNamePart : argNameParts) {
 										argNameBuilder
 											.append(toUpperCase(argNamePart.charAt(0)))
 											.append(argNamePart.substring(1));
 									}
-									final var m = configBranchCls.getMethod(
+									final Method m = configBranchCls.getMethod(
 										"get" + argNameBuilder.toString()
 									);
 									final Class type = m.getReturnType();
-									final var argName = toLowerCase(argNameBuilder.charAt(0)) +
+									final String argName = toLowerCase(argNameBuilder.charAt(0)) +
 											argNameBuilder.substring(1);
 									argsWithTypes.put(
 										ARG_PREFIX + configBranchPrefix + Config.PATH_SEP + argName,

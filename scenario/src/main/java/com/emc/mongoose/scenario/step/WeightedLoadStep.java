@@ -1,6 +1,7 @@
 package com.emc.mongoose.scenario.step;
 
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import java.util.List;
@@ -32,9 +33,9 @@ extends LoadStepBase {
 	@Override
 	protected void init() {
 
-		final var autoStepId = getTypeName().toLowerCase() + "_" + LogUtil.getDateTimeStamp();
-		final var config = new Config(baseConfig);
-		final var stepConfig = config.getTestConfig().getStepConfig();
+		final String autoStepId = getTypeName().toLowerCase() + "_" + LogUtil.getDateTimeStamp();
+		final Config config = new Config(baseConfig);
+		final StepConfig stepConfig = config.getTestConfig().getStepConfig();
 		if(stepConfig.getIdTmp()) {
 			stepConfig.setId(autoStepId);
 		}

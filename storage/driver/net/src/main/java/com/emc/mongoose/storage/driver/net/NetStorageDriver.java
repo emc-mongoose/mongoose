@@ -22,7 +22,7 @@ extends StorageDriver<I, O> {
 		KQUEUE
 	}
 
-	Map<Transport, String> IO_EXECUTOR_IMPLS = new HashMap<>() {
+	Map<Transport, String> IO_EXECUTOR_IMPLS = new HashMap<Transport, String>() {
 		{
 			put(Transport.NIO, "io.netty.channel.nio.NioEventLoopGroup");
 			put(Transport.EPOLL, "io.netty.channel.epoll.EpollEventLoopGroup");
@@ -30,7 +30,7 @@ extends StorageDriver<I, O> {
 		}
 	};
 
-	Map<Transport, String> SOCKET_CHANNEL_IMPLS = new HashMap<>() {
+	Map<Transport, String> SOCKET_CHANNEL_IMPLS = new HashMap<Transport, String>() {
 		{
 			put(Transport.NIO, "io.netty.channel.socket.nio.NioSocketChannel");
 			put(Transport.EPOLL, "io.netty.channel.epoll.EpollSocketChannel");

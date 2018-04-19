@@ -22,7 +22,7 @@ implements TokenItem {
 		if(!(o instanceof BasicTokenItem)) {
 			return false;
 		}
-		final var other = (BasicTokenItem) o;
+		final BasicTokenItem other = (BasicTokenItem) o;
 		if(name == null) {
 			return other.name == null;
 		}

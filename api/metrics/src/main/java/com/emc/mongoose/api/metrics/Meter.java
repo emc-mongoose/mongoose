@@ -26,7 +26,7 @@ implements MeterMBean {
 	public Meter(final MetricsContext metricsCtx)
 	throws MalformedObjectNameException {
 		this.metricsCtx = metricsCtx;
-		final var props = new Hashtable<String, String>();
+		final Hashtable<String, String> props = new Hashtable<>();
 		props.put(KEY_TEST_STEP_ID, metricsCtx.stepId());
 		props.put(KEY_LOAD_TYPE, metricsCtx.ioType().name());
 		props.put(KEY_STORAGE_DRIVER_COUNT, Integer.toString(metricsCtx.nodeCount()));

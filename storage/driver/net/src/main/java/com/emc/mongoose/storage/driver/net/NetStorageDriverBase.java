@@ -1,5 +1,7 @@
 package com.emc.mongoose.storage.driver.net;
 
+import com.emc.mongoose.ui.config.storage.net.NetConfig;
+import com.emc.mongoose.ui.config.storage.net.node.NodeConfig;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.net.ssl.SslContext;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -49,7 +51,9 @@ import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
+import javax.net.ssl.SSLEngine;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.BitSet;
@@ -90,37 +94,37 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 		super(jobName, itemDataInput, loadConfig, storageConfig, verifyFlag);
 
-		final var netConfig = storageConfig.getNetConfig();
+		final NetConfig netConfig = storageConfig.getNetConfig();
 		sslFlag = netConfig.getSsl();
 		if(sslFlag) {
 			Loggers.MSG.info("{}: SSL/TLS is enabled", jobName);
 		}
-		final var sto = netConfig.getTimeoutMilliSec();
+		final int sto = netConfig.getTimeoutMilliSec();
 		if(sto > 0) {
 			this.socketTimeout = sto;
 		} else {
 			this.socketTimeout = 0;
 		}
-		final var nodeConfig = netConfig.getNodeConfig();
+		final NodeConfig nodeConfig = netConfig.getNodeConfig();
 		storageNodePort = nodeConfig.getPort();
 		connAttemptsLimit = nodeConfig.getConnAttemptsLimit();
 		final String t[] = nodeConfig.getAddrs().toArray(new String[]{});
 		storageNodeAddrs = new String[t.length];
 		String n;
-		for(var i = 0; i < t.length; i ++) {
+		for(int i = 0; i < t.length; i ++) {
 			n = t[i];
 			storageNodeAddrs[i] = n + (n.contains(":") ? "" : ":" + storageNodePort);
 		}
 		
 		final int workerCount;
-		final var confWorkerCount = storageConfig.getDriverConfig().getThreads();
+		final int confWorkerCount = storageConfig.getDriverConfig().getThreads();
 		if(confWorkerCount < 1) {
 			workerCount = ThreadUtil.getHardwareThreadCount();
 		} else {
 			workerCount = confWorkerCount;
 		}
-		final var ioRatio = netConfig.getIoRatio();
-		final var transportKey = Transport.valueOf(netConfig.getTransport().toUpperCase());
+		final int ioRatio = netConfig.getIoRatio();
+		final Transport transportKey = Transport.valueOf(netConfig.getTransport().toUpperCase());
 
 		if(IO_EXECUTOR_LOCK.tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 			try {
@@ -130,15 +134,15 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						throw new AssertionError("I/O executor reference count should be 0");
 					}
 					try {
-						final var ioExecutorClsName = IO_EXECUTOR_IMPLS.get(transportKey);
-						final var transportCls = (Class<EventLoopGroup>) Class
+						final String ioExecutorClsName = IO_EXECUTOR_IMPLS.get(transportKey);
+						final Class<EventLoopGroup> transportCls = (Class<EventLoopGroup>) Class
 							.forName(ioExecutorClsName);
 						IO_EXECUTOR = transportCls
 							.getConstructor(Integer.TYPE, ThreadFactory.class)
 							.newInstance(workerCount, new LogContextThreadFactory("ioWorker", true));
 						Loggers.MSG.info("{}: use {} I/O workers", toString(), workerCount);
 						try {
-							final var setIoRatioMethod = transportCls.getMethod(
+							final Method setIoRatioMethod = transportCls.getMethod(
 								"setIoRatio", Integer.TYPE
 							);
 							setIoRatioMethod.invoke(IO_EXECUTOR, ioRatio);
@@ -164,7 +168,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			);
 		}
 
-		final var socketChannelClsName = SOCKET_CHANNEL_IMPLS.get(transportKey);
+		final String socketChannelClsName = SOCKET_CHANNEL_IMPLS.get(transportKey);
 		try {
 			socketChannelCls = (Class<SocketChannel>) Class.forName(socketChannelClsName);
 		} catch(final ReflectiveOperationException e) {
@@ -195,7 +199,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.SO_REUSEADDR, netConfig.getReuseAddr());
 		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.getTcpNoDelay());
 		try(
-			final var logCtx = CloseableThreadContext
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
@@ -214,7 +218,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	public final void adjustIoBuffers(final long avgTransferSize, final IoType ioType) {
 		int size;
 		try(
-			final var logCtx = CloseableThreadContext
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
@@ -245,7 +249,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected Channel getUnpooledConnection()
 	throws ConnectException, InterruptedException {
 
-		final var na = storageNodeAddrs[0];
+		final String na = storageNodeAddrs[0];
 		final InetSocketAddress nodeAddr;
 		if(na.contains(":")) {
 			final String addrParts[] = na.split(":");
@@ -254,7 +258,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			nodeAddr = new InetSocketAddress(na, storageNodePort);
 		}
 
-		final var bootstrap = new Bootstrap()
+		final Bootstrap bootstrap = new Bootstrap()
 			.group(IO_EXECUTOR)
 			.channel(socketChannelCls)
 			.handler(
@@ -263,7 +267,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					protected final void initChannel(final SocketChannel channel)
 					throws Exception {
 						try(
-							final var logCtx = CloseableThreadContext
+							final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 								.put(KEY_TEST_STEP_ID, stepId)
 								.put(KEY_CLASS_NAME, CLS_NAME)
 						) {
@@ -317,7 +321,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					return false;
 				}
 			} else {
-				final var conn = connPool.lease();
+				final Channel conn = connPool.lease();
 				if(conn == null) {
 					return false;
 				}
@@ -349,7 +353,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		Channel conn;
 		O nextIoTask;
 		try {
-			for(var i = from; i < to && isStarted(); i ++) {
+			for(int i = from; i < to && isStarted(); i ++) {
 				nextIoTask = ioTasks.get(i);
 				if(IoType.NOOP.equals(nextIoTask.ioType())) {
 					if(concurrencyThrottle.tryAcquire()) {
@@ -414,15 +418,15 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected final void sendRequestData(final Channel channel, final O ioTask)
 	throws IOException {
 		
-		final var ioType = ioTask.ioType();
+		final IoType ioType = ioTask.ioType();
 		
 		if(IoType.CREATE.equals(ioType)) {
 			final I item = ioTask.item();
 			if(item instanceof DataItem) {
-				final var dataIoTask = (DataIoTask) ioTask;
+				final DataIoTask dataIoTask = (DataIoTask) ioTask;
 				if(!(dataIoTask instanceof CompositeDataIoTask)) {
-					final var dataItem = (DataItem) item;
-					final var srcPath = dataIoTask.srcPath();
+					final DataItem dataItem = (DataItem) item;
+					final String srcPath = dataIoTask.srcPath();
 					if(0 < dataItem.size() && (null == srcPath || srcPath.isEmpty())) {
 						if(sslFlag) {
 							channel.write(new SeekableByteChannelChunkedNioStream(dataItem));
@@ -434,21 +438,21 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				}
 			}
 		} else if(IoType.UPDATE.equals(ioType)) {
-			final var item = ioTask.item();
+			final I item = ioTask.item();
 			if(item instanceof DataItem) {
 				
-				final var dataItem = (DataItem) item;
-				final var dataIoTask = (DataIoTask) ioTask;
+				final DataItem dataItem = (DataItem) item;
+				final DataIoTask dataIoTask = (DataIoTask) ioTask;
 				
 				final List<Range> fixedRanges = dataIoTask.fixedRanges();
 				if(fixedRanges == null || fixedRanges.isEmpty()) {
 					// random ranges update case
 					final BitSet updRangesMaskPair[] = dataIoTask.markedRangesMaskPair();
-					final var rangeCount = getRangeCount(dataItem.size());
+					final int rangeCount = getRangeCount(dataItem.size());
 					DataItem updatedRange;
 					if(sslFlag) {
 						// current layer updates first
-						for(var i = 0; i < rangeCount; i ++) {
+						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[0].get(i)) {
 								dataIoTask.currRangeIdx(i);
 								updatedRange = dataIoTask.currRangeUpdate();
@@ -458,7 +462,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 							}
 						}
 						// then next layer updates if any
-						for(var i = 0; i < rangeCount; i ++) {
+						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[1].get(i)) {
 								dataIoTask.currRangeIdx(i);
 								updatedRange = dataIoTask.currRangeUpdate();
@@ -469,7 +473,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						}
 					} else {
 						// current layer updates first
-						for(var i = 0; i < rangeCount; i ++) {
+						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[0].get(i)) {
 								dataIoTask.currRangeIdx(i);
 								updatedRange = dataIoTask.currRangeUpdate();
@@ -477,7 +481,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 							}
 						}
 						// then next layer updates if any
-						for(var i = 0; i < rangeCount; i ++) {
+						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[1].get(i)) {
 								dataIoTask.currRangeIdx(i);
 								updatedRange = dataIoTask.currRangeUpdate();
@@ -487,12 +491,12 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					}
 					dataItem.commitUpdatedRanges(dataIoTask.markedRangesMaskPair());
 				} else { // fixed byte ranges case
-					final var baseItemSize = dataItem.size();
+					final long baseItemSize = dataItem.size();
 					long beg;
 					long end;
 					long size;
 					if(sslFlag) {
-						for(final var fixedRange : fixedRanges) {
+						for(final Range fixedRange : fixedRanges) {
 							beg = fixedRange.getBeg();
 							end = fixedRange.getEnd();
 							size = fixedRange.getSize();
@@ -520,7 +524,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 							);
 						}
 					} else {
-						for(final var fixedRange : fixedRanges) {
+						for(final Range fixedRange : fixedRanges) {
 							beg = fixedRange.getBeg();
 							end = fixedRange.getEnd();
 							size = fixedRange.getSize();
@@ -581,11 +585,11 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	public final void channelCreated(final Channel channel)
 	throws Exception {
 		try(
-			final var ctx = CloseableThreadContext
+			final CloseableThreadContext.Instance ctx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
-			final var pipeline = channel.pipeline();
+			final ChannelPipeline pipeline = channel.pipeline();
 			appendHandlers(pipeline);
 			if(Loggers.MSG.isTraceEnabled()) {
 				Loggers.MSG.trace(
@@ -598,7 +602,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected void appendHandlers(final ChannelPipeline pipeline) {
 		if(sslFlag) {
 			Loggers.MSG.debug("{}: SSL/TLS is enabled for the channel", stepId);
-			final var sslEngine = SslContext.INSTANCE.createSSLEngine();
+			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
 			sslEngine.setEnabledProtocols(
 				new String[] { "TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3" }
 			);
@@ -633,7 +637,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected final void doStop()
 	throws IllegalStateException {
 		try(
-			final var ctx = CloseableThreadContext
+			final CloseableThreadContext.Instance ctx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {

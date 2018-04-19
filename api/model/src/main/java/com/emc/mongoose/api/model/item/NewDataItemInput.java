@@ -32,7 +32,7 @@ implements Input<D> {
 	@Override
 	public final int get(final List<D> buffer, final int maxCount)
 	throws IOException {
-		for(var i = 0; i < maxCount; i ++) {
+		for(int i = 0; i < maxCount; i ++) {
 			buffer.add(itemFactory.getItem(idInput.get(), idInput.getAsLong(), dataSize.get()));
 		}
 		return maxCount;

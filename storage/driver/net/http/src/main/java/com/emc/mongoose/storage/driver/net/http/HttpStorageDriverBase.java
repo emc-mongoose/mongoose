@@ -107,15 +107,15 @@ implements HttpStorageDriver<I, O> {
 
 		super(testStepId, itemDataInput, loadConfig, storageConfig, verifyFlag);
 		
-		final var httpConfig = storageConfig.getNetConfig().getHttpConfig();
+		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
 		
 		namespace = httpConfig.getNamespace();
 		fsAccess = httpConfig.getFsAccess();
 		versioning = httpConfig.getVersioning();
 		
-		final var headersMap = httpConfig.getHeaders();
+		final Map<String, String> headersMap = httpConfig.getHeaders();
 		String headerValue;
-		for(final var headerName : headersMap.keySet()) {
+		for(final String headerName : headersMap.keySet()) {
 			headerValue = headersMap.get(headerName);
 			if(-1 < headerName.indexOf(PATTERN_CHAR) || -1 < headerValue.indexOf(PATTERN_CHAR)) {
 				dynamicHeaders.add(headerName, headerValue);
@@ -131,9 +131,9 @@ implements HttpStorageDriver<I, O> {
 		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
-		final var channel = getUnpooledConnection();
+		final Channel channel = getUnpooledConnection();
 		try {
-			final var pipeline = channel.pipeline();
+			final ChannelPipeline pipeline = channel.pipeline();
 			Loggers.MSG.debug(
 				"{}: execute the HTTP request using the channel {} w/ pipeline: {}", stepId,
 				channel.hashCode(), pipeline
@@ -170,9 +170,9 @@ implements HttpStorageDriver<I, O> {
 	protected HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
 	throws URISyntaxException {
 
-		final var item = ioTask.item();
-		final var ioType = ioTask.ioType();
-		final var srcPath = ioTask.srcPath();
+		final I item = ioTask.item();
+		final IoType ioType = ioTask.ioType();
+		final String srcPath = ioTask.srcPath();
 
 		final HttpMethod httpMethod;
 		final String uriPath;
@@ -223,7 +223,7 @@ implements HttpStorageDriver<I, O> {
 				}
 				break;
 			case UPDATE:
-				final var dataIoTask = (DataIoTask) ioTask;
+				final DataIoTask dataIoTask = (DataIoTask) ioTask;
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, dataIoTask.markedRangesSize());
 				applyRangesHeaders(httpHeaders, dataIoTask);
 				break;
@@ -258,7 +258,7 @@ implements HttpStorageDriver<I, O> {
 	protected String getDataUriPath(
 		final I item, final String srcPath, final String dstPath, final IoType ioType
 	) {
-		final var itemName = item.getName();
+		final String itemName = item.getName();
 		if(dstPath == null) {
 			if(srcPath == null) {
 				if(itemName.startsWith(SLASH)) {
@@ -304,16 +304,16 @@ implements HttpStorageDriver<I, O> {
 			throw new AssertionError(e);
 		}
 		final List<Range> fixedRanges = dataIoTask.fixedRanges();
-		final var strb = THR_LOC_RANGES_BUILDER.get();
+		final StringBuilder strb = THR_LOC_RANGES_BUILDER.get();
 		strb.setLength(0);
 
 		if(fixedRanges == null || fixedRanges.isEmpty()) {
-			final var rangesMaskPair = dataIoTask.markedRangesMaskPair();
+			final BitSet rangesMaskPair[] = dataIoTask.markedRangesMaskPair();
 			if(rangesMaskPair[0].isEmpty() && rangesMaskPair[1].isEmpty()) {
 				return; // do not set the ranges header
 			}
 			// current layer first
-			for(var i = 0; i < getRangeCount(baseItemSize); i++) {
+			for(int i = 0; i < getRangeCount(baseItemSize); i++) {
 				if(rangesMaskPair[0].get(i)) {
 					if(strb.length() > 0) {
 						strb.append(',');
@@ -325,7 +325,7 @@ implements HttpStorageDriver<I, O> {
 				}
 			}
 			// then next layer ranges if any
-			for(var i = 0; i < getRangeCount(baseItemSize); i++) {
+			for(int i = 0; i < getRangeCount(baseItemSize); i++) {
 				if(rangesMaskPair[1].get(i)) {
 					if(strb.length() > 0) {
 						strb.append(',');
@@ -348,7 +348,7 @@ implements HttpStorageDriver<I, O> {
 	) {
 		Range nextFixedRange;
 		long nextRangeSize;
-		for(var i = 0; i < ranges.size(); i ++) {
+		for(int i = 0; i < ranges.size(); i ++) {
 			nextFixedRange = ranges.get(i);
 			nextRangeSize = nextFixedRange.getSize();
 			if(i > 0) {
@@ -363,7 +363,7 @@ implements HttpStorageDriver<I, O> {
 	}
 
 	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
-		for(final var sharedHeader : sharedHeaders) {
+		for(final Map.Entry<String, String> sharedHeader : sharedHeaders) {
 			httpHeaders.add(sharedHeader.getKey(), sharedHeader.getValue());
 		}
 	}
@@ -375,7 +375,7 @@ implements HttpStorageDriver<I, O> {
 		BatchSupplier<String> headerNameSupplier;
 		BatchSupplier<String> headerValueSupplier;
 
-		for(final var nextHeader : dynamicHeaders) {
+		for(final Map.Entry<String, String> nextHeader : dynamicHeaders) {
 
 			headerName = nextHeader.getKey();
 			// header name is a generator pattern
@@ -422,9 +422,9 @@ implements HttpStorageDriver<I, O> {
 		final Channel channel, final ChannelPromise channelPromise, final O ioTask
 	) {
 
-		final var nodeAddr = ioTask.nodeAddr();
+		final String nodeAddr = ioTask.nodeAddr();
 		try {
-			final var httpRequest = getHttpRequest(ioTask, nodeAddr);
+			final HttpRequest httpRequest = getHttpRequest(ioTask, nodeAddr);
 			if(channel == null) {
 				return;
 			} else {

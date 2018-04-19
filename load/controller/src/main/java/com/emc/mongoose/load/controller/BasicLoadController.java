@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.controller;
 
+import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvLogMessage;
@@ -13,6 +14,7 @@ import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvBatchLogMessage;
 import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
+import com.emc.mongoose.ui.config.test.step.limit.fail.FailConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
@@ -95,7 +97,7 @@ implements LoadController<I, O> {
 		this.countLimit = limitConfig.getCount() > 0 ? limitConfig.getCount() : Long.MAX_VALUE;
 		this.sizeLimit = limitConfig.getSize().get() > 0 ?
 			limitConfig.getSize().get() : Long.MAX_VALUE;
-		final var failConfig = limitConfig.getFailConfig();
+		final FailConfig failConfig = limitConfig.getFailConfig();
 		this.failCountLimit = failConfig.getCount() > 0 ? failConfig.getCount() : Long.MAX_VALUE;
 		this.failRateLimitFlag = failConfig.getRate();
 	}
@@ -109,9 +111,9 @@ implements LoadController<I, O> {
 				);
 				return true;
 			}
-			final var lastStats = metricsCtx.lastSnapshot();
-			final var succCountSum = lastStats.succCount();
-			final var failCountSum = lastStats.failCount();
+			final MetricsSnapshot lastStats = metricsCtx.lastSnapshot();
+			final long succCountSum = lastStats.succCount();
+			final long failCountSum = lastStats.failCount();
 			if(succCountSum + failCountSum >= countLimit) {
 				Loggers.MSG.debug(
 					"{}: count limit reached, {} successful + {} failed >= {} limit", id,
@@ -125,7 +127,7 @@ implements LoadController<I, O> {
 
 	private boolean isDoneSizeLimit() {
 		if(sizeLimit > 0) {
-			final var sizeSum = metricsCtx.lastSnapshot().byteCount();
+			final long sizeSum = metricsCtx.lastSnapshot().byteCount();
 			if(sizeSum >= sizeLimit) {
 				Loggers.MSG.debug(
 					"{}: size limit reached, done {} >= {} limit", id,
@@ -156,7 +158,7 @@ implements LoadController<I, O> {
 		} catch(final RemoteException ignored) {
 		}
 		// load generator has done its work
-		final var generatedIoTasks = generator.getGeneratedTasksCount();
+		final long generatedIoTasks = generator.getGeneratedTasksCount();
 		return generator.isRecycling() &&
 				// all generated I/O tasks executed at least once
 				counterResults.sum() >= generatedIoTasks &&
@@ -181,10 +183,10 @@ implements LoadController<I, O> {
 	 false otherwise
 	 */
 	private boolean isFailThresholdReached() {
-		final var metricsSnapshot = metricsCtx.lastSnapshot();
-		final var failCountSum = metricsSnapshot.failCount();
-		final var failRateLast = metricsSnapshot.failRateLast();
-		final var succRateLast = metricsSnapshot.succRateLast();
+		final MetricsSnapshot metricsSnapshot = metricsCtx.lastSnapshot();
+		final long failCountSum = metricsSnapshot.failCount();
+		final double failRateLast = metricsSnapshot.failRateLast();
+		final double succRateLast = metricsSnapshot.succRateLast();
 		if(failCountSum > failCountLimit) {
 			Loggers.ERR.warn(
 				"{}: failure count ({}) is more than the configured limit ({}), stopping the step",
@@ -238,10 +240,10 @@ implements LoadController<I, O> {
 			return true;
 		}
 
-		final var status = ioTaskResult.status();
+		final Status status = ioTaskResult.status();
 		if(Status.SUCC.equals(status)) {
-			final var reqDuration = ioTaskResult.duration();
-			final var respLatency = ioTaskResult.latency();
+			final long reqDuration = ioTaskResult.duration();
+			final long respLatency = ioTaskResult.latency();
 			final long countBytesDone;
 			if(ioTaskResult instanceof DataIoTask) {
 				countBytesDone = ((DataIoTask) ioTaskResult).countBytesDone();
@@ -374,13 +376,12 @@ implements LoadController<I, O> {
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
-		final var timeOutMilliSec = timeUnit.toMillis(timeout);
-		//
+		final long timeOutMilliSec = timeUnit.toMillis(timeout);
 		Loggers.MSG.debug(
 			"{}: await for the done condition at most for {}[s]", id,
 			TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec)
 		);
-		var t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		while(System.currentTimeMillis() - t < timeOutMilliSec) {
 			synchronized(state) {
 				state.wait(100);
@@ -429,14 +430,14 @@ implements LoadController<I, O> {
 		}
 
 		try(
-			final var ctx = CloseableThreadContext
+			final CloseableThreadContext.Instance ctx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, id)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			try {
-				final var finalResults = driver.getAll();
+				final List<O> finalResults = driver.getAll();
 				if(finalResults != null) {
-					final var finalResultsCount = finalResults.size();
+					final int finalResultsCount = finalResults.size();
 					if(finalResultsCount > 0) {
 						Loggers.MSG.debug(
 							"{}: the driver \"{}\" returned {} final I/O " +
@@ -457,7 +458,7 @@ implements LoadController<I, O> {
 
 		if(latestIoResultsByItem != null && ioResultsOutput != null) {
 			try {
-				final var ioResultCount = latestIoResultsByItem.size();
+				final int ioResultCount = latestIoResultsByItem.size();
 				Loggers.MSG.info(
 					"{}: please wait while performing {} I/O results output...", id, ioResultCount
 				);

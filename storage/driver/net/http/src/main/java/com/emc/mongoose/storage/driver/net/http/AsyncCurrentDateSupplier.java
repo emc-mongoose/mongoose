@@ -18,7 +18,7 @@ extends AsyncUpdatingValueSupplier<String> {
 		super(
 			executor,
 			DateUtil.FMT_DATE_RFC1123.format(new Date(System.currentTimeMillis())),
-			new InitializedCallableBase<>() {
+			new InitializedCallableBase<String>() {
 				//
 				@Override
 				public final String call()
