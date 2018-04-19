@@ -427,7 +427,7 @@ implements Serializable {
 
 	public static Config loadDefaults()
 	throws IOException {
-		final var defaultConfigPath = PathUtil.getBaseDir() + File.separator + PATH_DEFAULTS;
+		final var defaultConfigPath = PathUtil.BASE_DIR + File.separator + PATH_DEFAULTS;
 		final var mapper = new ObjectMapper()
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);

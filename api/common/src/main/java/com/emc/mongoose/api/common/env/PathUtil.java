@@ -14,7 +14,7 @@ public abstract class PathUtil {
 
 	public static final String BASE_DIR = getBaseDir();
 
-	public static String getBaseDir() {
+	private static String getBaseDir() {
 		return getBasePathForClass(PathUtil.class);
 	}
 

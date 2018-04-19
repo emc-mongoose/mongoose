@@ -3,6 +3,7 @@ description = "mongoose-api-metrics"
 ext.isExt = false
 ext.jarFileName = description
 ext.mainClass = null
+ext.moduleName = "${rootPkg}.api.metrics"
 
 dependencies {
 

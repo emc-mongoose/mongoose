@@ -3,6 +3,7 @@ description = "mongoose-storage-driver-builder"
 ext.isExt = false
 ext.jarFileName = description
 ext.mainClass = null
+ext.moduleName = "${rootPkg}.storage.driver.builder"
 
 dependencies {
 

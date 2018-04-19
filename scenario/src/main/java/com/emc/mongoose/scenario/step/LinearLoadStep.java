@@ -1,4 +1,4 @@
-package com.emc.mongoose.scenario.sna;
+package com.emc.mongoose.scenario.step;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.metrics.AggregatingMetricsContext;
@@ -8,7 +8,6 @@ import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.api.model.item.ItemType;
-import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;

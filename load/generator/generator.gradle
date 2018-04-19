@@ -3,6 +3,7 @@ description = "mongoose-load-generator"
 ext.isExt = false
 ext.jarFileName = description
 ext.mainClass = null
+ext.moduleName = "${rootPkg}.load.generator"
 
 dependencies {
 

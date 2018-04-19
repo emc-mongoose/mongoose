@@ -3,6 +3,7 @@ description = "mongoose-storage-driver-nio"
 ext.isExt = false
 ext.jarFileName = description
 ext.mainClass = null
+ext.moduleName = "${rootPkg}.storage.driver.nio"
 
 dependencies {
 	compile(

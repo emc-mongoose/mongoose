@@ -3,3 +3,4 @@ description = "mongoose-storage-driver-net-http-emc"
 ext.isExt = false
 ext.jarFileName = description
 ext.mainClass = null
+ext.moduleName = "${rootPkg}.storage.driver.net.http.emc"

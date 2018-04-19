@@ -3,6 +3,7 @@ description = "mongoose-api-common"
 ext.isExt = false
 ext.jarFileName = description
 ext.mainClass = null
+ext.moduleName = "${rootPkg}.api.common"
 
 dependencies {
 	compile(

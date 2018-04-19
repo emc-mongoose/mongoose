@@ -3,6 +3,7 @@ description = "mongoose-load-controller"
 ext.isExt = false
 ext.jarFileName = description
 ext.mainClass = null
+ext.moduleName = "${rootPkg}.load.controller"
 
 dependencies {
 

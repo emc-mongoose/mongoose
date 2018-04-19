@@ -3,7 +3,7 @@ package com.emc.mongoose.node;
 import static com.github.akurilov.commons.system.DirectMemUtil.REUSABLE_BUFF_SIZE_MAX;
 
 import com.emc.mongoose.api.model.svc.ServiceBase;
-import com.emc.mongoose.scenario.sna.FileService;
+import com.emc.mongoose.scenario.step.FileService;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import org.apache.logging.log4j.Level;

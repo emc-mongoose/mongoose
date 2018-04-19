@@ -1,7 +1,7 @@
 package com.emc.mongoose.node;
 
 import com.emc.mongoose.api.model.svc.ServiceBase;
-import com.emc.mongoose.scenario.sna.LoadStepManagerService;
+import com.emc.mongoose.scenario.step.LoadStepManagerService;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
 

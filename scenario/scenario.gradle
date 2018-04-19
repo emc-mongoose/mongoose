@@ -3,6 +3,7 @@ description = "mongoose-scenario"
 ext.isExt = false
 ext.jarFileName = rootProject.name
 ext.mainClass = "com.emc.mongoose.scenario.Main"
+ext.moduleName = "${rootPkg}.scenario"
 
 dependencies {
 
