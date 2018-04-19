@@ -5,7 +5,6 @@ import com.emc.mongoose.api.metrics.MetricsManager;
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
-import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.load.LoadController;
 import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.model.storage.StorageDriver;
@@ -40,7 +39,6 @@ implements LoadStep, Runnable {
 	protected final List<LoadGenerator> generators = new ArrayList<>();
 	protected final List<StorageDriver> drivers = new ArrayList<>();
 	protected final List<LoadController> controllers = new ArrayList<>();
-	protected final List<DataInput> dataInputs = new ArrayList<>();
 
 	protected boolean distributedFlag = false;
 	protected volatile LoadStepClient stepClient = null;
@@ -167,6 +165,50 @@ implements LoadStep, Runnable {
 	protected abstract void doStartLocal(final Config actualConfig);
 
 	protected void doShutdown() {
+		if(stepClient == null) {
+			shutdownLocal();
+		} else {
+			try {
+				stepClient.shutdown();
+			} catch(final RemoteException ignored) {
+			}
+		}
+	}
+
+	private void shutdownLocal() {
+
+		generators.forEach(
+			generator -> {
+				try(
+					final var ctx = CloseableThreadContext
+						.put(KEY_TEST_STEP_ID, id)
+						.put(KEY_CLASS_NAME, getClass().getSimpleName())
+				) {
+					generator.stop();
+					Loggers.MSG.debug(
+						"{}: load generator \"{}\" interrupted", id,
+						generator.toString()
+					);
+				} catch(final RemoteException ignored) {
+				}
+			}
+		);
+
+		drivers.forEach(
+			driver -> {
+				try(
+					final var ctx = CloseableThreadContext
+						.put(KEY_TEST_STEP_ID, id)
+						.put(KEY_CLASS_NAME, getClass().getSimpleName())
+				) {
+					driver.shutdown();
+					Loggers.MSG.debug(
+						"{}: next storage driver {} shutdown", id, driver.toString()
+					);
+				} catch(final RemoteException ignored) {
+				}
+			}
+		);
 	}
 
 	@Override
@@ -259,6 +301,15 @@ implements LoadStep, Runnable {
 	}
 
 	protected void doStopLocal() {
+		drivers.forEach(
+			driver -> {
+				try {
+					driver.stop();
+				} catch(final RemoteException ignored) {
+				}
+				Loggers.MSG.debug("{}: next storage driver {} stopped", id, driver.toString());
+			}
+		);
 		controllers.forEach(
 			controller -> {
 				try {
@@ -336,19 +387,5 @@ implements LoadStep, Runnable {
 			}
 		);
 		controllers.clear();
-
-		dataInputs.forEach(
-			dataInput -> {
-				try {
-					dataInput.close();
-				} catch(final IOException e) {
-					LogUtil.exception(
-						Level.ERROR, e, "Failed to close the data input \"{}\"",
-						dataInput.toString()
-					);
-				}
-			}
-		);
-		dataInputs.clear();
 	}
 }

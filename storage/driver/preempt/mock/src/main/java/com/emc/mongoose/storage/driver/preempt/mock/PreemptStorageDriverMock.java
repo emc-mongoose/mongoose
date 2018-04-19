@@ -31,6 +31,8 @@ extends PreemptStorageDriverBase<I, O> {
 
 	@Override
 	protected void execute(final O ioTask) {
+		ioTask.startRequest();
+		ioTask.finishRequest();
 		ioTask.startResponse();
 		if(ioTask instanceof DataIoTask) {
 			final var dataIoTask = (DataIoTask) ioTask;
@@ -44,6 +46,7 @@ extends PreemptStorageDriverBase<I, O> {
 					break;
 				case READ:
 					dataIoTask.startDataResponse();
+					break;
 				case UPDATE:
 					final List<Range> fixedRanges = dataIoTask.fixedRanges();
 					if(fixedRanges == null || fixedRanges.isEmpty()) {
@@ -62,7 +65,6 @@ extends PreemptStorageDriverBase<I, O> {
 				default:
 					break;
 			}
-			dataIoTask.startDataResponse();
 		}
 		ioTask.finishResponse();
 		ioTask.status(IoTask.Status.SUCC);

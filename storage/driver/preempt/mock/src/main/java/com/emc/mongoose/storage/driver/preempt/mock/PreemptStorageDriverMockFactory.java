@@ -17,11 +17,13 @@ public class PreemptStorageDriverMockFactory<
 		return "preempt-mock";
 	}
 
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public T create(
 		final String stepId, final DataInput dataInput, final LoadConfig loadConfig,
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException, InterruptedException {
-		return null;
+		return (T) new PreemptStorageDriverMock<>(
+			stepId, dataInput, loadConfig, storageConfig, verifyFlag
+		);
 	}
 }

@@ -121,6 +121,19 @@ implements LoadStepClient {
 
 	@Override
 	protected final void doShutdown() {
+		stepSvcs
+			.parallelStream()
+			.forEach(
+				stepSvc -> {
+					try {
+						stepSvc.shutdown();
+					} catch(final RemoteException e) {
+						LogUtil.exception(
+							Level.WARN, e, "Failed to shutdown the step service {}", stepSvc
+						);
+					}
+				}
+			);
 	}
 
 	private Map<String, Config> sliceConfigs(final Config config, final List<String> nodeAddrs) {

@@ -14,8 +14,6 @@ import com.emc.mongoose.api.model.item.Item;
 public interface LoadController<I extends Item, O extends IoTask<I>>
 extends AsyncRunnable, Output<O> {
 	
-	String id();
-	
 	void setIoResultsOutput(final Output<O> ioTaskResultsOutput);
 
 	default Input<O> getInput() {

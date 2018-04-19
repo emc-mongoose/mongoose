@@ -8,22 +8,21 @@ import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.api.model.item.ItemType;
+import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.output.OutputConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
+import com.github.akurilov.concurrent.RateThrottle;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -56,8 +55,6 @@ extends LoadStepBase {
 		}
 		actualConfig(config);
 
-		final var stepConfig = config.getTestConfig().getStepConfig();
-		final var nodeCount = stepConfig.getNodeConfig().getAddrs().size();
 		final var ioType = IoType.valueOf(config.getLoadConfig().getType().toUpperCase());
 		final var concurrency = config.getLoadConfig().getLimitConfig().getConcurrency();
 		final var outputConfig = config.getOutputConfig();
@@ -65,6 +62,8 @@ extends LoadStepBase {
 		final var itemDataSize = config.getItemConfig().getDataConfig().getSize();
 
 		if(distributedFlag) {
+			final var stepConfig = config.getTestConfig().getStepConfig();
+			final var nodeCount = stepConfig.getNodeConfig().getAddrs().size();
 			metricsContexts.add(
 				new AggregatingMetricsContext(
 					id(),
@@ -117,89 +116,95 @@ extends LoadStepBase {
 		final var dataLayerConfig = dataInputConfig.getLayerConfig();
 		final var outputConfig = actualConfig.getOutputConfig();
 		final var testStepId = stepConfig.getId();
-		Loggers.MSG.info("Run the load step \"{}\"", testStepId);
 
 		try {
-			dataInputs.add(
-				DataInput.getInstance(
-					dataInputConfig.getFile(), dataInputConfig.getSeed(), dataLayerConfig.getSize(),
-					dataLayerConfig.getCache()
-				)
+
+			final var dataInput = DataInput.getInstance(
+				dataInputConfig.getFile(), dataInputConfig.getSeed(), dataLayerConfig.getSize(),
+				dataLayerConfig.getCache()
 			);
+
+			try {
+
+				final var driver = new BasicStorageDriverBuilder<>()
+					.testStepId(testStepId)
+					.itemConfig(itemConfig)
+					.dataInput(dataInput)
+					.loadConfig(loadConfig)
+					.storageConfig(storageConfig)
+					.build();
+				drivers.add(driver);
+
+				final var itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
+				final var itemFactory = ItemType.getItemFactory(itemType);
+
+				try {
+					final var generator = new BasicLoadGeneratorBuilder<>()
+						.itemConfig(itemConfig)
+						.loadConfig(loadConfig)
+						.limitConfig(limitConfig)
+						.itemType(itemType)
+						.itemFactory((ItemFactory) itemFactory)
+						.storageDriver(driver)
+						.authConfig(storageConfig.getAuthConfig())
+						.originIndex(0)
+						.build();
+					generators.add(generator);
+
+
+					final var rateLimit = loadConfig.getLimitConfig().getRate();
+					if(rateLimit > 0) {
+						generator.setRateThrottle(new RateThrottle<>(rateLimit));
+					}
+
+					final var controller = new BasicLoadController<>(
+						testStepId, generator, driver, metricsContexts.get(0), limitConfig,
+						outputConfig.getMetricsConfig().getTraceConfig().getPersist(),
+						loadConfig.getBatchConfig().getSize(),
+						loadConfig.getGeneratorConfig().getRecycleConfig().getLimit()
+					);
+					controllers.add(controller);
+
+					final var itemOutputFile = itemConfig.getOutputConfig().getFile();
+					if(itemOutputFile != null && itemOutputFile.length() > 0) {
+						final var itemOutputPath = Paths.get(itemOutputFile);
+						if(Files.exists(itemOutputPath)) {
+							Loggers.ERR.warn(
+								"Items output file \"{}\" already exists", itemOutputPath
+							);
+						}
+						try {
+							final var itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
+							controller.setIoResultsOutput(itemOutput);
+						} catch(final IOException e) {
+							LogUtil.exception(
+								Level.ERROR, e,
+								"Failed to initialize the item output, the processed items info " +
+									"won't be persisted"
+							);
+						}
+					}
+
+					Loggers.MSG.info("Run the linear load step \"{}\"", testStepId);
+
+					controller.start();
+					driver.start();
+					generator.start();
+
+				} catch(final OmgShootMyFootException e) {
+					LogUtil.exception(Level.FATAL, e, "Failed to initialize the load generator");
+					throw new IllegalStateException("Failed to initialize the load generator");
+				}
+			} catch(final OmgShootMyFootException e) {
+				LogUtil.exception(Level.FATAL, e, "Failed to initialize the storage driver");
+				throw new IllegalStateException("Failed to initialize the storage driver");
+			} catch(final InterruptedException e) {
+				throw new CancellationException();
+			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.FATAL, e, "Failed to initialize the data input");
 			throw new IllegalStateException("Failed to initialize the data input");
 		}
-
-		final var itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
-		final var itemFactory = ItemType.getItemFactory(itemType);
-		Loggers.MSG.info("Work on the " + itemType.toString().toLowerCase() + " items");
-
-		try {
-			drivers.add(
-				new BasicStorageDriverBuilder<>()
-					.testStepId(testStepId)
-					.itemConfig(itemConfig)
-					.dataInput(dataInputs.get(0))
-					.loadConfig(loadConfig)
-					.storageConfig(storageConfig)
-					.build()
-			);
-		} catch(final OmgShootMyFootException e) {
-			LogUtil.exception(Level.FATAL, e, "Failed to initialize the storage driver");
-			throw new IllegalStateException("Failed to initialize the storage driver");
-		} catch(final InterruptedException e) {
-			throw new CancellationException();
-		}
-
-		try {
-			generators.add(
-				new BasicLoadGeneratorBuilder<>()
-					.itemConfig(itemConfig)
-					.loadConfig(loadConfig)
-					.limitConfig(limitConfig)
-					.itemType(itemType)
-					.itemFactory((ItemFactory) itemFactory)
-					.storageDriver(drivers.get(0))
-					.authConfig(storageConfig.getAuthConfig())
-					.originIndex(0)
-					.build()
-			);
-		} catch(final OmgShootMyFootException e) {
-			LogUtil.exception(Level.FATAL, e, "Failed to initialize the load generator");
-			throw new IllegalStateException("Failed to initialize the load generator");
-		}
-
-		final var loadConfigs = new ArrayList<LoadConfig>();
-		loadConfigs.add(loadConfig);
-		final var outputConfigs = new ArrayList<OutputConfig>();
-		outputConfigs.add(outputConfig);
-
-		final var controller = new BasicLoadController(
-			testStepId, generators, drivers, null, metricsContexts, loadConfigs, stepConfig,
-			outputConfigs
-		);
-		controllers.add(controller);
-
-		final var itemOutputFile = itemConfig.getOutputConfig().getFile();
-		if(itemOutputFile != null && itemOutputFile.length() > 0) {
-			final var itemOutputPath = Paths.get(itemOutputFile);
-			if(Files.exists(itemOutputPath)) {
-				Loggers.ERR.warn("Items output file \"{}\" already exists", itemOutputPath);
-			}
-			try {
-				final var itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
-				controller.setIoResultsOutput(itemOutput);
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.ERROR, e,
-					"Failed to initialize the item output, the processed items info won't be "
-						+ "persisted"
-				);
-			}
-		}
-
-		controller.start();
 	}
 
 	@Override

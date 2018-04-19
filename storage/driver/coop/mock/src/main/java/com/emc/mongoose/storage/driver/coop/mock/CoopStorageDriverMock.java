@@ -33,6 +33,8 @@ extends CoopStorageDriverBase<I, O> {
 	@Override
 	protected boolean submit(final O ioTask)
 	throws IllegalStateException {
+		ioTask.startRequest();
+		ioTask.finishRequest();
 		ioTask.startResponse();
 		if(ioTask instanceof DataIoTask) {
 			final var dataIoTask = (DataIoTask) ioTask;
@@ -46,6 +48,7 @@ extends CoopStorageDriverBase<I, O> {
 					break;
 				case READ:
 					dataIoTask.startDataResponse();
+					break;
 				case UPDATE:
 					final List<Range> fixedRanges = dataIoTask.fixedRanges();
 					if(fixedRanges == null || fixedRanges.isEmpty()) {
@@ -64,7 +67,6 @@ extends CoopStorageDriverBase<I, O> {
 				default:
 					break;
 			}
-			dataIoTask.startDataResponse();
 		}
 		ioTask.finishResponse();
 		ioTask.status(IoTask.Status.SUCC);

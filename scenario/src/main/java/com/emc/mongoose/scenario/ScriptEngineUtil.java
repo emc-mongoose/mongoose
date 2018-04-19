@@ -3,6 +3,7 @@ package com.emc.mongoose.scenario;
 import com.emc.mongoose.api.common.env.Extensions;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.scenario.sna.LinearLoadStep;
+import com.emc.mongoose.scenario.sna.WeightedLoadStep;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
@@ -83,7 +84,8 @@ public interface ScriptEngineUtil {
 	 @param config the configuration
 	 */
 	static void registerStepBasicTypes(final ScriptEngine se, final Config config) {
-		se.put("Load", new LinearLoadStep(config));
+		se.put(LinearLoadStep.TYPE, new LinearLoadStep(config));
+		se.put(WeightedLoadStep.TYPE, new WeightedLoadStep(config));
 	}
 
 	/**
