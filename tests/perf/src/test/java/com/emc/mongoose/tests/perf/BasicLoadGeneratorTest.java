@@ -83,11 +83,10 @@ public class BasicLoadGeneratorTest {
 	private static final class RecyclingAndCountingOutput<T>
 	extends CountingOutput<T> {
 
-		private final LoadGenerator loadGenerator;
+		LoadGenerator loadGenerator;
 
-		RecyclingAndCountingOutput(final LoadGenerator loadGenerator, final LongAdder counter) {
+		RecyclingAndCountingOutput(final LongAdder counter) {
 			super(counter);
-			this.loadGenerator = loadGenerator;
 		}
 
 		@Override
@@ -128,7 +127,7 @@ public class BasicLoadGeneratorTest {
 			ItemNamingType.RANDOM, null, 13, Character.MAX_RADIX, 0
 		);
 		final Input itemInput = new NewDataItemInput(itemFactory, itemNameInput, itemSize);
-		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder()
+		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder(0)
 			.setIoType(IoType.CREATE)
 			.setOutputPathSupplier(new ConstantStringSupplier("/default"))
 			.setUidSupplier(null)
@@ -137,11 +136,10 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				0, shuffleFlag
+				itemInput, ioTaskBuilder, new CountingOutput(counter), BATCH_SIZE, 0,
+				Long.MAX_VALUE, new SizeInBytes(0), 0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " rate: " + counter.sum() / TIME_LIMIT);
@@ -160,7 +158,7 @@ public class BasicLoadGeneratorTest {
 			ItemNamingType.ASC, null, 10, 10, 0
 		);
 		final Input itemInput = new NewDataItemInput(itemFactory, itemNameInput, itemSize);
-		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder()
+		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder(0)
 			.setIoType(IoType.CREATE)
 			.setOutputPathSupplier(new ConstantStringSupplier("/default"))
 			.setUidSupplier(null)
@@ -169,11 +167,10 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				0, shuffleFlag
+				itemInput, ioTaskBuilder, new CountingOutput(counter), BATCH_SIZE, 0,
+				Long.MAX_VALUE, new SizeInBytes(0), 0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " (w/ asc names) rate: " + counter.sum() / TIME_LIMIT);
@@ -192,7 +189,7 @@ public class BasicLoadGeneratorTest {
 			ItemNamingType.RANDOM, null, 13, Character.MAX_RADIX, 0
 		);
 		final Input itemInput = new NewDataItemInput(itemFactory, itemNameInput, itemSize);
-		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder()
+		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder(0)
 			.setIoType(IoType.CREATE)
 			.setOutputPathSupplier(new ConstantStringSupplier("/default"))
 			.setUidSupplier(new ConstantStringSupplier("wuser1@sanity.local"))
@@ -201,11 +198,10 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				0, shuffleFlag
+				itemInput, ioTaskBuilder, new CountingOutput(counter), BATCH_SIZE, 0,
+				Long.MAX_VALUE, new SizeInBytes(0), 0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + "(w/ constant credentials) rate: " + counter.sum() / TIME_LIMIT);
@@ -224,7 +220,7 @@ public class BasicLoadGeneratorTest {
 			ItemNamingType.RANDOM, null, 13, Character.MAX_RADIX, 0
 		);
 		final Input itemInput = new NewDataItemInput(itemFactory, itemNameInput, itemSize);
-		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder()
+		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder(0)
 			.setIoType(IoType.CREATE)
 			.setOutputPathSupplier(new RangePatternDefinedSupplier("$p{16;2}"))
 			.setUidSupplier(null)
@@ -233,11 +229,10 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				0, shuffleFlag
+				itemInput, ioTaskBuilder, new CountingOutput(counter), BATCH_SIZE, 0,
+				Long.MAX_VALUE, new SizeInBytes(0), 0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " (w/ dynamic path) rate: " + counter.sum() / TIME_LIMIT);
@@ -258,7 +253,7 @@ public class BasicLoadGeneratorTest {
 			items.add(item);
 		}
 		final Input itemInput = new CircularListInput(items);
-		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder()
+		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder(0)
 			.setIoType(IoType.READ)
 			.setOutputPathSupplier(null)
 			.setUidSupplier(null)
@@ -267,11 +262,10 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				0, shuffleFlag
+				itemInput, ioTaskBuilder, new CountingOutput(counter), BATCH_SIZE, 0,
+				Long.MAX_VALUE, new SizeInBytes(0), 0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " rate: " + counter.sum() / TIME_LIMIT);
@@ -292,7 +286,7 @@ public class BasicLoadGeneratorTest {
 			items.add(item);
 		}
 		final Input itemInput = new CircularListInput(items);
-		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder()
+		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder(0)
 			.setIoType(IoType.READ)
 			.setOutputPathSupplier(null)
 			.setUidSupplier(null)
@@ -301,11 +295,10 @@ public class BasicLoadGeneratorTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				0, shuffleFlag
+				itemInput, ioTaskBuilder, new CountingOutput(counter), BATCH_SIZE, 0,
+				Long.MAX_VALUE, new SizeInBytes(0), 0, shuffleFlag
 			)
 		) {
-			loadGenerator.setOutput(new ArrayList<Output>() {{ add(new CountingOutput(counter)); }});
 			loadGenerator.start();
 			TimeUnit.SECONDS.sleep(TIME_LIMIT);
 			System.out.println(loadGenerator.toString() + " (w/ shuffling) rate: " + counter.sum() / TIME_LIMIT);
@@ -326,29 +319,25 @@ public class BasicLoadGeneratorTest {
 			items.add(item);
 		}
 		final Input itemInput = new ListInput(items);
-		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder()
+		final IoTaskBuilder ioTaskBuilder = new BasicDataIoTaskBuilder(0)
 			.setIoType(IoType.READ)
 			.setOutputPathSupplier(null)
 			.setUidSupplier(null)
 			.setSecretSupplier(null);
 		final boolean shuffleFlag = false;
 
-		try(
-			final LoadGenerator loadGenerator = new BasicLoadGenerator(
-				itemInput, BATCH_SIZE, 0, ioTaskBuilder, Long.MAX_VALUE, new SizeInBytes(0),
-				BATCH_SIZE, shuffleFlag
-			)
-		) {
-			loadGenerator.setOutput(
-				new ArrayList<Output>() {
-					{
-						add(new RecyclingAndCountingOutput(loadGenerator, counter));
-					}
-				}
-			);
-			loadGenerator.start();
-			TimeUnit.SECONDS.sleep(TIME_LIMIT);
-			System.out.println(loadGenerator.toString() + " rate: " + counter.sum() / TIME_LIMIT);
+		try(final Output taskOutput = new RecyclingAndCountingOutput(counter)) {
+			try(
+				final LoadGenerator loadGenerator = new BasicLoadGenerator(
+					itemInput, ioTaskBuilder, taskOutput, BATCH_SIZE, 0, Long.MAX_VALUE,
+					new SizeInBytes(0), 0, shuffleFlag
+				)
+			) {
+				((RecyclingAndCountingOutput) taskOutput).loadGenerator = loadGenerator;
+				loadGenerator.start();
+				TimeUnit.SECONDS.sleep(TIME_LIMIT);
+				System.out.println(loadGenerator.toString() + " rate: " + counter.sum() / TIME_LIMIT);
+			}
 		}
 	}
 }

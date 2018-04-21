@@ -48,21 +48,18 @@ implements LoadGenerator<I, O> {
 
 	private final static String CLS_NAME = BasicLoadGenerator.class.getSimpleName();
 
-	private volatile WeightThrottle weightThrottle = null;
-	private volatile Throttle<Object> rateThrottle = null;
-	private volatile Output<O> ioTaskOutput = null;
 	private volatile boolean recycleQueueFullState = false;
 	private volatile boolean itemInputFinishFlag = false;
 	private volatile boolean taskInputFinishFlag = false;
 	private volatile boolean outputFinishFlag = false;
 
-	private final BlockingQueue<O> recycleQueue;
 	private final Input<I> itemInput;
-	private final Lock inputLock = new ReentrantLock();
-	private final long transferSizeEstimate;
-	private final boolean shuffleFlag;
-	private final Random rnd;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
+	private final long transferSizeEstimate;
+	private final BlockingQueue<O> recycleQueue;
+	private final boolean shuffleFlag;
+	private final Lock inputLock = new ReentrantLock();
+	private final Random rnd;
 
 	private final LongAdder builtTasksCounter = new LongAdder();
 	private final LongAdder recycledTasksCounter = new LongAdder();
@@ -73,13 +70,15 @@ implements LoadGenerator<I, O> {
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
-		final Input<I> itemInput, final int batchSize, final long transferSizeEstimate,
-		final IoTaskBuilder<I, O> ioTaskBuilder, final long countLimit, final SizeInBytes sizeLimit,
-		final int recycleQueueSize, final boolean shuffleFlag
+		final Input<I> itemInput, final IoTaskBuilder<I, O> ioTaskBuilder,
+		final Output<O> ioTaskOutput, final Throttle rateThrottle,
+		final WeightThrottle weightThrottle, final int batchSize, final long transferSizeEstimate,
+		final long countLimit, final SizeInBytes sizeLimit, final int recycleQueueSize,
+		final boolean shuffleFlag
 	) {
 		this.itemInput = itemInput;
-		this.transferSizeEstimate = transferSizeEstimate;
 		this.ioTaskBuilder = ioTaskBuilder;
+		this.transferSizeEstimate = transferSizeEstimate;
 		this.recycleQueue = recycleQueueSize > 0 ?
 			new ArrayBlockingQueue<>(recycleQueueSize) : null;
 		this.shuffleFlag = shuffleFlag;
@@ -163,7 +162,7 @@ implements LoadGenerator<I, O> {
 							n = weightThrottle.tryAcquire(originIndex, n);
 						}
 						if(rateThrottle != null) {
-							n = rateThrottle.tryAcquire(originIndex, n);
+							n = rateThrottle.tryAcquire(null, n);
 						}
 						// try to output
 						if(n > 0) {
@@ -278,21 +277,6 @@ implements LoadGenerator<I, O> {
 		return outputFinishFlag ||
 			itemInputFinishFlag && taskInputFinishFlag &&
 				getGeneratedTasksCount() == outputTaskCounter.sum();
-	}
-
-	@Override
-	public final void setWeightThrottle(final WeightThrottle weightThrottle) {
-		this.weightThrottle = weightThrottle;
-	}
-
-	@Override
-	public final void setRateThrottle(final Throttle<Object> rateThrottle) {
-		this.rateThrottle = rateThrottle;
-	}
-
-	@Override
-	public final void setOutput(final Output<O> ioTaskOutput) {
-		this.ioTaskOutput = ioTaskOutput;
 	}
 
 	@Override

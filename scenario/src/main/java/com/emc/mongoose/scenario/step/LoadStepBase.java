@@ -128,7 +128,7 @@ implements LoadStep, Runnable {
 			if(distributedFlag) {
 				doStartRemote(actualConfig);
 			} else {
-				doStartLocal(actualConfig);
+				doStartLocal();
 			}
 
 			final long t = stepConfig.getLimitConfig().getTime();
@@ -140,16 +140,7 @@ implements LoadStep, Runnable {
 			LogUtil.exception(Level.WARN, cause, "{} step failed to start", id);
 		}
 
-		metricsContexts.forEach(
-			metricsCtx -> {
-				metricsCtx.start();
-				try {
-					MetricsManager.register(id, metricsCtx);
-				} catch(final InterruptedException e) {
-					throw new CancellationException(e.getMessage());
-				}
-			}
-		);
+		startMetricsAccounting();
 	}
 
 	/**
@@ -163,7 +154,60 @@ implements LoadStep, Runnable {
 		stepClient.start();
 	}
 
-	protected abstract void doStartLocal(final Config actualConfig);
+	private void doStartLocal() {
+		controllers.forEach(
+			controller -> {
+				try {
+					controller.start();
+				} catch(final RemoteException ignored) {
+				} catch(final IllegalStateException e) {
+					LogUtil.exception(
+						Level.WARN, e, "{}: failed to start the load controller \"{}\"", id,
+						controller
+					);
+				}
+			}
+		);
+		drivers.forEach(
+			driver -> {
+				try {
+					driver.start();
+				} catch(final RemoteException ignored) {
+				} catch(final IllegalStateException e) {
+					LogUtil.exception(
+						Level.WARN, e, "{}: failed to start the storage driver \"{}\"", id,
+						driver
+					);
+				}
+			}
+		);
+		generators.forEach(
+			generator -> {
+				try {
+					generator.start();
+				} catch(final RemoteException ignored) {
+				} catch(final IllegalStateException e) {
+					LogUtil.exception(
+						Level.WARN, e, "{}: failed to start the load generator \"{}\"", id,
+						generator
+					);
+				}
+			}
+		);
+	}
+
+	private void startMetricsAccounting() {
+		metricsContexts.forEach(
+			metricsCtx -> {
+				metricsCtx.start();
+				try {
+					MetricsManager.register(id, metricsCtx);
+				} catch(final InterruptedException e) {
+					throw new CancellationException(e.getMessage());
+				}
+			}
+		);
+	}
 
 	protected void doShutdown() {
 		if(stepClient == null) {

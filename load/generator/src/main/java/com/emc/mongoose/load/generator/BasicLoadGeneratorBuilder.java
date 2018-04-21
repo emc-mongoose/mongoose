@@ -45,6 +45,9 @@ import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
+import com.github.akurilov.concurrent.Throttle;
+import com.github.akurilov.concurrent.WeightThrottle;
+
 import org.apache.logging.log4j.Level;
 
 import java.io.BufferedReader;
@@ -85,6 +88,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 	private long sizeEstimate = 0;
 	private int batchSize;
 	private int originIndex;
+	private Throttle<O> rateThrottle = null;
+	private WeightThrottle weightThrottle = null;
 	
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, T> itemConfig(final ItemConfig itemConfig) {
@@ -152,6 +157,18 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, T> originIndex(final int originIndex) {
 		this.originIndex = originIndex;
+		return this;
+	}
+
+	@Override
+	public BasicLoadGeneratorBuilder<I, O, T> rateThrottle(final Throttle<O> rateThrottle) {
+		this.rateThrottle = rateThrottle;
+		return this;
+	}
+
+	@Override
+	public BasicLoadGeneratorBuilder<I, O, T> weightThrottle(final WeightThrottle weightThrottle) {
+		this.weightThrottle = weightThrottle;
 		return this;
 	}
 
@@ -323,8 +340,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 		final int recycleLimit = recycleConfig.getEnabled() ? recycleConfig.getLimit() : 0;
 
 		return (T) new BasicLoadGenerator<>(
-			itemInput, batchSize, sizeEstimate, ioTaskBuilder, countLimit, sizeLimit, recycleLimit,
-			shuffleFlag
+			itemInput, ioTaskBuilder, storageDriver, rateThrottle, weightThrottle, batchSize,
+			sizeEstimate, countLimit, sizeLimit, recycleLimit, shuffleFlag
 		);
 	}
 	

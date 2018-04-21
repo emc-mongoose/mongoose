@@ -59,12 +59,23 @@ extends LoadStepBase {
 	}
 
 	@Override
+	public String getTypeName() {
+		return TYPE;
+	}
+
+	@Override
+	protected LoadStepBase copyInstance(final List<Map<String, Object>> stepConfigs) {
+		return new LinearLoadStep(baseConfig, stepConfigs);
+	}
+
+	@Override
 	protected void init() {
 
 		final String autoStepId = getTypeName().toLowerCase() + "_" + LogUtil.getDateTimeStamp();
 		final Config config = new Config(baseConfig);
+		final TestConfig testConfig = config.getTestConfig();
+		final StepConfig stepConfig = testConfig.getStepConfig();
 		if(stepConfigs == null || stepConfigs.size() == 0) {
-			final StepConfig stepConfig = config.getTestConfig().getStepConfig();
 			if(stepConfig.getIdTmp()) {
 				stepConfig.setId(autoStepId);
 			}
@@ -73,14 +84,14 @@ extends LoadStepBase {
 		}
 		actualConfig(config);
 
-		final IoType ioType = IoType.valueOf(config.getLoadConfig().getType().toUpperCase());
-		final int concurrency = config.getLoadConfig().getLimitConfig().getConcurrency();
+		final LoadConfig loadConfig = config.getLoadConfig();
+		final IoType ioType = IoType.valueOf(loadConfig.getType().toUpperCase());
+		final int concurrency = loadConfig.getLimitConfig().getConcurrency();
 		final OutputConfig outputConfig = config.getOutputConfig();
 		final MetricsConfig metricsConfig = outputConfig.getMetricsConfig();
 		final SizeInBytes itemDataSize = config.getItemConfig().getDataConfig().getSize();
 
 		if(distributedFlag) {
-			final StepConfig stepConfig = config.getTestConfig().getStepConfig();
 			final int nodeCount = stepConfig.getNodeConfig().getAddrs().size();
 			metricsContexts.add(
 				new AggregatingMetricsContext(
@@ -115,24 +126,14 @@ extends LoadStepBase {
 				)
 			);
 		}
-	}
 
-	@Override
-	protected void doStartLocal(final Config actualConfig) {
-
-		final ItemConfig itemConfig = actualConfig.getItemConfig();
-		final LoadConfig loadConfig = actualConfig.getLoadConfig();
-		final StorageConfig storageConfig = actualConfig.getStorageConfig();
-		final TestConfig testConfig = actualConfig.getTestConfig();
-
+		final ItemConfig itemConfig = config.getItemConfig();
+		final StorageConfig storageConfig = config.getStorageConfig();
 		final DataConfig dataConfig = itemConfig.getDataConfig();
-		final StepConfig stepConfig = testConfig.getStepConfig();
-
 		final InputConfig dataInputConfig = dataConfig.getInputConfig();
 		final LimitConfig limitConfig = stepConfig.getLimitConfig();
-
 		final LayerConfig dataLayerConfig = dataInputConfig.getLayerConfig();
-		final OutputConfig outputConfig = actualConfig.getOutputConfig();
+
 		final String testStepId = stepConfig.getId();
 
 		try {
@@ -155,6 +156,7 @@ extends LoadStepBase {
 
 				final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
 				final ItemFactory<? extends Item> itemFactory = ItemType.getItemFactory(itemType);
+				final double rateLimit = loadConfig.getLimitConfig().getRate();
 
 				try {
 					final LoadGenerator generator = new BasicLoadGeneratorBuilder<>()
@@ -166,14 +168,10 @@ extends LoadStepBase {
 						.storageDriver(driver)
 						.authConfig(storageConfig.getAuthConfig())
 						.originIndex(0)
+						.rateThrottle(rateLimit > 0 ? new RateThrottle<>(rateLimit) : null)
+						.weightThrottle(null)
 						.build();
 					generators.add(generator);
-
-
-					final double rateLimit = loadConfig.getLimitConfig().getRate();
-					if(rateLimit > 0) {
-						generator.setRateThrottle(new RateThrottle<>(rateLimit));
-					}
 
 					final LoadController controller = new BasicLoadController<>(
 						testStepId, generator, driver, metricsContexts.get(0), limitConfig,
@@ -204,13 +202,6 @@ extends LoadStepBase {
 							);
 						}
 					}
-
-					Loggers.MSG.info("Run the linear load step \"{}\"", testStepId);
-
-					controller.start();
-					driver.start();
-					generator.start();
-
 				} catch(final OmgShootMyFootException e) {
 					LogUtil.exception(Level.FATAL, e, "Failed to initialize the load generator");
 					throw new IllegalStateException("Failed to initialize the load generator");
@@ -225,15 +216,5 @@ extends LoadStepBase {
 			LogUtil.exception(Level.FATAL, e, "Failed to initialize the data input");
 			throw new IllegalStateException("Failed to initialize the data input");
 		}
-	}
-
-	@Override
-	public String getTypeName() {
-		return TYPE;
-	}
-
-	@Override
-	protected LoadStepBase copyInstance(final List<Map<String, Object>> stepConfigs) {
-		return new LinearLoadStep(baseConfig, stepConfigs);
 	}
 }
