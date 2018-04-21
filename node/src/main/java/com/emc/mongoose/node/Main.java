@@ -22,7 +22,7 @@ public final class Main {
 
 		LogUtil.init();
 
-		final var config = Config.loadDefaults();
+		final Config config = Config.loadDefaults();
 		if(config == null) {
 			throw new AssertionError();
 		}
@@ -41,13 +41,13 @@ public final class Main {
 		}
 
 		try(
-			final var ctx = CloseableThreadContext
+			final CloseableThreadContext.Instance ctx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, config.getTestConfig().getStepConfig().getId())
 				.put(KEY_CLASS_NAME, com.emc.mongoose.scenario.Main.class.getSimpleName())
 		) {
 			Arrays.stream(args).forEach(Loggers.CLI::info);
 			Loggers.CONFIG.info(config.toString());
-			final var listenPort = config.getTestConfig().getStepConfig().getNodeConfig().getPort();
+			final int listenPort = config.getTestConfig().getStepConfig().getNodeConfig().getPort();
 			Service inputFileSvc = null;
 			Service scenarioStepSvc = null;
 			try {

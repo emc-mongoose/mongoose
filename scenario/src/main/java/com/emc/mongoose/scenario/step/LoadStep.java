@@ -1,4 +1,4 @@
-package com.emc.mongoose.scenario.sna;
+package com.emc.mongoose.scenario.step;
 
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.ui.config.Config;
@@ -33,7 +33,7 @@ extends AsyncRunnable {
 	throws RemoteException;
 
 	static Config initConfigSlice(final Config config, final String nodeAddrWithPort) {
-		final var configSlice = new Config(config);
+		final Config configSlice = new Config(config);
 		// disable the distributed mode flag
 		configSlice.getTestConfig().getStepConfig().setDistributed(false);
 		return configSlice;

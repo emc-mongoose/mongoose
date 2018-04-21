@@ -5,6 +5,7 @@ import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.storage.Credential;
@@ -33,8 +34,8 @@ extends NioStorageDriverBase<I, O> {
 	protected void invokeNio(final O ioTask) {
 		ioTask.startResponse();
 		if(ioTask instanceof DataIoTask) {
-			final var dataIoTask = (DataIoTask) ioTask;
-			final var dataItem = dataIoTask.item();
+			final DataIoTask dataIoTask = (DataIoTask) ioTask;
+			final DataItem dataItem = dataIoTask.item();
 			switch(dataIoTask.ioType()) {
 				case CREATE:
 					try {

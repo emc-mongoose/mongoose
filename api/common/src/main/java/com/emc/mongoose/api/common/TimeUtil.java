@@ -3,6 +3,7 @@ package com.emc.mongoose.api.common;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -10,14 +11,15 @@ import java.util.regex.Pattern;
  */
 public abstract class TimeUtil {
 	
-	private static final Map<String, TimeUnit> TIME_UNIT_SHORTCUTS = new HashMap<>() {
-		{
-			put("s", TimeUnit.SECONDS);
-			put("m", TimeUnit.MINUTES);
-			put("h", TimeUnit.HOURS);
-			put("d", TimeUnit.DAYS);
-		}
-	};
+	private static final Map<String, TimeUnit>
+		TIME_UNIT_SHORTCUTS = new HashMap<String, TimeUnit>() {
+			{
+				put("s", TimeUnit.SECONDS);
+				put("m", TimeUnit.MINUTES);
+				put("h", TimeUnit.HOURS);
+				put("d", TimeUnit.DAYS);
+			}
+		};
 	private static final Pattern PATTERN_TIME = Pattern.compile("([0-9]*)([smhdSMHD]?)");
 	private static final Pattern PATTERN_TIME_COMPAT = Pattern.compile("([0-9]*)\\.([a-zA-Z]{4,7})");
 	
@@ -25,7 +27,7 @@ public abstract class TimeUtil {
 	throws IllegalArgumentException {
 		
 		final String timeValueSpec;
-		var m = PATTERN_TIME.matcher(rawValue);
+		Matcher m = PATTERN_TIME.matcher(rawValue);
 		
 		if(m.matches()) {
 			timeValueSpec = m.group(1);
@@ -52,11 +54,11 @@ public abstract class TimeUtil {
 	
 	public static TimeUnit getTimeUnit(final String rawValue) {
 
-		var result = TimeUnit.SECONDS;
-		var m = PATTERN_TIME.matcher(rawValue);
+		TimeUnit result = TimeUnit.SECONDS;
+		Matcher m = PATTERN_TIME.matcher(rawValue);
 		
 		if(m.matches()) {
-			final var t = m.group(2).toLowerCase();
+			final String t = m.group(2).toLowerCase();
 			if(TIME_UNIT_SHORTCUTS.containsKey(t)) {
 				result = TIME_UNIT_SHORTCUTS.get(t);
 			}
@@ -78,7 +80,7 @@ public abstract class TimeUtil {
 	}
 	
 	public static long getTimeInSeconds(final String rawValue) {
-		final var timeUnit = TimeUtil.getTimeUnit(rawValue);
+		final TimeUnit timeUnit = TimeUtil.getTimeUnit(rawValue);
 		if(timeUnit == null) {
 			return TimeUtil.getTimeValue(rawValue);
 		} else {

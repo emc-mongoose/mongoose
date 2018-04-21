@@ -1,27 +1,45 @@
-package com.emc.mongoose.scenario.sna;
+package com.emc.mongoose.scenario.step;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.api.metrics.BasicMetricsContext;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.api.model.item.ItemType;
+import com.emc.mongoose.api.model.load.LoadController;
 import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.load.controller.BasicLoadController;
 import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.item.data.DataConfig;
+import com.emc.mongoose.ui.config.item.data.input.InputConfig;
+import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
+import com.emc.mongoose.ui.config.load.LoadConfig;
+import com.emc.mongoose.ui.config.output.OutputConfig;
+import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
+import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.test.TestConfig;
+import com.emc.mongoose.ui.config.test.step.StepConfig;
+import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
+import com.github.akurilov.commons.io.Output;
+import com.github.akurilov.commons.system.SizeInBytes;
+
 import com.github.akurilov.concurrent.RateThrottle;
+
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
@@ -43,10 +61,10 @@ extends LoadStepBase {
 	@Override
 	protected void init() {
 
-		final var autoStepId = getTypeName().toLowerCase() + "_" + LogUtil.getDateTimeStamp();
-		final var config = new Config(baseConfig);
+		final String autoStepId = getTypeName().toLowerCase() + "_" + LogUtil.getDateTimeStamp();
+		final Config config = new Config(baseConfig);
 		if(stepConfigs == null || stepConfigs.size() == 0) {
-			final var stepConfig = config.getTestConfig().getStepConfig();
+			final StepConfig stepConfig = config.getTestConfig().getStepConfig();
 			if(stepConfig.getIdTmp()) {
 				stepConfig.setId(autoStepId);
 			}
@@ -55,15 +73,15 @@ extends LoadStepBase {
 		}
 		actualConfig(config);
 
-		final var ioType = IoType.valueOf(config.getLoadConfig().getType().toUpperCase());
-		final var concurrency = config.getLoadConfig().getLimitConfig().getConcurrency();
-		final var outputConfig = config.getOutputConfig();
-		final var metricsConfig = outputConfig.getMetricsConfig();
-		final var itemDataSize = config.getItemConfig().getDataConfig().getSize();
+		final IoType ioType = IoType.valueOf(config.getLoadConfig().getType().toUpperCase());
+		final int concurrency = config.getLoadConfig().getLimitConfig().getConcurrency();
+		final OutputConfig outputConfig = config.getOutputConfig();
+		final MetricsConfig metricsConfig = outputConfig.getMetricsConfig();
+		final SizeInBytes itemDataSize = config.getItemConfig().getDataConfig().getSize();
 
 		if(distributedFlag) {
-			final var stepConfig = config.getTestConfig().getStepConfig();
-			final var nodeCount = stepConfig.getNodeConfig().getAddrs().size();
+			final StepConfig stepConfig = config.getTestConfig().getStepConfig();
+			final int nodeCount = stepConfig.getNodeConfig().getAddrs().size();
 			metricsContexts.add(
 				new AggregatingMetricsContext(
 					id(),
@@ -102,31 +120,31 @@ extends LoadStepBase {
 	@Override
 	protected void doStartLocal(final Config actualConfig) {
 
-		final var itemConfig = actualConfig.getItemConfig();
-		final var loadConfig = actualConfig.getLoadConfig();
-		final var storageConfig = actualConfig.getStorageConfig();
-		final var testConfig = actualConfig.getTestConfig();
+		final ItemConfig itemConfig = actualConfig.getItemConfig();
+		final LoadConfig loadConfig = actualConfig.getLoadConfig();
+		final StorageConfig storageConfig = actualConfig.getStorageConfig();
+		final TestConfig testConfig = actualConfig.getTestConfig();
 
-		final var dataConfig = itemConfig.getDataConfig();
-		final var stepConfig = testConfig.getStepConfig();
+		final DataConfig dataConfig = itemConfig.getDataConfig();
+		final StepConfig stepConfig = testConfig.getStepConfig();
 
-		final var dataInputConfig = dataConfig.getInputConfig();
-		final var limitConfig = stepConfig.getLimitConfig();
+		final InputConfig dataInputConfig = dataConfig.getInputConfig();
+		final LimitConfig limitConfig = stepConfig.getLimitConfig();
 
-		final var dataLayerConfig = dataInputConfig.getLayerConfig();
-		final var outputConfig = actualConfig.getOutputConfig();
-		final var testStepId = stepConfig.getId();
+		final LayerConfig dataLayerConfig = dataInputConfig.getLayerConfig();
+		final OutputConfig outputConfig = actualConfig.getOutputConfig();
+		final String testStepId = stepConfig.getId();
 
 		try {
 
-			final var dataInput = DataInput.getInstance(
+			final DataInput dataInput = DataInput.getInstance(
 				dataInputConfig.getFile(), dataInputConfig.getSeed(), dataLayerConfig.getSize(),
 				dataLayerConfig.getCache()
 			);
 
 			try {
 
-				final var driver = new BasicStorageDriverBuilder<>()
+				final StorageDriver driver = new BasicStorageDriverBuilder<>()
 					.testStepId(testStepId)
 					.itemConfig(itemConfig)
 					.dataInput(dataInput)
@@ -135,11 +153,11 @@ extends LoadStepBase {
 					.build();
 				drivers.add(driver);
 
-				final var itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
-				final var itemFactory = ItemType.getItemFactory(itemType);
+				final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
+				final ItemFactory<? extends Item> itemFactory = ItemType.getItemFactory(itemType);
 
 				try {
-					final var generator = new BasicLoadGeneratorBuilder<>()
+					final LoadGenerator generator = new BasicLoadGeneratorBuilder<>()
 						.itemConfig(itemConfig)
 						.loadConfig(loadConfig)
 						.limitConfig(limitConfig)
@@ -152,12 +170,12 @@ extends LoadStepBase {
 					generators.add(generator);
 
 
-					final var rateLimit = loadConfig.getLimitConfig().getRate();
+					final double rateLimit = loadConfig.getLimitConfig().getRate();
 					if(rateLimit > 0) {
 						generator.setRateThrottle(new RateThrottle<>(rateLimit));
 					}
 
-					final var controller = new BasicLoadController<>(
+					final LoadController controller = new BasicLoadController<>(
 						testStepId, generator, driver, metricsContexts.get(0), limitConfig,
 						outputConfig.getMetricsConfig().getTraceConfig().getPersist(),
 						loadConfig.getBatchConfig().getSize(),
@@ -165,16 +183,18 @@ extends LoadStepBase {
 					);
 					controllers.add(controller);
 
-					final var itemOutputFile = itemConfig.getOutputConfig().getFile();
+					final String itemOutputFile = itemConfig.getOutputConfig().getFile();
 					if(itemOutputFile != null && itemOutputFile.length() > 0) {
-						final var itemOutputPath = Paths.get(itemOutputFile);
+						final Path itemOutputPath = Paths.get(itemOutputFile);
 						if(Files.exists(itemOutputPath)) {
 							Loggers.ERR.warn(
 								"Items output file \"{}\" already exists", itemOutputPath
 							);
 						}
 						try {
-							final var itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
+							final Output<? extends Item> itemOutput = new ItemInfoFileOutput<>(
+								itemOutputPath
+							);
 							controller.setIoResultsOutput(itemOutput);
 						} catch(final IOException e) {
 							LogUtil.exception(

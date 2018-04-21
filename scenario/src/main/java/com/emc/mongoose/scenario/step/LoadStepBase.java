@@ -1,4 +1,4 @@
-package com.emc.mongoose.scenario.sna;
+package com.emc.mongoose.scenario.step;
 
 import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.api.metrics.MetricsManager;
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -55,7 +56,7 @@ implements LoadStep, Runnable {
 
 	@Override
 	public LoadStepBase config(final Map<String, Object> config) {
-		final var stepConfigsCopy = new ArrayList<Map<String, Object>>();
+		final List<Map<String, Object>> stepConfigsCopy = new ArrayList<>();
 		if(stepConfigs != null) {
 			stepConfigsCopy.addAll(stepConfigs);
 		}
@@ -68,7 +69,7 @@ implements LoadStep, Runnable {
 		return id;
 	}
 
-	@Override @SuppressWarnings("deprecation")
+	@Override //@SuppressWarnings("deprecation")
 	public final List<MetricsSnapshot> metricsSnapshots() {
 		return metricsContexts
 			.stream()
@@ -117,10 +118,10 @@ implements LoadStep, Runnable {
 
 		init();
 
-		final var stepConfig = actualConfig.getTestConfig().getStepConfig();
-		final var stepId = stepConfig.getId();
+		final StepConfig stepConfig = actualConfig.getTestConfig().getStepConfig();
+		final String stepId = stepConfig.getId();
 		try(
-			final var logCtx = CloseableThreadContext
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
@@ -130,7 +131,7 @@ implements LoadStep, Runnable {
 				doStartLocal(actualConfig);
 			}
 
-			final var t = stepConfig.getLimitConfig().getTime();
+			final long t = stepConfig.getLimitConfig().getTime();
 			if(t > 0) {
 				timeLimitSec = t;
 			}
@@ -180,7 +181,7 @@ implements LoadStep, Runnable {
 		generators.forEach(
 			generator -> {
 				try(
-					final var ctx = CloseableThreadContext
+					final CloseableThreadContext.Instance ctx = CloseableThreadContext
 						.put(KEY_TEST_STEP_ID, id)
 						.put(KEY_CLASS_NAME, getClass().getSimpleName())
 				) {
@@ -197,7 +198,7 @@ implements LoadStep, Runnable {
 		drivers.forEach(
 			driver -> {
 				try(
-					final var ctx = CloseableThreadContext
+					final CloseableThreadContext.Instance ctx = CloseableThreadContext
 						.put(KEY_TEST_STEP_ID, id)
 						.put(KEY_CLASS_NAME, getClass().getSimpleName())
 				) {
@@ -228,10 +229,10 @@ implements LoadStep, Runnable {
 
 	protected boolean awaitLocal(final long timeout, final TimeUnit timeUnit)
 	throws IllegalStateException, InterruptedException {
-		final var awaitExecutor = Executors.newFixedThreadPool(
+		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			controllers.size(), new LogContextThreadFactory(id)
 		);
-		final var latch = new CountDownLatch(controllers.size());
+		final CountDownLatch latch = new CountDownLatch(controllers.size());
 		controllers
 			.forEach(
 				controller -> {

@@ -56,7 +56,7 @@ implements Input<I> {
 	@Override
 	public I get()
 	throws IOException {
-		final var nextLine = itemsSrc.readLine();
+		final String nextLine = itemsSrc.readLine();
 		try {
 			return nextLine == null ? null : itemFactory.getItem(nextLine);
 		} catch(final IllegalArgumentException e) {
@@ -68,7 +68,7 @@ implements Input<I> {
 	@Override
 	public int get(final List<I> buffer, final int limit)
 	throws IOException {
-		var i = 0;
+		int i = 0;
 		String nextLine;
 		try {
 			while(i < limit) {

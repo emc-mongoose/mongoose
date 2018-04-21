@@ -1,4 +1,4 @@
-package com.emc.mongoose.scenario.sna;
+package com.emc.mongoose.scenario.step;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
@@ -6,8 +6,10 @@ import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.api.model.data.DataInput;
+import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.CsvFileItemInput;
 import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemType;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.api.model.svc.Service;
@@ -15,6 +17,14 @@ import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.load.generator.StorageItemInput;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.item.ItemConfig;
+import com.emc.mongoose.ui.config.item.data.DataConfig;
+import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
+import com.emc.mongoose.ui.config.item.input.InputConfig;
+import com.emc.mongoose.ui.config.item.naming.NamingConfig;
+import com.emc.mongoose.ui.config.item.output.OutputConfig;
+import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
+import com.emc.mongoose.ui.config.test.step.node.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -30,7 +40,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -40,6 +52,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -70,11 +83,11 @@ implements LoadStepClient {
 	protected final void doStart()
 	throws IllegalArgumentException {
 
-		final var nodeConfig = actualConfig.getTestConfig().getStepConfig().getNodeConfig();
-		final var nodePort = nodeConfig.getPort();
-		final var addPortIfMissingPartialFunc = Function2
+		final NodeConfig nodeConfig = actualConfig.getTestConfig().getStepConfig().getNodeConfig();
+		final int nodePort = nodeConfig.getPort();
+		final Function<String, String> addPortIfMissingPartialFunc = Function2
 			.partial2(NetUtil::addPortIfMissing, nodePort);
-		final var nodeAddrs = nodeConfig
+		final List<String> nodeAddrs = nodeConfig
 			.getAddrs()
 			.stream()
 			.map(addPortIfMissingPartialFunc)
@@ -91,8 +104,8 @@ implements LoadStepClient {
 		if(actualConfig.getOutputConfig().getMetricsConfig().getTraceConfig().getPersist()) {
 			initIoTraceLogFileServices(nodeAddrs);
 		}
-		final var configSlices = sliceConfigs(actualConfig, nodeAddrs);
-		final var resolveStepSvcPartialFunc = Function2.partial1(
+		final Map<String, Config> configSlices = sliceConfigs(actualConfig, nodeAddrs);
+		final Function<String, LoadStepService> resolveStepSvcPartialFunc = Function2.partial1(
 			this::resolveStepSvc, configSlices
 		);
 
@@ -104,9 +117,10 @@ implements LoadStepClient {
 				stepSvc -> {
 					try {
 						stepSvc.start();
-						final var snapshotsFetcher = new RemoteMetricsSnapshotsSupplierCoroutine(
-							ServiceTaskExecutor.INSTANCE, stepSvc
-						);
+						final MetricsSnapshotsSupplierCoroutine
+							snapshotsFetcher = new RemoteMetricsSnapshotsSupplierCoroutine(
+								ServiceTaskExecutor.INSTANCE, stepSvc
+							);
 						snapshotsFetcher.start();
 						metricsSnapshotsSuppliers.put(stepSvc, snapshotsFetcher);
 					} catch(final RemoteException | IllegalStateException e) {
@@ -138,7 +152,7 @@ implements LoadStepClient {
 
 	private Map<String, Config> sliceConfigs(final Config config, final List<String> nodeAddrs) {
 
-		final var configSlices = nodeAddrs
+		final Map<String, Config> configSlices = nodeAddrs
 			.stream()
 			.collect(
 				Collectors.toMap(
@@ -148,13 +162,13 @@ implements LoadStepClient {
 			);
 
 		// slice the count limit (if any)
-		final var nodeCount = nodeAddrs.size();
-		final var countLimit = config.getTestConfig().getStepConfig().getLimitConfig().getCount();
+		final int nodeCount = nodeAddrs.size();
+		final long countLimit = config.getTestConfig().getStepConfig().getLimitConfig().getCount();
 		if(nodeCount > 1 && countLimit > 0) {
-			final var countLimitPerNode = (long) Math.ceil(((double) countLimit) / nodeCount);
-			var remainingCountLimit = countLimit;
-			for(final var configEntry : configSlices.entrySet()) {
-				final var limitConfigSlice = configEntry.getValue()
+			final long countLimitPerNode = (long) Math.ceil(((double) countLimit) / nodeCount);
+			long remainingCountLimit = countLimit;
+			for(final Map.Entry<String, Config> configEntry : configSlices.entrySet()) {
+				final LimitConfig limitConfigSlice = configEntry.getValue()
 					.getTestConfig()
 					.getStepConfig()
 					.getLimitConfig();
@@ -175,8 +189,8 @@ implements LoadStepClient {
 		}
 
 		// slice an item input (if any)
-		final var batchSize = config.getLoadConfig().getBatchConfig().getSize();
-		try(final var itemInput = createItemInput(config, batchSize)) {
+		final int batchSize = config.getLoadConfig().getBatchConfig().getSize();
+		try(final Input<? extends Item> itemInput = createItemInput(config, batchSize)) {
 			if(itemInput != null) {
 				sliceItemInput(itemInput, nodeAddrs, configSlices, batchSize);
 			}
@@ -187,7 +201,7 @@ implements LoadStepClient {
 		}
 
 		// item output file (if any)
-		final var itemOutputFile = config.getItemConfig().getOutputConfig().getFile();
+		final String itemOutputFile = config.getItemConfig().getOutputConfig().getFile();
 		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
 			itemOutputFileSvcs = nodeAddrs
 				.parallelStream()
@@ -221,8 +235,8 @@ implements LoadStepClient {
 						.ifPresent(
 							fileSvc -> {
 								try {
-									final var remoteItemOutputFile = fileSvc.filePath();
-									final var outputConfigSlice = configSlices
+									final String remoteItemOutputFile = fileSvc.filePath();
+									final OutputConfig outputConfigSlice = configSlices
 										.get(nodeAddrWithPort)
 										.getItemConfig()
 										.getOutputConfig();
@@ -272,7 +286,7 @@ implements LoadStepClient {
 		try {
 			fileSvc.open(FileService.WRITE_OPEN_OPTIONS);
 			fileSvc.closeFile();
-			final var filePath = fileSvc.filePath();
+			final String filePath = fileSvc.filePath();
 			Loggers.MSG.info("Use temporary remote item output file \"{}\"", filePath);
 		} catch(final IOException e) {
 			LogUtil.exception(
@@ -286,17 +300,17 @@ implements LoadStepClient {
 
 	private static Input<? extends Item> createItemInput(final Config config, final int batchSize) {
 
-		final var itemConfig = config.getItemConfig();
-		final var itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
-		final var itemFactory = ItemType.getItemFactory(itemType);
-		final var itemInputConfig = itemConfig.getInputConfig();
-		final var itemInputFile = itemInputConfig.getFile();
+		final ItemConfig itemConfig = config.getItemConfig();
+		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
+		final ItemFactory<? extends Item> itemFactory = ItemType.getItemFactory(itemType);
+		final InputConfig itemInputConfig = itemConfig.getInputConfig();
+		final String itemInputFile = itemInputConfig.getFile();
 
 		if(itemInputFile != null && !itemInputFile.isEmpty()) {
 
-			final var itemInputFilePath = Paths.get(itemInputFile);
+			final Path itemInputFilePath = Paths.get(itemInputFile);
 			try {
-				final var mimeType = Files.probeContentType(itemInputFilePath);
+				final String mimeType = Files.probeContentType(itemInputFilePath);
 				if(mimeType.startsWith("text")) {
 					try {
 						return new CsvFileItemInput<>(itemInputFilePath, itemFactory);
@@ -313,26 +327,28 @@ implements LoadStepClient {
 			}
 		} else {
 
-			final var itemInputPath = itemInputConfig.getPath();
+			final String itemInputPath = itemInputConfig.getPath();
 			if(itemInputPath != null && !itemInputPath.isEmpty()) {
-				final var dataConfig = itemConfig.getDataConfig();
-				final var dataInputConfig = dataConfig.getInputConfig();
-				final var dataLayerConfig = dataInputConfig.getLayerConfig();
+				final DataConfig dataConfig = itemConfig.getDataConfig();
+				final com.emc.mongoose.ui.config.item.data.input.InputConfig
+					dataInputConfig = dataConfig.getInputConfig();
+				final LayerConfig dataLayerConfig = dataInputConfig.getLayerConfig();
 				try {
-					final var dataInput = DataInput.getInstance(
+					final DataInput dataInput = DataInput.getInstance(
 						dataInputConfig.getFile(), dataInputConfig.getSeed(),
 						dataLayerConfig.getSize(), dataLayerConfig.getCache()
 					);
-					final var storageDriver = new BasicStorageDriverBuilder<>()
-						.testStepId(config.getTestConfig().getStepConfig().getId())
-						.itemConfig(itemConfig)
-						.dataInput(dataInput)
-						.loadConfig(config.getLoadConfig())
-						.storageConfig(config.getStorageConfig())
-						.build();
-					final var namingConfig = itemConfig.getNamingConfig();
-					final var namingPrefix = namingConfig.getPrefix();
-					final var namingRadix = namingConfig.getRadix();
+					final StorageDriver<? extends Item, ? extends IoTask>
+						storageDriver = new BasicStorageDriverBuilder<>()
+							.testStepId(config.getTestConfig().getStepConfig().getId())
+							.itemConfig(itemConfig)
+							.dataInput(dataInput)
+							.loadConfig(config.getLoadConfig())
+							.storageConfig(config.getStorageConfig())
+							.build();
+					final NamingConfig namingConfig = itemConfig.getNamingConfig();
+					final String namingPrefix = namingConfig.getPrefix();
+					final int namingRadix = namingConfig.getRadix();
 					return new StorageItemInput<>(
 						(StorageDriver) storageDriver, batchSize, itemFactory, itemInputPath,
 						namingPrefix, namingRadix
@@ -357,14 +373,14 @@ implements LoadStepClient {
 
 		itemInputFileSvcs = createOpenItemInputFileServices(nodeAddrs);
 
-		final var itemsDataByNode = nodeAddrs
+		final Map<String, ByteArrayOutputStream> itemsDataByNode = nodeAddrs
 			.stream()
 			.collect(
 				Collectors.toMap(
 					Function.identity(), n -> new ByteArrayOutputStream(batchSize * 0x40)
 				)
 			);
-		final var itemsOutByNode = itemsDataByNode
+		final Map<String, ObjectOutputStream> itemsOutByNode = itemsDataByNode
 			.keySet()
 			.stream()
 			.collect(
@@ -488,11 +504,11 @@ implements LoadStepClient {
 		final Map<String, ObjectOutputStream> itemsOutByNode
 	) throws IOException {
 
-		final var nodeCount = nodeAddrs.size();
-		final var itemsBuff = new ArrayList<>(batchSize);
+		final int nodeCount = nodeAddrs.size();
+		final List<? extends Item> itemsBuff = new ArrayList<>(batchSize);
 
 		int n;
-		final var out = itemsOutByNode.get(nodeAddrs.get(0));
+		final ObjectOutputStream out = itemsOutByNode.get(nodeAddrs.get(0));
 
 		while(true) {
 
@@ -508,13 +524,13 @@ implements LoadStepClient {
 				// convert the items to the text representation
 				if(nodeCount > 1) {
 					// distribute the items using round robin
-					for(var i = 0; i < n; i ++) {
+					for(int i = 0; i < n; i ++) {
 						itemsOutByNode
 							.get(nodeAddrs.get(i % nodeCount))
 							.writeUnshared(itemsBuff.get(i));
 					}
 				} else {
-					for(var i = 0; i < n; i ++) {
+					for(int i = 0; i < n; i ++) {
 						out.writeUnshared(itemsBuff.get(i));
 					}
 				}
@@ -526,13 +542,13 @@ implements LoadStepClient {
 					.parallelStream()
 					.forEach(
 						nodeAddrWithPort -> {
-							final var buff = itemsDataByNode.get(nodeAddrWithPort);
+							final ByteArrayOutputStream buff = itemsDataByNode.get(nodeAddrWithPort);
 							itemInputFileSvcs
 								.get(nodeAddrWithPort)
 								.ifPresent(
 									itemInputFileSvc -> {
 										try {
-											final var data = buff.toByteArray();
+											final byte[] data = buff.toByteArray();
 											itemInputFileSvc.write(data);
 											buff.reset();
 										} catch(final IOException e) {
@@ -603,7 +619,7 @@ implements LoadStepClient {
 		if(stepSvcs == null || stepSvcs.size() == 0) {
 			throw new IllegalStateException("No step services available");
 		}
-		final var awaitExecutor = Executors.newFixedThreadPool(
+		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			stepSvcs.size(), new LogContextThreadFactory("remoteStepSvcAwaitWorker", true)
 		);
 		stepSvcs
@@ -771,7 +787,7 @@ implements LoadStepClient {
 		}
 
 		if(null != itemOutputFileSvcs) {
-			final var itemOutputFile = actualConfig.getItemConfig().getOutputConfig().getFile();
+			final String itemOutputFile = actualConfig.getItemConfig().getOutputConfig().getFile();
 			transferItemOutputData(itemOutputFileSvcs, itemOutputFile);
 			itemOutputFileSvcs
 				.entrySet()
@@ -797,7 +813,7 @@ implements LoadStepClient {
 	private static void transferItemOutputData(
 		final Map<String, Optional<FileService>> itemOutputFileSvcs, final String itemOutputFile
 	) {
-		final var itemOutputFilePath = Paths.get(itemOutputFile);
+		final Path itemOutputFilePath = Paths.get(itemOutputFile);
 		if(Files.exists(itemOutputFilePath)) {
 			Loggers.MSG.warn(
 				"Item output file \"{}\" already exists - will be appended", itemOutputFile
@@ -809,7 +825,7 @@ implements LoadStepClient {
 			);
 		}
 		try(
-			final var out = Files.newOutputStream(
+			final OutputStream out = Files.newOutputStream(
 				Paths.get(itemOutputFile), FileService.APPEND_OPEN_OPTIONS
 			)
 		) {
@@ -895,7 +911,7 @@ implements LoadStepClient {
 				Loggers.IO_TRACE.info(new String(data));
 			}
 		} catch(final RemoteException e) {
-			final var cause = e.getCause();
+			final Throwable cause = e.getCause();
 			if(!(cause instanceof EOFException)) {
 				LogUtil.exception(
 					Level.WARN, e, "Failed to read the data from the remote file"

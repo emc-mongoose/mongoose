@@ -22,7 +22,7 @@ implements BatchSupplier<T> {
 
 	@Override
 	public T get()  {
-		final var prevValue = lastValue;
+		final T prevValue = lastValue;
 		try {
 			lastValue = updateAction.call();
 		} catch(final Exception e) {
@@ -33,7 +33,7 @@ implements BatchSupplier<T> {
 	
 	@Override
 	public int get(final List<T> buffer, final int limit) {
-		var count = 0;
+		int count = 0;
 		try {
 			for(; count < limit; count ++) {
 				buffer.add(lastValue);
@@ -48,7 +48,7 @@ implements BatchSupplier<T> {
 	@Override
 	public long skip(final long count) {
 		try {
-			for(var i = 0; i < count; i++) {
+			for(int i = 0; i < count; i++) {
 				lastValue = updateAction.call();
 			}
 		} catch(final Exception e) {

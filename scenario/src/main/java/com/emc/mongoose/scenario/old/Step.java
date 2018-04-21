@@ -1,4 +1,4 @@
-package com.emc.mongoose.scenario.step;
+package com.emc.mongoose.scenario.old;
 
 import java.io.Closeable;
 

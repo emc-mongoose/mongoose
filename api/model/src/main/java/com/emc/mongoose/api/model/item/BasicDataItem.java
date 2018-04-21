@@ -8,14 +8,11 @@ import org.apache.commons.codec.binary.Hex;
 import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.BitSet;
 
@@ -63,12 +60,12 @@ implements DataItem {
 
 		super(value.substring(0, firstCommaPos));
 
-		var prevCommaPos = firstCommaPos;
-		var nextCommaPos = value.indexOf(',', prevCommaPos + 1);
+		int prevCommaPos = firstCommaPos;
+		int nextCommaPos = value.indexOf(',', prevCommaPos + 1);
 		if(nextCommaPos < prevCommaPos) {
 			throw new IllegalArgumentException("Invalid data item description: " + value);
 		}
-		final var offsetInfo = value.substring(prevCommaPos + 1, nextCommaPos);
+		final String offsetInfo = value.substring(prevCommaPos + 1, nextCommaPos);
 		try {
 			offset(Long.parseLong(offsetInfo, 0x10));
 		} catch(final NumberFormatException e) {
@@ -80,7 +77,7 @@ implements DataItem {
 		if(nextCommaPos < prevCommaPos) {
 			throw new IllegalArgumentException("Invalid data item description: " + value);
 		}
-		final var sizeInfo = value.substring(prevCommaPos + 1, nextCommaPos);
+		final String sizeInfo = value.substring(prevCommaPos + 1, nextCommaPos);
 		try {
 			truncate(Long.parseLong(sizeInfo, 10));
 		} catch(final NumberFormatException e) {
@@ -88,13 +85,13 @@ implements DataItem {
 		}
 
 		prevCommaPos = nextCommaPos;
-		final var rangesInfo = value.substring(prevCommaPos + 1);
-		final var sepPos = rangesInfo.indexOf(LAYER_MASK_SEP, 0);
+		final String rangesInfo = value.substring(prevCommaPos + 1);
+		final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP, 0);
 		try {
 			// extract hexadecimal layer number
 			layerNum = Integer.parseInt(rangesInfo.substring(0, sepPos), 0x10);
 			// extract hexadecimal mask, convert into bit set and add to the existing mask
-			final var rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
+			final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
 			final char rangesMaskChars[];
 			if(rangesMask.length() == 0) {
 				rangesMaskChars = ("00" + rangesMask).toCharArray();
@@ -154,7 +151,7 @@ implements DataItem {
 
 	@Override
 	public String toString() {
-		final var strb = STRB.get();
+		final StringBuilder strb = STRB.get();
 		strb.setLength(0); // reset
 		return strb
 			.append(super.toString()).append(',')
@@ -170,7 +167,7 @@ implements DataItem {
 
 	@Override
 	public String toString(final String itemPath) {
-		final var strBuilder = STRB.get();
+		final StringBuilder strBuilder = STRB.get();
 		strBuilder.setLength(0); // reset
 		return strBuilder
 			.append(super.toString(itemPath)).append(',')
@@ -235,7 +232,9 @@ implements DataItem {
 		if(partSize < 1) {
 			throw new IllegalArgumentException();
 		}
-		final var dataItemSlice = new BasicDataItem(name, offset + from, partSize, layerNum);
+		final BasicDataItem dataItemSlice = new BasicDataItem(
+			name, offset + from, partSize, layerNum
+		);
 		if(dataInput != null) {
 			dataItemSlice.setDataInput(dataInput);
 		}
@@ -311,7 +310,9 @@ implements DataItem {
 	@Override
 	public final int read(final ByteBuffer dst) {
 		final int n;
-		final var ringBuff = (MappedByteBuffer) dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
+			.getLayer(layerNum)
+			.asReadOnlyBuffer();
 		ringBuff.position((int) ((offset + position) % dataInputSize));
 		// bytes count to transfer
 		n = Math.min(dst.remaining(), ringBuff.remaining());
@@ -329,9 +330,11 @@ implements DataItem {
 			return 0;
 		}
 		int m;
-		final var ringBuff = (MappedByteBuffer) dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
+			.getLayer(layerNum)
+			.asReadOnlyBuffer();
 		ringBuff.position((int) ((offset + position) % dataInputSize));
-		final var n = Math.min(src.remaining(), ringBuff.remaining());
+		final int n = Math.min(src.remaining(), ringBuff.remaining());
 		if(n > 0) {
 			byte bs, bi;
 			for(m = 0; m < n; m ++) {
@@ -351,7 +354,9 @@ implements DataItem {
 	@Override
 	public final long writeToSocketChannel(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
-		final var ringBuff = (MappedByteBuffer) dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
+			.getLayer(layerNum)
+			.asReadOnlyBuffer();
 		long doneCount = 0;
 		int n, m;
 		// spin while not done either destination channel consumes all the data
@@ -372,8 +377,10 @@ implements DataItem {
 	@Override
 	public final long writeToFileChannel(final FileChannel chanDst, final long maxCount)
 	throws IOException {
-		final var ringBuff = (MappedByteBuffer) dataInput.getLayer(layerNum).asReadOnlyBuffer();
-		var n = (int) ((offset + position) % dataInputSize);
+		final MappedByteBuffer ringBuff = (MappedByteBuffer) dataInput
+			.getLayer(layerNum)
+			.asReadOnlyBuffer();
+		int n = (int) ((offset + position) % dataInputSize);
 		ringBuff.position(n);
 		n = (int) Math.min(maxCount, ringBuff.remaining());
 		ringBuff.limit(ringBuff.position() + n);
@@ -385,7 +392,7 @@ implements DataItem {
 	@Override
 	public final void verify(final ByteBuffer inBuff)
 	throws DataCorruptionException {
-		final var ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
 		ringBuff.position((int) ((offset + position) % dataInputSize));
 		verify(inBuff, ringBuff);
 	}
@@ -393,21 +400,21 @@ implements DataItem {
 	private void verify(final ByteBuffer inBuff, final ByteBuffer ringBuff)
 	throws DataCorruptionException {
 
-		final var inputSize = inBuff.remaining();
-		final var sizeToVerify = Math.min(ringBuff.remaining(), inputSize);
+		final int inputSize = inBuff.remaining();
+		final int sizeToVerify = Math.min(ringBuff.remaining(), inputSize);
 
 		// compare the 64 bit words 1st to make it faster
-		final var wordCount = sizeToVerify >>> 3; // how many 64 bit words are there
+		final int wordCount = sizeToVerify >>> 3; // how many 64 bit words are there
 		if(wordCount > 0) {
 			long ws, wi;
-			for(var k = 0; k < wordCount; k ++) {
+			for(int k = 0; k < wordCount; k ++) {
 				ws = ringBuff.getLong();
 				wi = inBuff.getLong();
 				if(ws != wi) {
 					// don't hurry more, find the exact non-matching byte
 					final int wordPos = k << 3;
 					byte bs, bi;
-					for(var i = 0; i < 8; i ++) {
+					for(int i = 0; i < 8; i ++) {
 						bs = (byte) ws;
 						ws >>= 8;
 						bi = (byte) wi;
@@ -421,10 +428,10 @@ implements DataItem {
 		}
 
 		// compare the remaining bytes if any
-		final var tailByteCount = sizeToVerify & 7;
+		final int tailByteCount = sizeToVerify & 7;
 		if(tailByteCount > 0) {
 			byte bs, bi;
-			for(var m = 0; m < tailByteCount; m ++) {
+			for(int m = 0; m < tailByteCount; m ++) {
 				bs = ringBuff.get();
 				bi = inBuff.get();
 				if(bs != bi) {
@@ -449,7 +456,7 @@ implements DataItem {
 		if(!(o instanceof BasicDataItem)) {
 			return false;
 		}
-		final var other = (BasicDataItem) o;
+		final BasicDataItem other = (BasicDataItem) o;
 		return super.equals(other) && offset == other.offset;
 	}
 	//

@@ -27,7 +27,7 @@ implements Input<I> {
 	@Override
 	public int get(final List<I> buffer, final int maxCount)
 	throws IOException {
-		for(var i = 0; i < maxCount; i ++) {
+		for(int i = 0; i < maxCount; i ++) {
 			buffer.add(itemFactory.getItem(idInput.get()));
 		}
 		return maxCount;

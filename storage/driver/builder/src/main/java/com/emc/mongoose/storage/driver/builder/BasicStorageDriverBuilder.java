@@ -13,9 +13,11 @@ import com.emc.mongoose.storage.driver.base.StorageDriverFactory;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
 import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.CloseableThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.util.ServiceLoader;
 
@@ -86,20 +88,20 @@ public class BasicStorageDriverBuilder<
 	throws OmgShootMyFootException, InterruptedException {
 
 		try(
-			final var ctx = CloseableThreadContext
+			final Instance ctx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepName)
 				.put(KEY_CLASS_NAME, BasicStorageDriverBuilder.class.getSimpleName())
 		) {
 
-			final var driverConfig = storageConfig.getDriverConfig();
-			final var driverType = driverConfig.getType();
-			final var verifyFlag = itemConfig.getDataConfig().getVerify();
+			final DriverConfig driverConfig = storageConfig.getDriverConfig();
+			final String driverType = driverConfig.getType();
+			final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
 
 			final ServiceLoader<StorageDriverFactory<I, O, T>> loader = ServiceLoader.load(
 				(Class) StorageDriverFactory.class, Extensions.CLS_LOADER
 			);
 
-			for(final var storageDriverFactory : loader) {
+			for(final StorageDriverFactory<I, O, T> storageDriverFactory : loader) {
 				if(driverType.equals(storageDriverFactory.getName())) {
 					return storageDriverFactory.create(
 						stepName, contentSrc, loadConfig, storageConfig, verifyFlag

@@ -53,10 +53,7 @@ task printVersion {
 
 ext {
 
-	isExt = false
-	jarFileName = rootProject.name
-	javaHome = System.properties["java.home"]
-	rootPkg = "com.emc.mongoose"
+	jarFileName = null
 
 	depVersion = [
 		commonsCodec : "1.11",
@@ -115,13 +112,13 @@ subprojects {
 	afterEvaluate {
 
 		compileJava {
-			sourceCompatibility = JavaVersion.VERSION_1_10
-			targetCompatibility = JavaVersion.VERSION_1_10
+			sourceCompatibility = JavaVersion.VERSION_1_8
+			targetCompatibility = JavaVersion.VERSION_1_8
 		}
 
 		compileTestJava {
-			sourceCompatibility = JavaVersion.VERSION_1_10
-			targetCompatibility = JavaVersion.VERSION_1_10
+			sourceCompatibility = JavaVersion.VERSION_1_8
+			targetCompatibility = JavaVersion.VERSION_1_8
 		}
 
 		jar {
@@ -150,6 +147,11 @@ subprojects {
 					jvmArgs = [
 						//"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005",
 						"-XX:+HeapDumpOnOutOfMemoryError",
+						"--module-path", classpath.asPath,
+						'--add-exports', "${moduleName}/${moduleName}.test=junit",
+						"--add-modules", "ALL-MODULE-PATH",
+						"--add-reads", "${moduleName}.test=junit",
+						"--patch-module", "${moduleName}=" + files(sourceSets.test.java.outputDir).asPath,
 					]
 				}
 				maxHeapSize "1g"
@@ -173,7 +175,7 @@ subprojects {
 	task sourcesJar(type: Jar, dependsOn: classes) {
 		if(project in leafProjects) {
 			classifier = "sources"
-			archiveName "${project.jarFileName}-$classifier.$extension"
+			archiveName = "${project.jarFileName}-$classifier.$extension"
 			from sourceSets.main.allSource
 		}
 	}
@@ -181,7 +183,7 @@ subprojects {
 	task javadocJar(type: Jar, dependsOn: javadoc) {
 		if(project in leafProjects) {
 			classifier = "javadoc"
-			archiveName "${project.jarFileName}-$classifier.$extension"
+			archiveName = "${project.jarFileName}-$classifier.$extension"
 			from javadoc.destinationDir
 		}
 	}

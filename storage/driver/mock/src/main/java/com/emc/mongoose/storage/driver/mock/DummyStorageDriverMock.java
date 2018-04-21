@@ -5,6 +5,7 @@ import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.storage.StorageDriver;
@@ -71,7 +72,7 @@ implements StorageDriver<I, O> {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
-		var i = from;
+		int i = from;
 		O nextTask;
 		while(i < to && isStarted()) {
 			nextTask = tasks.get(i);
@@ -82,7 +83,7 @@ implements StorageDriver<I, O> {
 				break;
 			}
 		}
-		final var n = i - from;
+		final int n = i - from;
 		scheduledTaskCount.add(n);
 		completedTaskCount.add(n);
 		return n;
@@ -94,8 +95,8 @@ implements StorageDriver<I, O> {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
-		var n = 0;
-		for(final var nextIoTask : tasks) {
+		int n = 0;
+		for(final O nextIoTask : tasks) {
 			if(isStarted()) {
 				checkStateFor(nextIoTask);
 				if(ioResultsQueue.offer(nextIoTask)) {
@@ -119,8 +120,8 @@ implements StorageDriver<I, O> {
 		ioTask.finishRequest();
 		ioTask.startResponse();
 		if(ioTask instanceof DataIoTask) {
-			final var dataIoTask = (DataIoTask) ioTask;
-			final var dataItem = dataIoTask.item();
+			final DataIoTask dataIoTask = (DataIoTask) ioTask;
+			final DataItem dataItem = dataIoTask.item();
 			switch(dataIoTask.ioType()) {
 				case CREATE:
 					dataIoTask.countBytesDone(dataItem.size());
@@ -171,8 +172,8 @@ implements StorageDriver<I, O> {
 	@Override
 	public final long skip(final long count)
 	throws IOException {
-		var n = (int) Math.min(count, Integer.MAX_VALUE);
-		final var tmpBuff = new ArrayList<O>(n);
+		int n = (int) Math.min(count, Integer.MAX_VALUE);
+		final List<O> tmpBuff = new ArrayList<>(n);
 		n = ioResultsQueue.drainTo(tmpBuff, n);
 		tmpBuff.clear();
 		return n;

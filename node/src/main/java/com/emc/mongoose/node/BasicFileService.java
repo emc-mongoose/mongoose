@@ -3,7 +3,7 @@ package com.emc.mongoose.node;
 import static com.github.akurilov.commons.system.DirectMemUtil.REUSABLE_BUFF_SIZE_MAX;
 
 import com.emc.mongoose.api.model.svc.ServiceBase;
-import com.emc.mongoose.scenario.sna.FileService;
+import com.emc.mongoose.scenario.step.FileService;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import org.apache.logging.log4j.Level;
@@ -58,20 +58,20 @@ implements FileService {
 		if(fileChannel == null) {
 			throw new IllegalStateException();
 		}
-		final var remainingSize = fileChannel.size() - fileChannel.position();
+		final long remainingSize = fileChannel.size() - fileChannel.position();
 		if(remainingSize <= 0) {
 			throw new EOFException();
 		}
-		final var buffSize = (int) Math.min(REUSABLE_BUFF_SIZE_MAX, remainingSize);
+		final int buffSize = (int) Math.min(REUSABLE_BUFF_SIZE_MAX, remainingSize);
 		if(buffSize > 0) {
-			final var bb = ByteBuffer.allocate(buffSize);
+			final ByteBuffer bb = ByteBuffer.allocate(buffSize);
 			int doneSize = 0;
 			int n;
 			while(doneSize < buffSize) {
 				n = fileChannel.read(bb);
 				if(n < 0) {
 					// unexpected but possible: the file is shorter than was estimated before
-					final var buff = new byte[bb.position()];
+					final byte[] buff = new byte[bb.position()];
 					bb.rewind();
 					bb.get(buff);
 					return buff;
@@ -91,7 +91,7 @@ implements FileService {
 		if(fileChannel == null) {
 			throw new IllegalStateException();
 		}
-		final var bb = ByteBuffer.wrap(buff);
+		final ByteBuffer bb = ByteBuffer.wrap(buff);
 		int n = 0;
 		while(n < buff.length) {
 			n = fileChannel.write(bb);

@@ -30,7 +30,7 @@ public abstract class ResponseContentUtil {
 		final int chunkSize
 	) throws IOException {
 		final List<Range> byteRanges = dataIoTask.fixedRanges();
-		final var item = dataIoTask.item();
+		final DataItem item = dataIoTask.item();
 		try {
 			if(byteRanges != null && !byteRanges.isEmpty()) {
 				verifyChunkDataAndSize(
@@ -55,7 +55,7 @@ public abstract class ResponseContentUtil {
 				dataIoTask.countBytesDone(countBytesDone + chunkSize);
 			}
 		} catch(final DataVerificationException e) {
-			final var dataItem = dataIoTask.item();
+			final DataItem dataItem = dataIoTask.item();
 			dataIoTask.countBytesDone(e.getOffset());
 			dataIoTask.status(IoTask.Status.RESP_FAIL_CORRUPT);
 			if(e instanceof DataSizeException) {
@@ -67,7 +67,7 @@ public abstract class ResponseContentUtil {
 				} catch(final IOException ignored) {
 				}
 			} else if(e instanceof DataCorruptionException) {
-				final var ee = (DataCorruptionException) e;
+				final DataCorruptionException ee = (DataCorruptionException) e;
 				Loggers.MSG.debug(
 					"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
 					dataItem.getName(), ee.getOffset(),
@@ -83,13 +83,13 @@ public abstract class ResponseContentUtil {
 		final ByteBuf chunkData, final int chunkSize, final List<Range> byteRanges
 	) throws DataCorruptionException, IOException {
 
-		final var rangesSizeSum = dataIoTask.markedRangesSize();
+		final long rangesSizeSum = dataIoTask.markedRangesSize();
 		if(chunkSize > rangesSizeSum - countBytesDone) {
 			throw new DataSizeException(
 				dataIoTask.markedRangesSize(), countBytesDone + chunkSize
 			);
 		}
-		final var baseItemSize = dataItem.size();
+		final long baseItemSize = dataItem.size();
 
 		Range byteRange;
 		DataItem currRange;
@@ -101,7 +101,7 @@ public abstract class ResponseContentUtil {
 		long cellOffset;
 		long cellEnd;
 		int currRangeIdx;
-		var chunkOffset = 0;
+		int chunkOffset = 0;
 		int n;
 
 		while(chunkOffset < chunkSize) {
@@ -170,10 +170,10 @@ public abstract class ResponseContentUtil {
 
 		DataItem currRange;
 		// "countBytesDone" is the current range done bytes counter here
-		var rangeBytesDone = countBytesDone;
+		long rangeBytesDone = countBytesDone;
 		long rangeSize;
 		int currRangeIdx;
-		var chunkOffset = 0;
+		int chunkOffset = 0;
 		int n;
 
 		while(chunkOffset < chunkSize) {
@@ -267,17 +267,17 @@ public abstract class ResponseContentUtil {
 		// fill the expected data buffer to compare with a chunk
 		final ByteBuffer bb = DirectMemUtil.getThreadLocalReusableBuff(remainingSize);
 		bb.limit(remainingSize);
-		var n = 0;
+		int n = 0;
 		while(n < remainingSize) {
 			n += item.read(bb);
 		}
 		bb.flip();
-		final var buff = Unpooled.wrappedBuffer(bb);
+		final ByteBuf buff = Unpooled.wrappedBuffer(bb);
 
 		// fast compare word by word
-		var fastEquals = true;
-		var buffPos = 0;
-		var chunkPos = chunkOffset;
+		boolean fastEquals = true;
+		int buffPos = 0;
+		int chunkPos = chunkOffset;
 
 		if(
 			buff.writerIndex() - remainingSize < buffPos ||
@@ -285,11 +285,11 @@ public abstract class ResponseContentUtil {
 		) {
 			fastEquals = false;
 		} else {
-			final var longCount = remainingSize >>> 3;
-			final var byteCount = remainingSize & 7;
+			final int longCount = remainingSize >>> 3;
+			final int byteCount = remainingSize & 7;
 
 			// assuming the same order (big endian)
-			for(var i = longCount; i > 0; i --) {
+			for(int i = longCount; i > 0; i --) {
 				if(buff.getLong(buffPos) != chunkData.getLong(chunkPos)) {
 					fastEquals = false;
 					break;
@@ -299,7 +299,7 @@ public abstract class ResponseContentUtil {
 			}
 
 			if(fastEquals) {
-				for(var i = byteCount; i > 0; i --) {
+				for(int i = byteCount; i > 0; i --) {
 					if(buff.getByte(buffPos) != chunkData.getByte(chunkPos)) {
 						fastEquals = false;
 						break;
@@ -317,7 +317,7 @@ public abstract class ResponseContentUtil {
 
 		// slow byte by byte compare if fast one fails to find the exact mismatch position
 		byte expected, actual;
-		for(var i = 0; i < remainingSize; i ++) {
+		for(int i = 0; i < remainingSize; i ++) {
 			expected = buff.getByte(i);
 			actual = chunkData.getByte(chunkOffset + i);
 			if(expected != actual) {

@@ -1,6 +1,5 @@
-package com.emc.mongoose.scenario.step;
+package com.emc.mongoose.scenario.old;
 
-import com.emc.mongoose.scenario.ScenarioParseException;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 

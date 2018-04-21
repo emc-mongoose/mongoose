@@ -43,10 +43,10 @@ implements BatchSupplier<String> {
 
 	@Override
 	public final String get() {
-		final var pathBuilder = THREAD_LOCAL_PATH_BUILDER.get();
+		final StringBuilder pathBuilder = THREAD_LOCAL_PATH_BUILDER.get();
 		pathBuilder.setLength(0);
-		final var newDepth = rnd.nextInt(depth) + 1;
-		for(var i = 0; i < newDepth; i++) {
+		final int newDepth = rnd.nextInt(depth) + 1;
+		for(int i = 0; i < newDepth; i++) {
 			pathBuilder.append(nextDirName(width));
 			pathBuilder.append(File.separatorChar);
 		}
@@ -56,11 +56,11 @@ implements BatchSupplier<String> {
 	@Override
 	public final int get(final List<String> buffer, final int limit) {
 		int count = 0, newDepth;
-		final var pathBuilder = THREAD_LOCAL_PATH_BUILDER.get();
+		final StringBuilder pathBuilder = THREAD_LOCAL_PATH_BUILDER.get();
 		for(; count < limit; count ++) {
 			pathBuilder.setLength(0);
 			newDepth = rnd.nextInt(depth) + 1;
-			for(var i = 0; i < newDepth; i++) {
+			for(int i = 0; i < newDepth; i++) {
 				pathBuilder.append(nextDirName(width));
 				pathBuilder.append(File.separatorChar);
 			}

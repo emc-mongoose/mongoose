@@ -2,8 +2,8 @@ package com.emc.mongoose.scenario;
 
 import com.emc.mongoose.api.common.env.Extensions;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.scenario.sna.LinearLoadStep;
-import com.emc.mongoose.scenario.sna.WeightedLoadStep;
+import com.emc.mongoose.scenario.step.LinearLoadStep;
+import com.emc.mongoose.scenario.step.WeightedLoadStep;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
@@ -11,6 +11,7 @@ import com.emc.mongoose.ui.log.Loggers;
 import org.apache.logging.log4j.Level;
 
 import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,20 +33,20 @@ public interface ScriptEngineUtil {
 		ScriptEngine se = null;
 
 		// init the available external script engines
-		final var sem = new ScriptEngineManager(Extensions.CLS_LOADER);
+		final ScriptEngineManager sem = new ScriptEngineManager(Extensions.CLS_LOADER);
 
 		// 1st try to determine the scenario type by the scenario file extension
-		final var scenarioFileName = scenarioPath.getFileName().toString();
-		var dotPos = scenarioFileName.lastIndexOf('.');
+		final String scenarioFileName = scenarioPath.getFileName().toString();
+		int dotPos = scenarioFileName.lastIndexOf('.');
 		if(dotPos > 0) {
-			final var scenarioFileExt = scenarioFileName.substring(dotPos + 1);
+			final String scenarioFileExt = scenarioFileName.substring(dotPos + 1);
 			se = sem.getEngineByExtension(scenarioFileExt);
 		}
 
 		if(se == null) {
 			// 2nd: try to determine the scenario MIME type
 			try {
-				final var scenarioMimeType = Files.probeContentType(scenarioPath);
+				final String scenarioMimeType = Files.probeContentType(scenarioPath);
 				if(scenarioMimeType != null) {
 					se = sem.getEngineByMimeType(scenarioMimeType);
 				}
@@ -63,7 +64,7 @@ public interface ScriptEngineUtil {
 				"Unable to resolve the scenario engine for the scenario file \"{}\", "
 					+ "available scenario engines list follows:", scenarioPath
 			);
-			for(final var sef : sem.getEngineFactories()) {
+			for(final ScriptEngineFactory sef : sem.getEngineFactories()) {
 				Loggers.MSG.info(
 					"\nEngine name: {}\n\tLanguage: {}\n\tFile extensions: {}\n\tMIME types: {}",
 					sef.getEngineName(), sef.getLanguageName(),
@@ -96,8 +97,9 @@ public interface ScriptEngineUtil {
 	 */
 	static void registerStepShortcutTypes(final ScriptEngine se, final Config config) {
 
-		var specificConfig = new Config(config);
+		Config specificConfig;
 
+		specificConfig = new Config(config);
 		specificConfig.getOutputConfig().getMetricsConfig().getAverageConfig().setPeriod(0);
 		specificConfig.getOutputConfig().getMetricsConfig().getAverageConfig().setPersist(false);
 		specificConfig
@@ -106,12 +108,12 @@ public interface ScriptEngineUtil {
 		specificConfig.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(false);
 		se.put("PreconditionLoad", new LinearLoadStep(specificConfig));
 
-		for(final var ioType : IoType.values()) {
+		for(final IoType ioType : IoType.values()) {
 			specificConfig = new Config(config);
-			final var ioTypeName = ioType.name().toLowerCase();
+			final String ioTypeName = ioType.name().toLowerCase();
 			specificConfig.getLoadConfig().setType(ioTypeName);
-			final var stepName = ioTypeName.substring(0, 1).toUpperCase() +
-				ioTypeName.substring(1) + "Load";
+			final String stepName = ioTypeName.substring(0, 1).toUpperCase()
+				+ ioTypeName.substring(1) + "Load";
 			se.put(stepName, new LinearLoadStep(specificConfig));
 		}
 

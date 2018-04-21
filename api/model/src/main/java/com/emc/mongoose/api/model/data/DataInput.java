@@ -36,23 +36,23 @@ extends Closeable, Externalizable {
 		final int layerCacheLimit
 	) throws IOException, IllegalStateException, IllegalArgumentException {
 		final DataInput instance;
-		final var layerSizeBytes = layerSize.get();
+		final long layerSizeBytes = layerSize.get();
 		if(layerSizeBytes > Integer.MAX_VALUE) {
 			throw new IllegalArgumentException("Item data layer size should be less than 2GB");
 		}
 		if(inputFilePath != null && !inputFilePath.isEmpty()) {
-			final var p = Paths.get(inputFilePath);
+			final Path p = Paths.get(inputFilePath);
 			if(Files.exists(p) && !Files.isDirectory(p) &&
 				Files.isReadable(p)) {
-				final var f = p.toFile();
-				final var fileSize = f.length();
+				final File f = p.toFile();
+				final long fileSize = f.length();
 				if(fileSize > 0) {
 					if(fileSize > Integer.MAX_VALUE) {
 						throw new AssertionError(
 							"Item data input file size should be less than 2GB"
 						);
 					}
-					try(final var rbc = Files.newByteChannel(p, READ)) {
+					try(final ReadableByteChannel rbc = Files.newByteChannel(p, READ)) {
 						instance = new ExternalDataInput(
 							rbc, (int) layerSizeBytes, layerCacheLimit
 						);
@@ -77,11 +77,11 @@ extends Closeable, Externalizable {
 	}
 
 	static void generateData(final MappedByteBuffer byteLayer, final long seed) {
-		final var ringBuffSize = byteLayer.capacity();
-		final var countWordBytes = Long.SIZE / Byte.SIZE;
-		final var countWords = ringBuffSize / countWordBytes;
-		final var countTailBytes = ringBuffSize % countWordBytes;
-		var word = seed;
+		final int ringBuffSize = byteLayer.capacity();
+		final int countWordBytes = Long.SIZE / Byte.SIZE;
+		final int countWords = ringBuffSize / countWordBytes;
+		final int countTailBytes = ringBuffSize % countWordBytes;
+		long word = seed;
 		int i;
 		// 64-bit words
 		byteLayer.clear();
@@ -90,7 +90,7 @@ extends Closeable, Externalizable {
 			word = MathUtil.xorShift(word);
 		}
 		// tail bytes
-		final var tailBytes = ByteBuffer.allocate(countWordBytes);
+		final ByteBuffer tailBytes = ByteBuffer.allocate(countWordBytes);
 		tailBytes.asLongBuffer().put(word).rewind();
 		for(i = 0; i < countTailBytes; i ++) {
 			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));

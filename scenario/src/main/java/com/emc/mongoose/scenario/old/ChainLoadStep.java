@@ -1,4 +1,4 @@
-package com.emc.mongoose.scenario.step;
+package com.emc.mongoose.scenario.old;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.data.DataInput;
@@ -190,7 +190,7 @@ extends ConfigurableStepBase {
 
 		for(final LoadController nextController : loadChain) {
 			nextController.start();
-			Loggers.MSG.info("Load step \"{}\" started", nextController.id());
+			//Loggers.MSG.info("Load step \"{}\" started", nextController.id());
 		}
 
 		long timeRemainSec = timeLimitSec;
@@ -203,9 +203,9 @@ extends ConfigurableStepBase {
 				tsStart = System.currentTimeMillis();
 				try {
 					if(controller.await(timeRemainSec, TimeUnit.SECONDS)) {
-						Loggers.MSG.info("Load step \"{}\" done", controller.id());
+						//Loggers.MSG.info("Load step \"{}\" done", controller.id());
 					} else {
-						Loggers.MSG.info("Load step \"{}\" timeout", controller.id());
+						//Loggers.MSG.info("Load step \"{}\" timeout", controller.id());
 					}
 				} finally {
 					controller.stop();
@@ -226,9 +226,9 @@ extends ConfigurableStepBase {
 				try {
 					nextController.close();
 				} catch(final IOException e) {
-					LogUtil.exception(
+					/*LogUtil.exception(
 						Level.WARN, e, "Failed to close the step \"{}\"",  nextController.id()
-					);
+					);*/
 				}
 			}
 			loadChain.clear();

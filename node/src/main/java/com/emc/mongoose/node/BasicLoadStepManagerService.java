@@ -1,7 +1,8 @@
 package com.emc.mongoose.node;
 
 import com.emc.mongoose.api.model.svc.ServiceBase;
-import com.emc.mongoose.scenario.sna.LoadStepManagerService;
+import com.emc.mongoose.scenario.step.LoadStepManagerService;
+import com.emc.mongoose.scenario.step.LoadStepService;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -34,7 +35,7 @@ implements LoadStepManagerService {
 	@Override
 	public final String getStepService(final String stepType, final Config config)
 	throws RemoteException {
-		final var stepSvc = new BasicLoadStepService(port, stepType, config);
+		final LoadStepService stepSvc = new BasicLoadStepService(port, stepType, config);
 		Loggers.MSG.info("New step service started @ port #{}: {}", port, stepSvc.name());
 		return stepSvc.name();
 	}

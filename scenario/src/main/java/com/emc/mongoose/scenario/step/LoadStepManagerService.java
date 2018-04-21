@@ -1,4 +1,4 @@
-package com.emc.mongoose.scenario.sna;
+package com.emc.mongoose.scenario.step;
 
 import com.emc.mongoose.api.model.svc.Service;
 import com.emc.mongoose.ui.config.Config;

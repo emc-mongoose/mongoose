@@ -4,6 +4,7 @@ import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
 import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
@@ -12,6 +13,8 @@ import com.emc.mongoose.api.model.storage.Credential;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
+import com.emc.mongoose.ui.config.storage.driver.queue.QueueConfig;
 import com.emc.mongoose.ui.log.Loggers;
 
 import com.github.akurilov.concurrent.ThreadUtil;
@@ -60,14 +63,14 @@ implements StorageDriver<I,O> {
 	) throws OmgShootMyFootException {
 
 		this.itemDataInput = itemDataInput;
-		final var driverConfig = storageConfig.getDriverConfig();
-		final var queueConfig = driverConfig.getQueueConfig();
-		final var outputQueueCapacity = queueConfig.getOutput();
+		final DriverConfig driverConfig = storageConfig.getDriverConfig();
+		final QueueConfig queueConfig = driverConfig.getQueueConfig();
+		final int outputQueueCapacity = queueConfig.getOutput();
 		this.ioResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
 		this.stepId = stepId;
-		final var authConfig = storageConfig.getAuthConfig();
+		final AuthConfig authConfig = storageConfig.getAuthConfig();
 		this.credential = Credential.getInstance(authConfig.getUid(), authConfig.getSecret());
-		final var authToken = authConfig.getToken();
+		final String authToken = authConfig.getToken();
 		if(authToken != null) {
 			if(this.credential == null) {
 				this.authTokens.put(Credential.NONE, authToken);
@@ -78,7 +81,7 @@ implements StorageDriver<I,O> {
 		this.concurrencyLevel = loadConfig.getLimitConfig().getConcurrency();
 		this.verifyFlag = verifyFlag;
 
-		final var confWorkerCount = driverConfig.getThreads();
+		final int confWorkerCount = driverConfig.getThreads();
 		if(confWorkerCount > 0) {
 			ioWorkerCount = confWorkerCount;
 		} else if(concurrencyLevel > 0) {
@@ -93,8 +96,8 @@ implements StorageDriver<I,O> {
 		if(ioTask instanceof DataIoTask) {
 			((DataIoTask) ioTask).item().setDataInput(itemDataInput);
 		}
-		final var dstPath = ioTask.dstPath();
-		final var credential = ioTask.credential();
+		final String dstPath = ioTask.dstPath();
+		final Credential credential = ioTask.credential();
 		if(credential != null) {
 			pathToCredMap.putIfAbsent(dstPath == null ? "" : dstPath, credential);
 			if(requestAuthTokenFunc != null) {
@@ -139,19 +142,19 @@ implements StorageDriver<I,O> {
 
 	@Override
 	public final List<O> getAll() {
-		final var n = ioResultsQueue.size();
+		final int n = ioResultsQueue.size();
 		if(n == 0) {
 			return Collections.emptyList();
 		}
-		final var ioTaskResults = new ArrayList<O>(n);
+		final List<O> ioTaskResults = new ArrayList<>(n);
 		ioResultsQueue.drainTo(ioTaskResults, n);
 		return ioTaskResults;
 	}
 
 	@Override
 	public final long skip(final long count) {
-		var n = (int) Math.min(count, Integer.MAX_VALUE);
-		final var tmpBuff = new ArrayList<O>(n);
+		int n = (int) Math.min(count, Integer.MAX_VALUE);
+		final List<O> tmpBuff = new ArrayList<>(n);
 		n = ioResultsQueue.drainTo(tmpBuff, n);
 		tmpBuff.clear();
 		return n;
@@ -166,12 +169,12 @@ implements StorageDriver<I,O> {
 	protected void doClose()
 	throws IOException, IllegalStateException {
 		try(
-			final var logCtx = CloseableThreadContext
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			itemDataInput.close();
-			final var ioResultsQueueSize = ioResultsQueue.size();
+			final int ioResultsQueueSize = ioResultsQueue.size();
 			if(ioResultsQueueSize > 0) {
 				Loggers.ERR.warn(
 					"{}: I/O results queue contains {} unhandled elements", toString(),

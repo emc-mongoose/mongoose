@@ -11,6 +11,7 @@ import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.ui.config.storage.driver.queue.QueueConfig;
 import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
@@ -43,7 +44,7 @@ implements StorageDriver<I, O> {
 		final StorageConfig storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
 		super(testStepId, dataInput, loadConfig, storageConfig, verifyFlag);
-		final var queueConfig = storageConfig.getDriverConfig().getQueueConfig();
+		final QueueConfig queueConfig = storageConfig.getDriverConfig().getQueueConfig();
 		this.childTasksQueue = new ArrayBlockingQueue<>(queueConfig.getInput());
 		this.inTasksQueue = new ArrayBlockingQueue<>(queueConfig.getInput());
 		if(concurrencyLevel > 0) {
@@ -51,7 +52,7 @@ implements StorageDriver<I, O> {
 		} else {
 			this.concurrencyThrottle = new Semaphore(Integer.MAX_VALUE, false);
 		}
-		final var batchSize = loadConfig.getBatchConfig().getSize();
+		final int batchSize = loadConfig.getBatchConfig().getSize();
 		this.ioTasksDispatchCoroutine = new IoTasksDispatchCoroutine<>(
 			ServiceTaskExecutor.INSTANCE, this, inTasksQueue, childTasksQueue, stepId, batchSize
 		);
@@ -84,7 +85,7 @@ implements StorageDriver<I, O> {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
-		var i = from;
+		int i = from;
 		O nextTask;
 		while(i < to && isStarted()) {
 			nextTask = tasks.get(i);
@@ -95,7 +96,7 @@ implements StorageDriver<I, O> {
 				break;
 			}
 		}
-		final var n = i - from;
+		final int n = i - from;
 		scheduledTaskCount.add(n);
 		return n;
 	}
@@ -106,8 +107,8 @@ implements StorageDriver<I, O> {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
-		var n = 0;
-		for(final var nextIoTask : tasks) {
+		int n = 0;
+		for(final O nextIoTask : tasks) {
 			if(isStarted()) {
 				prepareIoTask(nextIoTask);
 				if(inTasksQueue.offer(nextIoTask)) {
@@ -168,10 +169,10 @@ implements StorageDriver<I, O> {
 		completedTaskCount.increment();
 
 		if(ioTask instanceof CompositeIoTask) {
-			final var parentTask = (CompositeIoTask) ioTask;
+			final CompositeIoTask parentTask = (CompositeIoTask) ioTask;
 			if(!parentTask.allSubTasksDone()) {
 				final List<O> subTasks = parentTask.subTasks();
-				for(final var nextSubTask : subTasks) {
+				for(final O nextSubTask : subTasks) {
 					if(!childTasksQueue.offer(nextSubTask/*, 1, TimeUnit.MICROSECONDS*/)) {
 						Loggers.ERR.warn(
 							"{}: I/O child tasks queue overflow, dropping the I/O sub-task",
@@ -182,8 +183,8 @@ implements StorageDriver<I, O> {
 				}
 			}
 		} else if(ioTask instanceof PartialIoTask) {
-			final var subTask = (PartialIoTask) ioTask;
-			final var parentTask = subTask.parent();
+			final PartialIoTask subTask = (PartialIoTask) ioTask;
+			final CompositeIoTask parentTask = subTask.parent();
 			if(parentTask.allSubTasksDone()) {
 				// execute once again to finalize the things if necessary:
 				// complete the multipart upload, for example
@@ -215,7 +216,7 @@ implements StorageDriver<I, O> {
 	protected void doClose()
 	throws IOException, IllegalStateException {
 		try(
-			final var logCtx = CloseableThreadContext
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {

@@ -10,7 +10,6 @@ public interface Constants {
 
 	String DIR_CONFIG = "config";
 	String DIR_EXAMPLE = "example";
-	String DIR_EXAMPLE_CONTENT = DIR_EXAMPLE + File.separator + "content";
 	String DIR_EXAMPLE_SCENARIO = DIR_EXAMPLE + File.separator + "scenario";
 	String PATH_DEFAULTS = DIR_CONFIG + File.separator + "defaults.json";
 	String KEY_BASE_DIR = "baseDir";

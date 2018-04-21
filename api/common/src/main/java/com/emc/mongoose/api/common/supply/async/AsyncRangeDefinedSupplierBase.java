@@ -87,7 +87,7 @@ implements Initializable, RangeDefinedSupplier<T> {
 
 	@Override
 	public final int get(final List<String> buffer, final int limit) {
-		var count = 0;
+		int count = 0;
 		for(; count < limit; count ++) {
 			buffer.add(get());
 		}

@@ -5,6 +5,7 @@ import com.emc.mongoose.api.model.data.DataInput;
 import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
+import com.emc.mongoose.api.model.item.DataItem;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.storage.Credential;
@@ -37,8 +38,8 @@ extends CoopStorageDriverBase<I, O> {
 		ioTask.finishRequest();
 		ioTask.startResponse();
 		if(ioTask instanceof DataIoTask) {
-			final var dataIoTask = (DataIoTask) ioTask;
-			final var dataItem = dataIoTask.item();
+			final DataIoTask dataIoTask = (DataIoTask) ioTask;
+			final DataItem dataItem = dataIoTask.item();
 			switch(dataIoTask.ioType()) {
 				case CREATE:
 					try {
@@ -77,7 +78,7 @@ extends CoopStorageDriverBase<I, O> {
 	@Override
 	protected int submit(final List<O> ioTasks, final int from, final int to)
 	throws IllegalStateException {
-		for(var i = from; i < to; i ++) {
+		for(int i = from; i < to; i ++) {
 			submit(ioTasks.get(i));
 		}
 		return to - from;

@@ -105,8 +105,8 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 	) throws IOException {
 		if(IoType.READ.equals(ioTask.ioType())) {
 			if(ioTask instanceof DataIoTask) {
-				final var dataIoTask = (DataIoTask) ioTask;
-				final var countBytesDone = dataIoTask.countBytesDone();
+				final DataIoTask dataIoTask = (DataIoTask) ioTask;
+				final long countBytesDone = dataIoTask.countBytesDone();
 				if(dataIoTask.respDataTimeStart() == 0) { // if not set yet - 1st time
 					try {
 						dataIoTask.startDataResponse();
@@ -114,7 +114,7 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 						LogUtil.exception(Level.DEBUG, e, "{}", dataIoTask.toString());
 					}
 				}
-				final var chunkSize = contentChunk.readableBytes();
+				final int chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
 					if(verifyFlag) {
 						if(!RESP_FAIL_CORRUPT.equals(ioTask.status())) {
@@ -125,22 +125,22 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 					}
 				}
 			} else if(ioTask instanceof PathIoTask) {
-				final var pathIoTask = (PathIoTask) ioTask;
-				final var countBytesDone = pathIoTask.getCountBytesDone();
+				final PathIoTask pathIoTask = (PathIoTask) ioTask;
+				final long countBytesDone = pathIoTask.getCountBytesDone();
 				if(pathIoTask.getRespDataTimeStart() == 0) { // if not set yet - 1st time
 					pathIoTask.startDataResponse();
 				}
-				final var chunkSize = contentChunk.readableBytes();
+				final int chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
 					pathIoTask.setCountBytesDone(countBytesDone + chunkSize);
 				}
 			} else if(ioTask instanceof TokenIoTask) {
-				final var tokenIoTask = (TokenIoTask) ioTask;
-				final var countBytesDone = tokenIoTask.getCountBytesDone();
+				final TokenIoTask tokenIoTask = (TokenIoTask) ioTask;
+				final long countBytesDone = tokenIoTask.getCountBytesDone();
 				if(tokenIoTask.getRespDataTimeStart() == 0) { // if not set yet - 1st time
 					tokenIoTask.startDataResponse();
 				}
-				final var chunkSize = contentChunk.readableBytes();
+				final int chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
 					tokenIoTask.setCountBytesDone(countBytesDone + chunkSize);
 				}
@@ -164,15 +164,15 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 			} catch(final IllegalStateException e) {
 				LogUtil.exception(Level.DEBUG, e, "{}", ioTask.toString());
 			}
-			final var httpResponse = (HttpResponse) msg;
+			final HttpResponse httpResponse = (HttpResponse) msg;
 			if(Loggers.MSG.isTraceEnabled()) {
 				Loggers.MSG.trace("{} <<<< {}", ioTask.hashCode(), httpResponse.status());
 			}
-			final var httpResponseStatus = httpResponse.status();
+			final HttpResponseStatus httpResponseStatus = httpResponse.status();
 			handleResponseStatus(ioTask, httpResponseStatus.codeClass(), httpResponseStatus);
 			handleResponseHeaders(ioTask, httpResponse.headers());
 			if(msg instanceof FullHttpResponse) {
-				final var fullRespContent = ((FullHttpResponse) msg).content();
+				final ByteBuf fullRespContent = ((FullHttpResponse) msg).content();
 				handleResponseContentChunk(channel, ioTask, fullRespContent);
 			}
 		}

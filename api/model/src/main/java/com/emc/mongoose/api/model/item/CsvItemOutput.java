@@ -40,7 +40,7 @@ implements Output<I> {
 	@Override
 	public int put(final List<I> buffer, final int from, final int to)
 	throws IOException {
-		var i = from;
+		int i = from;
 		while(i < to && put(buffer.get(i))) {
 			i ++;
 		}

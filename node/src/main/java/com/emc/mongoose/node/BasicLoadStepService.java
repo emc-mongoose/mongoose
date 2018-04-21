@@ -2,9 +2,9 @@ package com.emc.mongoose.node;
 
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.svc.ServiceBase;
-import com.emc.mongoose.scenario.sna.LinearLoadStep;
-import com.emc.mongoose.scenario.sna.LoadStepService;
-import com.emc.mongoose.scenario.sna.LoadStep;
+import com.emc.mongoose.scenario.step.LinearLoadStep;
+import com.emc.mongoose.scenario.step.LoadStepService;
+import com.emc.mongoose.scenario.step.LoadStep;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
