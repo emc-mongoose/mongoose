@@ -31,11 +31,9 @@ import com.emc.mongoose.ui.log.Loggers;
 
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.concurrent.IndexThrottle;
 import com.github.akurilov.concurrent.RateThrottle;
-import com.github.akurilov.concurrent.WeightThrottle;
-
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import com.github.akurilov.concurrent.SequentialWeightsThrottle;
 
 import org.apache.logging.log4j.Level;
 
@@ -85,17 +83,17 @@ extends LoadStepBase {
 		final int subStepCount = stepConfigs.size();
 
 		// 1st pass: determine the weights map
-		final Int2IntMap weightMap = new Int2IntOpenHashMap(subStepCount);
+		final int[] weights = new int[subStepCount];
 		final List<Config> subConfigs = new ArrayList<>(subStepCount);
 		for(int i = 0; i < subStepCount; i ++) {
 			final Config subConfig = new Config(config);
 			subConfig.apply(stepConfigs.get(i), id());
 			subConfigs.add(subConfig);
 			final int weight = subConfig.getLoadConfig().getGeneratorConfig().getWeight();
-			weightMap.put(i, weight);
+			weights[i] = weight;
 		}
 
-		final WeightThrottle weightThrottle = new WeightThrottle(weightMap);
+		final IndexThrottle weightThrottle = new SequentialWeightsThrottle(weights);
 
 		// 2nd pass: initialize the sub steps
 		for(int i = 0; i < subStepCount; i ++) {
@@ -188,7 +186,7 @@ extends LoadStepBase {
 							.storageDriver(driver)
 							.authConfig(storageConfig.getAuthConfig())
 							.originIndex(i)
-							.rateThrottle(rateLimit > 0 ? new RateThrottle<>(rateLimit) : null)
+							.rateThrottle(rateLimit > 0 ? new RateThrottle(rateLimit) : null)
 							.weightThrottle(weightThrottle)
 							.build();
 						generators.add(generator);

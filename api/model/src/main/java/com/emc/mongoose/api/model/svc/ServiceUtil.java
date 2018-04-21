@@ -2,9 +2,6 @@ package com.emc.mongoose.api.model.svc;
 
 import com.github.akurilov.commons.net.FixedPortRmiSocketFactory;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -31,7 +28,7 @@ import java.util.Map;
  */
 public abstract class ServiceUtil {
 
-	private static Int2ObjectMap<Registry> REGISTRY_MAP = new Int2ObjectOpenHashMap<>();
+	private static Map<Integer, Registry> REGISTRY_MAP = new HashMap<>();
 	private static final String RMI_SCHEME = "rmi";
 	private static final String KEY_RMI_HOSTNAME = "java.rmi.server.hostname";
 	private static final Map<String, Service> SVC_MAP = new HashMap<>();

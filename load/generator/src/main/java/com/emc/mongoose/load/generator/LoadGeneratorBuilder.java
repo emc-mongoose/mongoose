@@ -12,8 +12,9 @@ import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
 import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
+
+import com.github.akurilov.concurrent.IndexThrottle;
 import com.github.akurilov.concurrent.Throttle;
-import com.github.akurilov.concurrent.WeightThrottle;
 
 import java.io.IOException;
 
@@ -42,9 +43,9 @@ public interface LoadGeneratorBuilder<
 
 	LoadGeneratorBuilder<I, O, T> originIndex(final int originIndex);
 
-	LoadGeneratorBuilder<I, O, T> rateThrottle(final Throttle<O> rateThrottle);
+	LoadGeneratorBuilder<I, O, T> rateThrottle(final Throttle rateThrottle);
 
-	LoadGeneratorBuilder<I, O, T> weightThrottle(final WeightThrottle weightThrottle);
+	LoadGeneratorBuilder<I, O, T> weightThrottle(final IndexThrottle weightThrottle);
 
 	T build()
 	throws OmgShootMyFootException, IOException;

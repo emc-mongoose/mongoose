@@ -168,7 +168,7 @@ extends LoadStepBase {
 						.storageDriver(driver)
 						.authConfig(storageConfig.getAuthConfig())
 						.originIndex(0)
-						.rateThrottle(rateLimit > 0 ? new RateThrottle<>(rateLimit) : null)
+						.rateThrottle(rateLimit > 0 ? new RateThrottle(rateLimit) : null)
 						.weightThrottle(null)
 						.build();
 					generators.add(generator);

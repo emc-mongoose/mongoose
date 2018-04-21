@@ -17,8 +17,6 @@ extends AsyncRunnable {
 	 */
 	long getGeneratedTasksCount();
 
-	long getTransferSizeEstimate();
-
 	IoType getIoType();
 	
 	/**

@@ -45,8 +45,8 @@ import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
+import com.github.akurilov.concurrent.IndexThrottle;
 import com.github.akurilov.concurrent.Throttle;
-import com.github.akurilov.concurrent.WeightThrottle;
 
 import org.apache.logging.log4j.Level;
 
@@ -88,8 +88,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 	private long sizeEstimate = 0;
 	private int batchSize;
 	private int originIndex;
-	private Throttle<O> rateThrottle = null;
-	private WeightThrottle weightThrottle = null;
+	private Throttle rateThrottle = null;
+	private IndexThrottle weightThrottle = null;
 	
 	@Override
 	public BasicLoadGeneratorBuilder<I, O, T> itemConfig(final ItemConfig itemConfig) {
@@ -161,13 +161,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 	}
 
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> rateThrottle(final Throttle<O> rateThrottle) {
+	public BasicLoadGeneratorBuilder<I, O, T> rateThrottle(final Throttle rateThrottle) {
 		this.rateThrottle = rateThrottle;
 		return this;
 	}
 
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> weightThrottle(final WeightThrottle weightThrottle) {
+	public BasicLoadGeneratorBuilder<I, O, T> weightThrottle(final IndexThrottle weightThrottle) {
 		this.weightThrottle = weightThrottle;
 		return this;
 	}
@@ -341,7 +341,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 		return (T) new BasicLoadGenerator<>(
 			itemInput, ioTaskBuilder, storageDriver, rateThrottle, weightThrottle, batchSize,
-			sizeEstimate, countLimit, sizeLimit, recycleLimit, shuffleFlag
+			countLimit, sizeLimit, recycleLimit, shuffleFlag
 		);
 	}
 	

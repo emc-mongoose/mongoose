@@ -60,15 +60,15 @@ ext {
 		commonsLang : "2.6",
 		disruptor : "3.4.1",
 		jackson : "2.9.5",
-		javaCommons : "[2.0.1,)",
-		javaConcurrent : "[2.0.1,)",
+		javaCommons : "[2.0.3,)",
+		javaConcurrent : "[2.0.2,)",
 		javassist : "3.22.0-GA",
 		slf4j : "1.7.25",
 		log4j : "2.8.2",
 		metrics : "4.0.2",
 		nagaina : "[3.6.10,)",
 		netty : "4.1.23.Final",
-		nettyConnectionPool : "[1.0.0,)",
+		nettyConnectionPool : "[1.0.1,)",
 	]
 
 	leafProjects = subprojects.findAll {

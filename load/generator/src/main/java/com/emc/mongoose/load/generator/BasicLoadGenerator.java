@@ -3,8 +3,8 @@ package com.emc.mongoose.load.generator;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
+import com.github.akurilov.concurrent.IndexThrottle;
 import com.github.akurilov.concurrent.Throttle;
-import com.github.akurilov.concurrent.WeightThrottle;
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.io.Input;
 
@@ -46,7 +46,7 @@ public class BasicLoadGenerator<I extends Item, O extends IoTask<I>>
 extends DaemonBase
 implements LoadGenerator<I, O> {
 
-	private final static String CLS_NAME = BasicLoadGenerator.class.getSimpleName();
+	private static final String CLS_NAME = BasicLoadGenerator.class.getSimpleName();
 
 	private volatile boolean recycleQueueFullState = false;
 	private volatile boolean itemInputFinishFlag = false;
@@ -55,7 +55,6 @@ implements LoadGenerator<I, O> {
 
 	private final Input<I> itemInput;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
-	private final long transferSizeEstimate;
 	private final BlockingQueue<O> recycleQueue;
 	private final boolean shuffleFlag;
 	private final Lock inputLock = new ReentrantLock();
@@ -72,13 +71,11 @@ implements LoadGenerator<I, O> {
 	public BasicLoadGenerator(
 		final Input<I> itemInput, final IoTaskBuilder<I, O> ioTaskBuilder,
 		final Output<O> ioTaskOutput, final Throttle rateThrottle,
-		final WeightThrottle weightThrottle, final int batchSize, final long transferSizeEstimate,
-		final long countLimit, final SizeInBytes sizeLimit, final int recycleQueueSize,
-		final boolean shuffleFlag
+		final IndexThrottle weightThrottle, final int batchSize, final long countLimit,
+		final SizeInBytes sizeLimit, final int recycleQueueSize, final boolean shuffleFlag
 	) {
 		this.itemInput = itemInput;
 		this.ioTaskBuilder = ioTaskBuilder;
-		this.transferSizeEstimate = transferSizeEstimate;
 		this.recycleQueue = recycleQueueSize > 0 ?
 			new ArrayBlockingQueue<>(recycleQueueSize) : null;
 		this.shuffleFlag = shuffleFlag;
@@ -97,8 +94,6 @@ implements LoadGenerator<I, O> {
 			{
 				if(countLimit > 0) {
 					this._countLimit = countLimit;
-				} else if(sizeLimit.get() > 0 && transferSizeEstimate > 0) {
-					this._countLimit = sizeLimit.get() / transferSizeEstimate + 1;
 				} else {
 					this._countLimit = Long.MAX_VALUE;
 				}
@@ -162,7 +157,7 @@ implements LoadGenerator<I, O> {
 							n = weightThrottle.tryAcquire(originIndex, n);
 						}
 						if(rateThrottle != null) {
-							n = rateThrottle.tryAcquire(null, n);
+							n = rateThrottle.tryAcquire(n);
 						}
 						// try to output
 						if(n > 0) {
@@ -282,11 +277,6 @@ implements LoadGenerator<I, O> {
 	@Override
 	public final long getGeneratedTasksCount() {
 		return builtTasksCounter.sum() + recycledTasksCounter.sum();
-	}
-
-	@Override
-	public final long getTransferSizeEstimate() {
-		return transferSizeEstimate;
 	}
 
 	@Override
