@@ -4,8 +4,9 @@ var itemsFile = "weighted_load_example.csv";
 var itemOutputPath = "/weighted_load_example";
 
 // declare the cleanup shell command
-var cmd = new java.lang.ProcessBuilder("sh", "-c", "rm -f " + itemsFile).start();
-cmd.waitFor();
+new java.lang.ProcessBuilder("sh", "-c", "rm -f " + itemsFile)
+    .start()
+    .waitFor();
 
 // prepare (create) the 10000 items on a storage before the test
 PreconditionLoad

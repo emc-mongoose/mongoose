@@ -72,7 +72,7 @@ extends LoadStepBase {
 	@Override
 	protected void init() {
 
-		final String autoStepId = getTypeName().toLowerCase() + "_" + LogUtil.getDateTimeStamp();
+		final String autoStepId = "weighted_" + LogUtil.getDateTimeStamp();
 		final Config config = new Config(baseConfig);
 		final StepConfig stepConfig = config.getTestConfig().getStepConfig();
 		if(stepConfig.getIdTmp()) {

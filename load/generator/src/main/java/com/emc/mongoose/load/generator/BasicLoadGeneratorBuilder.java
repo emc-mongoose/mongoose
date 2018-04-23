@@ -471,7 +471,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 			final Path itemInputFilePath = Paths.get(itemInputFile);
 			try {
 				final String mimeType = Files.probeContentType(itemInputFilePath);
-				if(mimeType.startsWith("text")) {
+				if(mimeType != null && mimeType.startsWith("text")) {
 					try {
 						itemInput = new CsvFileItemInput<>(itemInputFilePath, itemFactory);
 					} catch(final NoSuchMethodException e){

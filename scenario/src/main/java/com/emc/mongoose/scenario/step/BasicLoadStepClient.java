@@ -56,6 +56,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -205,6 +206,7 @@ implements LoadStepClient {
 		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
 			itemOutputFileSvcs = nodeAddrs
 				.parallelStream()
+				.filter(((Predicate<String>) ServiceUtil::isLocalAddress).negate())
 				.collect(
 					Collectors.toMap(
 						Function.identity(),
@@ -311,7 +313,7 @@ implements LoadStepClient {
 			final Path itemInputFilePath = Paths.get(itemInputFile);
 			try {
 				final String mimeType = Files.probeContentType(itemInputFilePath);
-				if(mimeType.startsWith("text")) {
+				if(mimeType != null && mimeType.startsWith("text")) {
 					try {
 						return new CsvFileItemInput<>(itemInputFilePath, itemFactory);
 					} catch(final NoSuchMethodException e) {
@@ -688,12 +690,12 @@ implements LoadStepClient {
 	private void initIoTraceLogFileServices(final List<String> nodeAddrs) {
 		ioTraceLogFileSvcs = nodeAddrs
 			.stream()
+			.filter(((Predicate<String>) ServiceUtil::isLocalAddress).negate())
 			.collect(
 				Collectors.toMap(
 					Function.identity(),
 					nodeAddrWithPort -> fileMgrSvcs
 						.get(nodeAddrWithPort)
-						.filter(fileMgrSvc -> ! ServiceUtil.isLocalAddress(nodeAddrWithPort))
 						.map(
 							fileMgrSvc -> {
 								try {
