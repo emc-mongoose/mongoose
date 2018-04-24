@@ -1,17 +1,5 @@
-final noOutputColorConfig = [
-    output : [
-        color : false
-    ]
-]
+def cmd1 = "echo Hello world!".execute()
+def cmd2 = "ps alx | grep java".execute()
 
-final command1 = Command
-    .config(noOutputColorConfig)
-    .value("echo Hello world!")
-
-final command2 = Command
-    .value("ps alx | grep java")
-
-Parallel
-    .step(command1)
-    .step(command2)
-    .run()
+cmd1.waitFor()
+cmd2.waitFor()

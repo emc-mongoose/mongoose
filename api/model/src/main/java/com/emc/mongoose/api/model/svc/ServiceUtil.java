@@ -212,7 +212,8 @@ public abstract class ServiceUtil {
 	public static void shutdown() {
 
 		synchronized(SVC_MAP) {
-			for(final Service svc : SVC_MAP.values()) {
+			while(!SVC_MAP.isEmpty()) {
+				final Service svc = SVC_MAP.values().iterator().next();
 				try {
 					System.out.println("Service closed: " + close(svc));
 				} catch(final RemoteException | MalformedURLException e) {

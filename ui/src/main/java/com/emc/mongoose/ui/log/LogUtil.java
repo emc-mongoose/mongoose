@@ -7,6 +7,7 @@ import static com.emc.mongoose.api.common.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.api.common.env.DateUtil.TZ_UTC;
 import static com.emc.mongoose.api.common.env.PathUtil.BASE_DIR;
 
+import com.emc.mongoose.api.model.svc.ServiceUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

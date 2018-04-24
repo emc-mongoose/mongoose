@@ -14,7 +14,7 @@ import com.emc.mongoose.api.model.item.Item;
 public interface LoadController<I extends Item, O extends IoTask<I>>
 extends AsyncRunnable, Output<O> {
 	
-	void setIoResultsOutput(final Output<O> ioTaskResultsOutput);
+	void ioResultsOutput(final Output<O> ioTaskResultsOutput);
 
 	default Input<O> getInput() {
 		throw new AssertionError("Shouldn't be invoked");

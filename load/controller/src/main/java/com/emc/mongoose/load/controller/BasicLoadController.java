@@ -219,7 +219,7 @@ implements LoadController<I, O> {
 	}
 
 	@Override
-	public final void setIoResultsOutput(final Output<O> ioTaskResultsOutput) {
+	public final void ioResultsOutput(final Output<O> ioTaskResultsOutput) {
 		this.ioResultsOutput = ioTaskResultsOutput;
 	}
 	

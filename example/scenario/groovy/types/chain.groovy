@@ -31,9 +31,7 @@ final deleteConfig = [
 ]
 
 // clean up before running the chain load step
-Command
-    .value("rm -f $itemOutputFile".toString())
-    .run();
+"rm -f $itemOutputFile".execute().waitFor()
 
 ChainLoad
     .config(createConfig)

@@ -1,8 +1,8 @@
 package com.emc.mongoose.node;
 
 import com.emc.mongoose.api.model.svc.ServiceBase;
-import com.emc.mongoose.scenario.step.FileManagerService;
-import com.emc.mongoose.scenario.step.FileService;
+import com.emc.mongoose.scenario.step.svc.FileManagerService;
+import com.emc.mongoose.scenario.step.svc.FileService;
 import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.CloseableThreadContext;

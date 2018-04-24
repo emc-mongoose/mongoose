@@ -1,20 +1,26 @@
 package com.emc.mongoose.scenario.step;
 
+import com.emc.mongoose.api.metrics.AggregatingMetricsContext;
+import com.emc.mongoose.api.metrics.BasicMetricsContext;
 import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.api.metrics.MetricsManager;
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.load.LoadController;
 import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.model.storage.StorageDriver;
+import com.emc.mongoose.scenario.step.client.BasicLoadStepClient;
+import com.emc.mongoose.scenario.step.client.LoadStepClient;
 import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
 import com.emc.mongoose.ui.config.test.step.StepConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.ui.log.Loggers;
-
+import com.github.akurilov.commons.system.SizeInBytes;
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 
@@ -60,8 +66,26 @@ implements LoadStep, Runnable {
 		if(stepConfigs != null) {
 			stepConfigsCopy.addAll(stepConfigs);
 		}
-		stepConfigsCopy.add(config);
+		final Map<String, Object> stepConfig = deepCopyTree(config);
+		stepConfigsCopy.add(stepConfig);
 		return copyInstance(stepConfigsCopy);
+	}
+
+	private static Map<String, Object> deepCopyTree(final Map<String, Object> srcTree) {
+		return srcTree
+			.entrySet()
+			.stream()
+			.collect(
+				Collectors.toMap(
+					Map.Entry::getKey,
+					entry -> {
+						final Object value = entry.getValue();
+						return value instanceof Map ?
+							deepCopyTree((Map<String, Object>) value) :
+							value;
+					}
+				)
+			);
 	}
 
 	@Override
@@ -126,7 +150,8 @@ implements LoadStep, Runnable {
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			if(distributedFlag) {
-				doStartRemote(actualConfig);
+				stepClient = new BasicLoadStepClient(this, baseConfig, stepConfigs);
+				stepClient.start();
 			} else {
 				doStartLocal();
 			}
@@ -148,10 +173,39 @@ implements LoadStep, Runnable {
 	 */
 	protected abstract void init();
 
-	private void doStartRemote(final Config actualConfig)
-	throws RemoteException {
-		stepClient = new BasicLoadStepClient(this, actualConfig);
-		stepClient.start();
+	protected final void initDistributedMetrics(
+		final int originIndex, final IoType ioType, final int concurrency, final int nodeCount,
+		final MetricsConfig metricsConfig, final SizeInBytes itemDataSize,
+		final boolean outputColorFlag
+	) {
+		metricsContexts.add(
+			new AggregatingMetricsContext(
+				id, ioType, nodeCount, concurrency * nodeCount,
+				(int) (concurrency * nodeCount * metricsConfig.getThreshold()),
+				itemDataSize, (int) metricsConfig.getAverageConfig().getPeriod(), outputColorFlag,
+				metricsConfig.getAverageConfig().getPersist(),
+				metricsConfig.getSummaryConfig().getPersist(),
+				metricsConfig.getSummaryConfig().getPerfDbResultsFile(),
+				() -> stepClient.remoteMetricsSnapshots(originIndex)
+			)
+		);
+	}
+
+	protected final void initLocalMetrics(
+		final IoType ioType, final int concurrency, final MetricsConfig metricsConfig,
+		final SizeInBytes itemDataSize, final boolean outputColorFlag
+	) {
+		metricsContexts.add(
+			new BasicMetricsContext(
+				id, ioType,
+				() -> drivers.stream().mapToInt(StorageDriver::getActiveTaskCount).sum(),
+				concurrency, (int) (concurrency * metricsConfig.getThreshold()), itemDataSize,
+				(int) metricsConfig.getAverageConfig().getPeriod(), outputColorFlag,
+				metricsConfig.getAverageConfig().getPersist(),
+				metricsConfig.getSummaryConfig().getPersist(),
+				metricsConfig.getSummaryConfig().getPerfDbResultsFile()
+			)
+		);
 	}
 
 	private void doStartLocal() {

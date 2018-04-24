@@ -1,6 +1,7 @@
-package com.emc.mongoose.scenario.step;
+package com.emc.mongoose.scenario.step.client;
 
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
+import com.emc.mongoose.scenario.step.LoadStep;
 
 import java.util.List;
 

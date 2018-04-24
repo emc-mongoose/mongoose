@@ -1,4 +1,4 @@
-package com.emc.mongoose.scenario.step;
+package com.emc.mongoose.scenario.step.svc;
 
 import com.emc.mongoose.api.model.svc.Service;
 

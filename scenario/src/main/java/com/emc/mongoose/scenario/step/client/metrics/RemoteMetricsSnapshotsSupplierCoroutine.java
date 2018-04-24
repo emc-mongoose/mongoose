@@ -1,6 +1,7 @@
-package com.emc.mongoose.scenario.step;
+package com.emc.mongoose.scenario.step.client.metrics;
 
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
+import com.emc.mongoose.scenario.step.svc.LoadStepService;
 import com.emc.mongoose.ui.log.LogUtil;
 
 import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
@@ -39,5 +40,10 @@ implements MetricsSnapshotsSupplierCoroutine {
 	@Override
 	public final List<MetricsSnapshot> get() {
 		return snapshotsByOrigin;
+	}
+
+	@Override
+	protected final void doClose() {
+		snapshotsByOrigin.clear();
 	}
 }

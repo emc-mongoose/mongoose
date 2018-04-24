@@ -1,4 +1,4 @@
-package com.emc.mongoose.scenario.step;
+package com.emc.mongoose.scenario.step.client.metrics;
 
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
 

@@ -1,4 +1,4 @@
-package com.emc.mongoose.scenario.step;
+package com.emc.mongoose.scenario.step.client;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
@@ -15,6 +15,13 @@ import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.api.model.svc.Service;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.load.generator.StorageItemInput;
+import com.emc.mongoose.scenario.step.client.metrics.RemoteMetricsSnapshotsSupplierCoroutine;
+import com.emc.mongoose.scenario.step.client.metrics.MetricsSnapshotsSupplierCoroutine;
+import com.emc.mongoose.scenario.step.svc.FileManagerService;
+import com.emc.mongoose.scenario.step.svc.FileService;
+import com.emc.mongoose.scenario.step.LoadStep;
+import com.emc.mongoose.scenario.step.svc.LoadStepManagerService;
+import com.emc.mongoose.scenario.step.svc.LoadStepService;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.item.ItemConfig;
@@ -56,7 +63,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -65,12 +71,17 @@ extends DaemonBase
 implements LoadStepClient {
 
 	private final LoadStep loadStep;
-	private final Config actualConfig;
+	private final Config baseConfig;
+	private final List<Map<String, Object>> stepConfigs;
 	private final Map<LoadStepService, MetricsSnapshotsSupplierCoroutine> metricsSnapshotsSuppliers;
 
-	public BasicLoadStepClient(final LoadStep loadStep, final Config actualConfig) {
+	public BasicLoadStepClient(
+		final LoadStep loadStep, final Config baseConfig,
+		final List<Map<String, Object>> stepConfigs
+	) {
 		this.loadStep = loadStep;
-		this.actualConfig = actualConfig;
+		this.baseConfig = baseConfig;
+		this.stepConfigs = stepConfigs;
 		this.metricsSnapshotsSuppliers = new HashMap<>();
 	}
 
@@ -84,7 +95,7 @@ implements LoadStepClient {
 	protected final void doStart()
 	throws IllegalArgumentException {
 
-		final NodeConfig nodeConfig = actualConfig.getTestConfig().getStepConfig().getNodeConfig();
+		final NodeConfig nodeConfig = baseConfig.getTestConfig().getStepConfig().getNodeConfig();
 		final int nodePort = nodeConfig.getPort();
 		final Function<String, String> addPortIfMissingPartialFunc = Function2
 			.partial2(NetUtil::addPortIfMissing, nodePort);
@@ -102,10 +113,10 @@ implements LoadStepClient {
 
 		initFileManagerServices(nodeAddrs);
 
-		if(actualConfig.getOutputConfig().getMetricsConfig().getTraceConfig().getPersist()) {
+		if(baseConfig.getOutputConfig().getMetricsConfig().getTraceConfig().getPersist()) {
 			initIoTraceLogFileServices(nodeAddrs);
 		}
-		final Map<String, Config> configSlices = sliceConfigs(actualConfig, nodeAddrs);
+		final Map<String, Config> configSlices = sliceConfigs(baseConfig, nodeAddrs);
 		final Function<String, LoadStepService> resolveStepSvcPartialFunc = Function2.partial1(
 			this::resolveStepSvc, configSlices
 		);
@@ -206,27 +217,36 @@ implements LoadStepClient {
 		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
 			itemOutputFileSvcs = nodeAddrs
 				.parallelStream()
-				.filter(((Predicate<String>) ServiceUtil::isLocalAddress).negate())
 				.collect(
 					Collectors.toMap(
 						Function.identity(),
-						nodeAddrWithPort -> fileMgrSvcs
-							.get(nodeAddrWithPort)
-							.map(
-								Function3.partial13(
-									BasicLoadStepClient::createFileService, nodeAddrWithPort, null
-								)
-							)
-							.map(
-								Function2
-									.partial1(BasicLoadStepClient::resolveService, nodeAddrWithPort)
-									.andThen(svc -> (FileService) svc)
-							)
-							.map(
-								Function2.partial1(
-									BasicLoadStepClient::createRemoteFile, nodeAddrWithPort
-								)
-							)
+						nodeAddrWithPort -> {
+							if(ServiceUtil.isLocalAddress(nodeAddrWithPort)) {
+								return Optional.empty();
+							} else {
+								return fileMgrSvcs
+									.get(nodeAddrWithPort)
+									.map(
+										Function3.partial13(
+											BasicLoadStepClient::createFileService,
+											nodeAddrWithPort, null
+										)
+									)
+									.map(
+										Function2
+											.partial1(
+												BasicLoadStepClient::resolveService,
+												nodeAddrWithPort
+											)
+											.andThen(svc -> (FileService) svc)
+									)
+									.map(
+										Function2.partial1(
+											BasicLoadStepClient::createRemoteFile, nodeAddrWithPort
+										)
+									);
+							}
+						}
 					)
 				);
 			// change the item output file value for each slice
@@ -312,8 +332,7 @@ implements LoadStepClient {
 
 			final Path itemInputFilePath = Paths.get(itemInputFile);
 			try {
-				final String mimeType = Files.probeContentType(itemInputFilePath);
-				if(mimeType != null && mimeType.startsWith("text")) {
+				if(itemInputFile.endsWith(".csv")) {
 					try {
 						return new CsvFileItemInput<>(itemInputFilePath, itemFactory);
 					} catch(final NoSuchMethodException e) {
@@ -591,7 +610,7 @@ implements LoadStepClient {
 		final String stepSvcName;
 		try {
 			stepSvcName = stepMgrSvc.getStepService(
-				getTypeName(), configSlices.get(nodeAddrWithPort)
+				getTypeName(), configSlices.get(nodeAddrWithPort), stepConfigs
 			);
 		} catch(final Exception e) {
 			LogUtil.exception(
@@ -690,43 +709,49 @@ implements LoadStepClient {
 	private void initIoTraceLogFileServices(final List<String> nodeAddrs) {
 		ioTraceLogFileSvcs = nodeAddrs
 			.stream()
-			.filter(((Predicate<String>) ServiceUtil::isLocalAddress).negate())
 			.collect(
 				Collectors.toMap(
 					Function.identity(),
-					nodeAddrWithPort -> fileMgrSvcs
-						.get(nodeAddrWithPort)
-						.map(
-							fileMgrSvc -> {
-								try {
-									return fileMgrSvc.createLogFileService(
-										Loggers.IO_TRACE.getName(), id()
-									);
-								} catch(final RemoteException e) {
-									LogUtil.exception(
-										Level.WARN, e, "Failed to create the log file service @ {}",
-										nodeAddrWithPort
-									);
-								}
-								return null;
-							}
-						)
-						.map(
-							ioTraceLogFileSvcName -> {
-								try {
-									return ServiceUtil.resolve(
-										nodeAddrWithPort, ioTraceLogFileSvcName
-									);
-								} catch(final Exception e) {
-									LogUtil.exception(
-										Level.WARN, e,
-										"Failed to resolve the log file service \"{}\" @ {}",
-										ioTraceLogFileSvcName, nodeAddrWithPort
-									);
-								}
-								return null;
-							}
-						)
+					nodeAddrWithPort -> {
+						if(ServiceUtil.isLocalAddress(nodeAddrWithPort)) {
+							return Optional.empty();
+						} else {
+							return fileMgrSvcs
+								.get(nodeAddrWithPort)
+								.map(
+									fileMgrSvc -> {
+										try {
+											return fileMgrSvc.createLogFileService(
+												Loggers.IO_TRACE.getName(), id()
+											);
+										} catch(final RemoteException e) {
+											LogUtil.exception(
+												Level.WARN, e,
+												"Failed to create the log file service @ {}",
+												nodeAddrWithPort
+											);
+										}
+										return null;
+									}
+								)
+								.map(
+									ioTraceLogFileSvcName -> {
+										try {
+											return ServiceUtil.resolve(
+												nodeAddrWithPort, ioTraceLogFileSvcName
+											);
+										} catch(final Exception e) {
+											LogUtil.exception(
+												Level.WARN, e,
+												"Failed to resolve the log file service \"{}\" @ {}",
+												ioTraceLogFileSvcName, nodeAddrWithPort
+											);
+										}
+										return null;
+									}
+								);
+						}
+					}
 				)
 			);
 	}
@@ -762,6 +787,27 @@ implements LoadStepClient {
 			.forEach(
 				snapshotsFetcher -> {
 					try {
+						snapshotsFetcher.stop();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.WARN, e, "Failed to stop the remote metrics snapshot fetcher"
+						);
+					}
+				}
+			);
+
+		stepSvcs
+			.parallelStream()
+			.forEach(BasicLoadStepClient::closeStepSvc);
+		stepSvcs.clear();
+		stepSvcs = null;
+
+		metricsSnapshotsSuppliers
+			.values()
+			.parallelStream()
+			.forEach(
+				snapshotsFetcher -> {
+					try {
 						snapshotsFetcher.close();
 					} catch(final IOException e) {
 						LogUtil.exception(
@@ -771,12 +817,6 @@ implements LoadStepClient {
 				}
 			);
 		metricsSnapshotsSuppliers.clear();
-
-		stepSvcs
-			.parallelStream()
-			.forEach(BasicLoadStepClient::closeStepSvc);
-		stepSvcs.clear();
-		stepSvcs = null;
 
 		if(null != itemInputFileSvcs) {
 			itemInputFileSvcs
@@ -789,7 +829,7 @@ implements LoadStepClient {
 		}
 
 		if(null != itemOutputFileSvcs) {
-			final String itemOutputFile = actualConfig.getItemConfig().getOutputConfig().getFile();
+			final String itemOutputFile = baseConfig.getItemConfig().getOutputConfig().getFile();
 			transferItemOutputData(itemOutputFileSvcs, itemOutputFile);
 			itemOutputFileSvcs
 				.entrySet()

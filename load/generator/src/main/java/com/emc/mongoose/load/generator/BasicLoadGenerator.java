@@ -3,11 +3,11 @@ package com.emc.mongoose.load.generator;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
-import com.github.akurilov.concurrent.IndexThrottle;
-import com.github.akurilov.concurrent.Throttle;
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.io.Input;
 
+import com.github.akurilov.concurrent.IndexThrottle;
+import com.github.akurilov.concurrent.Throttle;
 import com.github.akurilov.concurrent.coroutines.Coroutine;
 import com.github.akurilov.concurrent.coroutines.CoroutineBase;
 
@@ -224,11 +224,18 @@ implements LoadGenerator<I, O> {
 				} finally {
 					if(isFinished()) {
 						try {
-							stop();
+							BasicLoadGenerator.this.stop();
 						} catch(final RemoteException | IllegalStateException ignored) {
 						}
 					}
 				}
+			}
+
+			@Override
+			public final boolean isFinished() {
+				return outputFinishFlag ||
+					itemInputFinishFlag && taskInputFinishFlag &&
+						getGeneratedTasksCount() == outputTaskCounter.sum();
 			}
 
 			@Override
@@ -265,13 +272,6 @@ implements LoadGenerator<I, O> {
 			LogUtil.exception(Level.ERROR, e, "Failed to generate the I/O task");
 		}
 		return 0;
-	}
-
-	@Override
-	public final boolean isFinished() {
-		return outputFinishFlag ||
-			itemInputFinishFlag && taskInputFinishFlag &&
-				getGeneratedTasksCount() == outputTaskCounter.sum();
 	}
 
 	@Override

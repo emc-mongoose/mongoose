@@ -2,9 +2,11 @@ package com.emc.mongoose.node;
 
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.svc.ServiceBase;
-import com.emc.mongoose.scenario.step.LinearLoadStep;
-import com.emc.mongoose.scenario.step.LoadStepService;
+import com.emc.mongoose.scenario.step.types.ChainLoadStep;
+import com.emc.mongoose.scenario.step.types.LinearLoadStep;
+import com.emc.mongoose.scenario.step.svc.LoadStepService;
 import com.emc.mongoose.scenario.step.LoadStep;
+import com.emc.mongoose.scenario.step.types.WeightedLoadStep;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
@@ -23,13 +25,22 @@ implements LoadStepService {
 
 	private final LoadStep loadStep;
 
-	public BasicLoadStepService(final int port, final String stepType, final Config config) {
+	public BasicLoadStepService(
+		final int port, final String stepType, final Config config,
+		final List<Map<String, Object>> stepConfigs
+	) {
 		super(port);
 		// don't override the test-step-id value on the remote node again
 		config.getTestConfig().getStepConfig().setIdTmp(false);
 		switch(stepType) {
 			case LinearLoadStep.TYPE:
-				loadStep = new LinearLoadStep(config);
+				loadStep = new LinearLoadStep(config, stepConfigs);
+				break;
+			case WeightedLoadStep.TYPE:
+				loadStep = new WeightedLoadStep(config, stepConfigs);
+				break;
+			case ChainLoadStep.TYPE:
+				loadStep = new ChainLoadStep(config, stepConfigs);
 				break;
 			default:
 				throw new IllegalArgumentException("Unexpected step type: " + stepType);
