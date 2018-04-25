@@ -5,7 +5,7 @@ import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.common.supply.PatternDefinedSupplier;
 import com.emc.mongoose.api.common.supply.RangePatternDefinedSupplier;
 
-import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
+import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
 
 public final class AsyncPatternDefinedSupplier
 extends AsyncUpdatingValueSupplier<String>

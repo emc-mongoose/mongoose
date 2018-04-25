@@ -2,7 +2,7 @@ package com.emc.mongoose.api.common.supply.async;
 
 import com.github.akurilov.concurrent.InitCallable;
 import com.github.akurilov.concurrent.Initializable;
-import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
+import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
 
 import com.github.akurilov.commons.math.Random;
 

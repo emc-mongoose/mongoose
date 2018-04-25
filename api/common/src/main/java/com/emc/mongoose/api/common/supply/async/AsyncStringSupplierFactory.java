@@ -3,7 +3,8 @@ package com.emc.mongoose.api.common.supply.async;
 import com.emc.mongoose.api.common.supply.BatchSupplier;
 import com.emc.mongoose.api.common.supply.SupplierFactory;
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
+
+import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
 
 import java.text.ParseException;
 import java.util.Date;

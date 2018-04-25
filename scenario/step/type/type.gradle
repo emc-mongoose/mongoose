@@ -1,0 +1,18 @@
+description = "mongoose-scenario-step-type"
+
+ext.isExt = false
+ext.jarFileName = description
+
+dependencies {
+
+	compile(
+		project(":api:common"),
+		project(":api:metrics"),
+		project(":api:model"),
+		project(":ui"),
+		project(":scenario:step"),
+		project(":scenario:step:client"),
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+	)
+}

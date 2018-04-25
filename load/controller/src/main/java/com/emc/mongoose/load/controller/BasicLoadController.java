@@ -26,8 +26,8 @@ import com.emc.mongoose.ui.log.Loggers;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.io.Output;
 
-import com.github.akurilov.concurrent.coroutines.Coroutine;
-import com.github.akurilov.concurrent.coroutines.TransferCoroutine;
+import com.github.akurilov.concurrent.coroutine.Coroutine;
+import com.github.akurilov.concurrent.coroutine.TransferCoroutine;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
@@ -383,8 +383,8 @@ implements LoadController<I, O> {
 		);
 		final long t = System.currentTimeMillis();
 		while(System.currentTimeMillis() - t < timeOutMilliSec) {
-			synchronized(state) {
-				state.wait(100);
+			if(super.await(100, TimeUnit.MILLISECONDS)) {
+				return true;
 			}
 			if(isStopped()) {
 				Loggers.MSG.debug("{}: await exit due to \"interrupted\" state", id);

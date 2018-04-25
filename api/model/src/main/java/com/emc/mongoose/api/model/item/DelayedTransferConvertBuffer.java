@@ -1,7 +1,8 @@
 package com.emc.mongoose.api.model.item;
 
 import com.github.akurilov.commons.io.Input;
-import com.github.akurilov.concurrent.coroutines.Coroutine;
+
+import com.github.akurilov.concurrent.coroutine.Coroutine;
 
 import com.emc.mongoose.api.model.io.task.IoTask;
 

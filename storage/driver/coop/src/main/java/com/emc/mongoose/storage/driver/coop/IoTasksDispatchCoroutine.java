@@ -8,8 +8,9 @@ import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
-import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
-import com.github.akurilov.concurrent.coroutines.ExclusiveCoroutineBase;
+
+import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
+import com.github.akurilov.concurrent.coroutine.ExclusiveCoroutineBase;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;

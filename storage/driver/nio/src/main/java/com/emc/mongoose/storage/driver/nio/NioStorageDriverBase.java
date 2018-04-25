@@ -3,9 +3,9 @@ package com.emc.mongoose.storage.driver.nio;
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
 
-import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
-import com.github.akurilov.concurrent.coroutines.Coroutine;
-import com.github.akurilov.concurrent.coroutines.ExclusiveCoroutineBase;
+import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
+import com.github.akurilov.concurrent.coroutine.Coroutine;
+import com.github.akurilov.concurrent.coroutine.ExclusiveCoroutineBase;
 
 import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;

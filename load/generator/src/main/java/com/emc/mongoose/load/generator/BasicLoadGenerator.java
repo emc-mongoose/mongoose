@@ -6,10 +6,10 @@ import com.github.akurilov.commons.collection.OptLockBuffer;
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.io.Input;
 
-import com.github.akurilov.concurrent.IndexThrottle;
-import com.github.akurilov.concurrent.Throttle;
-import com.github.akurilov.concurrent.coroutines.Coroutine;
-import com.github.akurilov.concurrent.coroutines.CoroutineBase;
+import com.github.akurilov.concurrent.throttle.IndexThrottle;
+import com.github.akurilov.concurrent.throttle.Throttle;
+import com.github.akurilov.concurrent.coroutine.Coroutine;
+import com.github.akurilov.concurrent.coroutine.CoroutineBase;
 
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
@@ -225,7 +225,7 @@ implements LoadGenerator<I, O> {
 					if(isFinished()) {
 						try {
 							BasicLoadGenerator.this.stop();
-						} catch(final RemoteException | IllegalStateException ignored) {
+						} catch(final IllegalStateException ignored) {
 						}
 					}
 				}

@@ -2,9 +2,6 @@ package com.emc.mongoose.scenario;
 
 import com.emc.mongoose.api.common.env.Extensions;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.scenario.step.types.ChainLoadStep;
-import com.emc.mongoose.scenario.step.types.LinearLoadStep;
-import com.emc.mongoose.scenario.step.types.WeightedLoadStep;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
@@ -18,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.ServiceLoader;
 
 /**
  Created by andrey on 19.09.17.
@@ -86,6 +84,10 @@ public interface ScriptEngineUtil {
 	 @param config the configuration
 	 */
 	static void registerStepBasicTypes(final ScriptEngine se, final Config config) {
+		final ServiceLoader<LoadStepFactory<T>> loader = ServiceLoader.load(
+			(Class) LoadStepFactory.class, Extensions.CLS_LOADER
+		);
+		for(final LoadStepF)
 		se.put(LinearLoadStep.TYPE, new LinearLoadStep(config));
 		se.put(WeightedLoadStep.TYPE, new WeightedLoadStep(config));
 		se.put(ChainLoadStep.TYPE, new ChainLoadStep(config));

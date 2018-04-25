@@ -1,9 +1,9 @@
 package com.emc.mongoose.api.common.supply.async;
 
 import com.github.akurilov.concurrent.InitCallable;
-import com.github.akurilov.concurrent.coroutines.Coroutine;
-import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
-import com.github.akurilov.concurrent.coroutines.ExclusiveCoroutineBase;
+import com.github.akurilov.concurrent.coroutine.Coroutine;
+import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
+import com.github.akurilov.concurrent.coroutine.ExclusiveCoroutineBase;
 
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.api.common.supply.BasicUpdatingValueSupplier;

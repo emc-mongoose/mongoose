@@ -1,0 +1,18 @@
+description = "mongoose-scenario-step-server"
+
+ext.isExt = false
+ext.jarFileName = description
+ext.mainClass = "com.emc.mongoose.step.server.Main"
+
+dependencies {
+
+	compile(
+		project(":api:common"),
+		project(":api:model"),
+		project(":ui"),
+		project(":scenario"),
+		project(":scenario:step"),
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+	)
+}

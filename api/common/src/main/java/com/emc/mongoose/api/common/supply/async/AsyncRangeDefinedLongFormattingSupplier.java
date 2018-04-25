@@ -2,7 +2,7 @@ package com.emc.mongoose.api.common.supply.async;
 
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
 
-import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
+import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;

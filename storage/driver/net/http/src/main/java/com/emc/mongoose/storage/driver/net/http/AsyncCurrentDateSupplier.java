@@ -3,7 +3,8 @@ package com.emc.mongoose.storage.driver.net.http;
 import com.emc.mongoose.api.common.env.DateUtil;
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.api.common.supply.async.AsyncUpdatingValueSupplier;
-import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
+
+import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
 
 import java.util.Date;
 

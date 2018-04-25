@@ -199,10 +199,7 @@ implements StorageDriver<I, O> {
 
 	@Override
 	protected void doShutdown() {
-		try {
-			ioTasksDispatchCoroutine.stop();
-		} catch(final RemoteException ignored) {
-		}
+		ioTasksDispatchCoroutine.stop();
 		Loggers.MSG.debug("{}: shut down", toString());
 	}
 

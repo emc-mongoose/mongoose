@@ -12,8 +12,8 @@ import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
-import com.github.akurilov.concurrent.coroutines.Coroutine;
-import com.github.akurilov.concurrent.coroutines.CoroutineBase;
+import com.github.akurilov.concurrent.coroutine.Coroutine;
+import com.github.akurilov.concurrent.coroutine.CoroutineBase;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
@@ -218,11 +218,8 @@ extends DaemonBase {
 				}
 			} finally {
 				if(INSTANCE.allMetrics.size() == 0) {
-					try {
-						INSTANCE.stop();
-						Loggers.MSG.info("Stopped the metrics manager coroutine");
-					} catch(final RemoteException ignored) {
-					}
+					INSTANCE.stop();
+					Loggers.MSG.info("Stopped the metrics manager coroutine");
 				}
 				INSTANCE.allMetricsLock.unlock();
 				Loggers.MSG.debug("Metrics context \"{}\" unregistered", metricsCtx);

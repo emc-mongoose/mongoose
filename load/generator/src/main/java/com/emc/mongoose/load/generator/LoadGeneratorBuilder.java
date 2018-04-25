@@ -13,8 +13,8 @@ import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
 import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 
-import com.github.akurilov.concurrent.IndexThrottle;
-import com.github.akurilov.concurrent.Throttle;
+import com.github.akurilov.concurrent.throttle.IndexThrottle;
+import com.github.akurilov.concurrent.throttle.Throttle;
 
 import java.io.IOException;
 

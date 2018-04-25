@@ -45,8 +45,8 @@ import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
 
-import com.github.akurilov.concurrent.IndexThrottle;
-import com.github.akurilov.concurrent.Throttle;
+import com.github.akurilov.concurrent.throttle.IndexThrottle;
+import com.github.akurilov.concurrent.throttle.Throttle;
 
 import org.apache.logging.log4j.Level;
 

@@ -1,6 +1,6 @@
 package com.emc.mongoose.api.model.concurrent;
 
-import com.github.akurilov.concurrent.coroutines.CoroutinesExecutor;
+import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
 
 public interface ServiceTaskExecutor {
 
