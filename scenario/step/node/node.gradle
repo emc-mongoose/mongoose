@@ -1,21 +1,24 @@
-description = "mongoose-scenario"
+description = "mongoose-scenario-step-node"
 
 ext.isExt = false
-ext.jarFileName = rootProject.name
-ext.mainClass = "com.emc.mongoose.scenario.Main"
+ext.jarFileName = description
+ext.mainClass = "com.emc.mongoose.scenario.step.node.Main"
 
 dependencies {
 
 	compile(
+		project(":api:common"),
 		project(":api:model"),
 		project(":ui"),
+		project(":scenario:step"),
 		project(":scenario:step:type"),
 		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+		"com.lmax:disruptor:${depVersion.disruptor}",
 	)
 
 	runtime(
-		"com.lmax:disruptor:${depVersion.disruptor}",
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 	)
 }

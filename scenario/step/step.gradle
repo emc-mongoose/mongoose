@@ -6,8 +6,8 @@ ext.jarFileName = description
 dependencies {
 
 	compile(
-		project(":api:metrics"),
 		project(":api:model"),
+		project(":api:metrics"),
 		project(":ui"),
 		"com.github.akurilov:java-concurrent:${depVersion.javaConcurrent}",
 	)

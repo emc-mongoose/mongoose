@@ -9,7 +9,7 @@ new java.lang.ProcessBuilder("sh", "-c", "rm -f " + itemsFile)
     .waitFor();
 
 // prepare (create) the 10000 items on a storage before the test
-PreconditionLoad
+Load
     .config(
         {
             "item": {

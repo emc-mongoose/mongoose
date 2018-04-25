@@ -1,7 +1,8 @@
 package com.emc.mongoose.scenario;
 
-import com.emc.mongoose.api.common.env.Extensions;
 import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.scenario.step.LoadStep;
+import com.emc.mongoose.scenario.step.type.LoadStepFactory;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
@@ -27,12 +28,12 @@ public interface ScriptEngineUtil {
 	 @param scenarioPath the path to the script
 	 @return the script engine resolved either <code>null</code>
 	 */
-	static ScriptEngine resolve(final Path scenarioPath) {
+	static ScriptEngine resolve(final Path scenarioPath, final ClassLoader clsLoader) {
 
 		ScriptEngine se = null;
 
 		// init the available external script engines
-		final ScriptEngineManager sem = new ScriptEngineManager(Extensions.CLS_LOADER);
+		final ScriptEngineManager sem = new ScriptEngineManager(clsLoader);
 
 		// 1st try to determine the scenario type by the scenario file extension
 		final String scenarioFileName = scenarioPath.getFileName().toString();
@@ -83,14 +84,13 @@ public interface ScriptEngineUtil {
 	 @param se the script engine
 	 @param config the configuration
 	 */
-	static void registerStepBasicTypes(final ScriptEngine se, final Config config) {
-		final ServiceLoader<LoadStepFactory<T>> loader = ServiceLoader.load(
-			(Class) LoadStepFactory.class, Extensions.CLS_LOADER
-		);
-		for(final LoadStepF)
-		se.put(LinearLoadStep.TYPE, new LinearLoadStep(config));
-		se.put(WeightedLoadStep.TYPE, new WeightedLoadStep(config));
-		se.put(ChainLoadStep.TYPE, new ChainLoadStep(config));
+	static void registerStepBasicTypes(
+		final ScriptEngine se, final ServiceLoader<LoadStepFactory<? extends LoadStep>> loader,
+		final Config config
+	) {
+		for(final LoadStepFactory<? extends LoadStep> factory: loader) {
+			se.put(factory.getTypeName(), factory.create(config, null));
+		}
 	}
 
 	/**
@@ -99,7 +99,26 @@ public interface ScriptEngineUtil {
 	 @param se the script engine
 	 @param config the configuration
 	 */
-	static void registerStepShortcutTypes(final ScriptEngine se, final Config config) {
+
+	static void registerStepShortcutTypes(
+		final ScriptEngine se, final ServiceLoader<LoadStepFactory<? extends LoadStep>> loader,
+		final Config config
+	) {
+
+		final String baseLoadStepTypeName = "Load";
+		LoadStepFactory<? extends LoadStep> baseLoadStepFactory = null;
+		for(final LoadStepFactory<? extends LoadStep> factory: loader) {
+			if(baseLoadStepTypeName.equals(factory.getTypeName())) {
+				baseLoadStepFactory = factory;
+				break;
+			}
+		}
+		if(baseLoadStepFactory == null) {
+			Loggers.ERR.warn(
+				"Basic load step type \"{}\" implementation not found", baseLoadStepTypeName
+			);
+			return;
+		}
 
 		Config specificConfig;
 
@@ -110,7 +129,7 @@ public interface ScriptEngineUtil {
 			.getOutputConfig().getMetricsConfig().getSummaryConfig().setPerfDbResultsFile(false);
 		specificConfig.getOutputConfig().getMetricsConfig().getSummaryConfig().setPersist(false);
 		specificConfig.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(false);
-		se.put("PreconditionLoad", new LinearLoadStep(specificConfig));
+		se.put("PreconditionLoad", baseLoadStepFactory.create(specificConfig, null));
 
 		for(final IoType ioType : IoType.values()) {
 			specificConfig = new Config(config);
@@ -118,29 +137,28 @@ public interface ScriptEngineUtil {
 			specificConfig.getLoadConfig().setType(ioTypeName);
 			final String stepName = ioTypeName.substring(0, 1).toUpperCase()
 				+ ioTypeName.substring(1) + "Load";
-			se.put(stepName, new LinearLoadStep(specificConfig));
+			se.put(stepName, baseLoadStepFactory.create(specificConfig, null));
 		}
 
 		specificConfig = new Config(config);
 		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
 		specificConfig.getItemConfig().getDataConfig().setVerify(true);
-		se.put("ReadVerifyLoad", new LinearLoadStep(specificConfig));
+		se.put("ReadVerifyLoad", baseLoadStepFactory.create(specificConfig, null));
 
 		specificConfig = new Config(config);
 		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
 		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
-		se.put("ReadRandomRangeLoad", new LinearLoadStep(specificConfig));
+		se.put("ReadRandomRangeLoad", baseLoadStepFactory.create(specificConfig, null));
 
 		specificConfig = new Config(config);
 		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
 		specificConfig.getItemConfig().getDataConfig().setVerify(true);
 		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
-		se.put("ReadVerifyRandomRangeLoad", new LinearLoadStep(specificConfig));
+		se.put("ReadVerifyRandomRangeLoad", baseLoadStepFactory.create(specificConfig, null));
 
 		specificConfig = new Config(config);
 		specificConfig.getLoadConfig().setType(IoType.UPDATE.name().toLowerCase());
 		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
-		se.put("UpdateRandomRangeLoad", new LinearLoadStep(specificConfig));
+		se.put("UpdateRandomRangeLoad", baseLoadStepFactory.create(specificConfig, null));
 	}
-
 }

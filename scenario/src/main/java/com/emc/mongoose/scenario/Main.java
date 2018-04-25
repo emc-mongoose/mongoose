@@ -1,12 +1,14 @@
 package com.emc.mongoose.scenario;
 
+import com.emc.mongoose.api.common.env.Extensions;
+import com.emc.mongoose.scenario.step.LoadStep;
+import com.emc.mongoose.scenario.step.type.LoadStepFactory;
 import com.emc.mongoose.ui.cli.CliArgParser;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.IllegalArgumentNameException;
 import com.emc.mongoose.ui.config.test.scenario.ScenarioConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
-
 import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
@@ -26,7 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Map;
+import java.util.ServiceLoader;
 
 /**
  Created by andrey on 14.09.17.
@@ -61,6 +63,8 @@ public final class Main {
 				.put(KEY_TEST_STEP_ID, config.getTestConfig().getStepConfig().getId())
 				.put(KEY_CLASS_NAME, Main.class.getSimpleName())
 		) {
+			final ClassLoader clsLoader = Extensions.CLS_LOADER;
+
 			Arrays.stream(args).forEach(Loggers.CLI::info);
 			Loggers.CONFIG.info(config.toString());
 
@@ -81,7 +85,7 @@ public final class Main {
 			final String scenarioText = strb.toString();
 			Loggers.SCENARIO.log(Level.INFO, scenarioText);
 
-			final ScriptEngine scriptEngine = ScriptEngineUtil.resolve(scenarioPath);
+			final ScriptEngine scriptEngine = ScriptEngineUtil.resolve(scenarioPath, clsLoader);
 			if(scriptEngine == null) {
 				Loggers.ERR.fatal(
 					"Failed to resolve the scenario engine for the file \"{}\"", scenarioPath
@@ -93,16 +97,14 @@ public final class Main {
 				);
 
 				// expose the environment values
-				final Map<String, String> env = System.getenv();
-				for(final String envKey : env.keySet()) {
-					scriptEngine.put(envKey, env.get(envKey));
-				}
-
+				System.getenv().forEach(scriptEngine::put);
 				// expose the loaded configuration
 				scriptEngine.getContext().setAttribute(ATTR_CONFIG, config, ENGINE_SCOPE);
 				// expose the step types
-				ScriptEngineUtil.registerStepBasicTypes(scriptEngine, config);
-				ScriptEngineUtil.registerStepShortcutTypes(scriptEngine, config);
+				final ServiceLoader<LoadStepFactory<? extends LoadStep>>
+					loader = ServiceLoader.load((Class) LoadStepFactory.class, clsLoader);
+				ScriptEngineUtil.registerStepBasicTypes(scriptEngine, loader, config);
+				ScriptEngineUtil.registerStepShortcutTypes(scriptEngine, loader, config);
 				// go
 				try {
 					scriptEngine.eval(scenarioText);
