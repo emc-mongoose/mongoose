@@ -446,7 +446,7 @@ implements LoadController<I, O> {
 							driver.toString(), finalResults.size()
 						);
 						for(int i = 0; i < finalResultsCount; i += batchSize) {
-							put(finalResults, i, Math.min(i + batchSize, finalResultsCount - i));
+							put(finalResults, i, Math.min(i + batchSize, finalResultsCount));
 						}
 					}
 				}

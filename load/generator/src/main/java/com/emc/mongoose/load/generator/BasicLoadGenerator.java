@@ -326,6 +326,7 @@ implements LoadGenerator<I, O> {
 
 	@Override
 	protected final void doStop() {
+		shutdown();
 	}
 
 	@Override

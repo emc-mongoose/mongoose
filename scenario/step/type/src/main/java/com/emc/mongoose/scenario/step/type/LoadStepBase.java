@@ -286,10 +286,9 @@ implements LoadStep, Runnable {
 						.put(KEY_TEST_STEP_ID, id)
 						.put(KEY_CLASS_NAME, getClass().getSimpleName())
 				) {
-					generator.stop();
+					generator.shutdown();
 					Loggers.MSG.debug(
-						"{}: load generator \"{}\" interrupted", id,
-						generator.toString()
+						"{}: load generator \"{}\" interrupted", id, generator.toString()
 					);
 				} catch(final RemoteException ignored) {
 				}

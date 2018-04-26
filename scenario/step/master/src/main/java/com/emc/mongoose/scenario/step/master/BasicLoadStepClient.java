@@ -42,7 +42,7 @@ import com.github.akurilov.commons.func.Function3;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.net.NetUtil;
-
+import com.github.akurilov.commons.system.SizeInBytes;
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
@@ -929,6 +929,10 @@ implements LoadStepClient {
 		}
 
 		if(null != ioTraceLogFileSvcs) {
+			try {
+				Loggers.MSG.info("{}: transfer the I/O traces data from the nodes", id());
+			} catch(final RemoteException ignored) {
+			}
 			ioTraceLogFileSvcs
 				.values()
 				.parallelStream()
@@ -1046,6 +1050,7 @@ implements LoadStepClient {
 	}
 
 	private static void transferIoTraceData(final FileService ioTraceLogFileSvc) {
+		long transferredByteCount = 0;
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
@@ -1059,20 +1064,19 @@ implements LoadStepClient {
 					break; // EOF
 				}
 				Loggers.IO_TRACE.info(new String(data));
+				transferredByteCount += data.length;
 			}
 		} catch(final EOFException ok) {
-			try {
-				Loggers.MSG.debug(
-					"Transferred the remote I/O traces data from \"{}\"", ioTraceLogFileSvc.name()
-				);
-			} catch(final RemoteException ignored) {
-			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to read the data from the remote file");
 		} catch(final IOException e) {
 			LogUtil.exception(Level.ERROR, e, "Unexpected I/O exception");
 		} finally {
 			try {
+				Loggers.MSG.info(
+					"Transferred {} of the remote I/O traces data from the remote file \"{}\"",
+					SizeInBytes.formatFixedSize(transferredByteCount), ioTraceLogFileSvc.name()
+				);
 				ioTraceLogFileSvc.close();
 			} catch(final IOException e) {
 				try {
