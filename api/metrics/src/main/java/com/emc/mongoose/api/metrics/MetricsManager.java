@@ -16,6 +16,7 @@ import com.github.akurilov.concurrent.coroutine.Coroutine;
 import com.github.akurilov.concurrent.coroutine.CoroutineBase;
 
 import org.apache.logging.log4j.CloseableThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
@@ -145,14 +146,15 @@ extends DaemonBase {
 	public static void register(final String id, final MetricsContext metricsCtx)
 	throws InterruptedException {
 		if(INSTANCE.allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
-			if(!INSTANCE.isStarted()) {
-				INSTANCE.start();
-				Loggers.MSG.info("Started the metrics manager coroutine");
-			}
 			try(
-				final CloseableThreadContext.Instance
-					logCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, id)
+				final Instance logCtx = CloseableThreadContext
+					.put(KEY_TEST_STEP_ID, id)
+					.put(KEY_CLASS_NAME, MetricsManager.class.getSimpleName())
 			) {
+				if(!INSTANCE.isStarted()) {
+					INSTANCE.start();
+					Loggers.MSG.debug("Started the metrics manager coroutine");
+				}
 				final Map<MetricsContext, Closeable>
 					stepMetrics = INSTANCE.allMetrics.computeIfAbsent(id, c -> new HashMap<>());
 				stepMetrics.put(metricsCtx, new Meter(metricsCtx));
@@ -176,8 +178,9 @@ extends DaemonBase {
 	throws InterruptedException {
 		if(INSTANCE.allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
 			try(
-				final CloseableThreadContext.Instance
-					stepIdCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, id)
+				final Instance stepIdCtx = CloseableThreadContext
+					.put(KEY_TEST_STEP_ID, id)
+					.put(KEY_CLASS_NAME, MetricsManager.class.getSimpleName())
 			) {
 				final Map<MetricsContext, Closeable> stepMetrics = INSTANCE.allMetrics.get(id);
 				if(stepMetrics != null) {
@@ -219,7 +222,7 @@ extends DaemonBase {
 			} finally {
 				if(INSTANCE.allMetrics.size() == 0) {
 					INSTANCE.stop();
-					Loggers.MSG.info("Stopped the metrics manager coroutine");
+					Loggers.MSG.debug("Stopped the metrics manager coroutine");
 				}
 				INSTANCE.allMetricsLock.unlock();
 				Loggers.MSG.debug("Metrics context \"{}\" unregistered", metricsCtx);

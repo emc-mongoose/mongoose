@@ -5,6 +5,9 @@ import com.emc.mongoose.scenario.step.LoadStepManagerService;
 import com.emc.mongoose.scenario.step.LoadStepService;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.Loggers;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+
+import org.apache.logging.log4j.CloseableThreadContext;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -25,8 +28,13 @@ implements LoadStepManagerService {
 
 	@Override
 	protected final void doStart() {
-		super.doStart();
-		Loggers.MSG.info("Service \"{}\" started @ port #{}", SVC_NAME, port);
+		try(
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+				.put(KEY_CLASS_NAME, BasicLoadStepManagerService.class.getSimpleName())
+		) {
+			super.doStart();
+			Loggers.MSG.info("Service \"{}\" started @ port #{}", SVC_NAME, port);
+		}
 	}
 
 	@Override

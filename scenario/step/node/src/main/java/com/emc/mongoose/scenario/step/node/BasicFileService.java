@@ -2,10 +2,12 @@ package com.emc.mongoose.scenario.step.node;
 
 import static com.github.akurilov.commons.system.DirectMemUtil.REUSABLE_BUFF_SIZE_MAX;
 
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 import com.emc.mongoose.api.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.step.FileService;
 import com.emc.mongoose.ui.log.LogUtil;
 
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 
 import java.io.EOFException;
@@ -28,7 +30,10 @@ implements FileService {
 		super(port);
 		if(filePath == null) {
 			if(!Files.exists(TMP_DIR)) {
-				try {
+				try(
+					final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+						.put(KEY_CLASS_NAME, BasicFileService.class.getSimpleName())
+				) {
 					Files.createDirectories(TMP_DIR);
 				} catch(final IOException e) {
 					LogUtil.exception(Level.DEBUG, e, "Failed to create tmp directory {}", TMP_DIR);

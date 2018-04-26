@@ -64,6 +64,7 @@ implements LoadController<I, O> {
 	private final MetricsContext metricsCtx;
 	private final LongAdder counterResults = new LongAdder();
 	private final boolean tracePersistFlag;
+	private final int batchSize;
 
 	private volatile Output<O> ioResultsOutput;
 	
@@ -85,6 +86,7 @@ implements LoadController<I, O> {
 		this.driver = driver;
 		this.metricsCtx = metricsCtx;
 		this.tracePersistFlag = tracePersistFlag;
+		this.batchSize = batchSize;
 		this.isRecycling = generator.isRecycling();
 		if(isRecycling) {
 			latestIoResultsByItem = new ConcurrentHashMap<>(recycleLimit);
@@ -440,11 +442,12 @@ implements LoadController<I, O> {
 					final int finalResultsCount = finalResults.size();
 					if(finalResultsCount > 0) {
 						Loggers.MSG.debug(
-							"{}: the driver \"{}\" returned {} final I/O " +
-								"results to process",
-							id, driver.toString(), finalResults.size()
+							"{}: the driver \"{}\" returned {} final I/O results to process", id,
+							driver.toString(), finalResults.size()
 						);
-						put(finalResults, 0, finalResultsCount);
+						for(int i = 0; i < finalResultsCount; i += batchSize) {
+							put(finalResults, i, Math.min(i + batchSize, finalResultsCount - i));
+						}
 					}
 				}
 			} catch(final Throwable cause) {

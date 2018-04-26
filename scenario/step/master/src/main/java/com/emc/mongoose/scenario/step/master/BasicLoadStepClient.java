@@ -1,4 +1,4 @@
-package com.emc.mongoose.scenario.step.client;
+package com.emc.mongoose.scenario.step.master;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
@@ -15,13 +15,13 @@ import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.api.model.svc.Service;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
 import com.emc.mongoose.load.generator.StorageItemInput;
-import com.emc.mongoose.scenario.FileManagerService;
-import com.emc.mongoose.scenario.FileService;
+import com.emc.mongoose.scenario.step.FileManagerService;
+import com.emc.mongoose.scenario.step.FileService;
 import com.emc.mongoose.scenario.step.LoadStep;
 import com.emc.mongoose.scenario.step.LoadStepManagerService;
 import com.emc.mongoose.scenario.step.LoadStepService;
-import com.emc.mongoose.scenario.step.client.metrics.MetricsSnapshotsSupplierCoroutine;
-import com.emc.mongoose.scenario.step.client.metrics.RemoteMetricsSnapshotsSupplierCoroutine;
+import com.emc.mongoose.scenario.step.master.metrics.MetricsSnapshotsSupplierCoroutine;
+import com.emc.mongoose.scenario.step.master.metrics.RemoteMetricsSnapshotsSupplierCoroutine;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.config.item.ItemConfig;
@@ -34,6 +34,8 @@ import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.config.test.step.node.NodeConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
 import com.github.akurilov.commons.func.Function2;
 import com.github.akurilov.commons.func.Function3;
@@ -42,6 +44,7 @@ import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.net.NetUtil;
 
 import org.apache.logging.log4j.CloseableThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
 import java.io.ByteArrayOutputStream;
@@ -67,9 +70,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
 public final class BasicLoadStepClient
 extends DaemonBase
@@ -101,7 +101,7 @@ implements LoadStepClient {
 	throws IllegalArgumentException {
 
 		try(
-			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+			final Instance logCtx = CloseableThreadContext
 				.put(KEY_TEST_STEP_ID, id())
 				.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
 		) {
@@ -148,9 +148,13 @@ implements LoadStepClient {
 							snapshotsFetcher.start();
 							metricsSnapshotsSuppliers.put(stepSvc, snapshotsFetcher);
 						} catch(final RemoteException | IllegalStateException e) {
-							LogUtil.exception(
-								Level.WARN, e, "Failed to start the step service {}",  stepSvc
-							);
+							try {
+								LogUtil.exception(
+									Level.WARN, e, "Failed to start the step service {}",
+									stepSvc.name()
+								);
+							} catch(final RemoteException ignored) {
+							}
 						}
 					}
 				)
@@ -169,12 +173,20 @@ implements LoadStepClient {
 			.parallelStream()
 			.forEach(
 				stepSvc -> {
-					try {
+					try(
+						final Instance logCtx = CloseableThreadContext
+							.put(KEY_TEST_STEP_ID, id())
+							.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
+					) {
 						stepSvc.shutdown();
 					} catch(final RemoteException e) {
-						LogUtil.exception(
-							Level.WARN, e, "Failed to shutdown the step service {}", stepSvc
-						);
+						try {
+							LogUtil.exception(
+								Level.WARN, e, "Failed to shutdown the step service {}",
+								stepSvc.name()
+							);
+						} catch(final RemoteException ignored) {
+						}
 					}
 				}
 			);
@@ -478,10 +490,14 @@ implements LoadStepClient {
 							try {
 								return fileSvc.filePath();
 							} catch(final RemoteException e) {
-								LogUtil.exception(
-									Level.WARN, e, "Failed to invoke the file service \"{}\" @ {}",
-									fileSvc, nodeAddrWithPort
-								);
+								try {
+									LogUtil.exception(
+										Level.WARN, e,
+										"Failed to invoke the file service \"{}\" @ {}",
+										fileSvc.name(), nodeAddrWithPort
+									);
+								} catch(final RemoteException ignored) {
+								}
 							}
 							return null;
 						}
@@ -508,7 +524,14 @@ implements LoadStepClient {
 						.get(nodeAddrWithPort)
 						.map(
 							fileMgrSvc -> {
-								try {
+								try(
+									final Instance logCtx = CloseableThreadContext
+										.put(KEY_TEST_STEP_ID, id())
+										.put(
+											KEY_CLASS_NAME,
+											BasicLoadStepClient.class.getSimpleName()
+										)
+								) {
 									return fileMgrSvc.createFileService(null);
 								} catch(final RemoteException e) {
 									LogUtil.exception(
@@ -527,7 +550,14 @@ implements LoadStepClient {
 						)
 						.map(
 							fileSvc -> {
-								try {
+								try(
+									final Instance logCtx = CloseableThreadContext
+										.put(KEY_TEST_STEP_ID, id())
+										.put(
+											KEY_CLASS_NAME,
+											BasicLoadStepClient.class.getSimpleName()
+										)
+								) {
 									fileSvc.open(FileService.WRITE_OPEN_OPTIONS);
 								} catch(final IOException e) {
 									LogUtil.exception(
@@ -657,7 +687,8 @@ implements LoadStepClient {
 
 		try {
 			Loggers.MSG.info(
-				"{}: load step service \"{}\" is resolved @ {}", id(), stepSvc, nodeAddrWithPort
+				"{}: load step service \"{}\" is resolved @ {}", id(), stepSvc.name(),
+				nodeAddrWithPort
 			);
 		} catch(final RemoteException ignored) {
 		}
@@ -691,7 +722,11 @@ implements LoadStepClient {
 	private static boolean awaitStepService(
 		final LoadStepService stepSvc, final long timeout, final TimeUnit timeUnit
 	) {
-		try {
+		try(
+			final Instance logCtx = CloseableThreadContext
+				.put(KEY_TEST_STEP_ID, stepSvc.id())
+				.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
+		) {
 			long commFailCount = 0;
 			while(true) {
 				try {
@@ -702,7 +737,7 @@ implements LoadStepClient {
 					LogUtil.exception(
 						Level.DEBUG, e,
 						"Failed to invoke the step service \"{}\" await method {} times",
-						stepSvc, commFailCount
+						stepSvc.name(), commFailCount
 					);
 					commFailCount ++;
 					Thread.sleep(commFailCount);
@@ -710,6 +745,8 @@ implements LoadStepClient {
 			}
 		} catch(final InterruptedException e) {
 			throw new CancellationException();
+		} catch(final RemoteException ignored) {
+			return false;
 		}
 	}
 
@@ -720,7 +757,11 @@ implements LoadStepClient {
 				Collectors.toMap(
 					Function.identity(),
 					nodeAddrWithPort -> {
-						try {
+						try(
+							final Instance logCtx = CloseableThreadContext
+								.put(KEY_TEST_STEP_ID, id())
+								.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
+						) {
 							return Optional.of(
 								ServiceUtil.resolve(nodeAddrWithPort, FileManagerService.SVC_NAME)
 							);
@@ -799,7 +840,11 @@ implements LoadStepClient {
 	}
 
 	private static LoadStepService stopStepSvc(final LoadStepService stepSvc) {
-		try {
+		try(
+			final Instance logCtx = CloseableThreadContext
+				.put(KEY_TEST_STEP_ID, stepSvc.id())
+				.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
+		) {
 			stepSvc.stop();
 		} catch(final Exception e) {
 			try {
@@ -821,7 +866,11 @@ implements LoadStepClient {
 			.parallelStream()
 			.forEach(
 				snapshotsFetcher -> {
-					try {
+					try(
+						final Instance logCtx = CloseableThreadContext
+							.put(KEY_TEST_STEP_ID, id())
+							.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
+					) {
 						snapshotsFetcher.stop();
 					} catch(final IOException e) {
 						LogUtil.exception(
@@ -842,7 +891,11 @@ implements LoadStepClient {
 			.parallelStream()
 			.forEach(
 				snapshotsFetcher -> {
-					try {
+					try(
+						final Instance logCtx = CloseableThreadContext
+							.put(KEY_TEST_STEP_ID, id())
+							.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
+					) {
 						snapshotsFetcher.close();
 					} catch(final IOException e) {
 						LogUtil.exception(
@@ -913,7 +966,10 @@ implements LoadStepClient {
 				.map(Optional::get)
 				.forEach(
 					fileSvc -> {
-						try {
+						try(
+							final Instance logCtx = CloseableThreadContext
+								.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
+						) {
 							fileSvc.open(FileService.READ_OPTIONS);
 							byte buff[];
 							while(true) {
@@ -923,10 +979,13 @@ implements LoadStepClient {
 								}
 							}
 						} catch(final EOFException ok) {
-							Loggers.MSG.info(
-								"Items output data was transferred completely from \"{}\" to " +
-									"\"{}\"", fileSvc, itemOutputFile
-							);
+							try {
+								Loggers.MSG.info(
+									"Items output data was transferred completely from \"{}\" to " +
+										"\"{}\"", fileSvc.name(), itemOutputFile
+								);
+							} catch(final RemoteException ignored) {
+							}
 						} catch(final IOException e) {
 							LogUtil.exception(
 								Level.WARN, e, "Remote items output file transfer failure"
@@ -946,7 +1005,10 @@ implements LoadStepClient {
 
 	private static LoadStepService closeStepSvc(final LoadStepService stepSvc) {
 		if(null != stepSvc) {
-			try {
+			try(
+				final Instance logCtx = CloseableThreadContext
+					.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
+			) {
 				stepSvc.close();
 			} catch(final Exception e) {
 				try {
@@ -965,7 +1027,10 @@ implements LoadStepClient {
 		final FileService fileSvc, final String nodeAddrWithPort
 	) {
 		if(null != fileSvc) {
-			try {
+			try(
+				final Instance logCtx = CloseableThreadContext
+					.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
+			) {
 				fileSvc.close();
 			} catch(final IOException e) {
 				try {
@@ -981,9 +1046,12 @@ implements LoadStepClient {
 	}
 
 	private static void transferIoTraceData(final FileService ioTraceLogFileSvc) {
-		try {
+		try(
+			final Instance logCtx = CloseableThreadContext
+				.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
+		) {
 			ioTraceLogFileSvc.open(FileService.READ_OPTIONS);
-			Loggers.MSG.debug("Opened the remote I/O traces file \"{}\"", ioTraceLogFileSvc);
+			Loggers.MSG.debug("Opened the remote I/O traces file \"{}\"", ioTraceLogFileSvc.name());
 			byte[] data;
 			while(true) {
 				data = ioTraceLogFileSvc.read();
@@ -993,9 +1061,12 @@ implements LoadStepClient {
 				Loggers.IO_TRACE.info(new String(data));
 			}
 		} catch(final EOFException ok) {
-			Loggers.MSG.debug(
-				"Transferred the remote I/O traces data from \"{}\"", ioTraceLogFileSvc
-			);
+			try {
+				Loggers.MSG.debug(
+					"Transferred the remote I/O traces data from \"{}\"", ioTraceLogFileSvc.name()
+				);
+			} catch(final RemoteException ignored) {
+			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to read the data from the remote file");
 		} catch(final IOException e) {

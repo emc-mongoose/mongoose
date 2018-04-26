@@ -1,4 +1,4 @@
-package com.emc.mongoose.scenario.step.client.metrics;
+package com.emc.mongoose.scenario.step.master.metrics;
 
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.github.akurilov.concurrent.coroutine.Coroutine;

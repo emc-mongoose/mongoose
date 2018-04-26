@@ -3,7 +3,6 @@ package com.emc.mongoose.api.metrics.logging;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.ui.log.LogMessageBase;
-import com.emc.mongoose.ui.log.Loggers;
 
 import org.apache.logging.log4j.message.AsynchronouslyFormattable;
 
@@ -22,9 +21,6 @@ extends LogMessageBase {
 
 	public IoTraceCsvBatchLogMessage(final List<O> ioTaskResults, final int from, final int to) {
 		size = to - from;
-		if(size > 0x1000) {
-			Loggers.ERR.warn("I/O trace batch size too big: {}", to - from);
-		}
 		ioTraceRecords = new ArrayList<>(size);
 		for(int i = from; i < to; i ++) {
 			ioTraceRecords.add(new IoTraceRecord<>(ioTaskResults.get(i)));

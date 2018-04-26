@@ -9,7 +9,10 @@ import com.emc.mongoose.scenario.step.type.LoadStepFactory;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -54,17 +57,26 @@ implements LoadStepService {
 					"\", available types: " + Arrays.toString(typeNames.toArray())
 			);
 		}
-		loadStep = selectedFactory.create(config, stepConfigs);
 
-		Loggers.MSG.info(
+		try(
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
+		) {
+			loadStep = selectedFactory.create(config, stepConfigs);
+			Loggers.MSG.info(
 			"New step service for \"{}\"", config.getTestConfig().getStepConfig().getId()
-		);
-		super.doStart();
+			);
+			super.doStart();
+		}
 	}
 
 	@Override
 	protected final void doStart() {
-		try {
+		try(
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
+				.put(KEY_TEST_STEP_ID, loadStep.id())
+		) {
 			loadStep.start();
 			Loggers.MSG.info("Step service for \"{}\" is started", loadStep.id());
 		} catch(final IllegalStateException | RemoteException e) {
@@ -79,7 +91,11 @@ implements LoadStepService {
 
 	@Override
 	protected void doStop() {
-		try {
+		try(
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
+				.put(KEY_TEST_STEP_ID, loadStep.id())
+		) {
 			loadStep.stop();
 			Loggers.MSG.info("Step service for \"{}\" is stopped", loadStep.id());
 		} catch(final IllegalStateException | RemoteException e) {
@@ -95,9 +111,15 @@ implements LoadStepService {
 	@Override
 	protected final void doClose()
 	throws IOException {
-		super.doStop();
-		loadStep.close();
-		Loggers.MSG.info("Step service for \"{}\" is closed", loadStep.id());
+		try(
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
+				.put(KEY_TEST_STEP_ID, loadStep.id())
+		) {
+			super.doStop();
+			loadStep.close();
+			Loggers.MSG.info("Step service for \"{}\" is closed", loadStep.id());
+		}
 	}
 
 	@Override
@@ -132,7 +154,11 @@ implements LoadStepService {
 	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws IllegalStateException, InterruptedException {
-		try {
+		try(
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
+				.put(KEY_TEST_STEP_ID, loadStep.id())
+		) {
 			return loadStep.await(timeout, timeUnit);
 		} catch(final RemoteException ignored) {
 		}

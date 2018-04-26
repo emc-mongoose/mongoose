@@ -4,6 +4,8 @@ import com.emc.mongoose.api.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.step.FileManagerService;
 import com.emc.mongoose.scenario.step.FileService;
 import com.emc.mongoose.ui.log.Loggers;
+import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.LogManager;
@@ -13,8 +15,6 @@ import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
 import org.apache.logging.log4j.core.async.AsyncLogger;
 
 import java.rmi.RemoteException;
-
-import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 
 public final class BasicFileManagerService
 extends ServiceBase
@@ -31,21 +31,36 @@ implements FileManagerService {
 
 	@Override
 	protected final void doStart() {
-		super.doStart();
-		Loggers.MSG.info("Service \"{}\" started @ port #{}", SVC_NAME, port);
+		try(
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+				.put(KEY_CLASS_NAME, BasicFileManagerService.class.getSimpleName())
+		) {
+			super.doStart();
+			Loggers.MSG.info("Service \"{}\" started @ port #{}", SVC_NAME, port);
+		}
 	}
 
 	@Override
 	protected final void doClose() {
-		Loggers.MSG.info("Service \"{}\" closed", SVC_NAME);
+		try(
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+				.put(KEY_CLASS_NAME, BasicFileManagerService.class.getSimpleName())
+		) {
+			Loggers.MSG.info("Service \"{}\" closed", SVC_NAME);
+		}
 	}
 
 	@Override
 	public String createFileService(final String path)
 	throws RemoteException {
 		final FileService fileSvc = new BasicFileService(path, port);
-		fileSvc.start();
-		Loggers.MSG.info("New file service started @ port #{}: {}", port, fileSvc.name());
+		try(
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+				.put(KEY_CLASS_NAME, BasicFileManagerService.class.getSimpleName())
+		) {
+			fileSvc.start();
+			Loggers.MSG.info("New file service started @ port #{}: {}", port, fileSvc.name());
+		}
 		return fileSvc.name();
 	}
 
