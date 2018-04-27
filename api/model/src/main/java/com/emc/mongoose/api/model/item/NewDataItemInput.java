@@ -19,10 +19,6 @@ implements Input<D> {
 		this.dataSize = dataSize;
 	}
 	
-	public SizeInBytes getDataSizeInfo() {
-		return dataSize;
-	}
-	
 	@Override
 	public final D get()
 	throws IOException {

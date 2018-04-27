@@ -184,6 +184,10 @@
 							"minimum": 2,
 							"maximum": 36
 						},
+						"step": {
+							"type": "integer",
+							"minimum": 1
+						},
 						"offset": {
 							"type": "integer",
 							"minimum": 0
@@ -289,7 +293,7 @@
 						}
 					},
 					"required": [
-						"addrs", "recycle", "remote", "shuffle"
+						"recycle", "remote", "shuffle", "weight"
 					]
 				},
 				"limit": {
@@ -629,7 +633,7 @@
 				}
 			},
 			"required": [
-				"auth", "driver", "mock"
+				"auth", "driver"
 			]
 		},
 		"test": {

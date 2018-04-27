@@ -7,7 +7,6 @@ import static com.emc.mongoose.api.common.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.api.common.env.DateUtil.TZ_UTC;
 import static com.emc.mongoose.api.common.env.PathUtil.BASE_DIR;
 
-import com.emc.mongoose.api.model.svc.ServiceUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,6 +18,7 @@ import org.apache.logging.log4j.core.util.Cancellable;
 import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
 import org.apache.logging.log4j.core.util.datetime.DatePrinter;
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
+import org.apache.logging.log4j.message.Message;
 
 import java.util.Calendar;
 
@@ -27,9 +27,10 @@ import java.util.Calendar;
  */
 public final class LogUtil
 implements ShutdownCallbackRegistry {
-	//
+
 	public static final DatePrinter
 		FMT_DT = FastDateFormat.getInstance("yyyyMMdd.HHmmss.SSS", TZ_UTC, LOCALE_DEFAULT);
+
 	// console colors
 	public static final String
 		RED = "\u001B[31m",
@@ -46,13 +47,13 @@ implements ShutdownCallbackRegistry {
 		UPDATE_COLOR = "\u001B[38;5;104m",
 		DELETE_COLOR = "\u001B[38;5;137m",
 		LIST_COLOR = "\u001B[38;5;138m";
-	//
+
 	public static String getDateTimeStamp() {
 		return FMT_DT.format(
 			Calendar.getInstance(TZ_UTC, LOCALE_DEFAULT).getTime()
 		);
 	}
-	//
+
 	public static void init() {
 		ThreadContext.put(KEY_BASE_DIR, BASE_DIR);
 		try {
@@ -68,7 +69,7 @@ implements ShutdownCallbackRegistry {
 			e.printStackTrace(System.err);
 		}
 	}
-	//
+
 	public static void flushAll() {
 		final LoggerContext logCtx = ((LoggerContext) LogManager.getContext());
 		for(final org.apache.logging.log4j.core.Logger logger : logCtx.getLoggers()) {
@@ -79,7 +80,7 @@ implements ShutdownCallbackRegistry {
 			}
 		}
 	}
-	//
+
 	public static void shutdown() {
 		try {
 			DaemonBase.closeAll();
@@ -88,7 +89,7 @@ implements ShutdownCallbackRegistry {
 			cause.printStackTrace(System.err);
 		}
 	}
-	//
+
 	public static String getFailureRatioAnsiColorCode(final long succ, final long fail) {
 		if(fail == 0) {
 			return "\u001B[38;2;0;200;0m";
@@ -101,26 +102,39 @@ implements ShutdownCallbackRegistry {
 			/* G */ ((int) (((double) 200 * succ / (succ + fail)))) + ";" +
 			/* B */ "0m";
 	}
-	//
+
+	private static final ThreadLocal<StringBuilder>
+		THR_LOC_MSG_BUILDER = ThreadLocal.withInitial(StringBuilder::new);
+
 	public static void exception(
-		final Level level, final Throwable e,
-		final String msgPattern, final Object... args
+		final Level level, final Throwable e, final String msgPattern, final Object... args
 	) {
 		if(Loggers.ERR.isTraceEnabled()) {
-			Loggers.ERR.log(
-				level, Loggers.ERR.getMessageFactory().newMessage(msgPattern + ": " + e, args), e
-			);
+			trace(Loggers.ERR, level, e, msgPattern, args);
 		} else {
-			Loggers.ERR.log(
-				level, Loggers.ERR.getMessageFactory().newMessage(msgPattern + ": " + e, args)
-			);
+			final StringBuilder msgBuilder = THR_LOC_MSG_BUILDER.get();
+			msgBuilder.setLength(0);
+			msgBuilder
+				.append(msgPattern)
+				.append("\n\tCAUSE: ")
+				.append(e);
+			for(Throwable cause = e.getCause(); cause != null; cause = cause.getCause()) {
+				msgBuilder
+					.append("\n\tCAUSE: ")
+					.append(cause.toString());
+			}
+			final Message msg = Loggers.ERR
+				.getMessageFactory()
+				.newMessage(msgBuilder.toString(), args);
+			Loggers.ERR.log(level, msg);
 		}
 	}
-	//
+
 	public static void trace(
-		final Logger logger, final Level level, final String msgPattern, final Object... args
+		final Logger logger, final Level level, final Throwable e, final String msgPattern,
+		final Object... args
 	) {
-		logger.log(level, logger.getMessageFactory().newMessage(msgPattern, args), new Throwable());
+		logger.log(level, logger.getMessageFactory().newMessage(msgPattern + ": " + e, args), e);
 	}
 
 	@Override

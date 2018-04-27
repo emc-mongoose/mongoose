@@ -10,4 +10,8 @@ dependencies {
 		"com.github.akurilov:java-concurrent:${depVersion.javaConcurrent}",
 		"commons-lang:commons-lang:${depVersion.commonsLang}",
 	)
+
+	testCompile(
+		"junit:junit:${depVersion.junit}",
+	)
 }

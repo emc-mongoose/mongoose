@@ -19,6 +19,9 @@ import com.emc.mongoose.ui.log.Loggers;
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.ServiceLoader;
 
 /**
@@ -93,26 +96,35 @@ public class BasicStorageDriverBuilder<
 				.put(KEY_CLASS_NAME, BasicStorageDriverBuilder.class.getSimpleName())
 		) {
 
+			if(storageConfig == null) {
+				throw new OmgShootMyFootException("No storage config is set");
+			}
 			final DriverConfig driverConfig = storageConfig.getDriverConfig();
 			final String driverType = driverConfig.getType();
+			if(itemConfig == null) {
+				throw new OmgShootMyFootException("No item config config is set");
+			}
 			final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
 
 			final ServiceLoader<StorageDriverFactory<I, O, T>> loader = ServiceLoader.load(
 				(Class) StorageDriverFactory.class, Extensions.CLS_LOADER
 			);
 
+			final List<String> availTypes = new ArrayList<>();
 			for(final StorageDriverFactory<I, O, T> storageDriverFactory : loader) {
-				if(driverType.equals(storageDriverFactory.getName())) {
+				final String typeName = storageDriverFactory.getName();
+				availTypes.add(typeName);
+				if(driverType.equals(typeName)) {
 					return storageDriverFactory.create(
 						stepName, contentSrc, loadConfig, storageConfig, verifyFlag
 					);
 				}
 			}
 
-			Loggers.ERR.fatal(
-				"Failed to create the storage driver for the type \"{}\"", driverType
+			throw new OmgShootMyFootException(
+				"Failed to create the storage driver for the type \"" + driverType +
+					"\", available types: " + Arrays.toString(availTypes.toArray())
 			);
-			return null;
 		}
 	}
 }

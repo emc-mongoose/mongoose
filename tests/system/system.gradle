@@ -18,7 +18,7 @@ dependencies {
 		project(":storage:driver:net:http"),
 		project(":storage:driver:nio"),
 		project(":scenario"),
-		"junit:junit:4.12",
+		"junit:junit:${depVersion.junit}",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.commons:commons-csv:1.1",
 		"commons-io:commons-io:2.5",

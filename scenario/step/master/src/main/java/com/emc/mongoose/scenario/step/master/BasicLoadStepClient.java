@@ -43,6 +43,7 @@ import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
+
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
@@ -150,7 +151,7 @@ implements LoadStepClient {
 						} catch(final RemoteException | IllegalStateException e) {
 							try {
 								LogUtil.exception(
-									Level.WARN, e, "Failed to start the step service {}",
+									Level.ERROR, e, "Failed to start the step service {}",
 									stepSvc.name()
 								);
 							} catch(final RemoteException ignored) {
@@ -246,14 +247,14 @@ implements LoadStepClient {
 		// item output file (if any)
 		final String itemOutputFile = config.getItemConfig().getOutputConfig().getFile();
 		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
-			itemOutputFileSvcs = nodeAddrs.parallelStream().collect(
-				Collectors.toMap(
-					Function.identity(),
-					nodeAddrWithPort -> {
-						if(ServiceUtil.isLocalAddress(nodeAddrWithPort)) {
-							return Optional.empty();
-						} else {
-							return fileMgrSvcs
+			itemOutputFileSvcs = nodeAddrs
+				.parallelStream()
+				.collect(
+					Collectors.toMap(
+						Function.identity(),
+						nodeAddrWithPort -> ServiceUtil.isLocalAddress(nodeAddrWithPort) ?
+							Optional.empty() :
+							fileMgrSvcs
 								.get(nodeAddrWithPort)
 								.map(
 									Function3.partial13(
@@ -272,11 +273,9 @@ implements LoadStepClient {
 									Function2.partial1(
 										BasicLoadStepClient::createRemoteFile, nodeAddrWithPort
 									)
-								);
-						}
-					}
-				)
-			);
+								)
+					)
+				);
 			// change the item output file value for each slice
 			nodeAddrs.forEach(
 				nodeAddrWithPort -> itemOutputFileSvcs
@@ -655,7 +654,7 @@ implements LoadStepClient {
 			);
 		} catch(final Exception e) {
 			LogUtil.exception(
-				Level.WARN, e, "Failed to resolve the service \"{}\" @ {}",
+				Level.ERROR, e, "Failed to resolve the service \"{}\" @ {}",
 				LoadStepManagerService.SVC_NAME, nodeAddrWithPort
 			);
 			return null;
@@ -668,7 +667,7 @@ implements LoadStepClient {
 			);
 		} catch(final Exception e) {
 			LogUtil.exception(
-				Level.WARN, e, "Failed to start the new scenario step service @ {}",
+				Level.ERROR, e, "Failed to start the new scenario step service @ {}",
 				nodeAddrWithPort
 			);
 			return null;
@@ -679,7 +678,7 @@ implements LoadStepClient {
 			stepSvc = ServiceUtil.resolve(nodeAddrWithPort, stepSvcName);
 		} catch(final Exception e) {
 			LogUtil.exception(
-				Level.WARN, e, "Failed to resolve the service \"{}\" @ {}",
+				Level.ERROR, e, "Failed to resolve the service \"{}\" @ {}",
 				LoadStepManagerService.SVC_NAME, nodeAddrWithPort
 			);
 			return null;
@@ -970,6 +969,7 @@ implements LoadStepClient {
 				.map(Optional::get)
 				.forEach(
 					fileSvc -> {
+						long transferredByteCount = 0;
 						try(
 							final Instance logCtx = CloseableThreadContext
 								.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
@@ -981,21 +981,24 @@ implements LoadStepClient {
 								synchronized(out) {
 									out.write(buff);
 								}
+								transferredByteCount += buff.length;
 							}
 						} catch(final EOFException ok) {
-							try {
-								Loggers.MSG.info(
-									"Items output data was transferred completely from \"{}\" to " +
-										"\"{}\"", fileSvc.name(), itemOutputFile
-								);
-							} catch(final RemoteException ignored) {
-							}
 						} catch(final IOException e) {
 							LogUtil.exception(
 								Level.WARN, e, "Remote items output file transfer failure"
 							);
 						} catch(final Throwable cause) {
 							LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
+						} finally {
+							try {
+								Loggers.MSG.info(
+									"{} of items output data transferred from \"{}\" to \"{}\"",
+									SizeInBytes.formatFixedSize(transferredByteCount),
+									fileSvc.name(), itemOutputFile
+								);
+							} catch(final RemoteException ignored) {
+							}
 						}
 					}
 				);
@@ -1060,9 +1063,6 @@ implements LoadStepClient {
 			byte[] data;
 			while(true) {
 				data = ioTraceLogFileSvc.read();
-				if(0 == data.length) {
-					break; // EOF
-				}
 				Loggers.IO_TRACE.info(new String(data));
 				transferredByteCount += data.length;
 			}

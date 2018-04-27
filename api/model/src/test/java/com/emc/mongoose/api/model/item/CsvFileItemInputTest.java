@@ -1,0 +1,95 @@
+package com.emc.mongoose.api.model.item;
+
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.io.Output;
+
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.io.EOFException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+
+/**
+ Created by andrey on 11.06.17.
+ */
+public class CsvFileItemInputTest {
+
+	private static final int BATCH_SIZE = 0x1000;
+	private static final String FILE_NAME = "items.csv";
+
+	@BeforeClass
+	public static void setUpClass()
+	throws Exception {
+		try {
+			Files.delete(Paths.get(FILE_NAME));
+		} catch(final Exception ignored) {
+		}
+	}
+
+	@Test
+	public final void testInputRate()
+	throws Exception {
+
+		final long count = 100_000_000;
+
+		final ItemFactory<DataItem> itemFactory = (ItemFactory<DataItem>) ItemType.getItemFactory(
+			ItemType.DATA
+		);
+		final List<DataItem> itemBuff = new ArrayList<>(BATCH_SIZE);
+
+		try(
+			final Input<DataItem> newItemsInput = new NewDataItemInput<>(
+				itemFactory,
+				new ItemNameSupplier(ItemNamingType.ASC, "", 13, Character.MAX_RADIX, 0),
+				new SizeInBytes("0-1MB,2")
+			)
+		) {
+			try(
+				final Output<DataItem> newItemsOutput = new CsvFileItemOutput<>(
+					Paths.get(FILE_NAME), itemFactory
+				)
+			) {
+				long n = 0;
+				int m;
+				while(n < count) {
+					m = newItemsInput.get(itemBuff, BATCH_SIZE);
+					for(int i = 0; i < m; i += newItemsOutput.put(itemBuff, i, m));
+					n += m;
+					itemBuff.clear();
+				}
+			}
+		}
+
+		System.out.println("Items input file is ready, starting the input");
+		final LongAdder inputCounter = new LongAdder();
+		long t = System.nanoTime();
+		try(
+			final Input<DataItem> fileItemInput = new CsvFileItemInput<DataItem>(
+				Paths.get(FILE_NAME), itemFactory
+			)
+		) {
+			int n;
+			while(true) {
+				n = fileItemInput.get(itemBuff, BATCH_SIZE);
+				if(n > 0) {
+					inputCounter.add(n);
+					itemBuff.clear();
+				} else {
+					break;
+				}
+			}
+		} catch(final EOFException ignored) {
+		}
+		t = TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - t);
+
+		Assert.assertEquals(count, inputCounter.sum(), BATCH_SIZE);
+		System.out.println("CSV file input rate: " + count/t + " items per second");
+	}
+}

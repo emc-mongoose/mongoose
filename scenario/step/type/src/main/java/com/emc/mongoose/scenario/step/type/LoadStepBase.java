@@ -32,6 +32,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -126,7 +127,7 @@ implements LoadStep, Runnable {
 				throw new CancellationException();
 			}
 		} catch(final IllegalStateException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to start \"{}\"", toString());
+			LogUtil.exception(Level.ERROR, e, "Failed to start \"{}\"", toString());
 		} catch(final Throwable cause) {
 			cause.printStackTrace();
 		} finally {
@@ -153,7 +154,10 @@ implements LoadStep, Runnable {
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			if(distributedFlag) {
-				stepClient = new BasicLoadStepClient(this, baseConfig, stepConfigs);
+				// need to set the once generated step id
+				final Config config = new Config(baseConfig);
+				config.getTestConfig().getStepConfig().setId(stepId);
+				stepClient = new BasicLoadStepClient(this, config, stepConfigs);
 				stepClient.start();
 			} else {
 				doStartLocal();
@@ -173,8 +177,10 @@ implements LoadStep, Runnable {
 
 	/**
 	 * Initializes the actual configuration and metrics contexts
+	 * @throws IllegalStateException if initialization fails
 	 */
-	protected abstract void init();
+	protected abstract void init()
+	throws IllegalStateException;
 
 	protected final void initDistributedMetrics(
 		final int originIndex, final IoType ioType, final int concurrency, final int nodeCount,
@@ -447,46 +453,55 @@ implements LoadStep, Runnable {
 
 	protected void doCloseLocal() {
 
-		drivers.forEach(
-			driver -> {
-				try {
-					driver.close();
-				} catch(final IOException e) {
-					LogUtil.exception(
-						Level.ERROR, e, "Failed to close the storage driver \"{}\"",
-						driver.toString()
-					);
+		drivers
+			.parallelStream()
+			.filter(Objects::nonNull)
+			.forEach(
+				driver -> {
+					try {
+						driver.close();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.ERROR, e, "Failed to close the storage driver \"{}\"",
+							driver.toString()
+						);
+					}
 				}
-			}
-		);
+			);
 		drivers.clear();
 
-		generators.forEach(
-			generator -> {
-				try {
-					generator.close();
-				} catch(final IOException e) {
-					LogUtil.exception(
-						Level.ERROR, e, "Failed to close the load generator \"{}\"",
-						generator.toString()
-					);
+		generators
+			.parallelStream()
+			.filter(Objects::nonNull)
+			.forEach(
+				generator -> {
+					try {
+						generator.close();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.ERROR, e, "Failed to close the load generator \"{}\"",
+							generator.toString()
+						);
+					}
 				}
-			}
-		);
+			);
 		generators.clear();
 
-		controllers.forEach(
-			controller -> {
-				try {
-					controller.close();
-				} catch(final IOException e) {
-					LogUtil.exception(
-						Level.ERROR, e, "Failed to close the load controller \"{}\"",
-						controller.toString()
-					);
+		controllers
+			.parallelStream()
+			.filter(Objects::nonNull)
+			.forEach(
+				controller -> {
+					try {
+						controller.close();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.ERROR, e, "Failed to close the load controller \"{}\"",
+							controller.toString()
+						);
+					}
 				}
-			}
-		);
+			);
 		controllers.clear();
 	}
 }

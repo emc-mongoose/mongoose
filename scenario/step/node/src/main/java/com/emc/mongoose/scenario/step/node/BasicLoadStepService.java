@@ -79,13 +79,7 @@ implements LoadStepService {
 		) {
 			loadStep.start();
 			Loggers.MSG.info("Step service for \"{}\" is started", loadStep.id());
-		} catch(final IllegalStateException | RemoteException e) {
-			try {
-				LogUtil.exception(
-					Level.ERROR, e, "Failed to start the wrapped step w/ id: {}", loadStep.id()
-				);
-			} catch(final RemoteException ignored) {
-			}
+		} catch(final RemoteException ignored) {
 		}
 	}
 
@@ -98,13 +92,7 @@ implements LoadStepService {
 		) {
 			loadStep.stop();
 			Loggers.MSG.info("Step service for \"{}\" is stopped", loadStep.id());
-		} catch(final IllegalStateException | RemoteException e) {
-			try {
-				LogUtil.exception(
-					Level.ERROR, e, "Failed to stop the wrapped step w/ id: {}", loadStep.id()
-				);
-			} catch(final RemoteException ignored) {
-			}
+		} catch(final RemoteException ignored) {
 		}
 	}
 

@@ -76,18 +76,18 @@ public class BasicLoadGeneratorBuilder<
 	I extends Item, O extends IoTask<I>, T extends BasicLoadGenerator<I, O>
 >
 implements LoadGeneratorBuilder<I, O, T> {
-	
-	private ItemConfig itemConfig;
-	private LoadConfig loadConfig;
-	private LimitConfig limitConfig;
-	private ItemType itemType;
-	private ItemFactory<I> itemFactory;
-	private AuthConfig authConfig;
-	private StorageDriver<I, O> storageDriver;
+
+	private ItemConfig itemConfig = null;
+	private LoadConfig loadConfig = null;
+	private LimitConfig limitConfig = null;
+	private ItemType itemType = null;
+	private ItemFactory<I> itemFactory = null;
+	private AuthConfig authConfig = null;
+	private StorageDriver<I, O> storageDriver = null;
 	private Input<I> itemInput = null;
-	private long sizeEstimate = 0;
-	private int batchSize;
-	private int originIndex;
+	private long sizeEstimate = -1;
+	private int batchSize = -1;
+	private int originIndex = -1;
 	private Throttle rateThrottle = null;
 	private IndexThrottle weightThrottle = null;
 	
@@ -178,13 +178,28 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 		// prepare
 		final IoTaskBuilder<I, O> ioTaskBuilder;
+		if(limitConfig == null) {
+			throw new OmgShootMyFootException("Test step limit config is not set");
+		}
 		final long countLimit = limitConfig.getCount();
 		final SizeInBytes sizeLimit = limitConfig.getSize();
+		if(loadConfig == null) {
+			throw new OmgShootMyFootException("Load config is not set");
+		}
 		final GeneratorConfig generatorConfig = loadConfig.getGeneratorConfig();
 		final boolean shuffleFlag = generatorConfig.getShuffle();
+		if(itemConfig == null) {
+			throw new OmgShootMyFootException("Item config is not set");
+		}
 		final InputConfig inputConfig = itemConfig.getInputConfig();
 		final RangesConfig rangesConfig = itemConfig.getDataConfig().getRangesConfig();
 
+		if(itemType == null) {
+			throw new OmgShootMyFootException("Item type is not set");
+		}
+		if(originIndex < 0) {
+			throw new OmgShootMyFootException("No origin index is set");
+		}
 		// init the I/O task builder
 		if(ItemType.DATA.equals(itemType)) {
 			final List<String> fixedRangesConfig = rangesConfig.getFixed();
@@ -229,6 +244,9 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 		// init the credentials, multi-user case support
 		final BatchSupplier<String> uidSupplier;
+		if(authConfig == null) {
+			throw new OmgShootMyFootException("Storage auth config is not set");
+		}
 		final String uid = authConfig.getUid();
 		if(uid == null) {
 			uidSupplier = null;
@@ -259,7 +277,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		// init the items input
 		final String itemInputFile = inputConfig.getFile();
 		if(itemInput == null) {
-			itemInput = getItemInput(ioType, itemInputFile, itemInputPath);
+			itemInput = itemInput(ioType, itemInputFile, itemInputPath);
 			if(itemInput == null) {
 				throw new OmgShootMyFootException("No item input available");
 			}
@@ -327,12 +345,15 @@ implements LoadGeneratorBuilder<I, O, T> {
 					(int) srcItemsCountMin, (int) srcItemsCountMax
 				);
 				((DataIoTaskBuilder) ioTaskBuilder).setSrcItemsForConcat(srcItemsBuff);
-				itemInput = getNewItemInput();
+				itemInput = newItemInput();
 			}
 		}
 
 		// adjust the storage drivers for the estimated transfer size
-		if(sizeEstimate != 0 && ItemType.DATA.equals(itemType)) {
+		if(storageDriver == null) {
+			throw new OmgShootMyFootException("Storage driver is not set");
+		}
+		if(sizeEstimate > 0 && ItemType.DATA.equals(itemType)) {
 			storageDriver.adjustIoBuffers(sizeEstimate, ioType);
 		}
 
@@ -446,14 +467,14 @@ implements LoadGeneratorBuilder<I, O, T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Input<I> getItemInput(
+	private Input<I> itemInput(
 		final IoType ioType, final String itemInputFile, final String itemInputPath
 	) throws OmgShootMyFootException {
 		
 		if(itemInputFile == null || itemInputFile.isEmpty()) {
 			if(itemInputPath == null || itemInputPath.isEmpty()) {
 				if(IoType.CREATE.equals(ioType) || IoType.NOOP.equals(ioType)) {
-					itemInput = getNewItemInput();
+					itemInput = newItemInput();
 				} else {
 					throw new OmgShootMyFootException(
 						"No input (file either path) is specified for non-create generator"
@@ -489,7 +510,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		return itemInput;
 	}
 
-	private Input<I> getNewItemInput()
+	private Input<I> newItemInput()
 	throws OmgShootMyFootException {
 		final NamingConfig namingConfig = itemConfig.getNamingConfig();
 		final ItemNamingType namingType = ItemNamingType.valueOf(
@@ -502,6 +523,9 @@ implements LoadGeneratorBuilder<I, O, T> {
 		final ItemNameSupplier itemNameInput = new ItemNameSupplier(
 			namingType, namingPrefix, namingLength, namingRadix, namingOffset
 		);
+		if(itemFactory == null) {
+			throw new OmgShootMyFootException("Item factory is not set");
+		}
 		if(itemFactory instanceof BasicDataItemFactory) {
 			final SizeInBytes size = itemConfig.getDataConfig().getSize();
 			itemInput = (Input<I>) new NewDataItemInput(itemFactory, itemNameInput, size);

@@ -21,4 +21,10 @@ dependencies {
 	runtime(
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 	)
+
+	testCompile(
+		project(":api:common"),
+		"junit:junit:${depVersion.junit}",
+		"com.github.fge:json-schema-validator:2.2.6",
+	)
 }

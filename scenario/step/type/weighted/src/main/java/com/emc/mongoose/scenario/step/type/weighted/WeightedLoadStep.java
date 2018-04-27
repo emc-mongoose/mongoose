@@ -194,24 +194,19 @@ extends LoadStepBase {
 								}
 							}
 						} catch(final OmgShootMyFootException e) {
-							LogUtil.exception(
-								Level.FATAL, e, "Failed to initialize the load generator"
-							);
 							throw new IllegalStateException(
-								"Failed to initialize the load generator"
+								"Failed to initialize the load generator", e
 							);
 						}
 					} catch(final OmgShootMyFootException e) {
-						LogUtil.exception(
-							Level.FATAL, e, "Failed to initialize the storage driver"
+						throw new IllegalStateException(
+							"Failed to initialize the storage driver", e
 						);
-						throw new IllegalStateException("Failed to initialize the storage driver");
 					} catch(final InterruptedException e) {
 						throw new CancellationException();
 					}
 				} catch(final IOException e) {
-					LogUtil.exception(Level.FATAL, e, "Failed to initialize the data input");
-					throw new IllegalStateException("Failed to initialize the data input");
+					throw new IllegalStateException("Failed to initialize the data input", e);
 				}
 			}
 		}

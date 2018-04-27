@@ -159,9 +159,13 @@ extends LoadStepBase {
 						if(itemOutputFile != null && itemOutputFile.length() > 0) {
 							final Path itemOutputPath = Paths.get(itemOutputFile);
 							if(Files.exists(itemOutputPath)) {
-								Loggers.ERR.warn(
-									"Items output file \"{}\" already exists", itemOutputPath
-								);
+								if(distributedFlag) {
+									Files.delete(itemOutputPath);
+								} else {
+									Loggers.ERR.warn(
+										"Items output file \"{}\" already exists", itemOutputPath
+									);
+								}
 							}
 							try {
 								final Output<? extends Item> itemOutput = new ItemInfoFileOutput<>(
@@ -177,20 +181,17 @@ extends LoadStepBase {
 							}
 						}
 					} catch(final OmgShootMyFootException e) {
-						LogUtil.exception(
-							Level.FATAL, e, "Failed to initialize the load generator"
+						throw new IllegalStateException(
+							"Failed to initialize the load generator", e
 						);
-						throw new IllegalStateException("Failed to initialize the load generator");
 					}
 				} catch(final OmgShootMyFootException e) {
-					LogUtil.exception(Level.FATAL, e, "Failed to initialize the storage driver");
-					throw new IllegalStateException("Failed to initialize the storage driver");
+					throw new IllegalStateException("Failed to initialize the storage driver", e);
 				} catch(final InterruptedException e) {
 					throw new CancellationException();
 				}
 			} catch(final IOException e) {
-				LogUtil.exception(Level.FATAL, e, "Failed to initialize the data input");
-				throw new IllegalStateException("Failed to initialize the data input");
+				throw new IllegalStateException("Failed to initialize the data input", e);
 			}
 		}
 	}

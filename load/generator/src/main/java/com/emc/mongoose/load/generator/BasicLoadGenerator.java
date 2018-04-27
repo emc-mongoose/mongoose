@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.generator;
 
+import com.github.akurilov.commons.func.Function2;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
@@ -7,6 +8,7 @@ import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.io.Input;
 
 import com.github.akurilov.concurrent.throttle.IndexThrottle;
+import com.github.akurilov.concurrent.throttle.RateThrottle;
 import com.github.akurilov.concurrent.throttle.Throttle;
 import com.github.akurilov.concurrent.coroutine.Coroutine;
 import com.github.akurilov.concurrent.coroutine.CoroutineBase;
@@ -22,6 +24,7 @@ import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.ui.log.Loggers;
 import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
 
+import it.unimi.dsi.fastutil.ints.Int2IntFunction;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
@@ -31,6 +34,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -38,6 +42,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
+import java.util.function.IntFunction;
 
 /**
  Created by kurila on 11.07.16.
