@@ -1,8 +1,6 @@
 include "api:common"
 include "api:metrics"
 include "api:model"
-include "load:generator"
-include "load:controller"
 include "scenario"
 include "scenario:step"
 include "scenario:step:master"

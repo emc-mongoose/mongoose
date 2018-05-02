@@ -2,8 +2,6 @@ package com.emc.mongoose.api.model.item;
 
 import com.github.akurilov.commons.io.Input;
 
-import com.github.akurilov.concurrent.coroutine.Coroutine;
-
 import com.emc.mongoose.api.model.io.task.IoTask;
 
 import java.io.EOFException;
@@ -12,13 +10,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import static java.lang.System.nanoTime;
 
 /**
@@ -27,10 +22,6 @@ import static java.lang.System.nanoTime;
 public final class DelayedTransferConvertBuffer<I extends Item, O extends IoTask<I>>
 implements TransferConvertBuffer<I, O> {
 
-	private static final Logger LOG = Logger.getLogger(
-		DelayedTransferConvertBuffer.class.getName()
-	);
-	
 	private final List<O> ioResultsBuff;
 	private final int ioResultsBuffLimit;
 	private final List<O> markBuffer;
@@ -265,15 +256,13 @@ implements TransferConvertBuffer<I, O> {
 	
 	@Override
 	public final void close() {
+		lock.lock();
 		try {
-			if(!lock.tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
-				LOG.log(Level.WARNING, "Failed to obtain the lock in time to close safely");
-			}
-		} catch(final InterruptedException e) {
-			throw new CancellationException();
-		} finally {
+			poisonedFlag = true;
 			ioResultsBuff.clear();
 			ioResultsBuffSize = 0;
+		} finally {
+			lock.unlock();
 		}
 	}
 

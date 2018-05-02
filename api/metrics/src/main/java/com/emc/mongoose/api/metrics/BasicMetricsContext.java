@@ -32,7 +32,7 @@ implements MetricsContext {
 	private final long ts;
 	private volatile long tsStart = -1, prevElapsedTime = 0;
 
-	private final String stepId;
+	private final String id;
 	private final IoType ioType;
 	private final IntSupplier actualConcurrencyGauge;
 	private final int concurrency;
@@ -50,12 +50,12 @@ implements MetricsContext {
 	private volatile boolean thresholdStateExitedFlag = false;
 
 	public BasicMetricsContext(
-		final String stepId, final IoType ioType, final IntSupplier actualConcurrencyGauge,
+		final String id, final IoType ioType, final IntSupplier actualConcurrencyGauge,
 		final int concurrency, final int thresholdConcurrency, final SizeInBytes itemDataSize,
 		final int updateIntervalSec, final boolean stdOutColorFlag, final boolean avgPersistFlag,
 		final boolean sumPersistFlag, final boolean perfDbResultsFileFlag
 	) {
-		this.stepId = stepId;
+		this.id = id;
 		this.ioType = ioType;
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
 		this.concurrency = concurrency;
@@ -197,7 +197,7 @@ implements MetricsContext {
 	//
 	@Override
 	public final String stepId() {
-		return stepId;
+		return id;
 	}
 	//
 	@Override
@@ -320,8 +320,7 @@ implements MetricsContext {
 		if(thresholdMetricsCtx != null) {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
-		thresholdMetricsCtx = new BasicMetricsContext(
-			stepId, ioType, actualConcurrencyGauge, concurrency, 0, itemDataSize,
+		thresholdMetricsCtx = new BasicMetricsContext(id, ioType, actualConcurrencyGauge, concurrency, 0, itemDataSize,
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag,
 			avgPersistFlag, sumPersistFlag, perfDbResultsFileFlag
 		);
@@ -368,7 +367,7 @@ implements MetricsContext {
 	//
 	@Override
 	public final String toString() {
-		return "MetricsContext(" + ioType.name() + '-' + concurrency + "x1@" + stepId + ")";
+		return "MetricsContext(" + ioType.name() + '-' + concurrency + "x1@" + id + ")";
 	}
 	//
 	protected static final class BasicSnapshot

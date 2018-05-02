@@ -10,8 +10,6 @@ import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.api.model.load.LoadController;
-import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.scenario.step.LoadStep;
 import com.emc.mongoose.scenario.step.master.BasicLoadStepClient;
@@ -453,23 +451,6 @@ implements LoadStep, Runnable {
 
 	protected void doCloseLocal() {
 
-		drivers
-			.parallelStream()
-			.filter(Objects::nonNull)
-			.forEach(
-				driver -> {
-					try {
-						driver.close();
-					} catch(final IOException e) {
-						LogUtil.exception(
-							Level.ERROR, e, "Failed to close the storage driver \"{}\"",
-							driver.toString()
-						);
-					}
-				}
-			);
-		drivers.clear();
-
 		generators
 			.parallelStream()
 			.filter(Objects::nonNull)
@@ -486,6 +467,23 @@ implements LoadStep, Runnable {
 				}
 			);
 		generators.clear();
+
+		drivers
+			.parallelStream()
+			.filter(Objects::nonNull)
+			.forEach(
+				driver -> {
+					try {
+						driver.close();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.ERROR, e, "Failed to close the storage driver \"{}\"",
+							driver.toString()
+						);
+					}
+				}
+			);
+		drivers.clear();
 
 		controllers
 			.parallelStream()

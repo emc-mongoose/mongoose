@@ -8,7 +8,6 @@ import com.emc.mongoose.api.common.env.PathUtil;
 import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.api.common.exception.OmgLookAtMyConsoleException;
 import com.emc.mongoose.api.common.TimeUtil;
-import static com.emc.mongoose.api.common.Constants.DIR_CONFIG;
 import static com.emc.mongoose.api.common.Constants.PATH_DEFAULTS;
 import static com.emc.mongoose.ui.cli.CliArgParser.ARG_PREFIX;
 import com.emc.mongoose.ui.config.item.ItemConfig;

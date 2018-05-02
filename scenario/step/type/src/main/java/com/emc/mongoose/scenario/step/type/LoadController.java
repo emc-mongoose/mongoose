@@ -1,4 +1,4 @@
-package com.emc.mongoose.api.model.load;
+package com.emc.mongoose.scenario.step.type;
 
 import com.github.akurilov.concurrent.AsyncRunnable;
 

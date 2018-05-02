@@ -8,7 +8,6 @@ dependencies {
 	compile(
 		project(":api:metrics"),
 		project(":api:model"),
-		project(":load:generator"),
 		project(":storage:driver:builder"),
 		project(":ui"),
 		project(":scenario:step"),

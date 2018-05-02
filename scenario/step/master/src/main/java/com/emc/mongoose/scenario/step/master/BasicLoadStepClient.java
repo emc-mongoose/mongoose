@@ -14,7 +14,7 @@ import com.emc.mongoose.api.model.item.ItemType;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.api.model.svc.Service;
 import com.emc.mongoose.api.model.svc.ServiceUtil;
-import com.emc.mongoose.load.generator.StorageItemInput;
+import com.emc.mongoose.api.model.item.StorageItemInput;
 import com.emc.mongoose.scenario.step.FileManagerService;
 import com.emc.mongoose.scenario.step.FileService;
 import com.emc.mongoose.scenario.step.LoadStep;

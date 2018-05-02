@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.generator;
+package com.emc.mongoose.scenario.step.type;
 
 import com.github.akurilov.commons.io.collection.ListInput;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -18,8 +18,6 @@ import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemNameSupplier;
 import com.emc.mongoose.api.model.item.ItemNamingType;
 import com.emc.mongoose.api.model.item.NewDataItemInput;
-import com.emc.mongoose.api.model.load.LoadGenerator;
-
 import org.junit.Test;
 
 import java.io.IOException;

@@ -10,12 +10,12 @@ import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemInfoFileOutput;
 import com.emc.mongoose.api.model.item.ItemType;
 import com.emc.mongoose.api.model.item.TransferConvertBuffer;
-import com.emc.mongoose.api.model.load.LoadController;
-import com.emc.mongoose.api.model.load.LoadGenerator;
+import com.emc.mongoose.scenario.step.type.LoadController;
+import com.emc.mongoose.scenario.step.type.LoadGenerator;
 import com.emc.mongoose.api.model.storage.StorageDriver;
-import com.emc.mongoose.load.controller.BasicLoadController;
-import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
-import com.emc.mongoose.load.generator.LoadGeneratorBuilder;
+import com.emc.mongoose.scenario.step.type.BasicLoadController;
+import com.emc.mongoose.scenario.step.type.BasicLoadGeneratorBuilder;
+import com.emc.mongoose.scenario.step.type.LoadGeneratorBuilder;
 import com.emc.mongoose.scenario.step.type.LoadStepBase;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.ui.config.Config;
@@ -206,6 +206,61 @@ extends LoadStepBase  {
 				}
 			}
 		}
+	}
+
+	@Override
+	protected void doCloseLocal() {
+
+		final int n = Math.max(Math.max(generators.size(), drivers.size()), controllers.size());
+
+		for(int i = 0; i < n; i ++) {
+			if(i < generators.size()) {
+				try {
+					generators.get(i).close();
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.ERROR, e, "Failed to close the load generator \"{}\"",
+						generators.get(i).toString()
+					);
+				}
+			} else {
+				Loggers.ERR.warn(
+					"The count of load generators is " + generators.size() + " but expected " + n
+				);
+			}
+			if(i < drivers.size()) {
+				try {
+					drivers.get(i).close();
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.ERROR, e, "Failed to close the storage driver \"{}\"",
+						drivers.get(i).toString()
+					);
+				}
+			} else {
+				Loggers.ERR.warn(
+					"The count of storage drivers is " + drivers.size() + " but expected " + n
+				);
+			}
+			if(i < controllers.size()) {
+				try {
+					controllers.get(i).close();
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.ERROR, e, "Failed to close the load controller \"{}\"",
+						controllers.get(i).toString()
+					);
+				}
+			} else {
+				Loggers.ERR.warn(
+					"The count of load controllers is " + controllers.size() + " but expected " + n
+				);
+			}
+		}
+
+		generators.clear();
+		drivers.clear();
+		controllers.clear();
 	}
 
 	@Override

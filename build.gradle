@@ -73,8 +73,7 @@ ext {
 	]
 
 	leafProjects = subprojects.findAll {
-		it != project("api") && it != project("load") && it != project("storage") &&
-			it != project("storage:driver")
+		it != project("api") && it != project("storage") && it != project("storage:driver")
 	}
 }
 

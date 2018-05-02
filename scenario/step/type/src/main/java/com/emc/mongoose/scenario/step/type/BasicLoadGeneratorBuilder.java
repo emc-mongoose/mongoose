@@ -1,15 +1,11 @@
-package com.emc.mongoose.load.generator;
-
-import com.github.akurilov.commons.collection.Range;
-import com.github.akurilov.commons.io.file.BinFileInput;
-import com.github.akurilov.commons.system.SizeInBytes;
-import com.github.akurilov.commons.io.Input;
+package com.emc.mongoose.scenario.step.type;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
 import com.emc.mongoose.api.common.supply.BatchSupplier;
 import com.emc.mongoose.api.common.supply.ConstantStringSupplier;
 import com.emc.mongoose.api.common.supply.RangePatternDefinedSupplier;
+import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
+import com.emc.mongoose.api.model.io.IoType;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.api.model.io.task.data.BasicDataIoTaskBuilder;
@@ -17,21 +13,17 @@ import com.emc.mongoose.api.model.io.task.data.DataIoTaskBuilder;
 import com.emc.mongoose.api.model.io.task.path.BasicPathIoTaskBuilder;
 import com.emc.mongoose.api.model.io.task.token.BasicTokenIoTaskBuilder;
 import com.emc.mongoose.api.model.item.BasicDataItemFactory;
-import com.emc.mongoose.api.model.item.ItemNameSupplier;
 import com.emc.mongoose.api.model.item.CsvFileItemInput;
 import com.emc.mongoose.api.model.item.DataItem;
-import com.emc.mongoose.api.model.item.TransferConvertBuffer;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
+import com.emc.mongoose.api.model.item.ItemNameSupplier;
 import com.emc.mongoose.api.model.item.ItemNamingType;
 import com.emc.mongoose.api.model.item.ItemType;
 import com.emc.mongoose.api.model.item.NewDataItemInput;
-import com.emc.mongoose.api.model.io.IoType;
-import static com.emc.mongoose.api.common.Constants.M;
-import static com.emc.mongoose.api.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
-import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
-import static com.emc.mongoose.api.model.storage.StorageDriver.BUFF_SIZE_MIN;
 import com.emc.mongoose.api.model.item.NewItemInput;
+import com.emc.mongoose.api.model.item.StorageItemInput;
+import com.emc.mongoose.api.model.item.TransferConvertBuffer;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.item.data.ranges.RangesConfig;
@@ -44,10 +36,12 @@ import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
 import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.ui.log.Loggers;
-
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.io.file.BinFileInput;
+import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.concurrent.throttle.Throttle;
-
 import org.apache.logging.log4j.Level;
 
 import java.io.BufferedReader;
@@ -68,6 +62,11 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
+
+import static com.emc.mongoose.api.common.Constants.M;
+import static com.emc.mongoose.api.common.supply.PatternDefinedSupplier.PATTERN_CHAR;
+import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
+import static com.emc.mongoose.api.model.storage.StorageDriver.BUFF_SIZE_MIN;
 
 /**
  Created by andrey on 12.11.16.

@@ -1,10 +1,9 @@
-package com.emc.mongoose.load.controller;
+package com.emc.mongoose.scenario.step.type;
 
 import com.emc.mongoose.api.metrics.MetricsSnapshot;
 import com.emc.mongoose.api.model.concurrent.DaemonBase;
 import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.api.metrics.logging.IoTraceCsvLogMessage;
-import com.emc.mongoose.api.model.load.LoadController;
 import com.emc.mongoose.api.model.io.task.IoTask.Status;
 import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
 import com.emc.mongoose.api.model.io.task.data.DataIoTask;
@@ -19,7 +18,6 @@ import com.emc.mongoose.ui.log.LogUtil;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.storage.StorageDriver;
-import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.metrics.MetricsContext;
 import com.emc.mongoose.ui.log.Loggers;
 
@@ -58,7 +56,7 @@ implements LoadController<I, O> {
 	private final long sizeLimit;
 	private final long failCountLimit;
 	private final boolean failRateLimitFlag;
-	private final ConcurrentMap<I, O> latestIoResultsByItem;
+	private final ConcurrentMap<I, O> latestIoResultByItem;
 	private final boolean isRecycling;
 	private final Coroutine resultsTransferCoroutine;
 	private final MetricsContext metricsCtx;
@@ -89,9 +87,9 @@ implements LoadController<I, O> {
 		this.batchSize = batchSize;
 		this.isRecycling = generator.isRecycling();
 		if(isRecycling) {
-			latestIoResultsByItem = new ConcurrentHashMap<>(recycleLimit);
+			latestIoResultByItem = new ConcurrentHashMap<>(recycleLimit);
 		} else {
-			latestIoResultsByItem = null;
+			latestIoResultByItem = null;
 		}
 		resultsTransferCoroutine = new TransferCoroutine<>(
 			ServiceTaskExecutor.INSTANCE, driver, this, batchSize
@@ -161,11 +159,11 @@ implements LoadController<I, O> {
 		}
 		// load generator has done its work
 		final long generatedIoTasks = generator.getGeneratedTasksCount();
-		return generator.isRecycling() &&
+		return isRecycling &&
 				// all generated I/O tasks executed at least once
 				counterResults.sum() >= generatedIoTasks &&
 				// no successful I/O results
-				latestIoResultsByItem.size() == 0;
+				latestIoResultByItem.size() == 0;
 	}
 
 	private boolean isDone() {
@@ -258,8 +256,8 @@ implements LoadController<I, O> {
 			if(ioTaskResult instanceof PartialIoTask) {
 				metricsCtx.markPartSucc(countBytesDone, reqDuration, respLatency);
 			} else {
-				if(generator.isRecycling()) {
-					latestIoResultsByItem.put(ioTaskResult.item(), ioTaskResult);
+				if(isRecycling) {
+					latestIoResultByItem.put(ioTaskResult.item(), ioTaskResult);
 					generator.recycle(ioTaskResult);
 				} else if(ioResultsOutput != null) {
 					try {
@@ -329,8 +327,8 @@ implements LoadController<I, O> {
 				if(ioTaskResult instanceof PartialIoTask) {
 					metricsCtx.markPartSucc(countBytesDone, reqDuration, respLatency);
 				} else {
-					if(generator.isRecycling()) {
-						latestIoResultsByItem.put(ioTaskResult.item(), ioTaskResult);
+					if(isRecycling) {
+						latestIoResultByItem.put(ioTaskResult.item(), ioTaskResult);
 						generator.recycle(ioTaskResult);
 					} else if(ioResultsOutput != null) {
 						try {
@@ -459,13 +457,13 @@ implements LoadController<I, O> {
 			}
 		}
 
-		if(latestIoResultsByItem != null && ioResultsOutput != null) {
+		if(latestIoResultByItem != null && ioResultsOutput != null) {
 			try {
-				final int ioResultCount = latestIoResultsByItem.size();
+				final int ioResultCount = latestIoResultByItem.size();
 				Loggers.MSG.info(
 					"{}: please wait while performing {} I/O results output...", id, ioResultCount
 				);
-				for(final O latestItemIoResult : latestIoResultsByItem.values()) {
+				for(final O latestItemIoResult : latestIoResultByItem.values()) {
 					try {
 						if(!ioResultsOutput.put(latestItemIoResult)) {
 							Loggers.ERR.debug(
@@ -488,7 +486,7 @@ implements LoadController<I, O> {
 			} finally {
 				Loggers.MSG.info("{}: I/O results output done", id);
 			}
-			latestIoResultsByItem.clear();
+			latestIoResultByItem.clear();
 		}
 		if(ioResultsOutput != null) {
 			try {

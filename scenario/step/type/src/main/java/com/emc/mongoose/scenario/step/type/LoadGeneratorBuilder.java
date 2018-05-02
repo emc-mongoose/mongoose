@@ -1,18 +1,16 @@
-package com.emc.mongoose.load.generator;
+package com.emc.mongoose.scenario.step.type;
 
 import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.github.akurilov.commons.io.Input;
 import com.emc.mongoose.api.model.io.task.IoTask;
 import com.emc.mongoose.api.model.item.Item;
 import com.emc.mongoose.api.model.item.ItemFactory;
 import com.emc.mongoose.api.model.item.ItemType;
-import com.emc.mongoose.api.model.load.LoadGenerator;
 import com.emc.mongoose.api.model.storage.StorageDriver;
 import com.emc.mongoose.ui.config.item.ItemConfig;
 import com.emc.mongoose.ui.config.load.LoadConfig;
 import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
 import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
-
+import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.concurrent.throttle.Throttle;
 
