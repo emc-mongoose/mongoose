@@ -23,7 +23,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
 import javax.management.MalformedObjectNameException;
-import java.io.Closeable;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Collections;
@@ -51,7 +50,7 @@ extends DaemonBase {
 		}
 	}
 
-	private final Map<String, Map<MetricsContext, Closeable>> allMetrics = new HashMap<>();
+	private final Map<String, Map<MetricsContext, AutoCloseable>> allMetrics = new HashMap<>();
 	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
 	private final Lock allMetricsLock = new ReentrantLock();
 
@@ -157,11 +156,11 @@ extends DaemonBase {
 					INSTANCE.start();
 					Loggers.MSG.debug("Started the metrics manager coroutine");
 				}
-				final Map<MetricsContext, Closeable>
+				final Map<MetricsContext, AutoCloseable>
 					stepMetrics = INSTANCE.allMetrics.computeIfAbsent(id, c -> new HashMap<>());
 				stepMetrics.put(metricsCtx, new Meter(metricsCtx));
 				Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
-			} catch(final MalformedObjectNameException e) {
+			} catch(final Exception e) {
 				LogUtil.exception(
 					Level.WARN, e, "Failed to register the MBean for the metrics context \"{}\"",
 					metricsCtx.toString()
@@ -184,7 +183,7 @@ extends DaemonBase {
 					.put(KEY_TEST_STEP_ID, id)
 					.put(KEY_CLASS_NAME, MetricsManager.class.getSimpleName())
 			) {
-				final Map<MetricsContext, Closeable> stepMetrics = INSTANCE.allMetrics.get(id);
+				final Map<MetricsContext, AutoCloseable> stepMetrics = INSTANCE.allMetrics.get(id);
 				if(stepMetrics != null) {
 					metricsCtx.refreshLastSnapshot(); // last time
 					// check for the metrics threshold state if entered
@@ -207,11 +206,11 @@ extends DaemonBase {
 						new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx), true)
 					);
 					Loggers.METRICS_STD_OUT.info(new BasicMetricsLogMessage(metricsCtx));
-					final Closeable meterMBean = stepMetrics.remove(metricsCtx);
+					final AutoCloseable meterMBean = stepMetrics.remove(metricsCtx);
 					if(meterMBean != null) {
 						try {
 							meterMBean.close();
-						} catch(final IOException e) {
+						} catch(final Exception e) {
 							LogUtil.exception(Level.WARN, e, "Failed to close the meter MBean");
 						}
 					}

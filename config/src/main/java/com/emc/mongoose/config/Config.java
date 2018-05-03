@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,6 +43,10 @@ import java.util.Map;
  */
 public final class Config
 implements Serializable {
+
+	static {
+		InstallHook.run();
+	}
 
 	public static final String NAME = "name";
 	public static final String DEPRECATED = "deprecated";
@@ -420,6 +425,7 @@ implements Serializable {
 		}
 	}
 
+	@Deprecated
 	public static Config loadDefaults()
 	throws IOException {
 		final String defaultConfigPath = PathUtil.BASE_DIR + File.separator + PATH_DEFAULTS;
@@ -427,6 +433,24 @@ implements Serializable {
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 		return mapper.readValue(new File(defaultConfigPath), Config.class);
+	}
+
+	private static ObjectMapper getObjectMapper() {
+		return new ObjectMapper()
+			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
+	}
+
+	public static Config loadFromFile(final File configFile)
+	throws IOException {
+		final ObjectMapper mapper = getObjectMapper();
+		return mapper.readValue(configFile, Config.class);
+	}
+
+	public static Config loadFromResource(final URL configUrl)
+	throws IOException {
+		final ObjectMapper mapper = getObjectMapper();
+		return mapper.readValue(configUrl, Config.class);
 	}
 
 	/**

@@ -3,7 +3,6 @@ package com.emc.mongoose.scenario;
 import com.emc.mongoose.model.env.Extensions;
 import com.emc.mongoose.scenario.step.LoadStep;
 import com.emc.mongoose.scenario.step.type.LoadStepFactory;
-import com.emc.mongoose.cli.CliArgParser;
 import com.emc.mongoose.config.Config;
 import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.config.test.scenario.ScenarioConfig;
@@ -16,6 +15,7 @@ import static com.emc.mongoose.model.env.PathUtil.BASE_DIR;
 import static com.emc.mongoose.scenario.Constants.ATTR_CONFIG;
 import static com.emc.mongoose.cli.CliArgParser.formatCliArgsList;
 import static com.emc.mongoose.cli.CliArgParser.getAllCliArgs;
+import static com.emc.mongoose.cli.CliArgParser.parseArgs;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
@@ -47,8 +47,7 @@ public final class Main {
 
 		try {
 			config.apply(
-				CliArgParser.parseArgs(config.getAliasingConfig(), args),
-				"none-" + LogUtil.getDateTimeStamp()
+				parseArgs(config.getAliasingConfig(), args), "none-" + LogUtil.getDateTimeStamp()
 			);
 		} catch(final IllegalArgumentNameException e) {
 			System.err.println(

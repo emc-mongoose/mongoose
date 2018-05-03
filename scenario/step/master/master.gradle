@@ -6,6 +6,7 @@ ext.jarFileName = description
 dependencies {
 
 	compile(
+		project(":cli"),
 		project(":config"),
 		project(":logging"),
 		project(":model"),
