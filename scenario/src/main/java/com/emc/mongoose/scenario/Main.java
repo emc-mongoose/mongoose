@@ -1,21 +1,21 @@
 package com.emc.mongoose.scenario;
 
-import com.emc.mongoose.api.common.env.Extensions;
+import com.emc.mongoose.model.env.Extensions;
 import com.emc.mongoose.scenario.step.LoadStep;
 import com.emc.mongoose.scenario.step.type.LoadStepFactory;
-import com.emc.mongoose.ui.cli.CliArgParser;
-import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.IllegalArgumentNameException;
-import com.emc.mongoose.ui.config.test.scenario.ScenarioConfig;
-import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Loggers;
-import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
-import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
-import static com.emc.mongoose.api.common.env.PathUtil.BASE_DIR;
+import com.emc.mongoose.cli.CliArgParser;
+import com.emc.mongoose.config.Config;
+import com.emc.mongoose.config.IllegalArgumentNameException;
+import com.emc.mongoose.config.test.scenario.ScenarioConfig;
+import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.logging.Loggers;
+import static com.emc.mongoose.model.Constants.DIR_EXAMPLE_SCENARIO;
+import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.model.env.PathUtil.BASE_DIR;
 import static com.emc.mongoose.scenario.Constants.ATTR_CONFIG;
-import static com.emc.mongoose.ui.cli.CliArgParser.formatCliArgsList;
-import static com.emc.mongoose.ui.cli.CliArgParser.getAllCliArgs;
+import static com.emc.mongoose.cli.CliArgParser.formatCliArgsList;
+import static com.emc.mongoose.cli.CliArgParser.getAllCliArgs;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;

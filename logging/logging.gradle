@@ -1,0 +1,20 @@
+description = "mongoose-logging"
+
+ext.isExt = false
+ext.jarFileName = description
+ext.mainClass = null
+
+dependencies {
+
+	compile(
+		project(":model"),
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+	)
+
+	runtime(
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
+		"org.slf4j:slf4j-api:${depVersion.slf4j}",
+	)
+}

@@ -1,15 +1,15 @@
 package com.emc.mongoose.scenario.step.node;
 
-import com.emc.mongoose.api.model.svc.Service;
-import com.emc.mongoose.ui.cli.CliArgParser;
-import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.IllegalArgumentNameException;
-import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Loggers;
-import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
-import static com.emc.mongoose.ui.cli.CliArgParser.formatCliArgsList;
-import static com.emc.mongoose.ui.cli.CliArgParser.getAllCliArgs;
+import com.emc.mongoose.model.svc.Service;
+import com.emc.mongoose.cli.CliArgParser;
+import com.emc.mongoose.config.Config;
+import com.emc.mongoose.config.IllegalArgumentNameException;
+import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.logging.Loggers;
+import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.cli.CliArgParser.formatCliArgsList;
+import static com.emc.mongoose.cli.CliArgParser.getAllCliArgs;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 

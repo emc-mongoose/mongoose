@@ -1,11 +1,11 @@
 package com.emc.mongoose.scenario.step.node;
 
-import com.emc.mongoose.api.model.svc.ServiceBase;
+import com.emc.mongoose.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.step.LoadStepManagerService;
 import com.emc.mongoose.scenario.step.LoadStepService;
-import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.log.Loggers;
-import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import com.emc.mongoose.config.Config;
+import com.emc.mongoose.logging.Loggers;
+import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 

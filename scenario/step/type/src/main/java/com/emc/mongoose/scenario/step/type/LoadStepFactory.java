@@ -1,7 +1,7 @@
 package com.emc.mongoose.scenario.step.type;
 
 import com.emc.mongoose.scenario.step.LoadStep;
-import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.config.Config;
 
 import java.util.List;
 import java.util.Map;

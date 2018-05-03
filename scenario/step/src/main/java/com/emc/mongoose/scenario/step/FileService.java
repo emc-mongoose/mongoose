@@ -1,6 +1,6 @@
 package com.emc.mongoose.scenario.step;
 
-import com.emc.mongoose.api.model.svc.Service;
+import com.emc.mongoose.model.svc.Service;
 
 import java.io.IOException;
 import java.nio.file.LinkOption;

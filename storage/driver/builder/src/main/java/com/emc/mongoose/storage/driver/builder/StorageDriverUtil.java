@@ -1,14 +1,14 @@
 package com.emc.mongoose.storage.driver.builder;
 
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.storage.StorageDriver;
-import com.emc.mongoose.ui.config.item.ItemConfig;
-import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
-import com.emc.mongoose.ui.config.storage.StorageConfig;
-import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
-import com.emc.mongoose.ui.config.test.step.StepConfig;
+import com.emc.mongoose.model.exception.OmgShootMyFootException;
+import com.emc.mongoose.model.data.DataInput;
+import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.config.item.ItemConfig;
+import com.emc.mongoose.config.load.LoadConfig;
+import com.emc.mongoose.config.output.metrics.average.AverageConfig;
+import com.emc.mongoose.config.storage.StorageConfig;
+import com.emc.mongoose.config.storage.driver.DriverConfig;
+import com.emc.mongoose.config.test.step.StepConfig;
 
 import java.util.List;
 

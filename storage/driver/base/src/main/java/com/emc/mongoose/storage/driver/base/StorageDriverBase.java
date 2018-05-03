@@ -1,21 +1,21 @@
 package com.emc.mongoose.storage.driver.base;
 
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.model.concurrent.DaemonBase;
-import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
-import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
-import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.api.model.io.task.data.DataIoTask;
-import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.api.model.storage.Credential;
-import com.emc.mongoose.api.model.storage.StorageDriver;
-import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.storage.StorageConfig;
-import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
-import com.emc.mongoose.ui.config.storage.driver.queue.QueueConfig;
-import com.emc.mongoose.ui.log.Loggers;
+import com.emc.mongoose.model.exception.OmgShootMyFootException;
+import com.emc.mongoose.model.concurrent.DaemonBase;
+import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
+import com.emc.mongoose.config.storage.driver.DriverConfig;
+import com.emc.mongoose.model.data.DataInput;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.storage.Credential;
+import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.config.load.LoadConfig;
+import com.emc.mongoose.config.storage.StorageConfig;
+import com.emc.mongoose.config.storage.auth.AuthConfig;
+import com.emc.mongoose.config.storage.driver.queue.QueueConfig;
+import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.concurrent.ThreadUtil;
 import com.github.akurilov.commons.io.Input;

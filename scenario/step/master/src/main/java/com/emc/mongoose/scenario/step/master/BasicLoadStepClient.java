@@ -1,20 +1,20 @@
 package com.emc.mongoose.scenario.step.master;
 
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.metrics.MetricsSnapshot;
-import com.emc.mongoose.api.model.concurrent.DaemonBase;
-import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
-import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.api.model.item.CsvFileItemInput;
-import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.api.model.item.ItemFactory;
-import com.emc.mongoose.api.model.item.ItemType;
-import com.emc.mongoose.api.model.storage.StorageDriver;
-import com.emc.mongoose.api.model.svc.Service;
-import com.emc.mongoose.api.model.svc.ServiceUtil;
-import com.emc.mongoose.api.model.item.StorageItemInput;
+import com.emc.mongoose.model.exception.OmgShootMyFootException;
+import com.emc.mongoose.model.metrics.MetricsSnapshot;
+import com.emc.mongoose.model.concurrent.DaemonBase;
+import com.emc.mongoose.logging.LogContextThreadFactory;
+import com.emc.mongoose.model.concurrent.ServiceTaskExecutor;
+import com.emc.mongoose.model.data.DataInput;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.CsvFileItemInput;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.model.item.ItemType;
+import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.model.svc.Service;
+import com.emc.mongoose.model.svc.ServiceUtil;
+import com.emc.mongoose.model.item.StorageItemInput;
 import com.emc.mongoose.scenario.step.FileManagerService;
 import com.emc.mongoose.scenario.step.FileService;
 import com.emc.mongoose.scenario.step.LoadStep;
@@ -23,19 +23,19 @@ import com.emc.mongoose.scenario.step.LoadStepService;
 import com.emc.mongoose.scenario.step.master.metrics.MetricsSnapshotsSupplierCoroutine;
 import com.emc.mongoose.scenario.step.master.metrics.RemoteMetricsSnapshotsSupplierCoroutine;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
-import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.item.ItemConfig;
-import com.emc.mongoose.ui.config.item.data.DataConfig;
-import com.emc.mongoose.ui.config.item.data.input.layer.LayerConfig;
-import com.emc.mongoose.ui.config.item.input.InputConfig;
-import com.emc.mongoose.ui.config.item.naming.NamingConfig;
-import com.emc.mongoose.ui.config.item.output.OutputConfig;
-import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
-import com.emc.mongoose.ui.config.test.step.node.NodeConfig;
-import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Loggers;
-import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import com.emc.mongoose.config.Config;
+import com.emc.mongoose.config.item.ItemConfig;
+import com.emc.mongoose.config.item.data.DataConfig;
+import com.emc.mongoose.config.item.data.input.layer.LayerConfig;
+import com.emc.mongoose.config.item.input.InputConfig;
+import com.emc.mongoose.config.item.naming.NamingConfig;
+import com.emc.mongoose.config.item.output.OutputConfig;
+import com.emc.mongoose.config.test.step.limit.LimitConfig;
+import com.emc.mongoose.config.test.step.node.NodeConfig;
+import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.logging.Loggers;
+import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
 
 import com.github.akurilov.commons.func.Function2;
 import com.github.akurilov.commons.func.Function3;
@@ -379,7 +379,7 @@ implements LoadStepClient {
 			final String itemInputPath = itemInputConfig.getPath();
 			if(itemInputPath != null && !itemInputPath.isEmpty()) {
 				final DataConfig dataConfig = itemConfig.getDataConfig();
-				final com.emc.mongoose.ui.config.item.data.input.InputConfig
+				final com.emc.mongoose.config.item.data.input.InputConfig
 					dataInputConfig = dataConfig.getInputConfig();
 				final LayerConfig dataLayerConfig = dataInputConfig.getLayerConfig();
 				try {

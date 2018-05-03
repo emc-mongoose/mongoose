@@ -1,24 +1,23 @@
 package com.emc.mongoose.scenario.step.type;
 
-import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
-import com.emc.mongoose.api.metrics.AggregatingMetricsContext;
-import com.emc.mongoose.api.metrics.BasicMetricsContext;
-import com.emc.mongoose.api.metrics.MetricsContext;
-import com.emc.mongoose.api.metrics.MetricsManager;
-import com.emc.mongoose.api.metrics.MetricsSnapshot;
-import com.emc.mongoose.api.model.concurrent.DaemonBase;
-import com.emc.mongoose.api.model.concurrent.LogContextThreadFactory;
-import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.api.model.storage.StorageDriver;
+import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
+import com.emc.mongoose.model.metrics.AggregatingMetricsContext;
+import com.emc.mongoose.model.metrics.BasicMetricsContext;
+import com.emc.mongoose.model.metrics.MetricsContext;
+import com.emc.mongoose.model.metrics.MetricsSnapshot;
+import com.emc.mongoose.model.concurrent.DaemonBase;
+import com.emc.mongoose.logging.LogContextThreadFactory;
+import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.scenario.step.LoadStep;
 import com.emc.mongoose.scenario.step.master.BasicLoadStepClient;
 import com.emc.mongoose.scenario.step.master.LoadStepClient;
-import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.config.output.metrics.MetricsConfig;
-import com.emc.mongoose.ui.config.test.step.StepConfig;
-import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Loggers;
+import com.emc.mongoose.config.Config;
+import com.emc.mongoose.config.output.metrics.MetricsConfig;
+import com.emc.mongoose.config.test.step.StepConfig;
+import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 

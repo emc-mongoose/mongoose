@@ -1,17 +1,17 @@
 package com.emc.mongoose.storage.driver.nio.mock;
 
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.api.model.io.task.data.DataIoTask;
-import com.emc.mongoose.api.model.item.DataItem;
-import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.api.model.item.ItemFactory;
-import com.emc.mongoose.api.model.storage.Credential;
+import com.emc.mongoose.model.exception.OmgShootMyFootException;
+import com.emc.mongoose.model.data.DataInput;
+import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask;
+import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.nio.NioStorageDriverBase;
-import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.config.load.LoadConfig;
+import com.emc.mongoose.config.storage.StorageConfig;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.math.Random;
 

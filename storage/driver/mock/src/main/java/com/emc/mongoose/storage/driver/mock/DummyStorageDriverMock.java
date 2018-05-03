@@ -1,17 +1,17 @@
 package com.emc.mongoose.storage.driver.mock;
 
-import com.emc.mongoose.api.model.concurrent.DaemonBase;
-import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.api.model.io.task.data.DataIoTask;
-import com.emc.mongoose.api.model.item.DataItem;
-import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.api.model.item.ItemFactory;
-import com.emc.mongoose.api.model.storage.StorageDriver;
-import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.storage.StorageConfig;
-import com.emc.mongoose.ui.log.Loggers;
+import com.emc.mongoose.model.concurrent.DaemonBase;
+import com.emc.mongoose.model.data.DataInput;
+import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask;
+import com.emc.mongoose.model.item.DataItem;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.config.load.LoadConfig;
+import com.emc.mongoose.config.storage.StorageConfig;
+import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.io.Input;

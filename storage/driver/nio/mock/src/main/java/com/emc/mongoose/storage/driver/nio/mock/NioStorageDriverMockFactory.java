@@ -1,12 +1,12 @@
 package com.emc.mongoose.storage.driver.nio.mock;
 
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.api.model.item.Item;
+import com.emc.mongoose.model.exception.OmgShootMyFootException;
+import com.emc.mongoose.model.data.DataInput;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.base.StorageDriverFactory;
-import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.config.load.LoadConfig;
+import com.emc.mongoose.config.storage.StorageConfig;
 
 public final class NioStorageDriverMockFactory<
 	I extends Item, O extends IoTask<I>, T extends NioStorageDriverMock<I, O>

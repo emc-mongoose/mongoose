@@ -1,19 +1,17 @@
 package com.emc.mongoose.scenario.step.node;
 
-import com.emc.mongoose.api.common.env.Extensions;
-import com.emc.mongoose.api.metrics.MetricsSnapshot;
-import com.emc.mongoose.api.model.svc.ServiceBase;
+import com.emc.mongoose.model.env.Extensions;
+import com.emc.mongoose.model.metrics.MetricsSnapshot;
+import com.emc.mongoose.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.step.LoadStep;
 import com.emc.mongoose.scenario.step.LoadStepService;
 import com.emc.mongoose.scenario.step.type.LoadStepFactory;
-import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Loggers;
-import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import com.emc.mongoose.config.Config;
+import com.emc.mongoose.logging.Loggers;
+import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
-import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
 import java.rmi.RemoteException;

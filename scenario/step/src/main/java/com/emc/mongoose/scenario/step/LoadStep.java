@@ -1,7 +1,7 @@
 package com.emc.mongoose.scenario.step;
 
-import com.emc.mongoose.api.metrics.MetricsSnapshot;
-import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.model.metrics.MetricsSnapshot;
+import com.emc.mongoose.config.Config;
 
 import com.github.akurilov.concurrent.AsyncRunnable;
 

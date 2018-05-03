@@ -7,9 +7,9 @@ ext.mainClass = null
 dependencies {
 	compile(
 		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
-		project(":api:model"),
+		project(":model"),
 		project(":storage:driver:preempt"),
-		project(":ui"),
+		project(":logging"),
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 	)
 

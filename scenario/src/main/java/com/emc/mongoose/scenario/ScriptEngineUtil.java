@@ -1,11 +1,11 @@
 package com.emc.mongoose.scenario;
 
-import com.emc.mongoose.api.model.io.IoType;
+import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.scenario.step.LoadStep;
 import com.emc.mongoose.scenario.step.type.LoadStepFactory;
-import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Loggers;
+import com.emc.mongoose.config.Config;
+import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.logging.Loggers;
 
 import org.apache.logging.log4j.Level;
 

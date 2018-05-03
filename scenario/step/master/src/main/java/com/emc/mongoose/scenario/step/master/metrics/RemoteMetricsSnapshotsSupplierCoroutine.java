@@ -1,8 +1,8 @@
 package com.emc.mongoose.scenario.step.master.metrics;
 
-import com.emc.mongoose.api.metrics.MetricsSnapshot;
+import com.emc.mongoose.model.metrics.MetricsSnapshot;
 import com.emc.mongoose.scenario.step.LoadStepService;
-import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.logging.LogUtil;
 import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
 import com.github.akurilov.concurrent.coroutine.ExclusiveCoroutineBase;
 import org.apache.logging.log4j.Level;

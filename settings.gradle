@@ -1,6 +1,7 @@
-include "api:common"
-include "api:metrics"
-include "api:model"
+include "cli"
+include "config"
+include "logging"
+include "model"
 include "scenario"
 include "scenario:step"
 include "scenario:step:master"
@@ -22,7 +23,6 @@ include "storage:driver:nio:mock"
 include "storage:driver:preempt"
 include "storage:driver:preempt:mock"
 //include "tests:system"
-include "ui"
 
 rootProject.name = "mongoose"
 

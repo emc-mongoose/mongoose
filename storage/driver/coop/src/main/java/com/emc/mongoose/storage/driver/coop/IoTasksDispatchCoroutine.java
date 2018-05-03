@@ -1,10 +1,10 @@
 package com.emc.mongoose.storage.driver.coop;
 
-import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.ui.log.LogUtil;
-import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.logging.LogUtil;
+import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
 
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;

@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.driver.net.http;
 
-import com.emc.mongoose.api.common.env.DateUtil;
-import com.emc.mongoose.api.common.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.api.common.supply.async.AsyncUpdatingValueSupplier;
+import com.emc.mongoose.model.env.DateUtil;
+import com.emc.mongoose.model.exception.OmgDoesNotPerformException;
+import com.emc.mongoose.model.supply.async.AsyncUpdatingValueSupplier;
 
 import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
 

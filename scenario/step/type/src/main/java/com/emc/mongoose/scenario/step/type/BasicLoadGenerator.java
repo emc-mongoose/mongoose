@@ -1,13 +1,13 @@
 package com.emc.mongoose.scenario.step.type;
 
-import com.emc.mongoose.api.model.concurrent.DaemonBase;
-import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.api.model.io.IoType;
-import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.api.model.io.task.IoTaskBuilder;
-import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.ui.log.LogUtil;
-import com.emc.mongoose.ui.log.Loggers;
+import com.emc.mongoose.model.concurrent.DaemonBase;
+import com.emc.mongoose.model.concurrent.ServiceTaskExecutor;
+import com.emc.mongoose.model.io.IoType;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.IoTaskBuilder;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.logging.Loggers;
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
 import com.github.akurilov.commons.io.Input;
@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
 
 /**
  Created by kurila on 11.07.16.

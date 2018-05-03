@@ -1,26 +1,25 @@
 package com.emc.mongoose.storage.driver.coop;
 
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.model.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.api.model.io.task.composite.CompositeIoTask;
-import com.emc.mongoose.api.model.io.task.partial.PartialIoTask;
-import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.api.model.storage.StorageDriver;
+import com.emc.mongoose.model.exception.OmgShootMyFootException;
+import com.emc.mongoose.model.concurrent.ServiceTaskExecutor;
+import com.emc.mongoose.model.data.DataInput;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.composite.CompositeIoTask;
+import com.emc.mongoose.model.io.task.partial.PartialIoTask;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.storage.driver.base.StorageDriverBase;
-import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.storage.StorageConfig;
-import com.emc.mongoose.ui.config.storage.driver.queue.QueueConfig;
-import com.emc.mongoose.ui.log.Loggers;
-import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import com.emc.mongoose.config.load.LoadConfig;
+import com.emc.mongoose.config.storage.StorageConfig;
+import com.emc.mongoose.config.storage.driver.queue.QueueConfig;
+import com.emc.mongoose.logging.Loggers;
+import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;

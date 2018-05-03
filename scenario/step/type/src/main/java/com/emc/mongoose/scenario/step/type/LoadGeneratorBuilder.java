@@ -1,15 +1,15 @@
 package com.emc.mongoose.scenario.step.type;
 
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.api.model.item.ItemFactory;
-import com.emc.mongoose.api.model.item.ItemType;
-import com.emc.mongoose.api.model.storage.StorageDriver;
-import com.emc.mongoose.ui.config.item.ItemConfig;
-import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.storage.auth.AuthConfig;
-import com.emc.mongoose.ui.config.test.step.limit.LimitConfig;
+import com.emc.mongoose.model.exception.OmgShootMyFootException;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.item.ItemFactory;
+import com.emc.mongoose.model.item.ItemType;
+import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.config.item.ItemConfig;
+import com.emc.mongoose.config.load.LoadConfig;
+import com.emc.mongoose.config.storage.auth.AuthConfig;
+import com.emc.mongoose.config.test.step.limit.LimitConfig;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.concurrent.throttle.Throttle;

@@ -2,16 +2,16 @@ package com.emc.mongoose.storage.driver.net.data;
 
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.DirectMemUtil;
-import com.emc.mongoose.api.model.data.DataCorruptionException;
-import com.emc.mongoose.api.model.data.DataSizeException;
-import com.emc.mongoose.api.model.data.DataVerificationException;
-import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.api.model.io.task.data.DataIoTask;
-import com.emc.mongoose.api.model.item.DataItem;
-import static com.emc.mongoose.api.model.item.DataItem.getRangeCount;
-import static com.emc.mongoose.api.model.item.DataItem.getRangeOffset;
+import com.emc.mongoose.model.data.DataCorruptionException;
+import com.emc.mongoose.model.data.DataSizeException;
+import com.emc.mongoose.model.data.DataVerificationException;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.io.task.data.DataIoTask;
+import com.emc.mongoose.model.item.DataItem;
+import static com.emc.mongoose.model.item.DataItem.getRangeCount;
+import static com.emc.mongoose.model.item.DataItem.getRangeOffset;
 
-import com.emc.mongoose.ui.log.Loggers;
+import com.emc.mongoose.logging.Loggers;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
