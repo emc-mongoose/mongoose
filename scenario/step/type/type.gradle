@@ -1,0 +1,26 @@
+description = "mongoose-scenario-step-type"
+
+ext.isExt = false
+ext.jarFileName = description
+
+dependencies {
+
+	compile(
+		project(":model"),
+		project(":logging"),
+		project(":scenario:step"),
+		project(":scenario:step:master"),
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
+		"com.github.akurilov:java-concurrent:${depVersion.javaConcurrent}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"io.dropwizard.metrics:metrics-core:${depVersion.metrics}",
+	)
+
+	testCompile(
+		"junit:junit:${depVersion.junit}",
+	)
+
+	testRuntime(
+		"com.lmax:disruptor:${depVersion.disruptor}",
+	)
+}

@@ -4,11 +4,12 @@ var itemsFile = "weighted_load_example.csv";
 var itemOutputPath = "/weighted_load_example";
 
 // declare the cleanup shell command
-var precondition1 = Command
-    .value("rm -f " + itemsFile);
+new java.lang.ProcessBuilder("sh", "-c", "rm -f " + itemsFile)
+    .start()
+    .waitFor();
 
 // prepare (create) the 10000 items on a storage before the test
-var precondition2 = PreconditionLoad
+Load
     .config(
         {
             "item": {
@@ -33,10 +34,11 @@ var precondition2 = PreconditionLoad
                 }
             }
         }
-    );
+    )
+    .run();
 
 // declare the weighted load step instance (20% create operations, 80% read operations)
-var weightedLoad1 = WeightedLoad
+WeightedLoad
     .config(
         {
             "item": {
@@ -78,9 +80,5 @@ var weightedLoad1 = WeightedLoad
                 "type": "read"
             }
         }
-    );
-
-// go
-precondition1.run();
-precondition2.run();
-weightedLoad1.run();
+    )
+    .run();

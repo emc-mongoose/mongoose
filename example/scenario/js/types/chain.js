@@ -31,9 +31,8 @@ var deleteConfig = {
 };
 
 // clean up before running the chain load step
-Command
-    .value("rm -f " + itemOutputFile)
-    .run();
+var cmd = new java.lang.ProcessBuilder("sh", "-c", "rm -f " + itemOutputFile).start();
+cmd.waitFor();
 
 ChainLoad
     .config(createConfig)

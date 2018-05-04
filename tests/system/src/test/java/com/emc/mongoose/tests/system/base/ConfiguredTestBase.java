@@ -5,8 +5,8 @@ import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.ui.cli.CliArgParser;
-import com.emc.mongoose.ui.config.Config;
-import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.config.Config;
+import com.emc.mongoose.logging.LogUtil;
 
 import org.junit.After;
 import org.junit.Before;

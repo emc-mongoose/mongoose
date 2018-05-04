@@ -1,0 +1,18 @@
+description = "mongoose-scenario-step-type-weighted"
+
+ext.isExt = true
+ext.jarFileName = description
+
+dependencies {
+
+	compile(
+		project(":model"),
+		project(":scenario:step"),
+		project(":scenario:step:type"),
+		project(":storage:driver:builder"),
+		project(":logging"),
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
+		"com.github.akurilov:java-concurrent:${depVersion.javaConcurrent}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+	)
+}

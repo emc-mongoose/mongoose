@@ -1,25 +1,26 @@
 package com.emc.mongoose.storage.driver.builder;
 
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.common.env.Extensions;
-import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.api.model.storage.StorageDriver;
-import static com.emc.mongoose.api.common.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
+import com.emc.mongoose.model.exception.OmgShootMyFootException;
+import com.emc.mongoose.model.env.Extensions;
+import com.emc.mongoose.model.data.DataInput;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.storage.StorageDriver;
+import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
 
 import com.emc.mongoose.storage.driver.base.StorageDriverFactory;
-import com.emc.mongoose.ui.config.item.ItemConfig;
-import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
-import com.emc.mongoose.ui.config.storage.StorageConfig;
-import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
-import com.emc.mongoose.ui.log.Loggers;
+import com.emc.mongoose.config.item.ItemConfig;
+import com.emc.mongoose.config.load.LoadConfig;
+import com.emc.mongoose.config.storage.StorageConfig;
+import com.emc.mongoose.config.storage.driver.DriverConfig;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.ServiceLoader;
 
 /**
@@ -33,7 +34,6 @@ public class BasicStorageDriverBuilder<
 	private DataInput contentSrc;
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
-	private AverageConfig avgMetricsConfig;
 	private StorageConfig storageConfig;
 
 	protected final String getStepId() {
@@ -51,49 +51,36 @@ public class BasicStorageDriverBuilder<
 	}
 
 	@Override
-	public AverageConfig getAverageConfig() {
-		return avgMetricsConfig;
-	}
-
-	@Override
 	public StorageConfig getStorageConfig() {
 		return storageConfig;
 	}
 
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setTestStepName(final String jobName) {
+	public BasicStorageDriverBuilder<I, O, T> testStepId(final String jobName) {
 		this.stepName = jobName;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setContentSource(final DataInput contentSrc) {
+	public BasicStorageDriverBuilder<I, O, T> dataInput(final DataInput contentSrc) {
 		this.contentSrc = contentSrc;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig) {
+	public BasicStorageDriverBuilder<I, O, T> itemConfig(final ItemConfig itemConfig) {
 		this.itemConfig = itemConfig;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig) {
+	public BasicStorageDriverBuilder<I, O, T> loadConfig(final LoadConfig loadConfig) {
 		this.loadConfig = loadConfig;
 		return this;
 	}
 
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> setAverageConfig(
-		final AverageConfig avgMetricsConfig
-	) {
-		this.avgMetricsConfig = avgMetricsConfig;
-		return this;
-	}
-
-	@Override
-	public BasicStorageDriverBuilder<I, O, T> setStorageConfig(final StorageConfig storageConfig) {
+	public BasicStorageDriverBuilder<I, O, T> storageConfig(final StorageConfig storageConfig) {
 		this.storageConfig = storageConfig;
 		return this;
 	}
@@ -108,26 +95,35 @@ public class BasicStorageDriverBuilder<
 				.put(KEY_CLASS_NAME, BasicStorageDriverBuilder.class.getSimpleName())
 		) {
 
+			if(storageConfig == null) {
+				throw new OmgShootMyFootException("No storage config is set");
+			}
 			final DriverConfig driverConfig = storageConfig.getDriverConfig();
 			final String driverType = driverConfig.getType();
+			if(itemConfig == null) {
+				throw new OmgShootMyFootException("No item config config is set");
+			}
 			final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
 
 			final ServiceLoader<StorageDriverFactory<I, O, T>> loader = ServiceLoader.load(
 				(Class) StorageDriverFactory.class, Extensions.CLS_LOADER
 			);
 
+			final List<String> availTypes = new ArrayList<>();
 			for(final StorageDriverFactory<I, O, T> storageDriverFactory : loader) {
-				if(driverType.equals(storageDriverFactory.getName())) {
+				final String typeName = storageDriverFactory.getName();
+				availTypes.add(typeName);
+				if(driverType.equals(typeName)) {
 					return storageDriverFactory.create(
 						stepName, contentSrc, loadConfig, storageConfig, verifyFlag
 					);
 				}
 			}
 
-			Loggers.ERR.fatal(
-				"Failed to create the storage driver for the type \"{}\"", driverType
+			throw new OmgShootMyFootException(
+				"Failed to create the storage driver for the type \"" + driverType +
+					"\", available types: " + Arrays.toString(availTypes.toArray())
 			);
-			return null;
 		}
 	}
 }

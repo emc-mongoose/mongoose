@@ -1,9 +1,5 @@
 description = "mongoose-storage-driver-net-http-emc"
 
-jar {
-	manifest {
-		attributes (
-            "Class-Path": classPathString(configurations.runtime),
-		)
-	}
-}
+ext.isExt = false
+ext.jarFileName = description
+ext.mainClass = null

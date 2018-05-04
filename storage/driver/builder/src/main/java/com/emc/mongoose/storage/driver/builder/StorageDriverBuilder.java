@@ -1,14 +1,13 @@
 package com.emc.mongoose.storage.driver.builder;
 
-import com.emc.mongoose.api.common.exception.OmgShootMyFootException;
-import com.emc.mongoose.api.model.data.DataInput;
-import com.emc.mongoose.api.model.io.task.IoTask;
-import com.emc.mongoose.api.model.item.Item;
-import com.emc.mongoose.api.model.storage.StorageDriver;
-import com.emc.mongoose.ui.config.item.ItemConfig;
-import com.emc.mongoose.ui.config.load.LoadConfig;
-import com.emc.mongoose.ui.config.output.metrics.average.AverageConfig;
-import com.emc.mongoose.ui.config.storage.StorageConfig;
+import com.emc.mongoose.model.exception.OmgShootMyFootException;
+import com.emc.mongoose.model.data.DataInput;
+import com.emc.mongoose.model.io.task.IoTask;
+import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.model.storage.StorageDriver;
+import com.emc.mongoose.config.item.ItemConfig;
+import com.emc.mongoose.config.load.LoadConfig;
+import com.emc.mongoose.config.storage.StorageConfig;
 
 import java.rmi.RemoteException;
 
@@ -25,28 +24,22 @@ public interface StorageDriverBuilder<
 	LoadConfig getLoadConfig()
 	throws RemoteException;
 
-	AverageConfig getAverageConfig()
-	throws RemoteException;
-
 	StorageConfig getStorageConfig()
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setTestStepName(final String runId)
+	StorageDriverBuilder<I, O, T> testStepId(final String runId)
 	throws RemoteException;
 	
-	StorageDriverBuilder<I, O, T> setContentSource(final DataInput contentSrc)
+	StorageDriverBuilder<I, O, T> dataInput(final DataInput contentSrc)
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setItemConfig(final ItemConfig itemConfig)
+	StorageDriverBuilder<I, O, T> itemConfig(final ItemConfig itemConfig)
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setLoadConfig(final LoadConfig loadConfig)
+	StorageDriverBuilder<I, O, T> loadConfig(final LoadConfig loadConfig)
 	throws RemoteException;
 
-	StorageDriverBuilder<I, O, T> setAverageConfig(final AverageConfig avgConfig)
-	throws RemoteException;
-
-	StorageDriverBuilder<I, O, T> setStorageConfig(final StorageConfig storageConfig)
+	StorageDriverBuilder<I, O, T> storageConfig(final StorageConfig storageConfig)
 	throws RemoteException;
 
 	T build()
