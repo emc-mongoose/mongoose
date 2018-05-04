@@ -40,7 +40,7 @@ allprojects {
 
 String defineVersion() {
 	def configFilePath = [
-		rootDir, "config", "src", "main", "resources", "defaults.json",
+		rootDir, "src", "main", "resources", "config", "defaults.json",
 	].join(File.separator);
 	def inputFile = new File(configFilePath)
 	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
@@ -54,8 +54,6 @@ task printVersion {
 }
 
 ext {
-
-	jarFileName = null
 
 	depVersion = [
 		commonsCodec : "1.11",
@@ -78,6 +76,43 @@ ext {
 		it != project("storage") && it != project("storage:driver")
 	}
 }
+
+dependencies {
+
+	compile(
+		"commons-codec:commons-codec:${depVersion.commonsCodec}",
+		"commons-lang:commons-lang:${depVersion.commonsLang}",
+		"com.fasterxml.jackson.core:jackson-annotations:${depVersion.jackson}",
+		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
+		"com.github.akurilov:java-concurrent:${depVersion.javaConcurrent}",
+		"com.github.akurilov:netty-connection-pool:${depVersion.nettyConnectionPool}",
+		"com.lmax:disruptor:${depVersion.disruptor}",
+		"io.dropwizard.metrics:metrics-core:${depVersion.metrics}",
+		"io.netty:netty-buffer:${depVersion.netty}",
+		"io.netty:netty-codec-http:${depVersion.netty}",
+		"io.netty:netty-common:${depVersion.netty}",
+		"io.netty:netty-handler:${depVersion.netty}",
+		"io.netty:netty-transport:${depVersion.netty}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+	)
+
+	runtime(
+		"io.netty:netty-transport-native-epoll:${depVersion.netty}:linux-x86_64",
+		"io.netty:netty-transport-native-kqueue:${depVersion.netty}:osx-x86_64",
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
+		"org.javassist:javassist:${depVersion.javassist}",
+		"org.slf4j:slf4j-api:${depVersion.slf4j}",
+	)
+
+	testCompile(
+		"com.github.fge:json-schema-validator:2.2.6",
+		"junit:junit:${depVersion.junit}",
+	)
+}
+
 
 def classPathString(final configuration, final isExt) {
 	return configuration
@@ -122,140 +157,6 @@ subprojects {
 			sourceCompatibility = JavaVersion.VERSION_1_8
 			targetCompatibility = JavaVersion.VERSION_1_8
 		}
-
-		jar {
-			if(project in leafProjects) {
-				archiveName "${project.jarFileName}.${extension}"
-				manifest {
-					attributes(
-						"Class-Path": classPathString(configurations.runtime, project.isExt),
-						"Implementation-Version": version,
-						"Implementation-Title": "$name",
-					)
-				}
-				if(null != project.mainClass) {
-					manifest {
-						attributes(
-							"Main-Class": project.mainClass,
-						)
-					}
-				}
-			}
-		}
-
-		test {
-			if(project in leafProjects) {
-				doFirst {
-					jvmArgs = [
-						//"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005",
-						"-XX:+HeapDumpOnOutOfMemoryError",
-					]
-				}
-				maxHeapSize "1g"
-				/*
-				systemProperty "com.sun.management.jmxremote", "true"
-				systemProperty "com.sun.management.jmxremote.port", "9010"
-				systemProperty "com.sun.management.jmxremote.rmi.port", "9010"
-				systemProperty "com.sun.management.jmxremote.local.only", "false"
-				systemProperty "com.sun.management.jmxremote.authenticate", "false"
-				systemProperty "com.sun.management.jmxremote.ssl", "false"
-				*/
-				testLogging {
-					events "passed", "skipped", "failed", "standardOut"
-					showExceptions = true
-					showStandardStreams = true
-				}
-			}
-		}
-	}
-
-	task sourcesJar(type: Jar, dependsOn: classes) {
-		if(project in leafProjects) {
-			classifier = "sources"
-			archiveName = "${project.jarFileName}-$classifier.$extension"
-			from sourceSets.main.allSource
-		}
-	}
-
-	task javadocJar(type: Jar, dependsOn: javadoc) {
-		if(project in leafProjects) {
-			classifier = "javadoc"
-			archiveName = "${project.jarFileName}-$classifier.$extension"
-			from javadoc.destinationDir
-		}
-	}
-
-	artifacts {
-		archives jar
-		archives sourcesJar
-		archives javadocJar
-	}
-
-	// see http://central.sonatype.org/pages/gradle.html for details
-	uploadArchives {
-
-		// prevent the execution for empty (not leaf) subprojects and tests packages
-		if(project.path.contains("tests") || !(project in leafProjects)) {
-			return
-		}
-
-		LinkedList nameParts = new LinkedList()
-		collectName(project, nameParts)
-
-		def ossrhUsername = project.hasProperty("ossrhUsername") ?
-			project.property("ossrhUsername") : null
-		def ossrhPassword = project.hasProperty("ossrhPassword") ?
-			project.property("ossrhPassword") : null
-
-		repositories {
-			mavenDeployer {
-				beforeDeployment {
-					MavenDeployment deployment -> signing.signPom(deployment)
-				}
-
-				repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-					authentication(userName: ossrhUsername, password: ossrhPassword)
-				}
-
-				snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-					authentication(userName: ossrhUsername, password: ossrhPassword)
-				}
-
-				pom {
-
-					groupId = rootProject.group
-					name = nameParts.join("-")
-					artifactId = name
-
-					project {
-						description = rootProject.description
-
-						url "https://github.com/emc-mongoose/mongoose/wiki"
-
-						scm {
-							connection "https://github.com/emc-mongoose/mongoose.git"
-							developerConnection "https://github.com/emc-mongoose/mongoose.git"
-							url "https://github.com/emc-mongoose/mongoose.git"
-						}
-
-						licenses {
-							license {
-								name "The MIT License (MIT)"
-								url "https://github.com/emc-mongoose/mongoose/wiki/License"
-							}
-						}
-
-						developers {
-							developer {
-								id "akurilov"
-								name "Andrey Kurilov"
-								email "akurilov123@gmail.com"
-							}
-						}
-					}
-				}
-			}
-		}
 	}
 }
 
@@ -264,8 +165,10 @@ task wrapper(type: Wrapper) {
 }
 
 static def isExtProject(final Project p) {
-    final f = Paths.get(p.projectDir.toString(), "src", "main", "resources", "META-INF", "services").toFile()
-    return f.exists() && f.isDirectory() && f.listFiles().length > 0
+	final f = Paths
+		.get(p.projectDir.toString(), "src", "main", "resources", "META-INF", "services")
+		.toFile()
+	return f.exists() && f.isDirectory() && f.listFiles().length > 0
 }
 
 static def isTestsProject(final Project p) {
@@ -278,38 +181,136 @@ static def isTestsProject(final Project p) {
 	}
 }
 
-task dist(type: Tar, dependsOn: tasks.withType(Jar)) {
-	group = "distribution"
-	description = "Collect Mongoose as an archive"
-	baseName = "$rootProject.name-base"
-	compression = Compression.GZIP
+jar {
+
+	baseName = rootProject.name
+	version = version
 	destinationDir = new File("build", "dist")
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-	into("$rootProject.name-$rootProject.version") {
-		into("config") {
-			from { "config" }
-		}
-		into("example") {
-			from { "example" }
-		}
-		final extProjects = leafProjects.findAll { isExtProject(it) }
-		final nonExtNonTestProjects = leafProjects.findAll {
-			!isExtProject(it) && !isTestsProject(it)
-		}
-		into("ext") {
-			for(final Project p: extProjects) {
-				from p.jar.outputs.files
+
+	manifest {
+		attributes(
+			"Implementation-Version": version,
+			"Implementation-Title": rootProject.name,
+			"Main-Class": "com.emc.mongoose.Main",
+		)
+	}
+
+	doFirst {
+		leafProjects
+			.findAll {
+				!isExtProject(it) && !isTestsProject(it)
 			}
+			.each {
+				from it.jar.outputs.files.collect {
+					zipTree(it)
+				}
+				from it.configurations.runtime.collect {
+					it.isDirectory() ? it : zipTree(it)
+				}
+			}
+	}
+
+	leafProjects
+		.findAll {
+			isExtProject(it)
 		}
-		into("lib") {
-			for(final Project p: leafProjects) {
-				from p.configurations.runtime {
-					exclude "${rootProject.name}*.jar"
+		.each {
+			final Project p = it
+			from(p.jar.outputs.files) {
+				into "ext"
+				rename {
+					fileName -> "${p.jarFileName}.jar"
 				}
 			}
 		}
-		for(final Project p: nonExtNonTestProjects) {
-			from p.jar.outputs.files
-		}
+}
+
+/*task sourcesJar(type: Jar, dependsOn: classes) {
+	if(project in leafProjects) {
+		classifier = "sources"
+		archiveName = "${project.jarFileName}-$classifier.$extension"
+		from sourceSets.main.allSource
 	}
 }
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+	if(project in leafProjects) {
+		classifier = "javadoc"
+		archiveName = "${project.jarFileName}-$classifier.$extension"
+		from javadoc.destinationDir
+	}
+}
+
+artifacts {
+	archives jar
+	archives sourcesJar
+	archives javadocJar
+}
+
+// see http://central.sonatype.org/pages/gradle.html for details
+uploadArchives {
+
+	// prevent the execution for empty (not leaf) subprojects and tests packages
+	if(project.path.contains("tests") || !(project in leafProjects)) {
+		return
+	}
+
+	LinkedList nameParts = new LinkedList()
+	collectName(project, nameParts)
+
+	def ossrhUsername = project.hasProperty("ossrhUsername") ?
+		project.property("ossrhUsername") : null
+	def ossrhPassword = project.hasProperty("ossrhPassword") ?
+		project.property("ossrhPassword") : null
+
+	repositories {
+		mavenDeployer {
+			beforeDeployment {
+				MavenDeployment deployment -> signing.signPom(deployment)
+			}
+
+			repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+				authentication(userName: ossrhUsername, password: ossrhPassword)
+			}
+
+			snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+				authentication(userName: ossrhUsername, password: ossrhPassword)
+			}
+
+			pom {
+
+				groupId = rootProject.group
+				name = nameParts.join("-")
+				artifactId = name
+
+				project {
+					description = rootProject.description
+
+					url "https://github.com/emc-mongoose/mongoose/wiki"
+
+					scm {
+						connection "https://github.com/emc-mongoose/mongoose.git"
+						developerConnection "https://github.com/emc-mongoose/mongoose.git"
+						url "https://github.com/emc-mongoose/mongoose.git"
+					}
+
+					licenses {
+						license {
+							name "The MIT License (MIT)"
+							url "https://github.com/emc-mongoose/mongoose/wiki/License"
+						}
+					}
+
+					developers {
+						developer {
+							id "akurilov"
+							name "Andrey Kurilov"
+							email "akurilov123@gmail.com"
+						}
+					}
+				}
+			}
+		}
+	}
+}*/

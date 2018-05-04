@@ -1,6 +1,6 @@
 package com.emc.mongoose.scenario.step.type.weighted;
 
-import com.emc.mongoose.scenario.step.type.LoadStepFactory;
+import com.emc.mongoose.scenario.step.LoadStepFactory;
 import com.emc.mongoose.config.Config;
 
 import java.util.List;
