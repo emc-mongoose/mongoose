@@ -6,8 +6,8 @@ import com.emc.mongoose.model.data.DataInput;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
-import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
 
 import com.emc.mongoose.storage.driver.StorageDriverFactory;
 import com.emc.mongoose.config.item.ItemConfig;

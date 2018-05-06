@@ -5,8 +5,8 @@ import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.emc.mongoose.model.env.PathUtil;
-import com.emc.mongoose.model.TimeUtil;
-import static com.emc.mongoose.model.Constants.PATH_DEFAULTS;
+
+import static com.emc.mongoose.Constants.PATH_DEFAULTS;
 import com.emc.mongoose.config.item.ItemConfig;
 import com.emc.mongoose.config.load.LoadConfig;
 import com.emc.mongoose.config.output.OutputConfig;
@@ -43,10 +43,6 @@ import java.util.Map;
  */
 public final class Config
 implements Serializable {
-
-	static {
-		new InstallHook().run();
-	}
 
 	public static final String NAME = "name";
 	public static final String DEPRECATED = "deprecated";

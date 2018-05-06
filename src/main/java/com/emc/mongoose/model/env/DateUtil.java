@@ -1,6 +1,6 @@
 package com.emc.mongoose.model.env;
 
-import com.emc.mongoose.model.Constants;
+import com.emc.mongoose.Constants;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;

@@ -11,8 +11,8 @@ import com.emc.mongoose.logging.MetricsCsvLogMessage;
 import com.emc.mongoose.model.concurrent.ThreadDump;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
-import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
 
 import com.github.akurilov.concurrent.coroutine.Coroutine;
 import com.github.akurilov.concurrent.coroutine.CoroutineBase;

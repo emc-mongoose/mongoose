@@ -5,8 +5,8 @@ import com.emc.mongoose.model.metrics.MetricsSnapshot;
 
 import org.apache.logging.log4j.message.AsynchronouslyFormattable;
 
-import static com.emc.mongoose.model.Constants.K;
-import static com.emc.mongoose.model.Constants.M;
+import static com.emc.mongoose.Constants.K;
+import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.model.env.DateUtil.FMT_DATE_ISO8601;
 
 import java.util.Date;

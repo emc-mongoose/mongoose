@@ -1,6 +1,6 @@
 package com.emc.mongoose.model.item;
 
-import com.emc.mongoose.model.Constants;
+import com.emc.mongoose.Constants;
 import com.github.akurilov.commons.io.Output;
 
 import java.io.BufferedWriter;

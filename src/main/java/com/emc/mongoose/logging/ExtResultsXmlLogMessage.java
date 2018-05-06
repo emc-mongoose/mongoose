@@ -1,10 +1,9 @@
 package com.emc.mongoose.logging;
 
-import static com.emc.mongoose.model.Constants.MIB;
+import static com.emc.mongoose.Constants.MIB;
 import com.emc.mongoose.model.metrics.MetricsContext;
 import com.emc.mongoose.model.metrics.MetricsSnapshot;
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.logging.LogMessageBase;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;

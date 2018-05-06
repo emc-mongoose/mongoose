@@ -4,7 +4,6 @@ import com.emc.mongoose.config.test.step.node.NodeConfig;
 import com.emc.mongoose.config.util.ConfigMatcher;
 import com.emc.mongoose.config.util.ConfigNullMatcher;
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.emc.mongoose.model.TimeUtil;
 import com.emc.mongoose.config.item.ItemConfig;
 import com.emc.mongoose.config.item.data.DataConfig;
 import com.emc.mongoose.config.item.input.InputConfig;

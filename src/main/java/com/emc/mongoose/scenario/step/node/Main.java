@@ -6,8 +6,8 @@ import com.emc.mongoose.config.Config;
 import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
-import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.cli.CliArgParser.formatCliArgsList;
 import static com.emc.mongoose.cli.CliArgParser.getAllCliArgs;
 

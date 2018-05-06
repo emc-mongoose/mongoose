@@ -8,8 +8,8 @@ import com.github.akurilov.concurrent.coroutine.Coroutine;
 import com.github.akurilov.concurrent.coroutine.ExclusiveCoroutineBase;
 
 import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
-import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.model.io.task.IoTask.Status.ACTIVE;
 import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.PENDING;

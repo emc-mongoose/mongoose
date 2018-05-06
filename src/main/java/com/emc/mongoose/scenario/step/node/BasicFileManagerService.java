@@ -4,8 +4,8 @@ import com.emc.mongoose.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.step.FileManagerService;
 import com.emc.mongoose.scenario.step.FileService;
 import com.emc.mongoose.logging.Loggers;
-import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.LogManager;

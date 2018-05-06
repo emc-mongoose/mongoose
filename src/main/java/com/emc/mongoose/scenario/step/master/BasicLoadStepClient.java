@@ -34,8 +34,8 @@ import com.emc.mongoose.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.config.test.step.node.NodeConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
-import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
 
 import com.github.akurilov.commons.func.Function2;
 import com.github.akurilov.commons.func.Function3;

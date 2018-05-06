@@ -63,7 +63,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
-import static com.emc.mongoose.model.Constants.M;
+import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.model.supply.PatternDefinedSupplier.PATTERN_CHAR;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import static com.emc.mongoose.model.storage.StorageDriver.BUFF_SIZE_MIN;

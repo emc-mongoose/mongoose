@@ -2,8 +2,8 @@ package com.emc.mongoose.logging;
 
 import com.emc.mongoose.model.concurrent.DaemonBase;
 
-import static com.emc.mongoose.model.Constants.KEY_BASE_DIR;
-import static com.emc.mongoose.model.Constants.LOCALE_DEFAULT;
+import static com.emc.mongoose.Constants.KEY_BASE_DIR;
+import static com.emc.mongoose.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.model.env.DateUtil.TZ_UTC;
 import static com.emc.mongoose.model.env.PathUtil.BASE_DIR;
 

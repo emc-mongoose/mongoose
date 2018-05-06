@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 
 /**
  Created by kurila on 11.07.16.

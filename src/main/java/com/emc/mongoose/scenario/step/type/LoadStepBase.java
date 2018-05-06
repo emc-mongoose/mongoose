@@ -1,7 +1,7 @@
 package com.emc.mongoose.scenario.step.type;
 
-import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
 import com.emc.mongoose.model.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.model.metrics.BasicMetricsContext;
 import com.emc.mongoose.model.metrics.MetricsContext;

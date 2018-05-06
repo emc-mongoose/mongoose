@@ -2,7 +2,7 @@ package com.emc.mongoose.scenario.step.node;
 
 import static com.github.akurilov.commons.system.DirectMemUtil.REUSABLE_BUFF_SIZE_MAX;
 
-import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import com.emc.mongoose.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.step.FileService;
 import com.emc.mongoose.logging.LogUtil;

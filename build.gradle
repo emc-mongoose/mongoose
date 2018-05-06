@@ -2,7 +2,7 @@ import groovy.json.JsonSlurper
 import groovy.json.JsonParserType
 
 import java.nio.file.Paths
-import java.util.regex.Pattern
+
 description = "Mongoose is a high-load storage performance testing tool"
 
 buildscript {
@@ -73,7 +73,14 @@ ext {
 	]
 
 	leafProjects = subprojects.findAll {
-		it != project("storage") && it != project("storage:driver")
+		it != project("scenario") &&
+			it != project("scenario:step") &&
+			it != project("scenario:step:type") &&
+			it != project("storage") &&
+			it != project("storage:driver") &&
+			it != project("storage:driver:coop") &&
+			it != project("storage:driver:nio") &&
+			it != project("storage:driver:preempt")
 	}
 }
 
@@ -181,11 +188,10 @@ static def isTestsProject(final Project p) {
 	}
 }
 
-jar {
+task mainJar(type: Jar, dependsOn: compileJava) {
 
 	baseName = rootProject.name
 	version = version
-	destinationDir = new File("build", "dist")
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
 	manifest {
@@ -196,31 +202,21 @@ jar {
 		)
 	}
 
-	doFirst {
-		leafProjects
-			.findAll {
-				!isExtProject(it) && !isTestsProject(it)
-			}
-			.each {
-				from it.jar.outputs.files.collect {
-					zipTree(it)
-				}
-				from it.configurations.runtime.collect {
-					it.isDirectory() ? it : zipTree(it)
-				}
-			}
+	from compileJava.outputs.files
+
+	from sourceSets.main.resources
+
+	from configurations.runtime.collect {
+		it.isDirectory() ? it : zipTree(it)
 	}
 
 	leafProjects
-		.findAll {
-			isExtProject(it)
-		}
 		.each {
 			final Project p = it
 			from(p.jar.outputs.files) {
 				into "ext"
 				rename {
-					fileName -> "${p.jarFileName}.jar"
+					fileName -> "${p.description}.jar"
 				}
 			}
 		}

@@ -13,8 +13,8 @@ import com.emc.mongoose.config.load.LoadConfig;
 import com.emc.mongoose.config.storage.StorageConfig;
 import com.emc.mongoose.config.storage.driver.queue.QueueConfig;
 import com.emc.mongoose.logging.Loggers;
-import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 

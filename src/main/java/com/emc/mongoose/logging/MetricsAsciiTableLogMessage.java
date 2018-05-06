@@ -5,7 +5,7 @@ import com.emc.mongoose.model.metrics.MetricsSnapshot;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.model.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static com.emc.mongoose.logging.LogUtil.RESET;
-import static com.emc.mongoose.model.Constants.MIB;
+import static com.emc.mongoose.Constants.MIB;
 import static com.emc.mongoose.logging.LogUtil.getFailureRatioAnsiColorCode;
 
 import org.apache.commons.lang.text.StrBuilder;

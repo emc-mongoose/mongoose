@@ -3,7 +3,7 @@ package com.emc.mongoose.model.metrics;
 import javax.management.ObjectName;
 import java.util.Hashtable;
 
-import static com.emc.mongoose.model.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.model.svc.ServiceUtil.MBEAN_SERVER;
 
 /**

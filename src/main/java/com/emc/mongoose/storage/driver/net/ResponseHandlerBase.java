@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.net;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.logging.LogUtil;
-import static com.emc.mongoose.model.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_IO;
 import static com.emc.mongoose.model.io.task.IoTask.Status.FAIL_UNKNOWN;
