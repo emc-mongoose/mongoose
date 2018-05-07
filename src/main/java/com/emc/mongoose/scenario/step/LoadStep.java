@@ -35,7 +35,7 @@ extends AsyncRunnable {
 	static Config initConfigSlice(final Config config, final String nodeAddrWithPort) {
 		final Config configSlice = new Config(config);
 		// disable the distributed mode flag
-		configSlice.getTestConfig().getStepConfig().setDistributed(false);
+		configSlice.getScenarioConfig().getStepConfig().setDistributed(false);
 		return configSlice;
 	}
 }

@@ -14,7 +14,7 @@ import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.io.IoType;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.model.supply.PatternDefinedSupplier.PATTERN_CHAR;
 import static com.emc.mongoose.model.io.task.IoTask.SLASH;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
@@ -128,7 +128,7 @@ implements HttpStorageDriver<I, O> {
 	protected FullHttpResponse executeHttpRequest(final FullHttpRequest request)
 	throws InterruptedException, ConnectException {
 
-		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+		ThreadContext.put(KEY_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
 		final Channel channel = getUnpooledConnection();

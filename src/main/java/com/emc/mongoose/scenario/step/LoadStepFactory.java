@@ -1,6 +1,5 @@
 package com.emc.mongoose.scenario.step;
 
-import com.emc.mongoose.scenario.step.LoadStep;
 import com.emc.mongoose.config.Config;
 
 import java.util.List;
@@ -10,5 +9,8 @@ public interface LoadStepFactory<T extends LoadStep> {
 
 	String getTypeName();
 
-	T create(final Config baseConfig, final List<Map<String, Object>> overrides);
+	T create(
+		final Config baseConfig, final ClassLoader clsLoader,
+		final List<Map<String, Object>> overrides
+	);
 }

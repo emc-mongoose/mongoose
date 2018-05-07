@@ -8,7 +8,7 @@ import org.apache.logging.log4j.core.appender.rolling.RollingFileManager;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 /**
  Created by kurila on 30.06.17.
@@ -33,11 +33,11 @@ extends AbstractTriggeringPolicy {
 	
 	@Override
 	public final boolean isTriggeringEvent(final LogEvent logEvent) {
-		final String stepId = logEvent.getContextData().getValue(KEY_TEST_STEP_ID);
+		final String stepId = logEvent.getContextData().getValue(KEY_STEP_ID);
 		if(null == stepId) {
 			return false;
 		}
-		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+		ThreadContext.put(KEY_STEP_ID, stepId);
 		if(stepId.equals(lastStepId)) {
 			return false;
 		} else {

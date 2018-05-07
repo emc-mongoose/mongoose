@@ -5,37 +5,38 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
-import static com.emc.mongoose.model.env.PathUtil.BASE_DIR;
-
 public abstract class Extensions {
-
-	public static final String DIR_EXT = BASE_DIR + File.separator + "ext";
-	public static final URLClassLoader CLS_LOADER;
 
 	private static final Logger LOG = Logger.getLogger(Extensions.class.getSimpleName());
 
-	static {
+	public static final URLClassLoader extClassLoader(final Path appHomePath) {
 
-		final File dirExt = new File(DIR_EXT);
+		final URLClassLoader extClsLoader;
+
+		final File dirExt = Paths.get(appHomePath.toString(), "ext").toFile();
 
 		if(!dirExt.exists() || !dirExt.isDirectory()) {
 
-			CLS_LOADER = new URLClassLoader(new URL[] {});
 			LOG.warning("No \"" + dirExt.getAbsolutePath() + "\" directory, loaded no extensions");
+			extClsLoader = new URLClassLoader(new URL[] {});
 
 		} else {
 
 			final File[] extFiles = dirExt.listFiles();
 
 			if(extFiles == null) {
-				CLS_LOADER = new URLClassLoader(new URL[] {});
+
 				LOG.warning(
 					"Failed to load the contents of the \"" + dirExt.getAbsolutePath()
 						+ "\" directory, loaded no extensions"
 				);
+				extClsLoader = new URLClassLoader(new URL[] {});
+
 			} else {
 
 				final URL[] extFileUrls = new URL[extFiles.length];
@@ -58,8 +59,10 @@ public abstract class Extensions {
 					}
 				}
 
-				CLS_LOADER = new URLClassLoader(extFileUrls, ClassLoader.getSystemClassLoader());
+				extClsLoader = new URLClassLoader(extFileUrls, ClassLoader.getSystemClassLoader());
 			}
 		}
+
+		return extClsLoader;
 	}
 }

@@ -1,7 +1,7 @@
-package com.emc.mongoose.config.test.step.limit;
+package com.emc.mongoose.config.scenario.step.limit;
 
 import com.emc.mongoose.config.SizeInBytesSerializer;
-import com.emc.mongoose.config.test.step.limit.fail.FailConfig;
+import com.emc.mongoose.config.scenario.step.limit.fail.FailConfig;
 import com.emc.mongoose.config.SizeInBytesDeserializer;
 import com.emc.mongoose.config.TimeStrToLongDeserializer;
 

@@ -339,6 +339,9 @@
 				"batch", "generator", "limit", "service", "type"
 			]
 		},
+		"node": {
+			"type": "boolean"
+		},
 		"output": {
 			"type": "object",
 			"required": [
@@ -432,6 +435,111 @@
 							"type": "number",
 							"minimum": 0,
 							"maximum": 1
+						}
+					}
+				}
+			}
+		},
+		"scenario": {
+			"type": "object",
+			"required": [
+				"file", "step"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"file": {
+					"type": [
+						"null", "string"
+					]
+				},
+				"step": {
+					"type": "object",
+					"required": [
+						"distributed", "id", "limit", "node"
+					],
+					"additionalProperties": false,
+					"properties": {
+						"distributed": {
+							"type": "boolean"
+						},
+						"id": {
+							"type": [
+								"null", "string"
+							]
+						},
+						"limit": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"count": {
+									"type": "integer",
+									"minimum": 0
+								},
+								"fail": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"count": {
+											"type": "integer",
+											"minimum": 0
+										},
+										"rate": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"count", "rate"
+									]
+								},
+								"size": {
+									"oneOf": [
+										{
+											"type": "integer",
+											"minimum": 0
+										},
+										{
+											"type": "string",
+											"pattern": "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+										}
+									]
+								},
+								"time": {
+									"oneOf": [
+										{
+											"type": "integer",
+											"minimum": 0
+										},
+										{
+											"type": "string",
+											"pattern": "[\\d]+[SsMmHhDd]?"
+										}
+									]
+								}
+							},
+							"required": [
+								"count", "fail", "size", "time"
+							]
+						},
+						"node": {
+							"type": "object",
+							"required": [
+								"addrs",
+								"port"
+							],
+							"additionalProperties": false,
+							"properties": {
+								"addrs": {
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
+								},
+								"port": {
+									"type": "number",
+									"minimum": 1,
+									"maximum": 65535
+								}
+							}
 						}
 					}
 				}
@@ -636,120 +744,6 @@
 				"auth", "driver"
 			]
 		},
-		"test": {
-			"type": "object",
-			"required": [
-				"scenario", "step"
-			],
-			"additionalProperties": false,
-			"properties": {
-				"scenario": {
-					"type": "object",
-					"required": [
-						"file"
-					],
-					"additionalProperties": false,
-					"properties": {
-						"file": {
-							"type": [
-								"null", "string"
-							]
-						}
-					}
-				},
-				"step": {
-					"type": "object",
-					"required": [
-						"distributed", "id", "limit", "node"
-					],
-					"additionalProperties": false,
-					"properties": {
-						"distributed": {
-							"type": "boolean"
-						},
-						"id": {
-							"type": [
-								"null", "string"
-							]
-						},
-						"limit": {
-							"type": "object",
-							"additionalProperties": false,
-							"properties": {
-								"count": {
-									"type": "integer",
-									"minimum": 0
-								},
-								"fail": {
-									"type": "object",
-									"additionalProperties": false,
-									"properties": {
-										"count": {
-											"type": "integer",
-											"minimum": 0
-										},
-										"rate": {
-											"type": "boolean"
-										}
-									},
-									"required": [
-										"count", "rate"
-									]
-								},
-								"size": {
-									"oneOf": [
-										{
-											"type": "integer",
-											"minimum": 0
-										},
-										{
-											"type": "string",
-											"pattern": "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
-										}
-									]
-								},
-								"time": {
-									"oneOf": [
-										{
-											"type": "integer",
-											"minimum": 0
-										},
-										{
-											"type": "string",
-											"pattern": "[\\d]+[SsMmHhDd]?"
-										}
-									]
-								}
-							},
-							"required": [
-								"count", "fail", "size", "time"
-							]
-						},
-						"node": {
-							"type": "object",
-							"required": [
-								"addrs",
-								"port"
-							],
-							"additionalProperties": false,
-							"properties": {
-								"addrs": {
-									"type": "array",
-									"items": {
-										"type": "string"
-									}
-								},
-								"port": {
-									"type": "number",
-									"minimum": 1,
-									"maximum": 65535
-								}
-							}
-						}
-					}
-				}
-			}
-		},
 		"version": {
 			"type": "string"
 		}
@@ -757,9 +751,10 @@
 	"required": [
 		"item",
 		"load",
+		"node",
 		"output",
+		"scenario",
 		"storage",
-		"test",
 		"version"
 	]
 }

@@ -9,7 +9,7 @@ import com.github.akurilov.concurrent.coroutine.ExclusiveCoroutineBase;
 
 import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.model.io.task.IoTask.Status.ACTIVE;
 import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.PENDING;
@@ -99,7 +99,7 @@ implements NioStorageDriver<I, O> {
 		@Override
 		protected final void invokeTimedExclusively(final long startTimeNanos) {
 
-			ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+			ThreadContext.put(KEY_STEP_ID, stepId);
 
 			ioTaskBuffSize = ioTaskBuff.size();
 			if(ioTaskBuffSize > 0) {

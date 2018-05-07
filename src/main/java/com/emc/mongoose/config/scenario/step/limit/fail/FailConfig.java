@@ -1,4 +1,4 @@
-package com.emc.mongoose.config.test.step.limit.fail;
+package com.emc.mongoose.config.scenario.step.limit.fail;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

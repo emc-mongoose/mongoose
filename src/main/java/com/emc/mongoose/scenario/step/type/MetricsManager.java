@@ -12,7 +12,7 @@ import com.emc.mongoose.model.concurrent.ThreadDump;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import com.github.akurilov.concurrent.coroutine.Coroutine;
 import com.github.akurilov.concurrent.coroutine.CoroutineBase;
@@ -74,7 +74,7 @@ extends DaemonBase {
 					for(final String id : allMetrics.keySet()) {
 						for(final MetricsContext metricsCtx : allMetrics.get(id).keySet()) {
 
-							ThreadContext.put(KEY_TEST_STEP_ID, metricsCtx.stepId());
+							ThreadContext.put(KEY_STEP_ID, metricsCtx.stepId());
 
 							actualConcurrency = metricsCtx.actualConcurrency();
 							metricsCtx.refreshLastSnapshot();
@@ -147,7 +147,7 @@ extends DaemonBase {
 		if(INSTANCE.allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
 			try(
 				final Instance logCtx = CloseableThreadContext
-					.put(KEY_TEST_STEP_ID, id)
+					.put(KEY_STEP_ID, id)
 					.put(KEY_CLASS_NAME, MetricsManager.class.getSimpleName())
 			) {
 				if(!INSTANCE.isStarted()) {
@@ -178,7 +178,7 @@ extends DaemonBase {
 		if(INSTANCE.allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
 			try(
 				final Instance stepIdCtx = CloseableThreadContext
-					.put(KEY_TEST_STEP_ID, id)
+					.put(KEY_STEP_ID, id)
 					.put(KEY_CLASS_NAME, MetricsManager.class.getSimpleName())
 			) {
 				final Map<MetricsContext, AutoCloseable> stepMetrics = INSTANCE.allMetrics.get(id);

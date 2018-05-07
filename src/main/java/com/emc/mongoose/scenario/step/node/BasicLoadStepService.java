@@ -1,6 +1,5 @@
 package com.emc.mongoose.scenario.step.node;
 
-import com.emc.mongoose.model.env.Extensions;
 import com.emc.mongoose.model.metrics.MetricsSnapshot;
 import com.emc.mongoose.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.step.LoadStep;
@@ -9,7 +8,7 @@ import com.emc.mongoose.scenario.step.LoadStepFactory;
 import com.emc.mongoose.config.Config;
 import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 
@@ -29,15 +28,15 @@ implements LoadStepService {
 	private final LoadStep loadStep;
 
 	public BasicLoadStepService(
-		final int port, final String stepType, final Config config,
+		final int port, final ClassLoader clsLoader, final String stepType, final Config config,
 		final List<Map<String, Object>> stepConfigs
 	) {
 		super(port);
-		// don't override the test-step-id value on the remote node again
-		config.getTestConfig().getStepConfig().setIdTmp(false);
+		// don't override the step-id value on the remote node again
+		config.getScenarioConfig().getStepConfig().setIdTmp(false);
 
 		final ServiceLoader<LoadStepFactory> loader = ServiceLoader.load(
-			LoadStepFactory.class, Extensions.CLS_LOADER
+			LoadStepFactory.class, clsLoader
 		);
 		LoadStepFactory selectedFactory = null;
 		final List<String> typeNames = new ArrayList<>();
@@ -60,9 +59,9 @@ implements LoadStepService {
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
 		) {
-			loadStep = selectedFactory.create(config, stepConfigs);
+			loadStep = selectedFactory.create(config, clsLoader, stepConfigs);
 			Loggers.MSG.info(
-			"New step service for \"{}\"", config.getTestConfig().getStepConfig().getId()
+			"New step service for \"{}\"", config.getScenarioConfig().getStepConfig().getId()
 			);
 			super.doStart();
 		}
@@ -73,7 +72,7 @@ implements LoadStepService {
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
-				.put(KEY_TEST_STEP_ID, loadStep.id())
+				.put(KEY_STEP_ID, loadStep.id())
 		) {
 			loadStep.start();
 			Loggers.MSG.info("Step service for \"{}\" is started", loadStep.id());
@@ -86,7 +85,7 @@ implements LoadStepService {
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
-				.put(KEY_TEST_STEP_ID, loadStep.id())
+				.put(KEY_STEP_ID, loadStep.id())
 		) {
 			loadStep.stop();
 			Loggers.MSG.info("Step service for \"{}\" is stopped", loadStep.id());
@@ -100,7 +99,7 @@ implements LoadStepService {
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
-				.put(KEY_TEST_STEP_ID, loadStep.id())
+				.put(KEY_STEP_ID, loadStep.id())
 		) {
 			super.doStop();
 			loadStep.close();
@@ -143,7 +142,7 @@ implements LoadStepService {
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
-				.put(KEY_TEST_STEP_ID, loadStep.id())
+				.put(KEY_STEP_ID, loadStep.id())
 		) {
 			return loadStep.await(timeout, timeUnit);
 		} catch(final RemoteException ignored) {

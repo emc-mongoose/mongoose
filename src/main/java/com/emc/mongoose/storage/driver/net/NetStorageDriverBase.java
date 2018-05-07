@@ -27,7 +27,7 @@ import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
 import com.emc.mongoose.config.load.LoadConfig;
@@ -200,7 +200,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.getTcpNoDelay());
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
+				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			connPool = createConnectionPool();
@@ -219,7 +219,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		int size;
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
+				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			if(avgTransferSize < BUFF_SIZE_MIN) {
@@ -268,7 +268,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					throws Exception {
 						try(
 							final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-								.put(KEY_TEST_STEP_ID, stepId)
+								.put(KEY_STEP_ID, stepId)
 								.put(KEY_CLASS_NAME, CLS_NAME)
 						) {
 							appendHandlers(channel.pipeline());
@@ -301,7 +301,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected boolean submit(final O ioTask)
 	throws IllegalStateException {
 
-		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+		ThreadContext.put(KEY_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
 		if(!isStarted()) {
@@ -347,7 +347,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected int submit(final List<O> ioTasks, final int from, final int to)
 	throws IllegalStateException {
 
-		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+		ThreadContext.put(KEY_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
 		Channel conn;
@@ -558,7 +558,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	public void complete(final Channel channel, final O ioTask) {
 
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
-		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+		ThreadContext.put(KEY_STEP_ID, stepId);
 
 		try {
 			ioTask.finishResponse();
@@ -586,7 +586,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	throws Exception {
 		try(
 			final CloseableThreadContext.Instance ctx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
+				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			final ChannelPipeline pipeline = channel.pipeline();
@@ -638,7 +638,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	throws IllegalStateException {
 		try(
 			final CloseableThreadContext.Instance ctx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
+				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			try {

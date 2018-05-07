@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver;
 import com.emc.mongoose.model.exception.OmgShootMyFootException;
 import com.emc.mongoose.model.concurrent.DaemonBase;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import com.emc.mongoose.config.storage.driver.DriverConfig;
 import com.emc.mongoose.model.data.DataInput;
 import com.emc.mongoose.model.io.task.IoTask;
@@ -170,7 +170,7 @@ implements StorageDriver<I,O> {
 	throws IOException, IllegalStateException {
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
+				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			itemDataInput.close();

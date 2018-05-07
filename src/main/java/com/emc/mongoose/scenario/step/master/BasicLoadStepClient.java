@@ -30,12 +30,12 @@ import com.emc.mongoose.config.item.data.input.layer.LayerConfig;
 import com.emc.mongoose.config.item.input.InputConfig;
 import com.emc.mongoose.config.item.naming.NamingConfig;
 import com.emc.mongoose.config.item.output.OutputConfig;
-import com.emc.mongoose.config.test.step.limit.LimitConfig;
-import com.emc.mongoose.config.test.step.node.NodeConfig;
+import com.emc.mongoose.config.scenario.step.limit.LimitConfig;
+import com.emc.mongoose.config.scenario.step.node.NodeConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import com.github.akurilov.commons.func.Function2;
 import com.github.akurilov.commons.func.Function3;
@@ -78,15 +78,17 @@ implements LoadStepClient {
 
 	private final LoadStep loadStep;
 	private final Config baseConfig;
+	private final ClassLoader clsLoader;
 	private final List<Map<String, Object>> stepConfigs;
 	private final Map<LoadStepService, MetricsSnapshotsSupplierCoroutine> metricsSnapshotsSuppliers;
 
 	public BasicLoadStepClient(
-		final LoadStep loadStep, final Config baseConfig,
+		final LoadStep loadStep, final Config baseConfig, final ClassLoader clsLoader,
 		final List<Map<String, Object>> stepConfigs
 	) {
 		this.loadStep = loadStep;
 		this.baseConfig = baseConfig;
+		this.clsLoader = clsLoader;
 		this.stepConfigs = stepConfigs;
 		this.metricsSnapshotsSuppliers = new HashMap<>();
 	}
@@ -103,12 +105,12 @@ implements LoadStepClient {
 
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, id())
+				.put(KEY_STEP_ID, id())
 				.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
 		) {
 
 			final NodeConfig
-				nodeConfig = baseConfig.getTestConfig().getStepConfig().getNodeConfig();
+				nodeConfig = baseConfig.getScenarioConfig().getStepConfig().getNodeConfig();
 			final int nodePort = nodeConfig.getPort();
 			final Function<String, String> addPortIfMissingPartialFunc = Function2
 				.partial2(NetUtil::addPortIfMissing, nodePort);
@@ -176,7 +178,7 @@ implements LoadStepClient {
 				stepSvc -> {
 					try(
 						final Instance logCtx = CloseableThreadContext
-							.put(KEY_TEST_STEP_ID, id())
+							.put(KEY_STEP_ID, id())
 							.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
 					) {
 						stepSvc.shutdown();
@@ -206,13 +208,14 @@ implements LoadStepClient {
 
 		// slice the count limit (if any)
 		final int nodeCount = nodeAddrs.size();
-		final long countLimit = config.getTestConfig().getStepConfig().getLimitConfig().getCount();
+		final long
+			countLimit = config.getScenarioConfig().getStepConfig().getLimitConfig().getCount();
 		if(nodeCount > 1 && countLimit > 0) {
 			final long countLimitPerNode = (long) Math.ceil(((double) countLimit) / nodeCount);
 			long remainingCountLimit = countLimit;
 			for(final Map.Entry<String, Config> configEntry : configSlices.entrySet()) {
 				final LimitConfig limitConfigSlice = configEntry.getValue()
-					.getTestConfig()
+					.getScenarioConfig()
 					.getStepConfig()
 					.getLimitConfig();
 				if(remainingCountLimit > countLimitPerNode) {
@@ -233,7 +236,7 @@ implements LoadStepClient {
 
 		// slice an item input (if any)
 		final int batchSize = config.getLoadConfig().getBatchConfig().getSize();
-		try(final Input<? extends Item> itemInput = createItemInput(config, batchSize)) {
+		try(final Input<? extends Item> itemInput = createItemInput(config, clsLoader, batchSize)) {
 			if(itemInput != null) {
 				Loggers.MSG.info("{}: slice the item input \"{}\"...", id(), itemInput);
 				sliceItemInput(itemInput, nodeAddrs, configSlices, batchSize);
@@ -350,7 +353,9 @@ implements LoadStepClient {
 		return fileSvc;
 	}
 
-	private static Input<? extends Item> createItemInput(final Config config, final int batchSize) {
+	private static Input<? extends Item> createItemInput(
+		final Config config, final ClassLoader clsLoader, final int batchSize
+	) {
 
 		final ItemConfig itemConfig = config.getItemConfig();
 		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
@@ -389,7 +394,8 @@ implements LoadStepClient {
 					);
 					final StorageDriver<? extends Item, ? extends IoTask>
 						storageDriver = new BasicStorageDriverBuilder<>()
-							.testStepId(config.getTestConfig().getStepConfig().getId())
+							.classLoader(clsLoader)
+							.testStepId(config.getScenarioConfig().getStepConfig().getId())
 							.itemConfig(itemConfig)
 							.dataInput(dataInput)
 							.loadConfig(config.getLoadConfig())
@@ -525,7 +531,7 @@ implements LoadStepClient {
 							fileMgrSvc -> {
 								try(
 									final Instance logCtx = CloseableThreadContext
-										.put(KEY_TEST_STEP_ID, id())
+										.put(KEY_STEP_ID, id())
 										.put(
 											KEY_CLASS_NAME,
 											BasicLoadStepClient.class.getSimpleName()
@@ -551,7 +557,7 @@ implements LoadStepClient {
 							fileSvc -> {
 								try(
 									final Instance logCtx = CloseableThreadContext
-										.put(KEY_TEST_STEP_ID, id())
+										.put(KEY_STEP_ID, id())
 										.put(
 											KEY_CLASS_NAME,
 											BasicLoadStepClient.class.getSimpleName()
@@ -723,7 +729,7 @@ implements LoadStepClient {
 	) {
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepSvc.id())
+				.put(KEY_STEP_ID, stepSvc.id())
 				.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
 		) {
 			long commFailCount = 0;
@@ -758,7 +764,7 @@ implements LoadStepClient {
 					nodeAddrWithPort -> {
 						try(
 							final Instance logCtx = CloseableThreadContext
-								.put(KEY_TEST_STEP_ID, id())
+								.put(KEY_STEP_ID, id())
 								.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
 						) {
 							return Optional.of(
@@ -841,7 +847,7 @@ implements LoadStepClient {
 	private static LoadStepService stopStepSvc(final LoadStepService stepSvc) {
 		try(
 			final Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepSvc.id())
+				.put(KEY_STEP_ID, stepSvc.id())
 				.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
 		) {
 			stepSvc.stop();
@@ -867,7 +873,7 @@ implements LoadStepClient {
 				snapshotsFetcher -> {
 					try(
 						final Instance logCtx = CloseableThreadContext
-							.put(KEY_TEST_STEP_ID, id())
+							.put(KEY_STEP_ID, id())
 							.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
 					) {
 						snapshotsFetcher.stop();
@@ -892,7 +898,7 @@ implements LoadStepClient {
 				snapshotsFetcher -> {
 					try(
 						final Instance logCtx = CloseableThreadContext
-							.put(KEY_TEST_STEP_ID, id())
+							.put(KEY_STEP_ID, id())
 							.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
 					) {
 						snapshotsFetcher.close();

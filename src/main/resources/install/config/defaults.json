@@ -111,6 +111,7 @@
 		// The operation to process the items, may be "noop", "create", "update", "read" or "delete"
 		"type": "create"
 	},
+	"node": false,
 	"output": {
 		// Use colored standard output flag
 		"color": true,
@@ -141,6 +142,42 @@
 			// The concurrency threshold to enable intermediate statistics calculation,
 			// 0 means no threshold
 			"threshold": 0
+		}
+	},
+	"scenario": {
+		// The default scenario file to run, null means invoking the default.js scenario bundled
+		// into the distribution
+		"file": null,
+		"step": {
+			// The flag to enable the distributed mode for the given scenario step
+			"distributed": false,
+			// The test step id. Generated automatically if not specified (null).
+			// Specifies also the logs sub directory path: log/<STEP_ID>/
+			"id": null,
+			"limit": {
+				// The maximum number of the items to process for any load step. 0 means no limit
+				"count": 0,
+				"fail": {
+					// The maximum number of the failed I/O tasks before the step will be stopped,
+					// 0 means no limit
+					"count": 100000,
+					// Stop the step if failures rate is more than success rate and if the flag is set to true
+					"rate": false
+				},
+				// The maximum size of the data items to process. 0 means no size limit.
+				"size": 0,
+				// The maximum time to perform a load step. 0 means no time limit
+				"time": "0s"
+			},
+			"node": {
+				// Distributed mode: the list of the Mongoose node IPs or hostnames,
+				// may include port numbers to override the default port number value
+				"addrs": [
+					"127.0.0.1"
+				],
+				// Distributed mode: the common port number to connect the Mongoose nodes
+				"port": 1099
+			}
 		}
 	},
 	"storage": {
@@ -219,44 +256,6 @@
 			}
 		}
 	},
-	"test": {
-		"scenario": {
-			// The default scenario file to run, null means invoking the default.js scenario bundled
-			// into the distribution
-			"file": null
-		},
-		"step": {
-			// The flag to enable the distributed mode for the given scenario step
-			"distributed": false,
-			// The test step id. Generated automatically if not specified (null).
-			// Specifies also the logs sub directory path: log/<STEP_ID>/
-			"id": null,
-			"limit": {
-				// The maximum number of the items to process for any load step. 0 means no limit
-				"count": 0,
-				"fail": {
-					// The maximum number of the failed I/O tasks before the step will be stopped,
-					// 0 means no limit
-					"count": 100000,
-					// Stop the step if failures rate is more than success rate and if the flag is set to true
-					"rate": false
-				},
-				// The maximum size of the data items to process. 0 means no size limit.
-				"size": 0,
-				// The maximum time to perform a load step. 0 means no time limit
-				"time": "0s"
-			},
-			"node": {
-				// Distributed mode: the list of the Mongoose node IPs or hostnames,
-				// may include port numbers to override the default port number value
-				"addrs": [
-					"127.0.0.1"
-				],
-				// Distributed mode: the common port number to connect the Mongoose nodes
-				"port": 1099
-			}
-		}
-	},
 	// The Mongoose version
 	"version": "4.0.0",
 	// The aliasing section mapping the old configuration parameters/values to the current ones
@@ -271,7 +270,7 @@
 		{
 			"name": "run-id",
 			"deprecated": true,
-			"target": "test-step-id"
+			"target": "scenario-step-id"
 		},
 		{
 			"name": "noop",
@@ -420,42 +419,37 @@
 		{
 			"name": "load-job-name",
 			"deprecated": true,
-			"target": "test-step-id"
+			"target": "scenario-step-id"
 		},
 		{
 			"name": "load-limit-count",
 			"deprecated": true,
-			"target": "test-step-limit-count"
+			"target": "scenario-step-limit-count"
 		},
 		{
 			"name": "load-limit-size",
 			"deprecated": true,
-			"target": "test-step-limit-size"
+			"target": "scenario-step-limit-size"
 		},
 		{
 			"name": "load-limit-time",
 			"deprecated": true,
-			"target": "test-step-limit-time"
+			"target": "scenario-step-limit-time"
 		},
 		{
 			"name": "load-metrics-period",
 			"deprecated": true,
-			"target": "test-step-metrics-period"
+			"target": "scenario-step-metrics-period"
 		},
 		{
 			"name": "load-metrics-precondition",
 			"deprecated": true,
-			"target": "test-step-precondition"
+			"target": "scenario-step-precondition"
 		},
 		{
 			"name": "load-metrics-threshold",
 			"deprecated": true,
-			"target": "test-step-metrics-threshold"
-		},
-		{
-			"name": "scenario-file",
-			"deprecated": true,
-			"target": "test-scenario-file"
+			"target": "scenario-step-metrics-threshold"
 		},
 		{
 			"name": "storage-auth-id",
@@ -484,7 +478,7 @@
 		{
 			"name": "test-step-name",
 			"deprecated": true,
-			"target": "test-step-id"
+			"target": "scenario-step-id"
 		},
 		{
 			"name": "test-step-limit-rate",
@@ -541,17 +535,57 @@
 		{
 			"name": "storage-driver-remote",
 			"deprecated": true,
-			"target": "test-step-distributed"
+			"target": "scenario-step-distributed"
 		},
 		{
 			"name": "storage-driver-addrs",
 			"deprecated": true,
-			"target": "test-step-node-addrs"
+			"target": "scenario-step-node-addrs"
 		},
 		{
 			"name": "storage-driver-port",
 			"deprecated": true,
-			"target": "test-step-node-port"
+			"target": "scenario-step-node-port"
+		},
+		{
+			"name": "test-scenario-file",
+			"deprecated": true,
+			"target": "scenario-file"
+		},
+		{
+			"name": "test-step-distributed",
+			"deprecated": true,
+			"target": "scenario-step-distributed"
+		},
+		{
+			"name": "test-step-id",
+			"deprecated": true,
+			"target": "scenario-step-id"
+		},
+		{
+			"name": "test-step-limit-count",
+			"deprecated": true,
+			"target": "scenario-step-limit-count"
+		},
+		{
+			"name": "test-step-limit-fail-count",
+			"deprecated": true,
+			"target": "scenario-step-limit-fail-count"
+		},
+		{
+			"name": "test-step-limit-fail-rate",
+			"deprecated": true,
+			"target": "scenario-step-limit-fail-rate"
+		},
+		{
+			"name": "test-step-limit-size",
+			"deprecated": true,
+			"target": "scenario-step-limit-size"
+		},
+		{
+			"name": "test-step-limit-time",
+			"deprecated": true,
+			"target": "scenario-step-limit-time"
 		}
 	]
 }

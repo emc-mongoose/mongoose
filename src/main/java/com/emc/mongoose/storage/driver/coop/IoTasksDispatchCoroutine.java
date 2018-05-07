@@ -4,7 +4,7 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.logging.LogUtil;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
@@ -63,7 +63,7 @@ extends ExclusiveCoroutineBase {
 	@Override
 	protected final void invokeTimedExclusively(final long startTimeNanos) {
 
-		ThreadContext.put(KEY_TEST_STEP_ID, stepId);
+		ThreadContext.put(KEY_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
 		try {

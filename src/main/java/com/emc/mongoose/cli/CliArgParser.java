@@ -124,8 +124,7 @@ public final class CliArgParser {
 		return strb.toString();
 	}
 	
-	public static Map<String, Class> getAllCliArgs()
-	throws ReflectiveOperationException {
+	public static Map<String, Class> getAllCliArgs() {
 
 		final Map<String, Class> argsWithTypes = new TreeMap<>();
 		final Package configRootPkg = Config.class.getPackage();

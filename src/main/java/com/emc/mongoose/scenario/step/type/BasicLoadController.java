@@ -10,10 +10,10 @@ import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.io.task.path.PathIoTask;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import com.emc.mongoose.logging.IoTraceCsvBatchLogMessage;
-import com.emc.mongoose.config.test.step.limit.LimitConfig;
-import com.emc.mongoose.config.test.step.limit.fail.FailConfig;
+import com.emc.mongoose.config.scenario.step.limit.LimitConfig;
+import com.emc.mongoose.config.scenario.step.limit.fail.FailConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -226,7 +226,7 @@ implements LoadController<I, O> {
 	@Override
 	public final boolean put(final O ioTaskResult) {
 
-		ThreadContext.put(KEY_TEST_STEP_ID, id);
+		ThreadContext.put(KEY_STEP_ID, id);
 		
 		// I/O trace logging
 		if(tracePersistFlag) {
@@ -289,7 +289,7 @@ implements LoadController<I, O> {
 	@Override
 	public final int put(final List<O> ioTaskResults, final int from, final int to) {
 
-		ThreadContext.put(KEY_TEST_STEP_ID, id);
+		ThreadContext.put(KEY_STEP_ID, id);
 		
 		// I/O trace logging
 		if(tracePersistFlag) {
@@ -431,7 +431,7 @@ implements LoadController<I, O> {
 
 		try(
 			final CloseableThreadContext.Instance ctx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, id)
+				.put(KEY_STEP_ID, id)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			try {

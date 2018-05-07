@@ -17,31 +17,24 @@ import java.rmi.RemoteException;
 public interface StorageDriverBuilder<
 	I extends Item, O extends IoTask<I>, T extends StorageDriver<I, O>
 > {
+	ItemConfig itemConfig();
 
-	ItemConfig getItemConfig()
-	throws RemoteException;
+	LoadConfig loadConfig();
 
-	LoadConfig getLoadConfig()
-	throws RemoteException;
+	StorageConfig storageConfig();
 
-	StorageConfig getStorageConfig()
-	throws RemoteException;
+	StorageDriverBuilder<I, O, T> classLoader(final ClassLoader clsLoader);
 
-	StorageDriverBuilder<I, O, T> testStepId(final String runId)
-	throws RemoteException;
+	StorageDriverBuilder<I, O, T> testStepId(final String runId);
 	
-	StorageDriverBuilder<I, O, T> dataInput(final DataInput contentSrc)
-	throws RemoteException;
+	StorageDriverBuilder<I, O, T> dataInput(final DataInput contentSrc);
 
-	StorageDriverBuilder<I, O, T> itemConfig(final ItemConfig itemConfig)
-	throws RemoteException;
+	StorageDriverBuilder<I, O, T> itemConfig(final ItemConfig itemConfig);
 
-	StorageDriverBuilder<I, O, T> loadConfig(final LoadConfig loadConfig)
-	throws RemoteException;
+	StorageDriverBuilder<I, O, T> loadConfig(final LoadConfig loadConfig);
 
-	StorageDriverBuilder<I, O, T> storageConfig(final StorageConfig storageConfig)
-	throws RemoteException;
+	StorageDriverBuilder<I, O, T> storageConfig(final StorageConfig storageConfig);
 
 	T build()
-	throws RemoteException, OmgShootMyFootException, InterruptedException;
+	throws OmgShootMyFootException, InterruptedException;
 }

@@ -1,6 +1,6 @@
 package com.emc.mongoose.config;
 
-import com.emc.mongoose.config.test.step.node.NodeConfig;
+import com.emc.mongoose.config.scenario.step.node.NodeConfig;
 import com.emc.mongoose.config.util.ConfigMatcher;
 import com.emc.mongoose.config.util.ConfigNullMatcher;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -15,8 +15,8 @@ import com.emc.mongoose.config.storage.StorageConfig;
 import com.emc.mongoose.config.storage.auth.AuthConfig;
 import com.emc.mongoose.config.storage.net.NetConfig;
 import com.emc.mongoose.config.storage.net.http.HttpConfig;
-import com.emc.mongoose.config.test.scenario.ScenarioConfig;
-import com.emc.mongoose.config.test.step.limit.LimitConfig;
+import com.emc.mongoose.config.scenario.ScenarioConfig;
+import com.emc.mongoose.config.scenario.step.limit.LimitConfig;
 import junit.framework.TestCase;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -91,7 +91,7 @@ public class ConfigTest {
 			""));
 		MatcherAssert.assertThat(config.getLoadConfig().getLimitConfig().getConcurrency(), ConfigMatcher
 			.equalTo(1, "load.concurrency"));
-		final LimitConfig limitConfig = config.getTestConfig().getStepConfig().getLimitConfig();
+		final LimitConfig limitConfig = config.getScenarioConfig().getStepConfig().getLimitConfig();
 		MatcherAssert.assertThat(limitConfig, ConfigNullMatcher.notNullValue());
 		MatcherAssert.assertThat(limitConfig.getCount(), ConfigMatcher.equalTo(0L, "load.limit.count"));
 		MatcherAssert.assertThat(loadConfig.getLimitConfig().getRate(), ConfigMatcher.equalTo(0.0, "load.limit.rate"));
@@ -121,7 +121,7 @@ public class ConfigTest {
 				"load.metrics.period"
 			)
 		);
-		final ScenarioConfig scenarioConfig = config.getTestConfig().getScenarioConfig();
+		final ScenarioConfig scenarioConfig = config.getScenarioConfig();
 		MatcherAssert.assertThat(scenarioConfig, ConfigNullMatcher.notNullValue());
 		MatcherAssert.assertThat(scenarioConfig.getFile(), ConfigNullMatcher.nullValue("run.file"));
 		final StorageConfig storageConfig = config.getStorageConfig();
@@ -153,7 +153,7 @@ public class ConfigTest {
 			storageConfig.getNetConfig().getNodeConfig().getAddrs().get(0),
 			ConfigMatcher.equalTo("127.0.0.1", "storage.net.node.addrs")
 		);
-		final NodeConfig nodeConfig = config.getTestConfig().getStepConfig().getNodeConfig();
+		final NodeConfig nodeConfig = config.getScenarioConfig().getStepConfig().getNodeConfig();
 		assertThat(
 			nodeConfig.getAddrs().get(0),
 			ConfigMatcher.equalTo("127.0.0.1", "storage.driver.addrs")
@@ -273,7 +273,7 @@ public class ConfigTest {
 			dataConfig.getInputConfig().getLayerConfig().getSize().toString()
 		);
 		assertEquals(1, dataConfig.getRangesConfig().getRandom());
-		final LimitConfig limitConfig = config.getTestConfig().getStepConfig().getLimitConfig();
+		final LimitConfig limitConfig = config.getScenarioConfig().getStepConfig().getLimitConfig();
 		assertEquals(1000, limitConfig.getCount());
 		assertEquals(12.345, config.getLoadConfig().getLimitConfig().getRate());
 		assertEquals("321KB", limitConfig.getSize().toString());

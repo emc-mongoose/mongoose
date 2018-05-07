@@ -1,5 +1,6 @@
 package com.emc.mongoose.scenario.step.type.linear;
 
+import com.emc.mongoose.config.scenario.ScenarioConfig;
 import com.emc.mongoose.model.exception.OmgShootMyFootException;
 import com.emc.mongoose.model.data.DataInput;
 import com.emc.mongoose.model.io.IoType;
@@ -23,9 +24,8 @@ import com.emc.mongoose.config.load.LoadConfig;
 import com.emc.mongoose.config.output.OutputConfig;
 import com.emc.mongoose.config.output.metrics.MetricsConfig;
 import com.emc.mongoose.config.storage.StorageConfig;
-import com.emc.mongoose.config.test.TestConfig;
-import com.emc.mongoose.config.test.step.StepConfig;
-import com.emc.mongoose.config.test.step.limit.LimitConfig;
+import com.emc.mongoose.config.scenario.step.StepConfig;
+import com.emc.mongoose.config.scenario.step.limit.LimitConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
@@ -49,12 +49,11 @@ extends LoadStepBase {
 
 	public static final String TYPE = "Load";
 
-	public LinearLoadStep(final Config baseConfig) {
-		this(baseConfig, null);
-	}
-
-	public LinearLoadStep(final Config baseConfig, final List<Map<String, Object>> stepConfigs) {
-		super(baseConfig, stepConfigs);
+	public LinearLoadStep(
+		final Config baseConfig, final ClassLoader clsLoader,
+		final List<Map<String, Object>> overrides
+	) {
+		super(baseConfig, clsLoader, overrides);
 	}
 
 	@Override
@@ -64,7 +63,7 @@ extends LoadStepBase {
 
 	@Override
 	protected LoadStepBase copyInstance(final List<Map<String, Object>> stepConfigs) {
-		return new LinearLoadStep(baseConfig, stepConfigs);
+		return new LinearLoadStep(baseConfig, clsLoader, stepConfigs);
 	}
 
 	@Override
@@ -72,8 +71,7 @@ extends LoadStepBase {
 
 		final String autoStepId = "linear_" + LogUtil.getDateTimeStamp();
 		final Config config = new Config(baseConfig);
-		final TestConfig testConfig = config.getTestConfig();
-		final StepConfig stepConfig = testConfig.getStepConfig();
+		final StepConfig stepConfig = config.getScenarioConfig().getStepConfig();
 		if(stepConfigs == null || stepConfigs.size() == 0) {
 			if(stepConfig.getIdTmp()) {
 				stepConfig.setId(autoStepId);
@@ -120,6 +118,7 @@ extends LoadStepBase {
 				try {
 
 					final StorageDriver driver = new BasicStorageDriverBuilder<>()
+						.classLoader(clsLoader)
 						.testStepId(testStepId)
 						.itemConfig(itemConfig)
 						.dataInput(dataInput)

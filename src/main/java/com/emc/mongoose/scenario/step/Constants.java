@@ -5,6 +5,5 @@ package com.emc.mongoose.scenario.step;
  */
 public interface Constants {
 
-	String DIR_SCENARIOS = "scenarios";
 	String ATTR_CONFIG = "config";
 }

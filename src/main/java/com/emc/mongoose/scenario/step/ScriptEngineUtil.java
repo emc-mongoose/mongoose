@@ -82,27 +82,19 @@ public interface ScriptEngineUtil {
 	 @param se the script engine
 	 @param config the configuration
 	 */
-	static void registerStepBasicTypes(
-		final ScriptEngine se, final ServiceLoader<LoadStepFactory<? extends LoadStep>> loader,
-		final Config config
+	static void registerStepTypes(
+		final ScriptEngine se, final ClassLoader clsLoader, final Config config
 	) {
+
+		final ServiceLoader<LoadStepFactory<? extends LoadStep>>
+			loader = ServiceLoader.load((Class) LoadStepFactory.class, clsLoader);
+
 		for(final LoadStepFactory<? extends LoadStep> factory: loader) {
-			se.put(factory.getTypeName(), factory.create(config, null));
+			se.put(factory.getTypeName(), factory.create(config, clsLoader, null));
 		}
-	}
 
-	/**
-	 Expose the additional/shortcut step types to the given script engine using the given
-	 configuration
-	 @param se the script engine
-	 @param config the configuration
-	 */
-
-	static void registerStepShortcutTypes(
-		final ScriptEngine se, final ServiceLoader<LoadStepFactory<? extends LoadStep>> loader,
-		final Config config
-	) {
-
+		// Expose the additional/shortcut step types to the given script engine using the given
+		// configuration
 		final String baseLoadStepTypeName = "Load";
 		LoadStepFactory<? extends LoadStep> baseLoadStepFactory = null;
 		for(final LoadStepFactory<? extends LoadStep> factory: loader) {
@@ -127,7 +119,7 @@ public interface ScriptEngineUtil {
 			.getOutputConfig().getMetricsConfig().getSummaryConfig().setPerfDbResultsFile(false);
 		specificConfig.getOutputConfig().getMetricsConfig().getSummaryConfig().setPersist(false);
 		specificConfig.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(false);
-		se.put("PreconditionLoad", baseLoadStepFactory.create(specificConfig, null));
+		se.put("PreconditionLoad", baseLoadStepFactory.create(specificConfig, clsLoader, null));
 
 		for(final IoType ioType : IoType.values()) {
 			specificConfig = new Config(config);
@@ -135,28 +127,32 @@ public interface ScriptEngineUtil {
 			specificConfig.getLoadConfig().setType(ioTypeName);
 			final String stepName = ioTypeName.substring(0, 1).toUpperCase()
 				+ ioTypeName.substring(1) + "Load";
-			se.put(stepName, baseLoadStepFactory.create(specificConfig, null));
+			se.put(stepName, baseLoadStepFactory.create(specificConfig, clsLoader, null));
 		}
 
 		specificConfig = new Config(config);
 		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
 		specificConfig.getItemConfig().getDataConfig().setVerify(true);
-		se.put("ReadVerifyLoad", baseLoadStepFactory.create(specificConfig, null));
+		se.put("ReadVerifyLoad", baseLoadStepFactory.create(specificConfig, clsLoader, null));
 
 		specificConfig = new Config(config);
 		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
 		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
-		se.put("ReadRandomRangeLoad", baseLoadStepFactory.create(specificConfig, null));
+		se.put("ReadRandomRangeLoad", baseLoadStepFactory.create(specificConfig, clsLoader, null));
 
 		specificConfig = new Config(config);
 		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
 		specificConfig.getItemConfig().getDataConfig().setVerify(true);
 		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
-		se.put("ReadVerifyRandomRangeLoad", baseLoadStepFactory.create(specificConfig, null));
+		se.put(
+			"ReadVerifyRandomRangeLoad", baseLoadStepFactory.create(specificConfig, clsLoader, null)
+		);
 
 		specificConfig = new Config(config);
 		specificConfig.getLoadConfig().setType(IoType.UPDATE.name().toLowerCase());
 		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
-		se.put("UpdateRandomRangeLoad", baseLoadStepFactory.create(specificConfig, null));
+		se.put(
+			"UpdateRandomRangeLoad", baseLoadStepFactory.create(specificConfig, clsLoader, null)
+		);
 	}
 }

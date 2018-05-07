@@ -3,7 +3,7 @@ package com.emc.mongoose.model.metrics;
 import javax.management.ObjectName;
 import java.util.Hashtable;
 
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.model.svc.ServiceUtil.MBEAN_SERVER;
 
 /**
@@ -19,7 +19,7 @@ implements MeterMBean {
 	throws Exception {
 		this.metricsCtx = metricsCtx;
 		final Hashtable<String, String> props = new Hashtable<>();
-		props.put(KEY_TEST_STEP_ID, metricsCtx.stepId());
+		props.put(KEY_STEP_ID, metricsCtx.stepId());
 		props.put(KEY_LOAD_TYPE, metricsCtx.ioType().name());
 		props.put(KEY_STORAGE_DRIVER_COUNT, Integer.toString(metricsCtx.nodeCount()));
 		props.put(KEY_STORAGE_DRIVER_CONCURRENCY, Integer.toString(metricsCtx.concurrency()));

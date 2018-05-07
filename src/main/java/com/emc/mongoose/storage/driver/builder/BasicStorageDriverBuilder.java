@@ -1,13 +1,12 @@
 package com.emc.mongoose.storage.driver.builder;
 
 import com.emc.mongoose.model.exception.OmgShootMyFootException;
-import com.emc.mongoose.model.env.Extensions;
 import com.emc.mongoose.model.data.DataInput;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import com.emc.mongoose.storage.driver.StorageDriverFactory;
 import com.emc.mongoose.config.item.ItemConfig;
@@ -29,41 +28,48 @@ import java.util.ServiceLoader;
 public class BasicStorageDriverBuilder<
 	I extends Item, O extends IoTask<I>, T extends StorageDriver<I, O>
 > implements StorageDriverBuilder<I, O, T> {
-	
-	private String stepName;
-	private DataInput contentSrc;
+
+	private ClassLoader clsLoader;
+	private String stepId;
+	private DataInput dataInput;
 	private ItemConfig itemConfig;
 	private LoadConfig loadConfig;
 	private StorageConfig storageConfig;
 
-	protected final String getStepId() {
-		return stepName;
+	protected final String stepId() {
+		return stepId;
 	}
 	
 	@Override
-	public ItemConfig getItemConfig() {
+	public ItemConfig itemConfig() {
 		return itemConfig;
 	}
 	
 	@Override
-	public LoadConfig getLoadConfig() {
+	public LoadConfig loadConfig() {
 		return loadConfig;
 	}
 
 	@Override
-	public StorageConfig getStorageConfig() {
+	public StorageConfig storageConfig() {
 		return storageConfig;
 	}
 
 	@Override
+	public BasicStorageDriverBuilder<I, O, T> classLoader(final ClassLoader clsLoader) {
+		this.clsLoader = clsLoader;
+		return this;
+	}
+
+	@Override
 	public BasicStorageDriverBuilder<I, O, T> testStepId(final String jobName) {
-		this.stepName = jobName;
+		this.stepId = jobName;
 		return this;
 	}
 	
 	@Override
 	public BasicStorageDriverBuilder<I, O, T> dataInput(final DataInput contentSrc) {
-		this.contentSrc = contentSrc;
+		this.dataInput = contentSrc;
 		return this;
 	}
 	
@@ -91,7 +97,7 @@ public class BasicStorageDriverBuilder<
 
 		try(
 			final Instance ctx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepName)
+				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, BasicStorageDriverBuilder.class.getSimpleName())
 		) {
 
@@ -106,7 +112,7 @@ public class BasicStorageDriverBuilder<
 			final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
 
 			final ServiceLoader<StorageDriverFactory<I, O, T>> loader = ServiceLoader.load(
-				(Class) StorageDriverFactory.class, Extensions.CLS_LOADER
+				(Class) StorageDriverFactory.class, clsLoader
 			);
 
 			final List<String> availTypes = new ArrayList<>();
@@ -114,8 +120,7 @@ public class BasicStorageDriverBuilder<
 				final String typeName = storageDriverFactory.getName();
 				availTypes.add(typeName);
 				if(driverType.equals(typeName)) {
-					return storageDriverFactory.create(
-						stepName, contentSrc, loadConfig, storageConfig, verifyFlag
+					return storageDriverFactory.create(stepId, dataInput, loadConfig, storageConfig, verifyFlag
 					);
 				}
 			}

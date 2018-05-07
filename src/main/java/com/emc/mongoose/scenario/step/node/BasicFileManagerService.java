@@ -5,7 +5,7 @@ import com.emc.mongoose.scenario.step.FileManagerService;
 import com.emc.mongoose.scenario.step.FileService;
 import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.LogManager;
@@ -69,7 +69,7 @@ implements FileManagerService {
 	throws RemoteException {
 		try(
 			final CloseableThreadContext.Instance
-				logCtx = CloseableThreadContext.put(KEY_TEST_STEP_ID, testStepId)
+				logCtx = CloseableThreadContext.put(KEY_STEP_ID, testStepId)
 		) {
 			final Logger logger = LogManager.getLogger(loggerName);
 			final Appender appender = ((AsyncLogger) logger).getAppenders().get("ioTraceFile");

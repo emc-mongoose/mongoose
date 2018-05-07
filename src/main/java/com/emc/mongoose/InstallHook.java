@@ -4,7 +4,6 @@ import com.emc.mongoose.config.Config;
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.PATH_DEFAULTS;
 import static com.emc.mongoose.Constants.USER_HOME;
-
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
@@ -16,6 +15,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Predicate;
@@ -28,9 +28,24 @@ implements Runnable {
 	private static final String RESOURCES_TO_INSTALL_PREFIX = "install";
 
 	private final Path appHomePath;
+	private final Config bundledDefaults;
 
-	public InstallHook() {
-		final String appVersion = defaultVersion();
+	public InstallHook()
+	throws IllegalStateException, InvalidPathException  {
+		final URL defaultConfigUrl = InstallHook.class.getClassLoader().getResource(
+			RESOURCES_TO_INSTALL_PREFIX + File.separator + PATH_DEFAULTS
+		);
+		if(defaultConfigUrl == null) {
+			throw new IllegalStateException("No bundled default config found");
+		}
+		try {
+			bundledDefaults = Config.loadFromUrl(defaultConfigUrl);
+		} catch(final IOException e) {
+			throw new IllegalStateException(
+				"Failed to load the bundled default config from the resources", e
+			);
+		}
+		final String appVersion = bundledDefaults.getVersion();
 		System.out.println(APP_NAME + " v " + appVersion);
 		appHomePath = Paths.get(USER_HOME, "." + APP_NAME, appVersion);
 		try {
@@ -40,27 +55,12 @@ implements Runnable {
 		}
 	}
 
-	public Path appHomePath() {
+	public final Path appHomePath() {
 		return appHomePath;
 	}
 
-	private static String defaultVersion()
-	throws IllegalStateException {
-		final URL defaultConfigUrl = InstallHook.class.getClassLoader().getResource(
-			RESOURCES_TO_INSTALL_PREFIX + File.separator + PATH_DEFAULTS
-		);
-		if(defaultConfigUrl == null) {
-			throw new IllegalStateException("No bundled default config found");
-		}
-		final Config defaultConfig;
-		try {
-			defaultConfig = Config.loadFromUrl(defaultConfigUrl);
-		} catch(final IOException e) {
-			throw new IllegalStateException(
-				"Failed to load the default config from the resources", e
-			);
-		}
-		return defaultConfig.getVersion();
+	public final Config bundledDefaults() {
+		return bundledDefaults;
 	}
 
 	public final void run() {
@@ -95,14 +95,15 @@ implements Runnable {
 				.stream()
 				.filter(((Predicate<ZipEntry>) ZipEntry::isDirectory).negate())
 				.map(ZipEntry::getName)
-				.filter(InstallHook::startsWithResourcesToInstallPrefix)
+				.filter(InstallHook::isResourceToInstall)
 				.forEach(this::installResourcesFile);
 		} catch(final IOException e) {
 			throw new IllegalStateException(e);
 		}
+		Loggers.MSG.info("Install hook finished");
 	}
 
-	private static boolean startsWithResourcesToInstallPrefix(final String relPath) {
+	private static boolean isResourceToInstall(final String relPath) {
 		return relPath.startsWith(RESOURCES_TO_INSTALL_PREFIX);
 	}
 
@@ -120,7 +121,7 @@ implements Runnable {
 				srcFileInput = InstallHook.class.getResourceAsStream(File.separator + srcFilePath)
 		) {
 			final long copiedBytesCount = Files.copy(srcFileInput, dstPath);
-			Loggers.MSG.info("The file {} installed ({})", dstPath, copiedBytesCount);
+			Loggers.MSG.debug("The file {} installed ({})", dstPath, copiedBytesCount);
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to install file {}", dstPath);
 		}

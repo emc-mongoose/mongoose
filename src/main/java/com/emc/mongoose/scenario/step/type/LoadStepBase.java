@@ -1,7 +1,7 @@
 package com.emc.mongoose.scenario.step.type;
 
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import com.emc.mongoose.model.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.model.metrics.BasicMetricsContext;
 import com.emc.mongoose.model.metrics.MetricsContext;
@@ -15,7 +15,7 @@ import com.emc.mongoose.scenario.step.master.BasicLoadStepClient;
 import com.emc.mongoose.scenario.step.master.LoadStepClient;
 import com.emc.mongoose.config.Config;
 import com.emc.mongoose.config.output.metrics.MetricsConfig;
-import com.emc.mongoose.config.test.step.StepConfig;
+import com.emc.mongoose.config.scenario.step.StepConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
@@ -42,6 +42,7 @@ extends DaemonBase
 implements LoadStep, Runnable {
 
 	protected final Config baseConfig;
+	protected final ClassLoader clsLoader;
 	protected final List<Map<String, Object>> stepConfigs;
 	protected final List<MetricsContext> metricsContexts = new ArrayList<>();
 	protected final List<LoadGenerator> generators = new ArrayList<>();
@@ -56,9 +57,13 @@ implements LoadStep, Runnable {
 	private volatile long startTimeSec = -1;
 	private String id = null;
 
-	protected LoadStepBase(final Config baseConfig, final List<Map<String, Object>> stepConfigs) {
+	protected LoadStepBase(
+		final Config baseConfig, final ClassLoader clsLoader,
+		final List<Map<String, Object>> overrides
+	) {
 		this.baseConfig = baseConfig;
-		this.stepConfigs = stepConfigs;
+		this.clsLoader = clsLoader;
+		this.stepConfigs = overrides;
 	}
 
 	@Override
@@ -106,7 +111,7 @@ implements LoadStep, Runnable {
 
 	protected final void actualConfig(final Config actualConfig) {
 		this.actualConfig = actualConfig;
-		final StepConfig stepConfig = actualConfig.getTestConfig().getStepConfig();
+		final StepConfig stepConfig = actualConfig.getScenarioConfig().getStepConfig();
 		this.id = stepConfig.getId();
 		this.distributedFlag = stepConfig.getDistributed();
 	}
@@ -143,18 +148,18 @@ implements LoadStep, Runnable {
 
 		init();
 
-		final StepConfig stepConfig = actualConfig.getTestConfig().getStepConfig();
+		final StepConfig stepConfig = actualConfig.getScenarioConfig().getStepConfig();
 		final String stepId = stepConfig.getId();
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
+				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			if(distributedFlag) {
 				// need to set the once generated step id
 				final Config config = new Config(baseConfig);
-				config.getTestConfig().getStepConfig().setId(stepId);
-				stepClient = new BasicLoadStepClient(this, config, stepConfigs);
+				config.getScenarioConfig().getStepConfig().setId(stepId);
+				stepClient = new BasicLoadStepClient(this, config, clsLoader, stepConfigs);
 				stepClient.start();
 			} else {
 				doStartLocal();
@@ -286,7 +291,7 @@ implements LoadStep, Runnable {
 			generator -> {
 				try(
 					final CloseableThreadContext.Instance ctx = CloseableThreadContext
-						.put(KEY_TEST_STEP_ID, id)
+						.put(KEY_STEP_ID, id)
 						.put(KEY_CLASS_NAME, getClass().getSimpleName())
 				) {
 					generator.shutdown();
@@ -302,7 +307,7 @@ implements LoadStep, Runnable {
 			driver -> {
 				try(
 					final CloseableThreadContext.Instance ctx = CloseableThreadContext
-						.put(KEY_TEST_STEP_ID, id)
+						.put(KEY_STEP_ID, id)
 						.put(KEY_CLASS_NAME, getClass().getSimpleName())
 				) {
 					driver.shutdown();

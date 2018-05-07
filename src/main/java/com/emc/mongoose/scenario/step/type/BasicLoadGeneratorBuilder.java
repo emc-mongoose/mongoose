@@ -33,7 +33,7 @@ import com.emc.mongoose.config.load.LoadConfig;
 import com.emc.mongoose.config.load.generator.GeneratorConfig;
 import com.emc.mongoose.config.load.generator.recycle.RecycleConfig;
 import com.emc.mongoose.config.storage.auth.AuthConfig;
-import com.emc.mongoose.config.test.step.limit.LimitConfig;
+import com.emc.mongoose.config.scenario.step.limit.LimitConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.github.akurilov.commons.collection.Range;

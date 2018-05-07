@@ -195,6 +195,7 @@ task mergeLog4j2PluginsDat(dependsOn: compileJava) {
 	doLast {
 
 		byte[] pluginsData
+		byte[] customPluginsData
 
 		configurations.runtime
 			.each {
@@ -211,9 +212,20 @@ task mergeLog4j2PluginsDat(dependsOn: compileJava) {
 
 		sourceSets.main.output.classesDirs
 			.any {
+				customPluginsData = Files.readAllBytes(
+					Paths.get(it.toString(), log4j2PluginsDatPath.toString(),)
+				)
+			}
+
+		sourceSets.main.output.classesDirs
+			.any {
 				Files.write(
 					Paths.get(it.toString(), log4j2PluginsDatPath.toString(),),
-					pluginsData, StandardOpenOption.APPEND
+					pluginsData, StandardOpenOption.TRUNCATE_EXISTING
+				)
+				Files.write(
+					Paths.get(it.toString(), log4j2PluginsDatPath.toString(),),
+					customPluginsData, StandardOpenOption.APPEND
 				)
 			}
 	}

@@ -14,7 +14,7 @@ import com.emc.mongoose.config.storage.StorageConfig;
 import com.emc.mongoose.config.storage.driver.queue.QueueConfig;
 import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_TEST_STEP_ID;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 
@@ -213,7 +213,7 @@ implements StorageDriver<I, O> {
 	throws IOException, IllegalStateException {
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_TEST_STEP_ID, stepId)
+				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			super.doClose();

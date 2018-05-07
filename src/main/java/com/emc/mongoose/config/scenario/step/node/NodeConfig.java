@@ -1,4 +1,4 @@
-package com.emc.mongoose.config.test.step.node;
+package com.emc.mongoose.config.scenario.step.node;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

@@ -15,7 +15,10 @@ implements LoadStepFactory<T> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public T create(final Config baseConfig, final List<Map<String, Object>> overrides) {
-		return (T) new LinearLoadStep(baseConfig, overrides);
+	public T create(
+		final Config baseConfig, final ClassLoader clsLoader,
+		final List<Map<String, Object>> overrides
+	) {
+		return (T) new LinearLoadStep(baseConfig, clsLoader, overrides);
 	}
 }
