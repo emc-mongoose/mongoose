@@ -1,25 +1,31 @@
 package com.emc.mongoose;
 
 import com.emc.mongoose.config.Config;
-import com.github.akurilov.commons.system.SizeInBytes;
+import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.Constants.PATH_DEFAULTS;
+import static com.emc.mongoose.Constants.USER_HOME;
 
-import java.io.BufferedReader;
+import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.logging.Loggers;
+
+import org.apache.logging.log4j.Level;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.Constants.PATH_CONFIG_SCHEMA;
-import static com.emc.mongoose.Constants.PATH_DEFAULTS;
-import static com.emc.mongoose.Constants.USER_HOME;
+import java.util.function.Predicate;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public final class InstallHook
 implements Runnable {
+
+	private static final String RESOURCES_TO_INSTALL_PREFIX = "install";
 
 	private final Path appHomePath;
 
@@ -31,13 +37,18 @@ implements Runnable {
 			Files.createDirectories(appHomePath);
 		} catch(final IOException e) {
 			e.printStackTrace(System.err);
-			return;
 		}
+	}
+
+	public Path appHomePath() {
+		return appHomePath;
 	}
 
 	private static String defaultVersion()
 	throws IllegalStateException {
-		final URL defaultConfigUrl = InstallHook.class.getClassLoader().getResource(PATH_DEFAULTS);
+		final URL defaultConfigUrl = InstallHook.class.getClassLoader().getResource(
+			RESOURCES_TO_INSTALL_PREFIX + File.separator + PATH_DEFAULTS
+		);
 		if(defaultConfigUrl == null) {
 			throw new IllegalStateException("No bundled default config found");
 		}
@@ -53,41 +64,65 @@ implements Runnable {
 	}
 
 	public final void run() {
-		installResourcesFile(appHomePath, PATH_DEFAULTS);
-		installResourcesFile(appHomePath, PATH_CONFIG_SCHEMA);
 
-		try(
-			final BufferedReader reader = new BufferedReader(
-				new InputStreamReader(
-					InstallHook.class.getClassLoader().getResourceAsStream("example")
-				)
-			)
-		) {
-			String line;
-			while(null != (line = reader.readLine())) {
-				System.out.println(line);
+		final URL rootResUrl = this.getClass().getResource("");
+		if(rootResUrl == null) {
+			throw new IllegalStateException("Failed to get the root resources URL");
+		}
+		if(!"jar".equals(rootResUrl.getProtocol())) {
+			throw new IllegalStateException(
+				"Root resources URL doesn't point to the jar file: " + rootResUrl
+			);
+		}
+
+		final String jarPath;
+		try {
+			// cut the remaining "file:" prefix
+			final String t = new URL(rootResUrl.getPath()).getPath();
+			if(t.isEmpty()) {
+				throw new IllegalStateException("Root resources path is empty");
 			}
+			// cut the suffix with the internal jar path
+			final int i = t.indexOf('!');
+			jarPath = t.substring(0, i);
+		} catch(final MalformedURLException e) {
+			throw new IllegalStateException(e);
+		}
+
+		Loggers.MSG.info("Try to install resources from {}...", jarPath);
+		try(final ZipFile jarFile = new ZipFile(jarPath)) {
+			jarFile
+				.stream()
+				.filter(((Predicate<ZipEntry>) ZipEntry::isDirectory).negate())
+				.map(ZipEntry::getName)
+				.filter(InstallHook::startsWithResourcesToInstallPrefix)
+				.forEach(this::installResourcesFile);
 		} catch(final IOException e) {
-			e.printStackTrace(System.err);
+			throw new IllegalStateException(e);
 		}
 	}
 
-	private static void installResourcesFile(final Path appHomePath, final String relPath) {
-		final Path dstPath = Paths.get(appHomePath.toString(), relPath);
-		System.out.print("Checking the file " + dstPath + "... ");
+	private static boolean startsWithResourcesToInstallPrefix(final String relPath) {
+		return relPath.startsWith(RESOURCES_TO_INSTALL_PREFIX);
+	}
+
+	private void installResourcesFile(final String srcFilePath) {
+		final Path dstPath = Paths.get(
+			appHomePath.toString(), srcFilePath.substring(RESOURCES_TO_INSTALL_PREFIX.length() + 1)
+		);
 		if(dstPath.toFile().exists()) {
-			System.out.println("exists, skipping");
+			Loggers.MSG.debug("The file {} already exists, skipping", dstPath);
 			return;
 		}
 		dstPath.getParent().toFile().mkdirs();
 		try(
 			final InputStream
-				srcFileInput = InstallHook.class.getResourceAsStream(File.separator + relPath)
+				srcFileInput = InstallHook.class.getResourceAsStream(File.separator + srcFilePath)
 		) {
 			final long copiedBytesCount = Files.copy(srcFileInput, dstPath);
-			System.out.println("installed (" + SizeInBytes.formatFixedSize(copiedBytesCount) + ")");
+			Loggers.MSG.info("The file {} installed ({})", dstPath, copiedBytesCount);
 		} catch(final IOException e) {
-			System.out.println("failed to install (" + e + ")");
+			LogUtil.exception(Level.WARN, e, "Failed to install file {}", dstPath);
 		}
 	}
 }

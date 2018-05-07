@@ -5,7 +5,6 @@ import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.emc.mongoose.model.env.PathUtil;
-
 import static com.emc.mongoose.Constants.PATH_DEFAULTS;
 import com.emc.mongoose.config.item.ItemConfig;
 import com.emc.mongoose.config.load.LoadConfig;

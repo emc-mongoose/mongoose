@@ -2,8 +2,6 @@ package com.emc.mongoose.config.test.step;
 
 import com.emc.mongoose.config.test.step.limit.LimitConfig;
 import com.emc.mongoose.config.test.step.node.NodeConfig;
-import com.emc.mongoose.config.test.step.limit.LimitConfig;
-import com.emc.mongoose.config.test.step.node.NodeConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

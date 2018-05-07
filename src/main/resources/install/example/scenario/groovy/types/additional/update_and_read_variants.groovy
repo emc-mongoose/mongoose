@@ -1,4 +1,4 @@
-package example.scenario.groovy.types.additional
+package install.example.scenario.groovy.types.additional
 
 PreconditionLoad
     .config(

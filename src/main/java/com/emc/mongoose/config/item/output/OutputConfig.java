@@ -1,7 +1,7 @@
 package com.emc.mongoose.config.item.output;
 
 import com.emc.mongoose.config.TimeStrToLongDeserializer;
-import com.emc.mongoose.config.TimeStrToLongDeserializer;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 

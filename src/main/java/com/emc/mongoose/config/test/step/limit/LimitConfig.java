@@ -2,11 +2,10 @@ package com.emc.mongoose.config.test.step.limit;
 
 import com.emc.mongoose.config.SizeInBytesSerializer;
 import com.emc.mongoose.config.test.step.limit.fail.FailConfig;
-import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.config.SizeInBytesDeserializer;
-import com.emc.mongoose.config.SizeInBytesSerializer;
 import com.emc.mongoose.config.TimeStrToLongDeserializer;
-import com.emc.mongoose.config.test.step.limit.fail.FailConfig;
+
+import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

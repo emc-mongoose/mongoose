@@ -2,9 +2,9 @@ package com.emc.mongoose.config.item.data.input.layer;
 
 import com.emc.mongoose.config.SizeInBytesDeserializer;
 import com.emc.mongoose.config.SizeInBytesSerializer;
+
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.emc.mongoose.config.SizeInBytesDeserializer;
-import com.emc.mongoose.config.SizeInBytesSerializer;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

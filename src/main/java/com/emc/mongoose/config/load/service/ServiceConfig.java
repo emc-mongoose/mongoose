@@ -1,6 +1,7 @@
 package com.emc.mongoose.config.load.service;
 
 import com.emc.mongoose.model.concurrent.ServiceTaskExecutor;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;

@@ -4,6 +4,7 @@ import com.emc.mongoose.config.item.data.DataConfig;
 import com.emc.mongoose.config.item.input.InputConfig;
 import com.emc.mongoose.config.item.naming.NamingConfig;
 import com.emc.mongoose.config.item.output.OutputConfig;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;

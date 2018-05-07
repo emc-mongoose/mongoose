@@ -2,8 +2,7 @@ package com.emc.mongoose.config.output.metrics.average;
 
 import com.emc.mongoose.config.TimeStrToLongDeserializer;
 import com.emc.mongoose.config.output.metrics.average.table.TableConfig;
-import com.emc.mongoose.config.TimeStrToLongDeserializer;
-import com.emc.mongoose.config.output.metrics.average.table.TableConfig;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 

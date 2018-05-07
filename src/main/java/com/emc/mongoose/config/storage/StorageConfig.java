@@ -3,9 +3,6 @@ package com.emc.mongoose.config.storage;
 import com.emc.mongoose.config.storage.auth.AuthConfig;
 import com.emc.mongoose.config.storage.driver.DriverConfig;
 import com.emc.mongoose.config.storage.net.NetConfig;
-import com.emc.mongoose.config.storage.auth.AuthConfig;
-import com.emc.mongoose.config.storage.driver.DriverConfig;
-import com.emc.mongoose.config.storage.net.NetConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

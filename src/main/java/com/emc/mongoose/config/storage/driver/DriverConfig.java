@@ -1,13 +1,10 @@
 package com.emc.mongoose.config.storage.driver;
 
 import com.emc.mongoose.config.storage.driver.queue.QueueConfig;
-import com.emc.mongoose.config.storage.driver.queue.QueueConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  Created by andrey on 05.07.17.

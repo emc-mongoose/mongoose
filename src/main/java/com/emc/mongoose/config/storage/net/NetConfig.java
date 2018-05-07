@@ -4,11 +4,8 @@ import com.emc.mongoose.config.SizeInBytesDeserializer;
 import com.emc.mongoose.config.SizeInBytesSerializer;
 import com.emc.mongoose.config.storage.net.http.HttpConfig;
 import com.emc.mongoose.config.storage.net.node.NodeConfig;
+
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.emc.mongoose.config.SizeInBytesDeserializer;
-import com.emc.mongoose.config.SizeInBytesSerializer;
-import com.emc.mongoose.config.storage.net.http.HttpConfig;
-import com.emc.mongoose.config.storage.net.node.NodeConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

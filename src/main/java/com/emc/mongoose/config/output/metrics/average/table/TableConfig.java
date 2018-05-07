@@ -1,7 +1,7 @@
 package com.emc.mongoose.config.output.metrics.average.table;
 
 import com.emc.mongoose.config.output.metrics.average.table.header.HeaderConfig;
-import com.emc.mongoose.config.output.metrics.average.table.header.HeaderConfig;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;

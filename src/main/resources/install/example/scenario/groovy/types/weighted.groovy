@@ -1,4 +1,4 @@
-package example.scenario.groovy.types
+package install.example.scenario.groovy.types
 
 final sharedConcurrency = 100
 final itemDataSize = "10KB"

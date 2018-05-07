@@ -4,10 +4,7 @@ import com.emc.mongoose.config.load.batch.BatchConfig;
 import com.emc.mongoose.config.load.generator.GeneratorConfig;
 import com.emc.mongoose.config.load.rate.LimitConfig;
 import com.emc.mongoose.config.load.service.ServiceConfig;
-import com.emc.mongoose.config.load.batch.BatchConfig;
-import com.emc.mongoose.config.load.generator.GeneratorConfig;
-import com.emc.mongoose.config.load.rate.LimitConfig;
-import com.emc.mongoose.config.load.service.ServiceConfig;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;

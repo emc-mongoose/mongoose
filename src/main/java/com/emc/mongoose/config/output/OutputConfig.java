@@ -1,7 +1,6 @@
 package com.emc.mongoose.config.output;
 
 import com.emc.mongoose.config.output.metrics.MetricsConfig;
-import com.emc.mongoose.config.output.metrics.MetricsConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

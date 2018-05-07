@@ -2,10 +2,9 @@ package com.emc.mongoose.logging;
 
 import com.emc.mongoose.model.concurrent.DaemonBase;
 
-import static com.emc.mongoose.Constants.KEY_BASE_DIR;
+import static com.emc.mongoose.Constants.KEY_HOME_DIR;
 import static com.emc.mongoose.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.model.env.DateUtil.TZ_UTC;
-import static com.emc.mongoose.model.env.PathUtil.BASE_DIR;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -54,8 +53,8 @@ implements ShutdownCallbackRegistry {
 		);
 	}
 
-	public static void init() {
-		ThreadContext.put(KEY_BASE_DIR, BASE_DIR);
+	public static void init(final String homeDir) {
+		ThreadContext.put(KEY_HOME_DIR, homeDir);
 		try {
 			Runtime.getRuntime().addShutdownHook(
 				new Thread("logCtxShutDownHook") {

@@ -1,7 +1,11 @@
 import groovy.json.JsonSlurper
 import groovy.json.JsonParserType
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
+import java.util.stream.Collectors
 
 description = "Mongoose is a high-load storage performance testing tool"
 
@@ -40,8 +44,9 @@ allprojects {
 
 String defineVersion() {
 	def configFilePath = [
-		rootDir, "src", "main", "resources", "config", "defaults.json",
-	].join(File.separator);
+			rootDir, "src", "main", "resources", "install", "config", "defaults.json",
+		]
+		.join(File.separator);
 	def inputFile = new File(configFilePath)
 	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
 	json.version
@@ -82,6 +87,11 @@ ext {
 			it != project("storage:driver:nio") &&
 			it != project("storage:driver:preempt")
 	}
+
+	log4j2PluginsDatPath = Paths.get(
+		"META-INF", "org", "apache", "logging", "log4j", "core", "config", "plugins",
+		"Log4j2Plugins.dat",
+	)
 }
 
 dependencies {
@@ -171,13 +181,6 @@ task wrapper(type: Wrapper) {
 	gradleVersion = "4.7"
 }
 
-static def isExtProject(final Project p) {
-	final f = Paths
-		.get(p.projectDir.toString(), "src", "main", "resources", "META-INF", "services")
-		.toFile()
-	return f.exists() && f.isDirectory() && f.listFiles().length > 0
-}
-
 static def isTestsProject(final Project p) {
 	if(p == null) {
 		return false
@@ -188,7 +191,35 @@ static def isTestsProject(final Project p) {
 	}
 }
 
-task mainJar(type: Jar, dependsOn: compileJava) {
+task mergeLog4j2PluginsDat(dependsOn: compileJava) {
+	doLast {
+
+		byte[] pluginsData
+
+		configurations.runtime
+			.each {
+				if(!it.isDirectory()) {
+					zipTree(it)
+						.filter {
+							it.toString().endsWith(log4j2PluginsDatPath.toString())
+						}
+						.each {
+							pluginsData = Files.readAllBytes(Paths.get(it.toString()))
+						}
+				}
+			}
+
+		sourceSets.main.output.classesDirs
+			.any {
+				Files.write(
+					Paths.get(it.toString(), log4j2PluginsDatPath.toString(),),
+					pluginsData, StandardOpenOption.APPEND
+				)
+			}
+	}
+}
+
+task mainJar(type: Jar, dependsOn: [compileJava, mergeLog4j2PluginsDat]) {
 
 	baseName = rootProject.name
 	version = version
@@ -210,11 +241,13 @@ task mainJar(type: Jar, dependsOn: compileJava) {
 		it.isDirectory() ? it : zipTree(it)
 	}
 
+	exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
+
 	leafProjects
 		.each {
 			final Project p = it
 			from(p.jar.outputs.files) {
-				into "ext"
+				into "install${File.separator}ext"
 				rename {
 					fileName -> "${p.description}.jar"
 				}

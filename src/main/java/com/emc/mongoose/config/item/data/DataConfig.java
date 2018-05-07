@@ -1,11 +1,11 @@
 package com.emc.mongoose.config.item.data;
 
 import com.emc.mongoose.config.item.data.input.InputConfig;
-import com.github.akurilov.commons.system.SizeInBytes;
 import com.emc.mongoose.config.SizeInBytesDeserializer;
 import com.emc.mongoose.config.SizeInBytesSerializer;
-import com.emc.mongoose.config.item.data.input.InputConfig;
 import com.emc.mongoose.config.item.data.ranges.RangesConfig;
+
+import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

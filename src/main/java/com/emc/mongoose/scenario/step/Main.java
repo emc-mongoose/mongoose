@@ -36,7 +36,7 @@ public final class Main {
 	public static void main(final String... args)
 	throws Exception {
 
-		LogUtil.init();
+//		LogUtil.init();
 
 		final Config config = Config.loadDefaults();
 		if(config == null) {

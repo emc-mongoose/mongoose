@@ -14,8 +14,7 @@ public interface Constants {
 	String DIR_EXAMPLE = "example";
 	String DIR_EXAMPLE_SCENARIO = DIR_EXAMPLE + File.separator + "scenario";
 	String PATH_DEFAULTS = DIR_CONFIG + File.separator + "defaults.json";
-	String PATH_CONFIG_SCHEMA = DIR_CONFIG + File.separator + "config-schema.json";
-	String KEY_BASE_DIR = "baseDir";
+	String KEY_HOME_DIR = "homeDir";
 	String KEY_TEST_STEP_ID = "stepId";
 	String KEY_CLASS_NAME = "className";
 	int MIB = 0x10_00_00;

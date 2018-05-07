@@ -3,9 +3,6 @@ package com.emc.mongoose.config.output.metrics;
 import com.emc.mongoose.config.output.metrics.average.AverageConfig;
 import com.emc.mongoose.config.output.metrics.summary.SummaryConfig;
 import com.emc.mongoose.config.output.metrics.trace.TraceConfig;
-import com.emc.mongoose.config.output.metrics.average.AverageConfig;
-import com.emc.mongoose.config.output.metrics.summary.SummaryConfig;
-import com.emc.mongoose.config.output.metrics.trace.TraceConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
