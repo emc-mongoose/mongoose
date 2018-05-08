@@ -1,17 +1,15 @@
 package com.emc.mongoose.config;
 
 import com.emc.mongoose.config.scenario.ScenarioConfig;
-import com.github.akurilov.commons.collection.Range;
-import com.github.akurilov.commons.reflection.TypeUtil;
-import com.github.akurilov.commons.system.SizeInBytes;
-
-import com.emc.mongoose.model.env.PathUtil;
-import static com.emc.mongoose.Constants.PATH_DEFAULTS;
 import com.emc.mongoose.config.item.ItemConfig;
 import com.emc.mongoose.config.load.LoadConfig;
 import com.emc.mongoose.config.output.OutputConfig;
 import com.emc.mongoose.config.storage.StorageConfig;
 import com.emc.mongoose.config.scenario.step.StepConfig;
+
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.reflection.TypeUtil;
+import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
@@ -429,16 +427,6 @@ implements Serializable {
 		} catch(final NoSuchMethodException e) {
 			throw new IllegalArgumentNameException(key);
 		}
-	}
-
-	@Deprecated
-	public static Config loadDefaults()
-	throws IOException {
-		final String defaultConfigPath = PathUtil.BASE_DIR + File.separator + PATH_DEFAULTS;
-		final ObjectMapper mapper = new ObjectMapper()
-			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
-			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
-		return mapper.readValue(new File(defaultConfigPath), Config.class);
 	}
 
 	private static ObjectMapper getObjectMapper() {

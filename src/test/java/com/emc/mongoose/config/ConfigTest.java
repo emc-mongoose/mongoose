@@ -1,5 +1,6 @@
 package com.emc.mongoose.config;
 
+import com.emc.mongoose.InstallHook;
 import com.emc.mongoose.config.scenario.step.node.NodeConfig;
 import com.emc.mongoose.config.util.ConfigMatcher;
 import com.emc.mongoose.config.util.ConfigNullMatcher;
@@ -37,7 +38,7 @@ public class ConfigTest {
 	@Test
 	public void shouldParseWithoutFireballsThrowing()
 	throws IOException {
-		final Config config = Config.loadDefaults();
+		final Config config = new InstallHook().bundledDefaults();
 		MatcherAssert.assertThat(config, ConfigNullMatcher.notNullValue());
 		MatcherAssert.assertThat(config.getVersion(), ConfigMatcher.equalTo("4.0.0", "version"));
 		final NetConfig netConfig = config.getStorageConfig().getNetConfig();
@@ -215,20 +216,20 @@ public class ConfigTest {
 							put("timeoutMilliSec", "123456");
 							put("reuseAddr", "true");
 							put("tcpNoDelay", "false");
-							put("interestOpQueued", null);
+							put("interestOpQueued", true);
+							put(
+								"http",
+								new HashMap<String, Object>() {{
+									put("fsAccess", "true");
+									put("headers", "customHeaderName:customHeaderValue");
+								}}
+							);
 							put(
 								"node",
 								new HashMap<String, Object>() {{
 									put(
 										"addrs",
 										"10.123.45.67,10.123.45.68,10.123.45.69,10.123.45.70"
-									);
-									put(
-										"http",
-										new HashMap<String, Object>() {{
-											put("fsAccess", "true");
-											put("headers", "customHeaderName:customHeaderValue");
-										}}
 									);
 								}}
 							);
@@ -237,7 +238,7 @@ public class ConfigTest {
 				}}
 			);
 			put(
-				"test",
+				"scenario",
 				new HashMap<String, Object>() {{
 					put(
 						"step",
@@ -258,7 +259,7 @@ public class ConfigTest {
 			put("version", "1.2.5.10");
 		}};
 
-		final Config config = Config.loadDefaults();
+		final Config config = new InstallHook().bundledDefaults();
 		config.apply(argTree, null);
 		
 		assertEquals("1.2.5.10", config.getVersion());
@@ -289,7 +290,7 @@ public class ConfigTest {
 	@Test
 	public void testInvalidSizeValue()
 	throws Exception {
-		final Config config = Config.loadDefaults();
+		final Config config = new InstallHook().bundledDefaults();
 		try {
 			config.apply(new HashMap<String, Object>() {{
 				put("item", new HashMap<String, Object>() {{
@@ -306,7 +307,7 @@ public class ConfigTest {
 	@Test
 	public void testInvalidTimeValue()
 	throws Exception {
-		final Config config = Config.loadDefaults();
+		final Config config = new InstallHook().bundledDefaults();
 		try {
 			config.apply(new HashMap<String, Object>() {{
 				put("test", new HashMap<String, Object>() {{
@@ -325,7 +326,7 @@ public class ConfigTest {
 	@Test
 	public void testInvalidRangesValue()
 	throws Exception {
-		final Config config = Config.loadDefaults();
+		final Config config = new InstallHook().bundledDefaults();
 		try {
 			config.apply(new HashMap<String, Object>() {{
 				put("item", new HashMap<String, Object>() {{
@@ -344,7 +345,7 @@ public class ConfigTest {
 	@Test
 	public void testInvalidInteger()
 	throws Exception {
-		final Config config = Config.loadDefaults();
+		final Config config = new InstallHook().bundledDefaults();
 		try {
 			config.apply(new HashMap<String, Object>() {{
 				put("test", new HashMap<String, Object>() {{
@@ -363,7 +364,7 @@ public class ConfigTest {
 	@Test
 	public void testNoSuchArgName()
 	throws Exception {
-		final Config config = Config.loadDefaults();
+		final Config config = new InstallHook().bundledDefaults();
 		try {
 			config.apply(new HashMap<String, Object>() {{
 				put("storage", new HashMap<String, Object>() {{
@@ -374,7 +375,7 @@ public class ConfigTest {
 			}}, null);
 			Assert.fail("No exception thrown");
 		} catch(final IllegalArgumentNameException e) {
-			Assert.assertEquals("--storage-driver-blabla", e.getMessage());
+			Assert.assertEquals("storage-driver-blabla", e.getMessage());
 		}
 	}
 }

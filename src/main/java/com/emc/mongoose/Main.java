@@ -14,12 +14,9 @@ import static com.emc.mongoose.cli.CliArgParser.formatCliArgsList;
 import static com.emc.mongoose.cli.CliArgParser.getAllCliArgs;
 import static com.emc.mongoose.cli.CliArgParser.parseArgs;
 import com.emc.mongoose.model.svc.Service;
-import com.emc.mongoose.scenario.step.LoadStep;
-import com.emc.mongoose.scenario.step.LoadStepFactory;
 import com.emc.mongoose.scenario.step.ScriptEngineUtil;
 import com.emc.mongoose.scenario.step.node.BasicFileManagerService;
 import com.emc.mongoose.scenario.step.node.BasicLoadStepManagerService;
-import static com.emc.mongoose.model.env.PathUtil.BASE_DIR;
 import static com.emc.mongoose.scenario.step.Constants.ATTR_CONFIG;
 
 import org.apache.logging.log4j.CloseableThreadContext;
@@ -36,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.ServiceLoader;
 
 public final class Main {
 
@@ -84,7 +80,7 @@ public final class Main {
 				if(config.getNode()) {
 					runNode(config, extClsLoader);
 				} else {
-					runScenario(config, extClsLoader);
+					runScenario(config, extClsLoader, appHomePath);
 				}
 			}
 		} catch(final IOException e) {
@@ -116,8 +112,9 @@ public final class Main {
 		}
 	}
 
-	private static void runScenario(final Config config, final ClassLoader clsLoader)
-	throws IOException {
+	private static void runScenario(
+		final Config config, final ClassLoader clsLoader, final Path appHomePath
+	) throws IOException {
 		// get the scenario file/path
 		final Path scenarioPath;
 		final ScenarioConfig scenarioConfig = config.getScenarioConfig();
@@ -125,7 +122,9 @@ public final class Main {
 		if(scenarioFile != null && !scenarioFile.isEmpty()) {
 			scenarioPath = Paths.get(scenarioFile);
 		} else {
-			scenarioPath = Paths.get(BASE_DIR, DIR_EXAMPLE_SCENARIO, "js", "default.js");
+			scenarioPath = Paths.get(
+				appHomePath.toString(), DIR_EXAMPLE_SCENARIO, "js", "default.js"
+			);
 		}
 
 		final StringBuilder strb = new StringBuilder();
