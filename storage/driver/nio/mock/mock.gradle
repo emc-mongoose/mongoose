@@ -1,15 +1,10 @@
 description = "mongoose-storage-driver-nio-mock"
 
-ext.isExt = true
-ext.jarFileName = description
-ext.mainClass = null
-
 dependencies {
+
 	compile(
+		project(":"),
 		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
-		project(":model"),
-		project(":storage:driver:nio"),
-		project(":logging"),
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 	)
 

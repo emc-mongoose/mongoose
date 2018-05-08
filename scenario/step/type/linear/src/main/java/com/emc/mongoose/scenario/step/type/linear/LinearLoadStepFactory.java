@@ -1,6 +1,6 @@
 package com.emc.mongoose.scenario.step.type.linear;
 
-import com.emc.mongoose.scenario.step.type.LoadStepFactory;
+import com.emc.mongoose.scenario.step.LoadStepFactory;
 import com.emc.mongoose.config.Config;
 
 import java.util.List;
@@ -15,7 +15,10 @@ implements LoadStepFactory<T> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public T create(final Config baseConfig, final List<Map<String, Object>> overrides) {
-		return (T) new LinearLoadStep(baseConfig, overrides);
+	public T create(
+		final Config baseConfig, final ClassLoader clsLoader,
+		final List<Map<String, Object>> overrides
+	) {
+		return (T) new LinearLoadStep(baseConfig, clsLoader, overrides);
 	}
 }
