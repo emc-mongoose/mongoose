@@ -11,6 +11,7 @@ import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import org.apache.logging.log4j.CloseableThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -56,7 +57,7 @@ implements LoadStepService {
 		}
 
 		try(
-			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+			final Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
 		) {
 			loadStep = selectedFactory.create(config, clsLoader, stepConfigs);
@@ -70,7 +71,7 @@ implements LoadStepService {
 	@Override
 	protected final void doStart() {
 		try(
-			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+			final Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
 				.put(KEY_STEP_ID, loadStep.id())
 		) {
@@ -83,7 +84,7 @@ implements LoadStepService {
 	@Override
 	protected void doStop() {
 		try(
-			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+			final Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
 				.put(KEY_STEP_ID, loadStep.id())
 		) {
@@ -97,7 +98,7 @@ implements LoadStepService {
 	protected final void doClose()
 	throws IOException {
 		try(
-			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+			final Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
 				.put(KEY_STEP_ID, loadStep.id())
 		) {
@@ -140,7 +141,7 @@ implements LoadStepService {
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws IllegalStateException, InterruptedException {
 		try(
-			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+			final Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, BasicLoadStepService.class.getSimpleName())
 				.put(KEY_STEP_ID, loadStep.id())
 		) {
