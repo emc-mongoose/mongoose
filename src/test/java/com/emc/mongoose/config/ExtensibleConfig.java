@@ -13,6 +13,9 @@ public interface ExtensibleConfig {
 	Object val(final String path)
 	throws InvalidValuePathException, NoSuchElementException;
 
+	void val(final String path, final Object val)
+	throws InvalidValuePathException;
+
 	String stringVal(final String path)
 	throws InvalidValuePathException, NoSuchElementException;
 

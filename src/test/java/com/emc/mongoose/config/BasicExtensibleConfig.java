@@ -4,17 +4,15 @@ import com.github.akurilov.commons.collection.InvalidRangeException;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.SizeInBytes;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 public final class BasicExtensibleConfig
-implements Externalizable, ExtensibleConfig {
+implements ExtensibleConfig, Serializable {
 
 	private final char pathSep;
 	private final Map<String, Object> node;
@@ -24,6 +22,10 @@ implements Externalizable, ExtensibleConfig {
 		this.node = node;
 	}
 
+	/**
+	 Cloning constructor
+	 @param other the config instance to clone
+	 */
 	public BasicExtensibleConfig(final BasicExtensibleConfig other) {
 		this.pathSep = other.pathSep;
 		this.node = other.node
@@ -68,6 +70,30 @@ implements Externalizable, ExtensibleConfig {
 			}
 		} else {
 			return node.get(path);
+		}
+	}
+
+	@Override
+	public final void val(final String path, final Object val)
+	throws InvalidValuePathException {
+		final int sepPos = path.indexOf(pathSep);
+		if(sepPos == 0 || sepPos == path.length() - 1) {
+			throw new InvalidValuePathException(path);
+		}
+		if(sepPos > 0) {
+			final String key = path.substring(0, sepPos);
+			final String subPath = path.substring(sepPos + 1);
+			final Object child = node.get(key);
+			final ExtensibleConfig childConfig;
+			if(child instanceof ExtensibleConfig) {
+				childConfig = (ExtensibleConfig) child;
+			} else {
+				childConfig = new BasicExtensibleConfig(pathSep, new HashMap<>());
+				node.put(key, childConfig);
+			}
+			childConfig.val(subPath, val);
+		} else {
+			node.put(path, val);
 		}
 	}
 
@@ -206,36 +232,5 @@ implements Externalizable, ExtensibleConfig {
 				throw new InvalidValueTypeException(path, Long.class, v.getClass());
 			}
 		}
-	}
-
-	@Override
-	public final String toString() {
-
-	}
-
-	private void fromString(final String data) {
-
-	}
-
-	@Override
-	public final void writeExternal(final ObjectOutput out)
-	throws IOException {
-		final byte[] bytes = toString().getBytes();
-		final int length = bytes.length;
-		out.writeInt(length);
-		out.write(bytes);
-	}
-
-	@Override
-	public final void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		final int length = in.readInt();
-		final byte[] bytes = new byte[length];
-		int offset = 0;
-		while(offset < length) {
-			offset += in.read(bytes, offset, length - offset);
-		}
-		final String data = new String(bytes);
-		fromString(data);
 	}
 }
