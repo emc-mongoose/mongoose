@@ -36,7 +36,7 @@ implements StorageDriver<I, O> {
 	private final BlockingQueue<O> inTasksQueue;
 	private final LongAdder scheduledTaskCount = new LongAdder();
 	private final LongAdder completedTaskCount = new LongAdder();
-	private final IoTasksDispatchCoroutine ioTasksDispatchCoroutine;
+	private final IoTasksDispatchFiber ioTasksDispatchFiber;
 
 	protected CoopStorageDriverBase(
 		final String testStepId, final DataInput dataInput, final LoadConfig loadConfig,
@@ -52,7 +52,7 @@ implements StorageDriver<I, O> {
 			this.concurrencyThrottle = new Semaphore(Integer.MAX_VALUE, false);
 		}
 		final int batchSize = loadConfig.getBatchConfig().getSize();
-		this.ioTasksDispatchCoroutine = new IoTasksDispatchCoroutine<>(
+		this.ioTasksDispatchFiber = new IoTasksDispatchFiber<>(
 			ServiceTaskExecutor.INSTANCE, this, inTasksQueue, childTasksQueue, stepId, batchSize
 		);
 	}
@@ -60,7 +60,7 @@ implements StorageDriver<I, O> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		ioTasksDispatchCoroutine.start();
+		ioTasksDispatchFiber.start();
 	}
 
 	@Override
@@ -198,7 +198,7 @@ implements StorageDriver<I, O> {
 
 	@Override
 	protected void doShutdown() {
-		ioTasksDispatchCoroutine.stop();
+		ioTasksDispatchFiber.stop();
 		Loggers.MSG.debug("{}: shut down", toString());
 	}
 
@@ -217,7 +217,7 @@ implements StorageDriver<I, O> {
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			super.doClose();
-			ioTasksDispatchCoroutine.close();
+			ioTasksDispatchFiber.close();
 			childTasksQueue.clear();
 			inTasksQueue.clear();
 		}

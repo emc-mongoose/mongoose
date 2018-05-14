@@ -1,7 +1,7 @@
 package com.emc.mongoose.model.concurrent;
 
-import com.github.akurilov.concurrent.AsyncRunnable;
-import com.github.akurilov.concurrent.AsyncRunnableBase;
+import com.github.akurilov.commons.concurrent.AsyncRunnable;
+import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 
 import java.io.IOException;
 import java.util.Queue;

@@ -36,12 +36,14 @@ import com.emc.mongoose.config.storage.auth.AuthConfig;
 import com.emc.mongoose.config.scenario.step.limit.LimitConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.github.akurilov.concurrent.throttle.IndexThrottle;
-import com.github.akurilov.concurrent.throttle.Throttle;
+import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
+import com.github.akurilov.commons.concurrent.throttle.Throttle;
+
 import org.apache.logging.log4j.Level;
 
 import java.io.BufferedReader;

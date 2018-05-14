@@ -9,8 +9,6 @@ import com.emc.mongoose.config.item.ItemConfig;
 import com.emc.mongoose.config.load.LoadConfig;
 import com.emc.mongoose.config.storage.StorageConfig;
 
-import java.rmi.RemoteException;
-
 /**
  Created by andrey on 05.10.16.
  */

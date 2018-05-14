@@ -1,10 +1,10 @@
 package com.emc.mongoose.model.concurrent;
 
-import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
+import com.github.akurilov.fiber4j.FibersExecutor;
 
 public interface ServiceTaskExecutor {
 
-	CoroutinesExecutor INSTANCE = new CoroutinesExecutor();
+	FibersExecutor INSTANCE = new FibersExecutor();
 
 	static void setThreadCount(final int threadCount) {
 		INSTANCE.setThreadCount(threadCount);

@@ -1,12 +1,5 @@
 package com.emc.mongoose.storage.driver.nio;
 
-import com.github.akurilov.commons.collection.OptLockArrayBuffer;
-import com.github.akurilov.commons.collection.OptLockBuffer;
-
-import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
-import com.github.akurilov.concurrent.coroutine.Coroutine;
-import com.github.akurilov.concurrent.coroutine.ExclusiveCoroutineBase;
-
 import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
@@ -14,7 +7,6 @@ import static com.emc.mongoose.model.io.task.IoTask.Status.ACTIVE;
 import static com.emc.mongoose.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.model.io.task.IoTask.Status.PENDING;
 import com.emc.mongoose.model.exception.OmgShootMyFootException;
-import com.github.akurilov.concurrent.ThreadUtil;
 import com.emc.mongoose.model.concurrent.ThreadDump;
 import com.emc.mongoose.model.data.DataInput;
 import com.emc.mongoose.model.io.task.IoTask;
@@ -23,6 +15,14 @@ import com.emc.mongoose.config.load.LoadConfig;
 import com.emc.mongoose.config.storage.StorageConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+
+import com.github.akurilov.fiber4j.ExclusiveFiberBase;
+import com.github.akurilov.fiber4j.Fiber;
+import com.github.akurilov.fiber4j.FibersExecutor;
+
+import com.github.akurilov.commons.collection.OptLockArrayBuffer;
+import com.github.akurilov.commons.collection.OptLockBuffer;
+import com.github.akurilov.commons.concurrent.ThreadUtil;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
@@ -45,11 +45,11 @@ extends CoopStorageDriverBase<I, O>
 implements NioStorageDriver<I, O> {
 
 	private final static String CLS_NAME = NioStorageDriverBase.class.getSimpleName();
-	private final static CoroutinesExecutor IO_EXECUTOR = new CoroutinesExecutor(false);
+	private final static FibersExecutor IO_EXECUTOR = new FibersExecutor(false);
 
 	private final int ioWorkerCount;
 	private final int ioTaskBuffCapacity;
-	private final List<Coroutine> ioCoroutines;
+	private final List<Fiber> ioFibers;
 	private final OptLockBuffer<O> ioTaskBuffs[];
 	private final AtomicLong rrc = new AtomicLong(0);
 
@@ -67,12 +67,12 @@ implements NioStorageDriver<I, O> {
 		} else {
 			ioWorkerCount = ThreadUtil.getHardwareThreadCount();
 		}
-		ioCoroutines = new ArrayList<>(ioWorkerCount);
+		ioFibers = new ArrayList<>(ioWorkerCount);
 		ioTaskBuffs = new OptLockBuffer[ioWorkerCount];
 		ioTaskBuffCapacity = Math.max(MIN_TASK_BUFF_CAPACITY, concurrencyLevel / ioWorkerCount);
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			ioTaskBuffs[i] = new OptLockArrayBuffer<>(ioTaskBuffCapacity);
-			ioCoroutines.add(new NioCoroutine(IO_EXECUTOR, ioTaskBuffs[i]));
+			ioFibers.add(new NioFiber(IO_EXECUTOR, ioTaskBuffs[i]));
 		}
 	}
 
@@ -81,8 +81,8 @@ implements NioStorageDriver<I, O> {
 	 The I/O task itself may correspond to a large data transfer so it can't be non-blocking.
 	 So the I/O task may be invoked multiple times (in the reentrant manner).
 	 */
-	private final class NioCoroutine
-	extends ExclusiveCoroutineBase {
+	private final class NioFiber
+	extends ExclusiveFiberBase {
 
 		private final OptLockBuffer<O> ioTaskBuff;
 		private final List<O> ioTaskLocalBuff;
@@ -90,7 +90,7 @@ implements NioStorageDriver<I, O> {
 		private int ioTaskBuffSize;
 		private O ioTask;
 
-		public NioCoroutine(final CoroutinesExecutor executor, final OptLockBuffer<O> ioTaskBuff) {
+		public NioFiber(final FibersExecutor executor, final OptLockBuffer<O> ioTaskBuff) {
 			super(executor, ioTaskBuff);
 			this.ioTaskBuff = ioTaskBuff;
 			this.ioTaskLocalBuff = new ArrayList<>(ioTaskBuffCapacity);
@@ -181,9 +181,9 @@ implements NioStorageDriver<I, O> {
 	protected final void doStart()
 	throws IllegalStateException {
 		super.doStart();
-		for(final Coroutine ioCoroutine : ioCoroutines) {
+		for(final Fiber ioFiber : ioFibers) {
 			try {
-				ioCoroutine.start();
+				ioFiber.start();
 			} catch(final RemoteException ignored) {
 			}
 		}
@@ -192,7 +192,7 @@ implements NioStorageDriver<I, O> {
 	@Override
 	protected final void doStop()
 	throws IllegalStateException {
-		for(final Coroutine ioCoroutine : ioCoroutines) {
+		for(final Fiber ioCoroutine : ioFibers) {
 			try {
 				ioCoroutine.stop();
 			} catch(final RemoteException ignored) {
@@ -273,12 +273,16 @@ implements NioStorageDriver<I, O> {
 	protected void doClose()
 	throws IOException {
 		super.doClose();
-		for(final Coroutine ioCoroutine : ioCoroutines) {
-			ioCoroutine.close();
+		for(final Fiber ioFiber : ioFibers) {
+			ioFiber.close();
 		}
 		for(int i = 0; i < ioWorkerCount; i ++) {
-			try(final CloseableThreadContext.Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
-				if(ioTaskBuffs[i].tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+			try(
+				final CloseableThreadContext.Instance logCtx = CloseableThreadContext.put(
+					KEY_CLASS_NAME, CLS_NAME
+				)
+			) {
+				if(ioTaskBuffs[i].tryLock(Fiber.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 					ioTaskBuffs[i].clear();
 				} else if(ioTaskBuffs[i].size() > 0){
 					Loggers.ERR.debug(
@@ -293,6 +297,6 @@ implements NioStorageDriver<I, O> {
 			}
 			ioTaskBuffs[i] = null;
 		}
-		ioCoroutines.clear();
+		ioFibers.clear();
 	}
 }

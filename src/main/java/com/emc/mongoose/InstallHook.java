@@ -1,11 +1,14 @@
 package com.emc.mongoose;
 
-import com.emc.mongoose.config.Config;
+
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.PATH_DEFAULTS;
 import static com.emc.mongoose.Constants.USER_HOME;
+import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+
+import com.github.akurilov.confuse.Config;
 
 import org.apache.logging.log4j.Level;
 
@@ -18,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -32,20 +36,23 @@ implements Runnable {
 
 	public InstallHook()
 	throws IllegalStateException, InvalidPathException  {
-		final URL defaultConfigUrl = InstallHook.class.getClassLoader().getResource(
+		final URL defaultConfigUrl = getClass().getResource(
 			RESOURCES_TO_INSTALL_PREFIX + File.separator + PATH_DEFAULTS
 		);
 		if(defaultConfigUrl == null) {
 			throw new IllegalStateException("No bundled default config found");
 		}
 		try {
-			bundledDefaults = Config.loadFromUrl(defaultConfigUrl);
-		} catch(final IOException e) {
+			final Map<String, Object> schema = ConfigUtil.loadConfigSchema(
+				getClass().getResource("/config-schema.json")
+			);
+			bundledDefaults = ConfigUtil.loadConfig(defaultConfigUrl, schema);
+		} catch(final Exception e) {
 			throw new IllegalStateException(
 				"Failed to load the bundled default config from the resources", e
 			);
 		}
-		final String appVersion = bundledDefaults.getVersion();
+		final String appVersion = bundledDefaults.stringVal("version");
 		System.out.println(APP_NAME + " v " + appVersion);
 		appHomePath = Paths.get(USER_HOME, "." + APP_NAME, appVersion);
 		try {

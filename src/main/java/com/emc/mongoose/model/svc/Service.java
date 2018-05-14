@@ -1,6 +1,6 @@
 package com.emc.mongoose.model.svc;
 
-import com.github.akurilov.concurrent.AsyncRunnable;
+import com.github.akurilov.commons.concurrent.AsyncRunnable;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

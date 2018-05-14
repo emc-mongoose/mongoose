@@ -1,0 +1,148 @@
+{
+	"item": {
+		"data": {
+			"input": {
+				"file": "java.lang.String",
+				"layer": {
+					"cache": "int",
+					"size": "java.lang.String"
+				},
+				"seed": "java.lang.String"
+			},
+			"ranges": {
+				"concat": "java.lang.String",
+				"fixed": "java.util.List",
+				"random": "int",
+				"threshold": "java.lang.String"
+			},
+			"size": "java.lang.String",
+			"verify": "boolean"
+		},
+		"input": {
+			"file": "java.lang.String",
+			"path": "java.lang.String"
+		},
+		"naming": {
+			"type": "java.lang.String",
+			"prefix": "java.lang.String",
+			"radix": "int",
+			"step": "int",
+			"offset": "long",
+			"length": "int"
+		},
+		"output": {
+			"delay": "java.lang.String",
+			"file": "java.lang.String",
+			"path": "java.lang.String"
+		},
+		"type": "java.lang.String"
+	},
+	"load": {
+		"batch": {
+			"size": "int"
+		},
+		"generator": {
+			"recycle": {
+				"enabled": "boolean",
+				"limit": "int"
+			},
+			"remote": "boolean",
+			"shuffle": "boolean",
+			"weight": "int"
+		},
+		"limit": {
+			"concurrency": "int",
+			"rate": "double"
+		},
+		"service": {
+			"threads": "int"
+		},
+		"type": "java.lang.String"
+	},
+	"node": "boolean",
+	"output": {
+		"color": "boolean",
+		"metrics": {
+			"average": {
+				"period": "java.lang.String",
+				"persist": "boolean",
+				"table": {
+					"header": {
+						"period": "int"
+					}
+				}
+			},
+			"summary": {
+				"perfDbResultsFile": "boolean",
+				"persist": "boolean"
+			},
+			"trace": {
+				"persist": "boolean"
+			},
+			"threshold": "double"
+		}
+	},
+	"scenario": {
+		"file": "java.lang.String",
+		"step": {
+			"distributed": "boolean",
+			"id": "java.lang.String",
+			"limit": {
+				"count": "long",
+				"fail": {
+					"count": "long",
+					"rate": "boolean"
+				},
+				"size": "java.lang.String",
+				"time": "java.lang.String"
+			},
+			"node": {
+				"addrs": "java.util.List",
+				"port": "int"
+			}
+		}
+	},
+	"storage": {
+		"auth": {
+			"file": "java.lang.String",
+			"secret": "java.lang.String",
+			"token": "java.lang.String",
+			"uid": "java.lang.String"
+		},
+		"driver": {
+			"queue": {
+				"input": "int",
+				"output": "int"
+			},
+			"threads": "int",
+			"type": "java.lang.String"
+		},
+		"net": {
+			"bindBacklogSize": "int",
+			"interestOpQueued": "boolean",
+			"keepAlive": "boolean",
+			"linger": "int",
+			"reuseAddr": "boolean",
+			"rcvBuf": "int",
+			"sndBuf": "int",
+			"tcpNoDelay": "boolean",
+			"timeoutMilliSec": "int",
+			"ioRatio": "int",
+			"transport": "java.lang.String",
+			"ssl": "boolean",
+			"http": {
+				"fsAccess": "boolean",
+				"headers": "java.util.Map",
+				"namespace": "java.lang.String",
+				"versioning": "boolean"
+			},
+			"node": {
+				"addrs": "java.util.List",
+				"port": "int",
+				"connAttemptsLimit": "int"
+			}
+		}
+	},
+	"version": "java.lang.String",
+	"aliasing": "java.util.List"
+}

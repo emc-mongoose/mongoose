@@ -1,7 +1,7 @@
 package com.emc.mongoose;
 
-import com.emc.mongoose.config.Config;
 import com.emc.mongoose.config.IllegalArgumentNameException;
+import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.scenario.ScenarioConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -12,13 +12,14 @@ import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.Constants.PATH_DEFAULTS;
 import static com.emc.mongoose.cli.CliArgParser.formatCliArgsList;
 import static com.emc.mongoose.cli.CliArgParser.getAllCliArgs;
-import static com.emc.mongoose.cli.CliArgParser.parseArgs;
+
 import com.emc.mongoose.model.svc.Service;
 import com.emc.mongoose.scenario.step.ScriptEngineUtil;
 import com.emc.mongoose.scenario.step.node.BasicFileManagerService;
 import com.emc.mongoose.scenario.step.node.BasicLoadStepManagerService;
 import static com.emc.mongoose.scenario.step.Constants.ATTR_CONFIG;
 
+import com.github.akurilov.confuse.Config;
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
@@ -48,10 +49,12 @@ public final class Main {
 
 		try(final URLClassLoader extClsLoader = Extensions.extClassLoader(appHomePath)) {
 
+			// TODO resolve the runtime schema
+
 			final File defaultsFile = Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile();
 			try {
-				config = Config.loadFromFile(defaultsFile);
-			} catch(final IOException e) {
+				config = ConfigUtil.loadConfig(defaultsFile, config.schema());
+			} catch(final Exception e) {
 				LogUtil.exception(
 					Level.ERROR, e, "Failed to load the defaults from {}", defaultsFile
 				);

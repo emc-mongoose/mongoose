@@ -14,8 +14,8 @@ import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
-import com.github.akurilov.concurrent.coroutine.Coroutine;
-import com.github.akurilov.concurrent.coroutine.CoroutineBase;
+import com.github.akurilov.fiber4j.Fiber;
+import com.github.akurilov.fiber4j.FiberBase;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
@@ -52,7 +52,7 @@ extends DaemonBase {
 	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
 	private final Lock allMetricsLock = new ReentrantLock();
 
-	private final Coroutine coroutine = new CoroutineBase(ServiceTaskExecutor.INSTANCE) {
+	private final Fiber fiber = new FiberBase(ServiceTaskExecutor.INSTANCE) {
 
 		private long outputPeriodMillis;
 		private long lastOutputTs;
@@ -152,7 +152,7 @@ extends DaemonBase {
 			) {
 				if(!INSTANCE.isStarted()) {
 					INSTANCE.start();
-					Loggers.MSG.debug("Started the metrics manager coroutine");
+					Loggers.MSG.debug("Started the metrics manager fiber");
 				}
 				final Map<MetricsContext, AutoCloseable>
 					stepMetrics = INSTANCE.allMetrics.computeIfAbsent(id, c -> new HashMap<>());
@@ -221,7 +221,7 @@ extends DaemonBase {
 			} finally {
 				if(INSTANCE.allMetrics.size() == 0) {
 					INSTANCE.stop();
-					Loggers.MSG.debug("Stopped the metrics manager coroutine");
+					Loggers.MSG.debug("Stopped the metrics manager fiber");
 				}
 				INSTANCE.allMetricsLock.unlock();
 				Loggers.MSG.debug("Metrics context \"{}\" unregistered", metricsCtx);
@@ -258,7 +258,7 @@ extends DaemonBase {
 		try {
 			if(allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
 				try {
-					coroutine.start();
+					fiber.start();
 				} catch(final RemoteException ignored) {
 				} finally {
 					allMetricsLock.unlock();
@@ -282,7 +282,7 @@ extends DaemonBase {
 		try {
 			if(allMetricsLock.tryLock(1, TimeUnit.SECONDS)) {
 				try {
-					coroutine.stop();
+					fiber.stop();
 				} catch(final RemoteException ignored) {
 				} finally {
 					allMetricsLock.unlock();

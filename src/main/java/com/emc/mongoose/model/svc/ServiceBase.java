@@ -1,6 +1,6 @@
 package com.emc.mongoose.model.svc;
 
-import com.github.akurilov.concurrent.AsyncRunnableBase;
+import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;

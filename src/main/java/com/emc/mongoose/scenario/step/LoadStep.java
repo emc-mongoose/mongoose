@@ -3,7 +3,7 @@ package com.emc.mongoose.scenario.step;
 import com.emc.mongoose.model.metrics.MetricsSnapshot;
 import com.emc.mongoose.config.Config;
 
-import com.github.akurilov.concurrent.AsyncRunnable;
+import com.github.akurilov.commons.concurrent.AsyncRunnable;
 
 import java.rmi.RemoteException;
 import java.util.List;

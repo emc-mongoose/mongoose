@@ -1,14 +1,14 @@
 package com.emc.mongoose.model.supply.async;
 
 import com.emc.mongoose.model.exception.OmgDoesNotPerformException;
-import com.github.akurilov.concurrent.InitCallable;
-import com.github.akurilov.concurrent.Initializable;
-import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
-
-import com.github.akurilov.commons.math.Random;
-
 import com.emc.mongoose.model.supply.BatchSupplier;
 import com.emc.mongoose.model.supply.RangeDefinedSupplier;
+
+import com.github.akurilov.fiber4j.FibersExecutor;
+
+import com.github.akurilov.commons.concurrent.InitCallable;
+import com.github.akurilov.commons.concurrent.Initializable;
+import com.github.akurilov.commons.math.Random;
 
 import java.io.IOException;
 import java.util.List;
@@ -27,7 +27,7 @@ implements Initializable, RangeDefinedSupplier<T> {
 	private final BatchSupplier<T> newValueSupplier;
 
 	protected AsyncRangeDefinedSupplierBase(
-		final CoroutinesExecutor executor, final long seed, final T minValue, final T maxValue
+		final FibersExecutor executor, final long seed, final T minValue, final T maxValue
 	) throws OmgDoesNotPerformException {
 		this.rnd = new Random(seed);
 		this.minValue = minValue;

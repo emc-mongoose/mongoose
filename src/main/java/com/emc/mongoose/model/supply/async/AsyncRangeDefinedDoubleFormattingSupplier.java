@@ -2,7 +2,7 @@ package com.emc.mongoose.model.supply.async;
 
 import com.emc.mongoose.model.exception.OmgDoesNotPerformException;
 
-import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
+import com.github.akurilov.fiber4j.FibersExecutor;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -13,7 +13,7 @@ extends AsyncRangeDefinedSupplierBase<Double> {
 	private final NumberFormat format;
 
 	public AsyncRangeDefinedDoubleFormattingSupplier(
-		final CoroutinesExecutor executor, final long seed, final double minValue,
+		final FibersExecutor executor, final long seed, final double minValue,
 		final double maxValue, final String formatString
 	) throws OmgDoesNotPerformException {
 		super(executor, seed, minValue, maxValue);

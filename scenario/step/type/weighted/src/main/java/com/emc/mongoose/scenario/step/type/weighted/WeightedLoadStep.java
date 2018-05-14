@@ -30,10 +30,9 @@ import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.system.SizeInBytes;
-
-import com.github.akurilov.concurrent.throttle.IndexThrottle;
-import com.github.akurilov.concurrent.throttle.RateThrottle;
-import com.github.akurilov.concurrent.throttle.SequentialWeightsThrottle;
+import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
+import com.github.akurilov.commons.concurrent.throttle.RateThrottle;
+import com.github.akurilov.commons.concurrent.throttle.SequentialWeightsThrottle;
 
 import org.apache.logging.log4j.Level;
 

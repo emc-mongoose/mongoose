@@ -1,7 +1,6 @@
 package com.emc.mongoose.scenario.step.type;
 
-import com.github.akurilov.concurrent.AsyncRunnable;
-
+import com.github.akurilov.commons.concurrent.AsyncRunnable;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.Output;
 

@@ -4,7 +4,7 @@ import com.emc.mongoose.model.env.DateUtil;
 import com.emc.mongoose.model.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.model.supply.async.AsyncUpdatingValueSupplier;
 
-import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
+import com.github.akurilov.fiber4j.FibersExecutor;
 
 import java.util.Date;
 
@@ -14,7 +14,7 @@ import java.util.Date;
 public final class AsyncCurrentDateSupplier
 extends AsyncUpdatingValueSupplier<String> {
 
-	public AsyncCurrentDateSupplier(final CoroutinesExecutor executor)
+	public AsyncCurrentDateSupplier(final FibersExecutor executor)
 	throws OmgDoesNotPerformException {
 		super(
 			executor,

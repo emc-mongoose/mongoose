@@ -7,7 +7,6 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
-
 import com.emc.mongoose.storage.driver.StorageDriverFactory;
 import com.emc.mongoose.config.item.ItemConfig;
 import com.emc.mongoose.config.load.LoadConfig;
@@ -120,7 +119,8 @@ public class BasicStorageDriverBuilder<
 				final String typeName = storageDriverFactory.getName();
 				availTypes.add(typeName);
 				if(driverType.equals(typeName)) {
-					return storageDriverFactory.create(stepId, dataInput, loadConfig, storageConfig, verifyFlag
+					return storageDriverFactory.create(
+						stepId, dataInput, loadConfig, storageConfig, verifyFlag
 					);
 				}
 			}

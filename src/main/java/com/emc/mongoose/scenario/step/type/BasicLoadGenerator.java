@@ -8,15 +8,17 @@ import com.emc.mongoose.model.io.task.IoTaskBuilder;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.github.akurilov.concurrent.coroutine.Coroutine;
-import com.github.akurilov.concurrent.coroutine.CoroutineBase;
-import com.github.akurilov.concurrent.throttle.IndexThrottle;
-import com.github.akurilov.concurrent.throttle.Throttle;
+import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
+import com.github.akurilov.commons.concurrent.throttle.Throttle;
+
+import com.github.akurilov.fiber4j.Fiber;
+import com.github.akurilov.fiber4j.FiberBase;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
@@ -62,7 +64,7 @@ implements LoadGenerator<I, O> {
 	private final LongAdder outputTaskCounter = new LongAdder();
 	private final String name;
 	private final ThreadLocal<OptLockBuffer<O>> threadLocalTasksBuff;
-	private final Coroutine coroutine;
+	private final Fiber fiber;
 
 	@SuppressWarnings("unchecked")
 	public BasicLoadGenerator(
@@ -85,7 +87,7 @@ implements LoadGenerator<I, O> {
 
 		threadLocalTasksBuff = ThreadLocal.withInitial(() -> new OptLockArrayBuffer<>(batchSize));
 
-		coroutine = new CoroutineBase(ServiceTaskExecutor.INSTANCE) {
+		fiber = new FiberBase(ServiceTaskExecutor.INSTANCE) {
 
 			private final long _countLimit;
 			{
@@ -302,7 +304,7 @@ implements LoadGenerator<I, O> {
 	protected void doStart()
 	throws IllegalStateException {
 		try {
-			coroutine.start();
+			fiber.start();
 		} catch(final RemoteException ignored) {
 		}
 	}
@@ -311,7 +313,7 @@ implements LoadGenerator<I, O> {
 	protected final void doShutdown()
 	throws IllegalStateException {
 		try {
-			coroutine.stop();
+			fiber.stop();
 		} catch(final RemoteException ignored) {
 		}
 		Loggers.MSG.debug(
@@ -336,7 +338,7 @@ implements LoadGenerator<I, O> {
 		// to it so the load generator builder should close it
 		if(itemInput != null) {
 			try {
-				inputLock.tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS);
+				inputLock.tryLock(Fiber.TIMEOUT_NANOS, TimeUnit.NANOSECONDS);
 				itemInput.close();
 			} catch(final Exception e) {
 				LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", toString());

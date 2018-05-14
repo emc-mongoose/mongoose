@@ -4,7 +4,6 @@ import com.emc.mongoose.config.Config;
 import com.emc.mongoose.logging.Loggers;
 import org.apache.commons.lang.WordUtils;
 
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -149,7 +148,7 @@ public final class CliArgParser {
 
 				try {
 
-					final Class configBranchCls = (Class<Serializable>) Class.forName(
+					final Class configBranchCls = Class.forName(
 						subPkgName + '.' + configBranchClsNamePrefix + CONFIG_CLS_SUFFIX
 					);
 

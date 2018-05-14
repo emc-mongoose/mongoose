@@ -17,7 +17,7 @@ import com.emc.mongoose.config.storage.auth.AuthConfig;
 import com.emc.mongoose.config.storage.driver.queue.QueueConfig;
 import com.emc.mongoose.logging.Loggers;
 
-import com.github.akurilov.concurrent.ThreadUtil;
+import com.github.akurilov.commons.concurrent.ThreadUtil;
 import com.github.akurilov.commons.io.Input;
 
 import org.apache.logging.log4j.CloseableThreadContext;

@@ -3,9 +3,9 @@ package com.emc.mongoose.storage.driver.net;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.net.ssl.SslContext;
 import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.commons.concurrent.ThreadUtil;
 
-import com.github.akurilov.concurrent.ThreadUtil;
-import com.github.akurilov.concurrent.coroutine.Coroutine;
+import static com.github.akurilov.fiber4j.Fiber.TIMEOUT_NANOS;
 
 import com.github.akurilov.netty.connection.pool.BasicMultiNodeConnPool;
 import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;
@@ -126,7 +126,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		final int ioRatio = netConfig.getIoRatio();
 		final Transport transportKey = Transport.valueOf(netConfig.getTransport().toUpperCase());
 
-		if(IO_EXECUTOR_LOCK.tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+		if(IO_EXECUTOR_LOCK.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 			try {
 				if(IO_EXECUTOR == null) {
 					Loggers.MSG.info("{}: I/O executor doesn't exist yet", toString());
@@ -642,7 +642,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			try {
-				if(IO_EXECUTOR_LOCK.tryLock(Coroutine.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+				if(IO_EXECUTOR_LOCK.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 					try {
 						IO_EXECUTOR_REF_COUNT --;
 						Loggers.MSG.debug(

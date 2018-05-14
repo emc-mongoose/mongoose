@@ -5,7 +5,7 @@ import com.emc.mongoose.model.exception.OmgShootMyFootException;
 import com.emc.mongoose.model.supply.PatternDefinedSupplier;
 import com.emc.mongoose.model.supply.RangePatternDefinedSupplier;
 
-import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
+import com.github.akurilov.fiber4j.FibersExecutor;
 
 public final class AsyncPatternDefinedSupplier
 extends AsyncUpdatingValueSupplier<String>
@@ -13,7 +13,7 @@ implements PatternDefinedSupplier {
 	
 	private final PatternDefinedSupplier wrappedSupplier;
 	
-	public AsyncPatternDefinedSupplier(final CoroutinesExecutor executor, final String pattern)
+	public AsyncPatternDefinedSupplier(final FibersExecutor executor, final String pattern)
 	throws OmgShootMyFootException {
 		this(
 			executor,
@@ -24,7 +24,7 @@ implements PatternDefinedSupplier {
 	}
 	
 	private AsyncPatternDefinedSupplier(
-		final CoroutinesExecutor executor, final PatternDefinedSupplier wrappedSupplier
+		final FibersExecutor executor, final PatternDefinedSupplier wrappedSupplier
 	) throws OmgDoesNotPerformException {
 		super(
 			executor,

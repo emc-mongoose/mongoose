@@ -20,8 +20,8 @@ import com.emc.mongoose.scenario.step.FileService;
 import com.emc.mongoose.scenario.step.LoadStep;
 import com.emc.mongoose.scenario.step.LoadStepManagerService;
 import com.emc.mongoose.scenario.step.LoadStepService;
-import com.emc.mongoose.scenario.step.master.metrics.MetricsSnapshotsSupplierCoroutine;
-import com.emc.mongoose.scenario.step.master.metrics.RemoteMetricsSnapshotsSupplierCoroutine;
+import com.emc.mongoose.scenario.step.master.metrics.MetricsSnapshotsSupplierFiber;
+import com.emc.mongoose.scenario.step.master.metrics.RemoteMetricsSnapshotsSupplierFiber;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
 import com.emc.mongoose.config.Config;
 import com.emc.mongoose.config.item.ItemConfig;
@@ -80,7 +80,7 @@ implements LoadStepClient {
 	private final Config baseConfig;
 	private final ClassLoader clsLoader;
 	private final List<Map<String, Object>> stepConfigs;
-	private final Map<LoadStepService, MetricsSnapshotsSupplierCoroutine> metricsSnapshotsSuppliers;
+	private final Map<LoadStepService, MetricsSnapshotsSupplierFiber> metricsSnapshotsSuppliers;
 
 	public BasicLoadStepClient(
 		final LoadStep loadStep, final Config baseConfig, final ClassLoader clsLoader,
@@ -144,8 +144,8 @@ implements LoadStepClient {
 					stepSvc -> {
 						try {
 							stepSvc.start();
-							final MetricsSnapshotsSupplierCoroutine
-								snapshotsFetcher = new RemoteMetricsSnapshotsSupplierCoroutine(
+							final MetricsSnapshotsSupplierFiber
+								snapshotsFetcher = new RemoteMetricsSnapshotsSupplierFiber(
 									ServiceTaskExecutor.INSTANCE, stepSvc
 								);
 							snapshotsFetcher.start();

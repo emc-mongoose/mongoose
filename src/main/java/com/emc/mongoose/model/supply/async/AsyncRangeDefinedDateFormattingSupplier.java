@@ -3,7 +3,7 @@ package com.emc.mongoose.model.supply.async;
 import com.emc.mongoose.model.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.model.supply.RangeDefinedSupplier;
 
-import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
+import com.github.akurilov.fiber4j.FibersExecutor;
 
 import org.apache.commons.lang.time.FastDateFormat;
 
@@ -17,7 +17,7 @@ extends AsyncRangeDefinedSupplierBase<Date> {
 	private final RangeDefinedSupplier<Long> longGenerator;
 	
 	public AsyncRangeDefinedDateFormattingSupplier(
-		final CoroutinesExecutor executor, final long seed, final Date minValue,
+		final FibersExecutor executor, final long seed, final Date minValue,
 		final Date maxValue, final String formatString
 	) throws OmgDoesNotPerformException {
 		super(executor, seed, minValue, maxValue);

@@ -1,6 +1,6 @@
 package com.emc.mongoose.scenario.step.type;
 
-import com.github.akurilov.concurrent.AsyncRunnable;
+import com.github.akurilov.commons.concurrent.AsyncRunnable;
 
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;

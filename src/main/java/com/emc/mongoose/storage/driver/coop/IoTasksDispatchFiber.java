@@ -9,8 +9,8 @@ import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import com.github.akurilov.commons.collection.OptLockArrayBuffer;
 import com.github.akurilov.commons.collection.OptLockBuffer;
 
-import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
-import com.github.akurilov.concurrent.coroutine.ExclusiveCoroutineBase;
+import com.github.akurilov.fiber4j.ExclusiveFiberBase;
+import com.github.akurilov.fiber4j.FibersExecutor;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
@@ -20,10 +20,10 @@ import java.util.concurrent.BlockingQueue;
 /**
  Created by andrey on 23.08.17.
  */
-public final class IoTasksDispatchCoroutine<I extends Item, O extends IoTask<I>>
-extends ExclusiveCoroutineBase {
+public final class IoTasksDispatchFiber<I extends Item, O extends IoTask<I>>
+extends ExclusiveFiberBase {
 
-	private static final String CLS_NAME = IoTasksDispatchCoroutine.class.getSimpleName();
+	private static final String CLS_NAME = IoTasksDispatchFiber.class.getSimpleName();
 
 	private final String stepId;
 	private final int batchSize;
@@ -35,8 +35,8 @@ extends ExclusiveCoroutineBase {
 	private int n = 0; // the current count of the I/O tasks in the buffer
 	private int m;
 
-	public IoTasksDispatchCoroutine(
-		final CoroutinesExecutor executor, final CoopStorageDriverBase<I, O> storageDriver,
+	public IoTasksDispatchFiber(
+		final FibersExecutor executor, final CoopStorageDriverBase<I, O> storageDriver,
 		final BlockingQueue<O> inTasksQueue, final BlockingQueue<O> childTasksQueue,
 		final String stepId, final int batchSize
 	) {
@@ -46,8 +46,8 @@ extends ExclusiveCoroutineBase {
 		);
 	}
 
-	private IoTasksDispatchCoroutine(
-		final CoroutinesExecutor executor, final OptLockBuffer<O> buff,
+	private IoTasksDispatchFiber(
+		final FibersExecutor executor, final OptLockBuffer<O> buff,
 		final CoopStorageDriverBase<I, O> storageDriver, final BlockingQueue<O> inTasksQueue,
 		final BlockingQueue<O> childTasksQueue, final String stepId, final int batchSize
 	) {

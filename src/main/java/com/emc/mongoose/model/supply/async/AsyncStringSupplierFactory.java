@@ -4,7 +4,7 @@ import com.emc.mongoose.model.supply.BatchSupplier;
 import com.emc.mongoose.model.supply.SupplierFactory;
 import com.emc.mongoose.model.exception.OmgShootMyFootException;
 
-import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
+import com.github.akurilov.fiber4j.FibersExecutor;
 
 import java.text.ParseException;
 import java.util.Date;
@@ -18,19 +18,19 @@ implements SupplierFactory<String, G> {
 	private static final AsyncStringSupplierFactory<? extends BatchSupplier<String>>
 		INSTANCE = new AsyncStringSupplierFactory<>();
 
-	private CoroutinesExecutor executor;
+	private FibersExecutor executor;
 
 	private AsyncStringSupplierFactory() {
 	}
 
 	public static AsyncStringSupplierFactory<? extends BatchSupplier<String>> getInstance(
-		final CoroutinesExecutor executor
+		final FibersExecutor executor
 	) {
-		return INSTANCE.setCoroutinesExecutor(executor);
+		return INSTANCE.setFibersExecutor(executor);
 	}
 
-	private AsyncStringSupplierFactory<? extends BatchSupplier<String>> setCoroutinesExecutor(
-		final CoroutinesExecutor executor
+	private AsyncStringSupplierFactory<? extends BatchSupplier<String>> setFibersExecutor(
+		final FibersExecutor executor
 	) {
 		this.executor = executor;
 		return this;

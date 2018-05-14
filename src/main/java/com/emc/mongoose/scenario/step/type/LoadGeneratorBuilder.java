@@ -10,9 +10,10 @@ import com.emc.mongoose.config.item.ItemConfig;
 import com.emc.mongoose.config.load.LoadConfig;
 import com.emc.mongoose.config.storage.auth.AuthConfig;
 import com.emc.mongoose.config.scenario.step.limit.LimitConfig;
+
 import com.github.akurilov.commons.io.Input;
-import com.github.akurilov.concurrent.throttle.IndexThrottle;
-import com.github.akurilov.concurrent.throttle.Throttle;
+import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
+import com.github.akurilov.commons.concurrent.throttle.Throttle;
 
 import java.io.IOException;
 

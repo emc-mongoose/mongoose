@@ -24,9 +24,9 @@ import com.emc.mongoose.logging.Loggers;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.io.Output;
 
-import com.github.akurilov.concurrent.coroutine.Coroutine;
-import com.github.akurilov.concurrent.coroutine.TransferCoroutine;
+import com.github.akurilov.fiber4j.Fiber;
 
+import com.github.akurilov.fiber4j.TransferFiber;
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
@@ -58,7 +58,7 @@ implements LoadController<I, O> {
 	private final boolean failRateLimitFlag;
 	private final ConcurrentMap<I, O> latestIoResultByItem;
 	private final boolean isRecycling;
-	private final Coroutine resultsTransferCoroutine;
+	private final Fiber resultsTransferFiber;
 	private final MetricsContext metricsCtx;
 	private final LongAdder counterResults = new LongAdder();
 	private final boolean tracePersistFlag;
@@ -91,7 +91,7 @@ implements LoadController<I, O> {
 		} else {
 			latestIoResultByItem = null;
 		}
-		resultsTransferCoroutine = new TransferCoroutine<>(
+		resultsTransferFiber = new TransferFiber<>(
 			ServiceTaskExecutor.INSTANCE, driver, this, batchSize
 		);
 		this.countLimit = limitConfig.getCount() > 0 ? limitConfig.getCount() : Long.MAX_VALUE;
@@ -368,7 +368,7 @@ implements LoadController<I, O> {
 	protected void doStart()
 	throws IllegalStateException {
 		try {
-			resultsTransferCoroutine.start();
+			resultsTransferFiber.start();
 		} catch(final RemoteException ignored) {
 		}
 	}
@@ -425,7 +425,7 @@ implements LoadController<I, O> {
 	throws IllegalStateException {
 		
 		try {
-			resultsTransferCoroutine.stop();
+			resultsTransferFiber.stop();
 		} catch(final RemoteException ignored) {
 		}
 
@@ -510,11 +510,11 @@ implements LoadController<I, O> {
 	@Override
 	protected final void doClose() {
 		try {
-			resultsTransferCoroutine.close();
+			resultsTransferFiber.close();
 		} catch(final IOException e) {
 			LogUtil.exception(
 				Level.WARN, e, "{}: failed to stop the service coroutine {}",
-				resultsTransferCoroutine
+				resultsTransferFiber
 			);
 		}
 		Loggers.MSG.debug("{}: closed the load controller", id);

@@ -1,12 +1,13 @@
 package com.emc.mongoose.model.supply.async;
 
 import com.emc.mongoose.model.exception.OmgDoesNotPerformException;
-import com.github.akurilov.concurrent.InitCallable;
-import com.github.akurilov.concurrent.coroutine.Coroutine;
-import com.github.akurilov.concurrent.coroutine.CoroutinesExecutor;
-import com.github.akurilov.concurrent.coroutine.ExclusiveCoroutineBase;
-
 import com.emc.mongoose.model.supply.BasicUpdatingValueSupplier;
+
+import com.github.akurilov.commons.concurrent.InitCallable;
+
+import com.github.akurilov.fiber4j.ExclusiveFiberBase;
+import com.github.akurilov.fiber4j.Fiber;
+import com.github.akurilov.fiber4j.FibersExecutor;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -22,10 +23,10 @@ extends BasicUpdatingValueSupplier<T> {
 	
 	private static final Logger LOG = Logger.getLogger(AsyncUpdatingValueSupplier.class.getName());
 	
-	private final Coroutine updateTask;
+	private final Fiber updateTask;
 	
 	public AsyncUpdatingValueSupplier(
-		final CoroutinesExecutor executor, final T initialValue, final InitCallable<T> updateAction
+		final FibersExecutor executor, final T initialValue, final InitCallable<T> updateAction
 	) throws OmgDoesNotPerformException {
 
 		super(initialValue, null);
@@ -33,7 +34,7 @@ extends BasicUpdatingValueSupplier<T> {
 			throw new NullPointerException("Argument should not be null");
 		}
 
-		updateTask = new ExclusiveCoroutineBase(executor) {
+		updateTask = new ExclusiveFiberBase(executor) {
 
 			@Override
 			protected final void invokeTimedExclusively(final long startTimeNanos) {
