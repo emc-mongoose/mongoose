@@ -9,7 +9,7 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.confuse.Config;
-
+import com.github.akurilov.confuse.SchemaProvider;
 import org.apache.logging.log4j.Level;
 
 import java.io.File;
@@ -37,14 +37,14 @@ implements Runnable {
 	public InstallHook()
 	throws IllegalStateException, InvalidPathException  {
 		final URL defaultConfigUrl = getClass().getResource(
-			RESOURCES_TO_INSTALL_PREFIX + File.separator + PATH_DEFAULTS
+			File.separator + RESOURCES_TO_INSTALL_PREFIX + File.separator + PATH_DEFAULTS
 		);
 		if(defaultConfigUrl == null) {
 			throw new IllegalStateException("No bundled default config found");
 		}
 		try {
-			final Map<String, Object> schema = ConfigUtil.loadConfigSchema(
-				getClass().getResource("/config-schema.json")
+			final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
+				APP_NAME, getClass().getClassLoader()
 			);
 			bundledDefaults = ConfigUtil.loadConfig(defaultConfigUrl, schema);
 		} catch(final Exception e) {

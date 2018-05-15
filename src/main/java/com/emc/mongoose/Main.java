@@ -6,6 +6,8 @@ import com.emc.mongoose.config.scenario.ScenarioConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.model.env.Extensions;
+
+import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
@@ -20,6 +22,7 @@ import com.emc.mongoose.scenario.step.node.BasicLoadStepManagerService;
 import static com.emc.mongoose.scenario.step.Constants.ATTR_CONFIG;
 
 import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.SchemaProvider;
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
@@ -34,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Map;
 
 public final class Main {
 
@@ -49,18 +53,19 @@ public final class Main {
 
 		try(final URLClassLoader extClsLoader = Extensions.extClassLoader(appHomePath)) {
 
-			// TODO resolve the runtime schema
-
 			final File defaultsFile = Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile();
 			try {
-				config = ConfigUtil.loadConfig(defaultsFile, config.schema());
+				final Map<String, Object> configSchema = SchemaProvider.resolveAndReduce(
+					APP_NAME, extClsLoader
+				);
+				config = ConfigUtil.loadConfig(defaultsFile, configSchema);
 			} catch(final Exception e) {
 				LogUtil.exception(
 					Level.ERROR, e, "Failed to load the defaults from {}", defaultsFile
 				);
 			}
 
-			try {
+			/*try {
 				config.apply(
 					parseArgs(config.getAliasingConfig(), args),
 					"none-" + LogUtil.getDateTimeStamp()
@@ -85,13 +90,13 @@ public final class Main {
 				} else {
 					runScenario(config, extClsLoader, appHomePath);
 				}
-			}
+			}*/
 		} catch(final IOException e) {
 			LogUtil.exception(Level.ERROR, e, "Failed to close the extensions class loader");
 		}
 	}
 
-	private static void runNode(final Config config, final ClassLoader clsLoader)
+	/*private static void runNode(final Config config, final ClassLoader clsLoader)
 	throws IOException {
 		final int
 			listenPort = config.getScenarioConfig().getStepConfig().getNodeConfig().getPort();
@@ -165,5 +170,5 @@ public final class Main {
 				);
 			}
 		}
-	}
+	}*/
 }

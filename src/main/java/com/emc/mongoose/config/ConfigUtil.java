@@ -28,9 +28,9 @@ public interface ConfigUtil {
 
 	static ObjectMapper readConfigMapper(final Map<String, Object> schema)
 	throws Exception {
-		final JsonDeserializer<? extends Config>
+		final JsonDeserializer<BasicConfig>
 			deserializer = new ConfigJsonDeserializer<>(BasicConfig.class, "-", schema);
-		final Module module = new SimpleModule().addDeserializer(Config.class, deserializer);
+		final Module module = new SimpleModule().addDeserializer(BasicConfig.class, deserializer);
 		return new ObjectMapper()
 			.registerModule(module)
 			.enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)

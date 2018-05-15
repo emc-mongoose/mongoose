@@ -61,8 +61,8 @@ task printVersion {
 ext {
 
 	depVersion = [
-		confuse: "1.0.2",
-		confuseIoJson: "1.0.0",
+		confuse: "1.0.4",
+		confuseIoJson: "1.0.1",
 		commonsCodec : "1.11",
 		commonsLang : "2.6",
 		disruptor : "3.4.2",
@@ -75,7 +75,7 @@ ext {
 		log4j : "2.8.2",
 		metrics : "4.0.2",
 		nagaina : "[3.6.10,)",
-		netty : "4.1.24.Final",
+		netty : "4.1.25.Final",
 		nettyConnectionPool : "[1.0.1,)",
 	]
 
