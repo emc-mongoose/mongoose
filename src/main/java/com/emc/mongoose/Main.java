@@ -1,5 +1,8 @@
 package com.emc.mongoose;
 
+import com.emc.mongoose.cli.CliArgParser;
+import com.emc.mongoose.cli.CliArgUtil;
+import com.emc.mongoose.config.AliasingUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.scenario.ScenarioConfig;
@@ -12,6 +15,7 @@ import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.Constants.PATH_DEFAULTS;
+import static com.emc.mongoose.cli.CliArgParser.ARG_PREFIX;
 import static com.emc.mongoose.cli.CliArgParser.formatCliArgsList;
 import static com.emc.mongoose.cli.CliArgParser.getAllCliArgs;
 
@@ -37,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public final class Main {
@@ -49,11 +54,11 @@ public final class Main {
 		LogUtil.init(appHomePath.toString());
 		installHook.run();
 
-		Config config = installHook.bundledDefaults();
-
 		try(final URLClassLoader extClsLoader = Extensions.extClassLoader(appHomePath)) {
 
 			final File defaultsFile = Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile();
+			final Config config;
+
 			try {
 				final Map<String, Object> configSchema = SchemaProvider.resolveAndReduce(
 					APP_NAME, extClsLoader
@@ -63,6 +68,22 @@ public final class Main {
 				LogUtil.exception(
 					Level.ERROR, e, "Failed to load the defaults from {}", defaultsFile
 				);
+				return;
+			}
+
+			try {
+				final Map<String, String> parsedArgs = CliArgUtil.parseArgs(args);
+				final List<Map<String, Object>> aliasingConfig = config.listVal("aliasing");
+				final Map<String, String> aliasedArgs = AliasingUtil.apply(
+					parsedArgs, aliasingConfig
+				);
+				aliasedArgs.forEach(config::val);
+			} catch(final IllegalArgumentNameException e) {
+				Loggers.ERR.fatal(
+					"Invalid argument: \"{}\"\nThe list of all possible args:\n{}", e.getMessage(),
+					formatCliArgsList(getAllCliArgs())
+				);
+				return;
 			}
 
 			/*try {
