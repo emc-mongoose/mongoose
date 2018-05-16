@@ -61,14 +61,14 @@ task printVersion {
 ext {
 
 	depVersion = [
-		confuse: "1.0.4",
+		confuse: "1.0.5",
 		confuseIoJson: "1.0.1",
 		commonsCodec : "1.11",
 		commonsLang : "2.6",
 		disruptor : "3.4.2",
 		fiber4j: "[1.0.0,)",
 		jackson : "2.9.5",
-		javaCommons : "[2.0.4,)",
+		javaCommons : "[2.0.9,)",
 		javassist : "3.22.0-GA",
 		junit : "4.12",
 		slf4j : "1.7.25",

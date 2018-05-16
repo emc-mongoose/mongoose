@@ -22,7 +22,7 @@
 				// The count of the random ranges to update or read
 				"random": 0,
 				// The size threshold to enable multipart upload if supported by the configured storage driver
-				"threshold": 0
+				"threshold": "0"
 			},
 			// The size of the data items to process. Doesn't have any effect if item-type=path
 			"size": "1MB",
@@ -61,7 +61,7 @@
 		"output": {
 			// The minimum delay between the subsequent I/O operations for each item (chain load).
 			// 0 means no delay.
-			"delay": 0,
+			"delay": "0",
 			// Specified the target file for the items processed successfully.
 			// If null the items info is not saved.
 			"file": null,
@@ -165,7 +165,7 @@
 					"rate": false
 				},
 				// The maximum size of the data items to process. 0 means no size limit.
-				"size": 0,
+				"size": "0",
 				// The maximum time to perform a load step. 0 means no time limit
 				"time": "0s"
 			},
