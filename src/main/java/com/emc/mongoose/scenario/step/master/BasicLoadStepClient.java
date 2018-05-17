@@ -23,15 +23,6 @@ import com.emc.mongoose.scenario.step.LoadStepService;
 import com.emc.mongoose.scenario.step.master.metrics.MetricsSnapshotsSupplierFiber;
 import com.emc.mongoose.scenario.step.master.metrics.RemoteMetricsSnapshotsSupplierFiber;
 import com.emc.mongoose.storage.driver.builder.BasicStorageDriverBuilder;
-import com.emc.mongoose.config.Config;
-import com.emc.mongoose.config.item.ItemConfig;
-import com.emc.mongoose.config.item.data.DataConfig;
-import com.emc.mongoose.config.item.data.input.layer.LayerConfig;
-import com.emc.mongoose.config.item.input.InputConfig;
-import com.emc.mongoose.config.item.naming.NamingConfig;
-import com.emc.mongoose.config.item.output.OutputConfig;
-import com.emc.mongoose.config.scenario.step.limit.LimitConfig;
-import com.emc.mongoose.config.scenario.step.node.NodeConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
@@ -43,6 +34,8 @@ import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
+
+import com.github.akurilov.confuse.Config;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
@@ -109,13 +102,12 @@ implements LoadStepClient {
 				.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
 		) {
 
-			final NodeConfig
-				nodeConfig = baseConfig.getScenarioConfig().getStepConfig().getNodeConfig();
-			final int nodePort = nodeConfig.getPort();
+			final Config nodeConfig = baseConfig.configVal("scenario-step-node");
+			final int nodePort = nodeConfig.intVal("port");
 			final Function<String, String> addPortIfMissingPartialFunc = Function2
 				.partial2(NetUtil::addPortIfMissing, nodePort);
 			final List<String> nodeAddrs = nodeConfig
-				.getAddrs()
+				.<String>listVal("addrs")
 				.stream()
 				.map(addPortIfMissingPartialFunc)
 				.collect(Collectors.toList());
@@ -128,7 +120,7 @@ implements LoadStepClient {
 
 			initFileManagerServices(nodeAddrs);
 
-			if(baseConfig.getOutputConfig().getMetricsConfig().getTraceConfig().getPersist()) {
+			if(baseConfig.boolVal("output-metrics-trace-persist")) {
 				initIoTraceLogFileServices(nodeAddrs);
 			}
 			final Map<String, Config> configSlices = sliceConfigs(baseConfig, nodeAddrs);
@@ -208,34 +200,31 @@ implements LoadStepClient {
 
 		// slice the count limit (if any)
 		final int nodeCount = nodeAddrs.size();
-		final long
-			countLimit = config.getScenarioConfig().getStepConfig().getLimitConfig().getCount();
+		final long countLimit = config.longVal("scenario-step-limit-count");
 		if(nodeCount > 1 && countLimit > 0) {
 			final long countLimitPerNode = (long) Math.ceil(((double) countLimit) / nodeCount);
 			long remainingCountLimit = countLimit;
 			for(final Map.Entry<String, Config> configEntry : configSlices.entrySet()) {
-				final LimitConfig limitConfigSlice = configEntry.getValue()
-					.getScenarioConfig()
-					.getStepConfig()
-					.getLimitConfig();
+				final Config
+					limitConfigSlice = configEntry.getValue().configVal("scenario-step-limit");
 				if(remainingCountLimit > countLimitPerNode) {
 					Loggers.MSG.info(
 						"Node \"{}\": count limit = {}", configEntry.getKey(), countLimitPerNode
 					);
-					limitConfigSlice.setCount(countLimitPerNode);
+					limitConfigSlice.val("count", countLimitPerNode);
 					remainingCountLimit -= countLimitPerNode;
 				} else {
 					Loggers.MSG.info(
 						"Node \"{}\": count limit = {}", configEntry.getKey(), remainingCountLimit
 					);
-					limitConfigSlice.setCount(remainingCountLimit);
+					limitConfigSlice.val("count", remainingCountLimit);
 					remainingCountLimit = 0;
 				}
 			}
 		}
 
 		// slice an item input (if any)
-		final int batchSize = config.getLoadConfig().getBatchConfig().getSize();
+		final int batchSize = config.intVal("load-batch-size");
 		try(final Input<? extends Item> itemInput = createItemInput(config, clsLoader, batchSize)) {
 			if(itemInput != null) {
 				Loggers.MSG.info("{}: slice the item input \"{}\"...", id(), itemInput);
@@ -248,7 +237,7 @@ implements LoadStepClient {
 		}
 
 		// item output file (if any)
-		final String itemOutputFile = config.getItemConfig().getOutputConfig().getFile();
+		final String itemOutputFile = config.stringVal("item-output-file");
 		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
 			itemOutputFileSvcs = nodeAddrs
 				.parallelStream()
@@ -287,11 +276,10 @@ implements LoadStepClient {
 						fileSvc -> {
 							try {
 								final String remoteItemOutputFile = fileSvc.filePath();
-								final OutputConfig outputConfigSlice = configSlices
+								final Config outputConfigSlice = configSlices
 									.get(nodeAddrWithPort)
-									.getItemConfig()
-									.getOutputConfig();
-								outputConfigSlice.setFile(remoteItemOutputFile);
+									.configVal("item-output");
+								outputConfigSlice.val("file", remoteItemOutputFile);
 								Loggers.MSG.info(
 									"{}: temporary item output file is \"{}\" @ {}", id(),
 									remoteItemOutputFile, nodeAddrWithPort
@@ -357,11 +345,11 @@ implements LoadStepClient {
 		final Config config, final ClassLoader clsLoader, final int batchSize
 	) {
 
-		final ItemConfig itemConfig = config.getItemConfig();
-		final ItemType itemType = ItemType.valueOf(itemConfig.getType().toUpperCase());
+		final Config itemConfig = config.configVal("item");
+		final ItemType itemType = ItemType.valueOf(itemConfig.stringVal("type").toUpperCase());
 		final ItemFactory<? extends Item> itemFactory = ItemType.getItemFactory(itemType);
-		final InputConfig itemInputConfig = itemConfig.getInputConfig();
-		final String itemInputFile = itemInputConfig.getFile();
+		final Config itemInputConfig = itemConfig.configVal("input");
+		final String itemInputFile = itemInputConfig.stringVal("file");
 
 		if(itemInputFile != null && !itemInputFile.isEmpty()) {
 			final Path itemInputFilePath = Paths.get(itemInputFile);
@@ -381,29 +369,29 @@ implements LoadStepClient {
 				);
 			}
 		} else {
-			final String itemInputPath = itemInputConfig.getPath();
+			final String itemInputPath = itemInputConfig.stringVal("path");
 			if(itemInputPath != null && !itemInputPath.isEmpty()) {
-				final DataConfig dataConfig = itemConfig.getDataConfig();
-				final com.emc.mongoose.config.item.data.input.InputConfig
-					dataInputConfig = dataConfig.getInputConfig();
-				final LayerConfig dataLayerConfig = dataInputConfig.getLayerConfig();
+				final Config dataConfig = itemConfig.configVal("data");
+				final Config dataInputConfig = dataConfig.configVal("input");
+				final Config dataLayerConfig = dataInputConfig.configVal("layer");
 				try {
 					final DataInput dataInput = DataInput.getInstance(
-						dataInputConfig.getFile(), dataInputConfig.getSeed(),
-						dataLayerConfig.getSize(), dataLayerConfig.getCache()
+						dataInputConfig.stringVal("file"), dataInputConfig.stringVal("seed"),
+						new SizeInBytes(dataLayerConfig.stringVal("size")),
+						dataLayerConfig.intVal("cache")
 					);
 					final StorageDriver<? extends Item, ? extends IoTask>
 						storageDriver = new BasicStorageDriverBuilder<>()
 							.classLoader(clsLoader)
-							.testStepId(config.getScenarioConfig().getStepConfig().getId())
+							.testStepId(config.stringVal("scenario-step-id"))
 							.itemConfig(itemConfig)
 							.dataInput(dataInput)
-							.loadConfig(config.getLoadConfig())
-							.storageConfig(config.getStorageConfig())
+							.loadConfig(config.configVal("load"))
+							.storageConfig(config.configVal("storage"))
 							.build();
-					final NamingConfig namingConfig = itemConfig.getNamingConfig();
-					final String namingPrefix = namingConfig.getPrefix();
-					final int namingRadix = namingConfig.getRadix();
+					final Config namingConfig = itemConfig.configVal("naming");
+					final String namingPrefix = namingConfig.stringVal("prefix");
+					final int namingRadix = namingConfig.intVal("radix");
 					return new StorageItemInput<>(
 						(StorageDriver) storageDriver, batchSize, itemFactory, itemInputPath,
 						namingPrefix, namingRadix
@@ -510,9 +498,7 @@ implements LoadStepClient {
 					.ifPresent(
 						itemInputFile -> configSlices
 							.get(nodeAddrWithPort)
-							.getItemConfig()
-							.getInputConfig()
-							.setFile(itemInputFile)
+							.val("item-input-file", itemInputFile)
 					)
 			);
 	}
@@ -922,7 +908,7 @@ implements LoadStepClient {
 		}
 
 		if(null != itemOutputFileSvcs) {
-			final String itemOutputFile = baseConfig.getItemConfig().getOutputConfig().getFile();
+			final String itemOutputFile = baseConfig.stringVal("item-output-file");
 			transferItemOutputData(itemOutputFileSvcs, itemOutputFile);
 			itemOutputFileSvcs
 				.entrySet()

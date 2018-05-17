@@ -1,7 +1,8 @@
 package com.emc.mongoose.scenario.step;
 
 import com.emc.mongoose.model.svc.Service;
-import com.emc.mongoose.config.Config;
+
+import com.github.akurilov.confuse.Config;
 
 import java.rmi.RemoteException;
 import java.util.List;

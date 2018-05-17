@@ -1,5 +1,6 @@
 package com.emc.mongoose.cli;
 
+import com.emc.mongoose.config.CliArgUtil;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 

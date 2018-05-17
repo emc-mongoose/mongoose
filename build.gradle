@@ -61,8 +61,8 @@ task printVersion {
 ext {
 
 	depVersion = [
-		confuse: "1.0.5",
-		confuseIoJson: "1.0.1",
+		confuse: "1.0.7",
+		confuseIoJson: "1.0.2",
 		commonsCodec : "1.11",
 		commonsLang : "2.6",
 		disruptor : "3.4.2",

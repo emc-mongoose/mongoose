@@ -1,9 +1,11 @@
 package com.emc.mongoose.scenario.step;
 
 import com.emc.mongoose.model.metrics.MetricsSnapshot;
-import com.emc.mongoose.config.Config;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnable;
+
+import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.impl.BasicConfig;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -33,9 +35,9 @@ extends AsyncRunnable {
 	throws RemoteException;
 
 	static Config initConfigSlice(final Config config, final String nodeAddrWithPort) {
-		final Config configSlice = new Config(config);
+		final Config configSlice = new BasicConfig(config);
 		// disable the distributed mode flag
-		configSlice.getScenarioConfig().getStepConfig().setDistributed(false);
+		configSlice.val("scenario-step-distributed", false);
 		return configSlice;
 	}
 }

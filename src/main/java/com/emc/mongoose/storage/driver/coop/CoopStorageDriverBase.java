@@ -9,12 +9,11 @@ import com.emc.mongoose.model.io.task.partial.PartialIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.storage.driver.StorageDriverBase;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
-import com.emc.mongoose.config.storage.driver.queue.QueueConfig;
 import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
+
+import com.github.akurilov.confuse.Config;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 
@@ -39,19 +38,19 @@ implements StorageDriver<I, O> {
 	private final IoTasksDispatchFiber ioTasksDispatchFiber;
 
 	protected CoopStorageDriverBase(
-		final String testStepId, final DataInput dataInput, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final boolean verifyFlag
+		final String testStepId, final DataInput dataInput, final Config loadConfig,
+		final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
 		super(testStepId, dataInput, loadConfig, storageConfig, verifyFlag);
-		final QueueConfig queueConfig = storageConfig.getDriverConfig().getQueueConfig();
-		this.childTasksQueue = new ArrayBlockingQueue<>(queueConfig.getInput());
-		this.inTasksQueue = new ArrayBlockingQueue<>(queueConfig.getInput());
+		final Config queueConfig = storageConfig.configVal("driver-queue");
+		this.childTasksQueue = new ArrayBlockingQueue<>(queueConfig.intVal("input"));
+		this.inTasksQueue = new ArrayBlockingQueue<>(queueConfig.intVal("input"));
 		if(concurrencyLevel > 0) {
 			this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
 		} else {
 			this.concurrencyThrottle = new Semaphore(Integer.MAX_VALUE, false);
 		}
-		final int batchSize = loadConfig.getBatchConfig().getSize();
+		final int batchSize = loadConfig.intVal("batch-size");
 		this.ioTasksDispatchFiber = new IoTasksDispatchFiber<>(
 			ServiceTaskExecutor.INSTANCE, this, inTasksQueue, childTasksQueue, stepId, batchSize
 		);

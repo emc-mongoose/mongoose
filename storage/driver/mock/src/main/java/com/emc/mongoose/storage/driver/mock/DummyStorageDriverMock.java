@@ -9,12 +9,11 @@ import com.emc.mongoose.model.item.DataItem;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
 import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.confuse.Config;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -41,12 +40,12 @@ implements StorageDriver<I, O> {
 	private final LongAdder completedTaskCount = new LongAdder();
 
 	public DummyStorageDriverMock(
-		final String stepName, final DataInput contentSrc, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final boolean verifyFlag
+		final String stepName, final DataInput contentSrc, final Config loadConfig,
+		final Config storageConfig, final boolean verifyFlag
 	) {
-		this.batchSize = loadConfig.getBatchConfig().getSize();
-		this.outputQueueCapacity = storageConfig.getDriverConfig().getQueueConfig().getOutput();
-		this.concurrencyLevel = loadConfig.getLimitConfig().getConcurrency();
+		this.batchSize = loadConfig.intVal("batch-size");
+		this.outputQueueCapacity = storageConfig.intVal("driver-queue-output");
+		this.concurrencyLevel = loadConfig.intVal("limit-concurrency");
 		this.ioResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
 	}
 

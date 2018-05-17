@@ -11,10 +11,10 @@ import com.emc.mongoose.model.concurrent.ThreadDump;
 import com.emc.mongoose.model.data.DataInput;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+
+import com.github.akurilov.confuse.Config;
 
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 import com.github.akurilov.fiber4j.Fiber;
@@ -55,11 +55,11 @@ implements NioStorageDriver<I, O> {
 
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
-		final String testStepId, final DataInput dataInput, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final boolean verifyFlag
+		final String testStepId, final DataInput dataInput, final Config loadConfig,
+		final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
 		super(testStepId, dataInput, loadConfig, storageConfig, verifyFlag);
-		final int confWorkerCount = storageConfig.getDriverConfig().getThreads();
+		final int confWorkerCount = storageConfig.intVal("driver-threads");
 		if(confWorkerCount > 0) {
 			ioWorkerCount = confWorkerCount;
 		} else if(concurrencyLevel > 0) {

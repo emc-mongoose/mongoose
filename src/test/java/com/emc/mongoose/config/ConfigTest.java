@@ -1,23 +1,9 @@
 package com.emc.mongoose.config;
 
 import com.emc.mongoose.InstallHook;
-import com.emc.mongoose.config.scenario.step.node.NodeConfig;
 import com.emc.mongoose.config.util.ConfigMatcher;
 import com.emc.mongoose.config.util.ConfigNullMatcher;
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.emc.mongoose.config.item.ItemConfig;
-import com.emc.mongoose.config.item.data.DataConfig;
-import com.emc.mongoose.config.item.input.InputConfig;
-import com.emc.mongoose.config.item.naming.NamingConfig;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.load.generator.GeneratorConfig;
-import com.emc.mongoose.config.output.metrics.MetricsConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
-import com.emc.mongoose.config.storage.auth.AuthConfig;
-import com.emc.mongoose.config.storage.net.NetConfig;
-import com.emc.mongoose.config.storage.net.http.HttpConfig;
-import com.emc.mongoose.config.scenario.ScenarioConfig;
-import com.emc.mongoose.config.scenario.step.limit.LimitConfig;
 import junit.framework.TestCase;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;

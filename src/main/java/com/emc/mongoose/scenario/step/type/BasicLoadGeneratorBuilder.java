@@ -4,7 +4,6 @@ import com.emc.mongoose.model.exception.OmgShootMyFootException;
 import com.emc.mongoose.model.supply.BatchSupplier;
 import com.emc.mongoose.model.supply.ConstantStringSupplier;
 import com.emc.mongoose.model.supply.RangePatternDefinedSupplier;
-import com.emc.mongoose.logging.LogContextThreadFactory;
 import com.emc.mongoose.model.io.IoType;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.IoTaskBuilder;
@@ -25,17 +24,13 @@ import com.emc.mongoose.model.item.NewItemInput;
 import com.emc.mongoose.model.item.StorageItemInput;
 import com.emc.mongoose.model.item.TransferConvertBuffer;
 import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.config.item.ItemConfig;
-import com.emc.mongoose.config.item.data.ranges.RangesConfig;
-import com.emc.mongoose.config.item.input.InputConfig;
-import com.emc.mongoose.config.item.naming.NamingConfig;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.load.generator.GeneratorConfig;
-import com.emc.mongoose.config.load.generator.recycle.RecycleConfig;
-import com.emc.mongoose.config.storage.auth.AuthConfig;
-import com.emc.mongoose.config.scenario.step.limit.LimitConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.logging.LogContextThreadFactory;
+import static com.emc.mongoose.Constants.M;
+import static com.emc.mongoose.model.supply.PatternDefinedSupplier.PATTERN_CHAR;
+import static com.emc.mongoose.model.item.DataItem.getRangeCount;
+import static com.emc.mongoose.model.storage.StorageDriver.BUFF_SIZE_MIN;
 
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.io.Input;
@@ -43,6 +38,7 @@ import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.commons.concurrent.throttle.Throttle;
+import com.github.akurilov.confuse.Config;
 
 import org.apache.logging.log4j.Level;
 
@@ -65,11 +61,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
-import static com.emc.mongoose.Constants.M;
-import static com.emc.mongoose.model.supply.PatternDefinedSupplier.PATTERN_CHAR;
-import static com.emc.mongoose.model.item.DataItem.getRangeCount;
-import static com.emc.mongoose.model.storage.StorageDriver.BUFF_SIZE_MIN;
-
 /**
  Created by andrey on 12.11.16.
  */
@@ -78,12 +69,12 @@ public class BasicLoadGeneratorBuilder<
 >
 implements LoadGeneratorBuilder<I, O, T> {
 
-	private ItemConfig itemConfig = null;
-	private LoadConfig loadConfig = null;
-	private LimitConfig limitConfig = null;
+	private Config itemConfig = null;
+	private Config loadConfig = null;
+	private Config limitConfig = null;
 	private ItemType itemType = null;
 	private ItemFactory<I> itemFactory = null;
-	private AuthConfig authConfig = null;
+	private Config authConfig = null;
 	private StorageDriver<I, O> storageDriver = null;
 	private Input<I> itemInput = null;
 	private long sizeEstimate = -1;
@@ -93,20 +84,20 @@ implements LoadGeneratorBuilder<I, O, T> {
 	private IndexThrottle weightThrottle = null;
 	
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> itemConfig(final ItemConfig itemConfig) {
+	public BasicLoadGeneratorBuilder<I, O, T> itemConfig(final Config itemConfig) {
 		this.itemConfig = itemConfig;
 		return this;
 	}
 
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> loadConfig(final LoadConfig loadConfig) {
+	public BasicLoadGeneratorBuilder<I, O, T> loadConfig(final Config loadConfig) {
 		this.loadConfig = loadConfig;
-		this.batchSize = loadConfig.getBatchConfig().getSize();
+		this.batchSize = loadConfig.intVal("batch-size");
 		return this;
 	}
 
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> limitConfig(final LimitConfig limitConfig) {
+	public BasicLoadGeneratorBuilder<I, O, T> limitConfig(final Config limitConfig) {
 		this.limitConfig = limitConfig;
 		return this;
 	}
@@ -124,7 +115,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	}
 	
 	@Override
-	public BasicLoadGeneratorBuilder<I, O, T> authConfig(final AuthConfig authConfig) {
+	public BasicLoadGeneratorBuilder<I, O, T> authConfig(final Config authConfig) {
 		this.authConfig = authConfig;
 		return this;
 	}
@@ -139,17 +130,12 @@ implements LoadGeneratorBuilder<I, O, T> {
 	
 	@Override @SuppressWarnings("unchecked")
 	public BasicLoadGeneratorBuilder<I, O, T> itemInput(final Input<I> itemInput) {
-		/*if(this.itemInput != null) {
-			try {
-				this.itemInput.close();
-			} catch(final IOException ignored) {
-			}
-		}*/
 		this.itemInput = itemInput;
 		// chain transfer buffer is not resettable
 		if(!(itemInput instanceof TransferConvertBuffer)) {
 			sizeEstimate = estimateTransferSize(
-				null, IoType.valueOf(loadConfig.getType().toUpperCase()), (Input<DataItem>) itemInput
+				null, IoType.valueOf(loadConfig.stringVal("type").toUpperCase()),
+				(Input<DataItem>) itemInput
 			);
 		}
 		return this;
@@ -182,18 +168,18 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(limitConfig == null) {
 			throw new OmgShootMyFootException("Test step limit config is not set");
 		}
-		final long countLimit = limitConfig.getCount();
-		final SizeInBytes sizeLimit = limitConfig.getSize();
+		final long countLimit = limitConfig.longVal("count");
+		final SizeInBytes sizeLimit = new SizeInBytes(limitConfig.stringVal("size"));
 		if(loadConfig == null) {
 			throw new OmgShootMyFootException("Load config is not set");
 		}
-		final GeneratorConfig generatorConfig = loadConfig.getGeneratorConfig();
-		final boolean shuffleFlag = generatorConfig.getShuffle();
+		final Config generatorConfig = loadConfig.configVal("generator");
+		final boolean shuffleFlag = generatorConfig.boolVal("shuffle");
 		if(itemConfig == null) {
 			throw new OmgShootMyFootException("Item config is not set");
 		}
-		final InputConfig inputConfig = itemConfig.getInputConfig();
-		final RangesConfig rangesConfig = itemConfig.getDataConfig().getRangesConfig();
+		final Config inputConfig = itemConfig.configVal("input");
+		final Config rangesConfig = itemConfig.configVal("data-ranges");
 
 		if(itemType == null) {
 			throw new OmgShootMyFootException("Item type is not set");
@@ -203,7 +189,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 		// init the I/O task builder
 		if(ItemType.DATA.equals(itemType)) {
-			final List<String> fixedRangesConfig = rangesConfig.getFixed();
+			final List<String> fixedRangesConfig = rangesConfig.listVal("fixed");
 			final List<Range> fixedRanges;
 			if(fixedRangesConfig != null) {
 				fixedRanges = fixedRangesConfig
@@ -215,8 +201,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicDataIoTaskBuilder(originIndex)
 				.setFixedRanges(fixedRanges)
-				.setRandomRangesCount(rangesConfig.getRandom())
-				.setSizeThreshold(rangesConfig.getThreshold().get());
+				.setRandomRangesCount(rangesConfig.intVal("random"))
+				.setSizeThreshold(SizeInBytes.toFixedSize(rangesConfig.stringVal("threshold")));
 		} else if(ItemType.PATH.equals(itemType)){
 			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicPathIoTaskBuilder(originIndex);
 		} else {
@@ -224,11 +210,11 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 
 		// determine the operations type
-		final IoType ioType = IoType.valueOf(loadConfig.getType().toUpperCase());
+		final IoType ioType = IoType.valueOf(loadConfig.stringVal("type").toUpperCase());
 		ioTaskBuilder.setIoType(ioType);
 
 		// determine the input path
-		String itemInputPath = inputConfig.getPath();
+		String itemInputPath = inputConfig.stringVal("path");
 		if(itemInputPath != null && itemInputPath.indexOf('/') != 0) {
 			itemInputPath = '/' + itemInputPath;
 		}
@@ -248,7 +234,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(authConfig == null) {
 			throw new OmgShootMyFootException("Storage auth config is not set");
 		}
-		final String uid = authConfig.getUid();
+		final String uid = authConfig.stringVal("uid");
 		if(uid == null) {
 			uidSupplier = null;
 		} else if(-1 != uid.indexOf(PATTERN_CHAR)) {
@@ -258,14 +244,14 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 		ioTaskBuilder.setUidSupplier(uidSupplier);
 
-		final String authFile = authConfig.getFile();
+		final String authFile = authConfig.stringVal("file");
 		if(authFile != null && !authFile.isEmpty()) {
 			final Map<String, String> credentials = loadCredentials(authFile, (long) M);
 			ioTaskBuilder.setCredentialsMap(credentials);
 		} else {
 
 			final BatchSupplier<String> secretSupplier;
-			final String secret = authConfig.getSecret();
+			final String secret = authConfig.stringVal("secret");
 			if(secret == null) {
 				secretSupplier = null;
 			} else {
@@ -276,7 +262,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 
 		// init the items input
-		final String itemInputFile = inputConfig.getFile();
+		final String itemInputFile = inputConfig.stringVal("file");
 		if(itemInput == null) {
 			itemInput = itemInput(ioType, itemInputFile, itemInputPath);
 			if(itemInput == null) {
@@ -293,7 +279,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 
 		// intercept the items input for the copy ranges support
-		final Range srcItemsCountRange = rangesConfig.getConcat();
+		final Range srcItemsCountRange = new Range(rangesConfig.stringVal("concat"));
 		if(srcItemsCountRange != null) {
 			if(
 				IoType.CREATE.equals(ioType)
@@ -358,8 +344,9 @@ implements LoadGeneratorBuilder<I, O, T> {
 			storageDriver.adjustIoBuffers(sizeEstimate, ioType);
 		}
 
-		final RecycleConfig recycleConfig = generatorConfig.getRecycleConfig();
-		final int recycleLimit = recycleConfig.getEnabled() ? recycleConfig.getLimit() : 0;
+		final Config recycleConfig = generatorConfig.configVal("recycle");
+		final int
+			recycleLimit = recycleConfig.boolVal("enabled") ? recycleConfig.intVal("limit") : 0;
 
 		return (T) new BasicLoadGenerator<>(
 			itemInput, ioTaskBuilder, storageDriver, rateThrottle, weightThrottle, batchSize,
@@ -452,7 +439,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	private BatchSupplier<String> getOutputPathSupplier()
 	throws OmgShootMyFootException {
 		final BatchSupplier<String> pathSupplier;
-		String path = itemConfig.getOutputConfig().getPath();
+		String path = itemConfig.stringVal("output-path");
 		if(path == null || path.isEmpty()) {
 			path = LogUtil.getDateTimeStamp();
 		}
@@ -482,9 +469,9 @@ implements LoadGeneratorBuilder<I, O, T> {
 					);
 				}
 			} else {
-				final NamingConfig namingConfig = itemConfig.getNamingConfig();
-				final String namingPrefix = namingConfig.getPrefix();
-				final int namingRadix = namingConfig.getRadix();
+				final Config namingConfig = itemConfig.configVal("naming");
+				final String namingPrefix = namingConfig.stringVal("prefix");
+				final int namingRadix = namingConfig.intVal("radix");
 				itemInput = new StorageItemInput<>(
 					storageDriver, batchSize, itemFactory, itemInputPath, namingPrefix, namingRadix
 				);
@@ -513,14 +500,14 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 	private Input<I> newItemInput()
 	throws OmgShootMyFootException {
-		final NamingConfig namingConfig = itemConfig.getNamingConfig();
+		final Config namingConfig = itemConfig.configVal("naming");
 		final ItemNamingType namingType = ItemNamingType.valueOf(
-			namingConfig.getType().toUpperCase()
+			namingConfig.stringVal("type").toUpperCase()
 		);
-		final String namingPrefix = namingConfig.getPrefix();
-		final int namingLength = namingConfig.getLength();
-		final int namingRadix = namingConfig.getRadix();
-		final long namingOffset = namingConfig.getOffset();
+		final String namingPrefix = namingConfig.stringVal("prefix");
+		final int namingLength = namingConfig.intVal("length");
+		final int namingRadix = namingConfig.intVal("radix");
+		final long namingOffset = namingConfig.longVal("offset");
 		final ItemNameSupplier itemNameInput = new ItemNameSupplier(
 			namingType, namingPrefix, namingLength, namingRadix, namingOffset
 		);
@@ -528,7 +515,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 			throw new OmgShootMyFootException("Item factory is not set");
 		}
 		if(itemFactory instanceof BasicDataItemFactory) {
-			final SizeInBytes size = itemConfig.getDataConfig().getSize();
+			final SizeInBytes size = new SizeInBytes(itemConfig.stringVal("data-size"));
 			itemInput = (Input<I>) new NewDataItemInput(itemFactory, itemNameInput, size);
 		} else {
 			itemInput = new NewItemInput<>(itemFactory, itemNameInput);

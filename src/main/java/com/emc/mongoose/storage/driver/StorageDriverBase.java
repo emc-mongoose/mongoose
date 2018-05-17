@@ -4,21 +4,18 @@ import com.emc.mongoose.model.exception.OmgShootMyFootException;
 import com.emc.mongoose.model.concurrent.DaemonBase;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import com.emc.mongoose.config.storage.driver.DriverConfig;
 import com.emc.mongoose.model.data.DataInput;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.io.task.data.DataIoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
-import com.emc.mongoose.config.storage.auth.AuthConfig;
-import com.emc.mongoose.config.storage.driver.queue.QueueConfig;
 import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.commons.concurrent.ThreadUtil;
 import com.github.akurilov.commons.io.Input;
+
+import com.github.akurilov.confuse.Config;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 
@@ -58,19 +55,21 @@ implements StorageDriver<I,O> {
 	protected Function<Credential, String> requestAuthTokenFunc = this::requestNewAuthToken;
 
 	protected StorageDriverBase(
-		final String stepId, final DataInput itemDataInput, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final boolean verifyFlag
+		final String stepId, final DataInput itemDataInput, final Config loadConfig,
+		final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
 
 		this.itemDataInput = itemDataInput;
-		final DriverConfig driverConfig = storageConfig.getDriverConfig();
-		final QueueConfig queueConfig = driverConfig.getQueueConfig();
-		final int outputQueueCapacity = queueConfig.getOutput();
+		final Config driverConfig = storageConfig.configVal("driver");
+		final Config queueConfig = driverConfig.configVal("queue");
+		final int outputQueueCapacity = queueConfig.intVal("output");
 		this.ioResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
 		this.stepId = stepId;
-		final AuthConfig authConfig = storageConfig.getAuthConfig();
-		this.credential = Credential.getInstance(authConfig.getUid(), authConfig.getSecret());
-		final String authToken = authConfig.getToken();
+		final Config authConfig = storageConfig.configVal("auth");
+		this.credential = Credential.getInstance(
+			authConfig.stringVal("uid"), authConfig.stringVal("secret")
+		);
+		final String authToken = authConfig.stringVal("token");
 		if(authToken != null) {
 			if(this.credential == null) {
 				this.authTokens.put(Credential.NONE, authToken);
@@ -78,10 +77,10 @@ implements StorageDriver<I,O> {
 				this.authTokens.put(credential, authToken);
 			}
 		}
-		this.concurrencyLevel = loadConfig.getLimitConfig().getConcurrency();
+		this.concurrencyLevel = loadConfig.intVal("limit-concurrency");
 		this.verifyFlag = verifyFlag;
 
-		final int confWorkerCount = driverConfig.getThreads();
+		final int confWorkerCount = driverConfig.intVal("threads");
 		if(confWorkerCount > 0) {
 			ioWorkerCount = confWorkerCount;
 		} else if(concurrencyLevel > 0) {

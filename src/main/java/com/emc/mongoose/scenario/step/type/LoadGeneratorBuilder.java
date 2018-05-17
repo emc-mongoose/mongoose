@@ -6,14 +6,11 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.item.ItemType;
 import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.config.item.ItemConfig;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.storage.auth.AuthConfig;
-import com.emc.mongoose.config.scenario.step.limit.LimitConfig;
 
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.commons.concurrent.throttle.Throttle;
+import com.github.akurilov.confuse.Config;
 
 import java.io.IOException;
 
@@ -24,17 +21,17 @@ public interface LoadGeneratorBuilder<
 	I extends Item, O extends IoTask<I>, T extends LoadGenerator<I, O>
 > {
 
-	LoadGeneratorBuilder<I, O, T> itemConfig(final ItemConfig itemConfig);
+	LoadGeneratorBuilder<I, O, T> itemConfig(final Config itemConfig);
 
-	LoadGeneratorBuilder<I, O, T> loadConfig(final LoadConfig loadConfig);
+	LoadGeneratorBuilder<I, O, T> loadConfig(final Config loadConfig);
 
-	LoadGeneratorBuilder<I, O, T> limitConfig(final LimitConfig limitConfig);
+	LoadGeneratorBuilder<I, O, T> limitConfig(final Config limitConfig);
 
 	LoadGeneratorBuilder<I, O, T> itemType(final ItemType itemType);
 
 	LoadGeneratorBuilder<I, O, T> itemFactory(final ItemFactory<I> itemFactory);
 	
-	LoadGeneratorBuilder<I, O, T> authConfig(final AuthConfig authConfig);
+	LoadGeneratorBuilder<I, O, T> authConfig(final Config authConfig);
 	
 	LoadGeneratorBuilder<I, O, T> storageDriver(StorageDriver<I, O> storageDriver);
 	

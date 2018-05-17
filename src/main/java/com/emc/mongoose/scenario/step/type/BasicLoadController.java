@@ -12,8 +12,6 @@ import com.emc.mongoose.model.io.task.path.PathIoTask;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import com.emc.mongoose.logging.IoTraceCsvBatchLogMessage;
-import com.emc.mongoose.config.scenario.step.limit.LimitConfig;
-import com.emc.mongoose.config.scenario.step.limit.fail.FailConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
@@ -23,6 +21,8 @@ import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.io.Output;
+
+import com.github.akurilov.confuse.Config;
 
 import com.github.akurilov.fiber4j.Fiber;
 
@@ -74,7 +74,7 @@ implements LoadController<I, O> {
 		final LoadGenerator<I, O> generator,
 		final StorageDriver<I, O> driver,
 		final MetricsContext metricsCtx,
-		final LimitConfig limitConfig,
+		final Config limitConfig,
 		final boolean tracePersistFlag,
 		final int batchSize,
 		final int recycleLimit
@@ -94,12 +94,14 @@ implements LoadController<I, O> {
 		resultsTransferFiber = new TransferFiber<>(
 			ServiceTaskExecutor.INSTANCE, driver, this, batchSize
 		);
-		this.countLimit = limitConfig.getCount() > 0 ? limitConfig.getCount() : Long.MAX_VALUE;
-		this.sizeLimit = limitConfig.getSize().get() > 0 ?
-			limitConfig.getSize().get() : Long.MAX_VALUE;
-		final FailConfig failConfig = limitConfig.getFailConfig();
-		this.failCountLimit = failConfig.getCount() > 0 ? failConfig.getCount() : Long.MAX_VALUE;
-		this.failRateLimitFlag = failConfig.getRate();
+		final long configCountLimit = limitConfig.longVal("count");
+		this.countLimit = configCountLimit > 0 ? configCountLimit : Long.MAX_VALUE;
+		final SizeInBytes configSizeLimit = new SizeInBytes(limitConfig.stringVal("size"));
+		this.sizeLimit = configSizeLimit.get() > 0 ? configSizeLimit.get() : Long.MAX_VALUE;
+		final Config failConfig = limitConfig.configVal("fail");
+		final long configFailCount = failConfig.longVal("count");
+		this.failCountLimit = configFailCount > 0 ? configFailCount : Long.MAX_VALUE;
+		this.failRateLimitFlag = failConfig.boolVal("rate");
 	}
 
 	private boolean isDoneCountLimit() {

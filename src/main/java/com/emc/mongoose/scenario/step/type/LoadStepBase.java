@@ -2,6 +2,7 @@ package com.emc.mongoose.scenario.step.type;
 
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.model.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.model.metrics.BasicMetricsContext;
 import com.emc.mongoose.model.metrics.MetricsContext;
@@ -13,13 +14,12 @@ import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.scenario.step.LoadStep;
 import com.emc.mongoose.scenario.step.master.BasicLoadStepClient;
 import com.emc.mongoose.scenario.step.master.LoadStepClient;
-import com.emc.mongoose.config.Config;
-import com.emc.mongoose.config.output.metrics.MetricsConfig;
-import com.emc.mongoose.config.scenario.step.StepConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.impl.BasicConfig;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
@@ -111,9 +111,9 @@ implements LoadStep, Runnable {
 
 	protected final void actualConfig(final Config actualConfig) {
 		this.actualConfig = actualConfig;
-		final StepConfig stepConfig = actualConfig.getScenarioConfig().getStepConfig();
-		this.id = stepConfig.getId();
-		this.distributedFlag = stepConfig.getDistributed();
+		final Config stepConfig = actualConfig.configVal("scenario-step");
+		this.id = stepConfig.stringVal("id");
+		this.distributedFlag = stepConfig.boolVal("distributed");
 	}
 
 
@@ -148,8 +148,8 @@ implements LoadStep, Runnable {
 
 		init();
 
-		final StepConfig stepConfig = actualConfig.getScenarioConfig().getStepConfig();
-		final String stepId = stepConfig.getId();
+		final Config stepConfig = actualConfig.configVal("scenario-step");
+		final String stepId = stepConfig.stringVal("id");
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_STEP_ID, stepId)
@@ -157,15 +157,15 @@ implements LoadStep, Runnable {
 		) {
 			if(distributedFlag) {
 				// need to set the once generated step id
-				final Config config = new Config(baseConfig);
-				config.getScenarioConfig().getStepConfig().setId(stepId);
+				final Config config = new BasicConfig(baseConfig);
+				config.val("scenario-step-id", stepId);
 				stepClient = new BasicLoadStepClient(this, config, clsLoader, stepConfigs);
 				stepClient.start();
 			} else {
 				doStartLocal();
 			}
 
-			final long t = stepConfig.getLimitConfig().getTime();
+			final long t = stepConfig.longVal("limit-time");
 			if(t > 0) {
 				timeLimitSec = t;
 			}
@@ -186,35 +186,36 @@ implements LoadStep, Runnable {
 
 	protected final void initDistributedMetrics(
 		final int originIndex, final IoType ioType, final int concurrency, final int nodeCount,
-		final MetricsConfig metricsConfig, final SizeInBytes itemDataSize,
-		final boolean outputColorFlag
+		final Config metricsConfig, final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
 		metricsContexts.add(
 			new AggregatingMetricsContext(
 				id, ioType, nodeCount, concurrency * nodeCount,
-				(int) (concurrency * nodeCount * metricsConfig.getThreshold()),
-				itemDataSize, (int) metricsConfig.getAverageConfig().getPeriod(), outputColorFlag,
-				metricsConfig.getAverageConfig().getPersist(),
-				metricsConfig.getSummaryConfig().getPersist(),
-				metricsConfig.getSummaryConfig().getPerfDbResultsFile(),
+				(int) (concurrency * nodeCount * metricsConfig.doubleVal("threshold")),
+				itemDataSize,
+				(int) TimeUtil.getTimeInSeconds(metricsConfig.stringVal("average-period")),
+				outputColorFlag, metricsConfig.boolVal("average-persist"),
+				metricsConfig.boolVal("summary-persist"),
+				metricsConfig.boolVal("summary-perfDbResultsFile"),
 				() -> stepClient.remoteMetricsSnapshots(originIndex)
 			)
 		);
 	}
 
 	protected final void initLocalMetrics(
-		final IoType ioType, final int concurrency, final MetricsConfig metricsConfig,
+		final IoType ioType, final int concurrency, final Config metricsConfig,
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
 		metricsContexts.add(
 			new BasicMetricsContext(
 				id, ioType,
 				() -> drivers.stream().mapToInt(StorageDriver::getActiveTaskCount).sum(),
-				concurrency, (int) (concurrency * metricsConfig.getThreshold()), itemDataSize,
-				(int) metricsConfig.getAverageConfig().getPeriod(), outputColorFlag,
-				metricsConfig.getAverageConfig().getPersist(),
-				metricsConfig.getSummaryConfig().getPersist(),
-				metricsConfig.getSummaryConfig().getPerfDbResultsFile()
+				concurrency, (int) (concurrency * metricsConfig.doubleVal("threshold")),
+				itemDataSize,
+				(int) TimeUtil.getTimeInSeconds(metricsConfig.stringVal("average-period")),
+				outputColorFlag, metricsConfig.boolVal("average-persist"),
+				metricsConfig.boolVal("summary-persist"),
+				metricsConfig.boolVal("summary-perfDbResultsFile")
 			)
 		);
 	}

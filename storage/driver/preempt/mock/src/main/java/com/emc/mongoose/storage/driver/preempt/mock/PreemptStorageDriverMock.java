@@ -10,11 +10,11 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.preempt.PreemptStorageDriverBase;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
 
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.math.Random;
+
+import com.github.akurilov.confuse.Config;
 
 import java.io.IOException;
 import java.util.List;
@@ -25,8 +25,8 @@ extends PreemptStorageDriverBase<I, O> {
 	private final Random rnd = new Random();
 
 	public PreemptStorageDriverMock(
-		final String stepId, final DataInput itemDataInput, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final boolean verifyFlag
+		final String stepId, final DataInput itemDataInput, final Config loadConfig,
+		final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
 		super(stepId, itemDataInput, loadConfig, storageConfig, verifyFlag);
 	}

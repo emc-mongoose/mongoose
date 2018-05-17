@@ -10,11 +10,10 @@ import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.item.ItemFactory;
 import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
 
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.math.Random;
+import com.github.akurilov.confuse.Config;
 
 import java.io.IOException;
 import java.util.List;
@@ -25,8 +24,8 @@ extends CoopStorageDriverBase<I, O> {
 	private final Random rnd = new Random();
 
 	public CoopStorageDriverMock(
-		final String testStepId, final DataInput dataInput, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final boolean verifyFlag
+		final String testStepId, final DataInput dataInput, final Config loadConfig,
+		final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
 		super(testStepId, dataInput, loadConfig, storageConfig, verifyFlag);
 	}

@@ -1,10 +1,10 @@
 package com.emc.mongoose.scenario.step;
 
 import com.emc.mongoose.model.io.IoType;
-import com.emc.mongoose.config.Config;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
-
+import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.impl.BasicConfig;
 import org.apache.logging.log4j.Level;
 
 import javax.script.ScriptEngine;
@@ -62,7 +62,7 @@ public interface ScriptEngineUtil {
 				"Unable to resolve the scenario engine for the scenario file \"{}\", "
 					+ "available scenario engines list follows:", scenarioPath
 			);
-			for(final ScriptEngineFactory sef : sem.getEngineFactories()) {
+			for(final ScriptEngineFactory sef: sem.getEngineFactories()) {
 				Loggers.MSG.info(
 					"\nEngine name: {}\n\tLanguage: {}\n\tFile extensions: {}\n\tMIME types: {}",
 					sef.getEngineName(), sef.getLanguageName(),
@@ -112,45 +112,43 @@ public interface ScriptEngineUtil {
 
 		Config specificConfig;
 
-		specificConfig = new Config(config);
-		specificConfig.getOutputConfig().getMetricsConfig().getAverageConfig().setPeriod(0);
-		specificConfig.getOutputConfig().getMetricsConfig().getAverageConfig().setPersist(false);
-		specificConfig
-			.getOutputConfig().getMetricsConfig().getSummaryConfig().setPerfDbResultsFile(false);
-		specificConfig.getOutputConfig().getMetricsConfig().getSummaryConfig().setPersist(false);
-		specificConfig.getOutputConfig().getMetricsConfig().getTraceConfig().setPersist(false);
+		specificConfig = new BasicConfig(config);
+		specificConfig.val("output-metrics-average-period", 0);
+		specificConfig.val("output-metrics-average-persist", false);
+		specificConfig.val("output-metrics-summary-perfDbResultsFile", false);
+		specificConfig.val("output-metrics-summary-persist", false);
 		se.put("PreconditionLoad", baseLoadStepFactory.create(specificConfig, clsLoader, null));
 
 		for(final IoType ioType : IoType.values()) {
-			specificConfig = new Config(config);
+			specificConfig = new BasicConfig(config);
 			final String ioTypeName = ioType.name().toLowerCase();
-			specificConfig.getLoadConfig().setType(ioTypeName);
+			specificConfig.val("load-type", ioTypeName);
 			final String stepName = ioTypeName.substring(0, 1).toUpperCase()
 				+ ioTypeName.substring(1) + "Load";
 			se.put(stepName, baseLoadStepFactory.create(specificConfig, clsLoader, null));
 		}
 
-		specificConfig = new Config(config);
-		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
-		specificConfig.getItemConfig().getDataConfig().setVerify(true);
+		specificConfig = new BasicConfig(config);
+		specificConfig.val("load-type", IoType.READ.name().toLowerCase());
+		specificConfig.val("item-data-verify", true);
 		se.put("ReadVerifyLoad", baseLoadStepFactory.create(specificConfig, clsLoader, null));
 
-		specificConfig = new Config(config);
-		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
-		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
+		specificConfig = new BasicConfig(config);
+		specificConfig.val("load-type", IoType.READ.name().toLowerCase());
+		specificConfig.val("item-data-ranges-random", 1);
 		se.put("ReadRandomRangeLoad", baseLoadStepFactory.create(specificConfig, clsLoader, null));
 
-		specificConfig = new Config(config);
-		specificConfig.getLoadConfig().setType(IoType.READ.name().toLowerCase());
-		specificConfig.getItemConfig().getDataConfig().setVerify(true);
-		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
+		specificConfig = new BasicConfig(config);
+		specificConfig.val("load-type", IoType.READ.name().toLowerCase());
+		specificConfig.val("item-data-verify", true);
+		specificConfig.val("item-data-ranges-random", 1);
 		se.put(
 			"ReadVerifyRandomRangeLoad", baseLoadStepFactory.create(specificConfig, clsLoader, null)
 		);
 
-		specificConfig = new Config(config);
-		specificConfig.getLoadConfig().setType(IoType.UPDATE.name().toLowerCase());
-		specificConfig.getItemConfig().getDataConfig().getRangesConfig().setRandom(1);
+		specificConfig = new BasicConfig(config);
+		specificConfig.val("load-type", IoType.UPDATE.name().toLowerCase());
+		specificConfig.val("item-data-ranges-random", 1);
 		se.put(
 			"UpdateRandomRangeLoad", baseLoadStepFactory.create(specificConfig, clsLoader, null)
 		);

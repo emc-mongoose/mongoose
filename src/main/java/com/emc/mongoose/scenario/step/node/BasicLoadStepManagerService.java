@@ -3,9 +3,10 @@ package com.emc.mongoose.scenario.step.node;
 import com.emc.mongoose.model.svc.ServiceBase;
 import com.emc.mongoose.scenario.step.LoadStepManagerService;
 import com.emc.mongoose.scenario.step.LoadStepService;
-import com.emc.mongoose.config.Config;
 import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+
+import com.github.akurilov.confuse.Config;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;

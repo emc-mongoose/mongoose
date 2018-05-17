@@ -8,10 +8,8 @@ import com.emc.mongoose.model.storage.StorageDriver;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import com.emc.mongoose.storage.driver.StorageDriverFactory;
-import com.emc.mongoose.config.item.ItemConfig;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
-import com.emc.mongoose.config.storage.driver.DriverConfig;
+
+import com.github.akurilov.confuse.Config;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
@@ -31,26 +29,26 @@ public class BasicStorageDriverBuilder<
 	private ClassLoader clsLoader;
 	private String stepId;
 	private DataInput dataInput;
-	private ItemConfig itemConfig;
-	private LoadConfig loadConfig;
-	private StorageConfig storageConfig;
+	private Config itemConfig;
+	private Config loadConfig;
+	private Config storageConfig;
 
 	protected final String stepId() {
 		return stepId;
 	}
 	
 	@Override
-	public ItemConfig itemConfig() {
+	public Config itemConfig() {
 		return itemConfig;
 	}
 	
 	@Override
-	public LoadConfig loadConfig() {
+	public Config loadConfig() {
 		return loadConfig;
 	}
 
 	@Override
-	public StorageConfig storageConfig() {
+	public Config storageConfig() {
 		return storageConfig;
 	}
 
@@ -73,19 +71,19 @@ public class BasicStorageDriverBuilder<
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> itemConfig(final ItemConfig itemConfig) {
+	public BasicStorageDriverBuilder<I, O, T> itemConfig(final Config itemConfig) {
 		this.itemConfig = itemConfig;
 		return this;
 	}
 	
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> loadConfig(final LoadConfig loadConfig) {
+	public BasicStorageDriverBuilder<I, O, T> loadConfig(final Config loadConfig) {
 		this.loadConfig = loadConfig;
 		return this;
 	}
 
 	@Override
-	public BasicStorageDriverBuilder<I, O, T> storageConfig(final StorageConfig storageConfig) {
+	public BasicStorageDriverBuilder<I, O, T> storageConfig(final Config storageConfig) {
 		this.storageConfig = storageConfig;
 		return this;
 	}
@@ -103,12 +101,12 @@ public class BasicStorageDriverBuilder<
 			if(storageConfig == null) {
 				throw new OmgShootMyFootException("No storage config is set");
 			}
-			final DriverConfig driverConfig = storageConfig.getDriverConfig();
-			final String driverType = driverConfig.getType();
+			final Config driverConfig = storageConfig.configVal("driver");
+			final String driverType = driverConfig.stringVal("type");
 			if(itemConfig == null) {
 				throw new OmgShootMyFootException("No item config config is set");
 			}
-			final boolean verifyFlag = itemConfig.getDataConfig().getVerify();
+			final boolean verifyFlag = itemConfig.boolVal("data-verify");
 
 			final ServiceLoader<StorageDriverFactory<I, O, T>> loader = ServiceLoader.load(
 				(Class) StorageDriverFactory.class, clsLoader

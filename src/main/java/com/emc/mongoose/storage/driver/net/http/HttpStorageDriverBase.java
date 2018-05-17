@@ -23,11 +23,10 @@ import com.emc.mongoose.model.item.PathItem;
 import com.emc.mongoose.model.item.TokenItem;
 import com.emc.mongoose.model.storage.Credential;
 import com.emc.mongoose.storage.driver.net.NetStorageDriverBase;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
-import com.emc.mongoose.config.storage.net.http.HttpConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+
+import com.github.akurilov.confuse.Config;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -101,19 +100,19 @@ implements HttpStorageDriver<I, O> {
 	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
 	
 	protected HttpStorageDriverBase(
-		final String testStepId, final DataInput itemDataInput, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final boolean verifyFlag
+		final String testStepId, final DataInput itemDataInput, final Config loadConfig,
+		final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException, InterruptedException {
 
 		super(testStepId, itemDataInput, loadConfig, storageConfig, verifyFlag);
 		
-		final HttpConfig httpConfig = storageConfig.getNetConfig().getHttpConfig();
+		final Config httpConfig = storageConfig.configVal("net-http");
 		
-		namespace = httpConfig.getNamespace();
-		fsAccess = httpConfig.getFsAccess();
-		versioning = httpConfig.getVersioning();
+		namespace = httpConfig.stringVal("namespace");
+		fsAccess = httpConfig.boolVal("fsAccess");
+		versioning = httpConfig.boolVal("versioning");
 		
-		final Map<String, String> headersMap = httpConfig.getHeaders();
+		final Map<String, String> headersMap = httpConfig.mapVal("headers");
 		String headerValue;
 		for(final String headerName : headersMap.keySet()) {
 			headerValue = headersMap.get(headerName);

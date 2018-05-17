@@ -5,8 +5,8 @@ import com.emc.mongoose.model.data.DataInput;
 import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.storage.driver.StorageDriverFactory;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
+
+import com.github.akurilov.confuse.Config;
 
 /**
  Created by andrey on 19.09.17.
@@ -23,8 +23,8 @@ implements StorageDriverFactory<I, O, T> {
 
 	@Override @SuppressWarnings("unchecked")
 	public final T create(
-		final String stepId, final DataInput dataInput, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final boolean verifyFlag
+		final String stepId, final DataInput dataInput, final Config loadConfig,
+		final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
 		return (T) new DummyStorageDriverMock<>(
 			stepId, dataInput, loadConfig, storageConfig, verifyFlag

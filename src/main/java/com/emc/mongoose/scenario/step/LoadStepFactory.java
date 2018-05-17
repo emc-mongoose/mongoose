@@ -1,6 +1,6 @@
 package com.emc.mongoose.scenario.step;
 
-import com.emc.mongoose.config.Config;
+import com.github.akurilov.confuse.Config;
 
 import java.util.List;
 import java.util.Map;

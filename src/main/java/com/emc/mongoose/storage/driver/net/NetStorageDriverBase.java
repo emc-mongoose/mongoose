@@ -7,12 +7,12 @@ import com.github.akurilov.commons.concurrent.ThreadUtil;
 
 import static com.github.akurilov.fiber4j.Fiber.TIMEOUT_NANOS;
 
+import com.github.akurilov.confuse.Config;
+
 import com.github.akurilov.netty.connection.pool.BasicMultiNodeConnPool;
 import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;
 import static com.github.akurilov.netty.connection.pool.NonBlockingConnPool.ATTR_KEY_NODE;
 
-import com.emc.mongoose.config.storage.net.NetConfig;
-import com.emc.mongoose.config.storage.net.node.NodeConfig;
 import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import com.emc.mongoose.storage.driver.net.data.DataItemFileRegion;
 import com.emc.mongoose.model.exception.OmgShootMyFootException;
@@ -30,8 +30,6 @@ import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.model.io.task.IoTask.Status.SUCC;
 import static com.emc.mongoose.model.item.DataItem.getRangeCount;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
@@ -88,27 +86,27 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	@SuppressWarnings("unchecked")
 	protected NetStorageDriverBase(
-		final String jobName, final DataInput itemDataInput, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final boolean verifyFlag
+		final String jobName, final DataInput itemDataInput, final Config loadConfig,
+		final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException, InterruptedException {
 
 		super(jobName, itemDataInput, loadConfig, storageConfig, verifyFlag);
 
-		final NetConfig netConfig = storageConfig.getNetConfig();
-		sslFlag = netConfig.getSsl();
+		final Config netConfig = storageConfig.configVal("net");
+		sslFlag = netConfig.boolVal("ssl");
 		if(sslFlag) {
 			Loggers.MSG.info("{}: SSL/TLS is enabled", jobName);
 		}
-		final int sto = netConfig.getTimeoutMilliSec();
+		final int sto = netConfig.intVal("timeoutMilliSec");
 		if(sto > 0) {
 			this.socketTimeout = sto;
 		} else {
 			this.socketTimeout = 0;
 		}
-		final NodeConfig nodeConfig = netConfig.getNodeConfig();
-		storageNodePort = nodeConfig.getPort();
-		connAttemptsLimit = nodeConfig.getConnAttemptsLimit();
-		final String t[] = nodeConfig.getAddrs().toArray(new String[]{});
+		final Config nodeConfig = netConfig.configVal("node");
+		storageNodePort = nodeConfig.intVal("port");
+		connAttemptsLimit = nodeConfig.intVal("connAttemptsLimit");
+		final String t[] = nodeConfig.<String>listVal("addrs").toArray(new String[]{});
 		storageNodeAddrs = new String[t.length];
 		String n;
 		for(int i = 0; i < t.length; i ++) {
@@ -117,14 +115,16 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 		
 		final int workerCount;
-		final int confWorkerCount = storageConfig.getDriverConfig().getThreads();
+		final int confWorkerCount = storageConfig.intVal("driver-threads");
 		if(confWorkerCount < 1) {
 			workerCount = ThreadUtil.getHardwareThreadCount();
 		} else {
 			workerCount = confWorkerCount;
 		}
-		final int ioRatio = netConfig.getIoRatio();
-		final Transport transportKey = Transport.valueOf(netConfig.getTransport().toUpperCase());
+		final int ioRatio = netConfig.intVal("ioRatio");
+		final Transport transportKey = Transport.valueOf(
+			netConfig.stringVal("transport").toUpperCase()
+		);
 
 		if(IO_EXECUTOR_LOCK.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 			try {
@@ -183,21 +183,21 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		//bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, )
 		//bootstrap.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR)
 		//bootstrap.option(ChannelOption.AUTO_READ)
-		bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, netConfig.getTimeoutMilliSec());
+		bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, netConfig.intVal("timeoutMilliSec"));
 		bootstrap.option(ChannelOption.WRITE_SPIN_COUNT, 1);
-		int size = (int) netConfig.getRcvBuf().get();
+		int size = (int) SizeInBytes.toFixedSize(netConfig.stringVal("rcvBuf"));
 		if(size > 0) {
 			bootstrap.option(ChannelOption.SO_RCVBUF, size);
 		}
-		size = (int) netConfig.getSndBuf().get();
+		size = (int) SizeInBytes.toFixedSize(netConfig.stringVal("sndBuf"));
 		if(size > 0) {
 			bootstrap.option(ChannelOption.SO_SNDBUF, size);
 		}
 		//bootstrap.option(ChannelOption.SO_BACKLOG, netConfig.getBindBacklogSize());
-		bootstrap.option(ChannelOption.SO_KEEPALIVE, netConfig.getKeepAlive());
-		bootstrap.option(ChannelOption.SO_LINGER, netConfig.getLinger());
-		bootstrap.option(ChannelOption.SO_REUSEADDR, netConfig.getReuseAddr());
-		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.getTcpNoDelay());
+		bootstrap.option(ChannelOption.SO_KEEPALIVE, netConfig.boolVal("keepAlive"));
+		bootstrap.option(ChannelOption.SO_LINGER, netConfig.intVal("linger"));
+		bootstrap.option(ChannelOption.SO_REUSEADDR, netConfig.boolVal("reuseAddr"));
+		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.boolVal("tcpNoDelay"));
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_STEP_ID, stepId)

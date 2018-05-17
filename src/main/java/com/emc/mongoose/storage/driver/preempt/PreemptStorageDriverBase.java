@@ -7,9 +7,9 @@ import com.emc.mongoose.model.io.task.IoTask;
 import com.emc.mongoose.model.item.Item;
 import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.storage.driver.StorageDriverBase;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
 import com.emc.mongoose.logging.Loggers;
+
+import com.github.akurilov.confuse.Config;
 
 import java.io.EOFException;
 import java.util.List;
@@ -26,8 +26,8 @@ implements StorageDriver<I,O> {
 	private final ThreadPoolExecutor ioExecutor;
 
 	protected PreemptStorageDriverBase(
-		final String stepId, final DataInput itemDataInput, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final boolean verifyFlag
+		final String stepId, final DataInput itemDataInput, final Config loadConfig,
+		final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
 		super(stepId, itemDataInput, loadConfig, storageConfig, verifyFlag);
 		if(ioWorkerCount != concurrencyLevel) {
@@ -36,7 +36,7 @@ implements StorageDriver<I,O> {
 					+ " concurrency limit (" + concurrencyLevel + ")"
 			);
 		}
-		final int inQueueSize = storageConfig.getDriverConfig().getQueueConfig().getInput();
+		final int inQueueSize = storageConfig.intVal("driver-queue-input");
 		ioExecutor = new ThreadPoolExecutor(
 			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(inQueueSize),
