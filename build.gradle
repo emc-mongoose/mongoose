@@ -68,7 +68,7 @@ ext {
 		disruptor : "3.4.2",
 		fiber4j: "[1.0.0,)",
 		jackson : "2.9.5",
-		javaCommons : "[2.0.9,)",
+		javaCommons : "[2.1.0,)",
 		javassist : "3.22.0-GA",
 		junit : "4.12",
 		slf4j : "1.7.25",
