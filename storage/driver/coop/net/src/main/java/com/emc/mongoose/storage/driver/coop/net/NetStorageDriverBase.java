@@ -1,0 +1,693 @@
+package com.emc.mongoose.storage.driver.coop.net;
+
+import com.emc.mongoose.storage.driver.coop.net.data.DataItemFileRegion;
+import com.emc.mongoose.storage.driver.coop.net.data.SeekableByteChannelChunkedNioStream;
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.net.ssl.SslContext;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.commons.concurrent.ThreadUtil;
+
+import static com.github.akurilov.fiber4j.Fiber.TIMEOUT_NANOS;
+
+import com.github.akurilov.confuse.Config;
+
+import com.github.akurilov.netty.connection.pool.BasicMultiNodeConnPool;
+import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;
+import static com.github.akurilov.netty.connection.pool.NonBlockingConnPool.ATTR_KEY_NODE;
+
+import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
+
+import com.emc.mongoose.exception.OmgShootMyFootException;
+import com.emc.mongoose.concurrent.ThreadDump;
+import com.emc.mongoose.data.DataInput;
+import com.emc.mongoose.item.io.task.composite.data.CompositeDataIoTask;
+import com.emc.mongoose.item.io.task.data.DataIoTask;
+import com.emc.mongoose.item.DataItem;
+import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.Item;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.item.io.task.IoTask.Status.SUCC;
+import static com.emc.mongoose.item.DataItem.getRangeCount;
+import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.logging.LogContextThreadFactory;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.pool.ChannelPoolHandler;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.IdleStateHandler;
+
+import org.apache.logging.log4j.CloseableThreadContext;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.ThreadContext;
+
+import javax.net.ssl.SSLEngine;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.util.BitSet;
+import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+/**
+ Created by kurila on 30.09.16.
+ */
+public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
+extends CoopStorageDriverBase<I, O>
+implements NetStorageDriver<I, O>, ChannelPoolHandler {
+
+	private static final String CLS_NAME = NetStorageDriverBase.class.getSimpleName();
+
+	private static final Lock IO_EXECUTOR_LOCK = new ReentrantLock();
+	private static EventLoopGroup IO_EXECUTOR = null;
+	private static int IO_EXECUTOR_REF_COUNT = 0;
+
+	protected final String storageNodeAddrs[];
+	protected final Bootstrap bootstrap;
+	protected final int storageNodePort;
+	protected final int connAttemptsLimit;
+	private final Class<SocketChannel> socketChannelCls;
+	private final NonBlockingConnPool connPool;
+	private final int socketTimeout;
+	private final boolean sslFlag;
+
+	@SuppressWarnings("unchecked")
+	protected NetStorageDriverBase(
+		final String jobName, final DataInput itemDataInput, final Config loadConfig,
+		final Config storageConfig, final boolean verifyFlag
+	) throws OmgShootMyFootException, InterruptedException {
+
+		super(jobName, itemDataInput, loadConfig, storageConfig, verifyFlag);
+
+		final Config netConfig = storageConfig.configVal("net");
+		sslFlag = netConfig.boolVal("ssl");
+		if(sslFlag) {
+			Loggers.MSG.info("{}: SSL/TLS is enabled", jobName);
+		}
+		final int sto = netConfig.intVal("timeoutMilliSec");
+		if(sto > 0) {
+			this.socketTimeout = sto;
+		} else {
+			this.socketTimeout = 0;
+		}
+		final Config nodeConfig = netConfig.configVal("node");
+		storageNodePort = nodeConfig.intVal("port");
+		connAttemptsLimit = nodeConfig.intVal("connAttemptsLimit");
+		final String t[] = nodeConfig.<String>listVal("addrs").toArray(new String[]{});
+		storageNodeAddrs = new String[t.length];
+		String n;
+		for(int i = 0; i < t.length; i ++) {
+			n = t[i];
+			storageNodeAddrs[i] = n + (n.contains(":") ? "" : ":" + storageNodePort);
+		}
+		
+		final int workerCount;
+		final int confWorkerCount = storageConfig.intVal("driver-threads");
+		if(confWorkerCount < 1) {
+			workerCount = ThreadUtil.getHardwareThreadCount();
+		} else {
+			workerCount = confWorkerCount;
+		}
+		final int ioRatio = netConfig.intVal("ioRatio");
+		final Transport transportKey = Transport.valueOf(
+			netConfig.stringVal("transport").toUpperCase()
+		);
+
+		if(IO_EXECUTOR_LOCK.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+			try {
+				if(IO_EXECUTOR == null) {
+					Loggers.MSG.info("{}: I/O executor doesn't exist yet", toString());
+					if(IO_EXECUTOR_REF_COUNT != 0) {
+						throw new AssertionError("I/O executor reference count should be 0");
+					}
+					try {
+						final String ioExecutorClsName = IO_EXECUTOR_IMPLS.get(transportKey);
+						final Class<EventLoopGroup> transportCls = (Class<EventLoopGroup>) Class
+							.forName(ioExecutorClsName);
+						IO_EXECUTOR = transportCls
+							.getConstructor(Integer.TYPE, ThreadFactory.class)
+							.newInstance(workerCount, new LogContextThreadFactory("ioWorker", true));
+						Loggers.MSG.info("{}: use {} I/O workers", toString(), workerCount);
+						try {
+							final Method setIoRatioMethod = transportCls.getMethod(
+								"setIoRatio", Integer.TYPE
+							);
+							setIoRatioMethod.invoke(IO_EXECUTOR, ioRatio);
+						} catch(final ReflectiveOperationException e) {
+							LogUtil.exception(Level.ERROR, e, "Failed to set the I/O ratio");
+						}
+					} catch(final ReflectiveOperationException e) {
+						throw new AssertionError(e);
+					}
+				}
+				IO_EXECUTOR_REF_COUNT ++;
+				Loggers.MSG.debug(
+					"{}: increased the I/O executor ref count to {}", toString(),
+					IO_EXECUTOR_REF_COUNT
+				);
+			} finally {
+				IO_EXECUTOR_LOCK.unlock();
+			}
+		} else {
+			Loggers.ERR.error(
+				"Failed to obtain the I/O executor lock in time, thread dump:\n{}",
+				new ThreadDump().toString()
+			);
+		}
+
+		final String socketChannelClsName = SOCKET_CHANNEL_IMPLS.get(transportKey);
+		try {
+			socketChannelCls = (Class<SocketChannel>) Class.forName(socketChannelClsName);
+		} catch(final ReflectiveOperationException e) {
+			throw new AssertionError(e);
+		}
+
+		bootstrap = new Bootstrap()
+			.group(IO_EXECUTOR)
+			.channel(socketChannelCls);
+		//bootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator)
+		//bootstrap.option(ChannelOption.ALLOW_HALF_CLOSURE)
+		//bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, )
+		//bootstrap.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR)
+		//bootstrap.option(ChannelOption.AUTO_READ)
+		bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, netConfig.intVal("timeoutMilliSec"));
+		bootstrap.option(ChannelOption.WRITE_SPIN_COUNT, 1);
+		int size = (int) SizeInBytes.toFixedSize(netConfig.stringVal("rcvBuf"));
+		if(size > 0) {
+			bootstrap.option(ChannelOption.SO_RCVBUF, size);
+		}
+		size = (int) SizeInBytes.toFixedSize(netConfig.stringVal("sndBuf"));
+		if(size > 0) {
+			bootstrap.option(ChannelOption.SO_SNDBUF, size);
+		}
+		//bootstrap.option(ChannelOption.SO_BACKLOG, netConfig.getBindBacklogSize());
+		bootstrap.option(ChannelOption.SO_KEEPALIVE, netConfig.boolVal("keepAlive"));
+		bootstrap.option(ChannelOption.SO_LINGER, netConfig.intVal("linger"));
+		bootstrap.option(ChannelOption.SO_REUSEADDR, netConfig.boolVal("reuseAddr"));
+		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.boolVal("tcpNoDelay"));
+		try(
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+				.put(KEY_STEP_ID, stepId)
+				.put(KEY_CLASS_NAME, CLS_NAME)
+		) {
+			connPool = createConnectionPool();
+		}
+	}
+
+	protected NonBlockingConnPool createConnectionPool() {
+		return new BasicMultiNodeConnPool(
+			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort,
+			connAttemptsLimit
+		);
+	}
+	
+	@Override
+	public final void adjustIoBuffers(final long avgTransferSize, final IoType ioType) {
+		final int size;
+		try(
+			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+				.put(KEY_STEP_ID, stepId)
+				.put(KEY_CLASS_NAME, CLS_NAME)
+		) {
+			if(avgTransferSize < BUFF_SIZE_MIN) {
+				size = BUFF_SIZE_MIN;
+			} else if(BUFF_SIZE_MAX < avgTransferSize) {
+				size = BUFF_SIZE_MAX;
+			} else {
+				size = (int) avgTransferSize;
+			}
+			if(IoType.CREATE.equals(ioType)) {
+				Loggers.MSG.info(
+					"Adjust output buffer size: {}", SizeInBytes.formatFixedSize(size)
+				);
+				bootstrap.option(ChannelOption.SO_RCVBUF, BUFF_SIZE_MIN);
+				bootstrap.option(ChannelOption.SO_SNDBUF, size);
+			} else if(IoType.READ.equals(ioType)) {
+				Loggers.MSG.info("Adjust input buffer size: {}", SizeInBytes.formatFixedSize(size));
+				bootstrap.option(ChannelOption.SO_RCVBUF, size);
+				bootstrap.option(ChannelOption.SO_SNDBUF, BUFF_SIZE_MIN);
+			} else {
+				bootstrap.option(ChannelOption.SO_RCVBUF, BUFF_SIZE_MIN);
+				bootstrap.option(ChannelOption.SO_SNDBUF, BUFF_SIZE_MIN);
+			}
+		}
+	}
+
+	protected Channel getUnpooledConnection()
+	throws ConnectException, InterruptedException {
+
+		final String na = storageNodeAddrs[0];
+		final InetSocketAddress nodeAddr;
+		if(na.contains(":")) {
+			final String addrParts[] = na.split(":");
+			nodeAddr = new InetSocketAddress(addrParts[0], Integer.parseInt(addrParts[1]));
+		} else {
+			nodeAddr = new InetSocketAddress(na, storageNodePort);
+		}
+
+		final Bootstrap bootstrap = new Bootstrap()
+			.group(IO_EXECUTOR)
+			.channel(socketChannelCls)
+			.handler(
+				new ChannelInitializer<SocketChannel>() {
+					@Override
+					protected final void initChannel(final SocketChannel channel)
+					throws Exception {
+						try(
+							final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+								.put(KEY_STEP_ID, stepId)
+								.put(KEY_CLASS_NAME, CLS_NAME)
+						) {
+							appendHandlers(channel.pipeline());
+							Loggers.MSG.debug(
+								"{}: new unpooled channel {}, pipeline: {}", stepId,
+								channel.hashCode(), channel.pipeline()
+							);
+						}
+					}
+				}
+			);
+
+		return bootstrap.connect(nodeAddr).sync().channel();
+	}
+
+	@Override
+	protected void doStart()
+	throws IllegalStateException {
+		super.doStart();
+		if(concurrencyLevel > 0) {
+			try {
+				connPool.preCreateConnections(concurrencyLevel);
+			} catch(final ConnectException e) {
+				LogUtil.exception(Level.WARN, e, "Failed to pre-create the connections");
+			}
+		}
+	}
+	
+	@Override
+	protected boolean submit(final O ioTask)
+	throws IllegalStateException {
+
+		ThreadContext.put(KEY_STEP_ID, stepId);
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+
+		if(!isStarted()) {
+			throw new IllegalStateException();
+		}
+		try {
+			if(IoType.NOOP.equals(ioTask.ioType())) {
+				if(concurrencyThrottle.tryAcquire()) {
+					ioTask.startRequest();
+					sendRequest(null, null, ioTask);
+					ioTask.finishRequest();
+					concurrencyThrottle.release();
+					ioTask.status(SUCC);
+					ioTask.startResponse();
+					complete(null, ioTask);
+				} else {
+					return false;
+				}
+			} else {
+				final Channel conn = connPool.lease();
+				if(conn == null) {
+					return false;
+				}
+				conn.attr(ATTR_KEY_IOTASK).set(ioTask);
+				ioTask.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
+				ioTask.startRequest();
+				sendRequest(
+					conn, conn.newPromise().addListener(new RequestSentCallback(ioTask)), ioTask
+				);
+			}
+		} catch(final IllegalStateException e) {
+			LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
+		} catch(final ConnectException e) {
+			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
+			ioTask.status(IoTask.Status.FAIL_IO);
+			complete(null, ioTask);
+		}
+		return true;
+
+	}
+	
+	@Override @SuppressWarnings("unchecked")
+	protected int submit(final List<O> ioTasks, final int from, final int to)
+	throws IllegalStateException {
+
+		ThreadContext.put(KEY_STEP_ID, stepId);
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+
+		Channel conn;
+		O nextIoTask;
+		try {
+			for(int i = from; i < to && isStarted(); i ++) {
+				nextIoTask = ioTasks.get(i);
+				if(IoType.NOOP.equals(nextIoTask.ioType())) {
+					if(concurrencyThrottle.tryAcquire()) {
+						nextIoTask.startRequest();
+						sendRequest(null, null, nextIoTask);
+						nextIoTask.finishRequest();
+						concurrencyThrottle.release();
+						nextIoTask.status(SUCC);
+						nextIoTask.startResponse();
+						complete(null, nextIoTask);
+					} else {
+						return i - from;
+					}
+				} else {
+					conn = connPool.lease();
+					if(conn == null) {
+						return i - from;
+					}
+					conn.attr(ATTR_KEY_IOTASK).set(nextIoTask);
+					nextIoTask.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
+					nextIoTask.startRequest();
+					sendRequest(
+						conn, conn.newPromise().addListener(new RequestSentCallback(nextIoTask)),
+						nextIoTask
+					);
+				}
+			}
+		} catch(final IllegalStateException e) {
+			LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
+		} catch(final RejectedExecutionException e) {
+			if(!isStopped()) {
+				LogUtil.exception(Level.WARN, e, "Failed to submit the I/O task");
+			}
+		} catch(final ConnectException e) {
+			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
+			for(int i = from; i < to; i ++) {
+				nextIoTask = ioTasks.get(i);
+				nextIoTask.status(IoTask.Status.FAIL_IO);
+				complete(null, nextIoTask);
+			}
+		}
+		return to - from;
+	}
+	
+	@Override
+	protected final int submit(final List<O> ioTasks)
+	throws IllegalStateException {
+		return submit(ioTasks, 0, ioTasks.size());
+	}
+	
+	/**
+	 Note that the particular implementation should also invoke
+	 the {@link #sendRequestData(Channel, IoTask)} method to send the actual payload (if any).
+	 @param channel the channel to send request to
+	 @param channelPromise the promise which will be invoked when the request is sent completely
+	 @param ioTask the I/O task describing the item and the operation to perform
+	 */
+	protected abstract void sendRequest(
+		final Channel channel, final ChannelPromise channelPromise, final O ioTask
+	);
+	
+	protected final void sendRequestData(final Channel channel, final O ioTask)
+	throws IOException {
+		
+		final IoType ioType = ioTask.ioType();
+		
+		if(IoType.CREATE.equals(ioType)) {
+			final I item = ioTask.item();
+			if(item instanceof DataItem) {
+				final DataIoTask dataIoTask = (DataIoTask) ioTask;
+				if(!(dataIoTask instanceof CompositeDataIoTask)) {
+					final DataItem dataItem = (DataItem) item;
+					final String srcPath = dataIoTask.srcPath();
+					if(0 < dataItem.size() && (null == srcPath || srcPath.isEmpty())) {
+						if(sslFlag) {
+							channel.write(new SeekableByteChannelChunkedNioStream(dataItem));
+						} else {
+							channel.write(new DataItemFileRegion(dataItem));
+						}
+					}
+					dataIoTask.countBytesDone(dataItem.size());
+				}
+			}
+		} else if(IoType.UPDATE.equals(ioType)) {
+			final I item = ioTask.item();
+			if(item instanceof DataItem) {
+				
+				final DataItem dataItem = (DataItem) item;
+				final DataIoTask dataIoTask = (DataIoTask) ioTask;
+				
+				final List<Range> fixedRanges = dataIoTask.fixedRanges();
+				if(fixedRanges == null || fixedRanges.isEmpty()) {
+					// random ranges update case
+					final BitSet updRangesMaskPair[] = dataIoTask.markedRangesMaskPair();
+					final int rangeCount = getRangeCount(dataItem.size());
+					DataItem updatedRange;
+					if(sslFlag) {
+						// current layer updates first
+						for(int i = 0; i < rangeCount; i ++) {
+							if(updRangesMaskPair[0].get(i)) {
+								dataIoTask.currRangeIdx(i);
+								updatedRange = dataIoTask.currRangeUpdate();
+								channel.write(
+									new SeekableByteChannelChunkedNioStream(updatedRange)
+								);
+							}
+						}
+						// then next layer updates if any
+						for(int i = 0; i < rangeCount; i ++) {
+							if(updRangesMaskPair[1].get(i)) {
+								dataIoTask.currRangeIdx(i);
+								updatedRange = dataIoTask.currRangeUpdate();
+								channel.write(
+									new SeekableByteChannelChunkedNioStream(updatedRange)
+								);
+							}
+						}
+					} else {
+						// current layer updates first
+						for(int i = 0; i < rangeCount; i ++) {
+							if(updRangesMaskPair[0].get(i)) {
+								dataIoTask.currRangeIdx(i);
+								updatedRange = dataIoTask.currRangeUpdate();
+								channel.write(new DataItemFileRegion(updatedRange));
+							}
+						}
+						// then next layer updates if any
+						for(int i = 0; i < rangeCount; i ++) {
+							if(updRangesMaskPair[1].get(i)) {
+								dataIoTask.currRangeIdx(i);
+								updatedRange = dataIoTask.currRangeUpdate();
+								channel.write(new DataItemFileRegion(updatedRange));
+							}
+						}
+					}
+					dataItem.commitUpdatedRanges(dataIoTask.markedRangesMaskPair());
+				} else { // fixed byte ranges case
+					final long baseItemSize = dataItem.size();
+					long beg;
+					long end;
+					long size;
+					if(sslFlag) {
+						for(final Range fixedRange : fixedRanges) {
+							beg = fixedRange.getBeg();
+							end = fixedRange.getEnd();
+							size = fixedRange.getSize();
+							if(size == -1) {
+								if(beg == -1) {
+									beg = baseItemSize - end;
+									size = end;
+								} else if(end == -1) {
+									size = baseItemSize - beg;
+								} else {
+									size = end - beg + 1;
+								}
+							} else {
+								// append
+								beg = baseItemSize;
+								// note down the new size
+								dataItem.size(
+									dataItem.size() + dataIoTask.markedRangesSize()
+								);
+							}
+							channel.write(
+								new SeekableByteChannelChunkedNioStream(
+									dataItem.slice(beg, size)
+								)
+							);
+						}
+					} else {
+						for(final Range fixedRange : fixedRanges) {
+							beg = fixedRange.getBeg();
+							end = fixedRange.getEnd();
+							size = fixedRange.getSize();
+							if(size == -1) {
+								if(beg == -1) {
+									beg = baseItemSize - end;
+									size = end;
+								} else if(end == -1) {
+									size = baseItemSize - beg;
+								} else {
+									size = end - beg + 1;
+								}
+							} else {
+								// append
+								beg = baseItemSize;
+								// note down the new size
+								dataItem.size(
+									dataItem.size() + dataIoTask.markedRangesSize()
+								);
+							}
+							channel.write(new DataItemFileRegion(dataItem.slice(beg, size)));
+						}
+					}
+				}
+				dataIoTask.countBytesDone(dataIoTask.markedRangesSize());
+			}
+		}
+	}
+
+	@Override
+	public void complete(final Channel channel, final O ioTask) {
+
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+		ThreadContext.put(KEY_STEP_ID, stepId);
+
+		try {
+			ioTask.finishResponse();
+		} catch(final IllegalStateException e) {
+			LogUtil.exception(Level.DEBUG, e, "{}: invalid I/O task state", ioTask.toString());
+		}
+		if(channel != null) {
+			connPool.release(channel);
+		}
+		ioTaskCompleted(ioTask);
+	}
+
+	@Override
+	public final void channelReleased(final Channel channel)
+	throws Exception {
+	}
+	
+	@Override
+	public final void channelAcquired(final Channel channel)
+	throws Exception {
+	}
+	
+	@Override
+	public final void channelCreated(final Channel channel)
+	throws Exception {
+		try(
+			final CloseableThreadContext.Instance ctx = CloseableThreadContext
+				.put(KEY_STEP_ID, stepId)
+				.put(KEY_CLASS_NAME, CLS_NAME)
+		) {
+			final ChannelPipeline pipeline = channel.pipeline();
+			appendHandlers(pipeline);
+			if(Loggers.MSG.isTraceEnabled()) {
+				Loggers.MSG.trace(
+					"{}: new channel pipeline configured: {}", stepId, pipeline.toString()
+				);
+			}
+		}
+	}
+
+	protected void appendHandlers(final ChannelPipeline pipeline) {
+		if(sslFlag) {
+			Loggers.MSG.debug("{}: SSL/TLS is enabled for the channel", stepId);
+			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
+			sslEngine.setEnabledProtocols(
+				new String[] { "TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3" }
+			);
+			sslEngine.setUseClientMode(true);
+			sslEngine.setEnabledCipherSuites(
+				SslContext.INSTANCE.getServerSocketFactory().getSupportedCipherSuites()
+			);
+			pipeline.addLast(new SslHandler(sslEngine));
+			/*try {
+				final SslContext sslCtx = SslContextBuilder
+					.forClient()
+					.trustManager(InsecureTrustManagerFactory.INSTANCE)
+					.build();
+				pipeline.addLast(sslCtx.newHandler(pipeline.channel().alloc()));
+			} catch(final SSLException e) {
+				LogUtil.exception(
+					Level.ERROR, e, "Failed to enable the SSL/TLS for the connection: {}",
+					pipeline.channel()
+				);
+			}*/
+		}
+		if(socketTimeout > 0) {
+			pipeline.addLast(
+				new IdleStateHandler(
+					socketTimeout, socketTimeout, socketTimeout, TimeUnit.MILLISECONDS
+				)
+			);
+		}
+	}
+	
+	@Override
+	protected final void doStop()
+	throws IllegalStateException {
+		try(
+			final CloseableThreadContext.Instance ctx = CloseableThreadContext
+				.put(KEY_STEP_ID, stepId)
+				.put(KEY_CLASS_NAME, CLS_NAME)
+		) {
+			try {
+				if(IO_EXECUTOR_LOCK.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+					try {
+						IO_EXECUTOR_REF_COUNT --;
+						Loggers.MSG.debug(
+							"{}: decreased the I/O executor ref count to {}", toString(),
+							IO_EXECUTOR_REF_COUNT
+						);
+						if(IO_EXECUTOR_REF_COUNT == 0) {
+							Loggers.MSG.info("{}: shutdown the I/O executor", toString());
+							if(
+								IO_EXECUTOR
+									.shutdownGracefully(0, 1, TimeUnit.MILLISECONDS)
+									.await(10)
+							) {
+								Loggers.MSG.debug("{}: I/O workers stopped in time", toString());
+							} else {
+								Loggers.ERR.debug("{}: I/O workers stopping timeout", toString());
+							}
+							IO_EXECUTOR = null;
+						}
+					} finally {
+						IO_EXECUTOR_LOCK.unlock();
+					}
+				} else {
+					Loggers.ERR.error(
+						"Failed to obtain the I/O executor lock in time, thread dump:\n{}",
+						new ThreadDump().toString()
+					);
+				}
+			} catch(final InterruptedException e) {
+				LogUtil.exception(Level.WARN, e, "Graceful I/O workers shutdown was interrupted");
+			}
+		}
+	}
+
+	@Override
+	protected void doClose()
+	throws IllegalStateException, IOException {
+		super.doClose();
+		try {
+			connPool.close();
+		} catch(final IOException e) {
+			LogUtil.exception(
+				Level.WARN, e, "{}: failed to close the connection pool", toString()
+			);
+		}
+	}
+}

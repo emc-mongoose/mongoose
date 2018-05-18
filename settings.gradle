@@ -1,20 +1,11 @@
-include "scenario:step:type:linear"
-include "scenario:step:type:weighted"
-include "scenario:step:type:chain"
-include "storage:driver:coop:mock"
-include "storage:driver:mock"
-include "storage:driver:nio:mock"
-include "storage:driver:preempt:mock"
+include "load:step:type:linear"
+include "load:step:type:weighted"
+include "load:step:type:chain"
+include "storage:driver:coop"
+include "storage:driver:coop:net"
+include "storage:driver:coop:net:http"
+include "storage:driver:coop:nio"
+include "storage:driver:preempt"
 //include "tests:system"
 
 rootProject.name = "mongoose"
-
-void renameBuildFiles(def project) {
-	project.children.each {
-		subproject ->
-			renameBuildFiles(subproject)
-			subproject.buildFileName = subproject.name + ".gradle"
-	}
-}
-
-renameBuildFiles(rootProject)

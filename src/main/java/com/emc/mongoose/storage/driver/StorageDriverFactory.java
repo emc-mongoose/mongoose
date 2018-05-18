@@ -1,11 +1,9 @@
 package com.emc.mongoose.storage.driver;
 
-import com.emc.mongoose.model.exception.OmgShootMyFootException;
-import com.emc.mongoose.model.data.DataInput;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.storage.StorageDriver;
-
+import com.emc.mongoose.data.DataInput;
+import com.emc.mongoose.exception.OmgShootMyFootException;
+import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.Item;
 import com.github.akurilov.confuse.Config;
 
 public interface StorageDriverFactory<

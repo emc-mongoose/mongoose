@@ -1,0 +1,7 @@
+description = "mongoose-storage-driver-preempt"
+
+dependencies {
+	compile(
+		project(":"),
+	)
+}

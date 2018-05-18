@@ -52,7 +52,7 @@ implements Runnable {
 				"Failed to load the bundled default config from the resources", e
 			);
 		}
-		final String appVersion = bundledDefaults.stringVal("version");
+		final String appVersion = bundledDefaults.stringVal("run-version");
 		System.out.println(APP_NAME + " v " + appVersion);
 		appHomePath = Paths.get(USER_HOME, "." + APP_NAME, appVersion);
 		try {

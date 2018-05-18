@@ -1,0 +1,7 @@
+description = "mongoose-load-step-type-linear"
+
+dependencies {
+	compile(
+		project(":"),
+	)
+}

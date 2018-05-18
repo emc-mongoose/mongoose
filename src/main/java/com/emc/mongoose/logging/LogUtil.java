@@ -1,10 +1,10 @@
 package com.emc.mongoose.logging;
 
-import com.emc.mongoose.model.concurrent.DaemonBase;
+import com.emc.mongoose.concurrent.DaemonBase;
 
 import static com.emc.mongoose.Constants.KEY_HOME_DIR;
 import static com.emc.mongoose.Constants.LOCALE_DEFAULT;
-import static com.emc.mongoose.model.env.DateUtil.TZ_UTC;
+import static com.emc.mongoose.env.DateUtil.TZ_UTC;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

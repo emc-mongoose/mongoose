@@ -1,0 +1,7 @@
+description = "mongoose-storage-driver-coop"
+
+dependencies {
+	compile(
+		project(":"),
+	)
+}

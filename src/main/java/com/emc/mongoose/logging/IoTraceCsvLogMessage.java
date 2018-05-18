@@ -1,7 +1,7 @@
 package com.emc.mongoose.logging;
 
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.Item;
 
 import org.apache.logging.log4j.message.AsynchronouslyFormattable;
 

@@ -1,22 +1,16 @@
 package com.emc.mongoose.storage.driver;
 
-import com.emc.mongoose.model.exception.OmgShootMyFootException;
-import com.emc.mongoose.model.concurrent.DaemonBase;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import com.emc.mongoose.model.data.DataInput;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.storage.Credential;
-import com.emc.mongoose.model.storage.StorageDriver;
 import com.emc.mongoose.logging.Loggers;
-
+import com.emc.mongoose.concurrent.DaemonBase;
+import com.emc.mongoose.data.DataInput;
+import com.emc.mongoose.exception.OmgShootMyFootException;
+import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.io.task.data.DataIoTask;
+import com.emc.mongoose.item.Item;
+import com.emc.mongoose.storage.Credential;
 import com.github.akurilov.commons.concurrent.ThreadUtil;
 import com.github.akurilov.commons.io.Input;
-
 import com.github.akurilov.confuse.Config;
-
 import org.apache.logging.log4j.CloseableThreadContext;
 
 import java.io.IOException;
@@ -28,6 +22,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 /**
  Created by kurila on 11.07.16.
@@ -77,7 +74,7 @@ implements StorageDriver<I,O> {
 				this.authTokens.put(credential, authToken);
 			}
 		}
-		this.concurrencyLevel = loadConfig.intVal("limit-concurrency");
+		this.concurrencyLevel = loadConfig.intVal("step-limit-concurrency");
 		this.verifyFlag = verifyFlag;
 
 		final int confWorkerCount = driverConfig.intVal("threads");

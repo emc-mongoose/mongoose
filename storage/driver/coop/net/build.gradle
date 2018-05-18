@@ -1,0 +1,48 @@
+description = "mongoose-storage-driver-coop-net"
+
+dependencies {
+
+	compile(
+		project(":"),
+		project(":storage:driver:coop"),
+		"com.github.akurilov:netty-connection-pool:${depVersion.nettyConnectionPool}",
+		"io.netty:netty-buffer:${depVersion.netty}",
+		"io.netty:netty-common:${depVersion.netty}",
+		"io.netty:netty-handler:${depVersion.netty}",
+		"io.netty:netty-transport:${depVersion.netty}",
+	)
+
+	runtime(
+		"io.netty:netty-transport-native-epoll:${depVersion.netty}:linux-x86_64",
+		"io.netty:netty-transport-native-kqueue:${depVersion.netty}:osx-x86_64",
+		"org.javassist:javassist:${depVersion.javassist}",
+	)
+}
+
+jar {
+
+	baseName = project.description
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	manifest {
+		attributes (
+			"Implementation-Version": version,
+			"Implementation-Title": project.description,
+		)
+	}
+
+	// 1st level dependencies only
+	from configurations
+		.runtime
+		.copyRecursive()
+		.setTransitive(false)
+		.filter {
+			// do not include project dependencies (include module dependencies only)
+			!it.absolutePath.startsWith(rootProject.projectDir.absolutePath)
+		}
+		.collect {
+			zipTree it
+		}
+
+	exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
+}
