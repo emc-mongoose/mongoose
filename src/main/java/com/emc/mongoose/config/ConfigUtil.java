@@ -1,6 +1,7 @@
 package com.emc.mongoose.config;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
@@ -52,6 +53,14 @@ public interface ConfigUtil {
 		printer.indentObjectsWith(indenter);
 		printer.indentArraysWith(indenter);
 		return mapper.writer(printer);
+	}
+
+	static String toString(final Config config) {
+		try {
+			return configWriter().writeValueAsString(config);
+		} catch(final JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	static Config loadConfig(final URL url, final Map<String, Object> schema)

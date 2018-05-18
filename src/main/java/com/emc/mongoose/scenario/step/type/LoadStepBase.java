@@ -165,7 +165,7 @@ implements LoadStep, Runnable {
 				doStartLocal();
 			}
 
-			final long t = stepConfig.longVal("limit-time");
+			final long t = TimeUtil.getTimeInSeconds(stepConfig.stringVal("limit-time"));
 			if(t > 0) {
 				timeLimitSec = t;
 			}

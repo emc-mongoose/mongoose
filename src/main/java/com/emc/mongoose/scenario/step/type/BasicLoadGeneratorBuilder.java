@@ -191,13 +191,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(ItemType.DATA.equals(itemType)) {
 			final List<String> fixedRangesConfig = rangesConfig.listVal("fixed");
 			final List<Range> fixedRanges;
-			if(fixedRangesConfig != null) {
+			if(fixedRangesConfig == null) {
+				fixedRanges = Collections.EMPTY_LIST;
+			} else {
 				fixedRanges = fixedRangesConfig
 					.stream()
 					.map(Range::new)
 					.collect(Collectors.toList());
-			} else {
-				fixedRanges = Collections.EMPTY_LIST;
 			}
 			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicDataIoTaskBuilder(originIndex)
 				.setFixedRanges(fixedRanges)
@@ -279,8 +279,9 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 
 		// intercept the items input for the copy ranges support
-		final Range srcItemsCountRange = new Range(rangesConfig.stringVal("concat"));
-		if(srcItemsCountRange != null) {
+		final String itemDataRangesConcatConfig = rangesConfig.stringVal("concat");
+		if(itemDataRangesConcatConfig != null) {
+			final Range srcItemsCountRange = new Range(itemDataRangesConcatConfig);
 			if(
 				IoType.CREATE.equals(ioType)
 					&& ItemType.DATA.equals(itemType)
