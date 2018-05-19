@@ -10,8 +10,8 @@ description = "Mongoose is a high-load storage performance testing tool"
 ext {
 
 	depVersion = [
-		confuse: "1.0.8",
-		confuseIoJson: "1.0.2",
+		confuse: "1.1.0",
+		confuseIoJson: "1.0.3",
 		commonsCodec : "1.11",
 		commonsLang : "2.6",
 		disruptor : "3.4.2",
@@ -47,6 +47,7 @@ allprojects {
 
 	repositories {
 		mavenCentral()
+		maven { url "https://oss.sonatype.org/content/repositories/comgithubakurilov-1099" }
 	}
 
 	apply plugin: "java"

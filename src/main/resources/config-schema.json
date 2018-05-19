@@ -131,12 +131,6 @@
 			"ioRatio": "int32",
 			"transport": "string",
 			"ssl": "boolean",
-			"http": {
-				"fsAccess": "boolean",
-				"headers": "map",
-				"namespace": "string",
-				"versioning": "boolean"
-			},
 			"node": {
 				"addrs": "list",
 				"port": "int32",

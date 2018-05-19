@@ -227,21 +227,6 @@
 			// Currently only HTTPS implementation is available.
 			// Have no effect if configured storage type is filesystem.
 			"ssl": false,
-			"http": {
-				// Specifies whether filesystem access is enabled or not in the case of S3 or Atmos API
-				"fsAccess": false,
-				// Custom HTTP headers section.
-				// An user may place here a key-value pair which will be used as HTTP header.
-				"headers": {
-					"Connection": "Keep-Alive",
-					"User-Agent": "mongoose/4.0.0"
-				},
-				// The HTTP storage namespace.
-				// WARNING: the default value (null) will not work in the case of Swift API
-				"namespace": null,
-				// Specifies whether the versioning storage feature is used or not
-				"versioning": false
-			},
 			"node": {
 				// The list of the storage node IPs or hostnames to use for HTTP load.
 				// May include port numbers.
