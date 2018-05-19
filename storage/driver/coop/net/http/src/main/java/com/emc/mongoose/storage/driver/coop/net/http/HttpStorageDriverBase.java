@@ -17,8 +17,8 @@ import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.supply.PatternDefinedSupplier.PATTERN_CHAR;
 import static com.emc.mongoose.item.io.task.IoTask.SLASH;
-import static com.emc.mongoose.item.DataItem.getRangeCount;
-import static com.emc.mongoose.item.DataItem.getRangeOffset;
+import static com.emc.mongoose.item.DataItem.rangeCount;
+import static com.emc.mongoose.item.DataItem.rangeOffset;
 import com.emc.mongoose.item.PathItem;
 import com.emc.mongoose.item.TokenItem;
 import com.emc.mongoose.storage.Credential;
@@ -313,27 +313,27 @@ implements HttpStorageDriver<I, O> {
 				return; // do not set the ranges header
 			}
 			// current layer first
-			for(int i = 0; i < getRangeCount(baseItemSize); i++) {
+			for(int i = 0; i < rangeCount(baseItemSize); i++) {
 				if(rangesMaskPair[0].get(i)) {
 					if(strb.length() > 0) {
 						strb.append(',');
 					}
 					strb
-						.append(getRangeOffset(i))
+						.append(rangeOffset(i))
 						.append('-')
-						.append(Math.min(getRangeOffset(i + 1), baseItemSize) - 1);
+						.append(Math.min(rangeOffset(i + 1), baseItemSize) - 1);
 				}
 			}
 			// then next layer ranges if any
-			for(int i = 0; i < getRangeCount(baseItemSize); i++) {
+			for(int i = 0; i < rangeCount(baseItemSize); i++) {
 				if(rangesMaskPair[1].get(i)) {
 					if(strb.length() > 0) {
 						strb.append(',');
 					}
 					strb
-						.append(getRangeOffset(i))
+						.append(rangeOffset(i))
 						.append('-')
-						.append(Math.min(getRangeOffset(i + 1), baseItemSize) - 1);
+						.append(Math.min(rangeOffset(i + 1), baseItemSize) - 1);
 				}
 			}
 

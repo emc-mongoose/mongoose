@@ -3,7 +3,6 @@ description = "mongoose-storage-driver-coop-net"
 dependencies {
 
 	compile(
-		project(":"),
 		project(":storage:driver:coop"),
 		"com.github.akurilov:netty-connection-pool:${depVersion.nettyConnectionPool}",
 		"io.netty:netty-buffer:${depVersion.netty}",
@@ -13,8 +12,11 @@ dependencies {
 	)
 
 	runtime(
+		"io.netty:netty-codec:${depVersion.netty}",
+		"io.netty:netty-resolver:${depVersion.netty}",
 		"io.netty:netty-transport-native-epoll:${depVersion.netty}:linux-x86_64",
 		"io.netty:netty-transport-native-kqueue:${depVersion.netty}:osx-x86_64",
+		"io.netty:netty-transport-native-unix-common:${depVersion.netty}",
 		"org.javassist:javassist:${depVersion.javassist}",
 	)
 }

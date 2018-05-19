@@ -8,8 +8,8 @@ import com.emc.mongoose.data.DataVerificationException;
 import com.emc.mongoose.item.io.task.IoTask;
 import com.emc.mongoose.item.io.task.data.DataIoTask;
 import com.emc.mongoose.item.DataItem;
-import static com.emc.mongoose.item.DataItem.getRangeCount;
-import static com.emc.mongoose.item.DataItem.getRangeOffset;
+import static com.emc.mongoose.item.DataItem.rangeCount;
+import static com.emc.mongoose.item.DataItem.rangeOffset;
 
 import com.emc.mongoose.logging.Loggers;
 import io.netty.buffer.ByteBuf;
@@ -124,9 +124,9 @@ public abstract class ResponseContentUtil {
 			currOffset += rangeBytesDone;
 			// find the internal data item's cell index which has:
 			// (cell's offset <= current offset) && (cell's end > current offset)
-			n = getRangeCount(currOffset + 1) - 1;
-			cellOffset = getRangeOffset(n);
-			cellEnd = Math.min(baseItemSize, getRangeOffset(n + 1));
+			n = rangeCount(currOffset + 1) - 1;
+			cellOffset = rangeOffset(n);
+			cellEnd = Math.min(baseItemSize, rangeOffset(n + 1));
 			// get the found cell data item (updated or not)
 			currRange = dataItem.slice(cellOffset, cellEnd - cellOffset);
 			if(dataItem.isRangeUpdated(n)) {
@@ -193,7 +193,7 @@ public abstract class ResponseContentUtil {
 				continue;
 			}
 			currRange = dataIoTask.currRange();
-			rangeSize = dataItem.getRangeSize(currRangeIdx);
+			rangeSize = dataItem.rangeSize(currRangeIdx);
 
 			currRange.position(rangeBytesDone);
 			n = (int) Math.min(chunkSize - chunkOffset, rangeSize - rangeBytesDone);
@@ -232,11 +232,11 @@ public abstract class ResponseContentUtil {
 		while(chunkCountDone < chunkSize) {
 
 			currRangeIdx = dataIoTask.currRangeIdx();
-			nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+			nextRangeOffset = rangeOffset(currRangeIdx + 1);
 			if(countBytesDone + chunkCountDone == nextRangeOffset) {
 				if(nextRangeOffset < item.size()) {
 					currRangeIdx ++;
-					nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+					nextRangeOffset = rangeOffset(currRangeIdx + 1);
 					dataIoTask.currRangeIdx(currRangeIdx);
 				} else {
 					throw new DataSizeException(item.size(), countBytesDone + chunkSize);
@@ -252,7 +252,7 @@ public abstract class ResponseContentUtil {
 				chunkCountDone += remainingSize;
 			} catch(final DataCorruptionException e) {
 				throw new DataCorruptionException(
-					getRangeOffset(dataIoTask.currRangeIdx()) + e.getOffset(), e.expected,
+					rangeOffset(dataIoTask.currRangeIdx()) + e.getOffset(), e.expected,
 					e.actual
 				);
 			}

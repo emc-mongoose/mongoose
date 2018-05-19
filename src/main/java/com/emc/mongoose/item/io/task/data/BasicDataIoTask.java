@@ -52,7 +52,7 @@ implements DataIoTask<T> {
 		this.fixedRanges = fixedRanges;
 		this.randomRangesCount = randomRangesCount;
 		reset();
-		dataInput = item.getDataInput();
+		dataInput = item.dataInput();
 	}
 
 	public BasicDataIoTask(
@@ -143,7 +143,7 @@ implements DataIoTask<T> {
 	@Override
 	public final void markRandomRanges(final int count) {
 		try {
-			final int countRangesTotal = DataItem.getRangeCount(item.size());
+			final int countRangesTotal = DataItem.rangeCount(item.size());
 			if(count < 1 || count > countRangesTotal) {
 				throw new AssertionError(
 					"Range count should be more than 0 and less than max " + countRangesTotal +
@@ -161,7 +161,7 @@ implements DataIoTask<T> {
 	private void markRandomRangesActually(final int countRangesTotal) {
 		final int startCellPos = (int) (nanoTime() % countRangesTotal);
 		int nextCellPos;
-		if(countRangesTotal > item.getUpdatedRangesCount() + markedRangesMaskPair[0].cardinality()) {
+		if(countRangesTotal > item.updatedRangesCount() + markedRangesMaskPair[0].cardinality()) {
 			// current layer has not updated yet ranges
 			for(int i = 0; i < countRangesTotal; i ++) {
 				nextCellPos = (startCellPos + i) % countRangesTotal;
@@ -201,9 +201,9 @@ implements DataIoTask<T> {
 		long sumSize = 0;
 		if(fixedRanges == null || fixedRanges.isEmpty()) {
 			try {
-				for(int i = 0; i < DataItem.getRangeCount(item.size()); i++) {
+				for(int i = 0; i < DataItem.rangeCount(item.size()); i++) {
 					if(markedRangesMaskPair[0].get(i) || markedRangesMaskPair[1].get(i)) {
-						sumSize += item.getRangeSize(i);
+						sumSize += item.rangeSize(i);
 					}
 				}
 			} catch(final IOException e) {
@@ -264,9 +264,9 @@ implements DataIoTask<T> {
 	@Override
 	public final DataItem currRange() {
 		try {
-			if(currRange == null && currRangeIdx < DataItem.getRangeCount(item.size())) {
-				final long currRangeSize = item.getRangeSize(currRangeIdx);
-				final long currRangeOffset = DataItem.getRangeOffset(currRangeIdx);
+			if(currRange == null && currRangeIdx < DataItem.rangeCount(item.size())) {
+				final long currRangeSize = item.rangeSize(currRangeIdx);
+				final long currRangeOffset = DataItem.rangeOffset(currRangeIdx);
 				final int layerIdx = item.layer();
 				currRange = item.slice(currRangeOffset, currRangeSize);
 				if(item.isRangeUpdated(currRangeIdx)) {
@@ -284,13 +284,13 @@ implements DataIoTask<T> {
 		if(currRange == null) {
 			final int layerIdx = item.layer();
 			if(markedRangesMaskPair[0].get(currRangeIdx)) {
-				final long currRangeSize = item.getRangeSize(currRangeIdx);
-				final long currRangeOffset = DataItem.getRangeOffset(currRangeIdx);
+				final long currRangeSize = item.rangeSize(currRangeIdx);
+				final long currRangeOffset = DataItem.rangeOffset(currRangeIdx);
 				currRange = item.slice(currRangeOffset, currRangeSize);
 				currRange.layer(layerIdx + 1);
 			} else if(markedRangesMaskPair[1].get(currRangeIdx)) {
-				final long currRangeSize = item.getRangeSize(currRangeIdx);
-				final long currRangeOffset = DataItem.getRangeOffset(currRangeIdx);
+				final long currRangeSize = item.rangeSize(currRangeIdx);
+				final long currRangeOffset = DataItem.rangeOffset(currRangeIdx);
 				currRange = item.slice(currRangeOffset, currRangeSize);
 				currRange.layer(layerIdx + 2);
 			} else {
@@ -378,7 +378,7 @@ implements DataIoTask<T> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		dataInput = item.getDataInput();
+		dataInput = item.dataInput();
 		contentSize = in.readLong();
 		int n = in.readInt();
 		if(n == 0) {

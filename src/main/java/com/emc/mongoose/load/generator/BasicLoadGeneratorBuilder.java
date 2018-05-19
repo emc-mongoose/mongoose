@@ -29,7 +29,7 @@ import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.logging.LogContextThreadFactory;
 import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.supply.PatternDefinedSupplier.PATTERN_CHAR;
-import static com.emc.mongoose.item.DataItem.getRangeCount;
+import static com.emc.mongoose.item.DataItem.rangeCount;
 import static com.emc.mongoose.storage.driver.StorageDriver.BUFF_SIZE_MIN;
 
 import com.github.akurilov.commons.collection.Range;
@@ -415,7 +415,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 			case READ:
 			case UPDATE:
 				if(itemSize > 0 && randomRangesCount > 0) {
-					return itemSize * randomRangesCount / getRangeCount(itemSize);
+					return itemSize * randomRangesCount / rangeCount(itemSize);
 				} else if(fixedRanges != null && !fixedRanges.isEmpty()) {
 					long sizeSum = 0;
 					long rangeSize;

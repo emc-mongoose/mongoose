@@ -90,7 +90,7 @@ implements StorageDriver<I,O> {
 	protected void prepareIoTask(final O ioTask) {
 		ioTask.reset();
 		if(ioTask instanceof DataIoTask) {
-			((DataIoTask) ioTask).item().setDataInput(itemDataInput);
+			((DataIoTask) ioTask).item().dataInput(itemDataInput);
 		}
 		final String dstPath = ioTask.dstPath();
 		final Credential credential = ioTask.credential();

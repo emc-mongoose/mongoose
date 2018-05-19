@@ -22,9 +22,9 @@ extends Item, SeekableByteChannel {
 	
 	double LOG2 = Math.log(2);
 	
-	DataInput getDataInput();
+	DataInput dataInput();
 	
-	void setDataInput(final DataInput dataInput);
+	void dataInput(final DataInput dataInput);
 	
 	void reset();
 	
@@ -66,21 +66,21 @@ extends Item, SeekableByteChannel {
 	void verify(final ByteBuffer inBuff)
 	throws DataCorruptionException;
 	
-	static int getRangeCount(final long size) {
+	static int rangeCount(final long size) {
 		return (int) Math.ceil(Math.log(size + 1) / LOG2);
 	}
 	
-	static long getRangeOffset(final int i) {
+	static long rangeOffset(final int i) {
 		return (1 << i) - 1;
 	}
 	
-	long getRangeSize(int rangeIdx);
+	long rangeSize(int rangeIdx);
 	
 	boolean isUpdated();
 	
 	boolean isRangeUpdated(final int rangeIdx);
 	
-	int getUpdatedRangesCount();
+	int updatedRangesCount();
 	
 	void commitUpdatedRanges(final BitSet[] updatingRangesMask);
 }

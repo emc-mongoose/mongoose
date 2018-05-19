@@ -29,7 +29,7 @@ import com.emc.mongoose.item.Item;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.item.io.task.IoTask.Status.SUCC;
-import static com.emc.mongoose.item.DataItem.getRangeCount;
+import static com.emc.mongoose.item.DataItem.rangeCount;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.logging.LogContextThreadFactory;
@@ -186,11 +186,11 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		//bootstrap.option(ChannelOption.AUTO_READ)
 		bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, netConfig.intVal("timeoutMilliSec"));
 		bootstrap.option(ChannelOption.WRITE_SPIN_COUNT, 1);
-		int size = (int) SizeInBytes.toFixedSize(netConfig.stringVal("rcvBuf"));
+		int size = netConfig.intVal("rcvBuf");
 		if(size > 0) {
 			bootstrap.option(ChannelOption.SO_RCVBUF, size);
 		}
-		size = (int) SizeInBytes.toFixedSize(netConfig.stringVal("sndBuf"));
+		size = netConfig.intVal("sndBuf");
 		if(size > 0) {
 			bootstrap.option(ChannelOption.SO_SNDBUF, size);
 		}
@@ -449,7 +449,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				if(fixedRanges == null || fixedRanges.isEmpty()) {
 					// random ranges update case
 					final BitSet updRangesMaskPair[] = dataIoTask.markedRangesMaskPair();
-					final int rangeCount = getRangeCount(dataItem.size());
+					final int rangeCount = rangeCount(dataItem.size());
 					DataItem updatedRange;
 					if(sslFlag) {
 						// current layer updates first

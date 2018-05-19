@@ -1,0 +1,26 @@
+description = "mongoose-storage-driver-coop-nio-fs"
+
+dependencies {
+
+	compile(
+		project(":storage:driver:coop:nio"),
+	)
+
+	testCompile(
+		"junit:junit:${depVersion.junit}",
+		"commons-io:commons-io:2.6",
+	)
+}
+
+jar {
+	baseName = project.description
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	manifest {
+		attributes(
+			"Implementation-Version": version,
+			"Implementation-Title": project.description,
+		)
+	}
+}
+

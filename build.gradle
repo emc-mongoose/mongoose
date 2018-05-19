@@ -10,14 +10,14 @@ description = "Mongoose is a high-load storage performance testing tool"
 ext {
 
 	depVersion = [
-		confuse: "1.0.7",
+		confuse: "1.0.8",
 		confuseIoJson: "1.0.2",
 		commonsCodec : "1.11",
 		commonsLang : "2.6",
 		disruptor : "3.4.2",
 		fiber4j: "[1.0.0,)",
 		jackson : "2.9.5",
-		javaCommons : "[2.1.1,)",
+		javaCommons : "[2.1.2,)",
 		javassist : "3.22.0-GA",
 		junit : "4.12",
 		slf4j : "1.7.25",
@@ -25,7 +25,7 @@ ext {
 		metrics : "4.0.2",
 		nagaina : "[3.6.10,)",
 		netty : "4.1.25.Final",
-		nettyConnectionPool : "[1.0.1,)",
+		nettyConnectionPool : "[1.0.2,)",
 	]
 
 	leafProjects = subprojects.findAll {
@@ -34,14 +34,6 @@ ext {
 			!it.path.equals(":load:step:type") &&
 			!it.path.equals(":storage") &&
 			!it.path.equals(":storage:driver")
-	}
-
-	loadStepExtProjects = leafProjects.findAll {
-		it.path.startsWith(":load:step")
-	}
-
-	storageDriverExtProjects = leafProjects.findAll {
-		it.path.startsWith(":storage:driver")
 	}
 
 	log4j2PluginsDatPath = Paths.get(
@@ -87,8 +79,8 @@ allprojects {
 	// see http://central.sonatype.org/pages/gradle.html for details
 	uploadArchives {
 
-		// upload only base artifact and storage drivers
-		if(project != rootProject && !(project in storageDriverExtProjects)) {
+		// upload base artifact and extensions
+		if(project != rootProject && !(project in leafProjects)) {
 			return
 		}
 
@@ -309,7 +301,7 @@ task dist(type: Jar) {
 
 	exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
 
-	loadStepExtProjects
+	leafProjects
 		.each {
 			final Project p = it
 			from(p.jar.outputs.files) {

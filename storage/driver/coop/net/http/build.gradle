@@ -2,7 +2,6 @@ description = "mongoose-storage-driver-coop-net-http"
 
 dependencies {
 	compile(
-		project(":"),
 		project(":storage:driver:coop:net"),
 		"io.netty:netty-codec-http:${depVersion.netty}",
 	)

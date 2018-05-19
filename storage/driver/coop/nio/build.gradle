@@ -2,7 +2,19 @@ description = "mongoose-storage-driver-coop-nio"
 
 dependencies {
 	compile(
-		project(":"),
 		project(":storage:driver:coop"),
 	)
 }
+
+jar {
+	baseName = project.description
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	manifest {
+		attributes(
+			"Implementation-Version": version,
+			"Implementation-Title": project.description,
+		)
+	}
+}
+

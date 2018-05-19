@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.emc.mongoose.item.DataItem.getRangeCount;
+import static com.emc.mongoose.item.DataItem.rangeCount;
 import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
 
 /**
@@ -106,7 +106,7 @@ implements DataIoTaskBuilder<I, O> {
 				fixedRanges, randomRangesCount, getNextSrcItemsForConcat()
 			);
 		} else {
-			if(randomRangesCount > getRangeCount(dataItem.size())) {
+			if(randomRangesCount > rangeCount(dataItem.size())) {
 				throw new IllegalArgumentException(
 					"Configured random ranges count (" + randomRangesCount + ") is more than " +
 						"allowed for the data item w/ size " + formatFixedSize(dataItem.size())
@@ -147,7 +147,7 @@ implements DataIoTaskBuilder<I, O> {
 					)
 				);
 			} else {
-				if(randomRangesCount > getRangeCount(nextItem.size())) {
+				if(randomRangesCount > rangeCount(nextItem.size())) {
 					throw new IllegalArgumentException(
 						"Configured random ranges count (" + randomRangesCount + ") is more than " +
 							"allowed for the data item w/ size " + formatFixedSize(nextItem.size())

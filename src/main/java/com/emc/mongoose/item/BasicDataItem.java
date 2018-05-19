@@ -15,7 +15,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.BitSet;
 
-import static com.emc.mongoose.item.DataItem.getRangeOffset;
+import static com.emc.mongoose.item.DataItem.rangeOffset;
 import static java.lang.Math.min;
 
 /**
@@ -182,12 +182,12 @@ implements DataItem {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final DataInput getDataInput() {
+	public final DataInput dataInput() {
 		return dataInput;
 	}
 	//
 	@Override
-	public final void setDataInput(final DataInput dataInput) {
+	public final void dataInput(final DataInput dataInput) {
 		this.dataInput = dataInput;
 		this.dataInputSize = dataInput.getSize();
 	}
@@ -236,7 +236,7 @@ implements DataItem {
 			name, offset + from, partSize, layerNum
 		);
 		if(dataInput != null) {
-			dataItemSlice.setDataInput(dataInput);
+			dataItemSlice.dataInput(dataInput);
 		}
 		return dataItemSlice;
 	}
@@ -263,8 +263,8 @@ implements DataItem {
 	}
 	//
 	@Override
-	public final long getRangeSize(final int i) {
-		return min(getRangeOffset(i + 1), size) - getRangeOffset(i);
+	public final long rangeSize(final int i) {
+		return min(rangeOffset(i + 1), size) - rangeOffset(i);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -292,7 +292,7 @@ implements DataItem {
 	}
 	
 	@Override
-	public final int getUpdatedRangesCount() {
+	public final int updatedRangesCount() {
 		return modifiedRangesMask.cardinality();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
