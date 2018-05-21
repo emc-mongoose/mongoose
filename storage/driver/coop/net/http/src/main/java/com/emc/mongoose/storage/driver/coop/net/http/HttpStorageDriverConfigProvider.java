@@ -10,10 +10,12 @@ import static com.emc.mongoose.Constants.APP_NAME;
 public final class HttpStorageDriverConfigProvider
 extends JsonConfigProviderBase  {
 
+	private static final String CONFIG_
+
 	@Override
 	protected final InputStream configInputStream()
 	throws IOException {
-		return getClass().getResource("/config-storage-net-http.json").openStream();
+		return getClass().getResourceAsStream();
 	}
 
 	@Override

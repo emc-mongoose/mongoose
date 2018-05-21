@@ -4,6 +4,8 @@ import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.AliasingUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.config.ConfigUtil;
+import com.emc.mongoose.env.Installer;
+import com.emc.mongoose.env.MainInstaller;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.env.Extensions;
@@ -12,7 +14,6 @@ import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static com.emc.mongoose.Constants.PATH_DEFAULTS;
 import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
 import com.emc.mongoose.svc.Service;
 import com.emc.mongoose.load.step.ScriptEngineUtil;
@@ -20,6 +21,7 @@ import com.emc.mongoose.load.step.node.BasicFileManagerService;
 import com.emc.mongoose.load.step.node.BasicLoadStepManagerService;
 
 import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.ConfigProvider;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
@@ -31,7 +33,6 @@ import org.apache.logging.log4j.Level;
 import static javax.script.ScriptContext.ENGINE_SCOPE;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-import java.io.File;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -46,8 +47,8 @@ public final class Main {
 
 	public static void main(final String... args) {
 
-		final InstallHook installHook = new InstallHook();
-		final Path appHomePath = installHook.appHomePath();
+		final MainInstaller mainInstaller = new MainInstaller();
+		final Path appHomePath = mainInstaller.appHomePath();
 		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
 
 		try(
@@ -57,21 +58,23 @@ public final class Main {
 		) {
 
 			LogUtil.init(appHomePath.toString());
-			installHook.run();
+			mainInstaller.accept(appHomePath); // invokes the installer
 
 			try(final URLClassLoader extClsLoader = Extensions.extClassLoader(appHomePath)) {
 
-				// load the initial config from the file
-				final File defaultsFile = Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile();
+				// install the extensions
+				Installer.installExtensions(appHomePath, extClsLoader);
+
+				// load the initial config from the config files
 				final Map<String, Object> configSchema;
 				final Config config;
 				try {
 					configSchema = SchemaProvider.resolveAndReduce(APP_NAME, extClsLoader);
-					config = ConfigUtil.loadConfig(defaultsFile, configSchema);
-				} catch(final Exception e) {
-					LogUtil.exception(
-						Level.ERROR, e, "Failed to load the defaults from {}", defaultsFile
+					config = ConfigProvider.resolveAndReduce(
+						APP_NAME, extClsLoader, "-", configSchema
 					);
+				} catch(final Exception e) {
+					LogUtil.exception(Level.ERROR, e, "Failed to load the defaults");
 					return;
 				}
 
@@ -88,8 +91,8 @@ public final class Main {
 						.stream()
 						.collect(Collectors.joining("\n", "\t", ""));
 					Loggers.ERR.fatal(
-						"Invalid argument: \"{}\"\nThe list of all possible args:\n{}", e.getMessage(),
-						formattedAllCliArgs
+						"Invalid argument: \"{}\"\nThe list of all possible args:\n{}",
+						e.getMessage(), formattedAllCliArgs
 					);
 					return;
 				} catch(final InvalidValuePathException e) {
@@ -124,26 +127,15 @@ public final class Main {
 
 	private static void runNode(final Config config, final ClassLoader clsLoader) {
 		final int listenPort = config.intVal("load-step-node-port");
-		Service inputFileSvc = null;
-		Service scenarioStepSvc = null;
-		try {
-			inputFileSvc = new BasicFileManagerService(listenPort);
+		try(
+			final Service inputFileSvc = new BasicFileManagerService(listenPort);
+			final Service scenarioStepSvc = new BasicLoadStepManagerService(listenPort, clsLoader)
+		) {
 			inputFileSvc.start();
-			scenarioStepSvc = new BasicLoadStepManagerService(listenPort, clsLoader);
 			scenarioStepSvc.start();
 			scenarioStepSvc.await();
 		} catch(final Throwable cause) {
 			cause.printStackTrace(System.err);
-		} finally {
-			try {
-				if(inputFileSvc != null) {
-					inputFileSvc.close();
-				}
-				if(scenarioStepSvc != null) {
-					scenarioStepSvc.close();
-				}
-			} catch(final IOException ignored) {
-			}
 		}
 	}
 

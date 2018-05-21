@@ -14,7 +14,7 @@ public abstract class Extensions {
 
 	private static final Logger LOG = Logger.getLogger(Extensions.class.getSimpleName());
 
-	public static final URLClassLoader extClassLoader(final Path appHomePath) {
+	public static URLClassLoader extClassLoader(final Path appHomePath) {
 
 		final URLClassLoader extClsLoader;
 

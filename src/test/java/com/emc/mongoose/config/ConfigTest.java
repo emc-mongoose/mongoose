@@ -1,6 +1,5 @@
 package com.emc.mongoose.config;
 
-import com.emc.mongoose.InstallHook;
 import com.emc.mongoose.config.util.ConfigMatcher;
 import com.emc.mongoose.config.util.ConfigNullMatcher;
 import com.github.akurilov.commons.system.SizeInBytes;
