@@ -13,14 +13,18 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
+import com.github.akurilov.commons.collection.TreeUtil;
+
 import com.github.akurilov.confuse.Config;
+import static com.github.akurilov.confuse.Config.ROOT_PATH;
 import com.github.akurilov.confuse.impl.BasicConfig;
 
 import com.github.akurilov.confuse.io.json.ConfigJsonDeserializer;
 import com.github.akurilov.confuse.io.json.ConfigJsonSerializer;
 
 import java.io.File;
-import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public interface ConfigUtil {
@@ -61,14 +65,22 @@ public interface ConfigUtil {
 		}
 	}
 
-	static Config loadConfig(final URL url, final Map<String, Object> schema)
-	throws Exception {
-		return readConfigMapper(schema).readValue(url, BasicConfig.class);
-	}
-
 	static Config loadConfig(final File file, final Map<String, Object> schema)
 	throws Exception {
 		return readConfigMapper(schema).readValue(file, BasicConfig.class);
 	}
 
+	static Config merge(final String pathSep, final List<Config> configs) {
+		final Map<String, Object> schema = configs
+			.stream()
+			.map(Config::schema)
+			.reduce(TreeUtil::addBranches)
+			.orElseGet(Collections::emptyMap);
+		final Map<String, Object> configTree = configs
+			.stream()
+			.map(Config::deepToMap)
+			.reduce(TreeUtil::addBranches)
+			.orElseGet(Collections::emptyMap);
+		return new BasicConfig(pathSep, schema, configTree);
+	}
 }

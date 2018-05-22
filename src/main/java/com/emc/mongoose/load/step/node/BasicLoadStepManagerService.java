@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.step.node;
 
+import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.svc.ServiceBase;
 import com.emc.mongoose.load.step.LoadStepManagerService;
 import com.emc.mongoose.load.step.LoadStepService;
@@ -19,11 +20,11 @@ public final class BasicLoadStepManagerService
 extends ServiceBase
 implements LoadStepManagerService {
 
-	private final ClassLoader clsLoader;
+	private final List<Extension> extensions;
 
-	public BasicLoadStepManagerService(final int port, final ClassLoader clsLoader) {
+	public BasicLoadStepManagerService(final int port, final List<Extension> extensions) {
 		super(port);
-		this.clsLoader = clsLoader;
+		this.extensions = extensions;
 	}
 
 	@Override
@@ -52,7 +53,7 @@ implements LoadStepManagerService {
 		final String stepType, final Config config, final List<Map<String, Object>> stepConfigs
 	) throws RemoteException {
 		final LoadStepService stepSvc = new BasicLoadStepService(
-			port, clsLoader, stepType, config, stepConfigs
+			port, extensions, stepType, config, stepConfigs
 		);
 		Loggers.MSG.info("New step service started @ port #{}: {}", port, stepSvc.name());
 		return stepSvc.name();

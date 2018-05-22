@@ -12,6 +12,7 @@ public interface Constants {
 	String USER_HOME = System.getProperty("user.home");
 	String DIR_CONFIG = "config";
 	String DIR_EXAMPLE = "example";
+	String DIR_EXT = "ext";
 	String DIR_EXAMPLE_SCENARIO = DIR_EXAMPLE + File.separator + "scenario";
 	String PATH_DEFAULTS = DIR_CONFIG + File.separator + "defaults.json";
 	String KEY_HOME_DIR = "homeDir";

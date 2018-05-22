@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.step.master;
 
+import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.io.task.IoTask;
 import com.emc.mongoose.metrics.MetricsSnapshot;
@@ -71,17 +72,17 @@ implements LoadStepClient {
 
 	private final LoadStep loadStep;
 	private final Config baseConfig;
-	private final ClassLoader clsLoader;
+	private final List<Extension> extensions;
 	private final List<Map<String, Object>> stepConfigs;
 	private final Map<LoadStepService, MetricsSnapshotsSupplierFiber> metricsSnapshotsSuppliers;
 
 	public BasicLoadStepClient(
-		final LoadStep loadStep, final Config baseConfig, final ClassLoader clsLoader,
+		final LoadStep loadStep, final Config baseConfig, final List<Extension> extensions,
 		final List<Map<String, Object>> stepConfigs
 	) {
 		this.loadStep = loadStep;
 		this.baseConfig = baseConfig;
-		this.clsLoader = clsLoader;
+		this.extensions = extensions;
 		this.stepConfigs = stepConfigs;
 		this.metricsSnapshotsSuppliers = new HashMap<>();
 	}
@@ -225,7 +226,7 @@ implements LoadStepClient {
 
 		// slice an item input (if any)
 		final int batchSize = config.intVal("load-batch-size");
-		try(final Input<Item> itemInput = createItemInput(config, clsLoader, batchSize)) {
+		try(final Input<Item> itemInput = createItemInput(config, extensions, batchSize)) {
 			if(itemInput != null) {
 				Loggers.MSG.info("{}: slice the item input \"{}\"...", id(), itemInput);
 				sliceItemInput(itemInput, nodeAddrs, configSlices, batchSize);
@@ -342,7 +343,7 @@ implements LoadStepClient {
 	}
 
 	private static <I extends Item> Input<I> createItemInput(
-		final Config config, final ClassLoader clsLoader, final int batchSize
+		final Config config, final List<Extension> extensions, final int batchSize
 	) {
 
 		final Config itemConfig = config.configVal("item");
@@ -381,8 +382,8 @@ implements LoadStepClient {
 						dataLayerConfig.intVal("cache")
 					);
 					final StorageDriver<I, IoTask<I>> storageDriver = StorageDriver.instance(
-						clsLoader, config.configVal("load"), config.configVal("storage"), dataInput,
-						dataConfig.boolVal("verify"), config.stringVal("load-step-id")
+						extensions, config.configVal("load"), config.configVal("storage"),
+						dataInput, dataConfig.boolVal("verify"), config.stringVal("load-step-id")
 					);
 					final Config namingConfig = itemConfig.configVal("naming");
 					final String namingPrefix = namingConfig.stringVal("prefix");

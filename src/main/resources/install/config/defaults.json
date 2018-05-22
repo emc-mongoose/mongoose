@@ -203,45 +203,6 @@
 			"threads": 0,
 			// The identifier pointing to the one of the registered storage driver implementations to use
 			"type": "dummy-mock"
-		},
-		"net": {
-			// Socket options
-			"bindBacklogSize": 0,
-			"interestOpQueued": false,
-			"keepAlive": true,
-			"linger": 0,
-			"reuseAddr": true,
-			"rcvBuf": 0,
-			"sndBuf": 0,
-			"tcpNoDelay": true,
-			"timeoutMilliSec": 0,
-			// Internal Netty's I/O ratio parameter:
-			// https://github.com/netty/netty/issues/1154#issuecomment-14870909
-			// it's recommended to make it higher for large request/response payload (>1MB)
-			"ioRatio": 50,
-			// The I/O transport to use (see http://netty.io/wiki/native-transports.html for details).
-			// By default tries to use "nio" (the most compatible).
-			// For Linux try use "epoll", for MacOS/BSD try use "kqueue"
-			"transport": "epoll",
-			// The flag to enable the load through SSL/TLS.
-			// Currently only HTTPS implementation is available.
-			// Have no effect if configured storage type is filesystem.
-			"ssl": false,
-			"node": {
-				// The list of the storage node IPs or hostnames to use for HTTP load.
-				// May include port numbers.
-				"addrs": [
-					"127.0.0.1"
-				],
-				// The common port number to access the storage nodes,
-				// may be overridden adding the port number to the storage-driver-net-node-addrs,
-				// for example: "127.0.0.1:9020,127.0.0.1:9022,..."
-				"port": 9020,
-				// The limit for the subsequent connection attempts for each storage endpoint node.
-				// The node is excluded from the connection pool forever if the node has more
-				// subsequent connection failures. The default value (0) means no limit.
-				"connAttemptsLimit": 0
-			}
 		}
 	},
 	// The aliasing section mapping the old configuration parameters/values to the current ones

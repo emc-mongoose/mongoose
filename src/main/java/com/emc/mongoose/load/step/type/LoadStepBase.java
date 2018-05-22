@@ -3,6 +3,7 @@ package com.emc.mongoose.load.step.type;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import com.emc.mongoose.config.TimeUtil;
+import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.load.generator.LoadGenerator;
 import com.emc.mongoose.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.metrics.BasicMetricsContext;
@@ -44,7 +45,7 @@ extends DaemonBase
 implements LoadStep, Runnable {
 
 	protected final Config baseConfig;
-	protected final ClassLoader clsLoader;
+	protected final List<Extension> extensions;
 	protected final List<Map<String, Object>> stepConfigs;
 	protected final List<MetricsContext> metricsContexts = new ArrayList<>();
 	protected final List<LoadGenerator> generators = new ArrayList<>();
@@ -60,11 +61,11 @@ implements LoadStep, Runnable {
 	private String id = null;
 
 	protected LoadStepBase(
-		final Config baseConfig, final ClassLoader clsLoader,
+		final Config baseConfig, final List<Extension> extensions,
 		final List<Map<String, Object>> overrides
 	) {
 		this.baseConfig = baseConfig;
-		this.clsLoader = clsLoader;
+		this.extensions = extensions;
 		this.stepConfigs = overrides;
 	}
 
@@ -161,7 +162,7 @@ implements LoadStep, Runnable {
 				// need to set the once generated step id
 				final Config config = new BasicConfig(baseConfig);
 				config.val("load-step-id", stepId);
-				stepClient = new BasicLoadStepClient(this, config, clsLoader, stepConfigs);
+				stepClient = new BasicLoadStepClient(this, config, extensions, stepConfigs);
 				stepClient.start();
 			} else {
 				doStartLocal();

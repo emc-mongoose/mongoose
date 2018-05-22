@@ -17,7 +17,7 @@ import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public abstract class JarResourcesInstaller
+public class JarResourcesInstaller
 implements Installer {
 
 	@Override
@@ -53,7 +53,6 @@ implements Installer {
 			throw new IllegalStateException(e);
 		}
 
-		Loggers.MSG.info("Try to install resources from {}...", jarPath);
 		try(final ZipFile jarFile = new ZipFile(jarPath)) {
 			jarFile
 				.stream()
@@ -64,7 +63,7 @@ implements Installer {
 		} catch(final IOException e) {
 			throw new IllegalStateException(e);
 		}
-		Loggers.MSG.info("Install hook finished");
+		Loggers.MSG.debug("{}: installer finished", jarPath);
 	}
 
 	private static boolean isResourceToInstall(final String relPath) {
@@ -88,5 +87,7 @@ implements Installer {
 		}
 	}
 
-	protected abstract InputStream resourceStream(final String resPath);
+	protected InputStream resourceStream(final String resPath) {
+		return getClass().getResourceAsStream(resPath);
+	}
 }

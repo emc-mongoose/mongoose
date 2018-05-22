@@ -1,5 +1,7 @@
 package com.emc.mongoose.load.step.type.chain;
 
+import com.emc.mongoose.config.ConfigUtil;
+import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.item.io.IoType;
@@ -28,6 +30,7 @@ import static com.github.akurilov.commons.collection.TreeUtil.reduceForest;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
 import static com.github.akurilov.confuse.Config.ROOT_PATH;
+import static com.github.akurilov.confuse.Config.deepToMap;
 
 import org.apache.logging.log4j.Level;
 
@@ -47,15 +50,15 @@ extends LoadStepBase  {
 	public static final String TYPE = "ChainLoad";
 
 	public ChainLoadStep(
-		final Config baseConfig, final ClassLoader clsLoader,
+		final Config baseConfig, final List<Extension> extensions,
 		final List<Map<String, Object>> overrides
 	) {
-		super(baseConfig, clsLoader, overrides);
+		super(baseConfig, extensions, overrides);
 	}
 
 	@Override
 	protected ChainLoadStep copyInstance(final List<Map<String, Object>> stepConfigs) {
-		return new ChainLoadStep(baseConfig, clsLoader, stepConfigs);
+		return new ChainLoadStep(baseConfig, extensions, stepConfigs);
 	}
 
 	@Override
@@ -74,7 +77,7 @@ extends LoadStepBase  {
 		for(int originIndex = 0; originIndex < subStepCount; originIndex ++) {
 
 			final Map<String, Object> mergedConfigTree = reduceForest(
-				Arrays.asList(config.mapVal(ROOT_PATH), stepConfigs.get(originIndex))
+				Arrays.asList(deepToMap(config), stepConfigs.get(originIndex))
 			);
 			final Config subConfig = new BasicConfig(
 				config.pathSep(), config.schema(), mergedConfigTree
@@ -117,7 +120,7 @@ extends LoadStepBase  {
 					try {
 
 						final StorageDriver driver = StorageDriver.instance(
-							clsLoader, loadConfig, storageConfig, dataInput,
+							extensions, loadConfig, storageConfig, dataInput,
 							dataConfig.boolVal("verify"), testStepId
 						);
 						drivers.add(driver);

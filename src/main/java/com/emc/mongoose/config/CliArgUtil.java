@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 public interface CliArgUtil {
 
 	String ARG_PREFIX = "--";
+	String ARG_PATH_SEP = "-";
 	String ARG_VAL_SEP = "=";
 
 	static Map<String, String> parseArgs(final String... args) {

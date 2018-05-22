@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.step.type.weighted;
 
+import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.item.io.IoType;
@@ -21,6 +22,10 @@ import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.commons.concurrent.throttle.RateThrottle;
 import com.github.akurilov.commons.concurrent.throttle.SequentialWeightsThrottle;
+import static com.github.akurilov.commons.collection.TreeUtil.reduceForest;
+
+import static com.github.akurilov.confuse.Config.ROOT_PATH;
+import static com.github.akurilov.confuse.Config.deepToMap;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
@@ -37,19 +42,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
-import static com.github.akurilov.commons.collection.TreeUtil.reduceForest;
-import static com.github.akurilov.confuse.Config.ROOT_PATH;
-
 public class WeightedLoadStep
 extends LoadStepBase {
 
 	public static final String TYPE = "WeightedLoad";
 
 	public WeightedLoadStep(
-		final Config baseConfig, final ClassLoader clsLoader,
+		final Config baseConfig, final List<Extension> extensions,
 		final List<Map<String, Object>> overrides
 	) {
-		super(baseConfig, clsLoader, overrides);
+		super(baseConfig, extensions, overrides);
 	}
 
 	@Override
@@ -59,7 +61,7 @@ extends LoadStepBase {
 
 	@Override
 	protected WeightedLoadStep copyInstance(final List<Map<String, Object>> stepConfigs) {
-		return new WeightedLoadStep(baseConfig, clsLoader, stepConfigs);
+		return new WeightedLoadStep(baseConfig, extensions, stepConfigs);
 	}
 
 	@Override
@@ -80,7 +82,7 @@ extends LoadStepBase {
 		final List<Config> subConfigs = new ArrayList<>(subStepCount);
 		for(int i = 0; i < subStepCount; i ++) {
 			final Map<String, Object> mergedConfigTree = reduceForest(
-				Arrays.asList(config.mapVal(ROOT_PATH), stepConfigs.get(subStepCount))
+				Arrays.asList(deepToMap(config), stepConfigs.get(subStepCount))
 			);
 			final Config subConfig = new BasicConfig(
 				config.pathSep(), config.schema(), mergedConfigTree
@@ -134,7 +136,7 @@ extends LoadStepBase {
 					try {
 
 						final StorageDriver driver = StorageDriver.instance(
-							clsLoader, loadConfig, storageConfig, dataInput,
+							extensions, loadConfig, storageConfig, dataInput,
 							dataConfig.boolVal("verify"), testStepId
 						);
 						drivers.add(driver);

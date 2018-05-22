@@ -1,55 +1,47 @@
 package com.emc.mongoose.env;
 
+import com.github.akurilov.confuse.Config;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
 import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
-public abstract class Extensions {
+public interface Extension {
 
-	private static final Logger LOG = Logger.getLogger(Extensions.class.getSimpleName());
+	static List<Extension> load(final File dirExt) {
 
-	public static URLClassLoader extClassLoader(final Path appHomePath) {
-
+		final Logger log = Logger.getLogger(Extension.class.getSimpleName());
 		final URLClassLoader extClsLoader;
-
-		final File dirExt = Paths.get(appHomePath.toString(), "ext").toFile();
-
 		if(!dirExt.exists() || !dirExt.isDirectory()) {
-
-			LOG.warning("No \"" + dirExt.getAbsolutePath() + "\" directory, loaded no extensions");
+			log.warning("No \"" + dirExt.getAbsolutePath() + "\" directory, loaded no extensions");
 			extClsLoader = new URLClassLoader(new URL[] {});
-
 		} else {
-
 			final File[] extFiles = dirExt.listFiles();
-
 			if(extFiles == null) {
-
-				LOG.warning(
+				log.warning(
 					"Failed to load the contents of the \"" + dirExt.getAbsolutePath()
 						+ "\" directory, loaded no extensions"
 				);
 				extClsLoader = new URLClassLoader(new URL[] {});
-
 			} else {
-
 				final URL[] extFileUrls = new URL[extFiles.length];
 				final JarFile[] extFileJars = new JarFile[extFiles.length];
-
 				for(int i = 0; i < extFiles.length; i ++) {
 					try {
 						extFileUrls[i] = extFiles[i].toURI().toURL();
-						LOG.config("Loading the extension from the file: \"" + extFiles[i] + "\"");
+						log.config("Loading the extension from the file: \"" + extFiles[i] + "\"");
 						try {
 							extFileJars[i] = new JarFile(extFiles[i]);
 						} catch(final IOException e) {
-							LOG.warning(
+							log.warning(
 								"Failed to load the file \"" + extFiles[i]
 									+ "\", expected a valid JAR/ZIP file"
 							);
@@ -58,11 +50,25 @@ public abstract class Extensions {
 						throw new AssertionError(e);
 					}
 				}
-
 				extClsLoader = new URLClassLoader(extFileUrls, ClassLoader.getSystemClassLoader());
 			}
 		}
 
-		return extClsLoader;
+		final List<Extension> extensions = new ArrayList<>();
+		for(final Extension extension: ServiceLoader.load(Extension.class, extClsLoader)) {
+			extension.classLoader(extClsLoader);
+			extensions.add(extension);
+		}
+		return extensions;
 	}
+
+	String id();
+
+	ClassLoader classLoader();
+
+	void classLoader(final ClassLoader clsLoader);
+
+	void install(final Path appHomePath);
+
+	Config defaults(final Path appHomePath);
 }

@@ -1,0 +1,23 @@
+{
+	"storage": {
+		"net": {
+			"bindBacklogSize": "int32",
+			"interestOpQueued": "boolean",
+			"keepAlive": "boolean",
+			"linger": "int32",
+			"reuseAddr": "boolean",
+			"rcvBuf": "int32",
+			"sndBuf": "int32",
+			"tcpNoDelay": "boolean",
+			"timeoutMilliSec": "int32",
+			"ioRatio": "int32",
+			"transport": "string",
+			"ssl": "boolean",
+			"node": {
+				"addrs": "list",
+				"port": "int32",
+				"connAttemptsLimit": "int32"
+			}
+		}
+	}
+}
