@@ -52,6 +52,7 @@ allprojects {
 
 	apply plugin: "java"
 	apply plugin: "maven"
+	apply plugin: "scala"
 	apply plugin: "signing"
 
 	group = "com.github.emc-mongoose"

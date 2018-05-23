@@ -1,7 +1,5 @@
-package com.emc.mongoose.load.step.type;
+package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.load.generator.BasicLoadGenerator;
-import com.emc.mongoose.load.generator.LoadGenerator;
 import com.github.akurilov.commons.io.collection.ListInput;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.io.Input;
@@ -20,6 +18,7 @@ import com.emc.mongoose.item.ItemFactory;
 import com.emc.mongoose.item.ItemNameSupplier;
 import com.emc.mongoose.item.ItemNamingType;
 import com.emc.mongoose.item.NewDataItemInput;
+
 import org.junit.Test;
 
 import java.io.IOException;

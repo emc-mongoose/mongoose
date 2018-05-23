@@ -39,16 +39,7 @@ jobs:
     - stage: "Docker images"
       script:
       - docker --version
-
       - ./gradlew clean dist
-      - docker login -u $DOCKER_USER -p $DOCKER_PASS
-      - export REPO=emcmongoose/mongoose-base
-      - docker build -f docker/Dockerfile.base -t $REPO:$COMMIT .
-      - docker tag $REPO:$COMMIT $REPO:$TAG
-      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-      - docker push $REPO:$TAG
-
-    - script:
       - docker login -u $DOCKER_USER -p $DOCKER_PASS
       - export REPO=emcmongoose/mongoose
       - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile -t $REPO:$COMMIT .

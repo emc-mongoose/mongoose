@@ -1,3 +1,3 @@
 #!/bin/sh
 umask 0000
-java "$@"
+java -jar /opt/mongoose/mongoose.jar "$@"
