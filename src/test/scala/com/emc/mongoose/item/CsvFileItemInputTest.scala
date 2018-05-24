@@ -26,7 +26,7 @@ final class CsvFileItemInputTest {
 	@Test @throws[Exception]
 	def testInputRate(): Unit = {
 		val count = 100000000
-		val itemFactory = ItemType getItemFactory ItemType.DATA
+		val itemFactory = ItemType.getItemFactory[DataItem, ItemFactory[DataItem]](ItemType.DATA)
 		val itemBuff = new util.ArrayList[DataItem](BATCH_SIZE)
 		val newItemsInput = new NewDataItemInput[DataItem](
 			itemFactory,

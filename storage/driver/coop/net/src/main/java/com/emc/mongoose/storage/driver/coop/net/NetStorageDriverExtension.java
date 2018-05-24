@@ -5,6 +5,9 @@ import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.io.json.JsonSchemaProviderBase;
 
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 
@@ -24,6 +27,11 @@ extends ExtensionBase {
 			return APP_NAME;
 		}
 	};
+	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
+		Arrays.asList(
+			"config/defaults-storage-net.json"
+		)
+	);
 
 	@Override
 	protected final SchemaProvider schemaProvider() {
@@ -38,5 +46,10 @@ extends ExtensionBase {
 	@Override
 	public String id() {
 		return "net";
+	}
+
+	@Override
+	protected final List<String> resourceFilesToInstall() {
+		return RES_INSTALL_FILES;
 	}
 }

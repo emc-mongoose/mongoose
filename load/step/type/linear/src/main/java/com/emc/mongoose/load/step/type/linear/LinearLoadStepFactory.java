@@ -7,12 +7,19 @@ import com.emc.mongoose.load.step.LoadStepFactory;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 public class LinearLoadStepFactory<T extends LinearLoadStep>
 extends ExtensionBase
 implements LoadStepFactory<T> {
+
+	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
+		Arrays.asList(
+		)
+	);
 
 	@Override
 	public String id() {
@@ -35,5 +42,10 @@ implements LoadStepFactory<T> {
 	@Override
 	protected final String defaultsFileName() {
 		return null;
+	}
+
+	@Override
+	protected final List<String> resourceFilesToInstall() {
+		return RES_INSTALL_FILES;
 	}
 }

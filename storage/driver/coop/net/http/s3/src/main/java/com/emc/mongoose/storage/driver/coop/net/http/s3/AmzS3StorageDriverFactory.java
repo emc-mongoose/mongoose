@@ -10,13 +10,21 @@ import com.emc.mongoose.storage.driver.StorageDriverFactory;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 
-public class AmzS3StorageDriverFactory<
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+public final class AmzS3StorageDriverFactory<
 	I extends Item, O extends IoTask<I>, T extends AmzS3StorageDriver<I,O>
 >
 extends ExtensionBase
 implements StorageDriverFactory<I, O, T> {
 
 	private static final String NAME = "s3";
+	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
+		Arrays.asList(
+		)
+	);
 
 	@Override
 	public String id() {
@@ -41,5 +49,10 @@ implements StorageDriverFactory<I, O, T> {
 	@Override
 	protected final String defaultsFileName() {
 		return null;
+	}
+
+	@Override
+	protected final List<String> resourceFilesToInstall() {
+		return RES_INSTALL_FILES;
 	}
 }

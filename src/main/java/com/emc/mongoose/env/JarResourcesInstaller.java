@@ -8,78 +8,33 @@ import org.apache.logging.log4j.Level;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.function.Predicate;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.List;
 
-public class JarResourcesInstaller
+public abstract class JarResourcesInstaller
 implements Installer {
 
 	@Override
 	public void accept(final Path appHomePath) {
-
 		try {
 			Files.createDirectories(appHomePath);
 		} catch(final IOException e) {
 			e.printStackTrace(System.err);
 		}
-
-		final URL rootResUrl = this.getClass().getResource("");
-		if(rootResUrl == null) {
-			throw new IllegalStateException("Failed to get the root resources URL");
-		}
-		if(!"jar".equals(rootResUrl.getProtocol())) {
-			throw new IllegalStateException(
-				"Root resources URL doesn't point to the jar file: " + rootResUrl
-			);
-		}
-
-		final String jarPath;
-		try {
-			// cut the remaining "file:" prefix
-			final String t = new URL(rootResUrl.getPath()).getPath();
-			if(t.isEmpty()) {
-				throw new IllegalStateException("Root resources path is empty");
-			}
-			// cut the suffix with the internal jar path
-			final int i = t.indexOf('!');
-			jarPath = t.substring(0, i);
-		} catch(final MalformedURLException e) {
-			throw new IllegalStateException(e);
-		}
-
-		try(final ZipFile jarFile = new ZipFile(jarPath)) {
-			jarFile
-				.stream()
-				.filter(((Predicate<ZipEntry>) ZipEntry::isDirectory).negate())
-				.map(ZipEntry::getName)
-				.filter(JarResourcesInstaller::isResourceToInstall)
-				.forEach(srcFilePath -> installResourcesFile(appHomePath, srcFilePath));
-		} catch(final IOException e) {
-			throw new IllegalStateException(e);
-		}
-		Loggers.MSG.debug("{}: installer finished", jarPath);
-	}
-
-	private static boolean isResourceToInstall(final String relPath) {
-		return relPath.startsWith(RESOURCES_TO_INSTALL_PREFIX);
+		resourceFilesToInstall().forEach(resFile -> installResourcesFile(appHomePath, resFile));
+		Loggers.MSG.debug("Installer finished: \"{}\"", getClass().getCanonicalName());
 	}
 
 	private void installResourcesFile(final Path appHomePath, final String srcFilePath) {
-		final Path dstPath = Paths.get(
-			appHomePath.toString(), srcFilePath.substring(RESOURCES_TO_INSTALL_PREFIX.length() + 1)
-		);
+		final Path dstPath = Paths.get(appHomePath.toString(), srcFilePath);
 		if(dstPath.toFile().exists()) {
 			Loggers.MSG.debug("The file {} already exists, skipping", dstPath);
 			return;
 		}
 		dstPath.getParent().toFile().mkdirs();
-		try(final InputStream srcFileInput = resourceStream(File.separator + srcFilePath)) {
+		try(final InputStream srcFileInput = resourceStream(srcFilePath)) {
 			final long copiedBytesCount = Files.copy(srcFileInput, dstPath);
 			Loggers.MSG.debug("The file {} installed ({})", dstPath, copiedBytesCount);
 		} catch(final IOException e) {
@@ -88,6 +43,8 @@ implements Installer {
 	}
 
 	protected InputStream resourceStream(final String resPath) {
-		return getClass().getResourceAsStream(resPath);
+		return getClass().getResourceAsStream(File.separator + resPath);
 	}
+
+	protected abstract List<String> resourceFilesToInstall();
 }

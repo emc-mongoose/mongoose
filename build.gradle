@@ -148,7 +148,7 @@ allprojects {
 
 String defineVersion() {
 	def configFilePath = [
-			rootDir, "src", "main", "resources", "install", "config", "defaults.json",
+			rootDir, "src", "main", "resources", "config", "defaults.json",
 		]
 		.join(File.separator);
 	def inputFile = new File(configFilePath)
@@ -307,7 +307,7 @@ task dist(type: Jar) {
 		.each {
 			final Project p = it
 			from(p.jar.outputs.files) {
-				into "install${File.separator}ext"
+				into "${File.separator}ext"
 				rename {
 					fileName -> "${p.description}.jar"
 				}

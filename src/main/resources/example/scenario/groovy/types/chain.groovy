@@ -1,4 +1,4 @@
-package install.example.scenario.groovy.types
+package example.scenario.groovy.types
 
 final itemOutputFile = "items_passed_through_create_read_delete_chain.csv".toString()
 

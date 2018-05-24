@@ -3,53 +3,43 @@ package com.emc.mongoose.env;
 import com.github.akurilov.confuse.Config;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
 public interface Extension {
 
+	Logger LOG = Logger.getLogger(Extension.class.getSimpleName());
+
 	static List<Extension> load(final File dirExt) {
 
-		final Logger log = Logger.getLogger(Extension.class.getSimpleName());
 		final URLClassLoader extClsLoader;
 		if(!dirExt.exists() || !dirExt.isDirectory()) {
-			log.warning("No \"" + dirExt.getAbsolutePath() + "\" directory, loaded no extensions");
+			LOG.warning("No \"" + dirExt.getAbsolutePath() + "\" directory, loaded no extensions");
 			extClsLoader = new URLClassLoader(new URL[] {});
 		} else {
 			final File[] extFiles = dirExt.listFiles();
 			if(extFiles == null) {
-				log.warning(
+				LOG.warning(
 					"Failed to load the contents of the \"" + dirExt.getAbsolutePath()
 						+ "\" directory, loaded no extensions"
 				);
 				extClsLoader = new URLClassLoader(new URL[] {});
 			} else {
-				final URL[] extFileUrls = new URL[extFiles.length];
-				final JarFile[] extFileJars = new JarFile[extFiles.length];
-				for(int i = 0; i < extFiles.length; i ++) {
-					try {
-						extFileUrls[i] = extFiles[i].toURI().toURL();
-						log.config("Loading the extension from the file: \"" + extFiles[i] + "\"");
-						try {
-							extFileJars[i] = new JarFile(extFiles[i]);
-						} catch(final IOException e) {
-							log.warning(
-								"Failed to load the file \"" + extFiles[i]
-									+ "\", expected a valid JAR/ZIP file"
-							);
-						}
-					} catch(final MalformedURLException e) {
-						throw new AssertionError(e);
-					}
-				}
+				final URL[] extFileUrls = Arrays
+					.stream(extFiles)
+					.filter(Extension::isJarFile)
+					.map(Extension::fileToUrl)
+					.filter(Objects::nonNull)
+					.toArray(URL[]::new);
 				extClsLoader = new URLClassLoader(extFileUrls, ClassLoader.getSystemClassLoader());
 			}
 		}
@@ -60,6 +50,25 @@ public interface Extension {
 			extensions.add(extension);
 		}
 		return extensions;
+	}
+
+	static boolean isJarFile(final File f) {
+		try {
+			new JarFile(f);
+		} catch(final Exception e) {
+			LOG.warning("Failed to load the file \"" + f + "\", expected a valid JAR/ZIP file");
+			return false;
+		}
+		return true;
+	}
+
+	static URL fileToUrl(final File f) {
+		try {
+			return f.toURI().toURL();
+		} catch(final MalformedURLException e) {
+			LOG.severe(e.toString());
+		}
+		return null;
 	}
 
 	String id();

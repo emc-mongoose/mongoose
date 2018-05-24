@@ -1,4 +1,4 @@
-package install.example.scenario.groovy
+package example.scenario.groovy
 // increase the concurrency level by the factor of 10
 final limitConcurrencyFactor = 10
 

@@ -10,11 +10,20 @@ import com.emc.mongoose.storage.driver.StorageDriverFactory;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class PreemptStorageDriverMockFactory<
 	I extends Item, O extends IoTask<I>, T extends PreemptStorageDriverMock<I, O>
 >
 extends ExtensionBase
 implements StorageDriverFactory<I, O, T> {
+
+	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
+		Arrays.asList(
+		)
+	);
 
 	@Override
 	public String id() {
@@ -39,5 +48,10 @@ implements StorageDriverFactory<I, O, T> {
 	@Override
 	protected final String defaultsFileName() {
 		return null;
+	}
+
+	@Override
+	protected final List<String> resourceFilesToInstall() {
+		return RES_INSTALL_FILES;
 	}
 }
