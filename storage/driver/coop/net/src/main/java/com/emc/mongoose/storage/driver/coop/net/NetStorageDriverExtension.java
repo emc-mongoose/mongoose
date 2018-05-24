@@ -14,7 +14,6 @@ import static com.emc.mongoose.Constants.APP_NAME;
 public final class NetStorageDriverExtension
 extends ExtensionBase {
 
-	private static final String DEFAULTS_FILE_NAME = "defaults-storage-net.json";
 	private static final SchemaProvider SCHEMA_PROVIDER = new JsonSchemaProviderBase() {
 
 		@Override
@@ -27,9 +26,12 @@ extends ExtensionBase {
 			return APP_NAME;
 		}
 	};
+
+	private static final String DEFAULTS_FILE_NAME = "defaults-storage-net.json";
+
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
 		Arrays.asList(
-			"config/defaults-storage-net.json"
+			"config/" + DEFAULTS_FILE_NAME
 		)
 	);
 

@@ -8,7 +8,7 @@ PreconditionLoad
                     file: ITEMS_FILE_0
                 ]
             ],
-            test: [
+            load: [
                 step: [
                     limit: [
                         count: FIRST_STEP_COUNT_LIMIT

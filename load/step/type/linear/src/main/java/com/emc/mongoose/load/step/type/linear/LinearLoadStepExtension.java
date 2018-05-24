@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class LinearLoadStepFactory<T extends LinearLoadStep>
+public class LinearLoadStepExtension<T extends LinearLoadStep>
 extends ExtensionBase
 implements LoadStepFactory<T> {
 

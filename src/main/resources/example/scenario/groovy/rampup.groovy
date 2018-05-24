@@ -42,7 +42,7 @@ static def configCreate(iterId, size, itemOutputFile, limitCount, limitTime) {
                 path : "/default"
             ]
         ],
-        test: [
+        load: [
             step: [
                 id: "create0_$iterId".toString(),
                 limit: [
@@ -61,7 +61,7 @@ static def configRead(iterId, itemInputFile) {
                 file: itemInputFile
             ]
         ],
-        test: [
+        load: [
              step: [
                  id: "read1_$iterId".toString()
              ]
@@ -79,7 +79,7 @@ static def configUpdate(iterId, itemInputFile, itemOutputFile) {
                 file: itemOutputFile
             ]
         ],
-        test: [
+        load: [
             step: [
                 id: "update2_$iterId".toString()
             ]
@@ -94,7 +94,7 @@ static def configReadPartial(iterId, itemInputFile) {
                 file: itemInputFile
             ]
         ],
-        test: [
+        load: [
             step: [
                 id: "read3_$iterId".toString()
             ]
@@ -109,7 +109,7 @@ static def configDelete(iterId, itemInputFile) {
                 file: itemInputFile
             ]
         ],
-        test: [
+        load: [
             step: [
                 id: "delete4_$iterId".toString()
             ]

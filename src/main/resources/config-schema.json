@@ -31,7 +31,6 @@
 			"length": "int32"
 		},
 		"output": {
-			"delay": "string",
 			"file": "string",
 			"path": "string"
 		},
@@ -47,8 +46,7 @@
 				"limit": "int32"
 			},
 			"remote": "boolean",
-			"shuffle": "boolean",
-			"weight": "int32"
+			"shuffle": "boolean"
 		},
 		"step": {
 			"distributed": "boolean",
@@ -75,7 +73,6 @@
 		},
 		"type": "string"
 	},
-	"node": "boolean",
 	"output": {
 		"color": "boolean",
 		"metrics": {

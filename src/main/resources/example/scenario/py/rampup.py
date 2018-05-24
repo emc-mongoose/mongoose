@@ -39,7 +39,7 @@ def configCreate(iterId, size, itemOutputFile, limitCount, limitTime):
                 "path": "/default"
             }
         },
-        "test": {
+        "load": {
             "step": {
                 "id": "create0_" + iterId,
                 "limit": {
@@ -57,7 +57,7 @@ def configRead(iterId, itemInputFile):
                 "file": itemInputFile
             }
         },
-        "test": {
+        "load": {
              "step": {
                  "id": "read1_" + iterId
              }
@@ -74,7 +74,7 @@ def configUpdate(iterId, itemInputFile, itemOutputFile):
                 "file": itemOutputFile
             }
         },
-        "test": {
+        "load": {
             "step": {
                 "id": "update2_" + iterId
             }
@@ -88,7 +88,7 @@ def configReadPartial(iterId, itemInputFile):
                 "file": itemInputFile
             }
         },
-        "test": {
+        "load": {
             "step": {
                 "id": "read3_" + iterId
             }
@@ -102,7 +102,7 @@ def configDelete(iterId, itemInputFile):
                 "file": itemInputFile
             }
         },
-        "test": {
+        "load": {
             "step": {
                 "id": "delete4_" + iterId
             }

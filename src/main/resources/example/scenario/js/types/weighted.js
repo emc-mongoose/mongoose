@@ -24,9 +24,7 @@ Load
             "load": {
                 "limit": {
                     "concurrency": sharedConcurrency
-                }
-            },
-            "test": {
+                },
                 "step": {
                     "limit": {
                         "count": 10000
@@ -52,9 +50,7 @@ WeightedLoad
             "load": {
                 "generator": {
                     "weight": 20
-                }
-            },
-            "test": {
+                },
                 "step": {
                     "limit": {
                         "time": 100

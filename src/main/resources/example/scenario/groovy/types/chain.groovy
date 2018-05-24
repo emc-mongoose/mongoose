@@ -5,7 +5,7 @@ final itemOutputFile = "items_passed_through_create_read_delete_chain.csv".toStr
 // limit the whole chain step execution time by 5 minutes
 // (chain step takes the limits configuration parameter values from the 1st configuration element)
 final createConfig = [
-    test : [
+    load : [
         step : [
             limit : [
                 time : "5m"

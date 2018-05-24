@@ -23,9 +23,7 @@ precondition2 = PreconditionLoad \
             "load": {
                 "limit": {
                     "concurrency": sharedConcurrency
-                }
-            },
-            "test": {
+                },
                 "step": {
                     "limit": {
                         "count": 10000
@@ -50,9 +48,7 @@ weightedLoad1 = WeightedLoad \
             "load": {
                 "generator": {
                     "weight": 20
-                }
-            },
-            "test": {
+                },
                 "step": {
                     "limit": {
                         "time": 100

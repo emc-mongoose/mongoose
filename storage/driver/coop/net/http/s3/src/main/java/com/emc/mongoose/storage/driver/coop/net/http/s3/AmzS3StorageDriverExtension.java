@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.coop.net.http.atmos;
+package com.emc.mongoose.storage.driver.coop.net.http.s3;
 
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.env.ExtensionBase;
@@ -14,13 +14,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class AtmosStorageDriverFactory<
-	I extends Item, O extends IoTask<I>, T extends AtmosStorageDriver<I, O>
+public final class AmzS3StorageDriverExtension<
+	I extends Item, O extends IoTask<I>, T extends AmzS3StorageDriver<I,O>
 >
 extends ExtensionBase
 implements StorageDriverFactory<I, O, T> {
 
-	private static final String NAME = "atmos";
+	private static final String NAME = "s3";
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
 		Arrays.asList(
 		)
@@ -36,7 +36,7 @@ implements StorageDriverFactory<I, O, T> {
 		final String stepId, final DataInput dataInput, final Config loadConfig,
 		final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException, InterruptedException {
-		return (T) new AtmosStorageDriver<>(
+		return (T) new AmzS3StorageDriver<>(
 			stepId, dataInput, loadConfig, storageConfig, verifyFlag
 		);
 	}
@@ -56,4 +56,3 @@ implements StorageDriverFactory<I, O, T> {
 		return RES_INSTALL_FILES;
 	}
 }
-

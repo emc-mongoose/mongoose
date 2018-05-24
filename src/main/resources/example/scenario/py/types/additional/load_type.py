@@ -6,7 +6,7 @@ CreateLoad \
                     "file": ITEMS_FILE_0
                 }
             },
-            "test": {
+            "load": {
                 "step" : {
                     "limit": {
                         "time": FIRST_STEP_DURATION_LIMIT

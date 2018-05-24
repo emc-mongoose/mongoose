@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class SwiftStorageDriverFactory<
+public class SwiftStorageDriverExtension<
 	I extends Item, O extends IoTask<I>, T extends SwiftStorageDriver<I, O>
 >
 extends ExtensionBase

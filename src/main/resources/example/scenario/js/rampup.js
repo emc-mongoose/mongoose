@@ -41,7 +41,7 @@ function configCreate(iterId, size, itemOutputFile, limitCount, limitTime) {
                 "path": "/default"
             }
         },
-        "test": {
+        "load": {
             "step": {
                 "id": "create0_" + iterId,
                 "limit": {
@@ -60,7 +60,7 @@ function configRead(iterId, itemInputFile) {
                 "file": itemInputFile
             }
         },
-        "test": {
+        "load": {
              "step": {
                  "id": "read1_" + iterId
              }
@@ -78,7 +78,7 @@ function configUpdate(iterId, itemInputFile, itemOutputFile) {
                 "file": itemOutputFile
             }
         },
-        "test": {
+        "load": {
             "step": {
                 "id": "update2_" + iterId
             }
@@ -93,7 +93,7 @@ function configReadPartial(iterId, itemInputFile) {
                 "file": itemInputFile
             }
         },
-        "test": {
+        "load": {
             "step": {
                 "id": "read3_" + iterId
             }
@@ -108,7 +108,7 @@ function configDelete(iterId, itemInputFile) {
                 "file": itemInputFile
             }
         },
-        "test": {
+        "load": {
             "step": {
                 "id": "delete4_" + iterId
             }

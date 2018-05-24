@@ -59,9 +59,6 @@
 			"length": 12
 		},
 		"output": {
-			// The minimum delay between the subsequent I/O operations for each item (chain load).
-			// 0 means no delay.
-			"delay": "0",
 			// Specified the target file for the items processed successfully.
 			// If null the items info is not saved.
 			"file": null,
@@ -89,13 +86,7 @@
 			"remote": false,
 			// Defines whether to shuffle or not the items got from the item input,
 			// what should make the order of the I/O tasks execution randomized
-			"shuffle": false,
-			// The relative operations weight for the particular load generator.
-			// Effective only if used with weighted load step and JSR-223 compliant scenario engine.
-			// The total step's weight is a sum of all included load generator weights.
-			// The particular load generator weight is a ratio of its weight value to the total
-			// step's weight.
-			"weight": 1
+			"shuffle": false
 		},
 		// The count of the service threads. 0 means automatic value
 		"service": {
