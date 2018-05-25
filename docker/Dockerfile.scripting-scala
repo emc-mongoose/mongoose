@@ -1,0 +1,7 @@
+ARG MONGOOSE_VERSION
+
+FROM emcmongoose/mongoose:${MONGOOSE_VERSION}
+
+ADD ["http://central.maven.org/maven2/org/scala-lang/scala-library/2.12.6/scala-library-2.12.6.jar", "/root/.mongoose/${MONGOOSE_VERSION}/ext/scala-library.jar"]
+ADD ["http://central.maven.org/maven2/org/scala-lang/scala-reflect/2.12.6/scala-reflect-2.12.6.jar", "/root/.mongoose/${MONGOOSE_VERSION}/ext/scala-reflect.jar"]
+ADD ["http://central.maven.org/maven2/org/scala-lang/scala-compiler/2.12.6/scala-compiler-2.12.6.jar", "/root/.mongoose/${MONGOOSE_VERSION}/ext/scala-compiler.jar"]
