@@ -28,6 +28,8 @@ import static com.github.akurilov.confuse.Config.ROOT_PATH;
 import static com.github.akurilov.confuse.Config.deepToMap;
 
 import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
+import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
 import com.github.akurilov.confuse.impl.BasicConfig;
 
 import org.apache.logging.log4j.Level;
@@ -84,9 +86,13 @@ extends LoadStepBase {
 			final Map<String, Object> mergedConfigTree = reduceForest(
 				Arrays.asList(deepToMap(config), stepConfigs.get(subStepCount))
 			);
-			final Config subConfig = new BasicConfig(
-				config.pathSep(), config.schema(), mergedConfigTree
-			);
+			final Config subConfig;
+			try {
+				subConfig = new BasicConfig(config.pathSep(), config.schema(), mergedConfigTree);
+			} catch(final InvalidValueTypeException | InvalidValuePathException e) {
+				LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
+				throw new CancellationException();
+			}
 			subConfigs.add(subConfig);
 			final int weight = subConfig.intVal("load-generator-weight");
 			weights[i] = weight;

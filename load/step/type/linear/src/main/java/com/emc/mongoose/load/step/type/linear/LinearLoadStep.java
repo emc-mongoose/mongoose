@@ -23,9 +23,10 @@ import static com.github.akurilov.commons.collection.TreeUtil.reduceForest;
 import com.github.akurilov.commons.concurrent.throttle.RateThrottle;
 
 import com.github.akurilov.confuse.Config;
-import static com.github.akurilov.confuse.Config.ROOT_PATH;
 import static com.github.akurilov.confuse.Config.deepToMap;
 
+import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
+import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
 import com.github.akurilov.confuse.impl.BasicConfig;
 
 import org.apache.logging.log4j.Level;
@@ -76,9 +77,14 @@ extends LoadStepBase {
 			final List<Map<String, Object>> configForest = new ArrayList<>(stepConfigs.size() + 1);
 			configForest.add(deepToMap(_config));
 			configForest.addAll(stepConfigs);
-			config = new BasicConfig(
-				_config.pathSep(), _config.schema(), reduceForest(configForest)
-			);
+			try {
+				config = new BasicConfig(
+					_config.pathSep(), _config.schema(), reduceForest(configForest)
+				);
+			} catch(final InvalidValueTypeException | InvalidValuePathException e) {
+				LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
+				throw new CancellationException();
+			}
 		}
 		actualConfig(config);
 

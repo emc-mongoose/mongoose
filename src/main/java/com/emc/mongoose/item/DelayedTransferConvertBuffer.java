@@ -34,7 +34,7 @@ implements TransferConvertBuffer<I, O> {
 	private volatile boolean poisonedFlag = false;
 
 	public DelayedTransferConvertBuffer(
-		final int limit, final TimeUnit timeUnit, final long delay
+		final int limit, final long delay, final TimeUnit timeUnit
 	) {
 		this.ioResultsBuff = new LinkedList<>();
 		this.ioResultsBuffLimit = limit;

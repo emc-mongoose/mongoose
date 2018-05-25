@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 
 public final class Main {
@@ -130,6 +131,7 @@ public final class Main {
 			} else {
 				runScenario(config, extensions, appHomePath);
 			}
+		} catch(final CancellationException e) {
 		} catch(final Exception e) {
 			LogUtil.exception(Level.FATAL, e, "Unexpected failure");
 		}

@@ -131,10 +131,12 @@ implements LoadStep, Runnable {
 			} catch(final InterruptedException e) {
 				throw new CancellationException();
 			}
+		} catch(final CancellationException e) {
+			throw e;
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.ERROR, e, "Failed to start \"{}\"", toString());
 		} catch(final Throwable cause) {
-			cause.printStackTrace();
+			LogUtil.exception(Level.ERROR, cause, "Load step execution failure \"{}\"", toString());
 		} finally {
 			try {
 				close();

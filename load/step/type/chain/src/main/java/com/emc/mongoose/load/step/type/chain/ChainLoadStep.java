@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.step.type.chain;
 
 import com.emc.mongoose.config.ConfigUtil;
+import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.data.DataInput;
@@ -28,6 +29,8 @@ import com.github.akurilov.commons.concurrent.throttle.RateThrottle;
 import static com.github.akurilov.commons.collection.TreeUtil.reduceForest;
 
 import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
+import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
 import com.github.akurilov.confuse.impl.BasicConfig;
 import static com.github.akurilov.confuse.Config.ROOT_PATH;
 import static com.github.akurilov.confuse.Config.deepToMap;
@@ -79,9 +82,13 @@ extends LoadStepBase  {
 			final Map<String, Object> mergedConfigTree = reduceForest(
 				Arrays.asList(deepToMap(config), stepConfigs.get(originIndex))
 			);
-			final Config subConfig = new BasicConfig(
-				config.pathSep(), config.schema(), mergedConfigTree
-			);
+			final Config subConfig;
+			try {
+				subConfig = new BasicConfig(config.pathSep(), config.schema(), mergedConfigTree);
+			} catch(final InvalidValueTypeException | InvalidValuePathException e) {
+				LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
+				throw new CancellationException();
+			}
 			final Config loadConfig = subConfig.configVal("load");
 			final IoType ioType = IoType.valueOf(loadConfig.stringVal("type").toUpperCase());
 			final int concurrency = loadConfig.intVal("step-limit-concurrency");
@@ -163,7 +170,8 @@ extends LoadStepBase  {
 							if(originIndex < subStepCount - 1) {
 								nextItemBuff = new DelayedTransferConvertBuffer<>(
 									storageConfig.intVal("driver-queue-output"),
-									TimeUnit.SECONDS, itemConfig.longVal("output-delay")
+									TimeUtil.getTimeInSeconds(itemConfig.stringVal("output-delay")),
+									TimeUnit.SECONDS
 								);
 								controller.ioResultsOutput(nextItemBuff);
 							} else {
