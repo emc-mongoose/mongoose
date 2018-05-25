@@ -13,8 +13,10 @@ var limitConcurrency = 1;
 function configLimitConcurrency(c) {
     return {
         "load": {
-            "limit": {
-                "concurrency": c
+            "step": {
+                "limit": {
+                    "concurrency": c
+                }
             }
         }
     }

@@ -13,8 +13,10 @@ limitConcurrency = 1
 def configLimitConcurrency(c):
     return {
         "load": {
-            "limit": {
-                "concurrency": c
+            "step": {
+                "limit": {
+                    "concurrency": c
+                }
             }
         }
     }

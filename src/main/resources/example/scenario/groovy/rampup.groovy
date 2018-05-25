@@ -14,8 +14,10 @@ int limitConcurrency = 1;
 static def configLimitConcurrency(c) {
     return [
         load: [
-            limit: [
-                concurrency: c
+            step: [
+                limit: [
+                    concurrency: c
+                ]
             ]
         ]
     ]

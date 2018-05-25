@@ -19,11 +19,9 @@ final preconditionLoad1 = PreconditionLoad
                 ]
             ],
             load : [
-                limit : [
-                    concurrency : sharedConcurrency
-                ],
-				step : [
+                step : [
                     limit : [
+                        concurrency : sharedConcurrency,
                         count : 10000
                     ]
                 ]
@@ -47,7 +45,7 @@ final weightedLoad1 = WeightedLoad
                 generator : [
                     weight : 20
                 ],
-				step : [
+                step : [
                     limit : [
                         time : 100
                     ]

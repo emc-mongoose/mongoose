@@ -22,10 +22,11 @@ precondition2 = PreconditionLoad \
             },
             "load": {
                 "limit": {
-                    "concurrency": sharedConcurrency
+
                 },
                 "step": {
                     "limit": {
+                        "concurrency": sharedConcurrency,
                         "count": 10000
                     }
                 }
