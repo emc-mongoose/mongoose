@@ -47,7 +47,6 @@ allprojects {
 
 	repositories {
 		mavenCentral()
-		maven { url "https://oss.sonatype.org/content/repositories/comgithubakurilov-1104" }
 	}
 
 	apply plugin: "java"

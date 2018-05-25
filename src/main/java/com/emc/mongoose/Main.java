@@ -206,6 +206,7 @@ public final class Main {
 			try {
 				scriptEngine.eval(scenarioText);
 			} catch(final ScriptException e) {
+				e.printStackTrace();
 				LogUtil.exception(
 					Level.ERROR, e,
 					"\nScenario failed @ file \"{}\", line #{}, column #{}:\n{}",

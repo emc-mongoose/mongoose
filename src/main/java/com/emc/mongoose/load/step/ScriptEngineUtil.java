@@ -37,7 +37,7 @@ public interface ScriptEngineUtil {
 
 		// 1st try to determine the scenario type by the scenario file extension
 		final String scenarioFileName = scenarioPath.getFileName().toString();
-		int dotPos = scenarioFileName.lastIndexOf('.');
+		final int dotPos = scenarioFileName.lastIndexOf('.');
 		if(dotPos > 0) {
 			final String scenarioFileExt = scenarioFileName.substring(dotPos + 1);
 			se = sem.getEngineByExtension(scenarioFileExt);
