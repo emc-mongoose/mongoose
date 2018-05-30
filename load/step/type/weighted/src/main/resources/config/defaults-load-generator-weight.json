@@ -1,0 +1,12 @@
+{
+	"load": {
+		"generator": {
+			// The relative operations weight for the particular load generator.
+			// Effective only if used with weighted load step and JSR-223 compliant scenario engine.
+			// The total step's weight is a sum of all included load generator weights.
+			// The particular load generator weight is a ratio of its weight value to the total
+			// step's weight.
+			"weight": 1
+		}
+	}
+}

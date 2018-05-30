@@ -30,45 +30,16 @@ before_install:
 jobs:
   include:
 
-    - stage: "Unit tests"
-      script: "./gradlew :tests:unit:test"
-
-    - stage: "Component performance tests"
-      script: "./gradlew :tests:perf:test"
+    - stage: "Unit/integration tests"
+      script: "./gradlew test"
 
     - stage: "Docker images"
       script:
       - docker --version
-
       - ./gradlew clean dist
       - docker login -u $DOCKER_USER -p $DOCKER_PASS
-      - export REPO=emcmongoose/mongoose-base
-      - docker build -f docker/Dockerfile.base -t $REPO:$COMMIT .
-      - docker tag $REPO:$COMMIT $REPO:$TAG
-      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-      - docker push $REPO:$TAG
-
-    - script:
-      - docker login -u $DOCKER_USER -p $DOCKER_PASS
       - export REPO=emcmongoose/mongoose
-      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile -t $REPO:$COMMIT .
-      - docker tag $REPO:$COMMIT $REPO:$TAG
-      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-      - docker push $REPO:$TAG
-
-    - script:
-      - ./gradlew clean :storage:driver:service:dist
-      - docker login -u $DOCKER_USER -p $DOCKER_PASS
-      - export REPO=emcmongoose/mongoose-storage-driver-service-base
-      - docker build -f docker/Dockerfile.storage-driver-service-base -t $REPO:$COMMIT .
-      - docker tag $REPO:$COMMIT $REPO:$TAG
-      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-      - docker push $REPO:$TAG
-
-    - script:
-      - docker login -u $DOCKER_USER -p $DOCKER_PASS
-      - export REPO=emcmongoose/mongoose-storage-driver-service
-      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.storage-driver-service -t $REPO:$COMMIT .
+      - docker build -f docker/Dockerfile -t $REPO:$COMMIT .
       - docker tag $REPO:$COMMIT $REPO:$TAG
       - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
       - docker push $REPO:$TAG
@@ -88,14 +59,6 @@ jobs:
       - docker tag $REPO:$COMMIT $REPO:$TAG
       - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
       - docker push emcmongoose/mongoose-scripting-jython:$TAG
-
-    - script:
-      - export REPO=emcmongoose/mongoose-integration-prometheus
-      - docker login -u $DOCKER_USER -p $DOCKER_PASS
-      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.integration-prometheus -t $REPO:$COMMIT .
-      - docker tag $REPO:$COMMIT $REPO:$TAG
-      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-      - docker push emcmongoose/mongoose-integration-prometheus:$TAG
 
     - stage: "System tests"
 

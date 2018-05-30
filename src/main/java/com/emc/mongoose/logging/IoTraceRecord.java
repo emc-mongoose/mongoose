@@ -1,8 +1,8 @@
 package com.emc.mongoose.logging;
 
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.io.task.data.DataIoTask;
-import com.emc.mongoose.model.item.Item;
+import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.io.task.data.DataIoTask;
+import com.emc.mongoose.item.Item;
 
 /**
  Created by andrey on 24.07.17.

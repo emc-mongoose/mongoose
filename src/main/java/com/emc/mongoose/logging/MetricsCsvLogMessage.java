@@ -1,13 +1,13 @@
 package com.emc.mongoose.logging;
 
-import com.emc.mongoose.model.metrics.MetricsContext;
-import com.emc.mongoose.model.metrics.MetricsSnapshot;
+import com.emc.mongoose.metrics.MetricsContext;
+import com.emc.mongoose.metrics.MetricsSnapshot;
 
 import org.apache.logging.log4j.message.AsynchronouslyFormattable;
 
 import static com.emc.mongoose.Constants.K;
 import static com.emc.mongoose.Constants.M;
-import static com.emc.mongoose.model.env.DateUtil.FMT_DATE_ISO8601;
+import static com.emc.mongoose.env.DateUtil.FMT_DATE_ISO8601;
 
 import java.util.Date;
 

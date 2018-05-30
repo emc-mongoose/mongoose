@@ -1,14 +1,14 @@
 package com.emc.mongoose.logging;
 
-import com.github.akurilov.concurrent.ContextAwareThreadFactory;
+import com.github.akurilov.commons.concurrent.ContextAwareThreadFactory;
+
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.ThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 /**
  Created by kurila on 19.07.16.

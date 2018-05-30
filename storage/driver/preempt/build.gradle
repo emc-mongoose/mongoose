@@ -1,0 +1,19 @@
+description = "mongoose-storage-driver-preempt"
+
+dependencies {
+	compile(
+		project(":"),
+	)
+}
+
+jar {
+	baseName = project.description
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	manifest {
+		attributes(
+			"Implementation-Version": version,
+			"Implementation-Title": project.description,
+		)
+	}
+}

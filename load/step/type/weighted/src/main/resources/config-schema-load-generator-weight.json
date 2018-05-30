@@ -1,0 +1,7 @@
+{
+	"load": {
+		"generator": {
+			"weight": "int32"
+		}
+	}
+}

@@ -10,16 +10,6 @@ import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
-import com.emc.mongoose.config.item.ItemConfig;
-import com.emc.mongoose.config.item.data.input.InputConfig;
-import com.emc.mongoose.config.item.naming.NamingConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
-import com.emc.mongoose.config.storage.driver.DriverConfig;
-import com.emc.mongoose.config.storage.mock.MockConfig;
-import com.emc.mongoose.config.storage.mock.container.ContainerConfig;
-import com.emc.mongoose.config.storage.mock.fail.FailConfig;
-import com.emc.mongoose.config.storage.net.NetConfig;
-import com.emc.mongoose.config.storage.net.node.NodeConfig;
 
 import org.junit.After;
 import org.junit.Before;

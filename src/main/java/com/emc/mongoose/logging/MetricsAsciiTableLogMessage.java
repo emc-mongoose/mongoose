@@ -1,9 +1,9 @@
 package com.emc.mongoose.logging;
 
-import com.emc.mongoose.model.metrics.MetricsContext;
-import com.emc.mongoose.model.metrics.MetricsSnapshot;
-import com.emc.mongoose.model.io.IoType;
-import static com.emc.mongoose.model.env.DateUtil.FMT_DATE_METRICS_TABLE;
+import com.emc.mongoose.metrics.MetricsContext;
+import com.emc.mongoose.metrics.MetricsSnapshot;
+import com.emc.mongoose.item.io.IoType;
+import static com.emc.mongoose.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static com.emc.mongoose.logging.LogUtil.RESET;
 import static com.emc.mongoose.Constants.MIB;
 import static com.emc.mongoose.logging.LogUtil.getFailureRatioAnsiColorCode;

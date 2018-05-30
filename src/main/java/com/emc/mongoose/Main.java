@@ -1,124 +1,163 @@
 package com.emc.mongoose;
 
-import com.emc.mongoose.config.Config;
+import com.emc.mongoose.config.CliArgUtil;
+import com.emc.mongoose.config.AliasingUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
-import com.emc.mongoose.config.scenario.ScenarioConfig;
+import com.emc.mongoose.config.ConfigUtil;
+import com.emc.mongoose.env.Extension;
+import com.emc.mongoose.env.MainInstaller;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
-import com.emc.mongoose.model.env.Extensions;
+import static com.emc.mongoose.Constants.DIR_EXT;
+import static com.emc.mongoose.Constants.PATH_DEFAULTS;
+import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
+import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static com.emc.mongoose.Constants.PATH_DEFAULTS;
-import static com.emc.mongoose.cli.CliArgParser.formatCliArgsList;
-import static com.emc.mongoose.cli.CliArgParser.getAllCliArgs;
-import static com.emc.mongoose.cli.CliArgParser.parseArgs;
-import com.emc.mongoose.model.svc.Service;
-import com.emc.mongoose.scenario.step.ScriptEngineUtil;
-import com.emc.mongoose.scenario.step.node.BasicFileManagerService;
-import com.emc.mongoose.scenario.step.node.BasicLoadStepManagerService;
-import static com.emc.mongoose.scenario.step.Constants.ATTR_CONFIG;
+import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
+import com.emc.mongoose.svc.Service;
+import com.emc.mongoose.load.step.ScriptEngineUtil;
+import com.emc.mongoose.load.step.node.BasicFileManagerService;
+import com.emc.mongoose.load.step.node.BasicLoadStepManagerService;
+
+import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.SchemaProvider;
+import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
+import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
+import static javax.script.ScriptContext.ENGINE_SCOPE;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-import static javax.script.ScriptContext.ENGINE_SCOPE;
-import java.io.File;
 import java.io.IOException;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CancellationException;
+import java.util.stream.Collectors;
 
 public final class Main {
 
 	public static void main(final String... args) {
 
-		final InstallHook installHook = new InstallHook();
-		final Path appHomePath = installHook.appHomePath();
-
+		final MainInstaller mainInstaller = new MainInstaller();
+		final Path appHomePath = mainInstaller.appHomePath();
+		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
 		LogUtil.init(appHomePath.toString());
-		installHook.run();
 
-		Config config = installHook.bundledDefaults();
+		try(
+			final Instance logCtx = CloseableThreadContext
+				.put(KEY_STEP_ID, initialStepId)
+				.put(KEY_CLASS_NAME, Main.class.getSimpleName())
+		) {
 
-		try(final URLClassLoader extClsLoader = Extensions.extClassLoader(appHomePath)) {
+			// main module install and defaults config
+			mainInstaller.accept(appHomePath); // invokes the main installer
+			final Map<String, Object> mainConfigSchema = SchemaProvider
+				.resolve(APP_NAME, Thread.currentThread().getContextClassLoader())
+				.stream()
+				.findFirst()
+				.orElseThrow(IllegalStateException::new);
+			final Config mainDefaults = ConfigUtil.loadConfig(
+				Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile(), mainConfigSchema
+			);
 
-			final File defaultsFile = Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile();
+			// extensions
+			final List<Extension> extensions = Extension.load(
+				Paths.get(appHomePath.toString(), DIR_EXT).toFile()
+			);
+			// install the extensions
+			extensions.forEach(ext -> ext.install(appHomePath));
+			// apply the extensions defaults
+			final Config config;
 			try {
-				config = Config.loadFromFile(defaultsFile);
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.ERROR, e, "Failed to load the defaults from {}", defaultsFile
-				);
+				final List<Config> allDefaults = extensions
+					.stream()
+					.map(ext -> ext.defaults(appHomePath))
+					.filter(Objects::nonNull)
+					.collect(Collectors.toList());
+				allDefaults.add(mainDefaults);
+				config = ConfigUtil.merge(mainDefaults.pathSep(), allDefaults);
+			} catch(final Exception e) {
+				LogUtil.exception(Level.ERROR, e, "Failed to load the defaults");
+				return;
 			}
 
+			// parse the CLI args and apply them to the config instance
 			try {
-				config.apply(
-					parseArgs(config.getAliasingConfig(), args),
-					"none-" + LogUtil.getDateTimeStamp()
+				final Map<String, String> parsedArgs = CliArgUtil.parseArgs(args);
+				final List<Map<String, Object>> aliasingConfig = config.listVal("aliasing");
+				final Map<String, String> aliasedArgs = AliasingUtil.apply(
+					parsedArgs, aliasingConfig
 				);
+				aliasedArgs.forEach(config::val);
 			} catch(final IllegalArgumentNameException e) {
+				final String formattedAllCliArgs = allCliArgs(config.schema(), config.pathSep())
+					.stream()
+					.collect(Collectors.joining("\n", "\t", ""));
 				Loggers.ERR.fatal(
-					"Invalid argument: \"{}\"\nThe list of all possible args:\n{}", e.getMessage(),
-					formatCliArgsList(getAllCliArgs())
+					"Invalid argument: \"{}\"\nThe list of all possible args:\n{}",
+					e.getMessage(), formattedAllCliArgs
+				);
+				return;
+			} catch(final InvalidValuePathException e) {
+				Loggers.ERR.fatal("Invalid configuration option: \"{}\"", e.path());
+				return;
+			} catch(final InvalidValueTypeException e) {
+				Loggers.ERR.fatal(
+					"Invalid configuration value type for the option \"{}\", expected: {}, " +
+						"actual: {}", e.path(), e.expectedType(), e.actualType()
 				);
 				return;
 			}
 
-			try(
-				final Instance ctx = CloseableThreadContext
-					.put(KEY_STEP_ID, config.getScenarioConfig().getStepConfig().getId())
-					.put(KEY_CLASS_NAME, Main.class.getSimpleName())
-			) {
-				Arrays.stream(args).forEach(Loggers.CLI::info);
-				Loggers.CONFIG.info(config.toString());
-				if(config.getNode()) {
-					runNode(config, extClsLoader);
-				} else {
-					runScenario(config, extClsLoader, appHomePath);
-				}
+			if(null == config.val("load-step-id")) {
+				config.val("load-step-id", initialStepId);
+				config.val("load-step-idAutoGenerated", true);
 			}
-		} catch(final IOException e) {
-			LogUtil.exception(Level.ERROR, e, "Failed to close the extensions class loader");
+
+			Arrays.stream(args).forEach(Loggers.CLI::info);
+			Loggers.CONFIG.info(ConfigUtil.toString(config));
+			if(config.boolVal("run-node")) {
+				runNode(config, extensions);
+			} else {
+				runScenario(config, extensions, appHomePath);
+			}
+		} catch(final CancellationException e) {
+		} catch(final Exception e) {
+			LogUtil.exception(Level.FATAL, e, "Unexpected failure");
 		}
 	}
 
-	private static void runNode(final Config config, final ClassLoader clsLoader)
-	throws IOException {
-		final int
-			listenPort = config.getScenarioConfig().getStepConfig().getNodeConfig().getPort();
-		Service inputFileSvc = null;
-		Service scenarioStepSvc = null;
-		try {
-			inputFileSvc = new BasicFileManagerService(listenPort);
+	private static void runNode(final Config config, final List<Extension> extensions) {
+		final int listenPort = config.intVal("load-step-node-port");
+		try(
+			final Service inputFileSvc = new BasicFileManagerService(listenPort);
+			final Service scenarioStepSvc = new BasicLoadStepManagerService(listenPort, extensions)
+		) {
 			inputFileSvc.start();
-			scenarioStepSvc = new BasicLoadStepManagerService(listenPort, clsLoader);
 			scenarioStepSvc.start();
 			scenarioStepSvc.await();
 		} catch(final Throwable cause) {
 			cause.printStackTrace(System.err);
-		} finally {
-			if(inputFileSvc != null) {
-				inputFileSvc.close();
-			}
-			if(scenarioStepSvc != null) {
-				scenarioStepSvc.close();
-			}
 		}
 	}
 
+	@SuppressWarnings("StringBufferWithoutInitialCapacity")
 	private static void runScenario(
-		final Config config, final ClassLoader clsLoader, final Path appHomePath
-	) throws IOException {
+		final Config config, final List<Extension> extensions, final Path appHomePath
+	) {
 		// get the scenario file/path
 		final Path scenarioPath;
-		final ScenarioConfig scenarioConfig = config.getScenarioConfig();
-		final String scenarioFile = scenarioConfig.getFile();
+		final String scenarioFile = config.stringVal("run-scenario");
 		if(scenarioFile != null && !scenarioFile.isEmpty()) {
 			scenarioPath = Paths.get(scenarioFile);
 		} else {
@@ -128,13 +167,25 @@ public final class Main {
 		}
 
 		final StringBuilder strb = new StringBuilder();
-		Files
-			.lines(scenarioPath)
-			.forEach(line -> strb.append(line).append(System.lineSeparator()));
+		try {
+			Files
+				.lines(scenarioPath)
+				.forEach(line -> strb.append(line).append(System.lineSeparator()));
+		} catch(final IOException e) {
+			LogUtil.exception(
+				Level.FATAL, e, "Failed to read the scenario file \"{}\"", scenarioPath
+			);
+		}
 		final String scenarioText = strb.toString();
 		Loggers.SCENARIO.log(Level.INFO, scenarioText);
 
-		final ScriptEngine scriptEngine = ScriptEngineUtil.resolve(scenarioPath, clsLoader);
+		final ClassLoader extClsLoader = extensions
+			.stream()
+			.map(Extension::classLoader)
+			.findAny()
+			.orElse(null);
+
+		final ScriptEngine scriptEngine = ScriptEngineUtil.resolve(scenarioPath, extClsLoader);
 		if(scriptEngine == null) {
 			Loggers.ERR.fatal(
 				"Failed to resolve the scenario engine for the file \"{}\"", scenarioPath
@@ -150,11 +201,12 @@ public final class Main {
 			// expose the loaded configuration
 			scriptEngine.getContext().setAttribute(ATTR_CONFIG, config, ENGINE_SCOPE);
 			// expose the step types
-			ScriptEngineUtil.registerStepTypes(scriptEngine, clsLoader, config);
+			ScriptEngineUtil.registerStepTypes(scriptEngine, extensions, config);
 			// go
 			try {
 				scriptEngine.eval(scenarioText);
 			} catch(final ScriptException e) {
+				e.printStackTrace();
 				LogUtil.exception(
 					Level.ERROR, e,
 					"\nScenario failed @ file \"{}\", line #{}, column #{}:\n{}",

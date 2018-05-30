@@ -1,21 +1,19 @@
 package com.emc.mongoose.storage.driver;
 
-import com.emc.mongoose.model.exception.OmgShootMyFootException;
-import com.emc.mongoose.model.data.DataInput;
-import com.emc.mongoose.model.io.task.IoTask;
-import com.emc.mongoose.model.item.Item;
-import com.emc.mongoose.model.storage.StorageDriver;
-import com.emc.mongoose.config.load.LoadConfig;
-import com.emc.mongoose.config.storage.StorageConfig;
+import com.emc.mongoose.data.DataInput;
+import com.emc.mongoose.env.Extension;
+import com.emc.mongoose.exception.OmgShootMyFootException;
+import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.Item;
+import com.github.akurilov.confuse.Config;
 
 public interface StorageDriverFactory<
 	I extends Item, O extends IoTask<I>, T extends StorageDriver<I, O>
-> {
-
-	String getName();
+>
+extends Extension {
 
 	T create(
-		final String stepId, final DataInput dataInput, final LoadConfig loadConfig,
-		final StorageConfig storageConfig, final boolean verifyFlag
+		final String stepId, final DataInput dataInput, final Config loadConfig,
+		final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException, InterruptedException;
 }

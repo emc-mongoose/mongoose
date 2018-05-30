@@ -1,0 +1,12 @@
+{
+	"storage": {
+		"net": {
+			"http": {
+				"fsAccess": "boolean",
+				"headers": "map",
+				"namespace": "string",
+				"versioning": "boolean"
+			}
+		}
+	}
+}

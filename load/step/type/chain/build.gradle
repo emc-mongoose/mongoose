@@ -1,0 +1,19 @@
+description = "mongoose-load-step-type-chain"
+
+dependencies {
+	compile(
+		project(":"),
+	)
+}
+
+jar {
+	baseName = project.description
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	manifest {
+		attributes(
+			"Implementation-Version": version,
+			"Implementation-Title": project.description,
+		)
+	}
+}

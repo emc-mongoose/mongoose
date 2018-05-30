@@ -1,13 +1,18 @@
-ARG MONGOOSE_VERSION
+FROM openjdk:8-jre-alpine
 
-FROM emcmongoose/mongoose-base:${MONGOOSE_VERSION}
+RUN mkdir /opt /opt/mongoose /root/.mongoose; \
+    chmod -R ugo+rwx /root/.mongoose
 
-ADD ["https://github.com/emc-mongoose/mongoose-storage-driver-s3/releases/download/latest/mongoose-storage-driver-s3.jar", "/opt/mongoose/ext/mongoose-storage-driver-s3.jar"]
+ADD build/libs/mongoose-*.jar /opt/mongoose/
+ADD docker/entrypoint.sh /opt/mongoose/entrypoint.sh
+ADD docker/entrypoint-debug.sh /opt/mongoose/entrypoint-debug.sh
+ADD docker/entrypoint-jmx.sh /opt/mongoose/entrypoint-jmx.sh
 
-ADD ["https://github.com/emc-mongoose/mongoose-storage-driver-atmos/releases/download/latest/mongoose-storage-driver-atmos.jar", "/opt/mongoose/ext/mongoose-storage-driver-atmos.jar"]
+RUN ln -s /opt/mongoose/mongoose-*.jar /opt/mongoose/mongoose.jar; \
+    chmod +x /opt/mongoose/entrypoint.sh; \
+    chmod +x /opt/mongoose/entrypoint-debug.sh; \
+    chmod +x /opt/mongoose/entrypoint-jmx.sh
 
-ADD ["https://github.com/emc-mongoose/mongoose-storage-driver-swift/releases/download/latest/mongoose-storage-driver-swift.jar", "/opt/mongoose/ext/mongoose-storage-driver-swift.jar"]
+ENTRYPOINT /opt/mongoose/entrypoint.sh
 
-ADD ["https://github.com/emc-mongoose/mongoose-storage-driver-emc-s3/releases/download/latest/mongoose-storage-driver-emc-s3.jar", "/opt/mongoose/ext/mongoose-storage-driver-emc-s3.jar"]
-
-ADD ["https://github.com/emc-mongoose/mongoose-storage-driver-fs/releases/download/latest/mongoose-storage-driver-fs.jar", "/opt/mongoose/ext/mongoose-storage-driver-fs.jar"]
+EXPOSE 9010

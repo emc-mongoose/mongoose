@@ -1,0 +1,36 @@
+description = "mongoose-storage-driver-coop-net-http"
+
+dependencies {
+	compile(
+		project(":storage:driver:coop:net"),
+		"io.netty:netty-codec-http:${depVersion.netty}",
+	)
+}
+
+jar {
+
+	baseName = project.description
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	manifest {
+		attributes (
+			"Implementation-Version": version,
+			"Implementation-Title": project.description,
+		)
+	}
+
+	// 1st level dependencies only
+	from configurations
+		.runtime
+		.copyRecursive()
+		.setTransitive(false)
+		.filter {
+		// do not include project dependencies (include module dependencies only)
+		!it.absolutePath.startsWith(rootProject.projectDir.absolutePath)
+	}
+	.collect {
+		zipTree it
+	}
+
+	exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
+}

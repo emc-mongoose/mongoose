@@ -1,0 +1,24 @@
+description = "mongoose-storage-driver-coop-net-http-swift"
+
+dependencies {
+
+	compile(
+		project(":storage:driver:coop:net:http"),
+	)
+
+	testCompile(
+		"junit:junit:${depVersion.junit}",
+	)
+}
+
+jar {
+	baseName = project.description
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	manifest {
+		attributes(
+			"Implementation-Version": version,
+			"Implementation-Title": project.description,
+		)
+	}
+}
