@@ -310,6 +310,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 					} catch(final IOException ignored) {
 					}
 				}
+
+				// shoot the foot
 				if(srcItemsCount == 0) {
 					throw new OmgShootMyFootException(
 						"Available source items count " + srcItemsCount + " should be more than 0"
@@ -327,6 +329,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 							+ " max " + srcItemsCountMax
 					);
 				}
+
 				// it's safe to cast to int here because the values will not be more than
 				// srcItemsCount which is not more than the integer limit
 				((DataIoTaskBuilder) ioTaskBuilder).setSrcItemsCount(

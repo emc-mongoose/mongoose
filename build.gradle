@@ -12,20 +12,21 @@ ext {
 	depVersion = [
 		confuse: "1.1.4",
 		confuseIoJson: "1.0.3",
-		commonsCodec : "1.11",
-		commonsLang : "2.6",
-		disruptor : "3.4.2",
+		commonsCodec: "1.11",
+		commonsLang: "2.6",
+		disruptor: "3.4.2",
 		fiber4j: "1.0.0",
-		jackson : "2.9.5",
-		javaCommons : "2.1.3",
-		javassist : "3.22.0-GA",
-		junit : "4.12",
-		slf4j : "1.7.25",
-		log4j : "2.8.2",
-		metrics : "4.0.2",
-		nagaina : "3.6.10",
-		netty : "4.1.25.Final",
-		nettyConnectionPool : "1.0.2",
+		jackson: "2.9.5",
+		javaCommons: "2.1.3",
+		javassist: "3.22.0-GA",
+		junit: "4.12",
+		scala: "2.12.6",
+		slf4j: "1.7.25",
+		log4j: "2.8.2",
+		metrics: "4.0.2",
+		nagaina: "3.6.10",
+		netty: "4.1.25.Final",
+		nettyConnectionPool: "1.0.2",
 	]
 
 	leafProjects = subprojects.findAll {
@@ -42,8 +43,14 @@ ext {
 	)
 }
 
-
 allprojects {
+
+	buildscript {
+
+		repositories {
+			mavenCentral()
+		}
+	}
 
 	repositories {
 		mavenCentral()
@@ -187,6 +194,7 @@ dependencies {
 
 	testCompile(
 		"junit:junit:${depVersion.junit}",
+		"org.scala-lang:scala-library:2.12.6",
 	)
 }
 

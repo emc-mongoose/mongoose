@@ -59,13 +59,17 @@ public final class Main {
 				.put(KEY_CLASS_NAME, Main.class.getSimpleName())
 		) {
 
-			// main module install and defaults config
-			mainInstaller.accept(appHomePath); // invokes the main installer
+			// invoke the main installer
+			mainInstaller.accept(appHomePath);
+
+			// resolve the initial config schema
 			final Map<String, Object> mainConfigSchema = SchemaProvider
 				.resolve(APP_NAME, Thread.currentThread().getContextClassLoader())
 				.stream()
 				.findFirst()
 				.orElseThrow(IllegalStateException::new);
+
+			// load the defaults
 			final Config mainDefaults = ConfigUtil.loadConfig(
 				Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile(), mainConfigSchema
 			);
