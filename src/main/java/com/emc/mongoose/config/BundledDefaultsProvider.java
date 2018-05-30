@@ -13,7 +13,7 @@ extends JsonConfigProviderBase {
 
 	@Override
 	protected final InputStream configInputStream() {
-		return getClass().getResourceAsStream(File.separator + PATH_DEFAULTS);
+		return getClass().getResourceAsStream("/" + PATH_DEFAULTS);
 	}
 
 	@Override
