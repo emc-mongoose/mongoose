@@ -43,7 +43,7 @@ implements Installer {
 	}
 
 	protected InputStream resourceStream(final String resPath) {
-		return getClass().getResourceAsStream(File.separator + resPath);
+		return getClass().getResourceAsStream("/" + resPath);
 	}
 
 	protected abstract List<String> resourceFilesToInstall();
