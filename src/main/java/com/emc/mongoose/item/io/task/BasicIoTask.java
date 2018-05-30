@@ -224,12 +224,9 @@ implements IoTask<I> {
 		return respTimeStart - reqTimeDone;
 	}
 
-	protected static final ThreadLocal<StringBuilder> STRB = new ThreadLocal<StringBuilder>() {
-		@Override
-		protected final StringBuilder initialValue() {
-			return new StringBuilder();
-		}
-	};
+	protected static final ThreadLocal<StringBuilder> STRB = ThreadLocal.withInitial(
+		StringBuilder::new
+	);
 	
 	@Override
 	public String toString() {
