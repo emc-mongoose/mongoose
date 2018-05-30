@@ -206,8 +206,7 @@ implements LoadStepClient {
 			final long countLimitPerNode = (long) Math.ceil(((double) countLimit) / nodeCount);
 			long remainingCountLimit = countLimit;
 			for(final Map.Entry<String, Config> configEntry : configSlices.entrySet()) {
-				final Config
-					limitConfigSlice = configEntry.getValue().configVal("load-step-limit");
+				final Config limitConfigSlice = configEntry.getValue().configVal("load-step-limit");
 				if(remainingCountLimit > countLimitPerNode) {
 					Loggers.MSG.info(
 						"Node \"{}\": count limit = {}", configEntry.getKey(), countLimitPerNode
