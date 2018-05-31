@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.coop.net.http.s3;
 
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.env.DateUtil;
+import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.item.BasicDataItem;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
@@ -18,6 +19,7 @@ import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.storage.driver.coop.net.http.s3.AmzS3Api.KEY_UPLOAD_ID;
 
 import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.collection.TreeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
@@ -37,6 +39,7 @@ import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -44,7 +47,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
+import java.util.stream.Collectors;
 
 public class AmzS3StorageDriverTest
 extends AmzS3StorageDriver {
@@ -56,9 +61,29 @@ extends AmzS3StorageDriver {
 
 	private static Config getConfig() {
 		try {
-			final Map<String, Object> configSchema = SchemaProvider.resolveAndReduce(
-				APP_NAME, Thread.currentThread().getContextClassLoader()
-			);
+			final List<Map<String, Object>> configSchemas = Extension
+				.load(Thread.currentThread().getContextClassLoader())
+				.stream()
+				.map(Extension::schemaProvider)
+				.filter(Objects::nonNull)
+				.map(
+					schemaProvider -> {
+						try {
+							return schemaProvider.schema();
+						} catch(final Exception e) {
+							fail(e.getMessage());
+						}
+						return null;
+					}
+				)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toList());
+			SchemaProvider
+				.resolve(APP_NAME, Thread.currentThread().getContextClassLoader())
+				.stream()
+				.findFirst()
+				.ifPresent(configSchemas::add);
+			final Map<String, Object> configSchema = TreeUtil.reduceForest(configSchemas);
 			final Config config = new BasicConfig("-", configSchema);
 			config.val("load-batch-size", 4096);
 			config.val("load-step-limit-concurrency", 0);

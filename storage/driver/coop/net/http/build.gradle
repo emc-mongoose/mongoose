@@ -1,8 +1,20 @@
 description = "mongoose-storage-driver-coop-net-http"
 
 dependencies {
-	compile(
+
+	compileOnly(
+		project(":"),
+		project(":storage:driver:coop"),
 		project(":storage:driver:coop:net"),
+		"com.github.akurilov:confuse:${depVersion.confuse}",
+		"com.github.akurilov:confuse-io-json:${depVersion.confuseIoJson}",
+		"com.github.akurilov:fiber4j:${depVersion.fiber4j}",
+		"io.netty:netty-handler:${depVersion.netty}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+	)
+
+	provided(
 		"io.netty:netty-codec-http:${depVersion.netty}",
 	)
 }
@@ -21,7 +33,7 @@ jar {
 
 	// 1st level dependencies only
 	from configurations
-		.runtime
+		.provided
 		.copyRecursive()
 		.setTransitive(false)
 		.filter {

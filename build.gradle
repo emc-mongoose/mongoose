@@ -46,7 +46,6 @@ ext {
 allprojects {
 
 	buildscript {
-
 		repositories {
 			mavenCentral()
 		}
@@ -64,6 +63,19 @@ allprojects {
 	group = "com.github.emc-mongoose"
 	version = defineVersion()
 
+	configurations {
+		provided
+		testCompile {
+			extendsFrom(compileOnly, provided)
+		}
+	}
+
+	sourceSets {
+		main {
+			compileClasspath += configurations.provided
+		}
+	}
+
 	compileJava {
 		sourceCompatibility = JavaVersion.VERSION_1_8
 		targetCompatibility = JavaVersion.VERSION_1_8
@@ -76,6 +88,10 @@ allprojects {
 
 	// travis deploy stage runs "./gradlew check" again which is unnecessary
 	check.dependsOn -= test
+
+	javadoc {
+		classpath += configurations.provided
+	}
 
 	signing {
 		required {
@@ -153,9 +169,7 @@ allprojects {
 }
 
 String defineVersion() {
-	def configFilePath = [
-			rootDir, "src", "main", "resources", "config", "defaults.json",
-		]
+	def configFilePath = [ rootDir, "src", "main", "resources", "config", "defaults.json", ]
 		.join(File.separator);
 	def inputFile = new File(configFilePath)
 	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
@@ -170,7 +184,7 @@ task printVersion {
 
 dependencies {
 
-	compile(
+	provided(
 		"commons-codec:commons-codec:${depVersion.commonsCodec}",
 		"commons-lang:commons-lang:${depVersion.commonsLang}",
 		"com.fasterxml.jackson.core:jackson-annotations:${depVersion.jackson}",
@@ -184,9 +198,7 @@ dependencies {
 		"io.dropwizard.metrics:metrics-core:${depVersion.metrics}",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
-	)
-
-	runtime(
+		// actually the deps below are the runtime deps
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
 		"org.slf4j:slf4j-api:${depVersion.slf4j}",
@@ -250,7 +262,7 @@ task mergeLog4j2PluginsDat(dependsOn: compileJava) {
 		byte[] pluginsData
 		byte[] customPluginsData
 
-		configurations.runtime
+		configurations.provided
 			.each {
 				if(!it.isDirectory()) {
 					zipTree(it)
@@ -304,7 +316,7 @@ task dist(type: Jar) {
 
 	from sourceSets.main.resources
 
-	from configurations.runtime.collect {
+	from configurations.provided.collect {
 		it.isDirectory() ? it : zipTree(it)
 	}
 

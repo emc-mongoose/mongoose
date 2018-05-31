@@ -1,12 +1,18 @@
 description = "mongoose-storage-driver-coop-nio"
 
 dependencies {
-	compile(
+	compileOnly(
+		project(":"),
 		project(":storage:driver:coop"),
+		"com.github.akurilov:confuse:${depVersion.confuse}",
+		"com.github.akurilov:fiber4j:${depVersion.fiber4j}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 	)
 }
 
 jar {
+
 	baseName = project.description
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 

@@ -42,7 +42,7 @@ implements StorageDriverFactory<I, O, T> {
 	}
 
 	@Override
-	protected final SchemaProvider schemaProvider() {
+	public final SchemaProvider schemaProvider() {
 		return null;
 	}
 

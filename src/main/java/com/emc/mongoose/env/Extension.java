@@ -1,6 +1,7 @@
 package com.emc.mongoose.env;
 
 import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.SchemaProvider;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -19,8 +20,15 @@ public interface Extension {
 
 	Logger LOG = Logger.getLogger(Extension.class.getSimpleName());
 
-	static List<Extension> load(final File dirExt) {
+	static List<Extension> load(final ClassLoader extClsLoader) {
+		final List<Extension> extensions = new ArrayList<>();
+		for(final Extension extension: ServiceLoader.load(Extension.class, extClsLoader)) {
+			extensions.add(extension);
+		}
+		return extensions;
+	}
 
+	static ClassLoader extClassLoader(final File dirExt) {
 		final URLClassLoader extClsLoader;
 		if(!dirExt.exists() || !dirExt.isDirectory()) {
 			LOG.warning("No \"" + dirExt.getAbsolutePath() + "\" directory, loaded no extensions");
@@ -43,13 +51,7 @@ public interface Extension {
 				extClsLoader = new URLClassLoader(extFileUrls, ClassLoader.getSystemClassLoader());
 			}
 		}
-
-		final List<Extension> extensions = new ArrayList<>();
-		for(final Extension extension: ServiceLoader.load(Extension.class, extClsLoader)) {
-			extension.classLoader(extClsLoader);
-			extensions.add(extension);
-		}
-		return extensions;
+		return extClsLoader;
 	}
 
 	static boolean isJarFile(final File f) {
@@ -73,11 +75,9 @@ public interface Extension {
 
 	String id();
 
-	ClassLoader classLoader();
-
-	void classLoader(final ClassLoader clsLoader);
-
 	void install(final Path appHomePath);
 
 	Config defaults(final Path appHomePath);
+
+	SchemaProvider schemaProvider();
 }

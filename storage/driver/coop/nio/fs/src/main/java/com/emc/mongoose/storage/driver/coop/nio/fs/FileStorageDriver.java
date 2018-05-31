@@ -48,10 +48,10 @@ implements NioStorageDriver<I, O> {
 	private final Map<DataIoTask, FileChannel> dstOpenFiles = new ConcurrentHashMap<>();
 
 	public FileStorageDriver(
-		final String jobName, final DataInput dataInput, final Config loadConfig,
+		final String stepId, final DataInput dataInput, final Config loadConfig,
 		final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
-		super(jobName, dataInput, loadConfig, storageConfig, verifyFlag);
+		super(stepId, dataInput, loadConfig, storageConfig, verifyFlag);
 		requestAuthTokenFunc = null; // do not use
 	}
 

@@ -143,8 +143,8 @@ implements StorageDriver<I, O> {
 	@Override
 	public final boolean isIdle() {
 		if(concurrencyLevel > 0) {
-			return !concurrencyThrottle.hasQueuedThreads() &&
-				concurrencyThrottle.availablePermits() >= concurrencyLevel;
+			return !concurrencyThrottle.hasQueuedThreads()
+				&& concurrencyThrottle.availablePermits() >= concurrencyLevel;
 		} else {
 			return concurrencyThrottle.availablePermits() == Integer.MAX_VALUE;
 		}

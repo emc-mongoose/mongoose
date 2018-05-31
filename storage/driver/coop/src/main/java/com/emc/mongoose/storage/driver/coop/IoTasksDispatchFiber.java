@@ -31,7 +31,6 @@ extends ExclusiveFiberBase {
 	private final OptLockBuffer<O> buff;
 
 	private int n = 0; // the current count of the I/O tasks in the buffer
-	private int m;
 
 	public IoTasksDispatchFiber(
 		final FibersExecutor executor, final CoopStorageDriverBase<I, O> storageDriver,
@@ -89,7 +88,7 @@ extends ExclusiveFiberBase {
 						n --;
 					}
 				} else { // batch mode
-					m = storageDriver.submit(buff, 0, n);
+					final int m = storageDriver.submit(buff, 0, n);
 					if(m > 0) {
 						buff.removeRange(0, m);
 						n -= m;

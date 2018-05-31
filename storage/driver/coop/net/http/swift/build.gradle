@@ -2,8 +2,16 @@ description = "mongoose-storage-driver-coop-net-http-swift"
 
 dependencies {
 
-	compile(
+	compileOnly(
+		project(":"),
+		project(":storage:driver:coop"),
+		project(":storage:driver:coop:net"),
 		project(":storage:driver:coop:net:http"),
+		"com.github.akurilov:confuse:${depVersion.confuse}",
+		"com.fasterxml.jackson.core:jackson-core:${depVersion.jackson}",
+		"io.netty:netty-codec-http:${depVersion.netty}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 	)
 
 	testCompile(
@@ -12,6 +20,7 @@ dependencies {
 }
 
 jar {
+
 	baseName = project.description
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 

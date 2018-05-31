@@ -54,7 +54,7 @@ implements LoadStepFactory<T> {
 	}
 
 	@Override
-	protected final SchemaProvider schemaProvider() {
+	public final SchemaProvider schemaProvider() {
 		return SCHEMA_PROVIDER;
 	}
 

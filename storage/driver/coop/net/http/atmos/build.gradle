@@ -2,16 +2,32 @@ description = "mongoose-storage-driver-coop-net-http-atmos"
 
 dependencies {
 
-	compile(
+	compileOnly(
+		project(":"),
+		project(":storage:driver:coop"),
+		project(":storage:driver:coop:net"),
 		project(":storage:driver:coop:net:http"),
+		"com.github.akurilov:confuse:${depVersion.confuse}",
+		"com.github.akurilov:confuse-io-json:${depVersion.confuseIoJson}",
+		"io.netty:netty-codec-http:${depVersion.netty}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 	)
 
 	testCompile(
 		"junit:junit:${depVersion.junit}",
 	)
+
+	testRuntime(
+		"com.github.akurilov:fiber4j:${depVersion.fiber4j}",
+		"com.github.akurilov:netty-connection-pool:${depVersion.nettyConnectionPool}",
+		"com.lmax:disruptor:${depVersion.disruptor}",
+		"io.netty:netty-transport-native-epoll:${depVersion.netty}:linux-x86_64",
+	)
 }
 
 jar {
+
 	baseName = project.description
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 

@@ -18,18 +18,6 @@ public abstract class ExtensionBase
 extends JarResourcesInstaller
 implements Extension {
 
-	private ClassLoader clsLoader;
-
-	@Override
-	public final ClassLoader classLoader() {
-		return clsLoader;
-	}
-
-	@Override
-	public final void classLoader(final ClassLoader clsLoader) {
-		this.clsLoader = clsLoader;
-	}
-
 	@Override
 	public final void install(final Path appHomePath) {
 		Loggers.MSG.info(
@@ -70,8 +58,6 @@ implements Extension {
 			return null;
 		}
 	}
-
-	protected abstract SchemaProvider schemaProvider();
 
 	protected abstract String defaultsFileName();
 }

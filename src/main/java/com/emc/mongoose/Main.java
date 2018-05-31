@@ -75,9 +75,10 @@ public final class Main {
 			);
 
 			// extensions
-			final List<Extension> extensions = Extension.load(
+			final ClassLoader extClsLoader = Extension.extClassLoader(
 				Paths.get(appHomePath.toString(), DIR_EXT).toFile()
 			);
+			final List<Extension> extensions = Extension.load(extClsLoader);
 			// install the extensions
 			extensions.forEach(ext -> ext.install(appHomePath));
 			// apply the extensions defaults
@@ -133,7 +134,7 @@ public final class Main {
 			if(config.boolVal("run-node")) {
 				runNode(config, extensions);
 			} else {
-				runScenario(config, extensions, appHomePath);
+				runScenario(config, extensions, extClsLoader, appHomePath);
 			}
 		} catch(final CancellationException e) {
 		} catch(final Exception e) {
@@ -157,7 +158,8 @@ public final class Main {
 
 	@SuppressWarnings("StringBufferWithoutInitialCapacity")
 	private static void runScenario(
-		final Config config, final List<Extension> extensions, final Path appHomePath
+		final Config config, final List<Extension> extensions, final ClassLoader extClsLoader,
+		final Path appHomePath
 	) {
 		// get the scenario file/path
 		final Path scenarioPath;
@@ -182,12 +184,6 @@ public final class Main {
 		}
 		final String scenarioText = strb.toString();
 		Loggers.SCENARIO.log(Level.INFO, scenarioText);
-
-		final ClassLoader extClsLoader = extensions
-			.stream()
-			.map(Extension::classLoader)
-			.findAny()
-			.orElse(null);
 
 		final ScriptEngine scriptEngine = ScriptEngineUtil.resolve(scenarioPath, extClsLoader);
 		if(scriptEngine == null) {
