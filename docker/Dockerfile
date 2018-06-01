@@ -1,7 +1,7 @@
 FROM openjdk:8-jre-alpine
 
-RUN mkdir /opt /opt/mongoose /root/.mongoose; \
-    chmod -R ugo+rwx /root/.mongoose
+RUN mkdir /opt /opt/mongoose $HOME/.mongoose; \
+    chmod -R ugo+rwx $HOME/.mongoose
 
 ADD build/libs/mongoose-*.jar /opt/mongoose/
 ADD docker/entrypoint.sh /opt/mongoose/entrypoint.sh
