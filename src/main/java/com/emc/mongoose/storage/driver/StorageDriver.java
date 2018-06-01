@@ -9,6 +9,7 @@ import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.Output;
@@ -119,6 +120,9 @@ extends AsyncRunnable, Input<O>, Output<O> {
 							)
 					)
 				);
+			Loggers.MSG.info(
+				"{}: creating the storage driver instance for the type \"{}\"", stepId, driverType
+			);
 
 			return selectedFactory.create(stepId, dataInput, loadConfig, storageConfig, verifyFlag);
 		}

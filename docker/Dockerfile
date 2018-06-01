@@ -13,6 +13,6 @@ RUN ln -s /opt/mongoose/mongoose-*.jar /opt/mongoose/mongoose.jar; \
     chmod +x /opt/mongoose/entrypoint-debug.sh; \
     chmod +x /opt/mongoose/entrypoint-jmx.sh
 
-ENTRYPOINT /opt/mongoose/entrypoint.sh
+ENTRYPOINT ["/opt/mongoose/entrypoint.sh"]
 
 EXPOSE 9010
