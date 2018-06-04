@@ -32,7 +32,14 @@ allprojects {
 
 	// travis deploy stage runs "./gradlew check" again which is unnecessary
 	check.dependsOn -= test
+
+	configurations.all {
+		resolutionStrategy {
+			force 'com.github.akurilov:java-commons:1.4.1'
+		}
+	}
 }
+
 
 ext {
 
@@ -41,15 +48,15 @@ ext {
 		commonsLang : "2.6",
 		disruptor : "3.3.4",
 		jackson : "2.9.1",
-		javaCommons : "[1.4.1,)",
-		javaCoroutines : "[1.1.3,)",
+		javaCommons : "1.4.1",
+		javaCoroutines : "1.1.3",
 		javassist : "3.21.0-GA",
 		slf4j : "1.7.24",
 		log4j : "2.8.2",
 		metrics : "3.2.5",
-		nagaina : "[3.6.10,)",
+		nagaina : "3.6.10",
 		netty : "4.1.17.Final",
-		nettyConnectionPool : "[0.1.6,)"
+		nettyConnectionPool : "0.1.6"
 	]
 
 	mutualProjects = subprojects.findAll {
