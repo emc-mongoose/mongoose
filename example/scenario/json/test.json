@@ -1,31 +1,20 @@
 {
   "type": "sequential",
-  "config": {
-    "item": {
-      "output": {
-        "path": "linear-test"
-      }
-    }
-  },
   "steps": [
-    {
-      "type": "command",
-      "value": "rm 10K_items.csv"
-    },
     {
       "type": "command",
       "value": "rm $ITEM_INPUT_FILE"
     },
     {
       "type": "command",
-      "value": "export ITEM_INPUT_FILE=delete.csv"
+      "value": "export ITEM_INPUT_FILE=10K_items.csv"
     },
     {
       "type": "precondition",
       "config": {
         "item": {
           "output": {
-            "file": "$ITEM_INPUT_FILE"
+            "file": "{$ITEM_INPUT_FILE}"
           }
         },
         "test": {
@@ -38,59 +27,75 @@
       }
     },
     {
-      "type": "for",
-      "value": "itemSize",
-      "in": [
-        "10KB",
-        "1MB",
-        "100MB"
-      ],
-      "config": {
-        "item": {
-          "output": {
-            "file": "10K_items.csv"
-          }
-        }
-      },
+      "type": "parallel",
       "steps": [
         {
-          "type": "command",
-          "value": "echo ${itemSize}"
+          "type": "load",
+          "config": {
+            "item": {
+              "input": {
+                "file": "{$ITEM_INPUT_FILE}"
+              }
+            },
+            "load": {
+              "generator": {
+                "recycle": {
+                  "enabled": true
+                }
+              },
+              "type": "read"
+            }
+          }
         },
         {
           "type": "for",
-          "value": "concurrencyLimit",
+          "value": "itemSize",
           "in": [
-            1,
-            10,
-            100
+            "10KB",
+            "1MB",
+            "100MB"
           ],
           "steps": [
             {
               "type": "command",
-              "value": "echo ${concurrencyLimit}"
+              "value": "echo ${itemSize}"
             },
             {
-              "type": "load",
-              "config": {
-                "item": {
-                  "data": {
-                    "size": "${itemSize}"
-                  }
+              "type": "for",
+              "value": "concurrencyLimit",
+              "in": [
+                1,
+                10,
+                100
+              ],
+              "steps": [
+                {
+                  "type": "command",
+                  "value": "echo ${concurrencyLimit}"
                 },
-                "load": {
-                  "limit": {
-                    "concurrency": "${concurrencyLimit}"
-                  }
-                },
-                "test": {
-                  "step": {
-                    "limit": {
-                      "time": "1m"
+                {
+                  "type": "load",
+                  "config": {
+                    "item": {
+                      "data": {
+                        "size": "${itemSize}"
+                      }
+                    },
+                    "load": {
+                      "limit": {
+                        "concurrency": "${concurrencyLimit}"
+                      }
+                    },
+                    "test": {
+                      "step": {
+                        "limit": {
+                          "time": "1m"
+                        }
+                      }
                     }
                   }
                 }
-              }
+              ]
             }
           ]
         }
