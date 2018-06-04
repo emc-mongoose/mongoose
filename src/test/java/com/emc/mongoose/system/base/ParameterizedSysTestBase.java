@@ -8,12 +8,11 @@ import com.emc.mongoose.system.base.params.StorageType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import static org.junit.runners.Parameterized.Parameters;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.runners.Parameterized.Parameters;
 
 /**
  Created by andrey on 11.08.17.
@@ -65,6 +64,7 @@ public abstract class ParameterizedSysTestBase {
 				}
 			}
 		}
+
 		return data;
 	}
 

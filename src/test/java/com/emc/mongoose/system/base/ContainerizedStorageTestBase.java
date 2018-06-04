@@ -33,20 +33,32 @@ extends ConfiguredTestBase {
 	static {
 		System.out.println("Mongoose images version: " + MONGOOSE_VERSION);
 	}
-	private static final String
-		STORAGE_DRIVER_IMAGE_NAME = "emcmongoose/mongoose-storage-driver-service:" +
-		MONGOOSE_VERSION;
+	protected static final String
+		BASE_IMAGE_NAME = "emcmongoose/mongoose:" + MONGOOSE_VERSION;
 
 	protected Map<String, String> httpStorageMocks = null;
 	protected int httpStorageNodeCount = 1;
-	protected List<String> storageDriverBuilderSvcs = null;
+	protected List<String> loadStepSvcs = null;
 	protected DockerClient dockerClient = null;
+
+	protected final int storageNodePort;
+	protected final String itemInputFile;
+	protected final String itemNamingPrefix;
+	protected final int itemNamingRadix;
+	protected final boolean sslFlag;
+	protected final List<String> nodeAddrs = new ArrayList<>();
 
 	protected ContainerizedStorageTestBase(
 		final StorageType storageType, final NodeCount nodeCount, final Concurrency concurrency,
-		final ItemSize itemSize
+		final ItemSize itemSize, final int storageNodePort, final String itemInputFile,
+		final String itemNamingPrefix, final int itemNamingRadix, final boolean sslFlag
 	) throws Exception {
 		super(storageType, nodeCount, concurrency, itemSize);
+		this.storageNodePort = storageNodePort;
+		this.itemInputFile = itemInputFile;
+		this.itemNamingPrefix = itemNamingPrefix;
+		this.itemNamingRadix = itemNamingRadix;
+		this.sslFlag = sslFlag;
 	}
 
 	@Before
@@ -80,21 +92,9 @@ extends ConfiguredTestBase {
 					.exec(new PullImageResultCallback())
 					.awaitCompletion();
 				httpStorageMocks = new HashMap<>();
-				final NodeConfig nodeConfig = storageConfig.getNetConfig().getNodeConfig();
-				final ItemConfig itemConfig = config.getItemConfig();
-				final int port = nodeConfig.getPort();
-				final List<String> nodeAddrs = new ArrayList<>();
-				String nextNodeAddr;
-				final MockConfig mockConfig = storageConfig.getMockConfig();
-				final NetConfig netConfig = storageConfig.getNetConfig();
-				final ContainerConfig
-					containerConfig = mockConfig.getContainerConfig();
-				final FailConfig failConfig = mockConfig.getFailConfig();
-				final NamingConfig namingConfig = itemConfig.getNamingConfig();
 				for(int i = 0; i < httpStorageNodeCount; i ++) {
 
-					nodeConfig.setPort(port + i);
-					nextNodeAddr = "127.0.0.1:" + (port + i);
+					final String nodeAddr = "127.0.0.1:" + (storageNodePort + i);
 
 					final List<String> cmd = new ArrayList<>();
 					cmd.add("-Xms1g");
@@ -102,31 +102,28 @@ extends ConfiguredTestBase {
 					cmd.add("-XX:MaxDirectMemorySize=1g");
 					cmd.add("-jar");
 					cmd.add("/opt/nagaina/nagaina.jar");
-					if(itemConfig.getInputConfig().getFile() != null) {
-						cmd.add("--item-input-file=" + itemConfig.getInputConfig().getFile());
+					if(itemInputFile != null && !itemInputFile.isEmpty()) {
+						cmd.add("--item-input-file=" + itemInputFile);
 					}
-					if(namingConfig.getPrefix() != null) {
-						cmd.add("--item-naming-prefix=" + namingConfig.getPrefix());
+					if(itemNamingPrefix != null) {
+						cmd.add("--item-naming-prefix=" + itemNamingPrefix);
 					}
-					cmd.add("--item-naming-radix=" + namingConfig.getRadix());
-					cmd.add("--storage-mock-capacity=" + mockConfig.getCapacity());
+					cmd.add("--item-naming-radix=" + itemNamingRadix);
+					/*cmd.add("--storage-mock-capacity=" + mockConfig.getCapacity());
 					cmd.add("--storage-mock-container-capacity=" + containerConfig.getCapacity());
 					cmd.add("--storage-mock-container-countLimit=" + containerConfig.getCountLimit());
 					cmd.add("--storage-mock-fail-connections=" + failConfig.getConnections());
-					cmd.add("--storage-mock-fail-responses=" + failConfig.getResponses());
-					cmd.add("--storage-net-node-port=" + nodeConfig.getPort());
-					cmd.add("--storage-net-ssl=" + netConfig.getSsl());
-					final double rateLimit = config.getLoadConfig().getLimitConfig().getRate();
-					final long metricsPeriod = config
-						.getOutputConfig().getMetricsConfig().getAverageConfig().getPeriod();
-					cmd.add("--test-step-limit-rate=" + rateLimit);
-					cmd.add("--test-step-metrics-period=" + metricsPeriod);
+					cmd.add("--storage-mock-fail-responses=" + failConfig.getResponses());*/
+					cmd.add("--storage-net-node-port=" + (storageNodePort + i));
+					cmd.add("--storage-net-ssl=" + sslFlag);
+					/*cmd.add("--test-step-limit-rate=" + rateLimit);
+					cmd.add("--test-step-metrics-period=" + metricsPeriod);*/
 
 					final CreateContainerResponse container = dockerClient
 						.createContainerCmd(STORAGE_MOCK_IMAGE_NAME)
-						.withName("mongoose_storage_mock_" + (port + i))
+						.withName("mongoose_storage_mock_" + (storageNodePort + i))
 						.withNetworkMode("host")
-						.withExposedPorts(ExposedPort.tcp(port + i))
+						.withExposedPorts(ExposedPort.tcp(storageNodePort + i))
 						.withEntrypoint("java")
 						.withCmd(cmd)
 						.exec();
@@ -134,15 +131,13 @@ extends ConfiguredTestBase {
 					final String containedId = container.getId();
 					dockerClient.startContainerCmd(containedId).exec();
 
-					httpStorageMocks.put(nextNodeAddr, containedId);
+					httpStorageMocks.put(nodeAddr, containedId);
 					Loggers.TEST.info(
 						"Started the storage mock service @ port #{} in the container {}",
-						netConfig.getNodeConfig().getPort(), containedId
+						(storageNodePort + i), containedId
 					);
-					nodeAddrs.add(nextNodeAddr);
+					nodeAddrs.add(nodeAddr);
 				}
-				nodeConfig.setAddrs(nodeAddrs);
-				nodeConfig.setPort(port);
 				break;
 			case FS:
 				break;
@@ -165,53 +160,52 @@ extends ConfiguredTestBase {
 	throws Exception {
 		final int n = nodeCount.getValue();
 		if(n > 1) {
-			System.out.println("docker pull " + STORAGE_DRIVER_IMAGE_NAME + "...");
-			dockerClient.pullImageCmd(STORAGE_DRIVER_IMAGE_NAME)
+			System.out.println("docker pull " + BASE_IMAGE_NAME + "...");
+			dockerClient.pullImageCmd(BASE_IMAGE_NAME)
 				.exec(new PullImageResultCallback())
 				.awaitCompletion();
-			storageDriverBuilderSvcs = new ArrayList<>(n);
-			final DriverConfig driverConfig = config.getStorageConfig().getDriverConfig();
-			final StringJoiner storageDriverAddrsOption = new StringJoiner(
-				",", "--storage-driver-addrs=", ""
+			loadStepSvcs = new ArrayList<>(n);
+			final int defaultLoadStepSvcPort = BUNDLED_DEFAULTS.intVal("load-step-node-port");
+			final StringJoiner loadStepNodeAddrsOption = new StringJoiner(
+				",", "--load-step-node-addrs=", ""
 			);
-			int nextStorageDriverPort;
+			int nextLoadStepSvcPort;
 			for(int i = 0; i < n; i ++) {
-				nextStorageDriverPort = driverConfig.getPort() + i;
+				nextLoadStepSvcPort = defaultLoadStepSvcPort + i;
 				final String[] cmd = {
-					"-Xms1g", "-Xmx1g", "-XX:MaxDirectMemorySize=1g",
-					"-jar", "/opt/mongoose/mongoose-storage-driver-service.jar",
-					"--storage-driver-port=" + nextStorageDriverPort
+					"--run-node",
+					"--load-step-node-port=" + nextLoadStepSvcPort
 				};
 				final CreateContainerResponse container = dockerClient
-					.createContainerCmd(STORAGE_DRIVER_IMAGE_NAME)
-					.withName("mongoose_storage_driver_service_" + nextStorageDriverPort)
+					.createContainerCmd(BASE_IMAGE_NAME)
+					.withName("mongoose_node_" + nextLoadStepSvcPort)
 					.withNetworkMode("host")
-					.withExposedPorts(ExposedPort.tcp(nextStorageDriverPort))
-					.withEntrypoint("mongoose")
+					.withExposedPorts(ExposedPort.tcp(nextLoadStepSvcPort))
+					.withEntrypoint("/opt/mongoose/entrypoint-debug.sh")
 					.withCmd(cmd)
 					.exec();
 				final String containerId = container.getId();
 				dockerClient.startContainerCmd(containerId).exec();
 				Loggers.TEST.info(
-					"Started the storage driver service @ port #{} in the container {}",
-					nextStorageDriverPort, containerId
+					"Started the load step service @ port #{} in the container {}",
+					nextLoadStepSvcPort, containerId
 				);
-				storageDriverBuilderSvcs.add(containerId);
-				storageDriverAddrsOption.add("127.0.0.1:" + nextStorageDriverPort);
+				loadStepSvcs.add(containerId);
+				loadStepNodeAddrsOption.add("127.0.0.1:" + nextLoadStepSvcPort);
 			}
-			configArgs.add(storageDriverAddrsOption.toString());
-			configArgs.add("--storage-driver-remote");
+			configArgs.add(loadStepNodeAddrsOption.toString());
+			configArgs.add("--load-step-distributed");
 		}
 	}
 
 	private void tearDownDistributedModeIfNeeded()
 	throws Exception {
-		if(nodeCount.equals(NodeCount.DISTRIBUTED) && storageDriverBuilderSvcs != null) {
-			for(final String svcContainerId : storageDriverBuilderSvcs) {
+		if(nodeCount.equals(NodeCount.DISTRIBUTED) && loadStepSvcs != null) {
+			for(final String svcContainerId : loadStepSvcs) {
 				dockerClient.killContainerCmd(svcContainerId).exec();
 				dockerClient.removeContainerCmd(svcContainerId).exec();
 			}
-			storageDriverBuilderSvcs.clear();
+			loadStepSvcs.clear();
 		}
 	}
 

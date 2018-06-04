@@ -34,9 +34,7 @@ public abstract class ScenarioTestBase
 extends ContainerizedStorageTestBase {
 
 	protected static final String BASE_DIR = new File("").getAbsolutePath();
-	private static final Path DEFAULT_SCENARIO_PATH = Paths.get(
-		BASE_DIR, DIR_EXAMPLE_SCENARIO, "js", "default.js"
-	);
+	private static final String DEFAULT_SCENARIO_PATH = "js" + File.separator + "default.js";
 	protected static final String CONTAINER_HOME_PATH = "/root/.mongoose/" + APP_VERSION;
 	protected static final String CONTAINER_SHARE_PATH = CONTAINER_HOME_PATH + "/share";
 	protected final static Path HOST_SHARE_PATH = Paths.get(BASE_DIR, "share");
@@ -50,8 +48,6 @@ extends ContainerizedStorageTestBase {
 	}
 
 	private static final String
-		BASE_SCRIPTING_IMAGE_NAME = "emcmongoose/mongoose:" + MONGOOSE_VERSION;
-	private static final String
 		GROOVY_SCRIPTING_ENGINE_IMAGE_NAME = "emcmongoose/mongoose-scripting-groovy:" +
 		MONGOOSE_VERSION;
 	private static final String
@@ -59,12 +55,12 @@ extends ContainerizedStorageTestBase {
 		MONGOOSE_VERSION;
 	protected static final Map<String, String> SCENARIO_LANG_IMAGES = new HashMap<>();
 	static {
-		SCENARIO_LANG_IMAGES.put("js", BASE_SCRIPTING_IMAGE_NAME);
+		SCENARIO_LANG_IMAGES.put("js", BASE_IMAGE_NAME);
 		SCENARIO_LANG_IMAGES.put("groovy", GROOVY_SCRIPTING_ENGINE_IMAGE_NAME);
 		SCENARIO_LANG_IMAGES.put("py", JYTHON_SCRIPTING_ENGINE_IMAGE_NAME);
 	}
 
-	protected Path scenarioPath = null;
+	protected String scenarioPath = null;
 	protected String testContainerId = null;
 
 	protected final StringBuilder stdOutBuff = new StringBuilder();
@@ -75,9 +71,13 @@ extends ContainerizedStorageTestBase {
 
 	protected ScenarioTestBase(
 		final StorageType storageType, final NodeCount nodeCount, final Concurrency concurrency,
-		final ItemSize itemSize
+		final ItemSize itemSize, final int storageNodePort, final String itemInputFile,
+		final String itemNamingPrefix, final int itemNamingRadix, final boolean sslFlag
 	) throws Exception {
-		super(storageType, nodeCount, concurrency, itemSize);
+		super(
+			storageType, nodeCount, concurrency, itemSize, storageNodePort, itemInputFile,
+			itemNamingPrefix, itemNamingRadix, sslFlag
+		);
 	}
 
 	@Before
@@ -90,16 +90,15 @@ extends ContainerizedStorageTestBase {
 		if(scenarioPath == null) {
 			scenarioPath = DEFAULT_SCENARIO_PATH;
 		} else {
-			final String scenarioPathStr = scenarioPath.toString();
-			if(scenarioPathStr.startsWith(BASE_DIR)) {
+			if(scenarioPath.startsWith(BASE_DIR)) {
 				configArgs.add(
 					"--run-scenario=" + APP_HOME_DIR + "/" + DIR_EXAMPLE_SCENARIO + "/"
-						+ scenarioPathStr.substring(BASE_DIR.length())
+						+ scenarioPath.substring(BASE_DIR.length())
 				);
 			} else {
 				configArgs.add(
-					"--run-scenario="  + APP_HOME_DIR + "/" + DIR_EXAMPLE_SCENARIO + "/"
-						+ scenarioPathStr
+					"--run-scenario=" + APP_HOME_DIR + "/" + DIR_EXAMPLE_SCENARIO + "/"
+						+ scenarioPath
 				);
 			}
 		}
@@ -108,7 +107,7 @@ extends ContainerizedStorageTestBase {
 	protected void initTestContainer()
 	throws Exception {
 
-		final String scenarioFileName = scenarioPath.getFileName().toString();
+		final String scenarioFileName = new File(scenarioPath).getName();
 		int dotPos = scenarioFileName.lastIndexOf('.');
 		if(dotPos > 0) {
 
@@ -183,5 +182,5 @@ extends ContainerizedStorageTestBase {
 		super.tearDown();
 	}
 
-	protected abstract Path makeScenarioPath();
+	protected abstract String makeScenarioPath();
 }
