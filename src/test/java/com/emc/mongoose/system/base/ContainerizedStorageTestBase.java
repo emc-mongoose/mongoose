@@ -3,7 +3,7 @@ package com.emc.mongoose.system.base;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.system.base.params.Concurrency;
 import com.emc.mongoose.system.base.params.ItemSize;
-import com.emc.mongoose.system.base.params.NodeCount;
+import com.emc.mongoose.system.base.params.RunMode;
 import com.emc.mongoose.system.base.params.StorageType;
 
 import com.github.dockerjava.api.DockerClient;
@@ -49,11 +49,11 @@ extends ConfiguredTestBase {
 	protected final List<String> nodeAddrs = new ArrayList<>();
 
 	protected ContainerizedStorageTestBase(
-		final StorageType storageType, final NodeCount nodeCount, final Concurrency concurrency,
+		final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
 		final ItemSize itemSize, final int storageNodePort, final String itemInputFile,
 		final String itemNamingPrefix, final int itemNamingRadix, final boolean sslFlag
 	) throws Exception {
-		super(storageType, nodeCount, concurrency, itemSize);
+		super(storageType, runMode, concurrency, itemSize);
 		this.storageNodePort = storageNodePort;
 		this.itemInputFile = itemInputFile;
 		this.itemNamingPrefix = itemNamingPrefix;
@@ -158,7 +158,7 @@ extends ConfiguredTestBase {
 
 	private void setUpDistributedModeIfNeeded()
 	throws Exception {
-		final int n = nodeCount.getValue();
+		final int n = runMode.getValue();
 		if(n > 1) {
 			System.out.println("docker pull " + BASE_IMAGE_NAME + "...");
 			dockerClient.pullImageCmd(BASE_IMAGE_NAME)
@@ -200,7 +200,7 @@ extends ConfiguredTestBase {
 
 	private void tearDownDistributedModeIfNeeded()
 	throws Exception {
-		if(nodeCount.equals(NodeCount.DISTRIBUTED) && loadStepSvcs != null) {
+		if(runMode.equals(RunMode.DISTRIBUTED) && loadStepSvcs != null) {
 			for(final String svcContainerId : loadStepSvcs) {
 				dockerClient.killContainerCmd(svcContainerId).exec();
 				dockerClient.removeContainerCmd(svcContainerId).exec();

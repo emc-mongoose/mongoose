@@ -5,7 +5,7 @@ import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.item.io.task.IoTask;
 import com.emc.mongoose.system.base.params.Concurrency;
 import com.emc.mongoose.system.base.params.ItemSize;
-import com.emc.mongoose.system.base.params.NodeCount;
+import com.emc.mongoose.system.base.params.RunMode;
 import com.emc.mongoose.system.base.params.StorageType;
 import com.emc.mongoose.system.util.BufferingOutputStream;
 import com.emc.mongoose.system.util.LogPatterns;
@@ -87,10 +87,10 @@ extends ParameterizedSysTestBase {
 	protected BufferingOutputStream stdOutStream;
 
 	protected LoggingTestBase(
-		final StorageType storageType, final NodeCount nodeCount, final Concurrency concurrency,
+		final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {
-		super(storageType, nodeCount, concurrency, itemSize);
+		super(storageType, runMode, concurrency, itemSize);
 	}
 
 	@Before
@@ -114,7 +114,7 @@ extends ParameterizedSysTestBase {
 	}
 
 	protected String makeStepId() {
-		return getClass().getSimpleName() +  '-' + storageType.name() + '-' + nodeCount.name() +
+		return getClass().getSimpleName() +  '-' + storageType.name() + '-' + runMode.name() +
 			'x' + concurrency.name() + '-' + itemSize.name();
 	}
 

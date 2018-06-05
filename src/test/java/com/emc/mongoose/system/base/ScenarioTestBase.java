@@ -2,7 +2,7 @@ package com.emc.mongoose.system.base;
 
 import com.emc.mongoose.system.base.params.Concurrency;
 import com.emc.mongoose.system.base.params.ItemSize;
-import com.emc.mongoose.system.base.params.NodeCount;
+import com.emc.mongoose.system.base.params.RunMode;
 import com.emc.mongoose.system.base.params.StorageType;
 import com.emc.mongoose.system.util.docker.ContainerOutputCallback;
 
@@ -70,12 +70,12 @@ extends ContainerizedStorageTestBase {
 	);
 
 	protected ScenarioTestBase(
-		final StorageType storageType, final NodeCount nodeCount, final Concurrency concurrency,
+		final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
 		final ItemSize itemSize, final int storageNodePort, final String itemInputFile,
 		final String itemNamingPrefix, final int itemNamingRadix, final boolean sslFlag
 	) throws Exception {
 		super(
-			storageType, nodeCount, concurrency, itemSize, storageNodePort, itemInputFile,
+			storageType, runMode, concurrency, itemSize, storageNodePort, itemInputFile,
 			itemNamingPrefix, itemNamingRadix, sslFlag
 		);
 	}

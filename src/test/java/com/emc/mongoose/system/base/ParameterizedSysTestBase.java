@@ -2,7 +2,7 @@ package com.emc.mongoose.system.base;
 
 import com.emc.mongoose.system.base.params.Concurrency;
 import com.emc.mongoose.system.base.params.ItemSize;
-import com.emc.mongoose.system.base.params.NodeCount;
+import com.emc.mongoose.system.base.params.RunMode;
 import com.emc.mongoose.system.base.params.StorageType;
 
 import org.junit.Test;
@@ -32,10 +32,10 @@ public abstract class ParameterizedSysTestBase {
 			includedStorageTypes.add(StorageType.valueOf(storageTypeValue.toUpperCase()));
 		}
 
-		final List<NodeCount> includedNodeCounts = new ArrayList<>();
-		final String nodeCountValues = env.get(NodeCount.KEY_ENV);
+		final List<RunMode> includedRunModes = new ArrayList<>();
+		final String nodeCountValues = env.get(RunMode.KEY_ENV);
 		for(final String nodeCountValue : nodeCountValues.split(",")) {
-			includedNodeCounts.add(NodeCount.valueOf(nodeCountValue.toUpperCase()));
+			includedRunModes.add(RunMode.valueOf(nodeCountValue.toUpperCase()));
 		}
 
 		final List<Concurrency> includedConcurrencies = new ArrayList<>();
@@ -52,12 +52,12 @@ public abstract class ParameterizedSysTestBase {
 
 		final List<Object[]> data = new ArrayList<>();
 		for(final StorageType storageType : includedStorageTypes) {
-			for(final NodeCount nodeCount : includedNodeCounts) {
+			for(final RunMode runMode : includedRunModes) {
 				for(final Concurrency concurrency : includedConcurrencies) {
 					for(final ItemSize itemSize : includedItemSizes) {
 						data.add(
 							new Object[] {
-								storageType, nodeCount, concurrency, itemSize
+								storageType, runMode, concurrency, itemSize
 							}
 						);
 					}
@@ -69,22 +69,22 @@ public abstract class ParameterizedSysTestBase {
 	}
 
 	protected final StorageType storageType;
-	protected final NodeCount nodeCount;
+	protected final RunMode runMode;
 	protected final Concurrency concurrency;
 	protected final ItemSize itemSize;
 
 	protected ParameterizedSysTestBase(
-		final StorageType storageType, final NodeCount nodeCount, final Concurrency concurrency,
+		final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
 		final ItemSize itemSize
 	) {
 		this.storageType = storageType;
-		this.nodeCount = nodeCount;
+		this.runMode = runMode;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
 		System.out.println(
 			getClass().getSimpleName() + " params: "
 				+ StorageType.KEY_ENV + " = " + storageType.name() + ", "
-				+ NodeCount.KEY_ENV + " = " + nodeCount.name() + ", "
+				+ RunMode.KEY_ENV + " = " + runMode.name() + ", "
 				+ Concurrency.KEY_ENV + " = " + concurrency.name() + ", "
 				+ ItemSize.KEY_ENV + " = " + itemSize.name()
 		);

@@ -6,6 +6,13 @@ import java.util.List;
 public final class StorageMockContainer
 extends ContainerBase {
 
+	public static final int DEFAULT_PORT = 8000;
+	public static final int DEFAULT_CAPACITY = 1_000_000;
+	public static final int DEFAULT_CONTAINER_CAPACITY = 1_000_000;
+	public static final int DEFAULT_CONTAINER_COUNT_LIMIT = 1_000_000;
+	public static final int DEFAULT_FAIL_CONNECT_EVERY = 0;
+	public static final int DEFAULT_FAIL_RESPONSES_EVERY = 0;
+
 	private static final String IMAGE_NAME = "emcmongoose/nagaina";
 
 	private final String itemInputFile;

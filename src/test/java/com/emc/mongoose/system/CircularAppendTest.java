@@ -3,7 +3,7 @@ package com.emc.mongoose.system;
 import com.emc.mongoose.system.base.params.Concurrency;
 import com.emc.mongoose.system.base.params.EnvParams;
 import com.emc.mongoose.system.base.params.ItemSize;
-import com.emc.mongoose.system.base.params.NodeCount;
+import com.emc.mongoose.system.base.params.RunMode;
 import com.emc.mongoose.system.base.params.StorageType;
 import com.emc.mongoose.system.util.docker.NodeSvcContainer;
 import com.emc.mongoose.system.util.docker.StorageMockContainer;
@@ -31,16 +31,16 @@ public class CircularAppendTest {
 	private static final List<NodeSvcContainer> nodeSvcs = new ArrayList<>();
 
 	private final StorageType storageType;
-	private final NodeCount nodeCount;
+	private final RunMode runMode;
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
 
 	public CircularAppendTest(
-		final StorageType storageType, final NodeCount nodeCount, final Concurrency concurrency,
+		final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
 		final ItemSize itemSize
 	) {
 		this.storageType = storageType;
-		this.nodeCount = nodeCount;
+		this.runMode = runMode;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
 	}
@@ -49,7 +49,7 @@ public class CircularAppendTest {
 	public static void setUp()
 	throws Exception {
 
-		for(int i = 0; i < 4; i ++) {
+		for(int i = 0; i < 2; i ++) {
 			final StorageMockContainer storageMock = new StorageMockContainer(
 				8000 + i, false, null, null, Character.MAX_RADIX, 1_000_000, 1_000_000, 1_000_000,
 				0, 0, 0
@@ -60,8 +60,6 @@ public class CircularAppendTest {
 			nodeSvc.start();
 			nodeSvcs.add(nodeSvc);
 		}
-
-		TimeUnit.SECONDS.sleep(1000);
 	}
 
 	@AfterClass

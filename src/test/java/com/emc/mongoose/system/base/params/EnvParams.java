@@ -18,10 +18,10 @@ public abstract class EnvParams {
 			includedStorageTypes.add(StorageType.valueOf(storageTypeValue.toUpperCase()));
 		}
 
-		final List<NodeCount> includedNodeCounts = new ArrayList<>();
-		final String nodeCountValues = env.get(NodeCount.KEY_ENV);
+		final List<RunMode> includedRunModes = new ArrayList<>();
+		final String nodeCountValues = env.get(RunMode.KEY_ENV);
 		for(final String nodeCountValue : nodeCountValues.split(",")) {
-			includedNodeCounts.add(NodeCount.valueOf(nodeCountValue.toUpperCase()));
+			includedRunModes.add(RunMode.valueOf(nodeCountValue.toUpperCase()));
 		}
 
 		final List<Concurrency> includedConcurrencies = new ArrayList<>();
@@ -37,12 +37,12 @@ public abstract class EnvParams {
 		}
 
 		for(final StorageType storageType : includedStorageTypes) {
-			for(final NodeCount nodeCount : includedNodeCounts) {
+			for(final RunMode runMode : includedRunModes) {
 				for(final Concurrency concurrency : includedConcurrencies) {
 					for(final ItemSize itemSize : includedItemSizes) {
 						PARAMS.add(
 							new Object[] {
-								storageType, nodeCount, concurrency, itemSize
+								storageType, runMode, concurrency, itemSize
 							}
 						);
 					}

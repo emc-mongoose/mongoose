@@ -2,7 +2,7 @@ package com.emc.mongoose.system.base;
 
 import com.emc.mongoose.system.base.params.Concurrency;
 import com.emc.mongoose.system.base.params.ItemSize;
-import com.emc.mongoose.system.base.params.NodeCount;
+import com.emc.mongoose.system.base.params.RunMode;
 import com.emc.mongoose.system.base.params.StorageType;
 
 import org.junit.After;
@@ -20,10 +20,10 @@ extends LoggingTestBase {
 	protected final List<String> configArgs = new ArrayList<>();
 
 	protected ConfiguredTestBase(
-		final StorageType storageType, final NodeCount nodeCount, final Concurrency concurrency,
+		final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
 		final ItemSize itemSize
 	) throws Exception {
-		super(storageType, nodeCount, concurrency, itemSize);
+		super(storageType, runMode, concurrency, itemSize);
 	}
 
 	@Before
