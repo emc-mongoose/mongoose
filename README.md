@@ -146,3 +146,4 @@ page for the details.
 * Mikhail Danilov
 * [Mikhail Malygin](https://github.com/aphreet)
 * [Olga Zhavzharova](https://github.com/Zhavzharova)
+* [Veronika Kochugova](https://github.com/veronikaKochugova)
