@@ -2,7 +2,6 @@ package com.emc.mongoose.config;
 
 import com.github.akurilov.confuse.io.json.JsonConfigProviderBase;
 
-import java.io.File;
 import java.io.InputStream;
 
 import static com.emc.mongoose.Constants.APP_NAME;

@@ -6,7 +6,7 @@ public interface ServiceTaskExecutor {
 
 	FibersExecutor INSTANCE = new FibersExecutor();
 
-	static void setThreadCount(final int threadCount) {
+	static void threadCount(final int threadCount) {
 		INSTANCE.setThreadCount(threadCount);
 	}
 }

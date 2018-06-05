@@ -36,7 +36,6 @@ extends JarResourcesInstaller {
 			"example/scenario/groovy/default.groovy",
 			"example/scenario/groovy/rampup.groovy",
 			// javascript scenario examples including the default one
-			"example/scenario/js/systest/CopyUsingInputPath.js",
 			"example/scenario/js/types/additional/copy_load_using_env_vars.js",
 			"example/scenario/js/types/additional/load_type.js",
 			"example/scenario/js/types/additional/update_and_read_variants.js",

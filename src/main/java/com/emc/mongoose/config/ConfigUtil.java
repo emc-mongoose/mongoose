@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.akurilov.commons.collection.TreeUtil;
 
 import com.github.akurilov.confuse.Config;
-import static com.github.akurilov.confuse.Config.ROOT_PATH;
 import com.github.akurilov.confuse.impl.BasicConfig;
 
 import com.github.akurilov.confuse.io.json.ConfigJsonDeserializer;

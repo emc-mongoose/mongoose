@@ -2,12 +2,10 @@ package com.emc.mongoose.system.util.docker;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
-public class StorageMockContainer
+public final class StorageMockContainer
 extends ContainerBase {
 
-	private static final Logger LOG = Logger.getLogger(StorageMockContainer.class.getSimpleName());
 	private static final String IMAGE_NAME = "emcmongoose/nagaina";
 
 	private final String itemInputFile;
@@ -18,7 +16,6 @@ extends ContainerBase {
 	private final int containerCountLimit;
 	private final int failConnectEvery;
 	private final int failResponsesEvery;
-	private final int port;
 	private final boolean sslFlag;
 	private final double rateLimit;
 
@@ -28,6 +25,7 @@ extends ContainerBase {
 		final int capacity, final int containerCountLimit, final int containerCapacity,
 		final int failConnectEvery, final int failResponsesEvery, final double rateLimit
 	) throws Exception {
+		super(VERSION_DEFAULT, port);
 		this.itemInputFile = itemInputFile;
 		this.itemNamingPrefix = itemNamingPrefix;
 		this.itemNamingRadix = itemNamingRadix;
@@ -36,7 +34,6 @@ extends ContainerBase {
 		this.containerCountLimit = containerCountLimit;
 		this.failConnectEvery = failConnectEvery;
 		this.failResponsesEvery = failResponsesEvery;
-		this.port = port;
 		this.sslFlag = sslFlag;
 		this.rateLimit = rateLimit;
 	}
@@ -66,15 +63,10 @@ extends ContainerBase {
 		cmd.add("--storage-mock-container-countLimit=" + containerCountLimit);
 		cmd.add("--storage-mock-fail-connections=" + failConnectEvery);
 		cmd.add("--storage-mock-fail-responses=" + failResponsesEvery);
-		cmd.add("--storage-net-node-port=" + port);
+		cmd.add("--storage-net-node-port=" + exposedTcpPorts[0]);
 		cmd.add("--storage-net-ssl=" + sslFlag);
 		cmd.add("--test-step-limit-rate=" + rateLimit);
 		return cmd;
-	}
-
-	@Override
-	protected int[] exposedTcpPorts() {
-		return new int[] { port };
 	}
 
 	@Override
