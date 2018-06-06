@@ -8,16 +8,14 @@ import com.emc.mongoose.system.base.params.StorageType;
 import com.emc.mongoose.system.util.docker.NodeSvcContainer;
 import com.emc.mongoose.system.util.docker.StorageMockContainer;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(Parameterized.class)
 public class CircularAppendTest {
@@ -45,24 +43,35 @@ public class CircularAppendTest {
 		this.itemSize = itemSize;
 	}
 
-	@BeforeClass
-	public static void setUp()
+	@Before
+	public void setUp()
 	throws Exception {
 
-		for(int i = 0; i < 2; i ++) {
-			final StorageMockContainer storageMock = new StorageMockContainer(
-				8000 + i, false, null, null, Character.MAX_RADIX, 1_000_000, 1_000_000, 1_000_000,
-				0, 0, 0
-			);
-			storageMock.start();
-			storageMocks.add(storageMock);
-			final NodeSvcContainer nodeSvc = new NodeSvcContainer("4.0.0", 10000 + i);
-			nodeSvc.start();
-			nodeSvcs.add(nodeSvc);
+		switch(storageType) {
+			case ATMOS:
+			case S3:
+			case SWIFT:
+				final StorageMockContainer storageMock = new StorageMockContainer(
+					StorageMockContainer.DEFAULT_PORT, false, null, null, Character.MAX_RADIX,
+					1_000_000, 1_000_000, 1_000_000, 0, 0, 0
+				);
+				storageMock.start();
+				storageMocks.add(storageMock);
+				break;
+		}
+
+		switch(runMode) {
+			case DISTRIBUTED:
+				for(int i = 0; i < 2; i ++) {
+					final NodeSvcContainer nodeSvc = new NodeSvcContainer("4.0.0", 10000 + i);
+					nodeSvc.start();
+					nodeSvcs.add(nodeSvc);
+				}
+				break;
 		}
 	}
 
-	@AfterClass
+	@After
 	public static void tearDown()
 	throws Exception {
 		nodeSvcs.parallelStream().forEach(
