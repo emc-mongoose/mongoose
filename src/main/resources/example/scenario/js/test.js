@@ -1,6 +1,6 @@
 var itemDataSizes = ["10KB", "1MB", "100MB"];
 var limitCount = 10000;
-var limitTime = "1s";
+var limitTime = "20s";
 var limitConcurrency = [1,10,100];
 var fileName="10K_items.csv"
 
@@ -15,11 +15,15 @@ function printToCL(cmd) {
     cmdStdOut.close();
 }
 
+//var cmd = new java.lang.ProcessBuilder()
+//    .command("del %ITEM_INPUT_FILE%")
+//    .start();
+//printToCL(cmd);
+
 var cmd = new java.lang.ProcessBuilder()
     .command("sh", "-c", "rm $ITEM_INPUT_FILE; echo $ITEM_INPUT_FILE")
     .start();
 printToCL(cmd);
-
 
 
 var load10K_config =
@@ -60,7 +64,6 @@ var read_config =
     }
 };
 
-
 function createConfig(size, concLimit) {
     return {
                           "item": {
@@ -71,8 +74,8 @@ function createConfig(size, concLimit) {
                           "load": {
                                   "step": {
                                         "limit": {
-                                              "concurrency": concLimit,
-                                              "time": limitTime
+                                              "time" : limitTime,
+                                              "concurrency": concLimit
                                         }
                                   }
                           }
@@ -81,7 +84,7 @@ function createConfig(size, concLimit) {
 
 
 var readStep = Load.config(read_config);
-
+readStep.start();
 
 for(var size = 0; size < itemDataSizes.length; ++size) {
 
@@ -92,15 +95,11 @@ for(var size = 0; size < itemDataSizes.length; ++size) {
         print("\nConcurrency LIMIT : " + limitConcurrency[conc]);
 
     var createStep = Load.config(createConfig(itemDataSizes[size], limitConcurrency[conc]));
-
-    readStep.start();
     createStep.start();
-
     createStep.await();
-    readStep.stop();
-
     createStep.close();
-    readStep.close();
 
     }
 }
+
+readStep.close();
