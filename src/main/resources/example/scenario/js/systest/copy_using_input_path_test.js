@@ -17,7 +17,7 @@ PreconditionLoad
                     "path": ITEM_SRC_PATH
                 }
             },
-            "test": {
+            "load": {
                 "step": {
                     "limit": {
                         "count": 100000,

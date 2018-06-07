@@ -1,21 +1,59 @@
 package com.emc.mongoose.system;
 
+import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.Concurrency;
 import com.emc.mongoose.system.base.params.EnvParams;
 import com.emc.mongoose.system.base.params.ItemSize;
 import com.emc.mongoose.system.base.params.RunMode;
 import com.emc.mongoose.system.base.params.StorageType;
-import com.emc.mongoose.system.util.docker.NodeSvcContainer;
-import com.emc.mongoose.system.util.docker.StorageMockContainer;
+import com.emc.mongoose.system.util.docker.MongooseContainer;
+import com.emc.mongoose.system.util.docker.MongooseNodeSvcContainer;
+import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
+import static com.emc.mongoose.config.TimeUtil.getTimeInSeconds;
+import static com.emc.mongoose.system.util.LogValidationUtil.getContainerMetricsLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.getContainerMetricsTotalLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testContainerIoTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
+import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
+import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
+
+import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
+import com.github.akurilov.commons.system.SizeInBytes;
+
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+
+import org.apache.commons.io.FileUtils;
+
+import org.apache.commons.math3.stat.Frequency;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 public class CircularAppendTest {
@@ -25,9 +63,14 @@ public class CircularAppendTest {
 		return EnvParams.PARAMS;
 	}
 
-	private static final List<StorageMockContainer> storageMocks = new ArrayList<>();
-	private static final List<NodeSvcContainer> nodeSvcs = new ArrayList<>();
+	private static final int EXPECTED_APPEND_COUNT = 100;
+	private static final long EXPECTED_COUNT = 100;
 
+	private final String itemListFile1 = snakeCaseName(getClass()) + "_1.csv";
+	private final List<HttpStorageMockContainer> storageMocks = new ArrayList<>();
+	private final List<MongooseNodeSvcContainer> nodeSvcs = new ArrayList<>();
+	private final MongooseContainer testContainer;
+	private final String stepId;
 	private final StorageType storageType;
 	private final RunMode runMode;
 	private final Concurrency concurrency;
@@ -36,44 +79,91 @@ public class CircularAppendTest {
 	public CircularAppendTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
 		final ItemSize itemSize
-	) {
+	) throws Exception {
+
+		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
+		try {
+			FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
+		} catch(final IOException ignored) {
+		}
+
 		this.storageType = storageType;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
-	}
 
-	@Before
-	public void setUp()
-	throws Exception {
+		final List<String> env = System.getenv()
+			.entrySet()
+			.stream()
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.toList());
+		env.add("BASE_ITEMS_COUNT=" + EXPECTED_COUNT);
+		env.add("APPEND_COUNT=" + EXPECTED_APPEND_COUNT);
+		env.add("ITEM_LIST_FILE_0=" + snakeCaseName(getClass()) + "_0.csv");
+		env.add("ITEM_LIST_FILE_1=" + itemListFile1);
+		env.add("ITEM_DATA_SIZE=" + itemSize.getValue());
+
+		final List<String> args = new ArrayList<>();
 
 		switch(storageType) {
 			case ATMOS:
 			case S3:
 			case SWIFT:
-				final StorageMockContainer storageMock = new StorageMockContainer(
-					StorageMockContainer.DEFAULT_PORT, false, null, null, Character.MAX_RADIX,
-					1_000_000, 1_000_000, 1_000_000, 0, 0, 0
+				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
+					HttpStorageMockContainer.DEFAULT_PORT, false, null, null, Character.MAX_RADIX,
+					HttpStorageMockContainer.DEFAULT_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
+					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY,
+					0
 				);
-				storageMock.start();
 				storageMocks.add(storageMock);
+				args.add(
+					"--storage-net-node-addrs=127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT
+				);
 				break;
 		}
 
 		switch(runMode) {
 			case DISTRIBUTED:
-				for(int i = 0; i < 2; i ++) {
-					final NodeSvcContainer nodeSvc = new NodeSvcContainer("4.0.0", 10000 + i);
-					nodeSvc.start();
+				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
+				args.add("--load-step-distributed");
+				final StringJoiner sj = new StringJoiner(",");
+				for(int i = 0; i < runMode.getNodeCount(); i ++) {
+					final int port = MongooseNodeSvcContainer.DEFAULT_PORT + i;
+					final MongooseNodeSvcContainer nodeSvc = new MongooseNodeSvcContainer(
+						MongooseContainer.APP_VERSION, port
+					);
 					nodeSvcs.add(nodeSvc);
+					sj.add(localExternalAddr + ":" + port);
 				}
+				args.add("--load-step-node-addrs=" + sj.toString());
 				break;
 		}
+
+		final String containerScenarioPath = containerScenarioPath(getClass());
+		testContainer = new MongooseContainer(
+			MongooseContainer.APP_VERSION, stepId, storageType, runMode, concurrency, itemSize,
+			containerScenarioPath, env, args
+		);
+	}
+
+	@Before
+	public void setUp()
+	throws Exception {
+		storageMocks.forEach(AsyncRunnableBase::start);
+		nodeSvcs.forEach(AsyncRunnableBase::start);
+		testContainer.start();
+		testContainer.await(1000, TimeUnit.SECONDS);
 	}
 
 	@After
-	public static void tearDown()
+	public void tearDown()
 	throws Exception {
+
+		testContainer.close();
+
 		nodeSvcs.parallelStream().forEach(
 			storageMock -> {
 				try {
@@ -97,6 +187,95 @@ public class CircularAppendTest {
 	@Test
 	public void test()
 	throws Exception {
-		System.out.println("yohoho");
+
+		try {
+			final List<CSVRecord> metricsLogRecords = getContainerMetricsLogRecords(stepId);
+			assertTrue(
+				"There should be more than 0 metrics records in the log file",
+				metricsLogRecords.size() > 0
+			);
+			testMetricsLogRecords(
+				metricsLogRecords, IoType.UPDATE, concurrency.getValue(),
+				runMode.getNodeCount(), itemSize.getValue(),
+				(long) (1.1 * EXPECTED_APPEND_COUNT * EXPECTED_COUNT), 0,
+				getTimeInSeconds(BUNDLED_DEFAULTS.stringVal("output-metrics-average-period"))
+			);
+		} catch(final FileNotFoundException ignored) {
+			// there may be no metrics file if append step duration is less than 10s
+		}
+
+		final List<CSVRecord> totalMetrcisLogRecords = getContainerMetricsTotalLogRecords(stepId);
+		assertEquals(
+			"There should be 1 total metrics records in the log file", 1,
+			totalMetrcisLogRecords.size()
+		);
+		testTotalMetricsLogRecord(
+			totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(),
+			runMode.getNodeCount(), itemSize.getValue(), 0, 0
+		);
+
+		final String stdOutContent = testContainer.stdOutContent();
+		testSingleMetricsStdout(
+			stdOutContent.replaceAll("[\r\n]+", " "),
+			IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+			getTimeInSeconds(BUNDLED_DEFAULTS.stringVal("output-metrics-average-period"))
+		);
+
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
+			testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(), itemSize.getValue());
+			ioTraceRecCount.increment();
+		};
+		testContainerIoTraceLogRecords(stepId, ioTraceReqTestFunc);
+		assertTrue(
+			"There should be more than " + EXPECTED_COUNT +
+				" records in the I/O trace log file, but got: " + ioTraceRecCount.sum(),
+			EXPECTED_COUNT < ioTraceRecCount.sum()
+		);
+
+
+		final List<CSVRecord> items = new ArrayList<>();
+		try(final BufferedReader br = new BufferedReader(new FileReader(itemListFile1))) {
+			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
+			for(final CSVRecord csvRecord : csvParser) {
+				items.add(csvRecord);
+			}
+		}
+		final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
+		final Frequency freq = new Frequency();
+		String itemPath, itemId;
+		long itemOffset;
+		long size;
+		final SizeInBytes expectedFinalSize = new SizeInBytes(
+			(EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() / 3,
+			3 * (EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get(),
+			1
+		);
+		final int n = items.size();
+		CSVRecord itemRec;
+		for(int i = 0; i < n; i ++) {
+			itemRec = items.get(i);
+			itemPath = itemRec.get(0);
+			for(int j = i; j < n; j ++) {
+				if(i != j) {
+					assertFalse(itemPath.equals(items.get(j).get(0)));
+				}
+			}
+			itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
+			if(!storageType.equals(StorageType.ATMOS)) {
+				itemOffset = Long.parseLong(itemRec.get(1), 0x10);
+				assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
+				freq.addValue(itemOffset);
+			}
+			size = Long.parseLong(itemRec.get(2));
+			assertTrue(
+				"Expected size: " + expectedFinalSize.toString() + ", actual: " + size,
+				expectedFinalSize.getMin() <= size && size <= expectedFinalSize.getMax()
+			);
+			assertEquals("0/0", itemRec.get(3));
+		}
+		if(!storageType.equals(StorageType.ATMOS)) {
+			assertEquals(EXPECTED_COUNT, freq.getUniqueCount(), EXPECTED_COUNT / 20);
+		}
 	}
 }

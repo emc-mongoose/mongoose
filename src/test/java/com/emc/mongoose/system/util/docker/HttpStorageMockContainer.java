@@ -1,9 +1,14 @@
 package com.emc.mongoose.system.util.docker;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public final class StorageMockContainer
+import static com.emc.mongoose.system.util.docker.Docker.DEFAULT_IMAGE_VERSION;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
+
+public final class HttpStorageMockContainer
 extends ContainerBase {
 
 	public static final int DEFAULT_PORT = 8000;
@@ -26,13 +31,13 @@ extends ContainerBase {
 	private final boolean sslFlag;
 	private final double rateLimit;
 
-	public StorageMockContainer(
+	public HttpStorageMockContainer(
 		final int port, final boolean sslFlag, final String itemInputFile,
 		final String itemNamingPrefix, final int itemNamingRadix,
 		final int capacity, final int containerCountLimit, final int containerCapacity,
 		final int failConnectEvery, final int failResponsesEvery, final double rateLimit
 	) throws Exception {
-		super(VERSION_DEFAULT, port);
+		super(DEFAULT_IMAGE_VERSION, emptyList(), emptyMap(), false, port);
 		this.itemInputFile = itemInputFile;
 		this.itemNamingPrefix = itemNamingPrefix;
 		this.itemNamingRadix = itemNamingRadix;

@@ -6,6 +6,10 @@ import java.util.Map;
 
 public abstract class EnvParams {
 
+	// prevent the singleton instantiation
+	private EnvParams() {
+	}
+
 	public final static List<Object[]> PARAMS = new ArrayList<>();
 
 	static {
@@ -49,9 +53,5 @@ public abstract class EnvParams {
 				}
 			}
 		}
-	}
-
-	// prevent the instantiation
-	private EnvParams() {
 	}
 }

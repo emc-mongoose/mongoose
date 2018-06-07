@@ -1,6 +1,7 @@
-Command
-	.value("rm -f " + ITEM_LIST_FILE)
-	.run();
+new java.lang.ProcessBuilder()
+	.command("sh", "-c", "rm -f " + ITEM_LIST_FILE)
+	.start()
+	.waitFor();
 
 PreconditionLoad
 	.config(
@@ -14,7 +15,7 @@ PreconditionLoad
 					"path": ITEM_OUTPUT_PATH + "/%p{16;2}"
 				}
 			},
-			"test": {
+			"load": {
 				"step": {
 					"limit": {
 						"count": STEP_LIMIT_COUNT

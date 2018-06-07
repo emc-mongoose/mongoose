@@ -84,7 +84,6 @@ extends ConfiguredTestBase {
 		switch(storageType) {
 			case ATMOS:
 			case S3:
-			case EMCS3:
 			case SWIFT:
 				System.out.println("docker pull " + STORAGE_MOCK_IMAGE_NAME + "...");
 				dockerClient
@@ -158,7 +157,7 @@ extends ConfiguredTestBase {
 
 	private void setUpDistributedModeIfNeeded()
 	throws Exception {
-		final int n = runMode.getValue();
+		final int n = runMode.getNodeCount();
 		if(n > 1) {
 			System.out.println("docker pull " + BASE_IMAGE_NAME + "...");
 			dockerClient.pullImageCmd(BASE_IMAGE_NAME)

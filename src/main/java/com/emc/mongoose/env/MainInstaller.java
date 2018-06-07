@@ -53,6 +53,11 @@ extends JarResourcesInstaller {
 
 			"example/scenario/js/rampup.js",
 
+			// system tests scenario files
+			"example/scenario/js/systest/circular_append_test.js",
+			"example/scenario/js/systest/copy_using_input_path_test.js",
+			"example/scenario/js/systest/read_using_variable_path_test.js",
+
 			// custom scenario examples in python
 			"example/scenario/py/types/additional/copy_load_using_env_vars.py",
 			"example/scenario/py/types/additional/load_type.py",

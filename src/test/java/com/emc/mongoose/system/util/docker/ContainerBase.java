@@ -2,41 +2,62 @@ package com.emc.mongoose.system.util.docker;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 
-import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.api.model.Frame;
+import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.dockerjava.core.command.WaitContainerResultCallback;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import static com.emc.mongoose.system.util.docker.Docker.DEFAULT_IMAGE_VERSION;
+
 public abstract class ContainerBase
-extends AsyncRunnableBase {
+extends AsyncRunnableBase
+implements Docker.Container {
 
-	protected static final String VERSION_DEFAULT = "latest";
+	private static final Logger LOG = Logger.getLogger(HttpStorageMockContainer.class.getSimpleName());
 
-	private static final Logger LOG = Logger.getLogger(StorageMockContainer.class.getSimpleName());
-	private static final DockerClient DOCKER_CLIENT = DockerClientBuilder.getInstance().build();
-
-	protected final String version;
+	private final String version;
+	private final List<String> env;
+	private final Map<String, Path> volumeBinds;
+	private final boolean attachOutputFlag;
 	protected final int[] exposedTcpPorts;
+	private final StringBuilder stdOutBuff = new StringBuilder();
+	private final StringBuilder stdErrBuff = new StringBuilder();
+	private final ResultCallback<Frame> streamsCallback = new ContainerOutputCallback(
+		stdOutBuff, stdErrBuff
+	);
+	private String containerId;
+	private int containerExitCode = Integer.MIN_VALUE;
 
-	protected String containerId;
-
-	protected ContainerBase(final String version, final int... exposedTcpPorts)
-	throws InterruptedException{
-		this.version = (version == null || version.isEmpty()) ? VERSION_DEFAULT : version;
+	protected ContainerBase(
+		final String version, final List<String> env, final Map<String, Path> volumeBinds,
+		final boolean attachOutputFlag, final int... exposedTcpPorts
+	) throws InterruptedException{
+		this.version = (version == null || version.isEmpty()) ? DEFAULT_IMAGE_VERSION : version;
+		this.env = env;
+		this.volumeBinds = volumeBinds;
+		this.attachOutputFlag = attachOutputFlag;
 		this.exposedTcpPorts = exposedTcpPorts;
 		final String imageNameWithVer = imageName() + ":" + this.version;
 		try {
-			DOCKER_CLIENT.inspectImageCmd(imageNameWithVer).exec();
+			Docker.CLIENT.inspectImageCmd(imageNameWithVer).exec();
 		} catch(final NotFoundException e) {
-			DOCKER_CLIENT
+			Docker.CLIENT
 				.pullImageCmd(imageNameWithVer)
 				.exec(new PullImageResultCallback())
 				.awaitCompletion();
@@ -49,10 +70,33 @@ extends AsyncRunnableBase {
 
 	protected abstract String entrypoint();
 
+	@Override
+	public final int exitStatusCode() {
+		return containerExitCode;
+	}
+
+	@Override
+	public final String stdOutContent() {
+		return stdOutBuff.toString();
+	}
+
+	@Override
+	public final String stdErrContent() {
+		return stdErrBuff.toString();
+	}
+
 	protected final void doStart() {
 		containerId = createContainer();
+		if(attachOutputFlag) {
+			Docker.CLIENT
+				.attachContainerCmd(containerId)
+				.withStdErr(true)
+				.withStdOut(true)
+				.withFollowStream(true)
+				.exec(streamsCallback);
+		}
 		LOG.info("docker start " + imageName() + "(" + containerId + ")...");
-		DOCKER_CLIENT.startContainerCmd(containerId).exec();
+		Docker.CLIENT.startContainerCmd(containerId).exec();
 	}
 
 	private String createContainer() {
@@ -62,12 +106,34 @@ extends AsyncRunnableBase {
 			.mapToObj(ExposedPort::tcp)
 			.collect(Collectors.toList())
 			.toArray(new ExposedPort[]{});
-		final CreateContainerCmd createContainerCmd = DOCKER_CLIENT
+		final CreateContainerCmd createContainerCmd = Docker.CLIENT
 			.createContainerCmd(imageNameWithVer)
 			.withName(imageName().replace('/', '_') + '_' + hashCode())
 			.withNetworkMode("host")
 			.withExposedPorts(exposedPorts)
 			.withCmd(args);
+		if(env != null && !env.isEmpty()) {
+			createContainerCmd.withEnv(env);
+		}
+		if(attachOutputFlag) {
+			createContainerCmd
+				.withAttachStdout(attachOutputFlag)
+				.withAttachStderr(attachOutputFlag);
+		}
+		if(volumeBinds != null && !volumeBinds.isEmpty()) {
+			final List<Volume> volumes = new ArrayList<>(volumeBinds.size());
+			final List<Bind> binds = new ArrayList<>(volumeBinds.size());
+			volumeBinds.forEach(
+				(containerPath, hostPath) -> {
+					final Volume volume = new Volume(containerPath);
+					volumes.add(volume);
+					final Bind bind = new Bind(hostPath.toString(), volume);
+					binds.add(bind);
+				}
+			);
+			createContainerCmd.withVolumes(volumes);
+			createContainerCmd.withBinds(binds);
+		}
 		final String entrypoint = entrypoint();
 		if(entrypoint != null && !entrypoint.isEmpty()) {
 			createContainerCmd.withEntrypoint(entrypoint);
@@ -76,10 +142,33 @@ extends AsyncRunnableBase {
 		return container.getId();
 	}
 
+	public final boolean await(final long timeout, final TimeUnit timeUnit) {
+		containerExitCode = Docker.CLIENT
+			.waitContainerCmd(containerId)
+			.exec(new WaitContainerResultCallback())
+			.awaitStatusCode(timeout, TimeUnit.SECONDS);
+		return true;
+	}
+
 	protected final void doClose() {
+
 		LOG.info("docker kill " + containerId + "...");
-		DOCKER_CLIENT.killContainerCmd(containerId).exec();
+		try {
+			Docker.CLIENT.killContainerCmd(containerId).exec();
+		} catch(final Throwable ignored) {
+		}
+
 		LOG.info("docker rm " + containerId + "...");
-		DOCKER_CLIENT.removeContainerCmd(containerId).exec();
+		try {
+			Docker.CLIENT.removeContainerCmd(containerId).exec();
+		} catch(final Throwable t) {
+			t.printStackTrace(System.err);
+		}
+
+		try {
+			streamsCallback.close();
+		} catch(final IOException e) {
+			e.printStackTrace(System.err);
+		}
 	}
 }

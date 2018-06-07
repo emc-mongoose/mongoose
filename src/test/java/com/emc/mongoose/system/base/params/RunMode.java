@@ -10,13 +10,13 @@ public enum RunMode {
 
 	public static final String KEY_ENV = "RUN_MODE";
 
-	private final int value;
+	private final int nodeCount;
 
-	RunMode(final int value) {
-		this.value = value;
+	RunMode(final int nodeCount) {
+		this.nodeCount = nodeCount;
 	}
 
-	public final int getValue() {
-		return value;
+	public final int getNodeCount() {
+		return nodeCount;
 	}
 }
