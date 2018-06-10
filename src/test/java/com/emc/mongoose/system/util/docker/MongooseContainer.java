@@ -24,6 +24,8 @@ import java.util.Map;
 public final class MongooseContainer
 extends ContainerBase {
 
+	public static final String IMAGE_VERSION = System.getenv("MONGOOSE_VERSION");
+
 	public static final Config BUNDLED_DEFAULTS;
 	static {
 		try {
@@ -49,7 +51,7 @@ extends ContainerBase {
 	private static final int PORT_DEBUG = 5005;
 	private static final int PORT_JMX = 9010;
 
-	private static final String CONTAINER_SHARE_PATH = CONTAINER_HOME_PATH + "/share";
+	public static final String CONTAINER_SHARE_PATH = CONTAINER_HOME_PATH + "/share";
 	public static final Path HOST_SHARE_PATH = Paths.get(APP_HOME_DIR, "share");
 	static {
 		HOST_SHARE_PATH.toFile().mkdir();
@@ -73,6 +75,17 @@ extends ContainerBase {
 
 	private String containerItemOutputPath = null;
 	private String hostItemOutputPath = null;
+
+	public MongooseContainer(
+		final String stepId, final StorageType storageType,
+		final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize,
+		final String containerScenarioPath, final List<String> env, final List<String> args
+	) throws InterruptedException {
+		this(
+			IMAGE_VERSION, stepId, storageType, runMode, concurrency, itemSize,
+			containerScenarioPath, env, args
+		);
+	}
 
 	public MongooseContainer(
 		final String version, final String stepId, final StorageType storageType,

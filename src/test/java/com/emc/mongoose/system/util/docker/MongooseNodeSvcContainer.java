@@ -15,7 +15,12 @@ extends ContainerBase {
 
 	public MongooseNodeSvcContainer()
 	throws InterruptedException {
-		this(Docker.DEFAULT_IMAGE_VERSION, DEFAULT_PORT);
+		this(MongooseContainer.IMAGE_VERSION, DEFAULT_PORT);
+	}
+
+	public MongooseNodeSvcContainer(final int port)
+	throws InterruptedException {
+		this(MongooseContainer.IMAGE_VERSION, port);
 	}
 
 	public MongooseNodeSvcContainer(final String version, final int svcPort)

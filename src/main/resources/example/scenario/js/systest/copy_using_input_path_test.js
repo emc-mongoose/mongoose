@@ -22,7 +22,7 @@ PreconditionLoad
                     "limit": {
                         "count": 100000,
                         "size": "1GB",
-                        "time": 30
+                        "time": "30s"
                     }
                 }
             }

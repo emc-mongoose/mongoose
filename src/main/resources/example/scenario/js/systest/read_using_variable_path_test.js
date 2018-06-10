@@ -1,13 +1,23 @@
 new java.lang.ProcessBuilder()
-	.command("sh", "-c", "rm -f " + ITEM_LIST_FILE)
+	.command("/bin/sh", "-c", "rm -f " + ITEM_LIST_FILE)
 	.start()
 	.waitFor();
 
+var itemNamingConfig = {
+	"item": {
+		"naming": {
+			"length": 16,
+			"radix": 16
+		}
+	}
+}
+
 PreconditionLoad
+	.config(itemNamingConfig)
 	.config(
 		{
 			"item": {
-				"data" : {
+				"data": {
 					"size": ITEM_DATA_SIZE
 				},
 				"output": {
@@ -27,6 +37,7 @@ PreconditionLoad
 	.run();
 
 ReadVerifyLoad
+	.config(itemNamingConfig)
 	.config(
 		{
 			"item": {
