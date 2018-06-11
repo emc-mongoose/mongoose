@@ -3,6 +3,13 @@
 [![release](https://img.shields.io/github/release/emc-mongoose/mongoose-base.svg)]()
 [![Docker Pulls](https://img.shields.io/docker/pulls/emcmongoose/mongoose.svg)](https://hub.docker.com/r/emcmongoose/mongoose/)
 
+# Contents
+
+* Overview
+* Features
+* Documentation
+* Contributors
+
 # Overview
 
 Mongoose is a scaleable, customizable and extensible storage performance
@@ -60,6 +67,9 @@ execute millions of operations per second.
     * [Copy Mode](doc/design/copy_mode.md)
     * [Pipeline Load](doc/design/pipeline_load.md)
     * [Weighted Load](doc/design/weighted_load.md)
+* Development
+    * Notes
+    * Changelog
 
 # Contributors
 
@@ -71,3 +81,4 @@ execute millions of operations per second.
 * [Mikhail Malygin](https://github.com/aphreet)
 * [Olga Zhavzharova](https://github.com/Zhavzharova)
 * [Veronika Kochugova](https://github.com/veronikaKochugova)
+

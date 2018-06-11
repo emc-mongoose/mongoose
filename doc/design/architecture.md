@@ -46,6 +46,14 @@
   invokes the default scenario if no custom scenario is specified. The
   default scenario just runs the single *linear* load step.
 
+* **Master Node**
+
+  In the distributed mode the node which is used to execute a scenario is a *master node*
+
+* **Slave Node**
+
+  In the distributed mode the node which is used to execute a scenario steps is a *slave node*
+
 # Components
 
 ## Storage Driver

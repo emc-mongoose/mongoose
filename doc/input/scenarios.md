@@ -404,6 +404,8 @@ type so the call may be included into the call chain.
 
 ### 3.1.3. Weighted Load
 
+See also the [weighted load spec](../design/weighted_load.md)
+
 Example:
 
 ```javascript
@@ -446,6 +448,8 @@ step appends the configuration structure to the list. **Returns** the new step i
 type so the call may be included into the call chain.
 
 ### 3.1.4. Pipeline Load
+
+See also the [pipeline load spec](../design/pipeline_load.md)
 
 Example:
 

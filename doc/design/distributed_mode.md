@@ -2,11 +2,10 @@
 
 In the new major version of Mongoose the new distributed mode
 architecture is introduced. Comparing to the previous design the
-scenario is not executed on the controller side completely. The scenario
-steps are *sliced* by the *local* node among all the Mongoose nodes
+scenario is not executed on the master node completely. The scenario
+steps are *sliced* by the *master* node among all the *slave* nodes
 involved in the test. Then each step *slice* is being executed
-independently on the corresponding Mongoose node. Mongoose nodes in the
-distributed mode are equal.
+independently on the corresponding slave node.
 
 ## Advantages
 
@@ -17,19 +16,18 @@ of contention.
 
 # Design
 
-The distributed mode test involves some set of the Mongoose nodes. The
-test may be started from any node from that set. The node selected to
-start the test should be treated as the *local node*. The local node is
-not excluded from the actual load execution.
+The distributed mode test involves at least one master node and some set of the slave nodes. The
+test may be started from any node from that set. The node selected to start the test should be
+treated as the *master node*. The master node is not excluded from the actual load execution.
 
-## Local
+## Master Node
 
-Local node loads the scenario into the corresponding scripting engine.
+Master node loads the scenario into the corresponding scripting engine.
 The scripting engine instantiates the scenario steps. Each load step
 consists of its local and remote parts. The local step functionality:
 
 * step slicing
-* load the input items and distribute to the nodes
+* load the input items and distribute to the slave nodes
 * item output file aggregation (optional)
 * I/O traces aggregation (optional)
 
@@ -57,7 +55,7 @@ files located on the remote side. Then these files are used as items input files
 New configuration parameter `item-naming-step` is required to support
 a load step slicing in case of a non-random item naming scheme. The
 default `item-naming-step` parameter value is 1. In the distributed
-mode the value is equal to the count of the nodes involved in the test.
+mode the value is equal to the count of the slave nodes involved in the test.
 
 Example:
 
@@ -101,10 +99,9 @@ TODO
 
 * `load-step-node-addrs`
 
-    Comma-separated list of node IP addresses/hostnames. The default
-    value is `127.0.0.1`. Adding the port numbers is allowed to override
-    the `load-step-distributed-node-port` value. For example
-    `nodeA:1100,nodeB:1101,nodeC:1111`
+    Comma-separated list of slave node IP addresses/hostnames. The default
+    value is `127.0.0.1`. Adding the port numbers is allowed to override the
+    `load-step-distributed-node-port` value. For example `nodeA:1100,nodeB:1101,nodeC:1111`
 
 * `load-step-node-port`
 

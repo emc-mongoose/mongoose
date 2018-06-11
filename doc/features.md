@@ -17,6 +17,8 @@
 
 ## 1.1. Distributed Mode
 
+TODO
+
 ## 1.2. Fibers
 
 Using fibers allows to sustain millions of concurrent tasks easily
