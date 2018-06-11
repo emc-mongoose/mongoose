@@ -27,7 +27,7 @@ Internally, the weighted load step contains several
 (for each configuration element supplied) and single
 [load controller](architecture.md#load-controller).
 The load step controller contains the
-[weight throttle](https://github.com/akurilov/java-commons/blob/master/src/main/java/com/github/akurilov/commons/concurrent/WeightThrottle.java)
+[weight throttle](https://github.com/akurilov/java-commons/blob/master/src/main/java/com/github/akurilov/commons/concurrent/throttle/SequentialWeightsThrottle.java)
 shared among the load generators configured.
 
 ## Configuration

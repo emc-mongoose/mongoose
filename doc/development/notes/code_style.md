@@ -7,7 +7,7 @@ nextSubTask = new BasicPartialMutableDataIoTask<>(
 );
 ```
 
-* If something may be declared as *final* it should be declared as *final*
+* Any field/local variable should be *final* if possible
 * Take care about the performance in the critical places:
   * Avoid *frequent* objects instantiation
   * Avoid unnecessary *frequent* allocation
