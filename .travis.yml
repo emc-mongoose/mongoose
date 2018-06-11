@@ -31,10 +31,10 @@ jobs:
   include:
 
     - stage: "Unit tests"
-      script: "./gradlew test --tests com.emc.mongoose.cli.* --tests com.emc.mongoose.item.* --tests com.emc.mongoose.load.* --tests com.emc.mongoose.supply.*"
+      script: "./gradlew test"
 
     - stage: "Integration tests"
-      script: "./gradlew test --tests com.emc.mongoose.integration.*"
+      script: "./gradlew integrationTest"
 
     - stage: "Docker images"
       script:
