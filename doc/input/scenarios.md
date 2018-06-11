@@ -25,7 +25,7 @@
 # 1. Introduction
 
 The user scenarios are executed by the
-[Java's scripting engine|https://docs.oracle.com/javase/8/docs/technotes/guides/scripting/].
+[Java's scripting engine](https://docs.oracle.com/javase/8/docs/technotes/guides/scripting/).
 Mongoose exposes the specific DSL to the user scenarios to run the performance tests.
 
 ## 1.1. JSR-223 Compliance

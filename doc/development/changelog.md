@@ -1,0 +1,481 @@
+# Contents
+
+* 4.0.0
+* 3.6.1
+* 3.5.1
+* 3.4.2
+* 3.3.0
+* 3.2.1
+* 3.1.0
+* 3.0.5
+* 2.5.6
+* 1.4.1
+* 1.2.2
+
+# 4.0.0
+
+## New Features and Enhancements
+
+### Functional
+
+1. **New Architecture**
+
+The *controller* bottleneck is eleminated when using the distributed
+mode. Any load step is been executed independently on a remote node. A
+"master" node executes the specified scenario only. The new architecture
+preconditions also the future ***resume*** functionality.
+
+2. **Automated Installer**
+
+New Mongoose is delivered as a single jar instead of tarball. This jar
+installs all the required files automatically if needed in the user
+home directory. Also, the installer detects the extensions and installs
+them too.
+
+3. **Extensible Configuration**
+
+Some extension require the specific configuration options. To support
+the specific configuration options the extensible configuration was
+implemented. The new [external library](https://github.com/akurilov/confuse) is used for this purpose.
+The configuration is assembled dynamically, including the
+sub-configurations provided by the extensions resolved in the runtime.
+
+### Non-functional
+
+1.
+
+
+## Fixed Bugs
+
+*
+
+# 3.6.1
+
+The latest version of the discontinued 3.x.x branch
+
+## New Features and Enhancements
+
+### Functional
+
+1. **[[Extensions Mechanism|v3.6 Extensions]]**
+
+    The new simple way to use a custom scripting engine either a storage
+    driver implementation. Just put the extension jar file(s) into the
+    `ext` directory of Mongoose and it's ready to use.
+
+2. **[[JSR-223 Compliant Scenario Engine|v3.6 Scenarios]]**
+
+    Powerful scripting capability using any language supporting JSR-223
+    standard. Javascript is proposed as default scenarios language.
+
+### Non-functional
+
+1. All storage driver implementations moved to the separate projects
+    under the same [GitHub organization](https://github.com/emc-mongoose).
+    The list of the storage drivers supported currently:
+    1. [EMC Atmos](https://github.com/emc-mongoose/mongoose-storage-driver-atmos)
+    2. [EMC S3](https://github.com/emc-mongoose/mongoose-storage-driver-emc-s3) (extensions)
+    3. [Filesystem](https://github.com/emc-mongoose/mongoose-storage-driver-fs)
+    4. [HDFS](https://github.com/emc-mongoose/mongoose-storage-driver-hdfs) (**new**)
+    5. [NFS](https://github.com/emc-mongoose/mongoose-storage-driver-nfs) (not working currently, under development)
+    6. [Amazon S3](https://github.com/emc-mongoose/mongoose-storage-driver-s3) (generic)
+    7. [OpenStack Swift](https://github.com/emc-mongoose/mongoose-storage-driver-swift)
+
+    The **[[deployment|v3.6 Deployment]]** procedure significantly changed,
+    so please keep attention on this. Note also that base/core mongoose
+    distribution doesn't include any storage driver implementation since
+    the new version.
+
+2. The connection pool used by Mongoose moved to the separate project
+[netty-connection-pool](https://github.com/akurilov/netty-connection-pool).
+
+3. The source code repository name changed from `mongoose` to
+`mongoose-base` due to storage driver implementations separation.
+Accessing via the old name redirects to the new one.
+
+4. Moved all content example files and all scenario files under the
+common `example` directory.
+
+5. Changed the default new items name length to 12 characters in
+order to make the new item name characters distribution uniform (in
+the space of the default radix of 36: [0-9a-z]). Previously all new
+item names began with character "0" either "1" what was not uniform
+enough.
+
+## Fixed Bugs
+
+* (1120) Path items input doesn't finish the listing
+* (1147) Connection pool deadlock if a connection is dropped
+
+
+# 3.5.1
+
+## New Features and Enhancements
+
+### Functional
+
+1. [[Concurrency Model|v3.5 Concurrency Model]] reworked and enhanced.
+
+    1. New [[Unlimited Concurrency|v3.5 Concurrency Model#actual-concurrency-measurement]] feature added.
+
+        Allows to measure the actual maximum concurrency which the service/storage being test can sustain.
+
+    2. [[Configurable I/O vs Calculations Balance|v3.5 Performance#2-tuning]].
+
+    3. [Coroutines](https://github.com/akurilov/java-coroutines) library became a separate project.
+
+2. [[Recycle Mode|v3.5 Recycle Mode]] reworked.
+
+3. [[Monitoring API|v3.5 Monitoring API]].
+
+4. Output configuration enhancements
+   1. Generate the new test id for each new test if the test id is not
+      configured. It's not recommended to use the `--test-step-id` CLI argument since v3.5.
+   2. The logging configuration file is moved from the "user space"
+      to the resource bundle. The logging is configured through the main configuration.
+   3. New output options.
+      1. [[Console output coloring flag|v3.5 General Output#coloring]].
+      2. [[Average metrics time period|v3.5 Metrics Output#1-load-average]].
+      3. [[Average metrics persistence flag|v3.5 Metrics Output#12-files]].
+      4. [[Average metrics table header period|v3.5 Metrics Output#11-console]].
+      5. [[Summary metrics persistence flag|v3.5 Metrics Output#22-files]].
+      6. [[Trace metrics persistence flag|v3.5 Metrics Output#32-files]].
+   4. Log the defaults content, launch command and the scenario content
+
+5. Miscellaneous.
+    1. Avoid flood of error messages.
+    2. Docker image fix and size decrease.
+    3. Fixed RMI port for the distributed mode and remote monitoring purposes.
+    4. Set the corresponding ring buffer size if the content input file is configured
+
+## Fixed Bugs
+
+* (1036) Multiuser load case - destination path checking requests failing
+* (1047) Recycling the load tasks order is unpredictable
+* (1051) I/O trace log contains the records for the pending load tasks
+* (1064) Max latency is higher than max duration
+* (1065) File storage driver causes out of direct memory
+* (1068) Connection leak on the connection pool close
+* (1076) External XML results file reporting: include configured item size instead of transfer size
+* (1085) Subsequent load step doesn't append the same items output file
+
+## [[Performance|v3.5 Performance]]
+
+Follow the link above for the details
+
+## [[Configuration|v3.5 Configuration]]
+
+| Old parameter name (v < 3.5.0)  | New parameter name (v >= 3.5.0)
+|---------------------------------|--------------------------------
+| N/A                             | load-service-threads
+| N/A                             | storage-net-node-connAttemptsLimit
+| N/A                             | item-data-ranges-concat
+| load-circular                   | load-generator-recycle-enabled
+| load-queue-size                 | load-generator-recycle-limit, storage-driver-queue-input, storage-driver-queue-output
+| load-rate-limit                 | load-limit-rate
+| storage-driver-concurrency      | load-limit-concurrency
+| storage-driver-io-workers       | storage-driver-threads
+| item-data-content-file          | item-data-input-file
+| item-data-content-seed          | item-data-input-seed
+| item-data-content-ring-cache    | item-data-input-layer-cache
+| item-data-content-ring-size     | item-data-input-layer-size
+| test-step-limit-rate            | load-rate-limit
+| test-step-metrics-period        | output-metrics-average-period
+| test-step-metrics-threshold     | output-metrics-threshold
+| test-step-name                  | test-step-id
+| test-step-precondition          | N/A (see the [[Metrics Output|v3.5 Metrics Output]] documentation for details)
+
+# 3.4.2
+
+Includes the v3.3 (won't be released) new functionality and fixes:<br/>
+[[See v3.3 Release Notes|v3.3 Overview#release-notes]]
+
+## New Features and Enhancements
+
+### Functional
+
+1. **[[Multipart Upload|v3.4 Multipart Upload]]**.
+
+ The behavior may be improved due configurable batch size introduction.
+ It's recommended to use the batch size of 1 for a multipart upload
+ tests.
+
+## Fixed Bugs
+
+1. (823) SSL/TLS support regression after introducing Netty in 3.x.
+2. (976) Latency measurement failures.
+3. (979) Failed to stop the remaining I/O tasks.
+4. (1003) Manual interruption - content source closed before I/O interrupted causing NPE.
+5. (1006) File storage driver: verification after update fails in ~0.2% cases.
+6. (1014) MPU/DLO: I/O buffer is adjusted to the whole item size but not the part size.
+7. (1015) Unique results map contains not unique elements.
+8. (1016) Scenario values substitution pattern matches only one occurrence per value.
+9. (1044) Decrease the size of the Docker image.
+10. (1045) Use fixed RMI port.
+11. (1066) Missing method to set the custom HTTP headers
+
+## Miscellaneous
+
+1. **Standard Output Changes**
+
+    * More neutral colors
+    * Metrics are displayed as a table
+    * Highlighted metrics
+    * Highlighted errors counter with color depending on the errors ratio
+    * Highlighted the operation type with color depending on the particular type
+
+    | v3.3.x                          | v3.4.x                    |
+    |---------------------------------|---------------------------|
+    | ![v3.3](images/stdout-coloring-v3.3.png) | ![v3.4](images/stdout-coloring-v3.4.png) |
+
+
+2. **Performance Improvements**
+
+    * [[Coroutine-like|v3.4 Architecture#reentrant-service-tasks]] execution flow approach.
+        This allowed to make the load generator concurrent and make the distributed mode linearly scalable.
+
+    * Logging subsystem reworked to separate the log event streams more efficiently.
+
+    * Conditional metrics snapshot recalculation decreases the CPU usage.
+
+3. **Centralized Metrics Processing**
+
+    In the new version all the metrics are processed by the "Load Monitor" component containing the
+    "Metrics Manager" singleton instance. Previously, the load monitor component included the
+    execution control functionality which is separated to the "Load Controller" component. Such
+    architecture change gives the following advantages:
+
+     * Joint interface for the metrics fetching by external tools
+     * More readable combined metrics output
+
+4. **[[Configuration layout change|v3.4 Configuration]]**
+
+    Detailed configuration layout change info:
+
+    | Old parameter name (v < 3.4.0)  | New parameter name (v >= 3.4.0)
+    |---------------------------------|--------------------------------
+    | N/A                             | item-data-content-ring-cache
+    | item-data-content-ringSize      | item-data-content-ring-size
+    | N/A                             | load-batch-size
+
+5. **Advanced Test Coverage**
+
+    The automated tests are run by Travis CI using multiple
+    parameterized build stages. This allowed to increase the coverage
+    approximately by 2 orders of magnitude.
+
+# 3.3.0
+
+Not released (cancelled)
+
+## New Features and Enhancements
+
+### Functional
+
+1. **[[Multiuser Load Case|v3.3 Multiuser Load Case]]**
+
+    Sometimes the performance depends on how many distinct users are using a storage concurrently.
+    This may happen because each user may allocate some transient resources on the storage side.
+    The feature is designed to test the performance in the multi-user environment.
+
+## Fixed Bugs
+
+TODO
+
+## Miscellaneous
+
+1. **Modularity**
+
+    1. **[[Custom Storage Driver Plugin|v3.3 Custom Storage Driver]]**
+
+        Initially Mongoose worked via Amazon S3 REST API. Then support for the EMC Atmos and OpenStack
+        Swift API had been added. Finally Mongoose was redesigned to support the work with filesystem
+        what made Mongoose load engine independent on the particular storage type. Currently adding
+        the support of any other storage type supporting CRUD operations is not a trouble.
+
+        It's time to enhance the range of the storage types supported by Mongoose. The way to do this is
+        described in the documentation.
+
+    2. The storage mock aka **"Nagaina" moved to the separate [project](https://github.com/emc-mongoose/nagaina)**
+
+        That was done to make Mongoose even more modular and even lighter in size.
+        Nagaina has its own docker image and released tarballs.
+
+    3. Mongoose [[Components|v3.3 Components]] are available in the Maven Central Repo.
+
+        This will allow to use to embed any Mongoose functionality into an user application.
+
+2. **Configuration layout change**
+
+    Detailed configuration layout change info:
+
+    | Old parameter name (v < 3.3.0)  | New parameter name (v >= 3.3.0)
+    |---------------------------------|--------------------------------
+    | load-concurrency                | storage-driver-concurrency
+    | load-job-name                   | test-step-name
+    | load-limit-count                | test-step-limit-count
+    | load-limit-rate                 | test-step-limit-rate
+    | load-limit-size                 | test-step-limit-size
+    | load-limit-time                 | test-step-limit-time
+    | load-metrics-period             | test-step-metrics-period
+    | load-metrics-precondition       | test-step-precondition
+    | load-metrics-threshold          | test-step-metrics-threshold
+    | scenario-file                   | test-scenario-file
+    | *storage-type**                 | *storage-driver-type**
+    | *storage-http-api**             | *storage-driver-type**
+
+    (*) Note the last 2 parameters. Saying strictly they are completely deprecated and may not be
+    mapped to the new `storage-driver-type` parameter safely. But the only case which may cause a
+    failure is setting the deprecated parameter `storage-type` to the "http" value. This is not
+    expected because in all previous versions `storage-type` was set to "http" by default.
+
+# 3.2.1
+
+## New Features and Enhancements
+
+### Functional
+
+1. [[Intermediate Statistics|v3.2-User-Guide#73-metrics-reporting-triggered-by-load-threshold]]
+2. [[Mixed|v3.2-User-Guide#957-mixed-load-job]] and [[Weighted|v3.2-User-Guide#9572-weighted-load-job]] Load
+3. [[Partial Read|v3.2-User-Guide#833-partial-read]] (*[[Design Specification|v3.2-Byte-Ranges-Read-and-Update]]*)
+4. Atmos API Support. [[Subtenants load|v3.2-User-Guide#213-token-items]] functionality added (create, delete).
+5. S3 API Support. [[Buckets load|v3.2-User-Guide#212-path-items]] functionality added (create, read, delete).
+6. Swift API Support
+    1. [[Tokens load|v3.2-User-Guide#213-token-items]] functionality (create)
+    2. [[Containers load|v3.2-User-Guide#212-path-items]] functionality (create, read, delete)
+
+## Fixed Bugs
+
+* (891) Idle load job state is not reached on the manual interruption
+* (892) Circular/Distributed count limit implementation is inaccurate
+* (923) Mongoose 3.1.0 String Index out of bound exception
+* (905) Quick fading when one of the target nodes went offline
+* (937) Circular read - monitor is getting the results for active/pending I/O tasks
+* (938) Circular load job hangs if all I/O tasks are failed and the count limit is set
+* (944) Distributed mode issue while running in the Docker container
+* (953) Not working: S3 MPU/Swift DLO
+
+## Miscellaneous
+
+1. Advanced the test coverage with new system tests.
+
+    For detailed coverage info see the [[Functional Testing]] page.
+
+2. Configuration layout change
+
+    Some *"socket-..."* and *"storage-..."* configuration parameters moved under
+    **"storage-net-..."** prefix/path. This was done to differentiate the FS storage
+    driver configuration from Net storage driver configuration. Both CLI and scenario files
+    backward compatibility is provided. Using deprecated configuration parameter names will cause
+    warning messages. It's recommended to ***check the custom/user scenarios against the
+    provided scenario schema*** (<MONGOOSE_DIR>/scenario/schema.json).
+
+    Detailed configuration layout change info:
+
+    | Old parameter name (v < 3.2.0)  | New parameter name (v >= 3.2.0)
+    |---------------------------------|--------------------------------
+    | socket-timeoutMilliSec          | storage-net-timeoutMilliSec
+    | socket-reuseAddr                | storage-net-reuseAddr
+    | socket-keepAlive                | storage-net-keepAlive
+    | socket-tcpNoDelay               | storage-net-tcpNoDelay
+    | socket-linger                   | storage-net-linger
+    | socket-bindBacklogSize          | storage-net-bindBacklogSize
+    | socket-interestOpQueued         | storage-net-interestOpQueued
+    | socket-selectInterval           | storage-net-selectInterval
+    | storage-ssl                     | storage-net-ssl
+    | storage-http-api                | storage-net-http-api
+    | storage-http-fsAccess           | storage-net-http-fsAccess
+    | storage-http-headers            | storage-net-http-headers
+    | storage-http-namespace          | storage-net-http-namespace
+    | storage-http-versioning         | storage-net-http-versioning
+    | storage-node-addrs              | storage-net-node-addrs
+    | storage-node-port               | storage-net-node-port
+
+# 3.1.0
+
+## New Features and Enhancements
+
+### Functional
+
+1. Chain Operations
+
+  The "chain" feature is designed for zone replication testing.
+  It allows to write the objects and read them from other zone.
+  Each object is being read immediately (or after configurable delay) after it was written.
+  So a "chain" load job doesn't wait all objects to be written before reading starts.
+  Chain load jobs are not limited with create/read operations
+  but may also include update, delete in any comprehensible combination.
+  The feature was implemented as an extension of the scenario engine.
+
+### Performance
+
+1. Specialized and more efficient non-blocking connection pool was implemented to replace Netty's bundled connection pool. The performance rates increased by 10-40 % depending on test configuration.
+
+## Fixed Bugs
+
+919. I/O tasks distribution among the storage drivers worked incorrectly.
+920. I/O path inconsistency.
+
+## Miscellaneous
+
+1. Configuration JSON schema was ported from v2.x.x for validation purposes
+2. Scenario JSON schema was ported from v2.x.x for validation purposes
+
+# 3.0.5
+
+## Major Improvements
+
+* [[New Architecture|v3.0/Architecture]]
+
+* [[Non-blocking filesystem storage driver|v3.0/NIO Storage Driver]]
+
+* Netty-based storage driver for the HTTP
+
+  Using Netty instead of Apache's HTTP core NIO library is expected to
+  improve the performance
+
+* [[User-friendly CLI|v3.0.0-CLI.md]]
+
+## New Features
+
+* [[Multi-Part Upload|v3.0/Multi Part Upload]]
+* [[Mixed/Weighted Load Support|v3.0/Mixed and Weighted Load]]
+* [[Fixed Byte Ranges Update|v3.0/Fixed Byte Ranges Update]]
+
+## Essential Differences from 2.x.x
+
+* Configured concurrent connection count (in the case of a non-FS storage driver) is shared between all the configured storage nodes. So if it's configured concurrency level of N1 and the count of the storage nodes is N2 then the total concurrent connection count is still N1 (before 3.0.0 it was N1 x N2).
+* I/O trace logging is disabled by default by performance considerations. An user should manually modify the logging configuration file to enable the I/O trace logging.
+* Processed items logging is disabled by default by performance considerations. An user should manually specify the item output file if needed.
+* Content verification on read is disabled by default by performance considerations.
+
+## Other Notable Changes
+
+* Faster 64-bit data verification instead of old byte-by-byte approach.
+* Epoll I/O mechanism is used if available.
+* Configurable I/O traces fields output.
+* New "NOOP" load type support useful to perform the dry runs.
+
+# 2.5.6
+
+The latest version of the discontinued 2.x.x branch
+
+# 1.4.1
+
+The latest version of the discontinued 1.x.x branch. Comparing to the
+v1.2.2 has broken web GUI but includes also the following new features:
+
+* Custom HTTP headers
+* Writing files to the variable destination files
+* Custom Items Naming
+
+# 1.2.2
+
+Basic full command example:
+
+```bash
+java -Dscenario.name=chain -Dscenario.type.chain.load=create,update,read -Dscenario.type.chain.concurrent=true [<OTHER_OPTIONS>] -jar mongoose-1.2.2/mongoose.jar
+```
+
+Note:
+> v1.2.2 may be built only using Java 7.
