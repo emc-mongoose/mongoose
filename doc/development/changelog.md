@@ -1,16 +1,43 @@
 # Contents
 
-* 4.0.0
-* 3.6.1
-* 3.5.1
-* 3.4.2
-* 3.3.0
-* 3.2.1
-* 3.1.0
-* 3.0.5
-* 2.5.6
-* 1.4.1
-* 1.2.2
+* [4.0.0](#400)
+* [3.6.1](#361)
+* [3.5.1](#351)
+* [3.4.2](#342)
+* [3.3.0](#330)
+* [3.2.1](#321)
+* [3.1.0](#310)
+* [3.0.5](#305)
+* [2.5.6](#256)
+* [2.2.0](#220)
+* [2.1.0](#210)
+* [2.0.0](#200)
+* [1.4.1](#141)
+* [1.2.2](#122)
+* [1.4.0](#140)
+* [1.3.2](#132)
+* [1.3.0](#130)
+* [1.2.2](#122)
+* [1.2.0](#120)
+* [1.1.3](#113)
+* [1.1.2](#112)
+* [1.1.1](#111)
+* [1.1.0](#110)
+* [1.0.2](#102)
+* [1.0.1](#101)
+* [1.0.0](#100)
+* [0.9.0](#090)
+* [0.8.0](#080)
+* [0.7.0](#070)
+* [0.6.4](#064)
+* [0.6.3](#063)
+* [0.6](#06)
+* [0.5.1](#051)
+* [0.5](#05)
+* [0.4](#04)
+* [0.3](#03)
+* [0.1.6](#016)
+* [0.1.4](#014)
 
 # 4.0.0
 
@@ -460,6 +487,96 @@ TODO
 
 The latest version of the discontinued 2.x.x branch
 
+# 2.2.0
+
+General Notes
+The normal development process was interrupted due to urgent new functionality requirement. This requirement is to be able to read back the files written to the variable destination path.
+
+New Features and Enhancements
+Core functionality
+Ability to read back the items written to the variable path
+Directories, files and objects may be written to a variable path described with width and depth. In order to read back these items spread across the directories and subdirectories Mongoose should persist the item path into the items.csv output file. Note that the format of the items.csv and perf.trace.csv output files are changed.
+
+Non-functional
+Turn back to the CRUD notation
+There's a requirement from the users to speak CRUD instead of WRD. This is the notation used prior to v2.0.0 with some differences:
+
+The Copy Mode is enabled if both load type is "Create" and the source items container set to a non-null value
+"Append" becomes a case of "Update"
+
+# 2.1.0
+
+General Notes
+This version includes the new functionality required urgently due to ECS field request.
+
+Also, v2.1.0 is much better compatible with old versions (prior to v2.0.0) in comparison to v2.0.0.
+
+New Features and Enhancements
+Core functionality
+SSL/TLS Support.
+There are an urgent requirement to make the tool able to perform a load via HTTPS in addition to HTTP. The tool will trust any certificates returned by the server so no additional configuration is required. In order to start using this functionality it's neccessary to add only 2 additional options:
+network.ssl=true
+storage.port=<SECURE_PORT>
+The implementation supports the following protocols:
+TLSv1
+TLSv1.1
+TLSv1.2
+SSLv3
+Non-functional
+Scenario JSON schema.
+Any user is welcome to write its own scenarios for Mongoose. The scenario syntax is described in the corresponding documentation section. The scenario JSON schema allows to validate any custom Mongoose scenario syntax making the writing the scenarios much easier.
+Better Backward Compatibility (where possible) with old versions.
+The key improvements are:
+Aliasing the old configuration parameters to the new ones.
+Deprecation Warning messages in case of deprecated configuration parameters detection.
+Default Scenario is used when nothing else is specified. It's useful to fall back to use the default scenario if none is specified. The interactive mode should be invoked using special CLI argument as a new functionality.
+
+java -jar mongoose.jar	Default scenario (scenario/default.json) is used to run
+java -jar mongoose.jar -I	Semi-interactive mode: await a scenario text from the standard input
+java -jar mongoose.jar -f <PATH>	The scenario specified by <PATH> is used to run
+java -jar mongoose.jar client -f <PATH>	The scenario specified by <PATH> is used to run in the distributed mode
+
+# 2.0.0
+
+General Notes
+Mongoose 2.x is no more compatible with previous versions. That was done to perform a big switch to a new Configuration Layout and Scripting Engine.
+
+The new version of Mongoose is expected to be
+
+Scriptable by an User
+Supporting new use cases such as "Mixed Load" and "Weighted Load"
+Including the reach set of predefined example scenarios for an user reference.
+Also, web GUI is temporary unavailable for the new version as far as it requires an additional work.
+
+New Features and Enhancements
+Core functionality
+Scripting Engine
+The feature introduces the ability to execute the JSON scenario provided on an input (a file or the standard input). This allows to perform the scenarios of unlimited complexity compared to 3 hardcoded scenarios in the previous versions (single, chain, rampup). The scenario syntax is made to be simple so any user is free to write its own scenarios.
+Mixed Load Cases Support
+Mongoose is able to perform a load to several target buckets, using several users or anything else in the new version.
+Weighted Load Case Support
+Mongoose is able to perform a load described by a set of the load type ratios, for example: 20% of the requests are Write requests and 80% are Read ones.
+Copy Mode
+Sometimes it's very useful to perform a copy operation on the multiple files instead of write one. The performance rates may be significantly different for the copy and write operations. Some cloud storage APIs also support copying the objects (S3 and Swift) so the functionality may be a general. In case of S3 and Swift there's no payload sent while copying the objects so these requests may be significantly faster than writing new objects.
+The feature allows to copy the files/directories/objects to a different destination. Implemented as an extension of the "Write" load type.
+Load Limit By Total Size
+It was possible to limit a load job by an item count, a time and a rate in the previous versions. There are the new requirement to make it possible to limit by total processed size. For example, a load job should stop after writing 1TB of a data to the storage.
+Non-functional
+Example Scenarios
+There are almost a hundred of the predefined scenario files written for a user reference, covering most of use cases. They are available in the new version distribution.
+Filesystem Load Engine Performance Improvements
+Using FileChannels instead of ByteChannels to perform filesystem I/O is expected to increase the performance because of ByteBuffer skipping.
+New Configuration Layout
+The configuratio layout has been changed significantly to make it more meaningfull and compatible with current and future features.
+New Load Type Notation
+WRD (Write/Read/Delete) notation is used in the new version instead of CRUDA (Create/Read/Update/Delete/Append) used previously. This was done to make it compatible with future Partial Read feature. Update/Append load types become a partial cases of more general Write load type.
+Fixed bugs
+Summary	T	Created	P	Status	Resolution
+Current load rate limitation approach is too weak	Bug	Mar 28, 2016	Major	CLOSED	Fixed
+Load goes through 4 target nodes while configured 12	Bug	Jan 09, 2016	Major	CLOSED	Cannot Reproduce
+Mongoose 1.2.0 - perf.sum.csv is sometimes 0 bytes	Bug	Dec 20, 2015	Blocker	CLOSED	Cannot Reproduce
+Web UI - log events doesn't load in some cases	Bug	Dec 17, 2015	Minor	CLOSED	Cannot Reproduce
+
 # 1.4.1
 
 The latest version of the discontinued 1.x.x branch. Comparing to the
@@ -469,13 +586,355 @@ v1.2.2 has broken web GUI but includes also the following new features:
 * Writing files to the variable destination files
 * Custom Items Naming
 
+# 1.4.0
+
+General Notes
+New Features and Enhancements
+Core functionality
+Custom HTTP headers format extensions
+It's required that the variable values in custom HTTP headers have a special format for several reasons.
+For details see:
+Mongoose Dynamic Configuration Values design notes.
+How to generate custom HTTP headers with dynamic values
+Writing files to the variable path feature
+It's required to write the files to the set of the nested subdirectories described with a "width" and "depth" parameters.
+For details see: How to write files on the variable path
+Non-functional
+Availability of Mongoose as a Docker image in the registry
+For details see: How to use Mongoose with Docker
+Fixed bugs
+Summary	T	Created	P	Status	Resolution
+Mongoose 1.3.2 Small Object Write to local NFS mounted directory performance
+
+# 1.3.2
+
+Fixed bugs:
+Atmos, S3 - doesn't work - canonical request string contains raw pattern instead of variable data
+
+# 1.3.0
+
+General Notes
+It's expected to be the last major release before the 2.0 version development.
+
+New Features and Enhancements
+Core functionality
+Dynamic values for the custom HTTP headers.
+It's required to sent the HTTP request with custom HTTP headers having the variable values defined by patterns and ranges.
+For details see:
+Mongoose Dynamic Configuration Values design notes.
+How to generate custom HTTP headers with dynamic values
+Item naming scheme enhanced implementation.
+The following new naming options become available:
+name prefix
+custom fixed name length
+id encoding radix
+id start offset
+For details see:
+How to write the items with decimal names starting from 1000000 to 9999999
+How to write the items with names having a prefix and a binary random number
+
 # 1.2.2
 
-Basic full command example:
+Fixed bugs:
+frequent debug logging to the messages.log file
 
-```bash
-java -Dscenario.name=chain -Dscenario.type.chain.load=create,update,read -Dscenario.type.chain.concurrent=true [<OTHER_OPTIONS>] -jar mongoose-1.2.2/mongoose.jar
-```
+# 1.2.0
 
-Note:
-> v1.2.2 may be built only using Java 7.
+General Notes
+Circular load feature has been completely rewritten in order to support Update/Append load types.
+Kirill Gusakov has left the team so the development process is expected to be slower.
+New Features and Enhancements
+Core functionality
+Filesystem load engine.
+It's required to perform the I/O operations over the files or directories. Distributed mode is supported also in order to perform the tests for the distributed filesystems like NFS.
+For details see:
+Mongoose Filesystem Load Engine
+How to write the files
+How to create the directories
+Circular Update/Append load jobs support.
+For details see: How to do infinite load using finite items source
+Latency/Duration real-time charts added in the Web UI.
+Custom HTTP headers for the requests generated by Mongoose.
+For details see: How to add custom HTTP headers to the generated requests
+Basic implementation of the custom item naming scheme feature
+For example see: How to write the items with names in the sequential ascending order
+Non-functional
+The option to turn off console output coloring.
+For details see: How to disable the console output coloring
+Distributed mode performance improvements.
+Storage node balancing improvements.
+Fixed bugs
+Summary	Created	P	Status	Resolution
+Summary not displayed on ^C hitting	Dec 16, 2015	Major	CLOSED	Fixed
+Mongoose indicates that it's exiting but the process hung	Dec 13, 2015	Major	CLOSED	Fixed
+Storage node balancing load is not uniform when the load is low	Dec 07, 2015	Major	CLOSED	Fixed
+wrong labels for axis on charts	Dec 04, 2015	Major	CLOSED	Fixed
+Mongoose 1.1.3 Writing to bucket with prefix does not work in distributed mode	Nov 30, 2015	Major	CLOSED	Fixed
+circularity feature doesn't support append and update	Sep 17, 2015	Blocker	CLOSED	Fixed
+distributed mode bottleneck	Jun 11, 2015	Blocker	CLOSED	Cannot Reproduce
+duplicate library files in ./webapp/WEB-INF/lib/ directory of distribution package
+
+# 1.1.3
+
+Fixed bugs:
+v1.1.x write performance degradation
+
+# 1.1.2
+
+Fixed bugs:
+Mongoose 1.1.1 - Unable to read in distributed mode	Nov 17, 2015
+load client hangs	Nov 15, 2015
+Atmos API: read fails via namespace interface	Nov 13, 2015
+Mongoose doesn't exit/show error message if invalid items list path is specified	Nov 13, 2015
+Mongoose 1.1 - Read Hung
+
+# 1.1.1
+
+Fixed bugs:
+Mongoose 1.1 - Read Hung CLOSED
+Mongoose doesn't exit/show error message if invalid items list path is specified CLOSED
+
+# 1.1.0
+
+General Notes
+There are two major new things:
+Custom content generation.
+Abstract load engine with reference container-specific implementation in addition to already existing object-specific one. This is significant enhancement as far as this will allow to implement in the future version easily another specific load engine implementations, for example operating with local files, users, namespaces, authentication tokens, etc.
+Please note the output files format/naming changes described below.
+New Features and Enhancements
+Core Functionality
+Custom content generation
+Mongoose becomes able to create the data items with different kind of payload: random data (the only way to generate the data which is supported in previous versions), custom text or custom binary data. The custom data modification using update or append load jobs is supported. The custom data corruption checking using read load job is supported too.
+See:
+How to write new data items filled with zero bytes
+How to write new data items filled with text from Rikki-Tikki-Tavi tale by R. Kipling
+How to write new data items filled with custom data from an external file
+Container load engine
+Mongoose load engine is reworked in the way to be more abstract. New load engine supports not only data items (e.g. objects) but another entiites also. There are a load engine implementation which is able to process the containers (S3 buckets or Swift containers). Create, read and delete operations are supported.
+See:
+How to create a lot of buckets concurrently
+How to read a lot of buckets concurrently
+How to delete a lot of buckets concurrently
+How to perform a load over the Swift containers instead of buckets
+Storage directories support
+There are a new capability to specify the path of the directory on the storage which will be used as a target for a load: create in the directory, read from the directory, etc. Bucket/container listing also supports the directory setting. Note that the directory setting has the effect only if file access mode is enabled. Storage API support: Atmos, S3, Swift.
+See:
+How to create the objects in the specific subdirectory on the storage side
+Time to 1st byte of the response payload measurement.
+Additional latency metric is reported into the perf.trace.csv log file. The 1st latency is the time between the request has been fully sent and the response is received. This is so called "response latency" or just "latency". The 2nd latency is the time between the request has been fully sent and the 1st byte of the content is received. This is so called "data latency". The data latency is meaningful only in case of a read load.
+See:
+Metrics reported by Mongoose
+Reporting
+The format of the perf.trace.csv log file is changed in order to support the data latency measurement. Please refer to Results analysis section for the details.
+The file name of the processed items list is changed from data.items.csv to items.csv because of abstract load engine implementation.
+Non-Functional
+The introduction of the new Sequencing Connection Pool improved the maximum throughput from 60K op/s to 70K op/s.
+Fixed Bugs
+Mongoose to supress the following debug message: DEBUG | BasicDataItemProducer | 7-S3-Read-60x4x2 | Failed to transfer the data items
+
+# 1.0.2
+
+Fixed bugs:
+Mongoose 1.0 - Multi-client read imbalance CLOSED
+
+# 1.0.1
+
+Fixed bugs:
+Mongoose 1.0 - is not working CLOSED
+load client exits w/o summary if count limit is very little CLOSED
+storage node balancing bottleneck in comparison w/ v0.8.2
+
+# 1.0.0
+
+New Features and Enhancements
+unlimited reading using data items list of limited size
+distributed mode - servers to nodes mapping and assignment
+Mongoose must unambiguously report configuration of run
+Adding duration. Time takes to perform an operation
+6-number summary for duration/latency metrics
+distributed mode is not aware of any other producer types other than file
+C10K
+No python
+
+# 0.9.0
+
+New Features
+Mongoose embedding. It must be possible to use Mongoose as a library for load generation.
+Run pause/resume function. There must be a way to pause the run for several minutes and resume it.
+Resumed run must provide correct reporting with regards to performance metrics and counting
+
+Resumed run must pick up limitations of the paused run
+
+Resumed run must be able to adopt new configuration
+
+The feature should work from CLI and Web UI
+
+Tthe feature should work under Linux/MacOS/Windows
+
+# 0.8.0
+
+New Features and Enhancements
+User got control over Mongoose speed. User can specify "think time" between 2 successive operations.
+See HowTo wiki for more information
+CSV format support
+perf.avg and per.sum report files are in CSV format now
+All the CSV-files produced contain no markup symbols
+All the CSV-files produced use a single delimiter
+All the CSV-files produced start with a header line
+
+# 0.7.0
+
+New Features and Enhancements
+API and Operations
+ECS implementation of OpenStack Swift API support
+ECS implementation of Atmos subtenants listing and automatic creation
+Data items of zero size support
+User Interface and Reporting
+New Mongoose Logo
+Ability to save charts
+Separate log directory for each run
+Multiple minor enhancements
+All default configuration migrated to conf/properties.json file
+Non-functional Enhancements
+Way more stable release
+Higher performance
+
+# 0.6.4
+
+Bug: Distributed read hangs
+The release contains several bug fixes regarding distributed data reading plus some memory consumption tuning.
+
+# 0.6.3
+
+The release contains the fix for the low bandwidth issue occurring on big objects operations.
+
+# 0.6
+
+New features:
+* Atmos API support for CRUD operations.
+* Realtime charts for any scenario (single, chain, rampup) in web UI.
+* Performance improvements (able to sustain the create rate of more than 30K obj/s).
+* All values in log files are now in decimal format.
+
+# 0.5.1
+
+This release contains a small fix of incorrect reporting of data corruption in case of dropped connection.
+
+# 0.5
+
+We introduced following new features:
+
+Now Mongoose has possibility to start test from Web UI (was tested in Firefox and Google Chrome, doesn’t support IE)
+Mongoose has set of parameters, which could be configured by a shortcuts:
+ -b,--bucket <arg>  Bucket to write data to
+ -c,--count <arg>  Count of objects to write
+ -d,--delete  Perform object delete
+ -h,--help  Displays this message
+ -i,--ip <arg>  Comma-separated list of ip addresses to write to
+ -l,--length <arg>  Size of the object to write
+ -o,--use-deployment-output  Use deployment output
+ -r,--read <arg>  Perform object read
+ -s,--secret <arg>  Secret
+ -t,--threads <arg>  Number of parallel threads
+ -u,--user <arg>  User
+ -w,--write  Perform object write
+ -z,--run-id <arg>  Sets run id
+Mongoose supports standalone vipr environments, so if needed datanodes may be listed following way:
+ –i=ip_address:port1, ip_address:port3, ip_address:port3
+ Added error codes returned by storage in error.log
+And couple of options which may impact ViPR performance:
+
+Now bucket may be created with filesystem access
+Now bucket may be created with versioning support
+I’d like also add some short instruction how UI could be used:
+
+Copy mongoose tar file to the client host
+Do # tar –xvf mongoose-0.5.0.tar
+Do # java -jar mongoose-0.5/mongoose.jar webui
+Now webui is accessible by http://<host_ip>:8080/
+
+# 0.4
+
+New metric: Latency (actually response latency): this value is measured in nanoseconds and shows how much time passed since mongoose sent first byte to storage till first byte  from storage was returned. This value depends on object size in case of Create or Update, and doesn't in case of Read and Delete
+
+Changed format:
+
+perf.trace.csv:
+removed some unnecessary data
+added response latency (named as latency) - time required to get first byte from storage after request was sent from Mongoose
+perf.avg.csv:
+added response latency (named as latency) - time required to get first byte from storage after request was sent from Mongoose
+duration metrics values were sorted. Average value is now on 1st position
+Summary message format changed.
+
+Updated scenarios:
+
+chain:
+has two modes now: simultaneous=(true/false). default is false. If true: every object consequentially processed via all operations defined for chain load (i.e. create, read, update and delete). So different operations may happen concurrently in a parallel threads. If false: all objects will be processed by a defined operation and result will be saved to a buffer. As soon as all required objects will be processed (or time limit will be reached) next operation will start.
+rampup (requires to update chain properties as well) - Will follow number of threads and object sizes defined in .\conf\properties\scenario\rampup
+!!!Please mind that this scenario uses chain with defined properties. If you want different set of operation from CRUD - either define it via -Dscenario.chain.load=create-Dscenario.chain.load property!!!
+
+Major bugs fixed:
+Message: "FATAL Ignoring log event after log4j was shut down" after test completion
+
+# 0.3.0
+
+Main features completed:
+* node balancing broken due to refactoring for v0.2
+* unlimited data appends and updates
+* client doesn't handle a remote load executor in the specific conditions
+* distributed shutdown hangup impacting performance measurements
+* more verbose output on data corruption
+* numeric result codes for storage response instead of constant names
+* report full server message in case of ANY non-2xx response
+* tail checking code doesn't work currently due to layer switching
+
+# 0.1.6
+
+Writing and reading became both faster than previously.
+64Mb write and read tests on Khaki show higher rates than the ones available for Grinder.
+
+The tool outputs its own efficiency for every finished load executor.
+The efficiency is calculated as sum of all response times divided by test time and divided by total connections/threads count and logged as percent value.
+
+The configuration parameters "load.create.size.{min|max}" are renamed to "data.size.{min|max}".
+
+# 0.1.4
+
+The main goal of the version is ranges update functionality and read data verification. There are also other changes so please have a look into these release notes if you are going to use the tool.
+
+1.
+
+As far as ViPR doesn’t support currently multiple byte range update via S3 REST API there are only a kind of workaround to simulate multiple byte ranges update.
+
+The user should use scenario “chain” and multiple subsequent updates in order to get the objects updated many times.  The example of CLI to perform the multiple objects updates follows below:
+
+$ java –Drun.time=10.hours –Drun.scenario.name=chain –Dscenario.chain.load=create,update,read,update,read,…,update,read,delete <OTHER_USER_SPECIFIC_ARGUMENTS> –jar mongoose-0.1.4/mongoose.jar
+
+2.
+
+The data integrity verification is checked during read using the range update mask but not the checksum as before. Every object mask is persisted in the output file “data.items.csv” so the format of the file is changed. The example of the output file contents follows below:
+
+…
+
+3bd9b7aa89de570b,100000,080011420032
+
+73fdb2dc6a5bf5cf,100000,21000242408008
+
+257dcec2e417b6eb,100000,06180040800101
+
+507f8f874d96c66c,100000,17a000002040
+
+…
+
+Note the hexadecimal mask values which are highlighted.
+
+3.
+
+The source data ring parameters are not persisted into the header of output file anymore. The user should make self sure that the same data ring is used for the objects data verification as one used for these objects creation/modification. The configuration parameters (and CLI arguments) which determine the source data ring are: data.ring.seed and data.ring.size. If another data ring is used for objects reading with enabled data content verification (by default it is true) the tool will display the following error messages:
+
+Content verification failed for "765e5841deaca7dc"
+
+4.
+
+The number of ranges which may be updated w/o overlapping is calculated from the object size. If user tries to perform more updates the error occurs and the object doesn’t update.

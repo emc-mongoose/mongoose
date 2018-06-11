@@ -14,7 +14,6 @@
 4.1. [Console](#41-console)<br/>
 4.2. [File](#42-files)<br/>
 
-
 # 1. Load Average
 
 Load average metrics records are thought to be produced periodically to monitor the load step state
