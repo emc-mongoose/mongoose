@@ -916,7 +916,7 @@ Summary
 # 0.1.6
 
 Writing and reading became both faster than previously.
-64Mb write and read tests on Khaki show higher rates than the ones available for Grinder.
+64Mb write and read tests show higher rates than the ones available for Grinder.
 
 The tool outputs its own efficiency for every finished load executor.
 The efficiency is calculated as sum of all response times divided by test time and divided by total connections/threads count and logged as percent value.

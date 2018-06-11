@@ -21,8 +21,8 @@ TODO
 
 ## 1.2. Fibers
 
-Using fibers allows to sustain millions of concurrent tasks easily
-without significant performance degradation.
+Using [fibers](https://github.com/akurilov/fiber4j) allows to sustain millions of concurrent tasks
+easily without significant performance degradation.
 
 # 2. Customization
 
@@ -32,18 +32,18 @@ Supports the parameterization
 
 ## 2.2. Load Generation Patterns
 
-* CRUD operations and the extensions: Noop, Copy
+* CRUD operations and the extensions: Noop, [Copy](design/copy_mode.md)
 
-* Parial Operations
+* [Parial Operations](design/byte_range_operations.md)
 
 * Composite Operations
 
 * Complex Load Steps
-    * Weighted Load
-    * Pipeline Load
-* Recycle Mode
+    * [Pipeline Load](design/pipeline_load.md)
+    * [Weighted Load](design/weighted_load.md)
+* [Recycle Mode](design/recycle_mode.md)
 
-* Data Reentrancy
+* [Data Reentrancy](design/data_reentrancy.md)
 
   Allows to validate the data read back from the storage successfully
   even after the data items have been randomly updated multiple times
