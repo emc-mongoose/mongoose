@@ -3,6 +3,41 @@
 [![release](https://img.shields.io/github/release/emc-mongoose/mongoose-base.svg)]()
 [![Docker Pulls](https://img.shields.io/docker/pulls/emcmongoose/mongoose.svg)](https://hub.docker.com/r/emcmongoose/mongoose/)
 
+# Contents
+
+* Overview
+* Features
+* Documentation
+    * Deployment
+    * User Guide
+    * Troubleshooting
+    * API
+        * Extensions
+            * Load Steps
+            * Storage Drivers
+        * Dependencies
+    * Input
+        * CLI
+        * Configuration
+        * Scenarios
+    * Output
+        * General
+        * Metrics
+    * Design
+        * Architecture
+        * Concurrency
+        * Distributed Mode
+        * Installer
+        * Configuration
+        * Recycle Mode
+        * Data Reentrancy
+        * Byte Range Operations
+        * Copy Mode
+* Contributors
+* License
+
+# Overview
+
 Mongoose is a storage performance testing tool.
 
 It is designed to be used for:
