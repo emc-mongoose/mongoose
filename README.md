@@ -14,7 +14,7 @@
     * API
         * Extensions
             * Load Steps
-            * Storage Drivers
+            * [Storage Drivers](doc/api/extensions/storage_drivers.md)
         * Dependencies
     * Input
         * CLI
