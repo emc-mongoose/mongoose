@@ -18,7 +18,20 @@ It is designed to be used for:
 Mongoose is able to sustain millions of concurrent connections and
 execute millions of operations per second.
 
-# [Features](doc/features.md)
+# Features
+
+1. [Scale Out](doc/features.md#1-scale-out)<br/>
+ 1.1. [Distributed Mode](doc/features.md#11-distributed-mode)<br/>
+ 1.2. [Fibers](doc/features.md#12-fibers)<br/>
+2. [Customization](doc/features.md#2-customization)<br/>
+ 2.1. [Flexible Configuration](doc/features.md#21-flexible-configuration)<br/>
+ 2.2. [Load Generation Patterns](doc/features.md#22-load-generation-patterns)<br/>
+ 2.3. [Scenarios](doc/features.md#23-scenarios)<br/>
+ 2.4. [Metrics Reporting](doc/features.md#24-metrics-reporting)<br/>
+3. [Extension](doc/features.md#3-extension)<br/>
+ 3.1. [Load Steps](doc/features.md#31-load-steps)<br/>
+ 3.2. [Storage Drivers](doc/features.md#32-storage-drivers)<br/>
+ 3.3. [Scenario Engines](doc/features.md#33-scenario-engine)<br/>
 
 # Documentation
 
