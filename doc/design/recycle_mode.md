@@ -23,7 +23,7 @@ objects/files in the unlimited manner (infinitely either using time limit).
 
 # Approach
 
-The [Load Generator](architecture.md#Load_Generator) component is
+The [Load Generator](architecture.md#Load-Generator) component is
 responsible for the tasks recycling. There are two additional methods in
 its interface to support the recycling:
 * Check if the load generator is configured to recycle the tasks:
@@ -35,7 +35,7 @@ its interface to support the recycling:
     void recycle(final O ioTask);
     ```
 
-The [Load Controller](architecture.md#Load_Controller) component also
+The [Load Controller](architecture.md#Load-Controller) component also
 controls the recycling. It should keep in memory the latest state for
 all items being processed in the recycle mode to meet the requirement
 (5).
