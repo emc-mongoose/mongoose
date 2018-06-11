@@ -33,7 +33,7 @@ final config2 = [
     ]
 ]
 
-ChainLoad
+PipelineLoad
     .config(config1)
     .config(config2)
     .run()

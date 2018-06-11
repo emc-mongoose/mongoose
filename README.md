@@ -39,7 +39,6 @@ execute millions of operations per second.
     * [Metrics](doc/output/metrics.md)
 * Design
     * [Architecture](doc/design/architecture.md)
-    * [Concurrency](doc/design/concurrency.md)
     * [Distributed Mode](doc/design/distributed_mode.md)
     * [Installer](doc/design/installer.md)
     * [Recycle Mode](doc/design/recycle_mode.md)

@@ -2,6 +2,6 @@
 
 # Linear Load
 
-# Chain Load
+# Pipeline Load
 
 # Weighted Load

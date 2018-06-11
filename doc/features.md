@@ -1,17 +1,17 @@
 # Contents
 
 1. Scale Out
-    1. Distributed Mode
-    2. Fibers
+ 1.1. Distributed Mode
+ 1.2. Fibers
 2. Customization
-    1. Flexible Configuration
-    2. Load Generation Patterns
-    3. Scenarios
-    4. Metrics Reporting
+ 2.1. Flexible Configuration
+ 2.2. Load Generation Patterns
+ 2.3. Scenarios
+ 2.4. Metrics Reporting
 3. Extension
-    1. Load Steps
-    2. Storage Drivers
-    3. Scenario Engines
+ 3.1. Load Steps
+ 3.2. Storage Drivers
+ 3.3. Scenario Engines
 
 # 1. Scale Out
 

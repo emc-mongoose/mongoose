@@ -11,7 +11,7 @@ There's also **[RFC 7233](https://tools.ietf.org/html/rfc7233)** specification d
 * Effective only if load type is set to **update** or **read**.
 
 * Random byte range count should not be more than maximum for the particular data item size used.
-  (For details please refer to [this spec](data_reentrancy.md#random-range-update)
+  (For details please refer to [this section](data_reentrancy.md#random-range-update))
 
 * It's not allowed to specify both random and fixed byte ranges simultaneously. The fixed byte ranges configuration will be used in this case only.
 
@@ -35,7 +35,7 @@ There's also **[RFC 7233](https://tools.ietf.org/html/rfc7233)** specification d
 
 Random ranges read example:
 ```bash
-java -jar mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
 	--read \
 	--item-data-ranges-random=2 \
 	--item-input-file=items.csv \
@@ -44,7 +44,7 @@ java -jar mongoose.jar \
 
 Random ranges update example:
 ```bash
-java -jar mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
 	--update \
 	--item-data-ranges-random=2 \
 	--item-input-file=items2update.csv \
@@ -54,7 +54,7 @@ java -jar mongoose.jar \
 
 Partial read of the data items from 2KB *(2048th byte, the 1st byte after 2048 bytes)* to the end:
 ```bash
-java -jar mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
 	--read \
 	--item-data-ranges-fixed=2KB- \
 	--item-input-file=items.csv \
@@ -63,7 +63,7 @@ java -jar mongoose.jar \
 
 Overwrite the data items from the *second byte (including it)* to the end:
 ```bash
-java -jar mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
 	--update \
 	--item-data-ranges-fixed=1- \
 	--item-input-file=items2overwrite_tail2KBs.csv \
@@ -73,7 +73,7 @@ java -jar mongoose.jar \
 
 Read the last 1234 bytes of the data items:
 ```bash
-java -jar mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
 	--read \
 	--item-data-ranges-fixed=-1234 \
 	--item-input-file=items.csv \
@@ -82,7 +82,7 @@ java -jar mongoose.jar \
 
 Overwrite the last 1234 bytes of the data items:
 ```bash
-java -jar mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
 	--update \
 	--item-data-ranges-fixed=-1234 \
 	--item-input-file=items2overwrite_tail2KBs.csv \
@@ -92,7 +92,7 @@ java -jar mongoose.jar \
 
 Partially read the data items each in the range from 2KB to *5KB + 1*:
 ```bash
-java -jar mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
 	--read \
 	--item-data-ranges-fixed=2KB-5KB \
 	--item-input-file=items.csv \
@@ -101,7 +101,7 @@ java -jar mongoose.jar \
 
 Overwrite the data items in the range from 2KB to *5KB + 1*:
 ```bash
-java -jar mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
 	--update \
 	--item-data-ranges-fixed=2KB-5KB \
 	--item-input-file=items2overwrite_range.csv \
@@ -111,7 +111,7 @@ java -jar mongoose.jar \
 
 Append 16KB to the data items:
 ```bash
-java -jar mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
 	--update \
 	--item-data-ranges-fixed=-16KB- \
 	--item-input-file=items2append_16KB_tails.csv \
@@ -121,7 +121,7 @@ java -jar mongoose.jar \
 
 Partially read the data items using multiple fixed ranges configuration:
 ```bash
-java -jar mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
 	--read \
 	--item-data-ranges-fixed=0-1KB,2KB-5KB,8KB- \
 	--item-input-file=items.csv \

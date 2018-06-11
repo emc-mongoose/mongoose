@@ -182,14 +182,3 @@ The new approach addresses the following issues:
 3. The count of the byte ranges updated on this layer is:
 
    n = m mod N
-
-
-
-
-
-
-
-
-
-
-

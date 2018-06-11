@@ -1,4 +1,4 @@
-description = "mongoose-load-step-type-chain"
+description = "mongoose-load-step-type-pipeline"
 
 dependencies {
 	compileOnly(

@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.step.type.chain;
+package com.emc.mongoose.load.step.type.pipeline;
 
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.env.ExtensionBase;
@@ -16,7 +16,7 @@ import java.util.Map;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 
-public class ChainLoadStepExtension<T extends ChainLoadStep>
+public class PipelineLoadStepExtension<T extends PipelineLoadStep>
 extends ExtensionBase
 implements LoadStepFactory<T> {
 
@@ -41,7 +41,7 @@ implements LoadStepFactory<T> {
 
 	@Override
 	public String id() {
-		return ChainLoadStep.TYPE;
+		return PipelineLoadStep.TYPE;
 	}
 
 	@Override @SuppressWarnings("unchecked")
@@ -49,7 +49,7 @@ implements LoadStepFactory<T> {
 		final Config baseConfig, final List<Extension> extensions,
 		final List<Map<String, Object>> overrides
 	) {
-		return (T) new ChainLoadStep(baseConfig, extensions, overrides);
+		return (T) new PipelineLoadStep(baseConfig, extensions, overrides);
 	}
 
 	@Override

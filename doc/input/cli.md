@@ -11,6 +11,6 @@ java -jar mongoose-<VERSION>.jar \
 ```
 
 To find all available CLI options please refer to
-[Configuration](doc/input/configuration.md) section. For example the
+[Configuration](configuration.md) section. For example the
 configuration option `item-data-size` corresponds to the CLI argument
 `--item-data-size`.

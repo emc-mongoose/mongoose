@@ -131,7 +131,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	@Override @SuppressWarnings("unchecked")
 	public BasicLoadGeneratorBuilder<I, O, T> itemInput(final Input<I> itemInput) {
 		this.itemInput = itemInput;
-		// chain transfer buffer is not resettable
+		// pipeline transfer buffer is not resettable
 		if(!(itemInput instanceof TransferConvertBuffer)) {
 			sizeEstimate = estimateTransferSize(
 				null, IoType.valueOf(loadConfig.stringVal("type").toUpperCase()),
