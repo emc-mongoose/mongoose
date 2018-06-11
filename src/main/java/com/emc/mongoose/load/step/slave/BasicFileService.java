@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.step.node;
+package com.emc.mongoose.load.step.slave;
 
 import static com.github.akurilov.commons.system.DirectMemUtil.REUSABLE_BUFF_SIZE_MAX;
 

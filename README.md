@@ -69,7 +69,12 @@ execute millions of operations per second.
     * [Weighted Load](doc/design/weighted_load.md)
 * Development
     * Notes
-    * Changelog
+        * [Code Branches](doc/development/notes/branches.md)
+        * [Code Style](doc/development/notes/code_style.md)
+        * [Issue Reporting](doc/development/notes/issue_reporting.md)
+        * [Releasing](doc/development/notes/releasing.md)
+        * [Testing](doc/development/notes/testing.md)
+    * [Changelog](doc/development/changelog.md)
 
 # Contributors
 

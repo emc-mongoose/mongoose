@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.step.node;
+package com.emc.mongoose.load.step.slave;
 
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.metrics.MetricsSnapshot;

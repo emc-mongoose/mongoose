@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.step.node;
+package com.emc.mongoose.load.step.slave;
 
 import com.emc.mongoose.svc.ServiceBase;
 import com.emc.mongoose.load.step.FileManagerService;

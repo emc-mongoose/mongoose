@@ -1,29 +1,28 @@
 package com.emc.mongoose.system.util.docker;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 
-public final class MongooseNodeSvcContainer
+public final class MongooseSlaveNodeContainer
 extends ContainerBase {
 
 	private static final String IMAGE_NAME = "emcmongoose/mongoose";
 	public static final int DEFAULT_PORT = 10000;
 
-	public MongooseNodeSvcContainer()
+	public MongooseSlaveNodeContainer()
 	throws InterruptedException {
 		this(MongooseContainer.IMAGE_VERSION, DEFAULT_PORT);
 	}
 
-	public MongooseNodeSvcContainer(final int port)
+	public MongooseSlaveNodeContainer(final int port)
 	throws InterruptedException {
 		this(MongooseContainer.IMAGE_VERSION, port);
 	}
 
-	public MongooseNodeSvcContainer(final String version, final int svcPort)
+	public MongooseSlaveNodeContainer(final String version, final int svcPort)
 	throws InterruptedException {
 		super(version, emptyList(), emptyMap(), false, svcPort);
 	}
