@@ -1,43 +1,54 @@
 # Contents
 
+# 2018
 * [4.0.0](#400)
-* [3.6.1](#361)
-* [3.5.1](#351)
-* [3.4.2](#342)
+* [3.6.1](#361) 03/26/18
+
+# 2017
+* [3.5.1](#351) 11/05/17
+* [3.4.2](#342) 08/18/17
 * [3.3.0](#330)
 * [3.2.1](#321)
-* [3.1.0](#310)
-* [3.0.5](#305)
-* [2.5.6](#256)
-* [2.2.0](#220)
-* [2.1.0](#210)
-* [2.0.0](#200)
+* [3.1.0](#310) 01/31/17
+* [3.0.5](#305) 01/16/17
+
+# 2016
+* [2.5.6](#256) 12/21/16
+* [2.4.3](#243) 08/19/16
+* [2.2.0](#220) 06/01/16
+* [2.1.0](#210) 05/13/16
+* [2.0.0](#200) 05/06/16
 * [1.4.1](#141)
-* [1.2.2](#122)
 * [1.4.0](#140)
-* [1.3.2](#132)
-* [1.3.0](#130)
-* [1.2.2](#122)
-* [1.2.0](#120)
-* [1.1.3](#113)
-* [1.1.2](#112)
-* [1.1.1](#111)
+* [1.3.2](#132) 02/26/16
+* [1.3.0](#130) 02/18/16
+* [1.2.2](#122) 01/21/16
+
+# 2015
+* [1.2.0](#120) 12/19/15
+* [1.1.3](#113) 11/18/15
+* [1.1.2](#112) 11/18/15
+* [1.1.1](#111) 11/13/15
 * [1.1.0](#110)
-* [1.0.2](#102)
-* [1.0.1](#101)
-* [1.0.0](#100)
-* [0.9.0](#090)
-* [0.8.0](#080)
-* [0.7.0](#070)
-* [0.6.4](#064)
+* [1.0.2](#102) 10/26/15
+* [1.0.1](#101) 10/15/15
+* [1.0.0](#100) 10/08/15
+* [0.9.0](#090) 08/27/15
+* [0.8.0](#080) 05/15/15
+* [0.7.0](#070) 04/28/15
+* [0.6.4](#064) 03/30/15
 * [0.6.3](#063)
-* [0.6](#06)
-* [0.5.1](#051)
-* [0.5](#05)
-* [0.4](#04)
-* [0.3](#03)
-* [0.1.6](#016)
-* [0.1.4](#014)
+* [0.6](#06) 03/02/15
+* [0.5](#05) 01/13/15
+
+# 2014
+* [0.4](#04) 11/27/14
+* [0.3](#03) 10/30/14
+* [0.2](#02) 10/10/14
+* [0.1.6](#016) 09/29/14
+* [0.1.5](#015) 09/22/14
+* [0.1.4](#014) 09/17/14
+* [0.1.3](#013) 08/15/14
 
 # 4.0.0
 
@@ -487,6 +498,16 @@ TODO
 
 The latest version of the discontinued 2.x.x branch
 
+Closed tickets:
+* long run hang in the distributed mode
+* circular append in the distributed mode hangs
+
+# 2.4.3
+
+Closed tickets:
+* "for" variable is not resolved when use with "headers"
+* Mongoose 2.4.2 Making loop inclusive
+
 # 2.2.0
 
 General Notes
@@ -816,10 +837,6 @@ New features:
 * Performance improvements (able to sustain the create rate of more than 30K obj/s).
 * All values in log files are now in decimal format.
 
-# 0.5.1
-
-This release contains a small fix of incorrect reporting of data corruption in case of dropped connection.
-
 # 0.5
 
 We introduced following new features:
@@ -889,6 +906,13 @@ Main features completed:
 * report full server message in case of ANY non-2xx response
 * tail checking code doesn't work currently due to layer switching
 
+# 0.2
+
+Summary
+* create s3 bucket
+* file size abbreviations should be case insensitive
+* answer 200 on every http create/delete/update/append-request
+
 # 0.1.6
 
 Writing and reading became both faster than previously.
@@ -898,6 +922,10 @@ The tool outputs its own efficiency for every finished load executor.
 The efficiency is calculated as sum of all response times divided by test time and divided by total connections/threads count and logged as percent value.
 
 The configuration parameters "load.create.size.{min|max}" are renamed to "data.size.{min|max}".
+
+# 0.1.5
+
+Closed issue: multi-layer byte range update
 
 # 0.1.4
 
@@ -938,3 +966,7 @@ Content verification failed for "765e5841deaca7dc"
 4.
 
 The number of ranges which may be updated w/o overlapping is calculated from the object size. If user tries to perform more updates the error occurs and the object doesn’t update.
+
+# 0.1.3
+
+1st registered version, 1st issue: data.items.csv is empty on both driver and controller sides
