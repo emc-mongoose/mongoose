@@ -58,6 +58,8 @@ execute millions of operations per second.
     * [Data Reentrancy](doc/design/data_reentrancy.md)
     * [Byte Range Operations](doc/design/byte_range_operations.md)
     * [Copy Mode](doc/design/copy_mode.md)
+    * [Pipeline Load](doc/design/pipeline_load.md)
+    * [Weighted Load](doc/design/weighted_load.md)
 
 # Contributors
 
