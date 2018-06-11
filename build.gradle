@@ -115,6 +115,8 @@ allprojects {
 		}
 	}
 
+	// NOTE: system tests execution is controlled by travis build file
+
 	// travis deploy stage runs "./gradlew check" again which is unnecessary
 	check.dependsOn -= test
 
