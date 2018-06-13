@@ -11,13 +11,13 @@ independently on the corresponding slave node.
 |----|----
 | ![Distributed Mode v3.x.x](../images/distributed_mode_v3.png) | ![Distributed Mode v4.x.x](../images/distributed_mode_v4.png)
 
-* v3.x.x
+* **v3.x.x**
     * The "controller" is used to initiate the run
     * The "controller" is located at separate host usually
     * The "drivers" are "thin": execute the I/O tasks only (in other
       words, contains storage driver only)
     * The "controller" is "rich"
-* v4.x.x
+* **v4.x.x**
     * The "master" node is used to initiate the run
     * Any node may be used to initiate the run
     * The "slave" node is "rich": execute the load step "slices"
