@@ -10,7 +10,6 @@ independently on the corresponding slave node.
 | v3.x.x | v4.x.x
 |----|----
 | ![Distributed Mode v3.x.x](../images/distributed_mode_v3.png) | ![Distributed Mode v4.x.x](../images/distributed_mode_v4.png)
-| Controller is used to initiate the test. Controller is excluded from the actual I/O tasks execution process and usually located at a separate host. | Master node is used to initiate the run and also is involved into the I/O tasks execution process |
 
 ## Advantages
 
