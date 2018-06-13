@@ -49,15 +49,17 @@ is mentioned as the corresponding JSON node:
 
 ### 1.1.1. Base
 
-```
+<pre>
 item
 |── data
 |   |── input
 |   |   |── file
-|   |   |   <span class="code-comment">The source file for the content generation. Type: path. Default: null</span>
+|   |   |   <span class="code-comment">The source file for the content generation. Type: path. Default: null.</span>
 |   |   |── layer
 |   |   |   |── cache
+|   |   |   |   <span class="code-comment">The maximum count of the data "layers" to be cached into the memory. Type: int32 > 0. Default: 25.</span>
 |   |   |   └── size
+|   |   |       <span class="code-comment">The size of the content source ring buffer. Type: fixed size. Default: "4MB".</span>
 |   |   └── seed
 |   |── ranges
 |   |   |── concat
@@ -79,7 +81,7 @@ item
 |   |── file
 |   └── path
 └── type
-```
+</pre>
 
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
