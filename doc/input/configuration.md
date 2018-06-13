@@ -49,7 +49,7 @@ is mentioned as the corresponding JSON node:
 
 ### 1.1.1. Base
 
-<pre><code>
+<code>
 item
 |── data
 |   |── input
@@ -79,7 +79,7 @@ item
 |   |── file
 |   └── path
 └── type
-</code></pre>
+</code>
 
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
