@@ -60,7 +60,7 @@ scenario:
 5. `storage-auth-file`
 6. `storage-net-http-headers-*` (in case of parameterization is used)
 7. `storage-net-node-addrs` (if node-to-node mapping is enabled)
-8. `load-step-distributed`: set to `false`
+8. `load-step-distributed` set to `false`
 
 #### Items Input
 

@@ -36,7 +36,7 @@ This jar file may be downloaded manually and placed into the `ext`
 directory of Mongoose to be automatically loaded into the runtime.
 
 ```bash
-java -jar mongoose-<VERSION>/mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
     --storage-driver-type=fs \
     ...
 ```

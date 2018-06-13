@@ -5,7 +5,7 @@
 1.2. [Specific Types](#12-specific-types)<br/>
 1.2.1. [Time](#121-time)<br/>
 1.2.2. [Size](#122-size)<br/>
-2. [Parametrization](#2-parametrization)<br/>
+2. [Parameterization](#2-parameterization)<br/>
 2.1. [Symchronous Supply](#21-synchronous-supply)<br/>
 2.2. [Asynchronous Supply](#22-asynchronous-supply)<br/>
 2.3. [Syntax](#23-syntax)<br/>
@@ -48,6 +48,37 @@ is mentioned as the corresponding JSON node:
 ## 1.1. Quick Reference Table
 
 ### 1.1.1. Base
+
+```
+item
+|── data
+|   |── input
+|   |   |── file
+|   |   |── layer
+|   |   |   |── cache
+|   |   |   └── size
+|   |   └── seed
+|   |── ranges
+|   |   |── concat
+|   |   |── fixed
+|   |   |── random
+|   |   └── threshold
+|   |── size
+|   └── verify
+|── input
+|   |── file
+|   └── path
+|── naming
+|   |── length
+|   |── offset
+|   |── prefix
+|   |── radix
+|   └── type
+|── output
+|   |── file
+|   └── path
+└── type
+```
 
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
@@ -197,7 +228,7 @@ The configuration parameters supporting the time type:
 | "6EB"   | 6EB (exobytes)
 | "7YB"   | Invalid Value
 
-# 2. Parametrization
+# 2. Parameterization
 
 The configuration value is usually fixed. However, it's possible to define a dynamic value changing
 in the runtime. Each next value may be taken in a synchronous either asynchronous way.
