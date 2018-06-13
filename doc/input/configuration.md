@@ -49,6 +49,11 @@ is mentioned as the corresponding JSON node:
 
 ### 1.1.1. Base
 
+<pre><code>
+<span class="code-comment"># Ignore the fact this is Perl, and pretend it's some unheard-of language</span>
+<span class="code-keyword">our</span> <span class="code-variable">$site</span> = <span class="code-string">"needs this"</span>;
+</code></pre>
+
 ```
 **item**
 |── **data**
