@@ -8,7 +8,6 @@ public enum StorageType {
 
 	S3,
 	ATMOS,
-	EMCS3,
 	FS,
 	SWIFT;
 

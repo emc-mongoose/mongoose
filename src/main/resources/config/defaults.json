@@ -193,7 +193,7 @@
 			// The count of the shared/global I/O executor threads. 0 (default) is reserved to use the CPU cores/threads count
 			"threads": 0,
 			// The identifier pointing to the one of the registered storage driver implementations to use
-			"type": "dummy-mock"
+			"type": "s3"
 		}
 	},
 	// The aliasing section mapping the old configuration parameters/values to the current ones

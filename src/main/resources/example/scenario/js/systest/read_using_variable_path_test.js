@@ -1,12 +1,23 @@
-Command
-	.value("rm -f " + ITEM_LIST_FILE)
-	.run();
+new java.lang.ProcessBuilder()
+	.command("/bin/sh", "-c", "rm -f " + ITEM_LIST_FILE)
+	.start()
+	.waitFor();
+
+var itemNamingConfig = {
+	"item": {
+		"naming": {
+			"length": 16,
+			"radix": 16
+		}
+	}
+}
 
 PreconditionLoad
+	.config(itemNamingConfig)
 	.config(
 		{
 			"item": {
-				"data" : {
+				"data": {
 					"size": ITEM_DATA_SIZE
 				},
 				"output": {
@@ -14,7 +25,7 @@ PreconditionLoad
 					"path": ITEM_OUTPUT_PATH + "/%p{16;2}"
 				}
 			},
-			"test": {
+			"load": {
 				"step": {
 					"limit": {
 						"count": STEP_LIMIT_COUNT
@@ -26,6 +37,7 @@ PreconditionLoad
 	.run();
 
 ReadVerifyLoad
+	.config(itemNamingConfig)
 	.config(
 		{
 			"item": {

@@ -20,11 +20,14 @@ extends JarResourcesInstaller {
 
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
 		Arrays.asList(
+
 			// initial configuration/defaults file
 			"config/defaults.json",
+
 			// custom content example files
 			"example/content/textexample",
 			"example/content/zerobytes",
+
 			// custom groovy scenario examples
 			"example/scenario/groovy/types/additional/copy_load_using_env_vars.groovy",
 			"example/scenario/groovy/types/additional/load_type.groovy",
@@ -35,6 +38,7 @@ extends JarResourcesInstaller {
 			"example/scenario/groovy/types/weighted.groovy",
 			"example/scenario/groovy/default.groovy",
 			"example/scenario/groovy/rampup.groovy",
+
 			// javascript scenario examples including the default one
 			"example/scenario/js/types/additional/copy_load_using_env_vars.js",
 			"example/scenario/js/types/additional/load_type.js",
@@ -43,9 +47,17 @@ extends JarResourcesInstaller {
 			"example/scenario/js/types/chain_with_delay_using_env_vars.js",
 			"example/scenario/js/types/parallel_shell_commands.js",
 			"example/scenario/js/types/weighted.js",
+
 			// the default scenario which is invoked if no scenario is specified
 			"example/scenario/js/default.js",
+
 			"example/scenario/js/rampup.js",
+
+			// system tests scenario files
+			"example/scenario/js/systest/circular_append_test.js",
+			"example/scenario/js/systest/copy_using_input_path_test.js",
+			"example/scenario/js/systest/read_using_variable_path_test.js",
+
 			// custom scenario examples in python
 			"example/scenario/py/types/additional/copy_load_using_env_vars.py",
 			"example/scenario/py/types/additional/load_type.py",
@@ -56,6 +68,7 @@ extends JarResourcesInstaller {
 			"example/scenario/py/types/weighted.py",
 			"example/scenario/py/default.py",
 			"example/scenario/py/rampup.py",
+
 			// provided extensions
 			"ext/mongoose-storage-driver-coop-net.jar",
 			"ext/mongoose-storage-driver-coop-net-http.jar",
