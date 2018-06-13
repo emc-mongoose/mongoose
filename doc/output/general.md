@@ -33,7 +33,7 @@ once per run into the `config.json` log file.
 ## Scenario Dump
 
 The scenario used for the test is logged once per run into the
-`scenario.json` log file.
+`scenario.txt` log file.
 
 ## 3rd Party Log Messages
 

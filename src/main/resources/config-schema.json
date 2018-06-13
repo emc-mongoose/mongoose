@@ -45,7 +45,6 @@
 				"enabled": "boolean",
 				"limit": "int32"
 			},
-			"remote": "boolean",
 			"shuffle": "boolean"
 		},
 		"step": {

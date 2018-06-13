@@ -13,8 +13,7 @@
 
 # Overview
 
-Mongoose is a scaleable, customizable and extensible storage performance
-testing tool.
+Mongoose is a scalable and extensible storage performance testing tool.
 
 It is designed to be used for:
 * [Load Testing](https://en.wikipedia.org/wiki/Load_testing)
@@ -28,7 +27,7 @@ execute millions of operations per second.
 
 # Features
 
-1. [Scale Out](doc/features.md#1-scale-out)<br/>
+1. [Scalability](doc/features.md#1-scalability)<br/>
  1.1. [Distributed Mode](doc/features.md#11-distributed-mode)<br/>
  1.2. [Fibers](doc/features.md#12-fibers)<br/>
 2. [Customization](doc/features.md#2-customization)<br/>
@@ -48,6 +47,7 @@ execute millions of operations per second.
 * [Troubleshooting](doc/troubleshooting.md)
 * API
     * Extensions
+        * [General](doc/api/extensions/general.md)
         * [Load Steps](doc/api/extensions/load_steps.md)
         * [Storage Drivers](doc/api/extensions/storage_drivers.md)
     * [Dependencies](doc/api/dependencies.md)

@@ -56,24 +56,24 @@
 
 ### Functional
 
-1. **New Architecture**
+#### 1. New [Architecture](../design/architecture.md)
 
-The *controller* bottleneck is eleminated when using the distributed
-mode. Any load step is been executed independently on a remote node. A
+The *controller* bottleneck is eliminated for the distributed mode case.
+Any load step is been executed independently on a remote node. A
 "master" node executes the specified scenario only. The new architecture
 preconditions also the future ***resume*** functionality.
 
-2. **Automated Installer**
+#### 2. Automated [Installer](../design/installer.md)
 
 New Mongoose is delivered as a single jar instead of tarball. This jar
 installs all the required files automatically if needed in the user
 home directory. Also, the installer detects the extensions and installs
 them too.
 
-3. **Extensible Configuration**
+#### 3. [Extensible](../api/extensions/general.md) Configuration
 
-Some extension require the specific configuration options. To support
-the specific configuration options the extensible configuration was
+Some extensions require specific configuration options. To support the
+specific configuration options the extensible configuration was
 implemented. The new [external library](https://github.com/akurilov/confuse) is used for this purpose.
 The configuration is assembled dynamically, including the
 sub-configurations provided by the extensions resolved in the runtime.

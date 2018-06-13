@@ -1,6 +1,6 @@
 # Contents
 
-1. [Scale Out](#1-scale-out)<br/>
+1. [Scalability](#1-scalability)<br/>
  1.1. [Distributed Mode](#11-distributed-mode)<br/>
  1.2. [Fibers](#12-fibers)<br/>
 2. [Customization](#2-customization)<br/>
@@ -13,7 +13,7 @@
  3.2. [Storage Drivers](#32-storage-drivers)<br/>
  3.3. [Scenario Engines](#33-scenario-engine)<br/>
 
-# 1. Scale Out
+# 1. Scalability
 
 ## 1.1. Distributed Mode
 
@@ -97,6 +97,8 @@ different load step kinds.
 
 ## 3.1. Load Steps
 
+TODO
+
 ## 3.2. Storage Drivers
 
 Mongoose accounts and operates with abstract *items* which may be files,
@@ -109,7 +111,8 @@ Mongoose supports some storage types out-of-the-box:
 * OpenStack Swift
 * Filesystem
 
-The following additional storage driver implementations are available:
+The following additional storage driver implementations are publicly
+available:
 * [HDFS](https://github.com/emc-mongoose/mongoose-storage-driver-hdfs)
 
 ## 3.3. Scenario Engine

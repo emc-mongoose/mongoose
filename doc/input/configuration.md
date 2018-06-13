@@ -47,6 +47,8 @@ is mentioned as the corresponding JSON node:
 
 ## 1.1. Quick Reference Table
 
+### 1.1.1. Base
+
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
 | item-data-input-file                           | Path         | null             | The source file for the content generation       |
@@ -55,7 +57,7 @@ is mentioned as the corresponding JSON node:
 | item-data-input-seed                           | String (hex) | 7a42d9c483244167 | The initial value for the random data generation |
 | item-data-ranges-concat                        | Range | null | The number/range of numbers of the source objects used to concatenate every destination objec
 | item-data-ranges-fixed                         | Byte Range **list** | null | The fixed byte ranges to update or read (depends on the specified load type) |
-| item-data-ranges-random                        | Integer >= 0 or Byte Range | 0 | The count of the random ranges to update or read |
+| item-data-ranges-random                        | Integer >= 0 | 0 | The count of the random ranges to update or read |
 | item-data-ranges-threshold                     | Size | 0 | The size threshold to enable multipart upload if supported by the configured storage driver |
 | item-data-size                                 | Size | 1MB | The size of the data items to process. Doesn't have any effect if item.type=container |
 | item-data-verify                               | Flag | false | Specifies whether to verify the content while reading the data items or not. Doesn't have any effect if load-type != read |
@@ -65,29 +67,27 @@ is mentioned as the corresponding JSON node:
 | item-naming-prefix                             | String | null | The name prefix for the processed items. A correct value is neccessary to pass the content verification in the case of read load.
 | item-naming-radix                              | Integer >= 2 | 36 | The radix for the item ids. May be in the range of 2..36. A correct value is neccessary to pass the content verification in the case of read load.
 | item-naming-offset                             | Integer >= 0 | 0 | The start id for the new item ids
-| **item-naming-length**                         | Integer > 0 | 12 | The name length for the new items. Has effect only in the case of create (if not partial) load
-| item-output-delay                              | Time >= 0 | 0 | The minimum delay between the subsequent I/O operations for each item (pipeline load). 0 means no delay.
+| item-naming-length                             | Integer > 0 | 12 | The name length for the new items. Has effect only in the case of create (if not partial) load
 | item-output-file                               | Path | null | Specified the target file for the items processed successfully. If null the items info is not saved.
 | item-output-path                               | String | null | The target path. Null (default) value leads to path name generation and pre-creation.
 | item-type                                      | Enum | data | The type of the item to use, the possible values are: "data", "path", "token". In case of filesystem "data" means files and "path" means directories
 | load-batch-size                                | Integer >= 1| 4096 | The count of the items/tasks processed by a single invocation. It may be useful to set to 1 for MPU or DLO tests
-| load-generator-addrs                           | List of strings | 127.0.0.1 | Reserved, not used yet
 | load-generator-recycle-enabled                 | Flag | false | Specifies whether to recycle the load tasks multiple times or not
 | load-generator-recycle-limit                   | Integer >= 1 | 1000000 | The load tasks and results queues size limit
-| load-generator-remote                          | Flag | false | Reserved, not used yet
 | load-generator-shuffle                         | Flag | false | Defines whether to shuffle or not the items got from the item input, what should make the order of the I/O tasks execution randomized
-| load-generator-weight                          | Integer >= 0 | 1 | The relative operations weight for the particular load generator. Effective only if used with weighted load step and JSR-223 compliant scenario engine. The total step's weight is a sum of all included load generator weights. The particular load generator weight is a ratio of its weight value to the total step's weight.
+| load-service-threads                           | Integer >= 0 | 0 | The count of the service threads. 0 means automatic value (CPU cores/threads count)
+| load-step-distributed                          | Flag | false | Distributed mode: the flag to enable using slave nodes
 | load-step-id                                   | String | null | The test step id. Generated automatically if not specified (null). Specifies also the logs sub directory path: `log/<STEP_ID>/`
-| load-step-limit-concurrency                    | Integer >= 0 | 1 | The concurrency limit per storage driver. In case of filesystem this is the max number of open files at any moment. In case of HTTP this is the max number of the active connections at any moment.
+| load-step-idAutoGenerated                      | Flag | true | Internal
+| load-step-limit-concurrency                    | Integer >= 0 | 1 | The concurrency limit (per save node in case of distributed mode). In case of filesystem this is the max number of open files at any moment. In case of HTTP this is the max number of the active connections at any moment.
 | load-step-limit-count                          | Integer >= 0 | 0 | The maximum number of the items to process for any load step. 0 means infinite
 | load-step-limit-fail-count                     | Integer >= 0 | 100000 | The maximum number of the failed I/O tasks before the step will be stopped, 0 means no limit
 | load-step-limit-fail-rate                      | Boolean | false | Stop the step if failures rate is more than success rate and if the flag is set to true
 | load-step-limit-rate                           | Float >= 0 | 0 | The maximum number of the tasks to execute per second (throughput limit). 0 means no rate limit.
 | load-step-limit-size                           | Fixed size >= 0 | 0 | The maximum size of the data items to process. 0 means no size limit.
 | load-step-limit-time                           | Time >= 0 | 0 | The maximum time to perform a load step. 0 means no time limit
-| load-step-node-addrs                           | List of strings | 127.0.0.1 | Distributed mode: the list of the node IPs or hostnames, may include port numbers to override the default port number value
-| load-step-node-port                            | Integer > 0 | 1099 | Distributed mode: the common port number to start/connect the node services
-| load-service-threads                           | Integer >= 0 | 0 | The count of the service threads. 0 means automatic value (CPU cores/threads count)
+| load-step-node-addrs                           | List of strings | 127.0.0.1 | Distributed mode: the list of the slave node IPs or hostnames, may include port numbers to override the default port number value
+| load-step-node-port                            | Integer > 0 | 1099 | Distributed mode: the common port number to start/connect the slave node
 | load-type                                      | Enum | create | The operation to process the items, may be "create", "update", "read" or "delete"
 | output-color                                   | Flag | true | Use colored standard output flag
 | output-metrics-average-period                  | Time >= 0 | 0 | The time period for the load step's metrics console output. 0 means to not to output the metrics to the console
@@ -97,19 +97,25 @@ is mentioned as the corresponding JSON node:
 | output-metrics-summary-persist                 | Flag | true | Persist the load step's summary (total) metrics if true
 | output-metrics-trace-persist                   | Flag | true | Persist the information about each load operation if true
 | output-metrics-threshold                       | 0 <= Float <= 1 | 0 | The concurrency threshold to enable intermediate statistics calculation, 0 means no threshold
-| run-node                                       | Flag | false | Run in the node (agent/slave) mode or not
+| run-node                                       | Flag | false | Run in the slave node or not
 | run-scenario                                   | Path | null | The default file scenario to run, null means invoking the default.js scenario bundled into the distribution
-| run-version                                    | String | 3.6.0 | The Mongoose version
+| run-version                                    | String | 4.0.0 | The Mongoose version
 | storage-auth-file                              | Path | null | The path to a credentials list file, containing the lines of comma-separated user ids and secret keys
 | storage-auth-uid                               | String | null | The authentication identifier
 | storage-auth-secret                            | String | null | The authentication secret
 | storage-auth-token                             | String | null | S3: no effect, Atmos: subtenant, Swift: token
-| storage-driver-impl                            | List | | The list of the registered storage driver implementations
 | storage-driver-queue-input                     | Integer > 0 | 1000000 | Storage drivers internal input tasks queue size limit
 | storage-driver-queue-output                    | Integer > 0 | 1000000 | Storage drivers internal output tasks queue size limit
-| storage-driver-remote                          | Flag | false | Distributed mode: the flag to enable using remote storage drivers
 | storage-driver-threads                         | Integer >= 0 | 0 | The count of the shared/global I/O executor threads. 0 means automatic value (CPU cores/threads count)
 | storage-driver-type                            | String | s3 | The identifier pointing to the one of the registered storage driver implementations to use
+
+### 1.1.2. Net
+
+| Name                                           | Type         | Default Value    | Description                                      |
+|:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
+| storage-net-node-addrs                         | List of strings | 127.0.0.1 | The list of the storage node IPs or hostnames to use for HTTP load. May include port numbers.
+| storage-net-node-port                          | Integer > 0 | 9020 | The common port number to access the storage nodes, may be overriden adding the port number to the storage-driver-addrs, for example: "127.0.0.1:9020,127.0.0.1:9022,..."
+| storage-net-node-connAttemptsLimit             | Integer >= 0 | 0 | The limit for the subsequent connection attempts for each storage endpoint node. The node is excluded from the connection pool forever if the node has more subsequent connection failures. The default value (0) means no limit.
 | storage-net-bindBacklogSize                    | Integer >= 0 | 0 |
 | storage-net-interestOpQueued                   | Flag | false |
 | storage-net-keepAlive                          | Flag | true |
@@ -123,13 +129,27 @@ is mentioned as the corresponding JSON node:
 | storage-net-ioRatio                            | 0 < Integer < 100 | 50 | Internal [Netty's I/O ratio parameter](https://github.com/netty/netty/issues/1154#issuecomment-14870909). It's recommended to make it higher for large request/response payload (>1MB)
 | storage-net-transport                          | Enum | nio | The I/O transport to use (see the [details](http://netty.io/wiki/native-transports.html)). By default tries to use "nio" (the most compatible). For Linux try to use "epoll", for MacOS/BSD use "kqueue" (requires rebuilding).
 | storage-net-ssl                                | Flag | false | The flag to enable the load through SSL/TLS. Currently only HTTPS implementation is available. Have no effect if configured storage type is filesystem.
+
+#### 1.1.2.1. Net HTTP
+
+| Name                                           | Type         | Default Value    | Description                                      |
+|:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
 | storage-net-http-fsAccess                      | Flag | false | Specifies whether filesystem access is enabled or not in the case of S3 or Atmos API
 | storage-net-http-headers                       | Map | { "Connection" : "keep-alive", "User-Agent" : "mongoose/3.6.0" } | Custom HTTP headers section. An user may place here a key-value pair which will be used as HTTP header.
 | storage-net-http-namespace                     | String | null | The HTTP storage namespace. WARNING: the default value (null) will not work in the case of Swift API
 | storage-net-http-versioning                    | Flag | false | Specifies whether the versioning storage feature is used or not
-| storage-net-node-addrs                         | List of strings | 127.0.0.1 | The list of the storage node IPs or hostnames to use for HTTP load. May include port numbers.
-| storage-net-node-port                          | Integer > 0 | 9020 | The common port number to access the storage nodes, may be overriden adding the port number to the storage-driver-addrs, for example: "127.0.0.1:9020,127.0.0.1:9022,..."
-| storage-net-node-connAttemptsLimit             | Integer >= 0 | 0 | The limit for the subsequent connection attempts for each storage endpoint node. The node is excluded from the connection pool forever if the node has more subsequent connection failures. The default value (0) means no limit.
+
+#### 1.1.3. Pipeline Load
+
+| Name                                           | Type         | Default Value    | Description                                      |
+|:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
+| item-output-delay                              | Time >= 0 | 0 | The minimum delay between the subsequent I/O operations for each item. 0 means no delay.
+
+#### 1.1.4. Weighted Load
+
+| Name                                           | Type         | Default Value    | Description                                      |
+|:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
+| load-generator-weight                          | Integer >= 0 | 1 | The relative operations weight for the particular load generator. Effective only if used with weighted load step and JSR-223 compliant scenario engine. The total step's weight is a sum of all included load generator weights. The particular load generator weight is a ratio of its weight value to the total step's weight.
 
 ## 1.2. Specific Types
 
@@ -142,9 +162,9 @@ The configuration parameters supporting the time type:
 
 | Value | Effect
 | ----- | ------
-| 0     | Infinite/not set
-| -1    | Invalid value
-| 1     | 1 second
+| "0"   | 0/infinite/not set
+| "-1"  | Invalid value
+| "1"   | 1 second
 | "1s"  | 1 second
 | "2m"  | 2 minutes
 | "3h"  | 3 hours
@@ -166,11 +186,11 @@ The configuration parameters supporting the time type:
 
 | Value   | Effect
 | ------- | ------
-| -1      | Invalid Value
-| 0       | 0 bytes (Infinity in case of load.limit.size)
-| 1       | 1 bytes
-| 1024    | 1024 bytes or 1KB
-| "0B"    | 0 bytes (Infinity in case of load.limit.size)
+| "-1"    | Invalid Value
+| "0"     | 0 bytes (Infinity in case of `load-step-limit-size`)
+| "1"     | 1 bytes
+| "1024"  | 1024 bytes or 1KB
+| "0B"    | 0 bytes (Infinity in case of `load-step-limit-size`)
 | "1024B" | 1024 bytes or 1KB
 | "1KB"   | 1024 bytes or 1KB
 | "2MB"   | 2MB
@@ -265,7 +285,7 @@ Parameterized configuration parameter: `item-output-path`
 Example: dynamic files output path defined by some particular "width" (16) and "depth" (2):
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
     --item-output-path=/mnt/storage/%p\{16\;2\} \
     --storage-driver-type=fs \
     ...
@@ -278,27 +298,28 @@ Parameterized configuration parameter: `storage-net-http-headers-*`
 CLI example, note the "\" characters to escape the whitespaces in the header value:
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
     --storage-net-http-headers=myOwnHeaderName:MyOwnHeaderValue\ %d[0-1000]\ %f{###.##}[-2--1]\ %D{yyyy-MM-dd'T'HH:mm:ssZ}[1970/01/01-2016/01/01]
 ```
 
 Scenario example, note the parameterized header name:
 
-```json
-{
-    "type" : "load",
-    "config" : {
-        "storage" : {
-            "net" : {
-                "http" : {
-                    "headers" : {
-                        "x-amz-meta-$d[1-30]" : "%D{yyyy-MM-dd'T'HH:mm:ssZ}[1970/01/01-2016/01/01]"
-                    }
+```javascript
+var varHttpHeadersConfig = {
+    "storage" : {
+        "net" : {
+            "http" : {
+                "headers" : {
+                    "x-amz-meta-$d[1-30]" : "%D{yyyy-MM-dd'T'HH:mm:ssZ}[1970/01/01-2016/01/01]"
                 }
             }
         }
     }
-}
+};
+
+Load
+    .config(varHttpHeadersConfig)
+    .run();
 ```
 
 ### 2.4.3. Multiuser Load
@@ -311,38 +332,39 @@ Let's realize the case when someone needs to perform a load using many (hundreds
 destination paths (S3 buckets, Swift containers, filesystem directories, etc) using many different
 credentials.
 
-```json
-{
-    "type" : "load",
-    "config" : {
-        "item" : {
-            "data" : {
-                "size" : "10KB"
-            },
-            "output" : {
-                "file" : "objects.csv",
-                "path" : "bucket-%d(314159265){00}[0-99]"
-            }
+```javascript
+var multiUserConfig = {
+    "item" : {
+        "data" : {
+            "size" : "10KB"
         },
-        "load" : {
-            "step" : {
-                "limit" : {
-                    "concurrency" : 10,
-                    "count" : 10000
-                }
-            }
-        },
-        "storage" : {
-            "auth" : {
-                "file" : "credentials.csv",
-                "uid" : "user-%d(314159265){00}[0-99]"
-            },
-            "driver" : {
-                "type" : "s3"
+        "output" : {
+            "file" : "objects.csv",
+            "path" : "bucket-%d(314159265){00}[0-99]"
+        }
+    },
+    "load" : {
+        "step" : {
+            "limit" : {
+                "concurrency" : 10,
+                "count" : 10000
             }
         }
+    },
+    "storage" : {
+        "auth" : {
+            "file" : "credentials.csv",
+            "uid" : "user-%d(314159265){00}[0-99]"
+        },
+        "driver" : {
+            "type" : "s3"
+        }
     }
-}
+};
+
+Load
+    .config(multiUserConfig)
+    .run();
 ```
 
 **Note**:
@@ -367,34 +389,5 @@ for i in $(seq 10 99); do echo "user-$i,secret-$i" >> credentials.csv; done
 
 # 3. Aliasing
 
-## 3.1. General
-
-| Alias | Target Parameter | Default Value
-| ----- | ---------------- | --------------
-| load-threads | load-step-limit-concurrency | *
-| run-id | load-step-id | *
-| noop | load-type | noop
-| create | load-type | create
-| read | load-type | read
-| update | load-type | update
-| delete | load-type | delete
-
-## 3.2. Atmos
-
-| Alias | Target Parameter | Default Value
-| ----- | ---------------- | --------------
-| atmos-subtenant | storage-auth-token | *
-
-## 3.3. S3
-
-| Alias | Target Parameter | Default Value
-| ----- | ---------------- | --------------
-| s3-input-bucket | item-input-path | *
-| s3-output-bucket | item-output-path | *
-
-## 3.4. Swift
-
-| Alias | Target Parameter | Default Value
-| ----- | ---------------- | --------------
-| swift-input-container | item-input-path | *
-| swift-input-container | item-output-path | *
+The configuration aliasing is used primarily for backward compatibility
+to map old configuration paths to the new ones.
