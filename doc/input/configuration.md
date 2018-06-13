@@ -54,6 +54,9 @@ item
 |── data
 |   |── input
 |   |   |── file
+|   |   |
+|   |   |   The source file for the content generation. Type: path. Default: null
+|   |   |
 |   |   |── layer
 |   |   |   |── cache
 |   |   |   └── size
