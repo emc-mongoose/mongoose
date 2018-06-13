@@ -54,7 +54,7 @@ item
 |── data
 |   |── input
 |   |   |── file
-|   |   |   <font color="#aaaaaa">The source file for the content generation. Type: path. Default: null</font>
+|   |   |   <span class="code-comment">The source file for the content generation. Type: path. Default: null</span>
 |   |   |── layer
 |   |   |   |── cache
 |   |   |   └── size
