@@ -49,7 +49,12 @@ execute millions of operations per second.
     * Extensions
         * [General](doc/api/extensions/general.md)
         * [Load Steps](doc/api/extensions/load_steps.md)
-        * [Storage Drivers](doc/api/extensions/storage_drivers.md)
+        * Storage Drivers
+            * [General](doc/api/extensions/storage_drivers/general.md)
+            * [S3](doc/api/extensions/storage_drivers/s3.md)
+            * [Atmos](doc/api/extensions/storage_drivers/atmos.md)
+            * [Swift](doc/api/extensions/storage_drivers/swift.md)
+            * [FS](doc/api/extensions/storage_drivers/fs.md)
     * [Dependencies](doc/api/dependencies.md)
 * Input
     * [CLI](doc/input/cli.md)

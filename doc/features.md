@@ -15,9 +15,16 @@
 
 # 1. Scalability
 
-## 1.1. Distributed Mode
+## 1.1. [Distributed Mode](design/distributed_mode.md)
 
-TODO
+The distributed mode in Mongoose was designed to make each Mongoose node working independently as
+much as possible. Any *distributed load step* execution may be initiated from a chosen node which
+becomes a *master node*. The nodes involved in the given distributed load step execution become
+*slave nodes*. All necessary input is prepared (*sliced*) and distributed among the slave nodes
+before the actual load step start to get rid of the redundant interation via the network during the
+load step execution. The slave nodes are being polled periodically to synchronize the load step
+state. After the load step is done, the summary data may be (optionally) aggregated and persisted on
+the master node.
 
 ## 1.2. Fibers
 
@@ -28,7 +35,7 @@ easily without significant performance degradation.
 
 ## 2.1. Flexible Configuration
 
-Supports the parameterization
+Supports the parameterization and extension but remains type-safe and structure-safe
 
 ## 2.2. Load Generation Patterns
 
@@ -36,7 +43,7 @@ Supports the parameterization
 
 * [Parial Operations](design/byte_range_operations.md)
 
-* Composite Operations
+* [Composite Operations](design/storage_side_concatenation.md)
 
 * Complex Load Steps
     * [Pipeline Load](design/pipeline_load.md)
