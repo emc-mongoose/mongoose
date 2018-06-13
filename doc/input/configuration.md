@@ -2,6 +2,11 @@
 
 1. [Overview](#1-overview)<br/>
 1.1. [Quick Reference Table](#11-quick-reference-table)<br/>
+1.1.1. [Base](#111-base)
+1.1.2. [Network Storages](#112-network-storages)
+1.1.3. [HTTP Network Storages](#113-http-network-storages)
+1.1.4. [Pipeline Load Step](#114-pipeline-load-step)
+1.1.5. [Weighted Load Step](#115-weighted-load-step)
 1.2. [Specific Types](#12-specific-types)<br/>
 1.2.1. [Time](#121-time)<br/>
 1.2.2. [Size](#122-size)<br/>
@@ -48,37 +53,6 @@ is mentioned as the corresponding JSON node:
 ## 1.1. Quick Reference Table
 
 ### 1.1.1. Base
-
-```
-item
-|── data
-|   |── input
-|   |   |── file
-|   |   |── layer
-|   |   |   |── cache
-|   |   |   └── size
-|   |   └── seed
-|   |── ranges
-|   |   |── concat
-|   |   |── fixed
-|   |   |── random
-|   |   └── threshold
-|   |── size
-|   └── verify
-|── input
-|   |── file
-|   └── path
-|── naming
-|   |── length
-|   |── offset
-|   |── prefix
-|   |── radix
-|   └── type
-|── output
-|   |── file
-|   └── path
-└── type
-```
 
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
@@ -140,7 +114,7 @@ item
 | storage-driver-threads                         | Integer >= 0 | 0 | The count of the shared/global I/O executor threads. 0 means automatic value (CPU cores/threads count)
 | storage-driver-type                            | String | s3 | The identifier pointing to the one of the registered storage driver implementations to use
 
-### 1.1.2. Net
+### 1.1.2. Network Storages
 
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
@@ -161,7 +135,7 @@ item
 | storage-net-transport                          | Enum | nio | The I/O transport to use (see the [details](http://netty.io/wiki/native-transports.html)). By default tries to use "nio" (the most compatible). For Linux try to use "epoll", for MacOS/BSD use "kqueue" (requires rebuilding).
 | storage-net-ssl                                | Flag | false | The flag to enable the load through SSL/TLS. Currently only HTTPS implementation is available. Have no effect if configured storage type is filesystem.
 
-#### 1.1.2.1. Net HTTP
+#### 1.1.2.1. HTTP Network Storages
 
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
@@ -170,13 +144,13 @@ item
 | storage-net-http-namespace                     | String | null | The HTTP storage namespace. WARNING: the default value (null) will not work in the case of Swift API
 | storage-net-http-versioning                    | Flag | false | Specifies whether the versioning storage feature is used or not
 
-#### 1.1.3. Pipeline Load
+#### 1.1.3. Pipeline Load Step
 
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
 | item-output-delay                              | Time >= 0 | 0 | The minimum delay between the subsequent I/O operations for each item. 0 means no delay.
 
-#### 1.1.4. Weighted Load
+#### 1.1.4. Weighted Load Step
 
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
