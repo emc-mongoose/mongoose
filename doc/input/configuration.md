@@ -50,13 +50,11 @@ is mentioned as the corresponding JSON node:
 ### 1.1.1. Base
 
 <pre>
-<b>item</b>
-|── </b>data</b>
+item
+|── data
 |   |── input
 |   |   |── file
-|   |   |
-|   |   |   The source file for the content generation. Type: path. Default: null
-|   |   |
+|   |   |   <font color="#aaaaaa">The source file for the content generation. Type: path. Default: null</font>
 |   |   |── layer
 |   |   |   |── cache
 |   |   |   └── size
