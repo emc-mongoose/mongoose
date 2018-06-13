@@ -2,11 +2,11 @@
 
 1. [Overview](#1-overview)<br/>
 1.1. [Quick Reference Table](#11-quick-reference-table)<br/>
-1.1.1. [Base](#111-base)
-1.1.2. [Network Storages](#112-network-storages)
-1.1.3. [HTTP Network Storages](#113-http-network-storages)
-1.1.4. [Pipeline Load Step](#114-pipeline-load-step)
-1.1.5. [Weighted Load Step](#115-weighted-load-step)
+1.1.1. [Base](#111-base)<br/>
+1.1.2. [Network Storages](#112-network-storages)<br/>
+1.1.3. [HTTP Network Storages](#113-http-network-storages)<br/>
+1.1.4. [Pipeline Load Step](#114-pipeline-load-step)<br/>
+1.1.5. [Weighted Load Step](#115-weighted-load-step)<br/>
 1.2. [Specific Types](#12-specific-types)<br/>
 1.2.1. [Time](#121-time)<br/>
 1.2.2. [Size](#122-size)<br/>
