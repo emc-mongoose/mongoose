@@ -50,8 +50,8 @@ is mentioned as the corresponding JSON node:
 ### 1.1.1. Base
 
 ```
-item
-|── data
+**item**
+|── **data**
 |   |── input
 |   |   |── file
 |   |   |
