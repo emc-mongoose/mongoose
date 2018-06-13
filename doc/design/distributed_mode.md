@@ -7,9 +7,7 @@ steps are *sliced* by the *master* node among all the *slave* nodes
 involved in the test. Then each step *slice* is being executed
 independently on the corresponding slave node.
 
-![Distributed Mode v3.x.x](../images/distributed_mode_v3.png)
-
-![Distributed Mode v4.x.x](../images/distributed_mode_v4.png)
+![Distributed Mode v3.x.x](../images/distributed_mode_v3.png) ![Distributed Mode v4.x.x](../images/distributed_mode_v4.png)
 
 ## Advantages
 
