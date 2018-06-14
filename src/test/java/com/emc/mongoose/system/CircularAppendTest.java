@@ -8,7 +8,7 @@ import com.emc.mongoose.system.base.params.ItemSize;
 import com.emc.mongoose.system.base.params.RunMode;
 import com.emc.mongoose.system.base.params.StorageType;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseNodeSvcContainer;
+import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import static com.emc.mongoose.config.TimeUtil.getTimeInSeconds;
 import static com.emc.mongoose.system.util.LogValidationUtil.getContainerMetricsLogRecords;
@@ -70,7 +70,7 @@ public final class CircularAppendTest {
 	private final String itemListFile0 = snakeCaseName(getClass()) + "_0.csv";
 	private final String itemListFile1 = snakeCaseName(getClass()) + "_1.csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
-	private final Map<String, MongooseNodeSvcContainer> nodeSvcs = new HashMap<>();
+	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
@@ -134,14 +134,14 @@ public final class CircularAppendTest {
 				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
 				args.add("--load-step-distributed");
 				for(int i = 0; i < runMode.getNodeCount(); i ++) {
-					final int port = MongooseNodeSvcContainer.DEFAULT_PORT + i;
-					final MongooseNodeSvcContainer nodeSvc = new MongooseNodeSvcContainer(port);
+					final int port = MongooseSlaveNodeContainer.DEFAULT_PORT + i;
+					final MongooseSlaveNodeContainer nodeSvc = new MongooseSlaveNodeContainer(port);
 					final String addr = localExternalAddr + ":" + port;
-					nodeSvcs.put(addr, nodeSvc);
+					slaveNodes.put(addr, nodeSvc);
 				}
 				args.add(
 					"--load-step-node-addrs="
-						+ nodeSvcs.keySet().stream().collect(Collectors.joining(","))
+						+ slaveNodes.keySet().stream().collect(Collectors.joining(","))
 				);
 				break;
 		}
@@ -156,7 +156,7 @@ public final class CircularAppendTest {
 	public final void setUp()
 	throws Exception {
 		storageMocks.values().forEach(AsyncRunnableBase::start);
-		nodeSvcs.values().forEach(AsyncRunnableBase::start);
+		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		testContainer.start();
 		testContainer.await(1000, TimeUnit.SECONDS);
 	}
@@ -167,7 +167,7 @@ public final class CircularAppendTest {
 
 		testContainer.close();
 
-		nodeSvcs.values().parallelStream().forEach(
+		slaveNodes.values().parallelStream().forEach(
 			storageMock -> {
 				try {
 					storageMock.close();
