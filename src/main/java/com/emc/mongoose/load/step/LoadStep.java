@@ -8,6 +8,7 @@ import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
 
 import java.rmi.RemoteException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -36,8 +37,8 @@ extends AsyncRunnable {
 
 	static Config initConfigSlice(final Config config, final String nodeAddrWithPort) {
 		final Config configSlice = new BasicConfig(config);
-		// disable the distributed mode flag
-		configSlice.val("load-step-distributed", false);
+		// disable the distributed mode on the slave nodes
+		configSlice.val("load-step-node-addrs", Collections.EMPTY_LIST);
 		return configSlice;
 	}
 }

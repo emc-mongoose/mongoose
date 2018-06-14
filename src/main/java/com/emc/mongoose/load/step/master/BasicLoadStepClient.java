@@ -119,7 +119,8 @@ implements LoadStepClient {
 				);
 			}
 
-			initFileManagerServices(nodeAddrs);
+			fileMgrSvcs = initFileManagerServices(id(), nodeAddrs);
+			Loggers.MSG.debug("{}: file manager services resolved", id());
 
 			if(baseConfig.boolVal("output-metrics-trace-persist")) {
 				initIoTraceLogFileServices(nodeAddrs);
@@ -736,8 +737,10 @@ implements LoadStepClient {
 		}
 	}
 
-	private void initFileManagerServices(final List<String> nodeAddrs) {
-		fileMgrSvcs = nodeAddrs
+	private static Map<String, Optional<FileManagerService>> initFileManagerServices(
+		final String stepId, final List<String> nodeAddrs
+	) {
+		return nodeAddrs
 			.parallelStream()
 			.collect(
 				Collectors.toMap(
@@ -745,7 +748,7 @@ implements LoadStepClient {
 					nodeAddrWithPort -> {
 						try(
 							final Instance logCtx = CloseableThreadContext
-								.put(KEY_STEP_ID, id())
+								.put(KEY_STEP_ID, stepId)
 								.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
 						) {
 							return Optional.of(
@@ -762,10 +765,6 @@ implements LoadStepClient {
 					}
 				)
 			);
-		try {
-			Loggers.MSG.debug("{}: file manager services resolved", id());
-		} catch(final RemoteException ignored) {
-		}
 	}
 
 	private void initIoTraceLogFileServices(final List<String> nodeAddrs) {

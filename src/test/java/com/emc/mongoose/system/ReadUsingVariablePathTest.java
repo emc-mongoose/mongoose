@@ -138,8 +138,7 @@ public final class ReadUsingVariablePathTest {
 		switch(runMode) {
 			case DISTRIBUTED:
 				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
-				args.add("--load-step-distributed");
-				for(int i = 0; i < runMode.getNodeCount(); i ++) {
+				for(int i = 1; i < runMode.getNodeCount(); i ++) {
 					final int port = MongooseSlaveNodeContainer.DEFAULT_PORT + i;
 					final MongooseSlaveNodeContainer nodeSvc = new MongooseSlaveNodeContainer(port);
 					final String addr = localExternalAddr + ":" + port;

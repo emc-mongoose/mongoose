@@ -116,7 +116,8 @@ implements LoadStep, Runnable {
 		this.actualConfig = actualConfig;
 		final Config stepConfig = actualConfig.configVal("load-step");
 		this.id = stepConfig.stringVal("id");
-		this.distributedFlag = stepConfig.boolVal("distributed");
+		final List<String> nodeAddrs = stepConfig.listVal("node-addrs");
+		this.distributedFlag = nodeAddrs == null || nodeAddrs.isEmpty();
 	}
 
 

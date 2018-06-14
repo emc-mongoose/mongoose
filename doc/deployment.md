@@ -43,7 +43,6 @@ The base image may be used as a controller in the distributed mode:
 docker run \
     --network host \
     emcmongoose/mongoose \
-    --load-step-distributed \
     --load-step-node-addrs=<ADDR1,ADDR2,...> [\
     <ARGS>]
 ```

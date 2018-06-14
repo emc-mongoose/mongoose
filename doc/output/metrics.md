@@ -88,7 +88,7 @@ Field Name      | Description
 DateTimeISO8601 | Timestamp in the ISO8601 format
 TypeLoad        | Load type (CREATE/READ/...)
 Concurrency     | The configured concurrency level (per storage driver)
-NodeCount       | Count of the mongoose nodes used for the load (may be more than 1 in the distributed mode)
+NodeCount       | Count of the mongoose nodes used for the load (1 in case of the standalone mode, >1 in case of the distributed mode)
 ConcurrencyCurr | The current summary concurrency level (count of concurrently executed tasks)
 ConcurrencyMean | The mean summary concurrency level for the last *period* (10s by default)
 CountSucc       | Total successful I/O tasks count

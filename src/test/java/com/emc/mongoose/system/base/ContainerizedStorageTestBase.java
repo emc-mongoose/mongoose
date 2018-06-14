@@ -193,7 +193,6 @@ extends ConfiguredTestBase {
 				loadStepNodeAddrsOption.add("127.0.0.1:" + nextLoadStepSvcPort);
 			}
 			configArgs.add(loadStepNodeAddrsOption.toString());
-			configArgs.add("--load-step-distributed");
 		}
 	}
 

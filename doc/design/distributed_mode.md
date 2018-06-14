@@ -60,7 +60,7 @@ scenario:
 5. `storage-auth-file`
 6. `storage-net-http-headers-*` (in case of parameterization is used)
 7. `storage-net-node-addrs` (if node-to-node mapping is enabled)
-8. `load-step-distributed` set to `false`
+8. `load-step-node-addrs` set to empty list value
 
 #### Items Input
 
@@ -109,15 +109,10 @@ TODO
 
 # Configuration
 
-* `load-step-distributed`
-
-    Flag which enables the distributed mode. The default value is
-    `false`.
-
 * `load-step-node-addrs`
 
-    Comma-separated list of slave node IP addresses/hostnames. The default
-    value is `127.0.0.1`. Adding the port numbers is allowed to override the
+    Comma-separated list of slave node IP addresses/hostnames. The default value is empty list
+    (standalone mode). Adding the port numbers is allowed to override the
     `load-step-distributed-node-port` value. For example `nodeA:1100,nodeB:1101,nodeC:1111`
 
 * `load-step-node-port`
