@@ -2,7 +2,7 @@ package com.emc.mongoose.metrics;
 
 import com.emc.mongoose.concurrent.DaemonBase;
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.logging.BasicMetricsLogMessage;
+import com.emc.mongoose.logging.StepResultsMetricsLogMessage;
 import com.emc.mongoose.logging.ExtResultsXmlLogMessage;
 import com.emc.mongoose.logging.MetricsAsciiTableLogMessage;
 import com.emc.mongoose.logging.MetricsCsvLogMessage;
@@ -201,7 +201,7 @@ extends DaemonBase {
 					Loggers.METRICS_STD_OUT.info(
 						new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx), true)
 					);
-					Loggers.METRICS_STD_OUT.info(new BasicMetricsLogMessage(metricsCtx));
+					Loggers.METRICS_STD_OUT.info(new StepResultsMetricsLogMessage(metricsCtx));
 					final AutoCloseable meterMBean = stepMetrics.remove(metricsCtx);
 					if(meterMBean != null) {
 						try {

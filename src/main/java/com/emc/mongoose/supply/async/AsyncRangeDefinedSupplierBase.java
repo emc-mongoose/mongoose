@@ -32,7 +32,7 @@ implements Initializable, RangeDefinedSupplier<T> {
 		this.rnd = new Random(seed);
 		this.minValue = minValue;
 		this.range = computeRange(minValue, maxValue);
-		this.newValueSupplier = new AsyncUpdatingValueSupplier<>(
+		this.newValueSupplier = new AsyncValueUpdatingSupplier<>(
 			executor,
 			minValue,
 			new InitCallable<T>() {

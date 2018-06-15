@@ -1,7 +1,7 @@
 package com.emc.mongoose.item;
 
 import com.emc.mongoose.exception.OmgShootMyFootException;
-import com.emc.mongoose.supply.BasicUpdatingValueSupplier;
+import com.emc.mongoose.supply.ValueUpdatingSupplier;
 import com.github.akurilov.commons.math.MathUtil;
 
 import static java.lang.Long.reverse;
@@ -13,7 +13,7 @@ import static java.lang.System.nanoTime;
  Created by kurila on 18.12.15.
  */
 public class ItemNameSupplier
-extends BasicUpdatingValueSupplier<String>
+extends ValueUpdatingSupplier<String>
 implements IdStringInput {
 	//
 	protected final ItemNamingType namingType;

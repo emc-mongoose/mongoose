@@ -14,11 +14,11 @@ public enum ItemType {
 		final ItemType itemType
 	) {
 		if(ItemType.DATA.equals(itemType)) {
-			return (F) new BasicDataItemFactory<BasicDataItem>();
+			return (F) new DataItemFactoryImpl<DataItemImpl>();
 		} else if(ItemType.PATH.equals(itemType)) {
-			return (F) new BasicPathItemFactory<BasicPathItem>();
+			return (F) new PathItemFactoryImpl<PathItemImpl>();
 		} else if(ItemType.TOKEN.equals(itemType)) {
-			return (F) new BasicTokenItemFactory<BasicTokenItem>();
+			return (F) new TokenItemFactoryImpl<TokenItemImpl>();
 		} else {
 			throw new AssertionError("Item type \"" + itemType + "\" is not supported");
 		}

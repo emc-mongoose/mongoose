@@ -6,7 +6,7 @@ import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.load.generator.LoadGenerator;
 import com.emc.mongoose.metrics.AggregatingMetricsContext;
-import com.emc.mongoose.metrics.BasicMetricsContext;
+import com.emc.mongoose.metrics.MetricsContextImpl;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsSnapshot;
@@ -15,7 +15,7 @@ import com.emc.mongoose.logging.LogContextThreadFactory;
 import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.load.step.LoadStep;
-import com.emc.mongoose.load.step.master.BasicLoadStepClient;
+import com.emc.mongoose.load.step.master.LoadStepClientImpl;
 import com.emc.mongoose.load.step.master.LoadStepClient;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -163,7 +163,7 @@ implements LoadStep, Runnable {
 				// need to set the once generated step id
 				final Config config = new BasicConfig(baseConfig);
 				config.val("load-step-id", stepId);
-				stepClient = new BasicLoadStepClient(this, config, extensions, stepConfigs);
+				stepClient = new LoadStepClientImpl(this, config, extensions, stepConfigs);
 				stepClient.start();
 			} else {
 				doStartLocal();
@@ -211,7 +211,7 @@ implements LoadStep, Runnable {
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
 		metricsContexts.add(
-			new BasicMetricsContext(
+			new MetricsContextImpl(
 				id, ioType,
 				() -> drivers.stream().mapToInt(StorageDriver::getActiveTaskCount).sum(),
 				concurrency, (int) (concurrency * metricsConfig.doubleVal("threshold")),

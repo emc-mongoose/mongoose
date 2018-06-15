@@ -218,7 +218,7 @@ implements MetricsContext {
 		final long currentTimeMillis = System.currentTimeMillis();
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
 
-		lastSnapshot = new BasicMetricsContext.BasicSnapshot(
+		lastSnapshot = new MetricsContextImpl.MetricsSnapshotImpl(
 			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast,
 			tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyLast,
 			actualConcurrencyMean, sumDur, sumLat, durSnapshot, latSnapshot

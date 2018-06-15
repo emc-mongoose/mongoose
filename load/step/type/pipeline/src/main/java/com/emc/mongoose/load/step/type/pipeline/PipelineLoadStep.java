@@ -15,8 +15,8 @@ import com.emc.mongoose.item.TransferConvertBuffer;
 import com.emc.mongoose.load.step.type.LoadController;
 import com.emc.mongoose.load.generator.LoadGenerator;
 import com.emc.mongoose.storage.driver.StorageDriver;
-import com.emc.mongoose.load.step.type.BasicLoadController;
-import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
+import com.emc.mongoose.load.step.type.LoadControllerImpl;
+import com.emc.mongoose.load.generator.LoadGeneratorBuilderImpl;
 import com.emc.mongoose.load.generator.LoadGeneratorBuilder;
 import com.emc.mongoose.load.step.type.LoadStepBase;
 import com.emc.mongoose.logging.LogUtil;
@@ -139,7 +139,7 @@ extends LoadStepBase  {
 						final double rateLimit = loadConfig.doubleVal("step-limit-rate");
 
 						try {
-							final LoadGeneratorBuilder generatorBuilder = new BasicLoadGeneratorBuilder<>()
+							final LoadGeneratorBuilder generatorBuilder = new LoadGeneratorBuilderImpl<>()
 								.itemConfig(itemConfig)
 								.loadConfig(loadConfig)
 								.limitConfig(limitConfig)
@@ -157,7 +157,7 @@ extends LoadStepBase  {
 							final LoadGenerator generator = generatorBuilder.build();
 							generators.add(generator);
 
-							final LoadController controller = new BasicLoadController<>(
+							final LoadController controller = new LoadControllerImpl<>(
 								testStepId, generator, driver, metricsContexts.get(originIndex),
 								limitConfig,
 								outputConfig.boolVal("metrics-trace-persist"),

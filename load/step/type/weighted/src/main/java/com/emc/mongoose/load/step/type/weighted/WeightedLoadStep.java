@@ -11,8 +11,8 @@ import com.emc.mongoose.item.ItemType;
 import com.emc.mongoose.load.step.type.LoadController;
 import com.emc.mongoose.load.generator.LoadGenerator;
 import com.emc.mongoose.storage.driver.StorageDriver;
-import com.emc.mongoose.load.step.type.BasicLoadController;
-import com.emc.mongoose.load.generator.BasicLoadGeneratorBuilder;
+import com.emc.mongoose.load.step.type.LoadControllerImpl;
+import com.emc.mongoose.load.generator.LoadGeneratorBuilderImpl;
 import com.emc.mongoose.load.step.type.LoadStepBase;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -24,7 +24,6 @@ import com.github.akurilov.commons.concurrent.throttle.RateThrottle;
 import com.github.akurilov.commons.concurrent.throttle.SequentialWeightsThrottle;
 import static com.github.akurilov.commons.collection.TreeUtil.reduceForest;
 
-import static com.github.akurilov.confuse.Config.ROOT_PATH;
 import static com.github.akurilov.confuse.Config.deepToMap;
 
 import com.github.akurilov.confuse.Config;
@@ -154,7 +153,7 @@ extends LoadStepBase {
 						final double rateLimit = loadConfig.doubleVal("step-limit-rate");
 
 						try {
-							final LoadGenerator generator = new BasicLoadGeneratorBuilder<>()
+							final LoadGenerator generator = new LoadGeneratorBuilderImpl<>()
 								.itemConfig(itemConfig)
 								.loadConfig(loadConfig)
 								.limitConfig(limitConfig)
@@ -168,7 +167,7 @@ extends LoadStepBase {
 								.build();
 							generators.add(generator);
 
-							final LoadController controller = new BasicLoadController<>(
+							final LoadController controller = new LoadControllerImpl<>(
 								testStepId, generator, driver, metricsContexts.get(originIndex),
 								limitConfig,
 								outputConfig.boolVal("metrics-trace-persist"),

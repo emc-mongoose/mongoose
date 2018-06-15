@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.nio.fs;
 
-import com.emc.mongoose.item.BasicDataItem;
-import com.emc.mongoose.item.BasicItemFactory;
+import com.emc.mongoose.item.DataItemImpl;
+import com.emc.mongoose.item.ItemFactoryImpl;
 import com.emc.mongoose.item.DataItem;
 
 import com.github.akurilov.commons.math.Random;
@@ -76,18 +76,18 @@ public class FileStorageDriverTest {
 		}
 
 		List<DataItem> items = ListingHelper.list(
-			new BasicItemFactory<>(), TMP_DIR_PATH.toString(), prefix, 10,
-			new BasicDataItem("yohoho0099", 0, 0), count
+			new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), prefix, 10,
+			new DataItemImpl("yohoho0099", 0, 0), count
 		);
 		assertEquals(Integer.toString(items.size()), 99, items.size());
 
 		items = ListingHelper.list(
-			new BasicItemFactory<>(), TMP_DIR_PATH.toString(), prefix, 10, null, 100
+			new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), prefix, 10, null, 100
 		);
 		assertEquals(100, items.size());
 
 		items = ListingHelper.list(
-			new BasicItemFactory<>(), TMP_DIR_PATH.toString(), null, 10, null, 2 * count
+			new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), null, 10, null, 2 * count
 		);
 		assertEquals(2 * count, items.size());
 	}

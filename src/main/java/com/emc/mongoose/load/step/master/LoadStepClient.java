@@ -8,5 +8,7 @@ import java.util.List;
 public interface LoadStepClient
 extends LoadStep {
 
+	String ADDR_LOCAL_NONE = ".";
+
 	List<MetricsSnapshot> remoteMetricsSnapshots(final int originIndex);
 }

@@ -16,8 +16,8 @@ extends Serializable {
 		if(uid == null && secret == null) {
 			return null;
 		}
-		return new BasicCredential(uid, secret);
+		return new CredentialImpl(uid, secret);
 	}
 
-	Credential NONE = new BasicCredential(null, null);
+	Credential NONE = new CredentialImpl(null, null);
 }
