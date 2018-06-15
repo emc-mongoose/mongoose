@@ -74,7 +74,7 @@ implements LoadStepClient {
 	private final Config baseConfig;
 	private final List<Extension> extensions;
 	private final List<Map<String, Object>> stepConfigs;
-	private final Map<LoadStepService, MetricsSnapshotsSupplierFiber> metricsSnapshotsSuppliers;
+	private final Map<LoadStep, MetricsSnapshotsSupplierFiber> metricsSnapshotsSuppliers;
 
 	public BasicLoadStepClient(
 		final LoadStep loadStep, final Config baseConfig, final List<Extension> extensions,
@@ -87,7 +87,7 @@ implements LoadStepClient {
 		this.metricsSnapshotsSuppliers = new HashMap<>();
 	}
 
-	private List<LoadStepService> stepSvcs = null;
+	private List<LoadStep> stepSlices = null;
 	private Map<String, Optional<FileManagerService>> fileMgrSvcs = null;
 	private Map<String, Optional<FileService>> itemInputFileSvcs = null;
 	private Map<String, Optional<FileService>> itemOutputFileSvcs = null;
@@ -114,8 +114,7 @@ implements LoadStepClient {
 				.collect(Collectors.toList());
 			if(nodeAddrs.size() < 1) {
 				throw new IllegalArgumentException(
-					"There should be at least 1 node address to be configured if the " +
-						"distributed mode is enabled"
+					"There should be at least 1 node address to be configured if the distributed mode is enabled"
 				);
 			}
 
@@ -130,7 +129,7 @@ implements LoadStepClient {
 				this::resolveStepSvc, configSlices
 			);
 
-			stepSvcs = nodeAddrs
+			steps = nodeAddrs
 				.parallelStream()
 				.map(resolveStepSvcPartialFunc)
 				.filter(Objects::nonNull)
@@ -147,8 +146,7 @@ implements LoadStepClient {
 						} catch(final RemoteException | IllegalStateException e) {
 							try {
 								LogUtil.exception(
-									Level.ERROR, e, "Failed to start the step service {}",
-									stepSvc.name()
+									Level.ERROR, e, "Failed to start the step service {}", stepSvc.name()
 								);
 							} catch(final RemoteException ignored) {
 							}
@@ -156,6 +154,7 @@ implements LoadStepClient {
 					}
 				)
 				.collect(Collectors.toList());
+			// TODO - issue #1193 - add local load step service
 
 			Loggers.MSG.info(
 				"Load step client \"{}\" started @ {}", id(), Arrays.toString(nodeAddrs.toArray())
@@ -166,24 +165,18 @@ implements LoadStepClient {
 
 	@Override
 	protected final void doShutdown() {
-		stepSvcs
+		stepSlices
 			.parallelStream()
 			.forEach(
-				stepSvc -> {
+				stepSlice -> {
 					try(
 						final Instance logCtx = CloseableThreadContext
 							.put(KEY_STEP_ID, id())
 							.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
 					) {
-						stepSvc.shutdown();
+						stepSlice.shutdown();
 					} catch(final RemoteException e) {
-						try {
-							LogUtil.exception(
-								Level.WARN, e, "Failed to shutdown the step service {}",
-								stepSvc.name()
-							);
-						} catch(final RemoteException ignored) {
-						}
+						LogUtil.exception(Level.WARN, e, "Failed to shutdown the step service {}", stepSlice);
 					}
 				}
 			);
@@ -191,14 +184,11 @@ implements LoadStepClient {
 
 	private Map<String, Config> sliceConfigs(final Config config, final List<String> nodeAddrs) {
 
+		// TODO - issue #1193 - modify to include local
+
 		final Map<String, Config> configSlices = nodeAddrs
 			.stream()
-			.collect(
-				Collectors.toMap(
-					Function.identity(),
-					Function2.partial1(LoadStep::initConfigSlice, config)
-				)
-			);
+			.collect(Collectors.toMap(Function.identity(), Function2.partial1(LoadStep::initConfigSlice, config)));
 
 		// slice the count limit (if any)
 		final int nodeCount = nodeAddrs.size();
@@ -209,15 +199,11 @@ implements LoadStepClient {
 			for(final Map.Entry<String, Config> configEntry : configSlices.entrySet()) {
 				final Config limitConfigSlice = configEntry.getValue().configVal("load-step-limit");
 				if(remainingCountLimit > countLimitPerNode) {
-					Loggers.MSG.info(
-						"Node \"{}\": count limit = {}", configEntry.getKey(), countLimitPerNode
-					);
+					Loggers.MSG.info("Node \"{}\": count limit = {}", configEntry.getKey(), countLimitPerNode);
 					limitConfigSlice.val("count", countLimitPerNode);
 					remainingCountLimit -= countLimitPerNode;
 				} else {
-					Loggers.MSG.info(
-						"Node \"{}\": count limit = {}", configEntry.getKey(), remainingCountLimit
-					);
+					Loggers.MSG.info("Node \"{}\": count limit = {}", configEntry.getKey(), remainingCountLimit);
 					limitConfigSlice.val("count", remainingCountLimit);
 					remainingCountLimit = 0;
 				}
@@ -250,23 +236,14 @@ implements LoadStepClient {
 							fileMgrSvcs
 								.get(nodeAddrWithPort)
 								.map(
-									Function3.partial13(
-										BasicLoadStepClient::createFileService, nodeAddrWithPort,
-										null
-									)
+									Function3.partial13(BasicLoadStepClient::createFileService, nodeAddrWithPort, null)
 								)
 								.map(
 									Function2
-										.partial1(
-											BasicLoadStepClient::resolveService, nodeAddrWithPort
-										)
+										.partial1(BasicLoadStepClient::resolveService, nodeAddrWithPort)
 										.andThen(svc -> (FileService) svc)
 								)
-								.map(
-									Function2.partial1(
-										BasicLoadStepClient::createRemoteFile, nodeAddrWithPort
-									)
-								)
+								.map(Function2.partial1(BasicLoadStepClient::createRemoteFile, nodeAddrWithPort))
 					)
 				);
 			// change the item output file value for each slice
@@ -282,13 +259,12 @@ implements LoadStepClient {
 									.configVal("item-output");
 								outputConfigSlice.val("file", remoteItemOutputFile);
 								Loggers.MSG.info(
-									"{}: temporary item output file is \"{}\" @ {}", id(),
-									remoteItemOutputFile, nodeAddrWithPort
+									"{}: temporary item output file is \"{}\" @ {}", id(), remoteItemOutputFile,
+									nodeAddrWithPort
 								);
 							} catch(final RemoteException e) {
 								LogUtil.exception(
-									Level.WARN, e,
-									"Failed to get the remote item output file path @ {}",
+									Level.WARN, e, "Failed to get the remote item output file path @ {}",
 									nodeAddrWithPort
 								);
 							}
@@ -317,9 +293,7 @@ implements LoadStepClient {
 		try {
 			return ServiceUtil.resolve(nodeAddrWithPort, svcName);
 		} catch(final Exception e) {
-			LogUtil.exception(
-				Level.WARN, e, "Failed to resolve the service @ {}", nodeAddrWithPort
-			);
+			LogUtil.exception(Level.WARN, e, "Failed to resolve the service @ {}", nodeAddrWithPort);
 		}
 		return null;
 	}
@@ -333,11 +307,7 @@ implements LoadStepClient {
 			final String filePath = fileSvc.filePath();
 			Loggers.MSG.info("Use temporary remote item output file \"{}\"", filePath);
 		} catch(final IOException e) {
-			LogUtil.exception(
-				Level.WARN, e,
-				"Failed to create the remote file @ {}",
-				nodeAddrWithPort
-			);
+			LogUtil.exception(Level.WARN, e, "Failed to create the remote file @ {}", nodeAddrWithPort);
 		}
 		return fileSvc;
 	}
@@ -378,8 +348,7 @@ implements LoadStepClient {
 				try {
 					final DataInput dataInput = DataInput.instance(
 						dataInputConfig.stringVal("file"), dataInputConfig.stringVal("seed"),
-						new SizeInBytes(dataLayerConfig.stringVal("size")),
-						dataLayerConfig.intVal("cache")
+						new SizeInBytes(dataLayerConfig.stringVal("size")), dataLayerConfig.intVal("cache")
 					);
 					final StorageDriver<I, IoTask<I>> storageDriver = StorageDriver.instance(
 						extensions, config.configVal("load"), config.configVal("storage"),
@@ -388,9 +357,8 @@ implements LoadStepClient {
 					final Config namingConfig = itemConfig.configVal("naming");
 					final String namingPrefix = namingConfig.stringVal("prefix");
 					final int namingRadix = namingConfig.intVal("radix");
-					return new StorageItemInput<I>(
-						storageDriver, batchSize, itemFactory, itemInputPath, namingPrefix,
-						namingRadix
+					return new StorageItemInput<>(
+						storageDriver, batchSize, itemFactory, itemInputPath, namingPrefix, namingRadix
 					);
 				} catch(final IOException | IllegalStateException | IllegalArgumentException e) {
 					LogUtil.exception(Level.WARN, e, "Failed to initialize the data input");
@@ -409,6 +377,8 @@ implements LoadStepClient {
 		final Input<Item> itemInput, final List<String> nodeAddrs,
 		final Map<String, Config> configSlices, final int batchSize
 	) throws IOException {
+
+		// TODO - issue #1193 - modify to include local
 
 		itemInputFileSvcs = createOpenItemInputFileServices(nodeAddrs);
 
@@ -436,10 +406,7 @@ implements LoadStepClient {
 			);
 
 		transferItemsInputData(nodeAddrs, itemInput, batchSize, itemsDataByNode, itemsOutByNode);
-		Loggers.MSG.info(
-			"{}: items input data is distributed to the nodes: {}",
-			Arrays.toString(nodeAddrs.toArray())
-		);
+		Loggers.MSG.info("{}: items input data is distributed to the nodes: {}", Arrays.toString(nodeAddrs.toArray()));
 
 		nodeAddrs
 			.parallelStream()
@@ -481,8 +448,7 @@ implements LoadStepClient {
 							} catch(final RemoteException e) {
 								try {
 									LogUtil.exception(
-										Level.WARN, e,
-										"Failed to invoke the file service \"{}\" @ {}",
+										Level.WARN, e, "Failed to invoke the file service \"{}\" @ {}",
 										fileSvc.name(), nodeAddrWithPort
 									);
 								} catch(final RemoteException ignored) {
@@ -522,8 +488,7 @@ implements LoadStepClient {
 									return fileMgrSvc.createFileService(null);
 								} catch(final RemoteException e) {
 									LogUtil.exception(
-										Level.WARN, e,
-										"Failed to create the remote file service @ {}",
+										Level.WARN, e, "Failed to create the remote file service @ {}",
 										nodeAddrWithPort
 									);
 								}
@@ -548,8 +513,7 @@ implements LoadStepClient {
 									fileSvc.open(FileService.WRITE_OPEN_OPTIONS);
 								} catch(final IOException e) {
 									LogUtil.exception(
-										Level.WARN, e,
-										"Failed to open the remote file for writing @ {}",
+										Level.WARN, e, "Failed to open the remote file for writing @ {}",
 										nodeAddrWithPort
 									);
 								}
@@ -637,22 +601,18 @@ implements LoadStepClient {
 
 		final LoadStepManagerService stepMgrSvc;
 		try {
-			stepMgrSvc = ServiceUtil.resolve(
-				nodeAddrWithPort, LoadStepManagerService.SVC_NAME
-			);
+			stepMgrSvc = ServiceUtil.resolve(nodeAddrWithPort, LoadStepManagerService.SVC_NAME);
 		} catch(final Exception e) {
 			LogUtil.exception(
-				Level.ERROR, e, "Failed to resolve the service \"{}\" @ {}",
-				LoadStepManagerService.SVC_NAME, nodeAddrWithPort
+				Level.ERROR, e, "Failed to resolve the service \"{}\" @ {}", LoadStepManagerService.SVC_NAME,
+				nodeAddrWithPort
 			);
 			return null;
 		}
 
 		final String stepSvcName;
 		try {
-			stepSvcName = stepMgrSvc.getStepService(
-				getTypeName(), configSlices.get(nodeAddrWithPort), stepConfigs
-			);
+			stepSvcName = stepMgrSvc.getStepService(getTypeName(), configSlices.get(nodeAddrWithPort), stepConfigs);
 		} catch(final Exception e) {
 			LogUtil.exception(
 				Level.ERROR, e, "Failed to start the new scenario step service @ {}",
@@ -666,17 +626,14 @@ implements LoadStepClient {
 			stepSvc = ServiceUtil.resolve(nodeAddrWithPort, stepSvcName);
 		} catch(final Exception e) {
 			LogUtil.exception(
-				Level.ERROR, e, "Failed to resolve the service \"{}\" @ {}",
-				LoadStepManagerService.SVC_NAME, nodeAddrWithPort
+				Level.ERROR, e, "Failed to resolve the service \"{}\" @ {}", LoadStepManagerService.SVC_NAME,
+				nodeAddrWithPort
 			);
 			return null;
 		}
 
 		try {
-			Loggers.MSG.info(
-				"{}: load step service \"{}\" is resolved @ {}", id(), stepSvc.name(),
-				nodeAddrWithPort
-			);
+			Loggers.MSG.info("{}: load step service \"{}\" is resolved @ {}", id(), stepSvc.name(), nodeAddrWithPort);
 		} catch(final RemoteException ignored) {
 		}
 
@@ -686,13 +643,13 @@ implements LoadStepClient {
 	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws IllegalStateException, InterruptedException {
-		if(stepSvcs == null || stepSvcs.size() == 0) {
+		if(steps == null || steps.size() == 0) {
 			throw new IllegalStateException("No step services available");
 		}
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
-			stepSvcs.size(), new LogContextThreadFactory("remoteStepSvcAwaitWorker", true)
+			steps.size(), new LogContextThreadFactory("remoteStepSvcAwaitWorker", true)
 		);
-		stepSvcs
+		steps
 			.stream()
 			.map(
 				stepSvc ->
@@ -722,8 +679,7 @@ implements LoadStepClient {
 					}
 				} catch(final RemoteException e) {
 					LogUtil.exception(
-						Level.DEBUG, e,
-						"Failed to invoke the step service \"{}\" await method {} times",
+						Level.DEBUG, e, "Failed to invoke the step service \"{}\" await method {} times",
 						stepSvc.name(), commFailCount
 					);
 					commFailCount ++;
@@ -751,13 +707,10 @@ implements LoadStepClient {
 								.put(KEY_STEP_ID, stepId)
 								.put(KEY_CLASS_NAME, BasicLoadStepClient.class.getSimpleName())
 						) {
-							return Optional.of(
-								ServiceUtil.resolve(nodeAddrWithPort, FileManagerService.SVC_NAME)
-							);
+							return Optional.of(ServiceUtil.resolve(nodeAddrWithPort, FileManagerService.SVC_NAME));
 						} catch(final Exception e) {
 							LogUtil.exception(
-								Level.ERROR, e,
-								"Failed to resolve the remote file manager service @ {}",
+								Level.ERROR, e, "Failed to resolve the remote file manager service @ {}",
 								nodeAddrWithPort
 							);
 						}
@@ -782,13 +735,10 @@ implements LoadStepClient {
 								.map(
 									fileMgrSvc -> {
 										try {
-											return fileMgrSvc.createLogFileService(
-												Loggers.IO_TRACE.getName(), id()
-											);
+											return fileMgrSvc.createLogFileService(Loggers.IO_TRACE.getName(), id());
 										} catch(final RemoteException e) {
 											LogUtil.exception(
-												Level.WARN, e,
-												"Failed to create the log file service @ {}",
+												Level.WARN, e, "Failed to create the log file service @ {}",
 												nodeAddrWithPort
 											);
 										}
@@ -819,7 +769,7 @@ implements LoadStepClient {
 
 	@Override
 	protected final void doStop() {
-		stepSvcs
+		steps
 			.parallelStream()
 			.forEach(BasicLoadStepClient::stopStepSvc);
 	}
@@ -833,10 +783,7 @@ implements LoadStepClient {
 			stepSvc.stop();
 		} catch(final Exception e) {
 			try {
-				LogUtil.exception(
-					Level.WARN, e, "Failed to stop the step service \"{}\"",
-					stepSvc.name()
-				);
+				LogUtil.exception(Level.WARN, e, "Failed to stop the step service \"{}\"", stepSvc.name());
 			} catch(final Exception ignored) {
 			}
 		}
@@ -858,18 +805,16 @@ implements LoadStepClient {
 					) {
 						snapshotsFetcher.stop();
 					} catch(final IOException e) {
-						LogUtil.exception(
-							Level.WARN, e, "Failed to stop the remote metrics snapshot fetcher"
-						);
+						LogUtil.exception(Level.WARN, e, "Failed to stop the remote metrics snapshot fetcher");
 					}
 				}
 			);
 
-		stepSvcs
+		steps
 			.parallelStream()
 			.forEach(BasicLoadStepClient::closeStepSvc);
-		stepSvcs.clear();
-		stepSvcs = null;
+		steps.clear();
+		steps = null;
 
 		metricsSnapshotsSuppliers
 			.values()
@@ -883,9 +828,7 @@ implements LoadStepClient {
 					) {
 						snapshotsFetcher.close();
 					} catch(final IOException e) {
-						LogUtil.exception(
-							Level.WARN, e, "Failed to close the remote metrics snapshot fetcher"
-						);
+						LogUtil.exception(Level.WARN, e, "Failed to close the remote metrics snapshot fetcher");
 					}
 				}
 			);
@@ -934,13 +877,10 @@ implements LoadStepClient {
 	) {
 		final Path itemOutputFilePath = Paths.get(itemOutputFile);
 		if(Files.exists(itemOutputFilePath)) {
-			Loggers.MSG.info(
-				"Item output file \"{}\" already exists - will be appended", itemOutputFile
-			);
+			Loggers.MSG.info("Item output file \"{}\" already exists - will be appended", itemOutputFile);
 		} else {
 			Loggers.MSG.info(
-				"Transfer the items output data from the remote nodes to the local file \"{}\"...",
-				itemOutputFile
+				"Transfer the items output data from the remote nodes to the local file \"{}\"...",  itemOutputFile
 			);
 		}
 		try(
@@ -971,9 +911,7 @@ implements LoadStepClient {
 							}
 						} catch(final EOFException ok) {
 						} catch(final IOException e) {
-							LogUtil.exception(
-								Level.WARN, e, "Remote items output file transfer failure"
-							);
+							LogUtil.exception(Level.WARN, e, "Remote items output file transfer failure");
 						} catch(final Throwable cause) {
 							LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
 						} finally {
@@ -990,8 +928,7 @@ implements LoadStepClient {
 				);
 		} catch(final IOException e) {
 			LogUtil.exception(
-				Level.ERROR, e, "Failed to open the local file \"{}\" for the items output",
-				itemOutputFile
+				Level.ERROR, e, "Failed to open the local file \"{}\" for the items output", itemOutputFile
 			);
 		}
 	}
@@ -1005,10 +942,7 @@ implements LoadStepClient {
 				stepSvc.close();
 			} catch(final Exception e) {
 				try {
-					LogUtil.exception(
-						Level.WARN, e, "Failed to close the step service \"{}\"",
-						stepSvc.name()
-					);
+					LogUtil.exception(Level.WARN, e, "Failed to close the step service \"{}\"",  stepSvc.name());
 				} catch(final Exception ignored) {
 				}
 			}
@@ -1028,8 +962,7 @@ implements LoadStepClient {
 			} catch(final IOException e) {
 				try {
 					LogUtil.exception(
-						Level.WARN, e, "Failed to close the file service \"{}\" @ {}",
-						fileSvc.name(), nodeAddrWithPort
+						Level.WARN, e, "Failed to close the file service \"{}\" @ {}",  fileSvc.name(), nodeAddrWithPort
 					);
 				} catch(final RemoteException ignored) {
 				}
@@ -1067,8 +1000,7 @@ implements LoadStepClient {
 			} catch(final IOException e) {
 				try {
 					LogUtil.exception(
-						Level.DEBUG, e, "Failed to close the remote file {}",
-						ioTraceLogFileSvc.filePath()
+						Level.DEBUG, e, "Failed to close the remote file {}",  ioTraceLogFileSvc.filePath()
 					);
 				} catch(final RemoteException ignored) {
 				}

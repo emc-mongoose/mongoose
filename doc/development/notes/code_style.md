@@ -1,5 +1,5 @@
 * Indent code with TAB having width of 4 characters
-* Code line width: 100 characters
+* Code line width: 120 characters
 * Long line example:
 ```java
 nextSubTask = new BasicPartialMutableDataIoTask<>(

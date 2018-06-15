@@ -89,9 +89,7 @@ implements LoadStep, Runnable {
 					Map.Entry::getKey,
 					entry -> {
 						final Object value = entry.getValue();
-						return value instanceof Map ?
-							deepCopyTree((Map<String, Object>) value) :
-							value;
+						return value instanceof Map ? deepCopyTree((Map<String, Object>) value) : value;
 					}
 				)
 			);

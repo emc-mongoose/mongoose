@@ -39,9 +39,7 @@ implements FileService {
 					LogUtil.exception(Level.DEBUG, e, "Failed to create tmp directory {}", TMP_DIR);
 				}
 			}
-			this.filePath = Paths
-				.get(TMP_DIR.toString(), Long.toString(System.nanoTime()))
-				.toString();
+			this.filePath = Paths.get(TMP_DIR.toString(), Long.toString(System.nanoTime())).toString();
 		} else {
 			this.filePath = filePath;
 		}

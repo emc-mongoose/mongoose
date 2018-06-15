@@ -1,11 +1,9 @@
 # Introduction
 
-In the new major version of Mongoose the new distributed mode
-architecture is introduced. Comparing to the previous design the
-scenario is not executed on the master node completely. The scenario
-steps are *sliced* by the *master* node among all the *slave* nodes
-involved in the test. Then each step *slice* is being executed
-independently on the corresponding slave node.
+In the new major version of Mongoose the new distributed mode architecture is introduced. Comparing to the previous
+design the scenario is not executed on the master node completely. The scenario steps are *sliced* by the chosen
+*master* node among all the nodes involved in the load step. Then each step *slice* is being executed independently on
+the corresponding node.
 
 | v3.x.x | v4.x.x
 |----|----
@@ -14,44 +12,39 @@ independently on the corresponding slave node.
 * **v3.x.x**
     * The "controller" is used to initiate the run
     * The "controller" is located at separate host usually
-    * The "drivers" are "thin": execute the I/O tasks only (in other
-      words, contains storage driver only)
+    * The "drivers" are "thin": execute the I/O tasks only (in other words, contains storage driver only)
     * The "controller" is "rich"
 * **v4.x.x**
     * The "master" node is used to initiate the run
     * Any node may be used to initiate the run
-    * The "slave" node is "rich": execute the load step "slices"
-      entirely and independently (in other words, contains storage
-      driver, load generator, load step service, etc)
+    * The "slave" node is "rich": execute the load step "slices" entirely and independently (in other words, contains
+      storage driver, load generator, load step service, etc)
 
 ## Advantages
 
-1. Higher distributed mode performance due to lack of the single point
-of contention.
-2. The opportunity to introduce the modular configuration.
-3. Joint interface for CLI and GUI.
+1. Higher distributed mode performance due to lack of the single point of contention
+2. The opportunity to introduce the modular configuration
+3. Joint interface for CLI and GUI
 
 # Design
 
-The distributed mode test involves at least one master node and some set of the slave nodes. The
-test may be started from any node from that set. The node selected to start the test should be
-treated as the *master node*. The master node is not excluded from the actual load execution.
+The distributed mode test involves at least one master node and some set of the slave nodes. The test may be started
+from any node from that set. The node selected to start the test should be temporarily treated as the *master node*.
+The master node is not excluded from the actual load execution.
 
 ## Master Node
 
-Master node loads the scenario into the corresponding scripting engine.
-The scripting engine instantiates the scenario steps. Each load step
-consists of its local and remote parts. The local step functionality:
+Master node loads the scenario into the corresponding scripting engine. The scripting engine instantiates the scenario
+steps. Each load step consists of its local and remote parts. The local step functionality:
 
 * step slicing
-* load the input items and distribute to the slave nodes
+* load the input items and distribute to the nodes
 * item output file aggregation (optional)
 * I/O traces aggregation (optional)
 
 ### Scenario Step Slicing
 
-The configuration parameters which are the subject of slicing in the
-scenario:
+The configuration parameters which are the subject of slicing in the scenario:
 
 1. `item-input-file`
 2. `item-input-path`
@@ -64,15 +57,14 @@ scenario:
 
 #### Items Input
 
-The items input is being read locally if configured. The items from the input are distributed to the
-files located on the remote side. Then these files are used as items input files by the remote side.
+The items input is being read locally if configured. The items from the input are distributed to the files located on
+the remote side. Then these files are used as items input files by the remote side.
 
 #### Item Naming Scheme
 
-New configuration parameter `item-naming-step` is required to support
-a load step slicing in case of a non-random item naming scheme. The
-default `item-naming-step` parameter value is 1. In the distributed
-mode the value is equal to the count of the slave nodes involved in the test.
+New configuration parameter `item-naming-step` is required to support a load step slicing in case of a non-random item
+naming scheme. The default `item-naming-step` parameter value is 1. In the distributed mode the value is equal to the
+count of the slave nodes involved in the test.
 
 Example:
 
@@ -95,8 +87,7 @@ Example:
 ### Control
 
 1. Run actually the configured scenario step slice
-    1. Local scenario step should remember the environment variables
-    got upon instantiation from the scripting engine
+    1. Local scenario step should remember the environment variables got upon instantiation from the scripting engine
     2. Scenario step slice should be serializable
     3. Items for the input should be transferred and persisted too
 2. Determine the specified step state (started, paused, finished)
@@ -111,9 +102,9 @@ TODO
 
 * `load-step-node-addrs`
 
-    Comma-separated list of slave node IP addresses/hostnames. The default value is empty list
-    (standalone mode). Adding the port numbers is allowed to override the
-    `load-step-distributed-node-port` value. For example `nodeA:1100,nodeB:1101,nodeC:1111`
+    Comma-separated list of slave node IP addresses/hostnames. The default value is empty list (standalone mode). Adding
+    the port numbers is allowed to override the `load-step-distributed-node-port` value. For example
+    `nodeA:1100,nodeB:1101,nodeC:1111`
 
 * `load-step-node-port`
 
