@@ -15,8 +15,8 @@ import com.emc.mongoose.logging.LogContextThreadFactory;
 import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.load.step.LoadStep;
-import com.emc.mongoose.load.step.master.LoadStepClientImpl;
-import com.emc.mongoose.load.step.master.LoadStepClient;
+import com.emc.mongoose.load.step.client.LoadStepClientImpl;
+import com.emc.mongoose.load.step.client.LoadStepClient;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
@@ -52,7 +52,7 @@ implements LoadStep, Runnable {
 	protected final List<StorageDriver> drivers = new ArrayList<>();
 	protected final List<LoadController> controllers = new ArrayList<>();
 
-	protected boolean distributedFlag = false;
+	protected boolean clientFlag = false;
 	protected volatile LoadStepClient stepClient = null;
 
 	private volatile Config actualConfig = null;
@@ -115,7 +115,7 @@ implements LoadStep, Runnable {
 		final Config stepConfig = actualConfig.configVal("load-step");
 		this.id = stepConfig.stringVal("id");
 		final List<String> nodeAddrs = stepConfig.listVal("node-addrs");
-		this.distributedFlag = nodeAddrs == null || nodeAddrs.isEmpty();
+		this.clientFlag = nodeAddrs != null && !nodeAddrs.isEmpty();
 	}
 
 
@@ -159,7 +159,7 @@ implements LoadStep, Runnable {
 				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
-			if(distributedFlag) {
+			if(clientFlag) {
 				// need to set the once generated step id
 				final Config config = new BasicConfig(baseConfig);
 				config.val("load-step-id", stepId);

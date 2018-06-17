@@ -18,8 +18,8 @@ import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
 import com.emc.mongoose.svc.Service;
 import com.emc.mongoose.load.step.ScriptEngineUtil;
-import com.emc.mongoose.load.step.slave.StepFileManagerServiceImpl;
-import com.emc.mongoose.load.step.slave.LoadStepManagerServiceImpl;
+import com.emc.mongoose.load.step.service.StepFileManagerServiceImpl;
+import com.emc.mongoose.load.step.service.LoadStepManagerServiceImpl;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;

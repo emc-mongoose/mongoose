@@ -1,6 +1,6 @@
 package com.emc.mongoose.load.step;
 
-import com.emc.mongoose.load.step.slave.StepFileServiceImpl;
+import com.emc.mongoose.load.step.service.StepFileServiceImpl;
 import com.emc.mongoose.logging.LogUtil;
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;

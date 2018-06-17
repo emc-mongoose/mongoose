@@ -1,9 +1,12 @@
 # Introduction
 
-In the new major version of Mongoose the new distributed mode architecture is introduced. Comparing to the previous
-design the scenario is not executed on the master node completely. The scenario steps are *sliced* by the chosen
-*master* node among all the nodes involved in the load step. Then each step *slice* is being executed independently on
-the corresponding node.
+In the new major version of Mongoose the new distributed mode architecture is introduced. Any *distributed load step*
+execution may be initiated from any node from the given set. Then the chosen node becomes an temparary *entry node*.
+There may be also *additional nodes* involved in the given distributed load step. All necessary input is prepared
+(*sliced*) and distributed among the nodes before the actual load step start to get rid of the redundant interaction
+via the network during the load step execution. The additional nodes are being polled periodically to synchronize the
+load step state. After the load step is done, the summary data may be (optionally) aggregated and persisted on the entry
+node.
 
 | v3.x.x | v4.x.x
 |----|----
@@ -15,10 +18,10 @@ the corresponding node.
     * The "drivers" are "thin": execute the I/O tasks only (in other words, contains storage driver only)
     * The "controller" is "rich"
 * **v4.x.x**
-    * The "master" node is used to initiate the run
+    * The *entry node* is used to initiate the run
     * Any node may be used to initiate the run
-    * The "slave" node is "rich": execute the load step "slices" entirely and independently (in other words, contains
-      storage driver, load generator, load step service, etc)
+    * The *additional node* is functionally "rich": it executes the load step "slices" entirely and independently (in
+      other words, contains storage driver, load generator, load step service, etc)
 
 ## Advantages
 
@@ -28,13 +31,13 @@ the corresponding node.
 
 # Design
 
-The distributed mode test involves at least one master node and some set of the slave nodes. The test may be started
-from any node from that set. The node selected to start the test should be temporarily treated as the *master node*.
-The master node is not excluded from the actual load execution.
+The distributed mode test involves at least one entry node and some set of the additional nodes. The test may be started
+from any node from that set. The node selected to start the test should be temporarily treated as the *entry node*.
+The entry node is not excluded from the actual load execution.
 
-## Master Node
+## Entry Node
 
-Master node loads the scenario into the corresponding scripting engine. The scripting engine instantiates the scenario
+Entry node loads the scenario into the corresponding scripting engine. The scripting engine instantiates the scenario
 steps. Each load step consists of its local and remote parts. The local step functionality:
 
 * step slicing
@@ -102,10 +105,10 @@ TODO
 
 * `load-step-node-addrs`
 
-    Comma-separated list of slave node IP addresses/hostnames. The default value is empty list (standalone mode). Adding
-    the port numbers is allowed to override the `load-step-distributed-node-port` value. For example
+    Comma-separated list of additional node IP addresses/hostnames. The default value is empty list (standalone mode).
+    Adding the port numbers is allowed to override the `load-step-distributed-node-port` value. For example
     `nodeA:1100,nodeB:1101,nodeC:1111`
 
 * `load-step-node-port`
 
-    RMI port for the distributed mode. 1099 by default.
+    The network port for the interaction between the nodes/peers. 1099 by default.

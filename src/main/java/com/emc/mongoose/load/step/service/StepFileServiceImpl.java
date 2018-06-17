@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.step.slave;
+package com.emc.mongoose.load.step.service;
 
 import com.emc.mongoose.load.step.StepFile;
 import com.emc.mongoose.load.step.StepFileImpl;

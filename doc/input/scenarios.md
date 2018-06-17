@@ -70,7 +70,7 @@ steps.
 
 > **Note:**
 > All scenario statements are executed locally except the load steps. In the
-> distributed mode the steps are sliced and executed on the nodes (both master and slave nodes).
+> distributed mode the steps are sliced and executed on the nodes (both entry and additional nodes).
 
 ### 2.1.1. Methods
 

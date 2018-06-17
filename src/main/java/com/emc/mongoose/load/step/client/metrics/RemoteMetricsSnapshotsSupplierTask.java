@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.step.master.metrics;
+package com.emc.mongoose.load.step.client.metrics;
 
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.load.step.LoadStepService;

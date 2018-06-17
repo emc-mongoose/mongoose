@@ -110,7 +110,7 @@ extends LoadStepBase {
 			final Config metricsConfig = outputConfig.configVal("metrics");
 			final SizeInBytes itemDataSize = new SizeInBytes(subConfig.stringVal("item-data-size"));
 
-			if(distributedFlag) {
+			if(clientFlag) {
 				initDistributedMetrics(
 					originIndex, ioType, concurrency, stepConfig.listVal("node-addrs").size(),
 					metricsConfig, itemDataSize, outputConfig.boolVal("color")

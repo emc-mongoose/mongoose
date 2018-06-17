@@ -96,7 +96,7 @@ extends LoadStepBase {
 		final Config metricsConfig = outputConfig.configVal("metrics");
 		final SizeInBytes itemDataSize = new SizeInBytes(config.stringVal("item-data-size"));
 
-		if(distributedFlag) {
+		if(clientFlag) {
 			initDistributedMetrics(
 				0, ioType, concurrency, stepConfig.listVal("node-addrs").size(),
 				metricsConfig, itemDataSize, outputConfig.boolVal("color")
@@ -165,7 +165,7 @@ extends LoadStepBase {
 						if(itemOutputFile != null && itemOutputFile.length() > 0) {
 							final Path itemOutputPath = Paths.get(itemOutputFile);
 							if(Files.exists(itemOutputPath)) {
-								if(distributedFlag) {
+								if(clientFlag) {
 									Files.delete(itemOutputPath);
 								} else {
 									Loggers.ERR.warn(

@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.step.master;
+package com.emc.mongoose.load.step.client;
 
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.OmgShootMyFootException;
@@ -23,8 +23,8 @@ import com.emc.mongoose.load.step.StepFileService;
 import com.emc.mongoose.load.step.LoadStep;
 import com.emc.mongoose.load.step.LoadStepManagerService;
 import com.emc.mongoose.load.step.LoadStepService;
-import com.emc.mongoose.load.step.master.metrics.MetricsSnapshotsSupplierTask;
-import com.emc.mongoose.load.step.master.metrics.RemoteMetricsSnapshotsSupplierTask;
+import com.emc.mongoose.load.step.client.metrics.MetricsSnapshotsSupplierTask;
+import com.emc.mongoose.load.step.client.metrics.RemoteMetricsSnapshotsSupplierTask;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
@@ -89,7 +89,7 @@ implements LoadStepClient {
 		this.metricsSnapshotsSuppliers = new HashMap<>();
 	}
 
-	private Map<String, LoadStep> stepSlices = null;
+	private List<LoadStep> stepSlices = new ArrayList<>();
 	private Map<String, Optional<StepFileManager>> fileMgrs = null;
 	private Map<String, Optional<StepFileService>> itemInputFileSvcs = null;
 	private Map<String, Optional<StepFileService>> itemOutputFileSvcs = null;
@@ -129,35 +129,33 @@ implements LoadStepClient {
 			}
 			final Map<String, Config> configSlices = sliceConfigs(baseConfig, nodeAddrs);
 
-			stepSlices = nodeAddrs
+			nodeAddrs
 				.parallelStream()
-				.collect(
-					Collectors.toMap(
-						Function.identity(),
-						nodeAddrWithPort -> {
-							final LoadStepService stepSvc = resolveStepSvc(configSlices, nodeAddrWithPort);
-							if(stepSvc != null) {
+				.map(
+					nodeAddrWithPort -> {
+						final LoadStepService stepSvc = resolveStepSvc(configSlices, nodeAddrWithPort);
+						if(stepSvc != null) {
+							try {
+								stepSvc.start();
+								final MetricsSnapshotsSupplierTask
+									snapshotsSupplier = new RemoteMetricsSnapshotsSupplierTask(
+									ServiceTaskExecutor.INSTANCE, stepSvc
+								);
+								snapshotsSupplier.start();
+								metricsSnapshotsSuppliers.put(stepSvc, snapshotsSupplier);
+							} catch(final RemoteException | IllegalStateException e) {
 								try {
-									stepSvc.start();
-									final MetricsSnapshotsSupplierTask
-										snapshotsSupplier = new RemoteMetricsSnapshotsSupplierTask(
-											ServiceTaskExecutor.INSTANCE, stepSvc
-										);
-									snapshotsSupplier.start();
-									metricsSnapshotsSuppliers.put(stepSvc, snapshotsSupplier);
-								} catch(final RemoteException | IllegalStateException e) {
-									try {
-										LogUtil.exception(
-											Level.ERROR, e, "Failed to start the step service {}", stepSvc.name()
-										);
-									} catch(final RemoteException ignored) {
-									}
+									LogUtil.exception(
+										Level.ERROR, e, "Failed to start the step service {}", stepSvc.name()
+									);
+								} catch(final RemoteException ignored) {
 								}
 							}
-							return stepSvc;
 						}
-					)
-				);
+						return stepSvc;
+					}
+				)
+				.forEach(stepSlices::add);
 
 			Loggers.MSG.info(
 				"Load step client \"{}\" started @ {}", id(), Arrays.toString(nodeAddrs.toArray())
@@ -169,7 +167,6 @@ implements LoadStepClient {
 	@Override
 	protected final void doShutdown() {
 		stepSlices
-			.entrySet()
 			.parallelStream()
 			.forEach(
 				stepSlice -> {
@@ -178,9 +175,9 @@ implements LoadStepClient {
 							.put(KEY_STEP_ID, id())
 							.put(KEY_CLASS_NAME, LoadStepClientImpl.class.getSimpleName())
 					) {
-						stepSlice.getValue().shutdown();
+						stepSlice.shutdown();
 					} catch(final RemoteException e) {
-						LogUtil.exception(Level.WARN, e, "Failed to shutdown the step service {}", stepSlice.getKey());
+						LogUtil.exception(Level.WARN, e, "Failed to shutdown the step service {}", stepSlice);
 					}
 				}
 			);
@@ -239,9 +236,7 @@ implements LoadStepClient {
 							Optional.empty() :
 							fileMgrs
 								.get(nodeAddrWithPort)
-								.map(
-									Function3.partial13(LoadStepClientImpl::createFileService, nodeAddrWithPort, null)
-								)
+								.map(Function3.partial13(LoadStepClientImpl::createFileService, nodeAddrWithPort, null))
 								.map(
 									Function2
 										.partial1(LoadStepClientImpl::resolveService, nodeAddrWithPort)
@@ -652,7 +647,6 @@ implements LoadStepClient {
 			stepSlices.size(), new LogContextThreadFactory("stepSliceAwaitWorker", true)
 		);
 		stepSlices
-			.values()
 			.stream()
 			.map(
 				stepSlice ->
@@ -781,7 +775,6 @@ implements LoadStepClient {
 	@Override
 	protected final void doStop() {
 		stepSlices
-			.values()
 			.parallelStream()
 			.forEach(LoadStepClientImpl::stopStepSlice);
 	}
@@ -822,10 +815,7 @@ implements LoadStepClient {
 				}
 			);
 
-		stepSlices
-			.values()
-			.parallelStream()
-			.forEach(LoadStepClientImpl::closeStepSlice);
+		stepSlices.parallelStream().forEach(LoadStepClientImpl::closeStepSlice);
 		stepSlices.clear();
 		stepSlices = null;
 

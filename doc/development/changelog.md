@@ -56,12 +56,15 @@
 
 ### Functional
 
-#### 1. New [Architecture](../design/architecture.md)
+#### 1. [P2P Distributed Mode](../design/distributed_mode.md)
 
-The *controller* bottleneck is eliminated for the distributed mode case.
-Any load step is been executed independently on a remote node. A
-"master" node executes the specified scenario only. The new architecture
-preconditions also the future ***resume*** functionality.
+In the new major version of Mongoose the new distributed mode architecture is introduced. Any *distributed load step*
+execution may be initiated from any node from the given set. Then the chosen node becomes an temparary *entry node*.
+There may be also *additional nodes* involved in the given distributed load step. All necessary input is prepared
+(*sliced*) and distributed among the nodes before the actual load step start to get rid of the redundant interaction
+via the network during the load step execution. The additional nodes are being polled periodically to synchronize the
+load step state. After the load step is done, the summary data may be (optionally) aggregated and persisted on the entry
+node.
 
 #### 2. Automated [Installer](../design/installer.md)
 

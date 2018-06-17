@@ -13,23 +13,23 @@
 
 # Overview
 
-Mongoose is a scalable and extensible storage performance testing tool.
+Mongoose is a powerful storage performance testing tool.
 
 It is designed to be used for:
 * [Load Testing](https://en.wikipedia.org/wiki/Load_testing)
 * [Stress Testing](https://en.wikipedia.org/wiki/Stress_testing)
 * [Soak/Longevity/Endurance Testing](https://en.wikipedia.org/wiki/Soak_testing)
 * [Volume Testing](https://en.wikipedia.org/wiki/Volume_testing)
-* [Smoke](https://en.wikipedia.org/wiki/Smoke_testing_(software))/[Sanity](https://en.wikipedia.org/wiki/Sanity_check) Testing
+* [Smoke](https://en.wikipedia.org/wiki/Smoke_testing_(software))/[Sanity](https://en.wikipedia.org/wiki/Sanity_check)
+  Testing
 
-Mongoose is able to sustain millions of concurrent connections and
-execute millions of operations per second.
+It is easily scalable to perform millions of IOPS and emulate millions of concurrent clients.
 
 # Features
 
 1. [Scalability](doc/features.md#1-scalability)<br/>
- 1.1. [Distributed Mode](doc/features.md#11-distributed-mode)<br/>
- 1.2. [Fibers](doc/features.md#12-fibers)<br/>
+ 1.1. [Vertical](doc/feature.md#11-vertical)</br/>
+ 1.2. [Horizontal](doc/feature.md#12-horizontal)<br/>
 2. [Customization](doc/features.md#2-customization)<br/>
  2.1. [Flexible Configuration](doc/features.md#21-flexible-configuration)<br/>
  2.2. [Load Generation Patterns](doc/features.md#22-load-generation-patterns)<br/>

@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.step.slave;
+package com.emc.mongoose.load.step.service;
 
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.svc.ServiceBase;

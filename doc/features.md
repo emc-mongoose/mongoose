@@ -22,13 +22,9 @@ significant performance degradation.
 
 ## 1.2. Horizontal
 
-The [distributed mode](design/distributed_mode.md) in Mongoose was designed to make each Mongoose node working
-independently as much as possible. Any *distributed load step* execution may be initiated from any node from the given
-set. Then the chosen node becomes a *master node* (temporarily). The nodes involved in the given distributed load step
-execution become *slave nodes*. All necessary input is prepared (*sliced*) and distributed among the nodes before the
-actual load step start to get rid of the redundant interaction via the network during the load step execution. The slave
-nodes are being polled periodically to synchronize the load step state. After the load step is done, the summary data
-may be (optionally) aggregated and persisted on the master node.
+The [distributed mode](design/distributed_mode.md) in Mongoose was designed as P2P network. Each peer/node performs
+independently as much as possible. This eliminates the excess network interaction between the nodes which may be a
+bottleneck.
 
 # 2. Customization
 
