@@ -3,7 +3,6 @@ package com.emc.mongoose.load.step.service;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.svc.ServiceBase;
 import com.emc.mongoose.load.step.LoadStepManagerService;
-import com.emc.mongoose.load.step.LoadStepService;
 import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 

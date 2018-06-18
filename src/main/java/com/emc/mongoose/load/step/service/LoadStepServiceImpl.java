@@ -4,7 +4,6 @@ import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.svc.ServiceBase;
 import com.emc.mongoose.load.step.LoadStep;
-import com.emc.mongoose.load.step.LoadStepService;
 import com.emc.mongoose.load.step.LoadStepFactory;
 import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
@@ -27,7 +26,7 @@ public final class LoadStepServiceImpl
 extends ServiceBase
 implements LoadStepService {
 
-	private final LoadStep loadStep;
+	private final LoadStep localLoadStep;
 
 	public LoadStepServiceImpl(
 		final int port, final List<Extension> extensions, final String stepType, final Config config,
@@ -62,7 +61,7 @@ implements LoadStepService {
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, LoadStepServiceImpl.class.getSimpleName())
 		) {
-			loadStep = selectedFactory.create(config, extensions, stepConfigs);
+			localLoadStep = selectedFactory.create(config, extensions, stepConfigs);
 			Loggers.MSG.info("New step service for \"{}\"", config.stringVal("load-step-id"));
 			super.doStart();
 		}
@@ -73,10 +72,10 @@ implements LoadStepService {
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, LoadStepServiceImpl.class.getSimpleName())
-				.put(KEY_STEP_ID, loadStep.id())
+				.put(KEY_STEP_ID, localLoadStep.id())
 		) {
-			loadStep.start();
-			Loggers.MSG.info("Step service for \"{}\" is started", loadStep.id());
+			localLoadStep.start();
+			Loggers.MSG.info("Step service for \"{}\" is started", localLoadStep.id());
 		} catch(final RemoteException ignored) {
 		}
 	}
@@ -86,10 +85,10 @@ implements LoadStepService {
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, LoadStepServiceImpl.class.getSimpleName())
-				.put(KEY_STEP_ID, loadStep.id())
+				.put(KEY_STEP_ID, localLoadStep.id())
 		) {
-			loadStep.stop();
-			Loggers.MSG.info("Step service for \"{}\" is stopped", loadStep.id());
+			localLoadStep.stop();
+			Loggers.MSG.info("Step service for \"{}\" is stopped", localLoadStep.id());
 		} catch(final RemoteException ignored) {
 		}
 	}
@@ -100,11 +99,11 @@ implements LoadStepService {
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, LoadStepServiceImpl.class.getSimpleName())
-				.put(KEY_STEP_ID, loadStep.id())
+				.put(KEY_STEP_ID, localLoadStep.id())
 		) {
 			super.doStop();
-			loadStep.close();
-			Loggers.MSG.info("Step service for \"{}\" is closed", loadStep.id());
+			localLoadStep.close();
+			Loggers.MSG.info("Step service for \"{}\" is closed", localLoadStep.id());
 		}
 	}
 
@@ -116,25 +115,25 @@ implements LoadStepService {
 	@Override
 	public LoadStep config(final Map<String, Object> config)
 	throws RemoteException {
-		return loadStep.config(config);
+		return localLoadStep.config(config);
 	}
 
 	@Override
 	public final String id()
 	throws RemoteException {
-		return loadStep.id();
+		return localLoadStep.id();
 	}
 
 	@Override
 	public final String getTypeName()
 	throws RemoteException {
-		return loadStep.getTypeName();
+		return localLoadStep.getTypeName();
 	}
 
 	@Override
 	public final List<MetricsSnapshot> metricsSnapshots()
 	throws RemoteException {
-		return loadStep.metricsSnapshots();
+		return localLoadStep.metricsSnapshots();
 	}
 
 	@Override
@@ -143,9 +142,9 @@ implements LoadStepService {
 		try(
 			final Instance logCtx = CloseableThreadContext
 				.put(KEY_CLASS_NAME, LoadStepServiceImpl.class.getSimpleName())
-				.put(KEY_STEP_ID, loadStep.id())
+				.put(KEY_STEP_ID, localLoadStep.id())
 		) {
-			return loadStep.await(timeout, timeUnit);
+			return localLoadStep.await(timeout, timeUnit);
 		} catch(final RemoteException ignored) {
 		}
 		return false;
