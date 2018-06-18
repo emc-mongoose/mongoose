@@ -70,11 +70,11 @@ extends LoadStepClientBase {
 		final Config outputConfig = config.configVal("output");
 		final Config metricsConfig = outputConfig.configVal("metrics");
 		final SizeInBytes itemDataSize = new SizeInBytes(config.stringVal("item-data-size"));
+		final int originIndex = 0;
+		final int nodeCount = 1 + stepConfig.listVal("node-addrs").size();
+		final boolean colorFlag = outputConfig.boolVal("color");
 
-		initMetrics(
-			0, ioType, concurrency, stepConfig.listVal("node-addrs").size(),
-			metricsConfig, itemDataSize, outputConfig.boolVal("color")
-		);
+		initMetrics(originIndex, ioType, concurrency, nodeCount, metricsConfig, itemDataSize, colorFlag);
 	}
 
 	@Override

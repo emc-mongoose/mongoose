@@ -7,6 +7,6 @@ public interface MeterMBean
 extends AutoCloseable, MetricsListener, MetricsSnapshot {
 	String METRICS_DOMAIN = MeterMBean.class.getPackage().getName();
 	String KEY_LOAD_TYPE = "loadType";
-	String KEY_STORAGE_DRIVER_COUNT = "storageDriverCount";
-	String KEY_STORAGE_DRIVER_CONCURRENCY = "storageDriverConcurrency";
+	String KEY_NODE_COUNT = "nodeCount";
+	String KEY_CONCURRENCY_LIMIT = "concurrencyLimit";
 }

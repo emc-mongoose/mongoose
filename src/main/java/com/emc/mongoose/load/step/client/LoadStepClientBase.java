@@ -41,8 +41,8 @@ import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.github.akurilov.confuse.Config;
-
 import com.github.akurilov.confuse.impl.BasicConfig;
+
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
@@ -158,7 +158,6 @@ implements LoadStepClient {
 			Loggers.MSG.info(
 				"Load step client \"{}\" started @ {}", id(), Arrays.toString(nodeAddrs.toArray())
 			);
-		} catch(final RemoteException ignored) {
 		}
 	}
 
@@ -166,16 +165,18 @@ implements LoadStepClient {
 		final int originIndex, final IoType ioType, final int concurrency, final int nodeCount,
 		final Config metricsConfig, final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
+		final int sumConcurrency = concurrency * nodeCount;
+		final int sumConcurrencyThreshold = (int) (concurrency * nodeCount * metricsConfig.doubleVal("threshold"));
+		final int metricsAvgPeriod = (int) TimeUtil.getTimeInSeconds(metricsConfig.stringVal("average-period"));
+		final boolean metricsAvgPersistFlag = metricsConfig.boolVal("average-persist");
+		final boolean metricsSumPersistFlag = metricsConfig.boolVal("summary-persist");
+		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
+
 		metricsContexts.add(
 			new AggregatingMetricsContext(
-				id(), ioType, nodeCount, concurrency * nodeCount,
-				(int) (concurrency * nodeCount * metricsConfig.doubleVal("threshold")),
-				itemDataSize,
-				(int) TimeUtil.getTimeInSeconds(metricsConfig.stringVal("average-period")),
-				outputColorFlag, metricsConfig.boolVal("average-persist"),
-				metricsConfig.boolVal("summary-persist"),
-				metricsConfig.boolVal("summary-perfDbResultsFile"),
-				() -> stepClient.remoteMetricsSnapshots(originIndex)
+				id(), ioType, nodeCount, sumConcurrency, sumConcurrencyThreshold, itemDataSize, metricsAvgPeriod,
+				outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
+				() -> remoteMetricsSnapshots(originIndex)
 			)
 		);
 	}
@@ -243,6 +244,7 @@ implements LoadStepClient {
 		// item output file (if any)
 		final String itemOutputFile = config.stringVal("item-output-file");
 		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
+
 			itemOutputFileSvcs = nodeAddrs
 				.parallelStream()
 				.collect(
@@ -261,6 +263,7 @@ implements LoadStepClient {
 								.map(Function2.partial1(LoadStepClientBase::createRemoteFile, nodeAddrWithPort))
 					)
 				);
+
 			// change the item output file value for each slice
 			nodeAddrs.forEach(
 				nodeAddrWithPort -> itemOutputFileSvcs
@@ -876,10 +879,7 @@ implements LoadStepClient {
 		}
 
 		if(null != ioTraceLogFileSvcs) {
-			try {
-				Loggers.MSG.info("{}: transfer the I/O traces data from the nodes", id());
-			} catch(final RemoteException ignored) {
-			}
+			Loggers.MSG.info("{}: transfer the I/O traces data from the nodes", id());
 			ioTraceLogFileSvcs
 				.values()
 				.parallelStream()

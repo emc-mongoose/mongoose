@@ -17,9 +17,11 @@ import java.util.Map;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 
-public class WeightedLoadStepExtension<T extends WeightedLoadStep>
+public final class WeightedLoadStepExtension<T extends WeightedLoadStepLocal, U extends WeightedLoadStepClient>
 extends ExtensionBase
-implements LoadStepFactory<T> {
+implements LoadStepFactory<T, U> {
+
+	public static final String TYPE = "WeightedLoad";
 
 	private static final SchemaProvider SCHEMA_PROVIDER = new JsonSchemaProviderBase() {
 
@@ -41,16 +43,22 @@ implements LoadStepFactory<T> {
 	);
 
 	@Override
-	public String id() {
-		return WeightedLoadStep.TYPE;
+	public final String id() {
+		return TYPE;
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public T create(
-		final Config baseConfig, final List<Extension> extensions,
-		final List<Map<String, Object>> overrides
+	public final T createLocal(
+		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides
 	) {
-		return (T) new WeightedLoadStep(baseConfig, extensions, overrides);
+		return (T) new WeightedLoadStepLocal(baseConfig, extensions, overrides);
+	}
+
+	@Override @SuppressWarnings("unchecked")
+	public final U createClient(
+		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides
+	) {
+		return (U) new WeightedLoadStepClient(baseConfig, extensions, overrides);
 	}
 
 	@Override

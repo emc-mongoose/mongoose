@@ -37,8 +37,6 @@ implements LoadStep, Runnable {
 	protected final List<Map<String, Object>> stepConfigs;
 	protected final List<MetricsContext> metricsContexts = new ArrayList<>();
 
-	protected volatile LoadStepClient stepClient = null;
-
 	private volatile Config actualConfig = null;
 	private volatile long timeLimitSec = Long.MAX_VALUE;
 	private volatile long startTimeSec = -1;
