@@ -44,7 +44,6 @@ import com.github.akurilov.confuse.impl.BasicConfig;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
-
 import org.apache.logging.log4j.Level;
 
 import java.io.ByteArrayOutputStream;
@@ -75,16 +74,16 @@ public abstract class LoadStepClientBase
 extends LoadStepBase
 implements LoadStepClient {
 
-	private final Map<LoadStep, MetricsSnapshotsSupplierTask> metricsSnapshotsSuppliers;
+	private final List<LoadStep> stepSlices = new ArrayList<>();
+	private final Map<LoadStep, MetricsSnapshotsSupplierTask> metricsSnapshotsSuppliers = new HashMap<>();
+	private final List<FileManager> fileMgrs = new ArrayList<>();
 
 	public LoadStepClientBase(
 		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> stepConfigs
 	) {
 		super(baseConfig, extensions, stepConfigs);
-		this.metricsSnapshotsSuppliers = new HashMap<>();
 	}
 
-	private final List<LoadStep> stepSlices = new ArrayList<>();
 	private List<String> itemInputFileNames = null;
 	private List<String> itemOutputFileNames = null;
 	private List<String> ioTraceLogFileNames = null;
@@ -93,27 +92,26 @@ implements LoadStepClient {
 	protected final void doStartWrapped()
 	throws IllegalArgumentException {
 
-		try(
-			final Instance logCtx =put(KEY_STEP_ID, id())
-				.put(KEY_CLASS_NAME, LoadStepClientBase.class.getSimpleName())
-		) {
+		try(final Instance logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+
 			// need to set the once generated step id
 			final Config config = new BasicConfig(baseConfig);
 			config.val("load-step-id", id());
 
 			final Config nodeConfig = baseConfig.configVal("load-step-node");
 			final int nodePort = nodeConfig.intVal("port");
-			final Function<String, String> addPortIfMissingPartialFunc = Function2
-				.partial2(NetUtil::addPortIfMissing, nodePort);
 			final List<String> nodeAddrs = nodeConfig
 				.<String>listVal("addrs")
 				.stream()
-				.map(addPortIfMissingPartialFunc)
+				.map(addr -> NetUtil.addPortIfMissing(addr, nodePort))
 				.collect(Collectors.toList());
 
+			resolveFileManagers(nodeAddrs, fileMgrs);
+
 			if(baseConfig.boolVal("output-metrics-trace-persist")) {
-				initIoTraceLogFileServices(nodeAddrs);
+				ioTraceLogFileNames = initIoTraceLogFileServices(fileMgrs, id());
 			}
+
 			final List<Config> configSlices = sliceConfigs(baseConfig, nodeAddrs.size() + 1);
 
 			nodeAddrs
@@ -150,42 +148,24 @@ implements LoadStepClient {
 		}
 	}
 
-	protected final void initMetrics(
-		final int originIndex, final IoType ioType, final int concurrency, final int nodeCount,
-		final Config metricsConfig, final SizeInBytes itemDataSize, final boolean outputColorFlag
-	) {
-		final int sumConcurrency = concurrency * nodeCount;
-		final int sumConcurrencyThreshold = (int) (concurrency * nodeCount * metricsConfig.doubleVal("threshold"));
-		final int metricsAvgPeriod = (int) TimeUtil.getTimeInSeconds(metricsConfig.stringVal("average-period"));
-		final boolean metricsAvgPersistFlag = metricsConfig.boolVal("average-persist");
-		final boolean metricsSumPersistFlag = metricsConfig.boolVal("summary-persist");
-		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
-
-		metricsContexts.add(
-			new AggregatingMetricsContext(
-				id(), ioType, nodeCount, sumConcurrency, sumConcurrencyThreshold, itemDataSize, metricsAvgPeriod,
-				outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
-				() -> remoteMetricsSnapshots(originIndex)
-			)
-		);
+	private static void resolveFileManagers(final List<String> nodeAddrs, final List<FileManager> fileMgrsDst) {
+		// local
+		fileMgrsDst.add(new FileManagerImpl());
+		// remote
+		nodeAddrs
+			.parallelStream()
+			.map(FileManagerService::resolve)
+			.forEach(fileMgrsDst::add);
 	}
 
-	@Override
-	protected final void doShutdown() {
-		stepSlices
-			.parallelStream()
-			.forEach(
-				stepSlice -> {
-					try(
-						final Instance logCtx =put(KEY_STEP_ID, id())
-							.put(KEY_CLASS_NAME, LoadStepClientBase.class.getSimpleName())
-					) {
-						stepSlice.shutdown();
-					} catch(final RemoteException e) {
-						LogUtil.exception(Level.WARN, e, "Failed to shutdown the step service {}", stepSlice);
-					}
-				}
-			);
+	private static List<String> initIoTraceLogFileServices(final List<FileManager> fileMgrs, final String id) {
+		return fileMgrs
+			.stream()
+			.map(
+				fileMgr -> fileMgr instanceof FileManagerService ?
+					FileManager.logFileName(Loggers.IO_TRACE.getName(), id) : null
+			)
+			.collect(Collectors.toList());
 	}
 
 	private List<Config> sliceConfigs(final Config config, final int sliceCount) {
@@ -195,26 +175,11 @@ implements LoadStepClient {
 			configSlices.add(LoadStep.initConfigSlice(config));
 		}
 
-		// slice the count limit (if any)
 		final long countLimit = config.longVal("load-step-limit-count");
 		if(sliceCount > 1 && countLimit > 0) {
-			final long countLimitPerSlice = (long) Math.ceil(((double) countLimit) / sliceCount);
-			long remainingCountLimit = countLimit;
-			for(int i = 0; i < sliceCount; i ++) {
-				final Config limitConfigSlice = configSlices.get(i).configVal("load-step-limit");
-				if(remainingCountLimit > countLimitPerSlice) {
-					Loggers.MSG.info("Config slice #{}: count limit = {}", i, countLimitPerSlice);
-					limitConfigSlice.val("count", countLimitPerSlice);
-					remainingCountLimit -= countLimitPerSlice;
-				} else {
-					Loggers.MSG.info("Config slice #{}: count limit = {}", i, remainingCountLimit);
-					limitConfigSlice.val("count", remainingCountLimit);
-					remainingCountLimit = 0;
-				}
-			}
+			sliceCountLimit(countLimit, sliceCount, configSlices);
 		}
 
-		// slice an item input (if any)
 		final int batchSize = config.intVal("load-batch-size");
 		try(final Input<Item> itemInput = createItemInput(config, extensions, batchSize)) {
 			if(itemInput != null) {
@@ -237,16 +202,16 @@ implements LoadStepClient {
 					Collectors.toMap(
 						Function.identity(),
 						nodeAddrWithPort -> ServiceUtil.isLocalAddress(nodeAddrWithPort) ?
-							Optional.empty() :
-							fileMgrs
-								.get(nodeAddrWithPort)
-								.map(Function3.partial13(LoadStepClientBase::createFileService, nodeAddrWithPort, null))
-								.map(
-									Function2
-										.partial1(LoadStepClientBase::resolveService, nodeAddrWithPort)
-										.andThen(svc -> (StepFileService) svc)
-								)
-								.map(Function2.partial1(LoadStepClientBase::createRemoteFile, nodeAddrWithPort))
+											Optional.empty() :
+											fileMgrs
+												.get(nodeAddrWithPort)
+												.map(Function3.partial13(LoadStepClientBase::createFileService, nodeAddrWithPort, null))
+												.map(
+													Function2
+														.partial1(LoadStepClientBase::resolveService, nodeAddrWithPort)
+														.andThen(svc -> (StepFileService) svc)
+												)
+												.map(Function2.partial1(LoadStepClientBase::createRemoteFile, nodeAddrWithPort))
 					)
 				);
 
@@ -280,41 +245,22 @@ implements LoadStepClient {
 		return configSlices;
 	}
 
-	private static String createFileService(
-		final String nodeAddrWithPort, final FileManagerService fileMgrSvc, final String fileSvcName
-	) {
-		try {
-			return fileMgrSvc.createFile(fileSvcName);
-		} catch(final Exception e) {
-			LogUtil.exception(
-				Level.WARN, e, "Failed to create the file service @{}", nodeAddrWithPort
-			);
+	private static void sliceCountLimit(final long countLimit, final int sliceCount, final List<Config> configSlices) {
+		final long countLimitPerSlice = (long) Math.ceil(((double) countLimit) / sliceCount);
+		long remainingCountLimit = countLimit;
+		for(int i = 0; i < sliceCount; i ++) {
+			final Config limitConfigSlice = configSlices.get(i).configVal("load-step-limit");
+			if(remainingCountLimit > countLimitPerSlice) {
+				Loggers.MSG.info("Config slice #{}: count limit = {}", i, countLimitPerSlice);
+				limitConfigSlice.val("count", countLimitPerSlice);
+				remainingCountLimit -= countLimitPerSlice;
+			} else {
+				Loggers.MSG.info("Config slice #{}: count limit = {}", i, remainingCountLimit);
+				limitConfigSlice.val("count", remainingCountLimit);
+				remainingCountLimit = 0;
+			}
 		}
-		return null;
 	}
-
-	private static Service resolveService(final String nodeAddrWithPort, final String svcName) {
-		try {
-			return ServiceUtil.resolve(nodeAddrWithPort, svcName);
-		} catch(final Exception e) {
-			LogUtil.exception(Level.WARN, e, "Failed to resolve the service @ {}", nodeAddrWithPort);
-		}
-		return null;
-	}
-
-	/*private static StepFileService createRemoteFile(
-		final String nodeAddrWithPort, final StepFileService fileSvc
-	) {
-		try {
-			fileSvc.open(StepFileService.WRITE_OPEN_OPTIONS);
-			fileSvc.closeFile();
-			final String filePath = fileSvc.filePath();
-			Loggers.MSG.info("Use temporary remote item output file \"{}\"", filePath);
-		} catch(final IOException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to create the remote file @ {}", nodeAddrWithPort);
-		}
-		return fileSvc;
-	}*/
 
 	private static <I extends Item> Input<I> createItemInput(
 		final Config config, final List<Extension> extensions, final int batchSize
@@ -379,35 +325,33 @@ implements LoadStepClient {
 		final Input<Item> itemInput, final List<Config> configSlices, final int batchSize
 	) throws IOException {
 
-		// TODO - issue #1193 - modify to include local
+		final int sliceCount = configSlices.size();
 
-		itemInputFileNames = itemInputFileNames(stepSlices);
+		itemInputFileNames = itemInputFileNames(fileMgrs, sliceCount);
 
-		final Map<LoadStep, ByteArrayOutputStream> itemsDataByStepSlice = stepSlices
+		final List<ByteArrayOutputStream> itemsOutByteBuffs = fileMgrs
 			.stream()
-			.collect(Collectors.toMap(Function.identity(), slice -> new ByteArrayOutputStream(batchSize * 0x40)));
-		final Map<LoadStep, ObjectOutputStream> itemsOutByStepSlice = itemsDataByStepSlice
-			.keySet()
+			.map(fileMgr -> new ByteArrayOutputStream(batchSize * 0x40))
+			.collect(Collectors.toList());
+
+		final List<ObjectOutputStream> itemsOutputs = itemsOutByteBuffs
 			.stream()
-			.collect(
-				Collectors.toMap(
-					Function.identity(),
-					n -> {
-						try {
-							return new ObjectOutputStream(itemsDataByStepSlice.get(n));
-						} catch(final IOException ignored) {
-						}
-						return null;
+			.map(
+				itemsOutByteBuff -> {
+					try {
+						return new ObjectOutputStream(itemsOutByteBuff);
+					} catch(final IOException ignored) {
 					}
-				)
-			);
+					return null;
+				}
+			)
+			.collect(Collectors.toList());
 
-		transferItemsInputData(itemInput, batchSize, itemsDataByStepSlice, itemsOutByStepSlice);
+		transferItemsInputData(itemInput, batchSize, itemsOutByteBuffs, itemsOutputs);
 		Loggers.MSG.info("{}: items input data is distributed to the {} step slices", stepSlices.size());
 
-		stepSlices
+		itemsOutputs
 			.parallelStream()
-			.map(itemsOutByStepSlice::get)
 			.filter(Objects::nonNull)
 			.forEach(
 				outStream -> {
@@ -418,46 +362,37 @@ implements LoadStepClient {
 				}
 			);
 
-		stepSlices.forEach(
-			stepSlice -> {
-				final Config configSlice = configSlices.get(stepSlice);
-				final String itemInputFileName = itemInputFileNames.get(stepSlice);
-				configSlice.val("item-input-file", itemInputFileName);
-			}
-		);
+		for(int i = 0; i < sliceCount; i ++) {
+			final Config configSlice = configSlices.get(i);
+			final String itemInputFileName = itemInputFileNames.get(i);
+			configSlice.val("item-input-file", itemInputFileName);
+		}
 	}
 
-	private static Map<LoadStep, String> itemInputFileNames(final List<LoadStep> steps) {
-		return steps
-			.parallelStream()
-			.collect(
-				Collectors.toMap(
-					Function.identity(),
-					step -> {
-						try {
-							return step.newTmpFileName();
-						} catch(final IOException e) {
-							LogUtil.exception(
-								Level.ERROR, e, "Failed to get the item input file name for the step \"{}\"", step
-							);
-						}
-						return null;
-					}
-				)
-			);
+	private static List<String> itemInputFileNames(final List<FileManager> fileMgrs, final int sliceCount) {
+		final List<String> itemInputFileNames = new ArrayList<>(sliceCount);
+		for(int i = 0; i < sliceCount; i ++) {
+			try {
+				final String itemInputFileName = fileMgrs.get(i).newTmpFileName();
+				itemInputFileNames.add(itemInputFileName);
+			} catch(final Exception e) {
+				LogUtil.exception(Level.ERROR, e, "Failed to get the item input file name for the step slice #" + i);
+				itemInputFileNames.add(null);
+			}
+		}
+		return itemInputFileNames;
 	}
 
 	private void transferItemsInputData(
-		final Input<? extends Item> itemInput, final int batchSize,
-		final Map<LoadStep, ByteArrayOutputStream> itemsDataByStepSlice,
-		final Map<LoadStep, ObjectOutputStream> itemsOutByStepSlice
+		final Input<? extends Item> itemInput, final int batchSize, final List<ByteArrayOutputStream> itemsOutByteBuffs,
+		final List<ObjectOutputStream> itemsOutputs
 	) throws IOException {
 
-		final int sliceCount = itemsDataByStepSlice.size();
+		final int sliceCount = itemsOutByteBuffs.size();
 		final List<? extends Item> itemsBuff = new ArrayList<>(batchSize);
 
 		int n;
-		final ObjectOutputStream out = itemsOutByStepSlice.get(stepSlices.get(0));
+		final ObjectOutputStream out = itemsOutputs.get(0);
 
 		while(true) {
 
@@ -474,8 +409,8 @@ implements LoadStepClient {
 				if(sliceCount > 1) {
 					// distribute the items using round robin
 					for(int i = 0; i < n; i ++) {
-						itemsOutByStepSlice
-							.get(stepSlices.get(i % sliceCount))
+						itemsOutputs
+							.get(i % sliceCount)
 							.writeUnshared(itemsBuff.get(i));
 					}
 				} else {
@@ -487,31 +422,99 @@ implements LoadStepClient {
 				itemsBuff.clear();
 
 				// write the text items data to the remote input files
-				stepSlices
-					.parallelStream()
-					.forEach(
-						stepSlice -> {
-							final ByteArrayOutputStream buff = itemsDataByStepSlice.get(stepSlice);
-							final String itemInputFileName = itemInputFileNames.get(stepSlice);
-							try {
-								final byte[] data = buff.toByteArray();
-								stepSlice.writeToFile(itemInputFileName, data);
-								buff.reset();
-							} catch(final IOException e) {
-								LogUtil.exception(
-									Level.WARN, e,
-									"Failed to write the items input data to the " +
-										"remote file @ {}",
-									stepSlice
-								);
-							}
-						}
-					);
+				for(int i = 0; i < sliceCount; i ++ ) {
+					final FileManager fileMgr = fileMgrs.get(i);
+					final ByteArrayOutputStream buff = itemsOutByteBuffs.get(i);
+					final String itemInputFileName = itemInputFileNames.get(i);
+					try {
+						final byte[] data = buff.toByteArray();
+						fileMgr.writeToFile(itemInputFileName, data);
+						buff.reset();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.WARN, e, "Failed to write the items input data to the file manager #{}", i
+						);
+					}
+				}
 			} else {
 				break;
 			}
 		}
 	}
+
+	protected final void initMetrics(
+		final int originIndex, final IoType ioType, final int concurrency, final int nodeCount,
+		final Config metricsConfig, final SizeInBytes itemDataSize, final boolean outputColorFlag
+	) {
+		final int sumConcurrency = concurrency * nodeCount;
+		final int sumConcurrencyThreshold = (int) (concurrency * nodeCount * metricsConfig.doubleVal("threshold"));
+		final int metricsAvgPeriod = (int) TimeUtil.getTimeInSeconds(metricsConfig.stringVal("average-period"));
+		final boolean metricsAvgPersistFlag = metricsConfig.boolVal("average-persist");
+		final boolean metricsSumPersistFlag = metricsConfig.boolVal("summary-persist");
+		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
+
+		metricsContexts.add(
+			new AggregatingMetricsContext(
+				id(), ioType, nodeCount, sumConcurrency, sumConcurrencyThreshold, itemDataSize, metricsAvgPeriod,
+				outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
+				() -> remoteMetricsSnapshots(originIndex)
+			)
+		);
+	}
+
+	@Override
+	protected final void doShutdown() {
+		stepSlices
+			.parallelStream()
+			.forEach(
+				stepSlice -> {
+					try(
+						final Instance logCtx =put(KEY_STEP_ID, id())
+							.put(KEY_CLASS_NAME, LoadStepClientBase.class.getSimpleName())
+					) {
+						stepSlice.shutdown();
+					} catch(final RemoteException e) {
+						LogUtil.exception(Level.WARN, e, "Failed to shutdown the step service {}", stepSlice);
+					}
+				}
+			);
+	}
+
+	private static String createFileService(
+		final String nodeAddrWithPort, final FileManagerService fileMgrSvc, final String fileSvcName
+	) {
+		try {
+			return fileMgrSvc.createFile(fileSvcName);
+		} catch(final Exception e) {
+			LogUtil.exception(
+				Level.WARN, e, "Failed to create the file service @{}", nodeAddrWithPort
+			);
+		}
+		return null;
+	}
+
+	private static Service resolveService(final String nodeAddrWithPort, final String svcName) {
+		try {
+			return ServiceUtil.resolve(nodeAddrWithPort, svcName);
+		} catch(final Exception e) {
+			LogUtil.exception(Level.WARN, e, "Failed to resolve the service @ {}", nodeAddrWithPort);
+		}
+		return null;
+	}
+
+	/*private static StepFileService createRemoteFile(
+		final String nodeAddrWithPort, final StepFileService fileSvc
+	) {
+		try {
+			fileSvc.open(StepFileService.WRITE_OPEN_OPTIONS);
+			fileSvc.closeFile();
+			final String filePath = fileSvc.filePath();
+			Loggers.MSG.info("Use temporary remote item output file \"{}\"", filePath);
+		} catch(final IOException e) {
+			LogUtil.exception(Level.WARN, e, "Failed to create the remote file @ {}", nodeAddrWithPort);
+		}
+		return fileSvc;
+	}*/
 
 	private LoadStepService resolveStepSvc(
 		final Map<String, Config> configSlices, final String nodeAddrWithPort
@@ -639,43 +642,6 @@ implements LoadStepClient {
 		}
 
 		return fileMgr == null ? Optional.empty() : Optional.of(fileMgr);
-	}
-
-	private void initIoTraceLogFileServices(final List<String> nodeAddrs) {
-		ioTraceLogFileNames = nodeAddrs
-			.stream()
-			.collect(
-				Collectors.toMap(
-					Function.identity(),
-					nodeAddrWithPort -> fileMgrs
-						.get(nodeAddrWithPort)
-						.map(
-							fileMgrSvc -> {
-								try {
-									return fileMgrSvc.createLogFile(Loggers.IO_TRACE.getName(), id());
-								} catch(final Exception e) {
-									LogUtil.exception(
-										Level.WARN, e, "Failed to create the log file service @ {}", nodeAddrWithPort
-									);
-								}
-								return null;
-							}
-						)
-						.map(
-							ioTraceLogFileSvcName -> {
-								try {
-									return ServiceUtil.resolve(nodeAddrWithPort, ioTraceLogFileSvcName);
-								} catch(final Exception e) {
-									LogUtil.exception(
-										Level.WARN, e, "Failed to resolve the log file service \"{}\" @ {}",
-										ioTraceLogFileSvcName, nodeAddrWithPort
-									);
-								}
-								return null;
-							}
-						)
-				)
-			);
 	}
 
 	@Override

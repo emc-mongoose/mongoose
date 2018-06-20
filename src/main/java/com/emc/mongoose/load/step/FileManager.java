@@ -1,11 +1,21 @@
 package com.emc.mongoose.load.step;
 
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
+import org.apache.logging.log4j.core.async.AsyncLogger;
+
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 public interface FileManager {
 
@@ -25,6 +35,15 @@ public interface FileManager {
 		StandardOpenOption.APPEND
 	};
 	Path TMP_DIR = Paths.get(System.getProperty("java.io.tmpdir"), "mongoose");
+
+	static String logFileName(final String loggerName, final String testStepId) {
+		try(final Instance logCtx = put(KEY_STEP_ID, testStepId)) {
+			final Logger logger = LogManager.getLogger(loggerName);
+			final Appender appender = ((AsyncLogger) logger).getAppenders().get("ioTraceFile");
+			final String filePtrn = ((RollingRandomAccessFileAppender) appender).getFilePattern();
+			return filePtrn.contains("${ctx:stepId}") ? filePtrn.replace("${ctx:stepId}", testStepId) : filePtrn;
+		}
+	}
 
 	/**
 	 * Generate the temporary file name
