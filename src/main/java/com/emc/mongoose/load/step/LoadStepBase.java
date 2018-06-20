@@ -4,17 +4,16 @@ import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.concurrent.DaemonBase;
 import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.load.step.client.LoadStepClient;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.commons.system.SizeInBytes;
+
 import com.github.akurilov.confuse.Config;
 
 import org.apache.logging.log4j.CloseableThreadContext;

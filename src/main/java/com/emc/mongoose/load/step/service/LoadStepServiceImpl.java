@@ -11,10 +11,19 @@ import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import com.github.akurilov.confuse.Config;
 
-import org.apache.logging.log4j.CloseableThreadContext;
+import static com.github.akurilov.commons.system.DirectMemUtil.REUSABLE_BUFF_SIZE_MAX;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
 
+import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.FileSystemException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.List;
@@ -57,11 +66,8 @@ implements LoadStepService {
 				)
 			);
 
-		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_CLASS_NAME, LoadStepServiceImpl.class.getSimpleName())
-		) {
-			localLoadStep = selectedFactory.create(config, extensions, stepConfigs);
+		try(final Instance logCtx = put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+			localLoadStep = selectedFactory.createLocal(config, extensions, stepConfigs);
 			Loggers.MSG.info("New step service for \"{}\"", config.stringVal("load-step-id"));
 			super.doStart();
 		}
@@ -70,9 +76,7 @@ implements LoadStepService {
 	@Override
 	protected final void doStart() {
 		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_CLASS_NAME, LoadStepServiceImpl.class.getSimpleName())
-				.put(KEY_STEP_ID, localLoadStep.id())
+			final Instance logCtx = put(KEY_CLASS_NAME, getClass().getSimpleName()).put(KEY_STEP_ID, localLoadStep.id())
 		) {
 			localLoadStep.start();
 			Loggers.MSG.info("Step service for \"{}\" is started", localLoadStep.id());
@@ -83,9 +87,7 @@ implements LoadStepService {
 	@Override
 	protected void doStop() {
 		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_CLASS_NAME, LoadStepServiceImpl.class.getSimpleName())
-				.put(KEY_STEP_ID, localLoadStep.id())
+			final Instance logCtx = put(KEY_CLASS_NAME, getClass().getSimpleName()).put(KEY_STEP_ID, localLoadStep.id())
 		) {
 			localLoadStep.stop();
 			Loggers.MSG.info("Step service for \"{}\" is stopped", localLoadStep.id());
@@ -97,8 +99,7 @@ implements LoadStepService {
 	protected final void doClose()
 	throws IOException {
 		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_CLASS_NAME, LoadStepServiceImpl.class.getSimpleName())
+			final Instance logCtx = put(KEY_CLASS_NAME, getClass().getSimpleName())
 				.put(KEY_STEP_ID, localLoadStep.id())
 		) {
 			super.doStop();
@@ -137,16 +138,50 @@ implements LoadStepService {
 	}
 
 	@Override
-	public boolean await(final long timeout, final TimeUnit timeUnit)
+	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws IllegalStateException, InterruptedException {
 		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_CLASS_NAME, LoadStepServiceImpl.class.getSimpleName())
-				.put(KEY_STEP_ID, localLoadStep.id())
+			final Instance logCtx = put(KEY_CLASS_NAME, getClass().getSimpleName()).put(KEY_STEP_ID, localLoadStep.id())
 		) {
 			return localLoadStep.await(timeout, timeUnit);
 		} catch(final RemoteException ignored) {
 		}
 		return false;
+	}
+
+	@Override
+	public final String newTmpFileName()
+	throws IOException {
+		return localLoadStep.newTmpFileName();
+	}
+
+	@Override
+	public final byte[] readFromFile(final String fileName, final long offset)
+	throws IOException {
+		return localLoadStep.readFromFile(fileName, offset);
+	}
+
+	@Override
+	public final void writeToFile(final String fileName, final byte[] buff)
+	throws IOException {
+		localLoadStep.writeToFile(fileName, buff);
+	}
+
+	@Override
+	public final long fileSize(final String fileName)
+	throws IOException {
+		return localLoadStep.fileSize(fileName);
+	}
+
+	@Override
+	public final void truncateFile(final String fileName, final long size)
+	throws IOException {
+		localLoadStep.truncateFile(fileName, size);
+	}
+
+	@Override
+	public final void deleteFile(final String fileName)
+	throws IOException {
+		localLoadStep.deleteFile(fileName);
 	}
 }

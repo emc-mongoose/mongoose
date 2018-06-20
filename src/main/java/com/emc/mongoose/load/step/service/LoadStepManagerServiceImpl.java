@@ -51,9 +51,7 @@ implements LoadStepManagerService {
 	public final String getStepService(
 		final String stepType, final Config config, final List<Map<String, Object>> stepConfigs
 	) throws RemoteException {
-		final LoadStepService stepSvc = new LoadStepServiceImpl(
-			port, extensions, stepType, config, stepConfigs
-		);
+		final LoadStepService stepSvc = new LoadStepServiceImpl(port, extensions, stepType, config, stepConfigs);
 		Loggers.MSG.info("New step service started @ port #{}: {}", port, stepSvc.name());
 		return stepSvc.name();
 	}

@@ -35,7 +35,7 @@ extends AsyncRunnable {
 	List<MetricsSnapshot> metricsSnapshots()
 	throws RemoteException;
 
-	static Config initConfigSlice(final Config config, final String nodeAddrWithPort) {
+	static Config initConfigSlice(final Config config) {
 		final Config configSlice = new BasicConfig(config);
 		// disable the distributed mode on the slave nodes
 		configSlice.val("load-step-node-addrs", Collections.EMPTY_LIST);

@@ -1,12 +1,13 @@
-package com.emc.mongoose.load.step;
+package com.emc.mongoose.load.step.service;
 
+import com.emc.mongoose.load.step.FileManager;
 import com.emc.mongoose.svc.Service;
 
 /**
  Remote file access service. All files created are deleted when JVM exits.
  */
-public interface StepFileManagerService
-extends StepFileManager, Service {
+public interface FileManagerService
+extends FileManager, Service {
 
 	String SVC_NAME = "file/manager";
 }
