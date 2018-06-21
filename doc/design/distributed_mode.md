@@ -31,6 +31,12 @@ node.
 
 # Design
 
+## Requirements
+
+## Assumptions
+
+## Limitations
+
 The distributed mode test involves at least one entry node and some set of the additional nodes. The test may be started
 from any node from that set. The node selected to start the test should be temporarily treated as the *entry node*.
 The entry node is not excluded from the actual load execution.
