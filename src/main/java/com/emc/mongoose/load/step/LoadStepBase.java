@@ -159,8 +159,8 @@ implements LoadStep, Runnable {
 	throws IllegalStateException;
 
 	protected abstract void initMetrics(
-		final int originIndex, final IoType ioType, final int concurrency, final int nodeCount,
-		final Config metricsConfig, final SizeInBytes itemDataSize, final boolean outputColorFlag
+		final int originIndex, final IoType ioType, final int concurrency, final Config metricsConfig,
+		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	);
 
 	private void startMetricsAccounting() {

@@ -45,8 +45,7 @@ implements MetricsContext {
 		this.ioType = ioType;
 		this.nodeCount = nodeCount;
 		this.concurrency = concurrency;
-		this.thresholdConcurrency = thresholdConcurrency > 0 ?
-			thresholdConcurrency : Integer.MAX_VALUE;
+		this.thresholdConcurrency = thresholdConcurrency > 0 ? thresholdConcurrency : Integer.MAX_VALUE;
 		this.itemDataSize = itemDataSize;
 		this.snapshotsSupplier = snapshotsSupplier;
 

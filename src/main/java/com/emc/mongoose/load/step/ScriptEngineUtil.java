@@ -96,13 +96,9 @@ public interface ScriptEngineUtil {
 			.forEach(factory -> se.put(factory.id(), factory.createClient(config, extensions, null)));
 		loadStepFactories
 			.stream()
-			.filter(f -> "Load".equals(f.id()))
+			.filter(factory -> "Load".equals(factory.id()))
 			.findFirst()
-			.ifPresent(
-				baseLoadStepFactory -> registerAdditionalStepTypes(
-					se, extensions, config, baseLoadStepFactory
-				)
-			);
+			.ifPresent(factory -> registerAdditionalStepTypes(se, extensions, config, factory));
 	}
 
 	static void registerAdditionalStepTypes(
