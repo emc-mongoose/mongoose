@@ -16,7 +16,8 @@ import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.github.akurilov.confuse.Config;
 
-import org.apache.logging.log4j.CloseableThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -131,11 +132,7 @@ implements LoadStep, Runnable {
 
 		init();
 
-		try(
-			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_ID, id)
-				.put(KEY_CLASS_NAME, getClass().getSimpleName())
-		) {
+		try(final Instance logCtx = put(KEY_STEP_ID, id).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 			doStartWrapped();
 			final long t = TimeUtil.getTimeInSeconds(actualConfig.stringVal("load-step-limit-time"));
 			if(t > 0) {
