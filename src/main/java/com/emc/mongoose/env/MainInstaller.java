@@ -70,18 +70,18 @@ extends JarResourcesInstaller {
 			"example/scenario/py/rampup.py",
 
 			// provided extensions
+			"ext/mongoose-load-step-linear.jar",
+			"ext/mongoose-load-step-pipeline.jar",
+			"ext/mongoose-load-step-weighted.jar",
+			"ext/mongoose-storage-driver-coop.jar",
 			"ext/mongoose-storage-driver-coop-net.jar",
 			"ext/mongoose-storage-driver-coop-net-http.jar",
 			"ext/mongoose-storage-driver-coop-net-http-atmos.jar",
-			"ext/mongoose-load-step-type-weighted.jar",
-			"ext/mongoose-storage-driver-coop.jar",
-			"ext/mongoose-load-step-type-linear.jar",
 			"ext/mongoose-storage-driver-coop-net-http-s3.jar",
-			"ext/mongoose-storage-driver-preempt.jar",
-			"ext/mongoose-storage-driver-coop-nio-fs.jar",
-			"ext/mongoose-load-step-type-pipeline.jar",
+			"ext/mongoose-storage-driver-coop-net-http-swift.jar",
 			"ext/mongoose-storage-driver-coop-nio.jar",
-			"ext/mongoose-storage-driver-coop-net-http-swift.jar"
+			"ext/mongoose-storage-driver-coop-nio-fs.jar",
+			"ext/mongoose-storage-driver-preempt.jar"
 		)
 	);
 

@@ -3,9 +3,10 @@ package com.emc.mongoose.load.step.pipeline;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.env.ExtensionBase;
 import com.emc.mongoose.load.step.LoadStepFactory;
-import com.emc.mongoose.load.step.client.LoadStepClient;
+
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
+
 import com.github.akurilov.confuse.io.json.JsonSchemaProviderBase;
 
 import java.io.InputStream;

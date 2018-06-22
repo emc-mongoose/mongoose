@@ -5,7 +5,6 @@ import com.emc.mongoose.logging.Loggers;
 
 import org.apache.logging.log4j.Level;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
