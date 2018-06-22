@@ -9,7 +9,7 @@ load step state. After the load step is done, the summary data may be (optionall
 node.
 
 | v3.x.x | v4.x.x
-|----|----
+|--------|-------
 | ![Distributed Mode v3.x.x](../images/distributed_mode_v3.png) | ![Distributed Mode v4.x.x](../images/distributed_mode_v4.png)
 
 * **v3.x.x**
@@ -31,25 +31,39 @@ node.
 
 # Design
 
-## Requirements
+## High-Level
 
-## Assumptions
+### Requirements
 
-## Limitations
+| #  | Priority | Description
+|----|----------|------------
+| 1  | 0 | Initiate the run from any node from the deployed node set
+| 2  | 0 | Include the node used to initiate the run to the load step execution
+| 3  | 0 | Slice a load step input configuration
+| 4  | 0 | Slice a load step input items if an items input is configured and transfer these item input slices to all the nodes involved in the particular load step run
+| 5  | 0 | Aggregate the metrics during the load step run
+| 6  | 0 | Aggregate the item output file on the entry node if configured
+| 7  | 0 | Aggregate the I/O trace log file on the entry node if configured
+| 8  | 0 | Share the same load step id for all load step slices for a given load step
+| 9  | 1 | Be able to slice the storage node addresses set among the Mongoose nodes involved in the particular load step run
+| 10 | 1 | The node should also server the incoming requests to initiate the new run
 
-The distributed mode test involves at least one entry node and some set of the additional nodes. The test may be started
-from any node from that set. The node selected to start the test should be temporarily treated as the *entry node*.
-The entry node is not excluded from the actual load execution.
+### Limitations
 
-## Entry Node
+| # | Description
+|---|------------
+| 1 | Using the additional node running locally will lead to output files content collision. Local additional nodes should run inside the isolated environment (Docker container, for example).
+
+### Assumptions
+
+| # | Description
+|---|------------
+| 1 | An user is able to specify the ***additional nodes***. The total count of the nodes involved in a run will be the count of the additional nodes specified **plus 1**. This is due to the local entry node is involved in the test executin also.
+
+## Detailed
 
 Entry node loads the scenario into the corresponding scripting engine. The scripting engine instantiates the scenario
-steps. Each load step consists of its local and remote parts. The local step functionality:
-
-* step slicing
-* load the input items and distribute to the nodes
-* item output file aggregation (optional)
-* I/O traces aggregation (optional)
+steps. Each load step consists of its local and remote parts (slices).
 
 ### Scenario Step Slicing
 
@@ -91,23 +105,7 @@ Example:
 | C      | 2      | 02, 06, 10, 14       |
 | D      | 3      | 03, 07, 11, 15       |
 
-## Remote
-
-### Control
-
-1. Run actually the configured scenario step slice
-    1. Local scenario step should remember the environment variables got upon instantiation from the scripting engine
-    2. Scenario step slice should be serializable
-    3. Items for the input should be transferred and persisted too
-2. Determine the specified step state (started, paused, finished)
-3. Return the processed items (optional)
-4. Return the I/O traces data (optional)
-
-### Monitoring
-
-TODO
-
-# Configuration
+### Configuration
 
 * `load-step-node-addrs`
 
@@ -118,3 +116,7 @@ TODO
 * `load-step-node-port`
 
     The network port for the interaction between the nodes/peers. 1099 by default.
+
+* `run-node`
+
+    The option which tells to run in the node service mode

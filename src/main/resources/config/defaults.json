@@ -162,10 +162,9 @@
 		}
 	},
 	"run": {
-		// start in the node mode or as as master
+		// start in the node service node
 		"node": false,
-		// The default scenario file to run, null means invoking the default.js scenario bundled
-		// into the distribution
+		// The scenario file to run, null means invoking the default.js scenario bundled into the distribution
 		"scenario": null,
 		// The Mongoose version
 		"version": "4.0.0"

@@ -28,7 +28,7 @@ It is easily scalable to perform millions of IOPS and emulate millions of concur
 # Features
 
 1. [Scalability](doc/features.md#1-scalability)<br/>
- 1.1. [Vertical](doc/feature.md#11-vertical)</br/>
+ 1.1. [Vertical](doc/feature.md#11-vertical)<br/>
  1.2. [Horizontal](doc/feature.md#12-horizontal)<br/>
 2. [Customization](doc/features.md#2-customization)<br/>
  2.1. [Flexible Configuration](doc/features.md#21-flexible-configuration)<br/>
