@@ -7,6 +7,7 @@ import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
+import org.apache.commons.lang.StringUtils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -100,7 +101,9 @@ extends JarResourcesInstaller {
 			);
 		}
 		final String appVersion = bundledDefaults.stringVal("run-version");
-		System.out.println(APP_NAME + " v " + appVersion);
+		final String msg = " " + APP_NAME + " v " + appVersion + " ";
+		final String pad = StringUtils.repeat("#", (120 - msg.length()) / 2);
+		System.out.println(pad + msg + pad);
 		appHomePath = Paths.get(USER_HOME, "." + APP_NAME, appVersion);
 	}
 

@@ -55,7 +55,7 @@ extends LogMessageBase {
 				ioTypeColorCode = LogUtil.LIST_COLOR;
 				break;
 		}
-		buffer.append("Step \"").append(metricsCtx.stepId()).append("\" results:\n\t");
+		buffer.append("Step \"").append(metricsCtx.stepId()).append(metricsCtx.getClass()).append("\" results:\n\t");
 		if(stdOutColorFlag) {
 			buffer.append(ioTypeColorCode);
 		}

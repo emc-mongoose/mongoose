@@ -63,15 +63,13 @@ extends LoadStep {
 			.forEachOrdered(fileMgrsDst::add);
 	}
 
-	static Map<FileManager, String> initIoTraceLogFileServices(final List<FileManager> fileMgrs, final String id) {
+	static Map<FileManager, String> initIoTraceLogFileSlices(final List<FileManager> fileMgrs, final String id) {
 		return fileMgrs
 			.stream()
+			// exclude local I/O trace log file
+			.filter(fileMgr -> !(fileMgr instanceof FileManagerService))
 			.collect(
-				Collectors.toMap(
-					Function.identity(),
-					fileMgr -> fileMgr instanceof FileManagerService ?
-						FileManager.logFileName(Loggers.IO_TRACE.getName(), id) : null
-				)
+				Collectors.toMap(Function.identity(), fileMgr -> fileMgr.logFileName(Loggers.IO_TRACE.getName(), id))
 			);
 	}
 
@@ -106,6 +104,7 @@ extends LoadStep {
 
 		if(itemInputFile != null && !itemInputFile.isEmpty()) {
 			itemInput = createFileItemInput(itemFactory, itemInputFile);
+			Loggers.MSG.debug("Using the file \"{}\" as items input", itemInputFile);
 		} else {
 			final String itemInputPath = itemInputConfig.stringVal("path");
 			if(itemInputPath != null && !itemInputPath.isEmpty()) {
@@ -113,6 +112,7 @@ extends LoadStep {
 					itemConfig, config.configVal("load"), config.configVal("storage"), extensions, batchSize,
 					itemFactory, itemInputPath
 				);
+				Loggers.MSG.debug("Using the storage path \"{}\" as items input", itemInputPath);
 			}
 		}
 
@@ -134,7 +134,7 @@ extends LoadStep {
 					throw new AssertionError(e);
 				}
 			} else {
-				return new BinFileInput<>(itemInputFilePath);
+				fileItemInput = new BinFileInput<>(itemInputFilePath);
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to open the item input file \"{}\"", itemInputFile);
@@ -154,7 +154,9 @@ extends LoadStep {
 		final Config dataConfig = itemConfig.configVal("data");
 		final Config dataInputConfig = dataConfig.configVal("input");
 		final Config dataLayerConfig = dataInputConfig.configVal("layer");
+
 		try {
+
 			final DataInput dataInput = DataInput.instance(
 				dataInputConfig.stringVal("file"), dataInputConfig.stringVal("seed"),
 				new SizeInBytes(dataLayerConfig.stringVal("size")), dataLayerConfig.intVal("cache")
@@ -166,9 +168,11 @@ extends LoadStep {
 			final Config namingConfig = itemConfig.configVal("naming");
 			final String namingPrefix = namingConfig.stringVal("prefix");
 			final int namingRadix = namingConfig.intVal("radix");
+
 			itemInput = new StorageItemInput<>(
 				storageDriver, batchSize, itemFactory, itemInputPath, namingPrefix, namingRadix
 			);
+
 		} catch(final IOException | IllegalStateException | IllegalArgumentException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to initialize the data input");
 		} catch(final OmgShootMyFootException e) {

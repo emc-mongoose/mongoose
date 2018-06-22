@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.coop.nio.fs;
+package com.emc.mongoose.storage.driver.mock;
 
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.env.ExtensionBase;
@@ -14,29 +14,31 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class FileStorageDriverFactory<
-	I extends Item, O extends IoTask<I>, T extends FileStorageDriver<I, O>
+/**
+ Created by andrey on 19.09.17.
+ */
+public final class DummyStorageDriverMockExtension<
+	I extends Item, O extends IoTask<I>, T extends DummyStorageDriverMock<I, O>
 >
 extends ExtensionBase
 implements StorageDriverFactory<I, O, T> {
 
-	private static final String NAME = "fs";
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
 		Arrays.asList(
 		)
 	);
 
 	@Override
-	public String id() {
-		return NAME;
+	public final String id() {
+		return "dummy-mock";
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public T create(
+	public final T create(
 		final String stepId, final DataInput dataInput, final Config loadConfig,
 		final Config storageConfig, final boolean verifyFlag
-	) throws OmgShootMyFootException, InterruptedException {
-		return (T) new FileStorageDriver<I, O>(
+	) throws OmgShootMyFootException {
+		return (T) new DummyStorageDriverMock<>(
 			stepId, dataInput, loadConfig, storageConfig, verifyFlag
 		);
 	}

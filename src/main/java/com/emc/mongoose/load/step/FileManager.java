@@ -37,7 +37,7 @@ public interface FileManager {
 	};
 	Path TMP_DIR = Paths.get(System.getProperty("java.io.tmpdir"), "mongoose");
 
-	static String logFileName(final String loggerName, final String testStepId) {
+	default String logFileName(final String loggerName, final String testStepId) {
 		try(final Instance logCtx = put(KEY_STEP_ID, testStepId)) {
 			final Logger logger = LogManager.getLogger(loggerName);
 			final Appender appender = ((AsyncLogger) logger).getAppenders().get("ioTraceFile");

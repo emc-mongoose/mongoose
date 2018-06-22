@@ -37,14 +37,13 @@ implements LoadStep, Runnable {
 	protected final List<Map<String, Object>> stepConfigs;
 	protected final List<MetricsContext> metricsContexts = new ArrayList<>();
 
-	private volatile Config actualConfig = null;
+	protected volatile Config actualConfig = null;
 	private volatile long timeLimitSec = Long.MAX_VALUE;
 	private volatile long startTimeSec = -1;
 	private String id = null;
 
 	protected LoadStepBase(
-		final Config baseConfig, final List<Extension> extensions,
-		final List<Map<String, Object>> overrides
+		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides
 	) {
 		this.baseConfig = baseConfig;
 		this.extensions = extensions;

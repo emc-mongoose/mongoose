@@ -20,9 +20,6 @@ implements Extension {
 
 	@Override
 	public final void install(final Path appHomePath) {
-		Loggers.MSG.info(
-			"Check/install the extension: \"{}\" ({})", id(), getClass().getCanonicalName()
-		);
 		accept(appHomePath);
 	}
 

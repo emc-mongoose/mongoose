@@ -95,15 +95,15 @@ Example:
 * item-naming-offset: 0
 * item-naming-radix: 10
 * item-naming-scheme: asc
-* node-addrs: A,B,C,D
+* load-step-node-addrs: A,B,C
 * load-step-limit-count: 18
 
-| Node # | Offset | Resulting Item Names |
-|--------|--------|----------------------|
-| A      | 0      | 00, 04, 08, 12, 16   |
-| B      | 1      | 01, 05, 09, 13, 17   |
-| C      | 2      | 02, 06, 10, 14       |
-| D      | 3      | 03, 07, 11, 15       |
+| Node    | Offset | Resulting Item Names |
+|---------|--------|----------------------|
+| <LOCAL> | 0      | 00, 04, 08, 12, 16   |
+| A       | 1      | 01, 05, 09, 13, 17   |
+| B       | 2      | 02, 06, 10, 14       |
+| C       | 3      | 03, 07, 11, 15       |
 
 ### Configuration
 

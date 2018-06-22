@@ -25,7 +25,7 @@ import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
-
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
@@ -80,7 +80,24 @@ public final class Main {
 			);
 			final List<Extension> extensions = Extension.load(extClsLoader);
 			// install the extensions
-			extensions.forEach(ext -> ext.install(appHomePath));
+			final StringBuilder availExtMsg = new StringBuilder("Available/installed extensions:\n");
+			extensions
+				.forEach(
+					ext -> {
+						ext.install(appHomePath);
+						final String extId = ext.id();
+						final String extFqcn = ext.getClass().getCanonicalName();
+						availExtMsg
+							.append('\t')
+							.append(extId)
+							.append(' ')
+							.append(StringUtils.repeat("-", extId.length() < 30 ? 30 - extId.length() : 1))
+							.append("> ")
+							.append(extFqcn)
+							.append('\n');
+					}
+				);
+			Loggers.MSG.info(availExtMsg);
 			// apply the extensions defaults
 			final Config config;
 			try {

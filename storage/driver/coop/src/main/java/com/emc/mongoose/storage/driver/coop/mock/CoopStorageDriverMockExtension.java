@@ -14,9 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class CoopStorageDriverMockFactory<
-	I extends Item, O extends IoTask<I>, T extends CoopStorageDriverMock<I, O>
->
+public class CoopStorageDriverMockExtension<I extends Item, O extends IoTask<I>, T extends CoopStorageDriverMock<I, O>>
 extends ExtensionBase
 implements StorageDriverFactory<I, O, T>  {
 
