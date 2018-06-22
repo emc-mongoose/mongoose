@@ -105,10 +105,9 @@ extends LoadStepLocalBase {
 			final Config outputConfig = subConfig.configVal("output");
 			final Config metricsConfig = outputConfig.configVal("metrics");
 			final SizeInBytes itemDataSize = new SizeInBytes(subConfig.stringVal("item-data-size"));
-			final int nodeCount = 1;
 			final boolean colorFlag = outputConfig.boolVal("color");
 
-			initMetrics(originIndex, ioType, concurrency, nodeCount, metricsConfig, itemDataSize, colorFlag);
+			initMetrics(originIndex, ioType, concurrency, metricsConfig, itemDataSize, colorFlag);
 
 			final Config itemConfig = subConfig.configVal("item");
 			final Config storageConfig = subConfig.configVal("storage");
@@ -123,21 +122,17 @@ extends LoadStepLocalBase {
 
 				final DataInput dataInput = DataInput.instance(
 					dataInputConfig.stringVal("file"), dataInputConfig.stringVal("seed"),
-					new SizeInBytes(dataLayerConfig.stringVal("size")),
-					dataLayerConfig.intVal("cache")
+					new SizeInBytes(dataLayerConfig.stringVal("size")), dataLayerConfig.intVal("cache")
 				);
 
 				try {
 
 					final StorageDriver driver = StorageDriver.instance(
-						extensions, loadConfig, storageConfig, dataInput,
-						dataConfig.boolVal("verify"), testStepId
+						extensions, loadConfig, storageConfig, dataInput, dataConfig.boolVal("verify"), testStepId
 					);
 					drivers.add(driver);
 
-					final ItemType itemType = ItemType.valueOf(
-						itemConfig.stringVal("type").toUpperCase()
-					);
+					final ItemType itemType = ItemType.valueOf(itemConfig.stringVal("type").toUpperCase());
 					final ItemFactory<Item> itemFactory = ItemType.getItemFactory(itemType);
 					final double rateLimit = loadConfig.doubleVal("step-limit-rate");
 
@@ -157,10 +152,8 @@ extends LoadStepLocalBase {
 						generators.add(generator);
 
 						final LoadController controller = new LoadControllerImpl<>(
-							testStepId, generator, driver, metricsContexts.get(originIndex),
-							limitConfig,
-							outputConfig.boolVal("metrics-trace-persist"),
-							loadConfig.intVal("batch-size"),
+							testStepId, generator, driver, metricsContexts.get(originIndex), limitConfig,
+							outputConfig.boolVal("metrics-trace-persist"), loadConfig.intVal("batch-size"),
 							loadConfig.intVal("generator-recycle-limit")
 						);
 						controllers.add(controller);
@@ -169,13 +162,10 @@ extends LoadStepLocalBase {
 						if(itemOutputFile != null && itemOutputFile.length() > 0) {
 							final Path itemOutputPath = Paths.get(itemOutputFile);
 							if(Files.exists(itemOutputPath)) {
-								Loggers.ERR.warn(
-									"Items output file \"{}\" already exists", itemOutputPath
-								);
+								Loggers.ERR.warn("Items output file \"{}\" already exists", itemOutputPath);
 							}
 							try {
-								final Output<? extends Item>
-									itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
+								final Output<? extends Item> itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
 								controller.ioResultsOutput(itemOutput);
 							} catch(final IOException e) {
 								LogUtil.exception(
@@ -186,14 +176,10 @@ extends LoadStepLocalBase {
 							}
 						}
 					} catch(final OmgShootMyFootException e) {
-						throw new IllegalStateException(
-							"Failed to initialize the load generator", e
-						);
+						throw new IllegalStateException("Failed to initialize the load generator", e);
 					}
 				} catch(final OmgShootMyFootException e) {
-					throw new IllegalStateException(
-						"Failed to initialize the storage driver", e
-					);
+					throw new IllegalStateException("Failed to initialize the storage driver", e);
 				} catch(final InterruptedException e) {
 					throw new CancellationException();
 				}

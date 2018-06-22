@@ -4,7 +4,7 @@ import com.emc.mongoose.load.step.LoadStep;
 import com.emc.mongoose.svc.Service;
 
 public interface LoadStepService
-extends Service, LoadStep, FileService {
+extends Service, LoadStep {
 
 	String SVC_NAME_PREFIX = "load/step/";
 }

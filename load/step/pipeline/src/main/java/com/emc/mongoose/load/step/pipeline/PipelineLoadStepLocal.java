@@ -91,9 +91,8 @@ extends LoadStepLocalBase {
 			final Config outputConfig = subConfig.configVal("output");
 			final Config metricsConfig = outputConfig.configVal("metrics");
 			final SizeInBytes itemDataSize = new SizeInBytes(subConfig.stringVal("item-data-size"));
-			final int nodeCount = 1;
 			final boolean outputColorFlag = outputConfig.boolVal("color");
-			initMetrics(originIndex, ioType, concurrency, nodeCount, metricsConfig, itemDataSize, outputColorFlag);
+			initMetrics(originIndex, ioType, concurrency, metricsConfig, itemDataSize, outputColorFlag);
 
 			final Config itemConfig = subConfig.configVal("item");
 			final Config storageConfig = subConfig.configVal("storage");

@@ -16,10 +16,11 @@ import com.emc.mongoose.load.step.service.FileManagerService;
 import com.emc.mongoose.load.step.service.LoadStepService;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
-import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.load.step.LoadStep;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.svc.ServiceUtil;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.file.BinFileInput;
@@ -27,20 +28,26 @@ import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.github.akurilov.confuse.Config;
 
+import org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
 import org.apache.logging.log4j.Level;
 
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public interface LoadStepClient
@@ -56,14 +63,16 @@ extends LoadStep {
 			.forEachOrdered(fileMgrsDst::add);
 	}
 
-	static List<String> initIoTraceLogFileServices(final List<FileManager> fileMgrs, final String id) {
+	static Map<FileManager, String> initIoTraceLogFileServices(final List<FileManager> fileMgrs, final String id) {
 		return fileMgrs
 			.stream()
-			.map(
-				fileMgr -> fileMgr instanceof FileManagerService ?
-					FileManager.logFileName(Loggers.IO_TRACE.getName(), id) : null
-			)
-			.collect(Collectors.toList());
+			.collect(
+				Collectors.toMap(
+					Function.identity(),
+					fileMgr -> fileMgr instanceof FileManagerService ?
+						FileManager.logFileName(Loggers.IO_TRACE.getName(), id) : null
+				)
+			);
 	}
 
 	static void sliceCountLimit(final long countLimit, final int sliceCount, final List<Config> configSlices) {
@@ -171,46 +180,54 @@ extends LoadStep {
 		return itemInput;
 	}
 
-	static List<String> sliceItemInput(
+	static Map<FileManager, String> sliceItemInput(
 		final Input<Item> itemInput, final List<FileManager> fileMgrs, final List<Config> configSlices,
 		final int batchSize
 	) throws IOException {
 
 		final int sliceCount = configSlices.size();
 
-		final List<String> itemInputFileNames = new ArrayList<>(sliceCount);
+		final Map<FileManager, String> itemInputFileSlices = new HashMap<>(sliceCount);
 		for(int i = 0; i < sliceCount; i ++) {
 			try {
-				final String itemInputFileName = fileMgrs.get(i).newTmpFileName();
-				itemInputFileNames.add(itemInputFileName);
+				final FileManager fileMgr = fileMgrs.get(i);
+				final String itemInputFileName = fileMgr.newTmpFileName();
+				itemInputFileSlices.put(fileMgr, itemInputFileName);
 			} catch(final Exception e) {
 				LogUtil.exception(Level.ERROR, e, "Failed to get the item input file name for the step slice #" + i);
-				itemInputFileNames.add(null);
 			}
 		}
 
-		final List<ByteArrayOutputStream> itemsOutByteBuffs = fileMgrs
+		final Map<FileManager, ByteArrayOutputStream> itemsOutByteBuffs = fileMgrs
 			.stream()
-			.map(fileMgr -> new ByteArrayOutputStream(batchSize * 0x40))
-			.collect(Collectors.toList());
+			.collect(
+				Collectors.toMap(
+					Function.identity(),
+					fileMgr -> new ByteArrayOutputStream(batchSize * 0x40)
+				)
+			);
 
-		final List<ObjectOutputStream> itemsOutputs = itemsOutByteBuffs
+		final Map<FileManager, ObjectOutputStream> itemsOutputs = itemsOutByteBuffs
+			.entrySet()
 			.stream()
-			.map(
-				itemsOutByteBuff -> {
-					try {
-						return new ObjectOutputStream(itemsOutByteBuff);
-					} catch(final IOException ignored) {
+			.collect(
+				Collectors.toMap(
+					Map.Entry::getKey,
+					entry -> {
+						try {
+							return new ObjectOutputStream(entry.getValue());
+						} catch(final IOException ignored) {
+						}
+						return null;
 					}
-					return null;
-				}
-			)
-			.collect(Collectors.toList());
+				)
+			);
 
-		transferItemsInputData(itemInput, batchSize, fileMgrs, itemInputFileNames, itemsOutByteBuffs, itemsOutputs);
+		transferItemsInputData(itemInput, batchSize, fileMgrs, itemInputFileSlices, itemsOutByteBuffs, itemsOutputs);
 		Loggers.MSG.info("{}: items input data is distributed to the {} step slices", configSlices.size());
 
 		itemsOutputs
+			.values()
 			.parallelStream()
 			.filter(Objects::nonNull)
 			.forEach(
@@ -224,21 +241,22 @@ extends LoadStep {
 
 		for(int i = 0; i < sliceCount; i ++) {
 			final Config configSlice = configSlices.get(i);
-			final String itemInputFileName = itemInputFileNames.get(i);
+			final String itemInputFileName = itemInputFileSlices.get(fileMgrs.get(i));
 			configSlice.val("item-input-file", itemInputFileName);
 		}
 
-		return itemInputFileNames;
+		return itemInputFileSlices;
 	}
 
 	static void transferItemsInputData(
 		final Input<? extends Item> itemInput, final int batchSize, final List<FileManager> fileMgrs,
-		final List<String> itemInputFileNames, final List<ByteArrayOutputStream> itemsOutByteBuffs,
-		final List<ObjectOutputStream> itemsOutputs
+		final Map<FileManager, String> itemInputFileSlices,
+		final Map<FileManager, ByteArrayOutputStream> itemsOutByteBuffs,
+		final Map<FileManager, ObjectOutputStream> itemsOutputs
 	) throws IOException {
 
 		final int sliceCount = itemsOutByteBuffs.size();
-		final List<? extends Item> itemsBuff = new ArrayList<>(batchSize);
+		final List itemsBuff = new ArrayList<>(batchSize);
 
 		int n;
 		final ObjectOutputStream out = itemsOutputs.get(0);
@@ -247,7 +265,7 @@ extends LoadStep {
 
 			// get the next batch of items
 			try {
-				n = itemInput.get((List) itemsBuff, batchSize);
+				n = itemInput.get(itemsBuff, batchSize);
 			} catch(final EOFException e) {
 				break;
 			}
@@ -259,7 +277,7 @@ extends LoadStep {
 					// distribute the items using round robin
 					for(int i = 0; i < n; i ++) {
 						itemsOutputs
-							.get(i % sliceCount)
+							.get(fileMgrs.get(i % sliceCount))
 							.writeUnshared(itemsBuff.get(i));
 					}
 				} else {
@@ -271,17 +289,16 @@ extends LoadStep {
 				itemsBuff.clear();
 
 				// write the text items data to the remote input files
-				for(int i = 0; i < sliceCount; i ++ ) {
-					final FileManager fileMgr = fileMgrs.get(i);
-					final ByteArrayOutputStream buff = itemsOutByteBuffs.get(i);
-					final String itemInputFileName = itemInputFileNames.get(i);
+				for(final FileManager fileMgr : fileMgrs) {
+					final ByteArrayOutputStream buff = itemsOutByteBuffs.get(fileMgr);
+					final String itemInputFileName = itemInputFileSlices.get(fileMgr);
 					try {
 						final byte[] data = buff.toByteArray();
 						fileMgr.writeToFile(itemInputFileName, data);
 						buff.reset();
 					} catch(final IOException e) {
 						LogUtil.exception(
-							Level.WARN, e, "Failed to write the items input data to the file manager #{}", i
+							Level.WARN, e, "Failed to write the items input data to the file manager \"{}\"", fileMgr
 						);
 					}
 				}
@@ -291,18 +308,18 @@ extends LoadStep {
 		}
 	}
 
-	static List<String> sliceItemOutputFileConfig(
+	static Map<FileManager, String> sliceItemOutputFileConfig(
 		final List<FileManager> fileMgrs, final List<Config> configSlices, final String itemOutputFile
 	) {
 		final int sliceCount = fileMgrs.size();
-		final List<String> itemOutputFileNames = new ArrayList<>(sliceCount);
+		final Map<FileManager, String> itemOutputFileSlices = new HashMap<>(sliceCount);
 		for(int i = 0; i < sliceCount; i ++) {
 			final FileManager fileMgr = fileMgrs.get(i);
 			if(i == 0) {
 				if(fileMgr instanceof FileManagerService) {
 					throw new AssertionError("File manager @ index #" + i + " shouldn't be a service");
 				}
-				itemOutputFileNames.add(itemOutputFile);
+				itemOutputFileSlices.put(fileMgr, itemOutputFile);
 			} else {
 				if(fileMgr instanceof FileManagerService) {
 					try {
@@ -319,7 +336,7 @@ extends LoadStep {
 				}
 			}
 		}
-		return itemOutputFileNames;
+		return itemOutputFileSlices;
 	}
 
 	static LoadStepService resolveRemoteLoadStepSlice(
@@ -363,5 +380,79 @@ extends LoadStep {
 		}
 
 		return stepSvc;
+	}
+
+	static boolean awaitStepSlice(final LoadStep stepSlice, final long timeout, final TimeUnit timeUnit) {
+		try(
+			final Instance logCtx = put(KEY_STEP_ID, stepSlice.id())
+				.put(KEY_CLASS_NAME, LoadStepClientBase.class.getSimpleName())
+		) {
+			long commFailCount = 0;
+			while(true) {
+				try {
+					if(stepSlice.await(timeout, timeUnit)) {
+						return true;
+					}
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						Level.DEBUG, e, "Failed to invoke the step slice \"{}\" await method {} times",
+						stepSlice, commFailCount
+					);
+					commFailCount ++;
+					Thread.sleep(commFailCount);
+				}
+			}
+		} catch(final InterruptedException e) {
+			throw new CancellationException();
+		} catch(final RemoteException ignored) {
+			return false;
+		}
+	}
+
+	static void transferItemOutputData(
+		final FileManager fileMgr, final String remoteItemOutputFileName, final OutputStream localItemOutput
+	) {
+		long transferredByteCount = 0;
+		try(final Instance logCtx = put(KEY_CLASS_NAME, LoadStepClient.class.getSimpleName())) {
+			byte buff[];
+			while(true) {
+				buff = fileMgr.readFromFile(remoteItemOutputFileName, transferredByteCount);
+				synchronized(localItemOutput) {
+					localItemOutput.write(buff);
+				}
+				transferredByteCount += buff.length;
+			}
+		} catch(final EOFException ok) {
+		} catch(final IOException e) {
+			LogUtil.exception(Level.WARN, e, "Remote items output file transfer failure");
+		} finally {
+			Loggers.MSG.info(
+				"{} of items output data transferred from \"{}\" @ \"{}\" to \"{}\"",
+				SizeInBytes.formatFixedSize(transferredByteCount), remoteItemOutputFileName, fileMgr,
+				localItemOutput
+			);
+		}
+	}
+
+	static void transferIoTraceData(final FileManager fileMgr, final String remoteIoTraceLogFileName) {
+		long transferredByteCount = 0;
+		try(final Instance logCtx = put(KEY_CLASS_NAME, LoadStepClient.class.getSimpleName())) {
+			byte[] data;
+			while(true) {
+				data = fileMgr.readFromFile(remoteIoTraceLogFileName, transferredByteCount);
+				Loggers.IO_TRACE.info(new String(data));
+				transferredByteCount += data.length;
+			}
+		} catch(final EOFException ok) {
+		} catch(final RemoteException e) {
+			LogUtil.exception(Level.WARN, e, "Failed to read the data from the remote file");
+		} catch(final IOException e) {
+			LogUtil.exception(Level.ERROR, e, "Unexpected I/O exception");
+		} finally {
+			Loggers.MSG.info(
+				"Transferred {} of the remote I/O traces data from the remote file \"{}\" @ \"{}\"",
+				SizeInBytes.formatFixedSize(transferredByteCount), remoteIoTraceLogFileName, fileMgr
+			);
+		}
 	}
 }

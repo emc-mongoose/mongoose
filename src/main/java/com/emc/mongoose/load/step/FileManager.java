@@ -8,6 +8,7 @@ import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
 import org.apache.logging.log4j.core.async.AsyncLogger;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
@@ -54,9 +55,8 @@ public interface FileManager {
 
 	/**
 	 Read the next batch of bytes from the remote file
-	 @return the bytes been read, may return empty buffer in case of EOF
-	 @throws IllegalStateException if the file isn't open yet either
-	 EOFException if end of file is reached
+	 @return The bytes been read, may return empty buffer in case of EOF
+	 @throws EOFException if end of file is reached
 	 */
 	byte[] readFromFile(final String fileName, final long offset)
 	throws IOException;
