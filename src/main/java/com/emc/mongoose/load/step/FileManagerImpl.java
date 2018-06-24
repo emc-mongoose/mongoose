@@ -1,5 +1,12 @@
 package com.emc.mongoose.load.step;
 
+import org.apache.logging.log4j.CloseableThreadContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
+import org.apache.logging.log4j.core.async.AsyncLogger;
+
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
@@ -10,10 +17,22 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.github.akurilov.commons.system.DirectMemUtil.REUSABLE_BUFF_SIZE_MAX;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 public class FileManagerImpl
 implements FileManager {
+
+	@Override
+	public final String logFileName(final String loggerName, final String testStepId) {
+		try(final CloseableThreadContext.Instance logCtx = put(KEY_STEP_ID, testStepId)) {
+			final Logger logger = LogManager.getLogger(loggerName);
+			final Appender appender = ((AsyncLogger) logger).getAppenders().get("ioTraceFile");
+			final String filePtrn = ((RollingRandomAccessFileAppender) appender).getFilePattern();
+			return filePtrn.contains("${ctx:stepId}") ? filePtrn.replace("${ctx:stepId}", testStepId) : filePtrn;
+		}
+	}
 
 	@Override
 	public final String newTmpFileName()

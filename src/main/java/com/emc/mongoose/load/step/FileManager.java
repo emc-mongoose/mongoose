@@ -37,14 +37,13 @@ public interface FileManager {
 	};
 	Path TMP_DIR = Paths.get(System.getProperty("java.io.tmpdir"), "mongoose");
 
-	default String logFileName(final String loggerName, final String testStepId) {
-		try(final Instance logCtx = put(KEY_STEP_ID, testStepId)) {
-			final Logger logger = LogManager.getLogger(loggerName);
-			final Appender appender = ((AsyncLogger) logger).getAppenders().get("ioTraceFile");
-			final String filePtrn = ((RollingRandomAccessFileAppender) appender).getFilePattern();
-			return filePtrn.contains("${ctx:stepId}") ? filePtrn.replace("${ctx:stepId}", testStepId) : filePtrn;
-		}
-	}
+	/**
+	 Determine the file name for the given logger and step id pair
+	 @param loggerName
+	 @param testStepId
+	 @return the file name
+	 */
+	String logFileName(final String loggerName, final String testStepId);
 
 	/**
 	 * Generate the temporary file name
