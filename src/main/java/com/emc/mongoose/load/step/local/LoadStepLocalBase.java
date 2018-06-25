@@ -102,11 +102,6 @@ extends LoadStepBase {
 			metricsConfig.boolVal("summary-perfDbResultsFile")
 		);
 		metricsContexts.add(metricsCtx);
-		try {
-			MetricsManager.register(id(), metricsCtx);
-		} catch(final InterruptedException e) {
-			throw new CancellationException(e.getMessage());
-		}
 	}
 
 	protected final void doShutdown() {

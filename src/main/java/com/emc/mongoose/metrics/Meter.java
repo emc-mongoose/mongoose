@@ -1,5 +1,9 @@
 package com.emc.mongoose.metrics;
 
+import com.emc.mongoose.logging.LogUtil;
+import org.apache.logging.log4j.Level;
+
+import javax.management.InstanceAlreadyExistsException;
 import javax.management.ObjectName;
 import java.util.Hashtable;
 
@@ -23,9 +27,22 @@ implements MeterMBean {
 		props.put(KEY_LOAD_TYPE, metricsCtx.ioType().name());
 		props.put(KEY_NODE_COUNT, Integer.toString(metricsCtx.nodeCount()));
 		props.put(KEY_CONCURRENCY_LIMIT, Integer.toString(metricsCtx.concurrencyLimit()));
+		props.put(KEY_ITEM_DATA_SIZE, metricsCtx.itemDataSize().toString());
 		objectName = new ObjectName(METRICS_DOMAIN, props);
 		metricsCtx.metricsListener(this);
-		MBEAN_SERVER.registerMBean(this, objectName);
+		try {
+			MBEAN_SERVER.registerMBean(this, objectName);
+		} catch(final InstanceAlreadyExistsException e) {
+			if(1 == metricsCtx.nodeCount()) {
+				MBEAN_SERVER.unregisterMBean(objectName);
+				MBEAN_SERVER.registerMBean(this, objectName);
+			} else {
+				LogUtil.exception(
+					Level.WARN, e, "Failed to expose the metrics context \"{}\" with name \"{}\" for JMX service",
+					metricsCtx, objectName
+				);
+			}
+		}
 	}
 
 	@Override
@@ -33,7 +50,9 @@ implements MeterMBean {
 	throws Exception {
 		metricsCtx.metricsListener(null);
 		lastSnapshot = null;
-		MBEAN_SERVER.unregisterMBean(objectName);
+		if(MBEAN_SERVER.isRegistered(objectName)) {
+			MBEAN_SERVER.unregisterMBean(objectName);
+		}
 	}
 
 	private volatile MetricsSnapshot lastSnapshot = null;

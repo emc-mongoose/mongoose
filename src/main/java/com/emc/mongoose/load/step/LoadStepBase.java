@@ -142,7 +142,16 @@ implements LoadStep, Runnable {
 			LogUtil.exception(Level.WARN, cause, "{} step failed to start", id);
 		}
 
-		metricsContexts.forEach(MetricsContext::start);
+		metricsContexts.forEach(
+			metricsCtx -> {
+				metricsCtx.start();
+				try {
+					MetricsManager.register(id(), metricsCtx);
+				} catch(final InterruptedException e) {
+					throw new CancellationException(e.getMessage());
+				}
+			}
+		);
 	}
 
 	protected abstract void doStartWrapped();

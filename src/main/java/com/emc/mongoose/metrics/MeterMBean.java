@@ -5,8 +5,11 @@ package com.emc.mongoose.metrics;
  */
 public interface MeterMBean
 extends AutoCloseable, MetricsListener, MetricsSnapshot {
+
 	String METRICS_DOMAIN = MeterMBean.class.getPackage().getName();
-	String KEY_LOAD_TYPE = "loadType";
-	String KEY_NODE_COUNT = "nodeCount";
-	String KEY_CONCURRENCY_LIMIT = "concurrencyLimit";
+
+	String KEY_LOAD_TYPE = "load_type";
+	String KEY_NODE_COUNT = "node_count";
+	String KEY_CONCURRENCY_LIMIT = "concurrency_limit";
+	String KEY_ITEM_DATA_SIZE = "item_data_size";
 }

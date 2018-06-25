@@ -59,8 +59,17 @@ extends LoadStep {
 		// remote
 		nodeAddrs
 			.stream()
-			.map(FileManagerService::resolve)
+			.map(LoadStepClient::resolveFileManager)
 			.forEachOrdered(fileMgrsDst::add);
+	}
+
+	static FileManagerService resolveFileManager(final String nodeAddrWithPort) {
+		try {
+			return (FileManagerService) ServiceUtil.resolve(nodeAddrWithPort, FileManagerService.SVC_NAME);
+		} catch(final Exception e) {
+			LogUtil.exception(Level.ERROR, e, "Failed to resolve the file manager service @ {}", nodeAddrWithPort);
+		}
+		return null;
 	}
 
 	static Map<FileManager, String> initIoTraceLogFileSlices(final List<FileManager> fileMgrs, final String id) {
@@ -69,7 +78,17 @@ extends LoadStep {
 			// exclude local I/O trace log file
 			.filter(fileMgr -> !(fileMgr instanceof FileManagerService))
 			.collect(
-				Collectors.toMap(Function.identity(), fileMgr -> fileMgr.logFileName(Loggers.IO_TRACE.getName(), id))
+				Collectors.toMap(
+					Function.identity(),
+					fileMgr -> {
+						try {
+							return fileMgr.logFileName(Loggers.IO_TRACE.getName(), id);
+						} catch(final IOException e) {
+							LogUtil.exception(Level.WARN, e, "{}: failed to get the remote log file name", id);
+							return null;
+						}
+					}
+				)
 			);
 	}
 

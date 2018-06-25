@@ -1,13 +1,5 @@
 package com.emc.mongoose.load.step;
 
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
-import org.apache.logging.log4j.core.async.AsyncLogger;
-
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.LinkOption;
@@ -15,8 +7,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 public interface FileManager {
 
@@ -43,7 +33,8 @@ public interface FileManager {
 	 @param testStepId
 	 @return the file name
 	 */
-	String logFileName(final String loggerName, final String testStepId);
+	String logFileName(final String loggerName, final String testStepId)
+	throws IOException;
 
 	/**
 	 * Generate the temporary file name

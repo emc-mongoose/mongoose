@@ -33,7 +33,8 @@ implements FileManagerService {
 	}
 
 	@Override
-	public final String logFileName(final String loggerName, final String testStepId) {
+	public final String logFileName(final String loggerName, final String testStepId)
+	throws IOException {
 		return localFileMgr.logFileName(loggerName, testStepId);
 	}
 

@@ -128,7 +128,7 @@ implements LoadStepClient {
 				if(i == 0) {
 					stepSlice = createLocalLoadStep(configSlice, extensions, stepConfigs, stepTypeName);
 				} else {
-					final String nodeAddrWithPort = nodeAddrs.get(i);
+					final String nodeAddrWithPort = nodeAddrs.get(i - 1);
 					stepSlice = resolveRemoteLoadStepSlice(configSlice, stepConfigs, stepTypeName, nodeAddrWithPort);
 				}
 				stepSlices.add(stepSlice);
@@ -221,11 +221,6 @@ implements LoadStepClient {
 			() -> metricsSnapshotsByIndex(originIndex)
 		);
 		metricsContexts.add(metricsCtx);
-		try {
-			MetricsManager.register(id(), metricsCtx);
-		} catch(final InterruptedException e) {
-			throw new CancellationException(e.getMessage());
-		}
 	}
 
 	@Override
