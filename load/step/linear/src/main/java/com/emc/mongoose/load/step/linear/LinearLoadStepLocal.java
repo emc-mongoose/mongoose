@@ -17,19 +17,13 @@ import com.emc.mongoose.load.generator.LoadGeneratorBuilderImpl;
 import com.emc.mongoose.load.step.LoadStepBase;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+import static com.emc.mongoose.load.step.linear.LinearLoadStep.initConfig;
 
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.system.SizeInBytes;
-
-import static com.emc.mongoose.load.step.linear.LinearLoadStep.initConfig;
-import static com.github.akurilov.commons.collection.TreeUtil.reduceForest;
 import com.github.akurilov.commons.concurrent.throttle.RateThrottle;
 
 import com.github.akurilov.confuse.Config;
-import static com.github.akurilov.confuse.Config.deepToMap;
-import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
-import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
-import com.github.akurilov.confuse.impl.BasicConfig;
 
 import org.apache.logging.log4j.Level;
 
@@ -37,7 +31,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;

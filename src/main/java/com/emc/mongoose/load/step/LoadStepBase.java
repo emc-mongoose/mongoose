@@ -142,7 +142,7 @@ implements LoadStep, Runnable {
 			LogUtil.exception(Level.WARN, cause, "{} step failed to start", id);
 		}
 
-		startMetricsAccounting();
+		metricsContexts.forEach(MetricsContext::start);
 	}
 
 	protected abstract void doStartWrapped();
@@ -159,21 +159,8 @@ implements LoadStep, Runnable {
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	);
 
-	private void startMetricsAccounting() {
-		metricsContexts.forEach(
-			metricsCtx -> {
-				metricsCtx.start();
-				try {
-					MetricsManager.register(id, metricsCtx);
-				} catch(final InterruptedException e) {
-					throw new CancellationException(e.getMessage());
-				}
-			}
-		);
-	}
-
 	@Override
-	protected final void doStop() {
+	protected void doStop() {
 
 		metricsContexts
 			.forEach(
@@ -185,8 +172,6 @@ implements LoadStep, Runnable {
 					}
 				}
 			);
-
-		doStopWrapped();
 
 		final long t = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - startTimeSec;
 		if(t < 0) {
@@ -204,12 +189,9 @@ implements LoadStep, Runnable {
 		}
 	}
 
-	protected abstract void doStopWrapped();
-
 	@Override
 	protected void doClose()
 	throws IOException {
-
 		metricsContexts
 			.forEach(
 				metricsCtx -> {
@@ -222,9 +204,5 @@ implements LoadStep, Runnable {
 					}
 				}
 			);
-
-		doCloseWrapped();
 	}
-
-	protected abstract void doCloseWrapped();
 }

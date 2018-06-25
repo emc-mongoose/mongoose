@@ -64,7 +64,7 @@ extends LogMessageBase {
 			buffer.append(RESET);
 		}
 		buffer
-			.append('-').append(metricsCtx.concurrency())
+			.append('-').append(metricsCtx.concurrencyLimit())
 			.append('x').append(metricsCtx.nodeCount())
 			.append(": c=(").append(formatFixedWidth(snapshot.actualConcurrencyMean(), 6))
 			.append("); n=(");

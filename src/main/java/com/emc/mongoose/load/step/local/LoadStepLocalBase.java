@@ -9,7 +9,9 @@ import com.emc.mongoose.load.step.LoadStepBase;
 import com.emc.mongoose.logging.LogContextThreadFactory;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsContextImpl;
+import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
@@ -92,18 +94,19 @@ extends LoadStepBase {
 		final int originIndex, final IoType ioType, final int concurrency, final Config metricsConfig,
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
-		metricsContexts.add(
-			new MetricsContextImpl(
-				id(), ioType,
-				() -> drivers.stream().mapToInt(StorageDriver::getActiveTaskCount).sum(),
-				concurrency, (int) (concurrency * metricsConfig.doubleVal("threshold")),
-				itemDataSize,
-				(int) TimeUtil.getTimeInSeconds(metricsConfig.stringVal("average-period")),
-				outputColorFlag, metricsConfig.boolVal("average-persist"),
-				metricsConfig.boolVal("summary-persist"),
-				metricsConfig.boolVal("summary-perfDbResultsFile")
-			)
+		final MetricsContext metricsCtx = new MetricsContextImpl(
+			id(), ioType, () -> drivers.stream().mapToInt(StorageDriver::getActiveTaskCount).sum(),
+			concurrency, (int) (concurrency * metricsConfig.doubleVal("threshold")), itemDataSize,
+			(int) TimeUtil.getTimeInSeconds(metricsConfig.stringVal("average-period")),
+			outputColorFlag, metricsConfig.boolVal("average-persist"), metricsConfig.boolVal("summary-persist"),
+			metricsConfig.boolVal("summary-perfDbResultsFile")
 		);
+		metricsContexts.add(metricsCtx);
+		try {
+			MetricsManager.register(id(), metricsCtx);
+		} catch(final InterruptedException e) {
+			throw new CancellationException(e.getMessage());
+		}
 	}
 
 	protected final void doShutdown() {
@@ -175,7 +178,7 @@ extends LoadStepBase {
 	}
 
 	@Override
-	protected final void doStopWrapped() {
+	protected final void doStop() {
 		drivers.forEach(
 			driver -> {
 				try {
@@ -193,9 +196,13 @@ extends LoadStepBase {
 				}
 			}
 		);
+		super.doStop();
 	}
 
-	protected final void doCloseWrapped() {
+	protected final void doClose()
+	throws IOException {
+
+		super.doClose();
 
 		generators
 			.parallelStream()

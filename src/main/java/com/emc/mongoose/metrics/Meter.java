@@ -22,7 +22,7 @@ implements MeterMBean {
 		props.put(KEY_STEP_ID, metricsCtx.stepId());
 		props.put(KEY_LOAD_TYPE, metricsCtx.ioType().name());
 		props.put(KEY_NODE_COUNT, Integer.toString(metricsCtx.nodeCount()));
-		props.put(KEY_CONCURRENCY_LIMIT, Integer.toString(metricsCtx.concurrency()));
+		props.put(KEY_CONCURRENCY_LIMIT, Integer.toString(metricsCtx.concurrencyLimit()));
 		objectName = new ObjectName(METRICS_DOMAIN, props);
 		metricsCtx.metricsListener(this);
 		MBEAN_SERVER.registerMBean(this, objectName);

@@ -210,7 +210,7 @@ implements MetricsContext {
 	}
 	//
 	@Override
-	public final int concurrency() {
+	public final int concurrencyLimit() {
 		return concurrency;
 	}
 	//

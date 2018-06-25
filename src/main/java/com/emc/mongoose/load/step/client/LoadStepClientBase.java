@@ -31,6 +31,9 @@ import static com.emc.mongoose.load.step.client.LoadStepClient.sliceItemOutputFi
 import static com.emc.mongoose.load.step.client.LoadStepClient.transferIoTraceData;
 import static com.emc.mongoose.load.step.client.LoadStepClient.transferItemOutputData;
 
+import com.emc.mongoose.metrics.MetricsContext;
+import com.emc.mongoose.metrics.MetricsManager;
+import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -53,6 +56,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -186,32 +190,42 @@ implements LoadStepClient {
 		return configSlices;
 	}
 
+	private int sliceCount() {
+		return stepSlices.size();
+	}
+
+	private List<MetricsSnapshot> metricsSnapshotsByIndex(final int originIndex) {
+		return metricsSnapshotsSuppliers
+			.values()
+			.stream()
+			.map(Supplier::get)
+			.filter(Objects::nonNull)
+			.map(metricsSnapshots -> metricsSnapshots.get(originIndex))
+			.filter(Objects::nonNull)
+			.collect(Collectors.toList());
+	}
 
 	protected final void initMetrics(
-		final int originIndex, final IoType ioType, final int concurrency, final Config metricsConfig,
+		final int originIndex, final IoType ioType, final int concurrencyLimit, final Config metricsConfig,
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
-		final int nodeCount = metricsSnapshotsSuppliers.size();
-		final int sumConcurrency = concurrency * nodeCount;
-		final int sumConcurrencyThreshold = (int) (concurrency * nodeCount * metricsConfig.doubleVal("threshold"));
+		final double concurrencyThreshold = concurrencyLimit * metricsConfig.doubleVal("threshold");
 		final int metricsAvgPeriod = (int) TimeUtil.getTimeInSeconds(metricsConfig.stringVal("average-period"));
 		final boolean metricsAvgPersistFlag = metricsConfig.boolVal("average-persist");
 		final boolean metricsSumPersistFlag = metricsConfig.boolVal("summary-persist");
 		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
-		metricsContexts.add(
-			new AggregatingMetricsContext(
-				id(), ioType, nodeCount, sumConcurrency, sumConcurrencyThreshold, itemDataSize, metricsAvgPeriod,
-				outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
-				() -> metricsSnapshotsSuppliers
-					.values()
-					.stream()
-					.map(Supplier::get)
-					.filter(Objects::nonNull)
-					.map(metricsSnapshots -> metricsSnapshots.get(originIndex))
-					.filter(Objects::nonNull)
-					.collect(Collectors.toList())
-			)
+
+		final MetricsContext metricsCtx = new AggregatingMetricsContext(
+			id(), ioType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
+			outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
+			() -> metricsSnapshotsByIndex(originIndex)
 		);
+		metricsContexts.add(metricsCtx);
+		try {
+			MetricsManager.register(id(), metricsCtx);
+		} catch(final InterruptedException e) {
+			throw new CancellationException(e.getMessage());
+		}
 	}
 
 	@Override
@@ -250,7 +264,7 @@ implements LoadStepClient {
 	}
 
 	@Override
-	protected final void doStopWrapped() {
+	protected final void doStop() {
 		stepSlices
 			.parallelStream()
 			.forEach(
@@ -265,10 +279,14 @@ implements LoadStepClient {
 					}
 				}
 			);
+		super.doStop();
 	}
 
 	@Override
-	protected final void doCloseWrapped() {
+	protected final void doClose()
+	throws IOException {
+
+		super.doClose();
 
 		metricsSnapshotsSuppliers
 			.values()

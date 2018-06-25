@@ -58,7 +58,7 @@ extends LogMessageBase {
 		strb
 			.append('"').append(FMT_DATE_ISO8601.format(new Date())).append('"').append(',')
 			.append(metricsCtx.ioType().name()).append(',')
-			.append(metricsCtx.concurrency()).append(',')
+			.append(metricsCtx.concurrencyLimit()).append(',')
 			.append(metricsCtx.nodeCount()).append(',')
 			.append(snapshot.actualConcurrencyLast()).append(',')
 			.append(snapshot.actualConcurrencyMean()).append(',')

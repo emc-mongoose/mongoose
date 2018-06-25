@@ -36,7 +36,7 @@ extends Closeable, Comparable<MetricsContext> {
 	String stepId();
 	IoType ioType();
 	int nodeCount();
-	int concurrency();
+	int concurrencyLimit();
 	int concurrencyThreshold();
 	int actualConcurrency();
 	SizeInBytes itemDataSize();
