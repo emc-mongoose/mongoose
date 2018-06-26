@@ -20,6 +20,7 @@ import com.emc.mongoose.load.step.master.LoadStepClient;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
@@ -170,7 +171,13 @@ implements LoadStep, Runnable {
 				doStartLocal();
 			}
 
-			final long t = TimeUtil.getTimeInSeconds(stepConfig.stringVal("limit-time"));
+			final long t;
+			final Object loadStepLimitTimeRaw = stepConfig.val("limit-time");
+			if(loadStepLimitTimeRaw instanceof String) {
+				t = TimeUtil.getTimeInSeconds((String) loadStepLimitTimeRaw);
+			} else {
+				t = TypeUtil.typeConvert(loadStepLimitTimeRaw, long.class);
+			}
 			if(t > 0) {
 				timeLimitSec = t;
 			}
@@ -193,15 +200,19 @@ implements LoadStep, Runnable {
 		final int originIndex, final IoType ioType, final int concurrency, final int nodeCount,
 		final Config metricsConfig, final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
+		final int outputMetricsAveragePeriod;
+		final Object outputMetricsAveragePeriodRaw = metricsConfig.val("average-period");
+		if(outputMetricsAveragePeriodRaw instanceof String) {
+			outputMetricsAveragePeriod = (int) TimeUtil.getTimeInSeconds((String) outputMetricsAveragePeriodRaw);
+		} else {
+			outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
+		}
 		metricsContexts.add(
 			new AggregatingMetricsContext(
 				id, ioType, nodeCount, concurrency * nodeCount,
 				(int) (concurrency * nodeCount * metricsConfig.doubleVal("threshold")),
-				itemDataSize,
-				(int) TimeUtil.getTimeInSeconds(metricsConfig.stringVal("average-period")),
-				outputColorFlag, metricsConfig.boolVal("average-persist"),
-				metricsConfig.boolVal("summary-persist"),
-				metricsConfig.boolVal("summary-perfDbResultsFile"),
+				itemDataSize, outputMetricsAveragePeriod, outputColorFlag, metricsConfig.boolVal("average-persist"),
+				metricsConfig.boolVal("summary-persist"), metricsConfig.boolVal("summary-perfDbResultsFile"),
 				() -> stepClient.remoteMetricsSnapshots(originIndex)
 			)
 		);
@@ -211,16 +222,19 @@ implements LoadStep, Runnable {
 		final IoType ioType, final int concurrency, final Config metricsConfig,
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
+		final int outputMetricsAveragePeriod;
+		final Object outputMetricsAveragePeriodRaw = metricsConfig.val("average-period");
+		if(outputMetricsAveragePeriodRaw instanceof String) {
+			outputMetricsAveragePeriod = (int) TimeUtil.getTimeInSeconds((String) outputMetricsAveragePeriodRaw);
+		} else {
+			outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
+		}
 		metricsContexts.add(
 			new BasicMetricsContext(
-				id, ioType,
-				() -> drivers.stream().mapToInt(StorageDriver::getActiveTaskCount).sum(),
+				id, ioType, () -> drivers.stream().mapToInt(StorageDriver::getActiveTaskCount).sum(),
 				concurrency, (int) (concurrency * metricsConfig.doubleVal("threshold")),
-				itemDataSize,
-				(int) TimeUtil.getTimeInSeconds(metricsConfig.stringVal("average-period")),
-				outputColorFlag, metricsConfig.boolVal("average-persist"),
-				metricsConfig.boolVal("summary-persist"),
-				metricsConfig.boolVal("summary-perfDbResultsFile")
+				itemDataSize, outputMetricsAveragePeriod, outputColorFlag, metricsConfig.boolVal("average-persist"),
+				metricsConfig.boolVal("summary-persist"), metricsConfig.boolVal("summary-perfDbResultsFile")
 			)
 		);
 	}

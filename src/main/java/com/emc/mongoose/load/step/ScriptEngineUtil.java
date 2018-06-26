@@ -113,7 +113,7 @@ public interface ScriptEngineUtil {
 		Config specificConfig;
 
 		specificConfig = new BasicConfig(config);
-		specificConfig.val("output-metrics-average-period", "0s");
+		specificConfig.val("output-metrics-average-period", 0);
 		specificConfig.val("output-metrics-average-persist", false);
 		specificConfig.val("output-metrics-summary-perfDbResultsFile", false);
 		specificConfig.val("output-metrics-summary-persist", false);

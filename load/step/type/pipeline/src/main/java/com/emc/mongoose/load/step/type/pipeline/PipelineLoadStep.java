@@ -23,6 +23,7 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.commons.io.Output;
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.throttle.RateThrottle;
 import static com.github.akurilov.commons.collection.TreeUtil.reduceForest;
@@ -93,7 +94,13 @@ extends LoadStepBase  {
 			final int concurrency = loadConfig.intVal("step-limit-concurrency");
 			final Config outputConfig = subConfig.configVal("output");
 			final Config metricsConfig = outputConfig.configVal("metrics");
-			final SizeInBytes itemDataSize = new SizeInBytes(subConfig.stringVal("item-data-size"));
+			final SizeInBytes itemDataSize;
+			final Object itemDataSizeRaw = subConfig.val("item-data-size");
+			if(itemDataSizeRaw instanceof String) {
+				itemDataSize = new SizeInBytes((String) itemDataSizeRaw);
+			} else {
+				itemDataSize = new SizeInBytes(TypeUtil.typeConvert(itemDataSizeRaw, long.class));
+			}
 
 			if(distributedFlag) {
 				initDistributedMetrics(
@@ -117,9 +124,16 @@ extends LoadStepBase  {
 
 				try {
 
+					final Object dataLayerSizeRaw = dataLayerConfig.val("size");
+					final SizeInBytes dataLayerSize;
+					if(dataLayerSizeRaw instanceof String) {
+						dataLayerSize = new SizeInBytes((String) dataLayerSizeRaw);
+					} else {
+						dataLayerSize = new SizeInBytes(TypeUtil.typeConvert(dataLayerSizeRaw, int.class));
+					}
+
 					final DataInput dataInput = DataInput.instance(
-						dataInputConfig.stringVal("file"), dataInputConfig.stringVal("seed"),
-						new SizeInBytes(dataLayerConfig.stringVal("size")),
+						dataInputConfig.stringVal("file"), dataInputConfig.stringVal("seed"), dataLayerSize,
 						dataLayerConfig.intVal("cache")
 					);
 
@@ -167,10 +181,15 @@ extends LoadStepBase  {
 							controllers.add(controller);
 
 							if(originIndex < subStepCount - 1) {
+								final long itemOutputDelay;
+								final Object itemOutputDelayRaw = itemConfig.val("output-delay");
+								if(itemDataSizeRaw instanceof String) {
+									itemOutputDelay = TimeUtil.getTimeInSeconds((String) itemDataSizeRaw);
+								} else {
+									itemOutputDelay = TypeUtil.typeConvert(itemOutputDelayRaw, long.class);
+								}
 								nextItemBuff = new DelayedTransferConvertBuffer<>(
-									storageConfig.intVal("driver-queue-output"),
-									TimeUtil.getTimeInSeconds(itemConfig.stringVal("output-delay")),
-									TimeUnit.SECONDS
+									storageConfig.intVal("driver-queue-output"), itemOutputDelay, TimeUnit.SECONDS
 								);
 								controller.ioResultsOutput(nextItemBuff);
 							} else {
