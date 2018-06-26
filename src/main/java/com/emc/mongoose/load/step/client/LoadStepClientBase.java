@@ -36,6 +36,7 @@ import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.net.NetUtil;
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.github.akurilov.confuse.Config;
@@ -210,7 +211,13 @@ implements LoadStepClient {
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
 		final double concurrencyThreshold = concurrencyLimit * metricsConfig.doubleVal("threshold");
-		final int metricsAvgPeriod = (int) TimeUtil.getTimeInSeconds(metricsConfig.stringVal("average-period"));
+		final int metricsAvgPeriod;
+		final Object metricsAvgPeriodRaw = metricsConfig.val("average-period");
+		if(metricsAvgPeriodRaw instanceof String) {
+			metricsAvgPeriod = (int) TimeUtil.getTimeInSeconds((String) metricsAvgPeriodRaw);
+		} else {
+			metricsAvgPeriod = TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
+		}
 		final boolean metricsAvgPersistFlag = metricsConfig.boolVal("average-persist");
 		final boolean metricsSumPersistFlag = metricsConfig.boolVal("summary-persist");
 		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");

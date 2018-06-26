@@ -5,6 +5,7 @@ import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.load.step.LoadStepBase;
 import com.emc.mongoose.load.step.client.LoadStepClientBase;
 
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 
@@ -40,7 +41,13 @@ extends LoadStepClientBase {
 		final int concurrency = stepConfig.intVal("limit-concurrency");
 		final Config outputConfig = config.configVal("output");
 		final Config metricsConfig = outputConfig.configVal("metrics");
-		final SizeInBytes itemDataSize = new SizeInBytes(config.stringVal("item-data-size"));
+		final SizeInBytes itemDataSize;
+		final Object itemDataSizeRaw = config.val("item-data-size");
+		if(itemDataSizeRaw instanceof String) {
+			itemDataSize = new SizeInBytes((String) itemDataSizeRaw);
+		} else {
+			itemDataSize = new SizeInBytes(TypeUtil.typeConvert(itemDataSizeRaw, long.class));
+		}
 		final int originIndex = 0;
 		final boolean colorFlag = outputConfig.boolVal("color");
 

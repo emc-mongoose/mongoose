@@ -124,10 +124,7 @@ public final class CircularAppendTest {
 				);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
-				args.add(
-					"--storage-net-node-addrs="
-						+ storageMocks.keySet().stream().collect(Collectors.joining(","))
-				);
+				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
 

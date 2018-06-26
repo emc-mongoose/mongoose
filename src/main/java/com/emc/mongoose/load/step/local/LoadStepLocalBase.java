@@ -13,6 +13,7 @@ import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsContextImpl;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.storage.driver.StorageDriver;
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import org.apache.logging.log4j.CloseableThreadContext;
@@ -94,10 +95,16 @@ extends LoadStepBase {
 		final int originIndex, final IoType ioType, final int concurrency, final Config metricsConfig,
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
+		final int metricsAvgPeriod;
+		final Object metricsAvgPeriodRaw = metricsConfig.val("average-period");
+		if(metricsAvgPeriodRaw instanceof String) {
+			metricsAvgPeriod = (int) TimeUtil.getTimeInSeconds((String) metricsAvgPeriodRaw);
+		} else {
+			metricsAvgPeriod = TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
+		}
 		final MetricsContext metricsCtx = new MetricsContextImpl(
 			id(), ioType, () -> drivers.stream().mapToInt(StorageDriver::getActiveTaskCount).sum(),
-			concurrency, (int) (concurrency * metricsConfig.doubleVal("threshold")), itemDataSize,
-			(int) TimeUtil.getTimeInSeconds(metricsConfig.stringVal("average-period")),
+			concurrency, (int) (concurrency * metricsConfig.doubleVal("threshold")), itemDataSize, metricsAvgPeriod,
 			outputColorFlag, metricsConfig.boolVal("average-persist"), metricsConfig.boolVal("summary-persist"),
 			metricsConfig.boolVal("summary-perfDbResultsFile")
 		);

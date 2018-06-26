@@ -105,7 +105,13 @@ extends LoadStepLocalBase {
 			final int concurrency = loadConfig.intVal("step-limit-concurrency");
 			final Config outputConfig = subConfig.configVal("output");
 			final Config metricsConfig = outputConfig.configVal("metrics");
-			final SizeInBytes itemDataSize = new SizeInBytes(subConfig.stringVal("item-data-size"));
+			final SizeInBytes itemDataSize;
+			final Object itemDataSizeRaw = subConfig.val("item-data-size");
+			if(itemDataSizeRaw instanceof String) {
+				itemDataSize = new SizeInBytes((String) itemDataSizeRaw);
+			} else {
+				itemDataSize = new SizeInBytes(TypeUtil.typeConvert(itemDataSizeRaw, long.class));
+			}
 			final boolean colorFlag = outputConfig.boolVal("color");
 
 			initMetrics(originIndex, ioType, concurrency, metricsConfig, itemDataSize, colorFlag);

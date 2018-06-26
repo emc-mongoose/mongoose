@@ -20,6 +20,7 @@ import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.load.step.linear.LinearLoadStep.initConfig;
 
 import com.github.akurilov.commons.io.Output;
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.throttle.RateThrottle;
 
@@ -67,7 +68,13 @@ extends LoadStepLocalBase {
 		final int concurrency = stepConfig.intVal("limit-concurrency");
 		final Config outputConfig = config.configVal("output");
 		final Config metricsConfig = outputConfig.configVal("metrics");
-		final SizeInBytes itemDataSize = new SizeInBytes(config.stringVal("item-data-size"));
+		final SizeInBytes itemDataSize;
+		final Object itemDataSizeRaw = config.val("item-data-size");
+		if(itemDataSizeRaw instanceof String) {
+			itemDataSize = new SizeInBytes((String) itemDataSizeRaw);
+		} else {
+			itemDataSize = new SizeInBytes(TypeUtil.typeConvert(itemDataSizeRaw, long.class));
+		}
 		final int originIndex = 0;
 		final boolean outputColorFlag = outputConfig.boolVal("color");
 		initMetrics(originIndex, ioType, concurrency, metricsConfig, itemDataSize, outputColorFlag);
@@ -83,17 +90,23 @@ extends LoadStepLocalBase {
 
 		try {
 
+			final Object dataLayerSizeRaw = dataLayerConfig.val("size");
+			final SizeInBytes dataLayerSize;
+			if(dataLayerSizeRaw instanceof String) {
+				dataLayerSize = new SizeInBytes((String) dataLayerSizeRaw);
+			} else {
+				dataLayerSize = new SizeInBytes(TypeUtil.typeConvert(dataLayerSizeRaw, int.class));
+			}
+
 			final DataInput dataInput = DataInput.instance(
-				dataInputConfig.stringVal("file"), dataInputConfig.stringVal("seed"),
-				new SizeInBytes(dataLayerConfig.stringVal("size")),
+				dataInputConfig.stringVal("file"), dataInputConfig.stringVal("seed"), dataLayerSize,
 				dataLayerConfig.intVal("cache")
 			);
 
 			try {
 
 				final StorageDriver driver = StorageDriver.instance(
-					extensions, loadConfig, storageConfig, dataInput,
-					dataConfig.boolVal("verify"), testStepId
+					extensions, loadConfig, storageConfig, dataInput, dataConfig.boolVal("verify"), testStepId
 				);
 				drivers.add(driver);
 

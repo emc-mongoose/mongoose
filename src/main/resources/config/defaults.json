@@ -22,7 +22,7 @@
 				// The count of the random ranges to update or read
 				"random": 0,
 				// The size threshold to enable multipart upload if supported by the configured storage driver
-				"threshold": "0"
+				"threshold": 0
 			},
 			// The size of the data items to process. Doesn't have any effect if item-type=path
 			"size": "1MB",

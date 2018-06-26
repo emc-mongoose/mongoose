@@ -12,6 +12,7 @@ import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.github.akurilov.confuse.Config;
@@ -133,7 +134,13 @@ implements LoadStep, Runnable {
 
 		try(final Instance logCtx = put(KEY_STEP_ID, id).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 			doStartWrapped();
-			final long t = TimeUtil.getTimeInSeconds(actualConfig.stringVal("load-step-limit-time"));
+			final long t;
+			final Object loadStepLimitTimeRaw = actualConfig.val("load-step-limit-time");
+			if(loadStepLimitTimeRaw instanceof String) {
+				t = TimeUtil.getTimeInSeconds((String) loadStepLimitTimeRaw);
+			} else {
+				t = TypeUtil.typeConvert(loadStepLimitTimeRaw, long.class);
+			}
 			if(t > 0) {
 				timeLimitSec = t;
 			}
