@@ -80,12 +80,6 @@ implements LoadStepService {
 	}
 
 	@Override
-	public LoadStep config(final Map<String, Object> config)
-	throws RemoteException {
-		return localLoadStep.config(config);
-	}
-
-	@Override
 	public final String id()
 	throws RemoteException {
 		return localLoadStep.id();

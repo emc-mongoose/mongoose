@@ -31,7 +31,7 @@ final preconditionLoad1 = PreconditionLoad
 
 // declare the weighted load step instance (20% create operations, 80% read operations)
 final weightedLoad1 = WeightedLoad
-    .config(
+    .append(
         [
             item : [
                 data : [
@@ -53,7 +53,7 @@ final weightedLoad1 = WeightedLoad
             ]
         ]
     )
-    .config(
+    .append(
         [
             item : [
                 input : [

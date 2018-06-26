@@ -19,6 +19,8 @@ import com.github.akurilov.confuse.Config;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
+
+import com.github.akurilov.confuse.impl.BasicConfig;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -33,53 +35,25 @@ public abstract class LoadStepBase
 extends DaemonBase
 implements LoadStep, Runnable {
 
-	protected final Config baseConfig;
+	protected final Config config;
 	protected final List<Extension> extensions;
-	protected final List<Map<String, Object>> stepConfigs;
+	protected final List<Map<String, Object>> contexts;
 	protected final List<MetricsContext> metricsContexts = new ArrayList<>();
 
-	protected volatile Config actualConfig = null;
 	private volatile long timeLimitSec = Long.MAX_VALUE;
 	private volatile long startTimeSec = -1;
-	private String id = null;
 
 	protected LoadStepBase(
-		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides
+		final Config config, final List<Extension> extensions, final List<Map<String, Object>> contexts
 	) {
-		this.baseConfig = baseConfig;
+		this.config = new BasicConfig(config);
 		this.extensions = extensions;
-		this.stepConfigs = overrides;
-	}
-
-	@Override
-	public LoadStepBase config(final Map<String, Object> config) {
-		final List<Map<String, Object>> stepConfigsCopy = new ArrayList<>();
-		if(stepConfigs != null) {
-			stepConfigsCopy.addAll(stepConfigs);
-		}
-		final Map<String, Object> stepConfig = deepCopyTree(config);
-		stepConfigsCopy.add(stepConfig);
-		return copyInstance(stepConfigsCopy);
-	}
-
-	private static Map<String, Object> deepCopyTree(final Map<String, Object> srcTree) {
-		return srcTree
-			.entrySet()
-			.stream()
-			.collect(
-				Collectors.toMap(
-					Map.Entry::getKey,
-					entry -> {
-						final Object value = entry.getValue();
-						return value instanceof Map ? deepCopyTree((Map<String, Object>) value) : value;
-					}
-				)
-			);
+		this.contexts = contexts;
 	}
 
 	@Override
 	public final String id() {
-		return id;
+		return config.stringVal("load-step-id");
 	}
 
 	@Override
@@ -89,15 +63,6 @@ implements LoadStep, Runnable {
 			.map(MetricsContext::lastSnapshot)
 			.collect(Collectors.toList());
 	}
-
-	protected abstract LoadStepBase copyInstance(final List<Map<String, Object>> stepConfigs);
-
-	protected final void actualConfig(final Config actualConfig) {
-		this.actualConfig = actualConfig;
-		final Config stepConfig = actualConfig.configVal("load-step");
-		this.id = stepConfig.stringVal("id");
-	}
-
 
 	@Override
 	public final void run() {
@@ -132,10 +97,10 @@ implements LoadStep, Runnable {
 
 		init();
 
-		try(final Instance logCtx = put(KEY_STEP_ID, id).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+		try(final Instance logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 			doStartWrapped();
 			final long t;
-			final Object loadStepLimitTimeRaw = actualConfig.val("load-step-limit-time");
+			final Object loadStepLimitTimeRaw = config.val("load-step-limit-time");
 			if(loadStepLimitTimeRaw instanceof String) {
 				t = TimeUtil.getTimeInSeconds((String) loadStepLimitTimeRaw);
 			} else {
@@ -146,7 +111,7 @@ implements LoadStep, Runnable {
 			}
 			startTimeSec = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 		} catch(final Throwable cause) {
-			LogUtil.exception(Level.WARN, cause, "{} step failed to start", id);
+			LogUtil.exception(Level.WARN, cause, "{} step failed to start", id());
 		}
 
 		metricsContexts.forEach(
@@ -182,7 +147,7 @@ implements LoadStep, Runnable {
 			.forEach(
 				metricsCtx -> {
 					try {
-						MetricsManager.unregister(id, metricsCtx);
+						MetricsManager.unregister(id(), metricsCtx);
 					} catch(final InterruptedException e) {
 						throw new CancellationException(e.getMessage());
 					}

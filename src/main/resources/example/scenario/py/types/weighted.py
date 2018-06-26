@@ -36,7 +36,7 @@ precondition2 = PreconditionLoad \
 
 # declare the weighted load step instance (20% create operations, 80% read operations)
 weightedLoad1 = WeightedLoad \
-    .config(
+    .append(
         {
             "item": {
                 "data": {
@@ -58,7 +58,7 @@ weightedLoad1 = WeightedLoad \
             }
         }
     ) \
-    .config(
+    .append(
         {
             "item": {
                 "input": {

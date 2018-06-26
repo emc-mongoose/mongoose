@@ -12,6 +12,7 @@ import com.emc.mongoose.item.io.task.IoTask;
 import com.emc.mongoose.load.step.FileManager;
 import com.emc.mongoose.load.step.FileManagerImpl;
 import com.emc.mongoose.load.step.LoadStepManagerService;
+import com.emc.mongoose.load.step.metrics.MetricsSnapshotsSupplierTask;
 import com.emc.mongoose.load.step.service.FileManagerService;
 import com.emc.mongoose.load.step.service.LoadStepService;
 import com.emc.mongoose.logging.LogUtil;
@@ -27,8 +28,11 @@ import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.impl.BasicConfig;
 
 import org.apache.logging.log4j.CloseableThreadContext.Instance;
+
+import static com.emc.mongoose.load.step.FileManager.APPEND_OPEN_OPTIONS;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 import org.apache.logging.log4j.Level;
 
@@ -37,10 +41,12 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +58,21 @@ import java.util.stream.Collectors;
 
 public interface LoadStepClient
 extends LoadStep {
+
+	/**
+	 Configure the step
+	 @param config a dictionary of the configuration values to override the inherited config
+	 @return <b>new/copied</b> step instance with the applied config values
+	 */
+	<T extends LoadStepClient> T config(final Map<String, Object> config);
+
+	/**
+	 Append the context. The actual behavior depends on the particular step type
+	 @param context a dictionary of the additional parameters handled by the particular load step implementation
+	 @return <b>new/copied</b> step instance with the appended context
+	 */
+	<T extends LoadStepClient> T append(final Map<String, Object> context);
+
 
 	static void resolveFileManagers(final List<String> nodeAddrs, final List<FileManager> fileMgrsDst) {
 		// local
@@ -70,6 +91,13 @@ extends LoadStep {
 			LogUtil.exception(Level.ERROR, e, "Failed to resolve the file manager service @ {}", nodeAddrWithPort);
 		}
 		return null;
+	}
+
+	static Config initConfigSlice(final Config config) {
+		final Config configSlice = new BasicConfig(config);
+		// disable the distributed mode on the slave nodes
+		configSlice.val("load-step-node-addrs", Collections.EMPTY_LIST);
+		return configSlice;
 	}
 
 	static Map<FileManager, String> initIoTraceLogFileSlices(final List<FileManager> fileMgrs, final String id) {
@@ -477,5 +505,162 @@ extends LoadStep {
 				SizeInBytes.formatFixedSize(transferredByteCount), remoteIoTraceLogFileName, fileMgr
 			);
 		}
+	}
+
+	static void stopMetricsSnapshotsSuppliers(
+		final String id, final Map<LoadStep, MetricsSnapshotsSupplierTask> metricsSnapshotsSuppliers
+	) {
+		metricsSnapshotsSuppliers
+			.values()
+			.parallelStream()
+			.forEach(
+				snapshotsSupplier -> {
+					try(
+						final Instance logCtx = put(KEY_STEP_ID, id)
+							.put(KEY_CLASS_NAME, LoadStepClient.class.getSimpleName())
+					) {
+						snapshotsSupplier.stop();
+					} catch(final IOException e) {
+						LogUtil.exception(Level.WARN, e, "{}: failed to stop the metrics snapshot supplier", id);
+					}
+				}
+			);
+	}
+
+	static void releaseStepSlices(final String id, final List<LoadStep> stepSlices) {
+		stepSlices
+			.parallelStream()
+			.forEach(
+				stepSlice -> {
+					try {
+						stepSlice.close();
+					} catch(final Exception e) {
+						LogUtil.exception(Level.WARN, e, "{}: failed to close the step service \"{}\"", id, stepSlice);
+					}
+				}
+			);
+		stepSlices.clear();
+	}
+
+	static void releaseMetricsSnapshotsSuppliers(
+		final String id, final Map<LoadStep, MetricsSnapshotsSupplierTask> metricsSnapshotsSuppliers
+	) {
+		metricsSnapshotsSuppliers
+			.values()
+			.parallelStream()
+			.forEach(
+				snapshotsSupplier -> {
+					try(
+						final Instance logCtx = put(KEY_STEP_ID, id)
+							.put(KEY_CLASS_NAME, LoadStepClient.class.getSimpleName())
+					) {
+						snapshotsSupplier.close();
+					} catch(final IOException e) {
+						LogUtil.exception(Level.WARN, e, "{}: failed to close the metrics snapshot supplier", id);
+					}
+				}
+			);
+		metricsSnapshotsSuppliers.clear();
+	}
+
+	static void releaseItemInputFileSlices(final String id, final Map<FileManager, String> itemInputFileSlices) {
+		itemInputFileSlices
+			.entrySet()
+			.parallelStream()
+			.forEach(
+				entry -> {
+					final FileManager fileMgr = entry.getKey();
+					final String itemInputFileName = entry.getValue();
+					try {
+						fileMgr.deleteFile(itemInputFileName);
+					} catch(final Exception e) {
+						LogUtil.exception(
+							Level.WARN, e, "{}: failed to delete the file \"{}\" @ file manager \"{}\"", id,
+							itemInputFileName, fileMgr
+						);
+					}
+				}
+			);
+		itemInputFileSlices.clear();
+	}
+
+	static void collectItemOutputFileAndRelease(
+		final String id, final Map<FileManager, String> itemOutputFileSlices, final String localItemOutputFileName
+	) {
+		try(
+			final OutputStream localItemOutput = Files.newOutputStream(
+				Paths.get(localItemOutputFileName), APPEND_OPEN_OPTIONS
+			)
+		) {
+			itemOutputFileSlices
+				.entrySet()
+				.parallelStream()
+				// don't transfer & delete local item output file
+				.filter(entry -> !(entry.getKey() instanceof FileManagerService))
+				.forEach(
+					entry -> {
+						final FileManager fileMgr = entry.getKey();
+						final String remoteItemOutputFileName = entry.getValue();
+						transferItemOutputData(fileMgr, remoteItemOutputFileName, localItemOutput);
+						try {
+							fileMgr.deleteFile(remoteItemOutputFileName);
+						} catch(final Exception e) {
+							LogUtil.exception(
+								Level.WARN, e, "{}: failed to delete the file \"{}\" @ file manager \"{}\"", id,
+								remoteItemOutputFileName, fileMgr
+							);
+						}
+					}
+				);
+		} catch(final IOException e) {
+			LogUtil.exception(
+				Level.WARN, e, "{}: failed to open the local item output file \"{}\" for appending", id,
+				localItemOutputFileName
+			);
+		}
+		itemOutputFileSlices.clear();
+	}
+
+	static void collectIoTraceLogFileAndRelease(final String id, final Map<FileManager, String> ioTraceLogFileSlices) {
+		Loggers.MSG.info("{}: transfer the I/O traces data from the nodes", id);
+		ioTraceLogFileSlices
+			.entrySet()
+			.parallelStream()
+			// don't transfer the local file data
+			.filter(entry -> !(entry.getKey() instanceof FileManagerService))
+			.forEach(
+				entry -> {
+					final FileManager fileMgr = entry.getKey();
+					final String remoteIoTraceLogFileName = entry.getValue();
+					transferIoTraceData(fileMgr, remoteIoTraceLogFileName);
+					try {
+						fileMgr.deleteFile(remoteIoTraceLogFileName);
+					} catch(final Exception e) {
+						LogUtil.exception(
+							Level.WARN, e, "{}: failed to delete the file \"{}\" @ file manager \"{}\"", id,
+							remoteIoTraceLogFileName, fileMgr
+						);
+					}
+				}
+			);
+		ioTraceLogFileSlices.clear();
+	}
+
+	static void releaseFileManagers(final String id, final List<FileManager> fileMgrs) {
+		fileMgrs
+			.parallelStream()
+			.filter(fileMgr -> fileMgr instanceof FileManagerService)
+			.forEach(
+				fileMgr -> {
+					try {
+						((FileManagerService) fileMgr).close();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							Level.WARN, e, "{}: failed to close the file manager service \"{}\"", id, fileMgr
+						);
+					}
+				}
+			);
+		fileMgrs.clear();
 	}
 }
