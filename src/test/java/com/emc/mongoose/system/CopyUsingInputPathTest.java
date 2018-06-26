@@ -28,6 +28,7 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_P
 import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import org.apache.commons.csv.CSVRecord;
@@ -295,31 +296,36 @@ public final class CopyUsingInputPathTest {
 			"There should be more than 0 metrics records in the log file",
 			metricsLogRecords.size() > 0
 		);
+		final int outputMetricsAveragePeriod;
+		final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");
+		if(outputMetricsAveragePeriodRaw instanceof String) {
+			outputMetricsAveragePeriod = (int) TimeUtil.getTimeInSeconds((String) outputMetricsAveragePeriodRaw);
+		} else {
+			outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
+		}
+
 		if(storageType.equals(StorageType.FS)) {
 			// some files may remain not written fully
 			testMetricsLogRecords(
 				metricsLogRecords, IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
-				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1),
-				0, 0,
-				TimeUtil.getTimeInSeconds(BUNDLED_DEFAULTS.stringVal("output-metrics-average-period"))
+				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0, 0,
+				outputMetricsAveragePeriod
 			);
 		} else {
 			testMetricsLogRecords(
-				metricsLogRecords, IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
-				itemSize.getValue(), 0, 0,
-				TimeUtil.getTimeInSeconds(BUNDLED_DEFAULTS.stringVal("output-metrics-average-period"))
+				metricsLogRecords, IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+				0, 0, outputMetricsAveragePeriod
 			);
 		}
 
 		final String stdOutContent = testContainer.stdOutContent();
 		testSingleMetricsStdout(
-			stdOutContent.replaceAll("[\r\n]+", " "),
-			IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
-			TimeUtil.getTimeInSeconds(BUNDLED_DEFAULTS.stringVal("output-metrics-average-period"))
+			stdOutContent.replaceAll("[\r\n]+", " "), IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
+			itemSize.getValue(), outputMetricsAveragePeriod
 		);
 		testFinalMetricsTableRowStdout(
-			stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
-			0, 0, itemSize.getValue()
+			stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(), 0, 0,
+			itemSize.getValue()
 		);
 	}
 }

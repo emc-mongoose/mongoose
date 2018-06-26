@@ -20,6 +20,7 @@ import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.logging.Loggers;
 
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.io.Output;
 
@@ -97,7 +98,13 @@ implements LoadController<I, O> {
 		);
 		final long configCountLimit = limitConfig.longVal("count");
 		this.countLimit = configCountLimit > 0 ? configCountLimit : Long.MAX_VALUE;
-		final SizeInBytes configSizeLimit = new SizeInBytes(limitConfig.stringVal("size"));
+		final SizeInBytes configSizeLimit;
+		final Object configSizeLimitRaw = limitConfig.val("size");
+		if(configSizeLimitRaw instanceof String) {
+			configSizeLimit = new SizeInBytes((String) configSizeLimitRaw);
+		} else {
+			configSizeLimit = new SizeInBytes(TypeUtil.typeConvert(configSizeLimitRaw, long.class));
+		}
 		this.sizeLimit = configSizeLimit.get() > 0 ? configSizeLimit.get() : Long.MAX_VALUE;
 		final Config failConfig = limitConfig.configVal("fail");
 		final long configFailCount = failConfig.longVal("count");

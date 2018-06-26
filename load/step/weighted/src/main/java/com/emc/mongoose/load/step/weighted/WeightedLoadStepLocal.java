@@ -18,6 +18,7 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.commons.io.Output;
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.commons.concurrent.throttle.RateThrottle;
@@ -120,9 +121,17 @@ extends LoadStepLocalBase {
 
 			try {
 
+				final Object dataLayerSizeRaw = dataLayerConfig.val("size");
+				final SizeInBytes dataLayerSize;
+				if(dataLayerSizeRaw instanceof String) {
+					dataLayerSize = new SizeInBytes((String) dataLayerSizeRaw);
+				} else {
+					dataLayerSize = new SizeInBytes(TypeUtil.typeConvert(dataLayerSizeRaw, int.class));
+				}
+
 				final DataInput dataInput = DataInput.instance(
-					dataInputConfig.stringVal("file"), dataInputConfig.stringVal("seed"),
-					new SizeInBytes(dataLayerConfig.stringVal("size")), dataLayerConfig.intVal("cache")
+					dataInputConfig.stringVal("file"), dataInputConfig.stringVal("seed"), dataLayerSize,
+					dataLayerConfig.intVal("cache")
 				);
 
 				try {

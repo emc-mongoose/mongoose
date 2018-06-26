@@ -3,7 +3,7 @@
 		"output": {
 			// The minimum delay between the subsequent I/O operations for each item (pipeline load).
 			// 0 means no delay.
-			"delay": "0"
+			"delay": 0
 		}
 	}
 }

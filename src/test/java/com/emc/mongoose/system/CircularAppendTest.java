@@ -1,5 +1,6 @@
 package com.emc.mongoose.system;
 
+import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.Concurrency;
@@ -24,6 +25,7 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFA
 import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import org.apache.commons.csv.CSVFormat;
@@ -196,11 +198,16 @@ public final class CircularAppendTest {
 				"There should be more than 0 metrics records in the log file",
 				metricsLogRecords.size() > 0
 			);
+			final int outputMetricsAveragePeriod;
+			final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");
+			if(outputMetricsAveragePeriodRaw instanceof String) {
+				outputMetricsAveragePeriod = (int) TimeUtil.getTimeInSeconds((String) outputMetricsAveragePeriodRaw);
+			} else {
+				outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
+			}
 			testMetricsLogRecords(
-				metricsLogRecords, IoType.UPDATE, concurrency.getValue(),
-				runMode.getNodeCount(), itemSize.getValue(),
-				(long) (1.1 * EXPECTED_APPEND_COUNT * EXPECTED_COUNT), 0,
-				getTimeInSeconds(BUNDLED_DEFAULTS.stringVal("output-metrics-average-period"))
+				metricsLogRecords, IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+				(long) (1.1 * EXPECTED_APPEND_COUNT * EXPECTED_COUNT), 0, outputMetricsAveragePeriod
 			);
 		} catch(final FileNotFoundException ignored) {
 			// there may be no metrics file if append step duration is less than 10s
@@ -217,10 +224,16 @@ public final class CircularAppendTest {
 		);
 
 		final String stdOutContent = testContainer.stdOutContent();
+		final int outputMetricsAveragePeriod;
+		final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");
+		if(outputMetricsAveragePeriodRaw instanceof String) {
+			outputMetricsAveragePeriod = (int) TimeUtil.getTimeInSeconds((String) outputMetricsAveragePeriodRaw);
+		} else {
+			outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
+		}
 		testSingleMetricsStdout(
-			stdOutContent.replaceAll("[\r\n]+", " "),
-			IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
-			getTimeInSeconds(BUNDLED_DEFAULTS.stringVal("output-metrics-average-period"))
+			stdOutContent.replaceAll("[\r\n]+", " "), IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+			itemSize.getValue(), outputMetricsAveragePeriod
 		);
 
 		final LongAdder ioTraceRecCount = new LongAdder();
