@@ -27,6 +27,7 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_P
 import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
+import com.github.akurilov.commons.reflection.TypeUtil;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 
@@ -218,11 +219,17 @@ public final class ReadUsingVariablePathTest {
 			EXPECTED_COUNT, ioTraceRecCount.sum()
 		);
 
+		final int outputMetricsAveragePeriod;
+		final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");
+		if(outputMetricsAveragePeriodRaw instanceof String) {
+			outputMetricsAveragePeriod = (int) TimeUtil.getTimeInSeconds((String) outputMetricsAveragePeriodRaw);
+		} else {
+			outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
+		}
+
 		testMetricsLogRecords(
-			getContainerMetricsLogRecords(stepId),
-			IoType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
-			EXPECTED_COUNT, 0,
-			TimeUtil.getTimeInSeconds(BUNDLED_DEFAULTS.stringVal("output-metrics-average-period"))
+			getContainerMetricsLogRecords(stepId), IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+			itemSize.getValue(), EXPECTED_COUNT, 0, outputMetricsAveragePeriod
 		);
 
 		testTotalMetricsLogRecord(
@@ -234,9 +241,8 @@ public final class ReadUsingVariablePathTest {
 		final String stdOutContent = testContainer.stdOutContent();
 
 		testSingleMetricsStdout(
-			stdOutContent.replaceAll("[\r\n]+", " "),
-			IoType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
-			TimeUtil.getTimeInSeconds(BUNDLED_DEFAULTS.stringVal("output-metrics-average-period"))
+			stdOutContent.replaceAll("[\r\n]+", " "), IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+			itemSize.getValue(), outputMetricsAveragePeriod
 		);
 
 		testFinalMetricsTableRowStdout(

@@ -33,6 +33,7 @@ import com.github.akurilov.commons.func.Function3;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.net.NetUtil;
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.github.akurilov.confuse.Config;
@@ -375,9 +376,17 @@ implements LoadStepClient {
 				final Config dataInputConfig = dataConfig.configVal("input");
 				final Config dataLayerConfig = dataInputConfig.configVal("layer");
 				try {
+
+					final Object dataLayerSizeRaw = dataLayerConfig.val("size");
+					final SizeInBytes dataLayerSize;
+					if(dataLayerSizeRaw instanceof String) {
+						dataLayerSize = new SizeInBytes((String) dataLayerSizeRaw);
+					} else {
+						dataLayerSize = new SizeInBytes(TypeUtil.typeConvert(dataLayerSizeRaw, int.class));
+					}
+
 					final DataInput dataInput = DataInput.instance(
-						dataInputConfig.stringVal("file"), dataInputConfig.stringVal("seed"),
-						new SizeInBytes(dataLayerConfig.stringVal("size")),
+						dataInputConfig.stringVal("file"), dataInputConfig.stringVal("seed"), dataLayerSize,
 						dataLayerConfig.intVal("cache")
 					);
 					final StorageDriver<I, IoTask<I>> storageDriver = StorageDriver.instance(

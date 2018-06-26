@@ -35,6 +35,7 @@ import static com.emc.mongoose.storage.driver.StorageDriver.BUFF_SIZE_MIN;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.file.BinFileInput;
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.commons.concurrent.throttle.Throttle;
@@ -169,7 +170,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 			throw new OmgShootMyFootException("Test step limit config is not set");
 		}
 		final long countLimit = limitConfig.longVal("count");
-		final SizeInBytes sizeLimit = new SizeInBytes(limitConfig.stringVal("size"));
+		final SizeInBytes sizeLimit;
+		final Object sizeLimitRaw = limitConfig.val("size");
+		if(sizeLimitRaw instanceof String) {
+			sizeLimit = new SizeInBytes((String) sizeLimitRaw);
+		} else {
+			sizeLimit = new SizeInBytes(TypeUtil.typeConvert(sizeLimitRaw, long.class));
+		}
 		if(loadConfig == null) {
 			throw new OmgShootMyFootException("Load config is not set");
 		}
@@ -199,10 +206,17 @@ implements LoadGeneratorBuilder<I, O, T> {
 					.map(Range::new)
 					.collect(Collectors.toList());
 			}
+			final long sizeThreshold;
+			final Object sizeThresholdRaw = limitConfig.val("size");
+			if(sizeThresholdRaw instanceof String) {
+				sizeThreshold = SizeInBytes.toFixedSize((String) sizeThresholdRaw);
+			} else {
+				sizeThreshold = TypeUtil.typeConvert(sizeThresholdRaw, long.class);
+			}
 			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicDataIoTaskBuilder(originIndex)
 				.setFixedRanges(fixedRanges)
 				.setRandomRangesCount(rangesConfig.intVal("random"))
-				.setSizeThreshold(SizeInBytes.toFixedSize(rangesConfig.stringVal("threshold")));
+				.setSizeThreshold(sizeThreshold);
 		} else if(ItemType.PATH.equals(itemType)){
 			ioTaskBuilder = (IoTaskBuilder<I, O>) new BasicPathIoTaskBuilder(originIndex);
 		} else {
@@ -519,8 +533,14 @@ implements LoadGeneratorBuilder<I, O, T> {
 			throw new OmgShootMyFootException("Item factory is not set");
 		}
 		if(itemFactory instanceof BasicDataItemFactory) {
-			final SizeInBytes size = new SizeInBytes(itemConfig.stringVal("data-size"));
-			itemInput = (Input<I>) new NewDataItemInput(itemFactory, itemNameInput, size);
+			final SizeInBytes itemDataSize;
+			final Object itemDataSizeRaw = itemConfig.val("data-size");
+			if(itemDataSizeRaw instanceof String) {
+				itemDataSize = new SizeInBytes((String) itemDataSizeRaw);
+			} else {
+				itemDataSize = new SizeInBytes(TypeUtil.typeConvert(itemDataSizeRaw, long.class));
+			}
+			itemInput = (Input<I>) new NewDataItemInput(itemFactory, itemNameInput, itemDataSize);
 		} else {
 			itemInput = new NewItemInput<>(itemFactory, itemNameInput);
 		}

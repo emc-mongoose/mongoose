@@ -114,9 +114,9 @@
 				// 0 means no rate limit.
 				"rate": 0,
 				// The maximum size of the data items to process. 0 means no size limit.
-				"size": "0",
+				"size": 0,
 				// The maximum time to perform a load step. 0 means no time limit
-				"time": "0s"
+				"time": 0
 			},
 			"node": {
 				// Distributed mode: the list of the Mongoose node IPs or hostnames,

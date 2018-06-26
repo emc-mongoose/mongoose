@@ -1,7 +1,7 @@
 {
 	"item": {
 		"output": {
-			"delay": "string"
+			"delay": "any"
 		}
 	}
 }
