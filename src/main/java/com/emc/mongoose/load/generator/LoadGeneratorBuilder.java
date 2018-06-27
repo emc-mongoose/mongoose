@@ -39,9 +39,9 @@ public interface LoadGeneratorBuilder<
 
 	LoadGeneratorBuilder<I, O, T> originIndex(final int originIndex);
 
-	LoadGeneratorBuilder<I, O, T> rateThrottle(final Throttle rateThrottle);
+	LoadGeneratorBuilder<I, O, T> addThrottle(final Throttle throttle);
 
-	LoadGeneratorBuilder<I, O, T> weightThrottle(final IndexThrottle weightThrottle);
+	LoadGeneratorBuilder<I, O, T> addThrottle(final IndexThrottle throttle);
 
 	T build()
 	throws OmgShootMyFootException, IOException;

@@ -39,7 +39,6 @@ extends LoadStepLocalBase {
 
 	public LinearLoadStepLocal(
 		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> contexts
-		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides
 	) {
 		super(baseConfig, extensions, contexts);
 	}
@@ -121,8 +120,7 @@ extends LoadStepLocalBase {
 						.storageDriver(driver)
 						.authConfig(storageConfig.configVal("auth"))
 						.originIndex(0)
-						.rateThrottle(rateLimit > 0 ? new RateThrottle(rateLimit) : null)
-						.weightThrottle(null)
+						.addThrottle(rateLimit > 0 ? new RateThrottle(rateLimit) : null)
 						.build();
 					generators.add(generator);
 

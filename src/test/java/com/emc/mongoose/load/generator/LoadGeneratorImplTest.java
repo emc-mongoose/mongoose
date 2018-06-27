@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
@@ -136,8 +137,8 @@ public class LoadGeneratorImplTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl<>(
-				itemInput, ioTaskBuilder, new CountingOutput(counter), null, null, BATCH_SIZE,
-				Long.MAX_VALUE, new SizeInBytes(0), 0, shuffleFlag
+				itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
+				Long.MAX_VALUE, 0, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -167,8 +168,8 @@ public class LoadGeneratorImplTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
-				itemInput, ioTaskBuilder, new CountingOutput(counter), null, null, BATCH_SIZE,
-				Long.MAX_VALUE, new SizeInBytes(0), 0, shuffleFlag
+				itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter),BATCH_SIZE,
+				Long.MAX_VALUE, 0, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -198,8 +199,8 @@ public class LoadGeneratorImplTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
-				itemInput, ioTaskBuilder, new CountingOutput(counter), null, null, BATCH_SIZE,
-				Long.MAX_VALUE, new SizeInBytes(0), 0, shuffleFlag
+				itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
+				Long.MAX_VALUE, 0, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -229,8 +230,8 @@ public class LoadGeneratorImplTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
-				itemInput, ioTaskBuilder, new CountingOutput(counter), null, null, BATCH_SIZE,
-				Long.MAX_VALUE, new SizeInBytes(0), 0, shuffleFlag
+				itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
+				Long.MAX_VALUE, 0, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -262,8 +263,8 @@ public class LoadGeneratorImplTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
-				itemInput, ioTaskBuilder, new CountingOutput(counter), null, null, BATCH_SIZE,
-				Long.MAX_VALUE, new SizeInBytes(0), 0, shuffleFlag
+				itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
+				Long.MAX_VALUE, 0, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -295,8 +296,8 @@ public class LoadGeneratorImplTest {
 		
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
-				itemInput, ioTaskBuilder, new CountingOutput(counter), null, null, BATCH_SIZE,
-				Long.MAX_VALUE, new SizeInBytes(0), 0, shuffleFlag
+				itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
+				Long.MAX_VALUE, 0, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -329,8 +330,8 @@ public class LoadGeneratorImplTest {
 		try(final Output taskOutput = new RecyclingAndCountingOutput(counter)) {
 			try(
 				final LoadGenerator loadGenerator = new LoadGeneratorImpl(
-					itemInput, ioTaskBuilder, new CountingOutput(counter), null, null, BATCH_SIZE,
-					Long.MAX_VALUE, new SizeInBytes(0), 0, shuffleFlag
+					itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
+					Long.MAX_VALUE, 0, shuffleFlag
 				)
 			) {
 				((RecyclingAndCountingOutput) taskOutput).loadGenerator = loadGenerator;

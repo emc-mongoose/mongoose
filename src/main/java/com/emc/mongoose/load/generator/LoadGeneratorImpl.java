@@ -1,6 +1,5 @@
 package com.emc.mongoose.load.generator;
 
-import com.emc.mongoose.concurrent.DaemonBase;
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.item.io.task.IoTask;
@@ -19,6 +18,7 @@ import com.github.akurilov.commons.concurrent.throttle.Throttle;
 
 import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FiberBase;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
@@ -42,7 +42,7 @@ import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
  Created by kurila on 11.07.16.
  */
 public class LoadGeneratorImpl<I extends Item, O extends IoTask<I>>
-extends DaemonBase
+extends FiberBase
 implements LoadGenerator<I, O> {
 
 	private static final String CLS_NAME = LoadGeneratorImpl.class.getSimpleName();
@@ -54,193 +54,165 @@ implements LoadGenerator<I, O> {
 
 	private final Input<I> itemInput;
 	private final IoTaskBuilder<I, O> ioTaskBuilder;
+	private final int originIndex;
+	private final Object[] throttles;
+	private final Output<O> ioTaskOutput;
+	private final Lock inputLock = new ReentrantLock();
+	private final int batchSize;
+	private final long countLimit;
 	private final BlockingQueue<O> recycleQueue;
 	private final boolean shuffleFlag;
-	private final Lock inputLock = new ReentrantLock();
 	private final Random rnd;
-
+	private final String name;
+	private final ThreadLocal<OptLockBuffer<O>> threadLocalTasksBuff;
 	private final LongAdder builtTasksCounter = new LongAdder();
 	private final LongAdder recycledTasksCounter = new LongAdder();
 	private final LongAdder outputTaskCounter = new LongAdder();
-	private final String name;
-	private final ThreadLocal<OptLockBuffer<O>> threadLocalTasksBuff;
-	private final Fiber fiber;
 
 	@SuppressWarnings("unchecked")
 	public LoadGeneratorImpl(
-		final Input<I> itemInput, final IoTaskBuilder<I, O> ioTaskBuilder,
-		final Output<O> ioTaskOutput, final Throttle rateThrottle,
-		final IndexThrottle weightThrottle, final int batchSize, final long countLimit,
-		final SizeInBytes sizeLimit, final int recycleQueueSize, final boolean shuffleFlag
+		final Input<I> itemInput, final IoTaskBuilder<I, O> ioTaskBuilder, final List<Object> throttles,
+		final Output<O> ioTaskOutput, final int batchSize, final long countLimit, final int recycleQueueSize,
+		final boolean shuffleFlag
 	) {
+
+		super(ServiceTaskExecutor.INSTANCE);
+
 		this.itemInput = itemInput;
 		this.ioTaskBuilder = ioTaskBuilder;
-		this.recycleQueue = recycleQueueSize > 0 ?
-			new ArrayBlockingQueue<>(recycleQueueSize) : null;
+		this.originIndex = ioTaskBuilder.getOriginIndex();
+		this.throttles = throttles.toArray(new Object[] {});
+		this.ioTaskOutput = ioTaskOutput;
+		this.batchSize = batchSize;
+		this.countLimit = countLimit > 0 ? countLimit : Long.MAX_VALUE;
+		this.recycleQueue = recycleQueueSize > 0 ? new ArrayBlockingQueue<>(recycleQueueSize) : null;
 		this.shuffleFlag = shuffleFlag;
 		this.rnd = shuffleFlag ? new Random() : null;
-
 		final String ioStr = ioTaskBuilder.getIoType().toString();
 		name = Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
 			(countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "") +
 			itemInput.toString();
-
 		threadLocalTasksBuff = ThreadLocal.withInitial(() -> new OptLockArrayBuffer<>(batchSize));
+	}
 
-		fiber = new FiberBase(ServiceTaskExecutor.INSTANCE) {
+	@Override
+	protected final void invokeTimed(final long startTimeNanos) {
 
-			private final long _countLimit;
-			{
-				if(countLimit > 0) {
-					this._countLimit = countLimit;
-				} else {
-					this._countLimit = Long.MAX_VALUE;
-				}
-			}
-			private final int originIndex = ioTaskBuilder.getOriginIndex();
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+		final OptLockBuffer<O> tasksBuff = threadLocalTasksBuff.get();
+		int pendingTasksCount = tasksBuff.size();
+		int n = batchSize - pendingTasksCount;
 
-			@Override
-			protected final void invokeTimed(final long startTimeNanos) {
+		try {
 
-				ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
-				final OptLockBuffer<O> tasksBuff = threadLocalTasksBuff.get();
-				int pendingTasksCount = tasksBuff.size();
-				int n = batchSize - pendingTasksCount;
-
-				try {
-
-					if(n > 0) { // the tasks buffer has free space for the new tasks
-						if(!itemInputFinishFlag) {
-							// try to produce new items from the items input
-							if(inputLock.tryLock()) {
-								try {
-									// find the remaining count of the tasks to generate
-									final long remainingTasksCount = _countLimit -
-										getGeneratedTasksCount();
-									if(remainingTasksCount > 0) {
-										// make the limit not more than batch size
-										n = (int) Math.min(remainingTasksCount, n);
-										final List<I> items = getItems(itemInput, n);
-										if(items == null) {
-											itemInputFinishFlag = true;
-										} else {
-											n = items.size();
-											if(n > 0) {
-												pendingTasksCount += buildTasks(
-													items, tasksBuff, n
-												);
-											}
-										}
-									}
-								} finally {
-									inputLock.unlock();
-								}
-							}
-						} else { // items input was exhausted
-							if(recycleQueue == null) { // recycling is disabled
-								taskInputFinishFlag = true; // allow shutdown
-							} else { // recycle the tasks if any
-								n = recycleQueue.drainTo(tasksBuff, n);
-								if(n > 0) {
-									pendingTasksCount += n;
-									recycledTasksCounter.add(n);
-								}
-							}
-						}
-					}
-
-					if(pendingTasksCount > 0) {
-						// acquire the throttles permit
-						n = pendingTasksCount;
-						if(weightThrottle != null) {
-							n = weightThrottle.tryAcquire(originIndex, n);
-						}
-						if(rateThrottle != null) {
-							n = rateThrottle.tryAcquire(n);
-						}
-						// try to output
-						if(n > 0) {
-							if(n == 1) { // single branch
-								try {
-									final O task = tasksBuff.get(0);
-									if(ioTaskOutput.put(task)) {
-										outputTaskCounter.increment();
-										if(pendingTasksCount == 1) {
-											tasksBuff.clear();
-										} else {
-											tasksBuff.remove(0);
-										}
-									}
-								} catch(final EOFException e) {
-									Loggers.MSG.debug(
-										"{}: finish due to output's EOF",
-										LoadGeneratorImpl.this.toString()
-									);
-									outputFinishFlag = true;
-								} catch(final IOException e) {
-									LogUtil.exception(
-										Level.ERROR, e, "{}: I/O task output failure",
-										LoadGeneratorImpl.this.toString()
-									);
-								}
-							} else { // batch mode branch
-								try {
-									n = ioTaskOutput.put(tasksBuff, 0, n);
-									outputTaskCounter.add(n);
-									if(n < pendingTasksCount) {
-										tasksBuff.removeRange(0, n);
-									} else {
-										tasksBuff.clear();
-									}
-								} catch(final EOFException e) {
-									Loggers.MSG.debug(
-										"{}: finish due to output's EOF",
-										LoadGeneratorImpl.this.toString()
-									);
-									outputFinishFlag = true;
-								} catch(final RemoteException e) {
-									final Throwable cause = e.getCause();
-									if(cause instanceof EOFException) {
-										Loggers.MSG.debug(
-											"{}: finish due to output's EOF",
-											LoadGeneratorImpl.this.toString()
-										);
-										outputFinishFlag = true;
-									} else {
-										LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
-										e.printStackTrace(System.err);
-									}
-								}
-							}
-						}
-					}
-
-				} catch(final Throwable t) {
-					if(!(t instanceof EOFException)) {
-						LogUtil.exception(Level.ERROR, t, "Unexpected failure");
-						t.printStackTrace(System.err);
-					}
-				} finally {
-					if(isFinished()) {
+			if(n > 0) { // the tasks buffer has free space for the new tasks
+				if(!itemInputFinishFlag) {
+					// try to produce new items from the items input
+					if(inputLock.tryLock()) {
 						try {
-							LoadGeneratorImpl.this.stop();
-						} catch(final IllegalStateException ignored) {
+							// find the remaining count of the tasks to generate
+							final long remainingTasksCount = countLimit - getGeneratedTasksCount();
+							if(remainingTasksCount > 0) {
+								// make the limit not more than batch size
+								n = (int) Math.min(remainingTasksCount, n);
+								final List<I> items = getItems(itemInput, n);
+								if(items == null) {
+									itemInputFinishFlag = true;
+								} else {
+									n = items.size();
+									if(n > 0) {
+										pendingTasksCount += buildTasks(items, tasksBuff, n);
+									}
+								}
+							}
+						} finally {
+							inputLock.unlock();
+						}
+					}
+				} else { // items input was exhausted
+					if(recycleQueue == null) { // recycling is disabled
+						taskInputFinishFlag = true; // allow shutdown
+					} else { // recycle the tasks if any
+						n = recycleQueue.drainTo(tasksBuff, n);
+						if(n > 0) {
+							pendingTasksCount += n;
+							recycledTasksCounter.add(n);
 						}
 					}
 				}
 			}
 
-			@Override
-			public final boolean isFinished() {
-				return outputFinishFlag ||
-					itemInputFinishFlag && taskInputFinishFlag &&
-						getGeneratedTasksCount() == outputTaskCounter.sum();
+			if(pendingTasksCount > 0) {
+				n = pendingTasksCount;
+				// acquire the permit for all the throttles
+				for(int i = 0; i < throttles.length; i ++) {
+					final Object throttle = throttles[i];
+					if(throttle instanceof Throttle) {
+						n = ((Throttle) throttle).tryAcquire(n);
+					} else if(throttle instanceof IndexThrottle) {
+						n = ((IndexThrottle) throttle).tryAcquire(originIndex, n);
+					} else {
+						throw new AssertionError("Unexpected throttle type: " + throttle.getClass());
+					}
+				}
+				// try to output
+				if(n > 0) {
+					if(n == 1) { // single mode branch
+						try {
+							final O task = tasksBuff.get(0);
+							if(ioTaskOutput.put(task)) {
+								outputTaskCounter.increment();
+								if(pendingTasksCount == 1) {
+									tasksBuff.clear();
+								} else {
+									tasksBuff.remove(0);
+								}
+							}
+						} catch(final EOFException e) {
+							Loggers.MSG.debug("{}: finish due to output's EOF", name);
+							outputFinishFlag = true;
+						} catch(final IOException e) {
+							LogUtil.exception(Level.ERROR, e, "{}: I/O task output failure", name);
+						}
+					} else { // batch mode branch
+						try {
+							n = ioTaskOutput.put(tasksBuff, 0, n);
+							outputTaskCounter.add(n);
+							if(n < pendingTasksCount) {
+								tasksBuff.removeRange(0, n);
+							} else {
+								tasksBuff.clear();
+							}
+						} catch(final EOFException e) {
+							Loggers.MSG.debug("{}: finish due to output's EOF", name);
+							outputFinishFlag = true;
+						} catch(final RemoteException e) {
+							final Throwable cause = e.getCause();
+							if(cause instanceof EOFException) {
+								Loggers.MSG.debug("{}: finish due to output's EOF", name);
+								outputFinishFlag = true;
+							} else {
+								LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
+								e.printStackTrace(System.err);
+							}
+						}
+					}
+				}
 			}
 
-			@Override
-			protected final void doClose() {
+		} catch(final Throwable t) {
+			if(!(t instanceof EOFException)) {
+				LogUtil.exception(Level.ERROR, t, "{}: unexpected failure", name);
+				t.printStackTrace(System.err);
 			}
-		};
+		} finally {
+			if(isFinished()) {
+				try {
+					stop();
+				} catch(final IllegalStateException ignored) {
+				}
+			}
+		}
 	}
 
 	private List<I> getItems(final Input<I> itemInput, final int n)
@@ -301,21 +273,16 @@ implements LoadGenerator<I, O> {
 	}
 
 	@Override
-	protected void doStart()
-	throws IllegalStateException {
-		try {
-			fiber.start();
-		} catch(final RemoteException ignored) {
-		}
+	public final boolean isFinished() {
+		return outputFinishFlag ||
+			itemInputFinishFlag && taskInputFinishFlag &&
+				getGeneratedTasksCount() == outputTaskCounter.sum();
 	}
 
 	@Override
 	protected final void doShutdown()
 	throws IllegalStateException {
-		try {
-			fiber.stop();
-		} catch(final RemoteException ignored) {
-		}
+		stop();
 		Loggers.MSG.debug(
 			"{}: generated {}, recycled {}, output {} I/O tasks",
 			LoadGeneratorImpl.this.toString(), builtTasksCounter.sum(), recycledTasksCounter.sum(),
@@ -324,18 +291,13 @@ implements LoadGenerator<I, O> {
 	}
 
 	@Override
-	protected final void doStop() {
-		shutdown();
-	}
-
-	@Override
 	protected final void doClose()
 	throws IOException {
 		if(recycleQueue != null) {
 			recycleQueue.clear();
 		}
-		// the item input may be instantiated by the load generator builder which has no reference
-		// to it so the load generator builder should close it
+		// the item input may be instantiated by the load generator builder which has no reference to it so the load
+		// generator builder should close it
 		if(itemInput != null) {
 			try {
 				inputLock.tryLock(Fiber.TIMEOUT_NANOS, TimeUnit.NANOSECONDS);
@@ -344,11 +306,11 @@ implements LoadGenerator<I, O> {
 				LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", toString());
 			}
 		}
-		// I/O task builder is instantiated by the load generator builder which forgets it
-		// so the load generator should close it
+		// I/O task builder is instantiated by the load generator builder which forgets it so the load generator should
+		// close it
 		ioTaskBuilder.close();
 	}
-	
+
 	@Override
 	public final String toString() {
 		return name;

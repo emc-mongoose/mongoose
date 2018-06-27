@@ -47,7 +47,8 @@ implements FileManager {
 	public final byte[] readFromFile(final String fileName, final long offset)
 	throws IOException {
 		try(final SeekableByteChannel fileChannel = Files.newByteChannel(Paths.get(fileName), READ_OPTIONS)) {
-			final long remainingSize = fileChannel.size() - fileChannel.position();
+			fileChannel.position(offset);
+			final long remainingSize = fileChannel.size() - offset;
 			if(remainingSize <= 0) {
 				throw new EOFException();
 			}

@@ -140,7 +140,7 @@ extends LoadStepLocalBase {
 							.authConfig(storageConfig.configVal("auth"))
 							.originIndex(originIndex);
 						if(rateLimit > 0) {
-							generatorBuilder.rateThrottle(new RateThrottle(rateLimit));
+							generatorBuilder.addThrottle(new RateThrottle(rateLimit));
 						}
 						if(nextItemBuff != null) {
 							generatorBuilder.itemInput(nextItemBuff);
