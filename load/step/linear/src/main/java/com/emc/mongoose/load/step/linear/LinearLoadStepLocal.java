@@ -40,8 +40,7 @@ public class LinearLoadStepLocal
 extends LoadStepLocalBase {
 
 	public LinearLoadStepLocal(
-		final Config baseConfig, final List<Extension> extensions,
-		final List<Map<String, Object>> overrides
+		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides
 	) {
 		super(baseConfig, extensions, overrides);
 	}
