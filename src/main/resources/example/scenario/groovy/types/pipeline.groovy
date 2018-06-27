@@ -36,7 +36,7 @@ final deleteConfig = [
 "rm -f $itemOutputFile".execute().waitFor()
 
 PipelineLoad
-    .config(createConfig)
-    .config(readConfig)
-    .config(deleteConfig)
+    .append(createConfig)
+    .append(readConfig)
+    .append(deleteConfig)
     .run();

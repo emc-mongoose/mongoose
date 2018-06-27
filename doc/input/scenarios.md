@@ -70,19 +70,23 @@ steps.
 
 > **Note:**
 > All scenario statements are executed locally except the load steps. In the
-> distributed mode the steps are sliced and executed on the specified Mongoose nodes.
+> distributed mode the steps are sliced and executed on the nodes (both entry and additional nodes).
 
 ### 2.1.1. Methods
 
 1. ```config(config)```
 
-    Appends the configuration structure element to the step. An argument
-    should be a dictionary/map with a structure equivalent to the
-    configuration structure (see
-    `<USER_HOME_DIR>/.mongoose/<VERSION>/config/defaults.json` file for
-    the reference). Returns the copied instance with the configuration
-    instance. Please refer to the [step type table](#2121-basic) for the
-    implementation details.
+    Configure the load step. Merge the specified configuration parameters dictionary with already existing step's
+    configuration. An argument should be a dictionary with a structure equivalent to the configuration structure (see
+    `<USER_HOME_DIR>/.mongoose/<VERSION>/config/defaults.json` file for the reference). Returns the copied instance with
+    the new configuration.
+
+2. ```append(config)```
+
+    Appends the configuration parameters dictionary to the step's sequence of the contexts. The resulting sequence of
+    the appended configuration elements is used by complex load step implementations such as
+    [Pipeline](#314-pipeline-load) either [Weighted](#313-weighted-load) load. Returns the copied instance with the new
+    sequence of the contexts.
 
 2. ```start()```
 
@@ -100,24 +104,23 @@ steps.
 
 5. ```close()```
 
-    Free the resources allocated by the step instance. Stops the step execution if was started.
-    Returns nothing. Should be invoked after all other step's methods (also terminate the call chain
-    on the step if any).
+    Free the resources allocated by the step instance. Stops the step execution if was started. Should be invoked after
+    all other step's methods (also terminate the call chain on the step if any). Returns nothing.
 
 6. ```run()```
 
     The convenience method for blocking execution flow. Includes ```start()```, ```await()``` and
-    ```close()``` calls sequence.
+    ```close()``` calls sequence. Returns nothing.
 
 ### 2.1.2. Types
 
 #### 2.1.2.1. Basic
 
-| Step Type Name | Description | Example | ```config``` method behavior |
-|----------------|-------------|---------|------------------------------|
-| Load | Execute a linear load | [link](#312-linear-load) | Apply the configuration (json/map) |
-| PipelineLoad | Execute a pipeline load | [link](#314-pipeline-load) | Append the configuration element (json/map) |
-| WeightedLoad | Execute a weighted load | [link](#313-weighted-load) | Append the configuration element (json/map) |
+| Step Type Name | Description | Example |
+|----------------|-------------|---------|
+| Load | Execute a linear load | [link](#312-linear-load) |
+| PipelineLoad | Execute a pipeline load | [link](#314-pipeline-load) |
+| WeightedLoad | Execute a weighted load | [link](#313-weighted-load) |
 
 #### 2.1.2.2. Additional Shortcuts
 
@@ -243,7 +246,7 @@ java -jar mongoose-next/mongoose.jar \
 The Javascript example scenario which uses these environment variables:
 
 ```javascript
-var config1 = {
+var ctx1 = {
     "item" : {
         "output" : {
             "delay" : "1m",
@@ -259,7 +262,7 @@ var config1 = {
     }
 };
 
-var config2 = {
+var ctx2 = {
     "load" : {
         "type" : "read"
     },
@@ -273,8 +276,8 @@ var config2 = {
 };
 
 PipelineLoad
-    .config(config1)
-    .config(config2)
+    .append(ctx1)
+    .append(ctx2)
     .run();
 ```
 
@@ -353,29 +356,11 @@ Example:
 // start the process
 var cmd = new java.lang.ProcessBuilder()
     .command("sh", "-c", "echo Hello world!")
+    .inheritIO()
     .start();
-
-// obtain the process stdin/stderr for further reading
-var cmdStdOut = new java.io.BufferedReader(
-    new java.io.InputStreamReader(cmd.getInputStream())
-);
-var cmdStdErr = new java.io.BufferedReader(
-    new java.io.InputStreamReader(cmd.getErrorStream())
-);
 
 // wait until the command finishes
 cmd.waitFor();
-
-// output the buffered stdin/stderr contents
-while(null != (nextLine = cmdStdOut.readLine())) {
-    print(nextLine);
-}
-while(null != (nextLine = cmdStdErr.readLine())) {
-    print(nextLine);
-}
-
-cmdStdOut.close();
-cmdStdErr.close();
 ```
 
 **Notes**:
@@ -410,7 +395,7 @@ Example:
 
 ```javascript
 WeightedLoad
-    .config(
+    .append(
         {
             "load" : {
                 "generator" : {
@@ -425,7 +410,7 @@ WeightedLoad
             }
         }
     )
-    .config(
+    .append(
         {
             "load" : {
                 "generator" : {
@@ -454,7 +439,7 @@ See also the [pipeline load spec](../design/pipeline_load.md)
 Example:
 
 ```javascript
-var createConfig = {
+var createCtx = {
     "load" : {
         "step" : {
             "limit" : {
@@ -464,13 +449,13 @@ var createConfig = {
     }
 };
 
-var readConfig = {
+var readCtx = {
     "load" : {
         "type" : "read"
     }
 };
 
-var deleteConfig = {
+var deleteCtx = {
     "item" : {
         "output" : {
             "file" : "items_passed_through_create_read_delete_pipeline.csv"
@@ -482,16 +467,16 @@ var deleteConfig = {
 };
 
 PipelineLoad
-    .config(createConfig)
-    .config(readConfig)
-    .config(deleteConfig)
+    .append(createCtx)
+    .append(readCtx)
+    .append(deleteCtx)
     .run();
 ```
 
 The example using the *delay between the operations* capability:
 
 ```javascript
-var config1 = {
+var ctx1 = {
     "item" : {
         "output" : {
             "delay" : "1m",
@@ -507,7 +492,7 @@ var config1 = {
     }
 };
 
-var config2 = {
+var ctx2 = {
     "load" : {
         "type" : "read"
     },
@@ -521,8 +506,8 @@ var config2 = {
 };
 
 PipelineLoad
-    .config(config1)
-    .config(config2)
+    .append(ctx1)
+    .append(ctx2)
     .run();
 ```
 

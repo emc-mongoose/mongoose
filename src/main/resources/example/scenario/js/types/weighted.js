@@ -38,7 +38,7 @@ Load
 
 // declare the weighted load step instance (20% create operations, 80% read operations)
 WeightedLoad
-    .config(
+    .append(
         {
             "item": {
                 "data": {
@@ -60,7 +60,7 @@ WeightedLoad
             }
         }
     )
-    .config(
+    .append(
         {
             "item": {
                 "input": {

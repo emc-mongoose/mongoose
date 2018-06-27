@@ -15,9 +15,9 @@ public interface Constants {
 	String DIR_EXT = "ext";
 	String DIR_EXAMPLE_SCENARIO = DIR_EXAMPLE + File.separator + "scenario";
 	String PATH_DEFAULTS = DIR_CONFIG + "/" + "defaults.json";
-	String KEY_HOME_DIR = "homeDir";
-	String KEY_STEP_ID = "stepId";
-	String KEY_CLASS_NAME = "className";
+	String KEY_HOME_DIR = "home_dir";
+	String KEY_STEP_ID = "step_id";
+	String KEY_CLASS_NAME = "class_name";
 	int MIB = 0x10_00_00;
 	double K = 1e3;
 	double M = 1e6;

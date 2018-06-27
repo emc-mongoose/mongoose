@@ -14,6 +14,14 @@ extends Closeable, Comparable<MetricsContext> {
 	int DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
 	int DEFAULT_RESERVOIR_SIZE = 0x10_00;
 
+	// these are useful as labels/tags
+	String stepId();
+	IoType ioType();
+	int nodeCount();
+	int concurrencyLimit();
+	SizeInBytes itemDataSize();
+
+
 	void start();
 	boolean isStarted();
 
@@ -33,13 +41,8 @@ extends Closeable, Comparable<MetricsContext> {
 
 	void markElapsedTime(final long millis);
 	
-	String stepId();
-	IoType ioType();
-	int nodeCount();
-	int concurrency();
 	int concurrencyThreshold();
 	int actualConcurrency();
-	SizeInBytes itemDataSize();
 
 	boolean stdOutColorEnabled();
 	boolean avgPersistEnabled();

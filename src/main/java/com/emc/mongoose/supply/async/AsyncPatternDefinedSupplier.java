@@ -8,7 +8,7 @@ import com.emc.mongoose.supply.RangePatternDefinedSupplier;
 import com.github.akurilov.fiber4j.FibersExecutor;
 
 public final class AsyncPatternDefinedSupplier
-extends AsyncUpdatingValueSupplier<String>
+extends AsyncValueUpdatingSupplier<String>
 implements PatternDefinedSupplier {
 	
 	private final PatternDefinedSupplier wrappedSupplier;
