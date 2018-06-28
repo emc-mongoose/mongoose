@@ -33,6 +33,17 @@ precondition2 = PreconditionLoad \
 
 # declare the weighted load step instance (20% create operations, 80% read operations)
 weightedLoad1 = WeightedLoad \
+    .config(
+        {
+            "load": {
+                "step": {
+                    "limit": {
+                        "time": "100s"
+                    }
+                }
+            }
+        }
+    ) \
     .append(
         {
             "item": {
@@ -46,11 +57,6 @@ weightedLoad1 = WeightedLoad \
             "load": {
                 "generator": {
                     "weight": 20
-                },
-                "step": {
-                    "limit": {
-                        "time": 100
-                    }
                 }
             }
         }
