@@ -8,6 +8,7 @@ import com.github.akurilov.commons.system.SizeInBytes;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public class AggregatingMetricsContext
@@ -16,9 +17,9 @@ implements MetricsContext {
 	private final long ts;
 	private final String stepId;
 	private final IoType ioType;
-	private final int nodeCount;
-	private final int concurrency;
-	private final int thresholdConcurrency;
+	private final IntSupplier nodeCountSupplier;
+	private final int concurrencyLimit;
+	private final double concurrencyThreshold;
 	private final SizeInBytes itemDataSize;
 	private final boolean stdOutColorFlag;
 	private final boolean avgPersistFlag;
@@ -35,18 +36,17 @@ implements MetricsContext {
 	private volatile boolean thresholdStateExitedFlag = false;
 
 	public AggregatingMetricsContext(
-		final String stepId, final IoType ioType, final int nodeCount, final int concurrency,
-		final int thresholdConcurrency, final SizeInBytes itemDataSize, final int updateIntervalSec,
+		final String stepId, final IoType ioType, final IntSupplier nodeCountSupplier, final int concurrencyLimit,
+		final double concurrencyThreshold, final SizeInBytes itemDataSize, final int updateIntervalSec,
 		final boolean stdOutColorFlag, final boolean avgPersistFlag, final boolean sumPersistFlag,
 		final boolean perfDbResultsFileFlag, final Supplier<List<MetricsSnapshot>> snapshotsSupplier
 	) {
 		this.ts = System.nanoTime();
 		this.stepId = stepId;
 		this.ioType = ioType;
-		this.nodeCount = nodeCount;
-		this.concurrency = concurrency;
-		this.thresholdConcurrency = thresholdConcurrency > 0 ?
-			thresholdConcurrency : Integer.MAX_VALUE;
+		this.nodeCountSupplier = nodeCountSupplier;
+		this.concurrencyLimit = concurrencyLimit;
+		this.concurrencyThreshold = concurrencyThreshold > 0 ? concurrencyThreshold : Long.MAX_VALUE;
 		this.itemDataSize = itemDataSize;
 		this.snapshotsSupplier = snapshotsSupplier;
 
@@ -111,17 +111,17 @@ implements MetricsContext {
 
 	@Override
 	public int nodeCount() {
-		return nodeCount;
+		return nodeCountSupplier.getAsInt();
 	}
 
 	@Override
-	public int concurrency() {
-		return concurrency;
+	public int concurrencyLimit() {
+		return concurrencyLimit * nodeCount();
 	}
 
 	@Override
 	public int concurrencyThreshold() {
-		return thresholdConcurrency;
+		return (int) (concurrencyThreshold * nodeCount());
 	}
 
 	@Override
@@ -218,7 +218,7 @@ implements MetricsContext {
 		final long currentTimeMillis = System.currentTimeMillis();
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
 
-		lastSnapshot = new BasicMetricsContext.BasicSnapshot(
+		lastSnapshot = new MetricsContextImpl.MetricsSnapshotImpl(
 			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast,
 			tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyLast,
 			actualConcurrencyMean, sumDur, sumLat, durSnapshot, latSnapshot
@@ -257,7 +257,7 @@ implements MetricsContext {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
 		thresholdMetricsCtx = new AggregatingMetricsContext(
-			stepId, ioType, nodeCount, concurrency, 0, itemDataSize,
+			stepId, ioType, nodeCountSupplier, concurrencyLimit, 0, itemDataSize,
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag,
 			avgPersistFlag, sumPersistFlag, perfDbResultsFileFlag, snapshotsSupplier
 		);

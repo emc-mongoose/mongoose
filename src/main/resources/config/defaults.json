@@ -22,7 +22,7 @@
 				// The count of the random ranges to update or read
 				"random": 0,
 				// The size threshold to enable multipart upload if supported by the configured storage driver
-				"threshold": "0"
+				"threshold": 0
 			},
 			// The size of the data items to process. Doesn't have any effect if item-type=path
 			"size": "1MB",
@@ -91,8 +91,6 @@
 			"threads": 0
 		},
 		"step": {
-			// The flag to enable the distributed mode for the given scenario step
-			"distributed": false,
 			// The test step id. Generated automatically if not specified (null).
 			// Specifies also the logs sub directory path: log/<STEP_ID>/
 			"id": null,
@@ -120,9 +118,9 @@
 			},
 			"node": {
 				// Distributed mode: the list of the Mongoose node IPs or hostnames,
-				// may include port numbers to override the default port number value
+				// may include port numbers to override the default port number value.
+				// Standalone mode is used if empty (default behaviour).
 				"addrs": [
-					"127.0.0.1"
 				],
 				// Distributed mode: the common port number to connect the Mongoose nodes
 				"port": 1099
@@ -164,10 +162,9 @@
 		}
 	},
 	"run": {
-		// start in the node mode or as as master
+		// start in the node service node
 		"node": false,
-		// The default scenario file to run, null means invoking the default.js scenario bundled
-		// into the distribution
+		// The scenario file to run, null means invoking the default.js scenario bundled into the distribution
 		"scenario": null,
 		// The Mongoose version
 		"version": "4.0.0"
@@ -469,8 +466,7 @@
 		// v4.0
 		{
 			"name": "storage-driver-remote",
-			"deprecated": true,
-			"target": "load-step-distributed"
+			"deprecated": true
 		},
 		{
 			"name": "storage-driver-addrs",
@@ -489,8 +485,7 @@
 		},
 		{
 			"name": "test-step-distributed",
-			"deprecated": true,
-			"target": "load-step-distributed"
+			"deprecated": true
 		},
 		{
 			"name": "test-step-id",

@@ -1,5 +1,6 @@
 package com.emc.mongoose.svc;
 
+import com.emc.mongoose.logging.Loggers;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 
 import java.net.MalformedURLException;
@@ -23,6 +24,10 @@ implements Service {
 	@Override
 	protected void doStart() {
 		ServiceUtil.create(this, port);
+		try {
+			Loggers.MSG.info("Service \"{}\" started @ port #{}", name(), port);
+		} catch(final RemoteException ignored) {
+		}
 	}
 
 	@Override
@@ -33,6 +38,7 @@ implements Service {
 	protected void doStop() {
 		try {
 			ServiceUtil.close(this);
+			Loggers.MSG.info("Service \"{}\" stopped listening the port #{}", name(), port);
 		} catch(final RemoteException | MalformedURLException e) {
 			try {
 				throw new RemoteException("Failed to stop the service " + name(), e);

@@ -1,0 +1,26 @@
+description = "mongoose-load-step-weighted"
+
+dependencies {
+	compileOnly(
+		project(":"),
+		"com.github.akurilov:confuse:${depVersion.confuse}",
+		"com.github.akurilov:confuse-io-json:${depVersion.confuseIoJson}",
+		"com.github.akurilov:fiber4j:${depVersion.fiber4j}",
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+	)
+}
+
+jar {
+
+	baseName = project.description
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	manifest {
+		attributes(
+			"Implementation-Version": version,
+			"Implementation-Title": project.description,
+		)
+	}
+}

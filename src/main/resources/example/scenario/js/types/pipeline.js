@@ -35,7 +35,7 @@ var cmd = new java.lang.ProcessBuilder("sh", "-c", "rm -f " + itemOutputFile).st
 cmd.waitFor();
 
 PipelineLoad
-    .config(createConfig)
-    .config(readConfig)
-    .config(deleteConfig)
+    .append(createConfig)
+    .append(readConfig)
+    .append(deleteConfig)
     .run();

@@ -124,18 +124,14 @@ public final class CircularAppendTest {
 				);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
-				args.add(
-					"--storage-net-node-addrs="
-						+ storageMocks.keySet().stream().collect(Collectors.joining(","))
-				);
+				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
 
 		switch(runMode) {
 			case DISTRIBUTED:
 				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
-				args.add("--load-step-distributed");
-				for(int i = 0; i < runMode.getNodeCount(); i ++) {
+				for(int i = 1; i < runMode.getNodeCount(); i ++) {
 					final int port = MongooseSlaveNodeContainer.DEFAULT_PORT + i;
 					final MongooseSlaveNodeContainer nodeSvc = new MongooseSlaveNodeContainer(port);
 					final String addr = localExternalAddr + ":" + port;

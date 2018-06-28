@@ -3,7 +3,7 @@ package com.emc.mongoose.supply;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 
 public final class RangePatternDefinedSupplier
-extends BasicPatternDefinedSupplier {
+extends PatternDefinedSupplierImpl {
 
 	/**
 	 * Segments (parts) of the input string that do not require changes

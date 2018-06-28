@@ -18,14 +18,14 @@ import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
 import com.emc.mongoose.svc.Service;
 import com.emc.mongoose.load.step.ScriptEngineUtil;
-import com.emc.mongoose.load.step.slave.BasicFileManagerService;
-import com.emc.mongoose.load.step.slave.BasicLoadStepManagerService;
+import com.emc.mongoose.load.step.service.FileManagerServiceImpl;
+import com.emc.mongoose.load.step.service.LoadStepManagerServiceImpl;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
-
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
@@ -80,7 +80,24 @@ public final class Main {
 			);
 			final List<Extension> extensions = Extension.load(extClsLoader);
 			// install the extensions
-			extensions.forEach(ext -> ext.install(appHomePath));
+			final StringBuilder availExtMsg = new StringBuilder("Available/installed extensions:\n");
+			extensions
+				.forEach(
+					ext -> {
+						ext.install(appHomePath);
+						final String extId = ext.id();
+						final String extFqcn = ext.getClass().getCanonicalName();
+						availExtMsg
+							.append('\t')
+							.append(extId)
+							.append(' ')
+							.append(StringUtils.repeat("-", extId.length() < 30 ? 30 - extId.length() : 1))
+							.append("> ")
+							.append(extFqcn)
+							.append('\n');
+					}
+				);
+			Loggers.MSG.info(availExtMsg);
 			// apply the extensions defaults
 			final Config config;
 			try {
@@ -145,10 +162,10 @@ public final class Main {
 	private static void runNode(final Config config, final List<Extension> extensions) {
 		final int listenPort = config.intVal("load-step-node-port");
 		try(
-			final Service inputFileSvc = new BasicFileManagerService(listenPort);
-			final Service scenarioStepSvc = new BasicLoadStepManagerService(listenPort, extensions)
+			final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
+			final Service scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions)
 		) {
-			inputFileSvc.start();
+			fileMgrSvc.start();
 			scenarioStepSvc.start();
 			scenarioStepSvc.await();
 		} catch(final Throwable cause) {

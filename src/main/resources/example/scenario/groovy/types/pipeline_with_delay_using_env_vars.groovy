@@ -34,6 +34,6 @@ final config2 = [
 ]
 
 PipelineLoad
-    .config(config1)
-    .config(config2)
+    .append(config1)
+    .append(config2)
     .run()

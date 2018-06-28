@@ -66,8 +66,8 @@ jobs:
     - stage: "System tests"
 
     # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312915008
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/315447295
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915008
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/315447295
     # STORAGE_TYPE=atmos,fs,swift RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.CircularAppendTest
       env:
       - TEST=CircularAppendTest
@@ -106,7 +106,7 @@ jobs:
           secure: ciLar6EGDY+CVwcmdSAI98DiPHG0Sy0nCOrSpGhOuoaZR/AMIN4IIZE3fOzh8U0Y+p/9IlPkSg7QQFkRmfUgw3nXQJ5CjniMQyK1yeQxOBHVyl9p8HHLvSjU7EC4Ec3JmrA/jgZD0uASgLYaBrAHDgIS97/wgSF8TUJbTfq20VEq7PmFpO+YX0fCi0gGz/S9ts/cQ76pIS0ADlQfrZ44Qa4mNRxG22dN7HtmhxSFe9qmDUdehPX+I4Gaf2/MwhrTeMADArQihTR/1CeS9v84gyD3ODOiLCKJClmGtdpBCD7WXEM2GytxNNPDwKmdm2ly88H7T5xW4toNXHh4uTtfsBd/Wf6nmDrM/TreMhTsMQlVaEA17dh3pXkiHTvL0MemldJVmqNUgsN2f/8shAsyQrY5Cr8HTAsW1r05IIS/9a8xiOVy7CNz61WiNB9oH9+xpYfUKqQxzjFPqFcFkTrc1IvGHM/5YqNw7TK826gk3xBAclGxlQ7ZZXyHVrIN8EYfLSVZFsaplTiQyJFLJ0kpnjB+npvLCTXhEcClJNFQVBvAi8joJufCHvnfjRnKR9CHoS5JghfxNBBdRM9yahggTgpgUselOEUAAd6R9Sf9b3ihI5nFEdejc9GB9zCE8cRBpPp69dMagZ7wZnQHXDg4VlEsE7m3tohn8shaIzYJXfc=
         file_glob: true
         file:
-        - "./build/dist/mongoose-base-*.tgz"
+        - "./build/dist/mongoose-*.tgz"
         - "./build/dist/mongoose-storage-driver-service-*.tgz"
         on:
           tags: true
@@ -343,9 +343,9 @@ jobs:
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312914999
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/313654714
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/315447289
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/312914999
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/313654714
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/315447289
     # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonChainLoadStepTest systemTest
     - env:
       - TEST=JsonChainLoadStepTest
@@ -356,7 +356,7 @@ jobs:
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312915007
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915007
     # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=JsonChainWithDelayTest systemTest
     - env:
       - TEST=JsonChainWithDelayTest
@@ -367,8 +367,8 @@ jobs:
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312915013
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/315447298
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915013
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/315447298
     # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonSingleFixedUpdateAndSingleRandomReadTest systemTest
     - env:
       - TEST=JsonSingleFixedUpdateAndSingleRandomReadTest
@@ -379,8 +379,8 @@ jobs:
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312915014
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/315447299
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915014
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/315447299
     # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonSingleRandomUpdateAndMultipleRandomReadTest systemTest
     - env:
       - TEST=JsonSingleRandomUpdateAndMultipleRandomReadTest
@@ -391,7 +391,7 @@ jobs:
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312915017
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915017
     # STORAGE_TYPE=atmos,fs,swift RUN_MODE=local,distributed CONCURRENCY=unlimited ITEM_SIZE=small,medium,large ./gradlew -Dtest.single=JsonUnlimitedConcurrencyLimitByRateTest systemTest
     - env:
       - TEST=JsonUnlimitedConcurrencyLimitByRateTest
@@ -402,8 +402,8 @@ jobs:
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/312915018
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/315447301
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915018
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/315447301
     # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=medium ./gradlew -Dtest.single=JsonUpdateUsingInputFileLimitByTimeTest systemTest
     - env:
       - TEST=JsonUpdateUsingInputFileLimitByTimeTest
@@ -414,7 +414,7 @@ jobs:
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose-base/jobs/315447302
+    # https://travis-ci.org/emc-mongoose/mongoose/jobs/315447302
     # STORAGE_TYPE=fs,s3,swift RUN_MODE=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonWeightedLoadTest systemTest
     - env:
       - TEST=JsonWeightedLoadTest

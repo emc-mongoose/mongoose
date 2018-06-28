@@ -93,16 +93,12 @@ public interface ScriptEngineUtil {
 			.map(ext -> (LoadStepFactory) ext)
 			.collect(Collectors.toList());
 		loadStepFactories
-			.forEach(factory -> se.put(factory.id(), factory.create(config, extensions, null)));
+			.forEach(factory -> se.put(factory.id(), factory.createClient(config, extensions, null)));
 		loadStepFactories
 			.stream()
-			.filter(f -> "Load".equals(f.id()))
+			.filter(factory -> "Load".equals(factory.id()))
 			.findFirst()
-			.ifPresent(
-				baseLoadStepFactory -> registerAdditionalStepTypes(
-					se, extensions, config, baseLoadStepFactory
-				)
-			);
+			.ifPresent(factory -> registerAdditionalStepTypes(se, extensions, config, factory));
 	}
 
 	static void registerAdditionalStepTypes(
@@ -118,7 +114,7 @@ public interface ScriptEngineUtil {
 		specificConfig.val("output-metrics-summary-perfDbResultsFile", false);
 		specificConfig.val("output-metrics-summary-persist", false);
 		specificConfig.val("output-metrics-trace-persist", false);
-		se.put("PreconditionLoad", baseLoadStepFactory.create(specificConfig, extensions, null));
+		se.put("PreconditionLoad", baseLoadStepFactory.createClient(specificConfig, extensions, null));
 
 		for(final IoType ioType : IoType.values()) {
 			specificConfig = new BasicConfig(config);
@@ -126,32 +122,32 @@ public interface ScriptEngineUtil {
 			specificConfig.val("load-type", ioTypeName);
 			final String stepName = ioTypeName.substring(0, 1).toUpperCase()
 				+ ioTypeName.substring(1) + "Load";
-			se.put(stepName, baseLoadStepFactory.create(specificConfig, extensions, null));
+			se.put(stepName, baseLoadStepFactory.createClient(specificConfig, extensions, null));
 		}
 
 		specificConfig = new BasicConfig(config);
 		specificConfig.val("load-type", IoType.READ.name().toLowerCase());
 		specificConfig.val("item-data-verify", true);
-		se.put("ReadVerifyLoad", baseLoadStepFactory.create(specificConfig, extensions, null));
+		se.put("ReadVerifyLoad", baseLoadStepFactory.createClient(specificConfig, extensions, null));
 
 		specificConfig = new BasicConfig(config);
 		specificConfig.val("load-type", IoType.READ.name().toLowerCase());
 		specificConfig.val("item-data-ranges-random", 1);
-		se.put("ReadRandomRangeLoad", baseLoadStepFactory.create(specificConfig, extensions, null));
+		se.put("ReadRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions, null));
 
 		specificConfig = new BasicConfig(config);
 		specificConfig.val("load-type", IoType.READ.name().toLowerCase());
 		specificConfig.val("item-data-verify", true);
 		specificConfig.val("item-data-ranges-random", 1);
 		se.put(
-			"ReadVerifyRandomRangeLoad", baseLoadStepFactory.create(specificConfig, extensions, null)
+			"ReadVerifyRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions, null)
 		);
 
 		specificConfig = new BasicConfig(config);
 		specificConfig.val("load-type", IoType.UPDATE.name().toLowerCase());
 		specificConfig.val("item-data-ranges-random", 1);
 		se.put(
-			"UpdateRandomRangeLoad", baseLoadStepFactory.create(specificConfig, extensions, null)
+			"UpdateRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions, null)
 		);
 	}
 }

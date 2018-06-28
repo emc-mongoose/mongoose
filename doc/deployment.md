@@ -36,27 +36,26 @@ docker run \
 
 ### Distributed Mode
 
-#### Master Node
+#### Node
 
-The base image may be used as a controller in the distributed mode:
-```bash
-docker run \
-    --network host \
-    emcmongoose/mongoose \
-    --load-step-distributed \
-    --load-step-node-addrs=<ADDR1,ADDR2,...> [\
-    <ARGS>]
-```
-
-#### Slave Node
-
-The base image may be used as a controller in the distributed mode:
+First, it's necessary to start some node/peer services:
 ```bash
 docker run \
     --network host \
     emcmongoose/mongoose \
     --run-node [\
     --test-step-node-port=<PORT>]
+```
+
+#### Run
+
+To invoke the run in the distributed mode it's necessary to specify the additional node/peer addresses:
+```bash
+docker run \
+    --network host \
+    emcmongoose/mongoose \
+    --load-step-node-addrs=<ADDR1,ADDR2,...> [\
+    <ARGS>]
 ```
 
 ### Extensions

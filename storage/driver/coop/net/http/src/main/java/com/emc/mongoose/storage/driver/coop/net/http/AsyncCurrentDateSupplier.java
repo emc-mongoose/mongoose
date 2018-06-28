@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.coop.net.http;
 
 import com.emc.mongoose.env.DateUtil;
 import com.emc.mongoose.exception.OmgDoesNotPerformException;
-import com.emc.mongoose.supply.async.AsyncUpdatingValueSupplier;
+import com.emc.mongoose.supply.async.AsyncValueUpdatingSupplier;
 
 import com.github.akurilov.fiber4j.FibersExecutor;
 
@@ -12,7 +12,7 @@ import java.util.Date;
  Created by kurila on 16.04.15.
  */
 public final class AsyncCurrentDateSupplier
-extends AsyncUpdatingValueSupplier<String> {
+extends AsyncValueUpdatingSupplier<String> {
 
 	public AsyncCurrentDateSupplier(final FibersExecutor executor)
 	throws OmgDoesNotPerformException {

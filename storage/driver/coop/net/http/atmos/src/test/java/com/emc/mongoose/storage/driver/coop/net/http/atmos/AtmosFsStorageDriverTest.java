@@ -3,10 +3,10 @@ package com.emc.mongoose.storage.driver.coop.net.http.atmos;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.env.DateUtil;
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.item.BasicDataItem;
+import com.emc.mongoose.item.DataItemImpl;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.data.BasicDataIoTask;
+import com.emc.mongoose.item.io.task.data.DataIoTaskImpl;
 import com.emc.mongoose.item.io.task.data.DataIoTask;
 import com.emc.mongoose.storage.Credential;
 import static com.emc.mongoose.Constants.APP_NAME;
@@ -175,10 +175,10 @@ extends AtmosStorageDriver {
 		final long itemSize = 10240;
 		final String dir = "/dir0";
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new BasicDataItem(
+		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
 			hashCode(), IoType.CREATE, dataItem, null, dir, credential, null, 0
 		);
 

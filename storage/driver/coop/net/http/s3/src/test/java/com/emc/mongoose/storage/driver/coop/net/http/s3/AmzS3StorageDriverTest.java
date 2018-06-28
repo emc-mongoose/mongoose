@@ -3,15 +3,15 @@ package com.emc.mongoose.storage.driver.coop.net.http.s3;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.env.DateUtil;
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.item.BasicDataItem;
+import com.emc.mongoose.item.DataItemImpl;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
 import com.emc.mongoose.item.ItemType;
 import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.composite.data.BasicCompositeDataIoTask;
+import com.emc.mongoose.item.io.task.composite.data.CompositeDataIoTaskImpl;
 import com.emc.mongoose.item.io.task.composite.data.CompositeDataIoTask;
-import com.emc.mongoose.item.io.task.data.BasicDataIoTask;
+import com.emc.mongoose.item.io.task.data.DataIoTaskImpl;
 import com.emc.mongoose.item.io.task.data.DataIoTask;
 import com.emc.mongoose.item.io.task.partial.data.PartialDataIoTask;
 import com.emc.mongoose.storage.Credential;
@@ -242,10 +242,10 @@ extends AmzS3StorageDriver {
 		final String bucketName = "/bucket2";
 		final long itemSize = 10240;
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new BasicDataItem(
+		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
 			hashCode(), IoType.CREATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0
 		);
@@ -278,10 +278,10 @@ extends AmzS3StorageDriver {
 		final String bucketDstName = "/bucketDst";
 		final long itemSize = 10240;
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new BasicDataItem(
+		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
 			hashCode(), IoType.CREATE, dataItem, bucketSrcName, bucketDstName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0
 		);
@@ -317,10 +317,10 @@ extends AmzS3StorageDriver {
 		final long itemSize = 12345;
 		final long partSize = 1234;
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new BasicDataItem(
+		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final CompositeDataIoTask<DataItem> mpuTask = new BasicCompositeDataIoTask<>(
+		final CompositeDataIoTask<DataItem> mpuTask = new CompositeDataIoTaskImpl<>(
 			hashCode(), IoType.CREATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0, partSize
 		);
@@ -355,10 +355,10 @@ extends AmzS3StorageDriver {
 		final long itemSize = 12345;
 		final long partSize = 1234;
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new BasicDataItem(
+		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final CompositeDataIoTask<DataItem> mpuTask = new BasicCompositeDataIoTask<>(
+		final CompositeDataIoTask<DataItem> mpuTask = new CompositeDataIoTaskImpl<>(
 			hashCode(), IoType.CREATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0, partSize
 		);
@@ -408,10 +408,10 @@ extends AmzS3StorageDriver {
 		final long itemSize = 12345;
 		final long partSize = 1234;
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new BasicDataItem(
+		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final CompositeDataIoTask<DataItem> mpuTask = new BasicCompositeDataIoTask<>(
+		final CompositeDataIoTask<DataItem> mpuTask = new CompositeDataIoTaskImpl<>(
 			hashCode(), IoType.CREATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0, partSize
 		);
@@ -464,10 +464,10 @@ extends AmzS3StorageDriver {
 		final String bucketName = "/bucket2";
 		final long itemSize = 10240;
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new BasicDataItem(
+		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
 			hashCode(), IoType.READ, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0
 		);
@@ -499,14 +499,14 @@ extends AmzS3StorageDriver {
 		final String bucketName = "/bucket2";
 		final long itemSize = 10240;
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new BasicDataItem(
+		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
 		final List<Range> fixedRanges = new ArrayList<>();
 		fixedRanges.add(new Range(0, 0, -1));
 		fixedRanges.add(new Range(1, 1, -1));
 		fixedRanges.add(new Range(2, 2, -1));
-		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
 			hashCode(), IoType.READ, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), fixedRanges, 0
 		);
@@ -540,10 +540,10 @@ extends AmzS3StorageDriver {
 		final String bucketName = "/bucket2";
 		final long itemSize = 10240;
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new BasicDataItem(
+		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
 			hashCode(), IoType.READ, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, rndRangeCount
 		);
@@ -582,10 +582,10 @@ extends AmzS3StorageDriver {
 		final String bucketName = "/bucket2";
 		final long itemSize = 10240;
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new BasicDataItem(
+		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
 			hashCode(), IoType.UPDATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0
 		);
@@ -617,14 +617,14 @@ extends AmzS3StorageDriver {
 		final String bucketName = "/bucket2";
 		final long itemSize = 10240;
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new BasicDataItem(
+		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
 		final List<Range> fixedRanges = new ArrayList<>();
 		fixedRanges.add(new Range(0, 0, -1));
 		fixedRanges.add(new Range(1, 1, -1));
 		fixedRanges.add(new Range(2, 2, -1));
-		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
 			hashCode(), IoType.UPDATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), fixedRanges, 0
 		);
@@ -658,10 +658,10 @@ extends AmzS3StorageDriver {
 		final String bucketName = "/bucket2";
 		final long itemSize = 10240;
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new BasicDataItem(
+		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
 			hashCode(), IoType.UPDATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, rndRangeCount
 		);
@@ -701,10 +701,10 @@ extends AmzS3StorageDriver {
 		final String bucketName = "/bucket2";
 		final long itemSize = 10240;
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new BasicDataItem(
+		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new BasicDataIoTask<>(
+		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
 			hashCode(), IoType.DELETE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0
 		);

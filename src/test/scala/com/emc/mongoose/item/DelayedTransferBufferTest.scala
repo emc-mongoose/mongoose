@@ -2,8 +2,7 @@ package com.emc.mongoose.item
 
 import com.emc.mongoose.item.io.IoType
 import com.emc.mongoose.item.io.task.IoTaskBuilder
-import com.emc.mongoose.item.io.task.data.BasicDataIoTaskBuilder
-import com.emc.mongoose.item.io.task.data.DataIoTask
+import com.emc.mongoose.item.io.task.data.{DataIoTask, DataIoTaskBuilderImpl}
 import com.emc.mongoose.supply.ConstantStringSupplier
 import com.github.akurilov.commons.io.Input
 import com.github.akurilov.commons.system.SizeInBytes
@@ -32,7 +31,7 @@ final class DelayedTransferBufferTest {
 			new ItemNameSupplier(ItemNamingType.ASC, null, 13, Character.MAX_RADIX, 0),
 			new SizeInBytes(0)
 		)
-		ioTaskBuilder = new BasicDataIoTaskBuilder[DataItem, DataIoTask[DataItem]](0)
+		ioTaskBuilder = new DataIoTaskBuilderImpl[DataItem, DataIoTask[DataItem]](0)
 		ioTaskBuilder.setIoType(IoType.NOOP)
 		ioTaskBuilder.setOutputPathSupplier(new ConstantStringSupplier("/default"))
 		ioTaskBuilder.setUidSupplier(new ConstantStringSupplier("uid1"))
