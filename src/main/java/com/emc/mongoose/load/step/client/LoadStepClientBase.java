@@ -178,6 +178,7 @@ implements LoadStepClient {
 			if(itemInput != null) {
 				Loggers.MSG.info("{}: slice the item input \"{}\"...", id(), itemInput);
 				itemInputFileSlices = sliceItemInput(itemInput, fileMgrs, configSlices, batchSize);
+				Loggers.MSG.info("{}: slice the item input \"{}\" done", id(), itemInput);
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "{}: failed to use the item input", id());

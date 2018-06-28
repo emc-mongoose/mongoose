@@ -12,12 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
+import java.util.zip.Adler32;
+import java.util.zip.Checksum;
 
 public abstract class JarResourcesInstaller
 implements Installer {
@@ -40,48 +37,42 @@ implements Installer {
 		if(dstPath.toFile().exists()) {
 			Loggers.MSG.debug("The file {} already exists, checking the checksum", dstPath);
 
-			final MessageDigest md;
-			try {
-				md = MessageDigest.getInstance("MD5");
-			} catch(final NoSuchAlgorithmException e) {
-				throw new AssertionError(e);
-			}
+			final Checksum checksumCalc = new Adler32();
+			final byte[] buff = new byte[0x2000];
+			int n;
 
-			try(
-				final InputStream in = resourceStream(srcFilePath);
-				final DigestInputStream din = new DigestInputStream(in, md)
-			) {
-				while(-1 < din.read());
+			try(final InputStream in = resourceStream(srcFilePath)) {
+				while(-1 < (n = in.read(buff))) {
+					checksumCalc.update(buff, 0, n);
+				}
 			} catch(final EOFException ok) {
 			} catch(final IOException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to read the src file \"{}\"", srcFilePath);
 			}
-			final byte[] srcFileChecksum = md.digest();
+			final long srcFileChecksum = checksumCalc.getValue();
 
-			md.reset();
+			checksumCalc.reset();
 
-			try(
-				final InputStream in = Files.newInputStream(dstPath, StandardOpenOption.READ);
-				final DigestInputStream din = new DigestInputStream(in, md)
-			) {
-				while(-1 < din.read());
+			try(final InputStream in = Files.newInputStream(dstPath, StandardOpenOption.READ)) {
+				while(-1 < (n = in.read(buff))) {
+					checksumCalc.update(buff, 0, n);
+				}
 			} catch(final EOFException ok) {
 			} catch(final IOException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to read the dst file \"{}\"", dstPath);
 			}
-			final byte[] dstFileChecksum = md.digest();
+			final long dstFileChecksum = checksumCalc.getValue();
 
-			final Base64.Encoder base64enc = Base64.getEncoder();
-			if(Arrays.equals(srcFileChecksum, dstFileChecksum)) {
+			if(srcFileChecksum == dstFileChecksum) {
 				Loggers.MSG.debug(
 					"The destination file \"{}\" has the same checksum ({}) as source, skipping", dstPath,
-					base64enc.encodeToString(dstFileChecksum)
+					Long.toHexString(srcFileChecksum)
 				);
 				return;
 			} else {
 				Loggers.MSG.info(
 					"The destination file \"{}\" has the different checksum ({}) than source ({}), replacing", dstPath,
-					base64enc.encodeToString(dstFileChecksum), base64enc.encodeToString(srcFileChecksum)
+					Long.toHexString(dstFileChecksum), Long.toHexString(srcFileChecksum)
 				);
 				try {
 					Files.delete(dstPath);

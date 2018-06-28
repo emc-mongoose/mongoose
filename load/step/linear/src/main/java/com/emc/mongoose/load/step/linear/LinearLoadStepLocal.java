@@ -39,7 +39,6 @@ extends LoadStepLocalBase {
 
 	public LinearLoadStepLocal(
 		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> contexts
-		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides
 	) {
 		super(baseConfig, extensions, contexts);
 	}

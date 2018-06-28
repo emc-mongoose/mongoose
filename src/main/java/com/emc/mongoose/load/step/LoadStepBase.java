@@ -156,12 +156,10 @@ implements LoadStep, Runnable {
 
 		final long t = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - startTimeSec;
 		if(t < 0) {
-			Loggers.ERR.warn(
-				"Stopped earlier than started, won't account the elapsed time"
-			);
+			Loggers.ERR.warn("Stopped earlier than started, won't account the elapsed time");
 		} else if(t > timeLimitSec) {
 			Loggers.MSG.warn(
-				"The elapsed time ({}[s]) is more than the limit ({}[s]), won't resume",
+				"The elapsed time ({}[s]) is more than the limit ({}[s]), further resuming is not available",
 				t, timeLimitSec
 			);
 			timeLimitSec = 0;
@@ -179,9 +177,7 @@ implements LoadStep, Runnable {
 					try {
 						metricsCtx.close();
 					} catch(final IOException e) {
-						LogUtil.exception(
-							Level.WARN, e, "Failed to close the metrics context \"{}\"", metricsCtx
-						);
+						LogUtil.exception(Level.WARN, e, "Failed to close the metrics context \"{}\"", metricsCtx);
 					}
 				}
 			);

@@ -33,12 +33,8 @@ implements LoadStepManagerService {
 
 	@Override
 	protected final void doStart() {
-		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_CLASS_NAME, LoadStepManagerServiceImpl.class.getSimpleName())
-		) {
+		try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 			super.doStart();
-			Loggers.MSG.info("Service \"{}\" started @ port #{}", SVC_NAME, port);
 		}
 	}
 

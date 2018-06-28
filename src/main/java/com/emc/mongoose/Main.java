@@ -162,10 +162,10 @@ public final class Main {
 	private static void runNode(final Config config, final List<Extension> extensions) {
 		final int listenPort = config.intVal("load-step-node-port");
 		try(
-			final Service inputFileSvc = new FileManagerServiceImpl(listenPort);
+			final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
 			final Service scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions)
 		) {
-			inputFileSvc.start();
+			fileMgrSvc.start();
 			scenarioStepSvc.start();
 			scenarioStepSvc.await();
 		} catch(final Throwable cause) {
