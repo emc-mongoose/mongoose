@@ -158,8 +158,8 @@ extends LoadStepLocalBase {
 						if(originIndex < subStepCount - 1) {
 							final long itemOutputDelay;
 							final Object itemOutputDelayRaw = itemConfig.val("output-delay");
-							if(itemDataSizeRaw instanceof String) {
-								itemOutputDelay = TimeUtil.getTimeInSeconds((String) itemDataSizeRaw);
+							if(itemOutputDelayRaw instanceof String) {
+								itemOutputDelay = TimeUtil.getTimeInSeconds((String) itemOutputDelayRaw);
 							} else {
 								itemOutputDelay = TypeUtil.typeConvert(itemOutputDelayRaw, long.class);
 							}
