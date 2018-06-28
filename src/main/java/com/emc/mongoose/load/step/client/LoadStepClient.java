@@ -109,12 +109,17 @@ extends LoadStep {
 				Collectors.toMap(
 					Function.identity(),
 					fileMgr -> {
+						String ioTraceLogFileSliceName = null;
 						try {
-							return fileMgr.logFileName(Loggers.IO_TRACE.getName(), id);
+							ioTraceLogFileSliceName = fileMgr.logFileName(Loggers.IO_TRACE.getName(), id);
+							Loggers.MSG.debug(
+								"{}: the remote file manager \"{}\" returned the file name \"{}\" for the I/O traces",
+								id, fileMgr, ioTraceLogFileSliceName
+							);
 						} catch(final IOException e) {
 							LogUtil.exception(Level.WARN, e, "{}: failed to get the remote log file name", id);
-							return null;
 						}
+						return ioTraceLogFileSliceName;
 					}
 				)
 			);
@@ -126,11 +131,11 @@ extends LoadStep {
 		for(int i = 0; i < sliceCount; i ++) {
 			final Config limitConfigSlice = configSlices.get(i).configVal("load-step-limit");
 			if(remainingCountLimit > countLimitPerSlice) {
-				Loggers.MSG.info("Config slice #{}: count limit = {}", i, countLimitPerSlice);
+				Loggers.MSG.debug("Config slice #{}: count limit = {}", i, countLimitPerSlice);
 				limitConfigSlice.val("count", countLimitPerSlice);
 				remainingCountLimit -= countLimitPerSlice;
 			} else {
-				Loggers.MSG.info("Config slice #{}: count limit = {}", i, remainingCountLimit);
+				Loggers.MSG.debug("Config slice #{}: count limit = {}", i, remainingCountLimit);
 				limitConfigSlice.val("count", remainingCountLimit);
 				remainingCountLimit = 0;
 			}
@@ -275,7 +280,7 @@ extends LoadStep {
 			);
 
 		transferItemsInputData(itemInput, batchSize, fileMgrs, itemInputFileSlices, itemsOutByteBuffs, itemsOutputs);
-		Loggers.MSG.info("{}: items input data is distributed to the {} step slices", configSlices.size());
+		Loggers.MSG.info("Items input data is distributed to the {} step slices", configSlices.size());
 
 		itemsOutputs
 			.values()
@@ -300,17 +305,21 @@ extends LoadStep {
 	}
 
 	static void transferItemsInputData(
-		final Input<? extends Item> itemInput, final int batchSize, final List<FileManager> fileMgrs,
+		final Input<Item> itemInput, final int batchSize, final List<FileManager> fileMgrs,
 		final Map<FileManager, String> itemInputFileSlices,
 		final Map<FileManager, ByteArrayOutputStream> itemsOutByteBuffs,
 		final Map<FileManager, ObjectOutputStream> itemsOutputs
 	) throws IOException {
 
 		final int sliceCount = itemsOutByteBuffs.size();
-		final List itemsBuff = new ArrayList<>(batchSize);
+		final List<Item> itemsBuff = new ArrayList<>(batchSize);
 
 		int n;
-		final ObjectOutputStream out = itemsOutputs.get(0);
+		final ObjectOutputStream out = itemsOutputs
+			.values()
+			.stream()
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("No outputs is available for items input data transfer"));
 
 		while(true) {
 
@@ -323,9 +332,8 @@ extends LoadStep {
 
 			if(n > 0) {
 
-				// convert the items to the text representation
 				if(sliceCount > 1) {
-					// distribute the items using round robin
+					// distribute the items using the round robin
 					for(int i = 0; i < n; i ++) {
 						itemsOutputs
 							.get(fileMgrs.get(i % sliceCount))
@@ -534,11 +542,13 @@ extends LoadStep {
 				stepSlice -> {
 					try {
 						stepSlice.close();
+						Loggers.MSG.debug("{}: step slice \"{}\" closed", id, stepSlice);
 					} catch(final Exception e) {
 						LogUtil.exception(Level.WARN, e, "{}: failed to close the step service \"{}\"", id, stepSlice);
 					}
 				}
 			);
+		Loggers.MSG.info("{}: closed all {} step slices", id, stepSlices.size());
 		stepSlices.clear();
 	}
 

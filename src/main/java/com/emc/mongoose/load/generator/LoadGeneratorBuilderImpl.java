@@ -33,11 +33,11 @@ import static com.emc.mongoose.item.DataItem.rangeCount;
 import static com.emc.mongoose.storage.driver.StorageDriver.BUFF_SIZE_MIN;
 
 import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
-import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.commons.concurrent.throttle.Throttle;
 import com.github.akurilov.confuse.Config;
 
@@ -81,8 +81,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	private long sizeEstimate = -1;
 	private int batchSize = -1;
 	private int originIndex = -1;
-	private Throttle rateThrottle = null;
-	private IndexThrottle weightThrottle = null;
+	private final List<Object> throttles = new ArrayList<>();
 	
 	@Override
 	public LoadGeneratorBuilderImpl<I, O, T> itemConfig(final Config itemConfig) {
@@ -149,14 +148,14 @@ implements LoadGeneratorBuilder<I, O, T> {
 	}
 
 	@Override
-	public LoadGeneratorBuilderImpl<I, O, T> rateThrottle(final Throttle rateThrottle) {
-		this.rateThrottle = rateThrottle;
+	public LoadGeneratorBuilderImpl<I, O, T> addThrottle(final Throttle throttle) {
+		throttles.add(throttle);
 		return this;
 	}
 
 	@Override
-	public LoadGeneratorBuilderImpl<I, O, T> weightThrottle(final IndexThrottle weightThrottle) {
-		this.weightThrottle = weightThrottle;
+	public LoadGeneratorBuilderImpl<I, O, T> addThrottle(final IndexThrottle throttle) {
+		throttles.add(throttle);
 		return this;
 	}
 
@@ -170,13 +169,6 @@ implements LoadGeneratorBuilder<I, O, T> {
 			throw new OmgShootMyFootException("Test step limit config is not set");
 		}
 		final long countLimit = limitConfig.longVal("count");
-		final SizeInBytes sizeLimit;
-		final Object sizeLimitRaw = limitConfig.val("size");
-		if(sizeLimitRaw instanceof String) {
-			sizeLimit = new SizeInBytes((String) sizeLimitRaw);
-		} else {
-			sizeLimit = new SizeInBytes(TypeUtil.typeConvert(sizeLimitRaw, long.class));
-		}
 		if(loadConfig == null) {
 			throw new OmgShootMyFootException("Load config is not set");
 		}
@@ -367,8 +359,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 			recycleLimit = recycleConfig.boolVal("enabled") ? recycleConfig.intVal("limit") : 0;
 
 		return (T) new LoadGeneratorImpl<>(
-			itemInput, ioTaskBuilder, storageDriver, rateThrottle, weightThrottle, batchSize,
-			countLimit, sizeLimit, recycleLimit, shuffleFlag
+			itemInput, ioTaskBuilder, throttles, storageDriver, batchSize, countLimit, recycleLimit, shuffleFlag
 		);
 	}
 	

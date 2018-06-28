@@ -1,16 +1,16 @@
 package com.emc.mongoose.load.generator;
 
-import com.github.akurilov.commons.concurrent.AsyncRunnable;
-
 import com.emc.mongoose.item.io.task.IoTask;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.io.IoType;
+
+import com.github.akurilov.fiber4j.Fiber;
 
 /**
  Created on 11.07.16.
  */
 public interface LoadGenerator<I extends Item, O extends IoTask<I>>
-extends AsyncRunnable {
+extends Fiber {
 	
 	/**
 	 @return sum of the new tasks and recycled ones

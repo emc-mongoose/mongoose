@@ -10,6 +10,7 @@ import com.emc.mongoose.item.ItemInfoFileOutput;
 import com.emc.mongoose.item.ItemType;
 import com.emc.mongoose.load.controller.LoadController;
 import com.emc.mongoose.load.generator.LoadGenerator;
+import com.emc.mongoose.load.generator.LoadGeneratorBuilder;
 import com.emc.mongoose.load.step.local.LoadStepLocalBase;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.load.controller.LoadControllerImpl;
@@ -111,7 +112,7 @@ extends LoadStepLocalBase {
 				final double rateLimit = stepConfig.doubleVal("limit-rate");
 
 				try {
-					final LoadGenerator generator = new LoadGeneratorBuilderImpl<>()
+					final LoadGeneratorBuilder generatorBuilder = new LoadGeneratorBuilderImpl<>()
 						.itemConfig(itemConfig)
 						.loadConfig(loadConfig)
 						.limitConfig(limitConfig)
@@ -119,10 +120,11 @@ extends LoadStepLocalBase {
 						.itemFactory((ItemFactory) itemFactory)
 						.storageDriver(driver)
 						.authConfig(storageConfig.configVal("auth"))
-						.originIndex(0)
-						.rateThrottle(rateLimit > 0 ? new RateThrottle(rateLimit) : null)
-						.weightThrottle(null)
-						.build();
+						.originIndex(0);
+					if(rateLimit > 0) {
+						generatorBuilder.addThrottle(new RateThrottle(rateLimit));
+					}
+					final LoadGenerator generator = generatorBuilder.build();
 					generators.add(generator);
 
 					final LoadController controller = new LoadControllerImpl<>(
