@@ -21,9 +21,6 @@ precondition2 = PreconditionLoad \
                 }
             },
             "load": {
-                "limit": {
-
-                },
                 "step": {
                     "limit": {
                         "concurrency": sharedConcurrency,

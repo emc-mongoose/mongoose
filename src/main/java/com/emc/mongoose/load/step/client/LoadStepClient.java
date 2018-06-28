@@ -104,7 +104,7 @@ extends LoadStep {
 		return fileMgrs
 			.stream()
 			// exclude local I/O trace log file
-			.filter(fileMgr -> !(fileMgr instanceof FileManagerService))
+			.filter(fileMgr -> fileMgr instanceof FileManagerService)
 			.collect(
 				Collectors.toMap(
 					Function.identity(),
@@ -606,7 +606,7 @@ extends LoadStep {
 				.entrySet()
 				.parallelStream()
 				// don't transfer & delete local item output file
-				.filter(entry -> !(entry.getKey() instanceof FileManagerService))
+				.filter(entry -> entry.getKey() instanceof FileManagerService)
 				.forEach(
 					entry -> {
 						final FileManager fileMgr = entry.getKey();
@@ -637,7 +637,7 @@ extends LoadStep {
 			.entrySet()
 			.parallelStream()
 			// don't transfer the local file data
-			.filter(entry -> !(entry.getKey() instanceof FileManagerService))
+			.filter(entry -> entry.getKey() instanceof FileManagerService)
 			.forEach(
 				entry -> {
 					final FileManager fileMgr = entry.getKey();

@@ -71,9 +71,9 @@ extends LoadStepLocalBase {
 		// 1st pass: determine the weights map
 		final int[] weights = new int[subStepCount];
 		final List<Config> subConfigs = new ArrayList<>(subStepCount);
-		for(int i = 0; i < subStepCount; i ++) {
+		for(int originIndex = 0; originIndex < subStepCount; originIndex ++) {
 			final Map<String, Object> mergedConfigTree = reduceForest(
-				Arrays.asList(deepToMap(config), contexts.get(subStepCount))
+				Arrays.asList(deepToMap(config), contexts.get(originIndex))
 			);
 			final Config subConfig;
 			try {
@@ -84,7 +84,7 @@ extends LoadStepLocalBase {
 			}
 			subConfigs.add(subConfig);
 			final int weight = subConfig.intVal("load-generator-weight");
-			weights[i] = weight;
+			weights[originIndex] = weight;
 		}
 
 		final IndexThrottle weightThrottle = new SequentialWeightsThrottle(weights);
