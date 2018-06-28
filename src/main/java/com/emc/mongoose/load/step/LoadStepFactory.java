@@ -33,7 +33,7 @@ extends Extension {
 
 		final LoadStepFactory selectedFactory = loadStepFactories
 			.stream()
-			.filter(f -> stepType.endsWith(f.id()))
+			.filter(f -> stepType.equals(f.id()))
 			.findFirst()
 			.orElseThrow(
 				() -> new IllegalStateException(
