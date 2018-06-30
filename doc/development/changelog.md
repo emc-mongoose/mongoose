@@ -58,13 +58,10 @@
 
 #### 1. [P2P Distributed Mode](../design/distributed_mode.md)
 
-In the new major version of Mongoose the new distributed mode architecture is introduced. Any *distributed load step*
-execution may be initiated from any node from the given set. Then the chosen node becomes an temparary *entry node*.
-There may be also *additional nodes* involved in the given distributed load step. All necessary input is prepared
-(*sliced*) and distributed among the nodes before the actual load step start to get rid of the redundant interaction
-via the network during the load step execution. The additional nodes are being polled periodically to synchronize the
-load step state. After the load step is done, the summary data may be (optionally) aggregated and persisted on the entry
-node.
+The new distributed mode design is based on P2P (peer-to-peer) principles such as task/workload slicing and independent
+execution. This allows to choose any node from the set to initiate the run. Also there's no more need to dedicate the
+host for the controller. The remote API is also available to deploy applications on top of Mongoose node set such as
+GUI.
 
 #### 2. Automated [Installer](../design/installer.md)
 
@@ -83,8 +80,8 @@ sub-configurations provided by the extensions resolved in the runtime.
 
 ### Non-functional
 
-1.
-
+1. Mongoose v4.0.0 doesn't work with deprecated JSON scenarios anymore. So the tool converting the Mongoose v3.x
+scenarios to v4.0.0 scenarios is provided: https://github.com/emc-mongoose/scenario-converter-3to4
 
 ## Fixed Bugs
 
