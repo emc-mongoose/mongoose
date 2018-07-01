@@ -35,19 +35,16 @@ its interface to support the recycling:
     void recycle(final O ioTask);
     ```
 
-The [Load Controller](architecture.md#load-controller) component also
-controls the recycling. It should keep in memory the latest state for
-all items being processed in the recycle mode to meet the requirement
-(5).
+The [Load Step Context](architecture.md#load-step-context) component keeps in memory the latest state for all items
+being processed in the recycle mode to meet the requirement (5).
 
 Also, there's a specific ***"nothing to recycle"*** state which requires
-a Load Controller to detect it to not to hang up the test step. Specific
+a Load Step Context to detect it to not to hang up the test step. Specific
 conditions:
-1. Single Load Generator.
-2. The Load Generator is finished to produce *new* load tasks.
-3. The Load Generator is recycling.
-4. All new load tasks executed at least once.
-5. No successful load task results.
+1. The Load Generator is finished to produce *new* load tasks.
+2. The Load Generator is recycling.
+3. All new load tasks executed at least once.
+4. No successful load task results.
 
 ## Recycle Flow
 
@@ -58,7 +55,7 @@ conditions:
     1. Resets the next load task state (status, timestamps, etc)
     2. Executes the next load task
     3. Outputs the next completed load task to the Load Controller
-3. Load Controller:
+3. Load Step Context:
     1. Receives the next completed load task
     2. Drops the load task if its status is not successful
     3. Determines the load task *origin* (the Load Generator produced
@@ -88,7 +85,7 @@ conditions:
 
 The items are processed multiple times in the recycle mode. For
 example, the file may be updated several times. The result of each
-next update operation is different. So the Load Controller doesn't
+next update operation is different. So the Load Step Context doesn't
 output the items info on the fly but keeps the latest items info in the
 memory. The processed items info is dumped at the test step finish in
 the recycle mode (once for each item).

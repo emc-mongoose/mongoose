@@ -55,7 +55,7 @@ extends AsyncRunnable, Input<O>, Output<O> {
 	 */
 	int getConcurrencyLevel();
 
-	int getActiveTaskCount();
+	int activeTaskCount();
 	
 	long getScheduledTaskCount();
 	

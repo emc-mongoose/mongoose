@@ -191,7 +191,7 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public final int getActiveTaskCount() {
+	public final int activeTaskCount() {
 		return (int) (getScheduledTaskCount() - getCompletedTaskCount());
 	}
 
