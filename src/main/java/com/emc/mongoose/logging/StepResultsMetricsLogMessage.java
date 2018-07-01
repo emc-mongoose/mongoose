@@ -1,5 +1,6 @@
 package com.emc.mongoose.logging;
 
+import com.emc.mongoose.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.item.io.IoType;
@@ -55,7 +56,12 @@ extends LogMessageBase {
 				ioTypeColorCode = LogUtil.LIST_COLOR;
 				break;
 		}
-		buffer.append("Step \"").append(metricsCtx.stepId()).append("\" results:\n\t");
+		buffer
+			.append(metricsCtx instanceof AggregatingMetricsContext ? "Distributed" : "Local")
+			.append(" load step ")
+			.append(metricsCtx instanceof AggregatingMetricsContext ? "\"" : "slice \"")
+			.append(metricsCtx.stepId())
+			.append("\" results:\n\t");
 		if(stdOutColorFlag) {
 			buffer.append(ioTypeColorCode);
 		}

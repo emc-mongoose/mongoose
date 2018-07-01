@@ -77,8 +77,7 @@ extends LoadStepBase {
 		final MetricsContext metricsCtx = new MetricsContextImpl(
 			id(), ioType, () -> stepContexts.stream().mapToInt(LoadStepContext::activeTasksCount).sum(),
 			concurrency, (int) (concurrency * metricsConfig.doubleVal("threshold")), itemDataSize, metricsAvgPeriod,
-			outputColorFlag, metricsConfig.boolVal("average-persist"), metricsConfig.boolVal("summary-persist"),
-			metricsConfig.boolVal("summary-perfDbResultsFile")
+			outputColorFlag
 		);
 		metricsContexts.add(metricsCtx);
 	}

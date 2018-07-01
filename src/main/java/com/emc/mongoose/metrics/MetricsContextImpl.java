@@ -38,9 +38,6 @@ implements MetricsContext {
 	private final int thresholdConcurrency;
 	private final SizeInBytes itemDataSize;
 	private final boolean stdOutColorFlag;
-	private final boolean avgPersistFlag;
-	private final boolean sumPersistFlag;
-	private final boolean perfDbResultsFileFlag;
 	private final long outputPeriodMillis;
 	private volatile long lastOutputTs = 0;
 	private volatile MetricsSnapshot lastSnapshot = null;
@@ -51,8 +48,7 @@ implements MetricsContext {
 	public MetricsContextImpl(
 		final String id, final IoType ioType, final IntSupplier actualConcurrencyGauge,
 		final int concurrency, final int thresholdConcurrency, final SizeInBytes itemDataSize,
-		final int updateIntervalSec, final boolean stdOutColorFlag, final boolean avgPersistFlag,
-		final boolean sumPersistFlag, final boolean perfDbResultsFileFlag
+		final int updateIntervalSec, final boolean stdOutColorFlag
 	) {
 		this.id = id;
 		this.ioType = ioType;
@@ -63,9 +59,6 @@ implements MetricsContext {
 		this.itemDataSize = itemDataSize;
 
 		this.stdOutColorFlag = stdOutColorFlag;
-		this.avgPersistFlag = avgPersistFlag;
-		this.sumPersistFlag = sumPersistFlag;
-		this.perfDbResultsFileFlag = perfDbResultsFileFlag;
 		this.outputPeriodMillis = TimeUnit.SECONDS.toMillis(updateIntervalSec);
 
 		respLatency = new Histogram(new UniformReservoir(DEFAULT_RESERVOIR_SIZE));
@@ -236,17 +229,17 @@ implements MetricsContext {
 	//
 	@Override
 	public final boolean avgPersistEnabled() {
-		return avgPersistFlag;
+		return false;
 	}
 	//
 	@Override
 	public final boolean sumPersistEnabled() {
-		return sumPersistFlag;
+		return false;
 	}
 	//
 	@Override
 	public final boolean perfDbResultsFileEnabled() {
-		return perfDbResultsFileFlag;
+		return false;
 	}
 	//
 	@Override
@@ -319,9 +312,9 @@ implements MetricsContext {
 		if(thresholdMetricsCtx != null) {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
-		thresholdMetricsCtx = new MetricsContextImpl(id, ioType, actualConcurrencyGauge, concurrency, 0, itemDataSize,
-			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag,
-			avgPersistFlag, sumPersistFlag, perfDbResultsFileFlag
+		thresholdMetricsCtx = new MetricsContextImpl(
+			id, ioType, actualConcurrencyGauge, concurrency, 0, itemDataSize,
+			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag
 		);
 		thresholdMetricsCtx.start();
 	}
