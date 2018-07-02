@@ -141,7 +141,7 @@ public class UnlimitedCreateTest {
         storageMocks.values().forEach(AsyncRunnableBase::start);
         slaveNodes.values().forEach(AsyncRunnableBase::start);
         testContainer.start();
-        testContainer.await(1000, TimeUnit.SECONDS);
+        testContainer.await(60, TimeUnit.SECONDS);
     }
 
     @After
