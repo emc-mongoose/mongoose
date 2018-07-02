@@ -176,12 +176,16 @@ public class UnlimitedCreateTest {
 
         final String stdOutContent = testContainer.stdOutContent();
 
+        System.out.println("before testMetricsTableStdout");
+
         testMetricsTableStdout(
                 stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
                 new HashMap<IoType, Integer>() {{
                     put(IoType.CREATE, concurrency.getValue());
                 }}
         );
+
+        System.out.println("after testMetricsTableStdout");
 
         final int expectedConcurrency = runMode.getNodeCount() * concurrency.getValue();
         if (storageType.equals(StorageType.FS)) {
