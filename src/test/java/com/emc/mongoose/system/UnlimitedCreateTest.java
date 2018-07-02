@@ -1,7 +1,5 @@
 package com.emc.mongoose.system;
 
-import com.emc.mongoose.config.ConfigUtil;
-import com.emc.mongoose.env.MainInstaller;
 import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
@@ -11,15 +9,21 @@ import com.emc.mongoose.system.util.PortTools;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
+import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
+import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
+
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
-import com.github.akurilov.confuse.Config;
-import com.github.akurilov.confuse.SchemaProvider;
+
 import org.apache.commons.io.FileUtils;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -29,12 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
-import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
 public class UnlimitedCreateTest {
@@ -141,12 +139,14 @@ public class UnlimitedCreateTest {
         storageMocks.values().forEach(AsyncRunnableBase::start);
         slaveNodes.values().forEach(AsyncRunnableBase::start);
         testContainer.start();
-        testContainer.await(60, TimeUnit.SECONDS);
+        testContainer.await(25, TimeUnit.SECONDS);
     }
 
     @After
     public final void tearDown()
             throws Exception {
+
+    	System.out.println("!!!!!!!!!!!!!!!!!!!!!!! Stopping the test");
 
         testContainer.close();
 
@@ -174,9 +174,9 @@ public class UnlimitedCreateTest {
     public final void test()
             throws Exception {
 
-        final String stdOutContent = testContainer.stdOutContent();
+		System.out.println("!!!!!!!!!!!!!!!!!!!!!!! Performing the checks");
 
-        System.out.println("before testMetricsTableStdout");
+        final String stdOutContent = testContainer.stdOutContent();
 
         testMetricsTableStdout(
                 stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
@@ -184,8 +184,6 @@ public class UnlimitedCreateTest {
                     put(IoType.CREATE, concurrency.getValue());
                 }}
         );
-
-        System.out.println("after testMetricsTableStdout");
 
         final int expectedConcurrency = runMode.getNodeCount() * concurrency.getValue();
         if (storageType.equals(StorageType.FS)) {
