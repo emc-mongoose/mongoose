@@ -5,6 +5,7 @@ import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
@@ -143,11 +144,16 @@ implements Docker.Container {
 	}
 
 	public final boolean await(final long timeout, final TimeUnit timeUnit) {
-		containerExitCode = Docker.CLIENT
-			.waitContainerCmd(containerId)
-			.exec(new WaitContainerResultCallback())
-			.awaitStatusCode(timeout, TimeUnit.SECONDS);
-		return true;
+		try {
+			containerExitCode = Docker.CLIENT
+				.waitContainerCmd(containerId)
+				.exec(new WaitContainerResultCallback())
+				.awaitStatusCode(timeout, TimeUnit.SECONDS);
+			return true;
+		} catch(final DockerClientException e) {
+			System.err.println(e.getMessage());
+			return false;
+		}
 	}
 
 	protected final void doClose() {
@@ -155,7 +161,8 @@ implements Docker.Container {
 		LOG.info("docker kill " + containerId + "...");
 		try {
 			Docker.CLIENT.killContainerCmd(containerId).exec();
-		} catch(final Throwable ignored) {
+		} catch(final Throwable t) {
+			t.printStackTrace(System.err);
 		}
 
 		LOG.info("docker rm " + containerId + "...");

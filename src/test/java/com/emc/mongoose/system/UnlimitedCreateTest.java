@@ -146,8 +146,6 @@ public class UnlimitedCreateTest {
     public final void tearDown()
             throws Exception {
 
-    	System.out.println("!!!!!!!!!!!!!!!!!!!!!!! Stopping the test");
-
         testContainer.close();
 
         slaveNodes.values().parallelStream().forEach(
@@ -173,8 +171,6 @@ public class UnlimitedCreateTest {
     @Test
     public final void test()
             throws Exception {
-
-		System.out.println("!!!!!!!!!!!!!!!!!!!!!!! Performing the checks");
 
         final String stdOutContent = testContainer.stdOutContent();
 
