@@ -158,11 +158,16 @@ implements Docker.Container {
 
 	protected final void doClose() {
 
-		LOG.info("docker kill " + containerId + "...");
+		LOG.info("docker stop " + containerId + "...");
 		try {
-			Docker.CLIENT.killContainerCmd(containerId).exec();
+			Docker.CLIENT.stopContainerCmd(containerId).withTimeout(10).exec();
 		} catch(final Throwable t) {
-			t.printStackTrace(System.err);
+			LOG.info("docker kill " + containerId + "...");
+			try {
+				Docker.CLIENT.killContainerCmd(containerId).exec();
+			} catch(final Throwable tt) {
+				tt.printStackTrace(System.err);
+			}
 		}
 
 		LOG.info("docker rm " + containerId + "...");
