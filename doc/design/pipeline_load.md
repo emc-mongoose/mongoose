@@ -27,7 +27,7 @@ test should be synchronized precisely if the delay between operations is
 used.
 
 3. There are the configuration parameters which are shared by the
-pipeline step's load controllers and may not be set independently:
+pipeline step's load contexts and may not be set independently:
    * `test-step-id`
    * `test-step-limit-time`
 The values for these parameters are taken from the ***1st***
@@ -52,20 +52,17 @@ same item in the operations pipeline.
 # Design
 
 The pipeline step is implemented as a sequence of the separate load
-controllers interconnected with the volatile memory FIFO buffer. This
+contexts interconnected with the volatile memory FIFO buffer. This
 buffer acts as an I/O tasks result output for the previous load
-controller in the sequence and as an items input for the next load
-controller. To support the configurable transfer delay
+context in the sequence and as an items input for the next load
+context. To support the configurable transfer delay
 ([Req.3](#Requirements)) the buffer contains the I/O tasks results which
 contain the information about the corresponding I/O task finish time.
 
-The following rules work while the next load controller requests the
-buffer for the new items:
-1. Retain every I/O task result if its finish time is later than the
-current time minus the configured delay.
-2. If the I/O task result is not retained by rule (1) it is converted
-to the corresponding item and yielded to the load controller requested
-the next batch of items.
+The following rules work while the next load context requests the buffer for the new items:
+1. Retain every I/O task result if its finish time is later than the current time minus the configured delay.
+2. If the I/O task result is not retained by rule (1) it is converted to the corresponding item and yielded to the load
+context requested the next batch of items.
 
 # Configuration
 

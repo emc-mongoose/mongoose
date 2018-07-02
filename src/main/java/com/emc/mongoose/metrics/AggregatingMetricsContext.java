@@ -2,7 +2,9 @@ package com.emc.mongoose.metrics;
 
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.UniformSnapshot;
+
 import com.emc.mongoose.item.io.IoType;
+
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.io.IOException;
@@ -76,15 +78,11 @@ implements MetricsContext {
 	}
 
 	@Override
-	public void markSucc(
-		final long count, final long bytes, final long[] durationValues, final long[] latencyValues
-	) {
+	public void markSucc(final long count, final long bytes, final long[] durationValues, final long[] latencyValues) {
 	}
 
 	@Override
-	public void markPartSucc(
-		final long bytes, final long[] durationValues, final long[] latencyValues
-	) {
+	public void markPartSucc(final long bytes, final long[] durationValues, final long[] latencyValues) {
 	}
 
 	@Override
@@ -219,9 +217,9 @@ implements MetricsContext {
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
 
 		lastSnapshot = new MetricsContextImpl.MetricsSnapshotImpl(
-			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast,
-			tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyLast,
-			actualConcurrencyMean, sumDur, sumLat, durSnapshot, latSnapshot
+			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast, tsStart,
+			prevElapsedTime + currElapsedTime, actualConcurrencyLast, actualConcurrencyMean, sumDur, sumLat,
+			durSnapshot, latSnapshot
 		);
 
 		if(metricsListener != null) {
@@ -258,8 +256,8 @@ implements MetricsContext {
 		}
 		thresholdMetricsCtx = new AggregatingMetricsContext(
 			stepId, ioType, nodeCountSupplier, concurrencyLimit, 0, itemDataSize,
-			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag,
-			avgPersistFlag, sumPersistFlag, perfDbResultsFileFlag, snapshotsSupplier
+			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag, avgPersistFlag, sumPersistFlag,
+			perfDbResultsFileFlag, snapshotsSupplier
 		);
 		thresholdMetricsCtx.start();
 	}

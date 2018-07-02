@@ -91,7 +91,7 @@ implements StorageDriver<I,O> {
 	protected abstract void execute(final O ioTask);
 
 	@Override
-	public final int getActiveTaskCount() {
+	public final int activeTaskCount() {
 		return ioExecutor.getActiveCount();
 	}
 

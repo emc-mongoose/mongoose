@@ -6,8 +6,8 @@
 
 High-load tests may allocate up to 1-2 GB of the memory depending on the scenario.
 * (Remote Storage) Connectivity with the endpoint nodes via the ports used
-* (Distributed Mode) Connectivity with the remote nodes via port #1099 (RMI)
-* (Remote Monitoring) Connectivity with the load controller via port #9010 (JMX)
+* (Distributed Mode) Connectivity with the additional/remote nodes via port #1099 (RMI)
+* (Remote Monitoring) Connectivity with the nodes via port #9010 (JMX)
 
 # Deliverable Package
 

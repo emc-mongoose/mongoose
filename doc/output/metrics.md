@@ -79,9 +79,10 @@ Mean Duration [us]    | The last mean operation duration measured in the microse
 
 ## 1.2. Files
 
-Average metrics data is written to a CSV file `metrics.csv` with *dynamic path*.
-To prevent the average metrics file output the configuration parameter
-`output-metrics-average-persist` should be set to "false".
+Average metrics data is written to a CSV file `metrics.csv` with *dynamic path*. To prevent the average metrics file
+output the configuration parameter `output-metrics-average-persist` should be set to "false". Note that the file output
+for the metrics is always disabled for the load step slices (i.e. on the additional/remote nodes in the distributed
+mode).
 
 Field Name      | Description
 ----------------|------------
@@ -120,7 +121,7 @@ At the end of each load step the summary metrics are produced.
 ## 2.1. Console
 
 ```
-2017-06-01T18:05:45,271 I LoadStep                       Test worker                    Step "ReadVerificationFailTest2" results:
+2017-06-01T18:05:45,271 I LoadStep                       Test worker                    Distributed load step "ReadVerificationFailTest2" results:
     READ-20x1: c=(19.87); n=(2/998); t[s]=(2.386/0.11893); size=(20KB); TP[op/s]=(0.83822/1.0); BW[MB/s]=(0.0081/0.0097); dur[us]=(59465/33086/85844); lat[us]=(21732/14089/29375)
 ```
 
@@ -137,6 +138,7 @@ The record pattern is:
 	lat[us]=(<LATENCY_AVG>/<LATENCY_MIN>/<LATENCY_MAX>);
 ```
 
+* On the entry node the load step summary is displayed twice: once for the local load step slice and once for total/aggregated results
 * The equation (CONFIGURED_CURRENCY_LEVEL * DRIVER_COUNT * ELAPSED_TIME / OPERATIONS_DURATION_SUM) may be used as efficiency estimate
 * *Mean* rates are calculated as current total count of items/bytes divided by current elapsed time.
 * *Last* rates are calculated as [exponentially decaying moving average](https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average) where
@@ -145,13 +147,12 @@ The record pattern is:
 
   and "t" is the configured *load-metrics-period* parameter.
 
-
 ## 2.2. Files
 
-The summary metrics produced at the end of each load step and the results are written to a CSV file
-`metrics.total.csv`. The layout is the same as for average metrics file output. To disable the
-summary metrics file output the configuration parameter `output-metrics-summary-persist` should be
-set to "false".
+The summary metrics produced at the end of each load step and the results are written to a CSV file `metrics.total.csv`.
+The layout is the same as for average metrics file output. To disable the summary metrics file output the configuration
+parameter `output-metrics-summary-persist` should be set to "false". Note that the file output for the metrics is always
+disabled for the load step slices (i.e. on the additional/remote nodes in the distributed mode).
 
 # 3. I/O Traces
 
@@ -260,5 +261,6 @@ java -jar mongoose-<VER>.jar \
 
 ## 4.2. Files
 
-The layout is the same as usual metrics log files layout, the log file name is:
-`metrics.threshold.total.csv`
+The layout is the same as usual metrics log files layout, the log file name is: `metrics.threshold.total.csv`. Note that
+the file output for the metrics is always disabled for the load step slices (i.e. on the additional/remote nodes in the
+distributed mode).

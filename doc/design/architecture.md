@@ -79,17 +79,14 @@ load generator. The basic properties are:
 * Storage drivers list
 * Storage drivers balancer
 
-## Load Controller
+## Load Step Context
 
-A load controller is an unit of test step control.
-Functionality:
+A load step context is an unit of test step control. Functionality:
 
-* Configuration deployment
-* Test initiation
 * Execution control (timeouts handling, shutdown invocations, etc)
 
 ## Metrics Manager
 
 Metrics aggregation and representation. The component is a singleton
-which was differentiated from the Load Controller component. Many load
-controllers may be associated with the single metrics manager.
+which was differentiated from the Load Step Context component. Many load
+step contexts may be associated with the single metrics manager.

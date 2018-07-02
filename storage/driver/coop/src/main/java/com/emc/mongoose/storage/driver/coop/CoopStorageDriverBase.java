@@ -122,7 +122,7 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public final int getActiveTaskCount() {
+	public final int activeTaskCount() {
 		if(concurrencyLevel > 0) {
 			return concurrencyLevel - concurrencyThrottle.availablePermits();
 		} else {

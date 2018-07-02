@@ -225,6 +225,8 @@ implements LoadStepClient {
 		final boolean metricsSumPersistFlag = metricsConfig.boolVal("summary-persist");
 		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
 
+		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
+		// further usage
 		final MetricsContext metricsCtx = new AggregatingMetricsContext(
 			id(), ioType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
 			outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,

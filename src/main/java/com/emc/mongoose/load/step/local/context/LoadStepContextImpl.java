@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.controller;
+package com.emc.mongoose.load.step.local.context;
 
 import com.emc.mongoose.load.generator.LoadGenerator;
 import com.emc.mongoose.metrics.MetricsSnapshot;
@@ -27,8 +27,9 @@ import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.confuse.Config;
 
 import com.github.akurilov.fiber4j.Fiber;
-
 import com.github.akurilov.fiber4j.TransferFiber;
+
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
@@ -47,9 +48,9 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  Created by kurila on 12.07.16.
  */
-public class LoadControllerImpl<I extends Item, O extends IoTask<I>>
+public class LoadStepContextImpl<I extends Item, O extends IoTask<I>>
 extends DaemonBase
-implements LoadController<I, O> {
+implements LoadStepContext<I, O> {
 	
 	private final String id;
 	private final LoadGenerator<I, O> generator;
@@ -71,7 +72,7 @@ implements LoadController<I, O> {
 	/**
 	 @param id test step id
 	 **/
-	public LoadControllerImpl(
+	public LoadStepContextImpl(
 		final String id,
 		final LoadGenerator<I, O> generator,
 		final StorageDriver<I, O> driver,
@@ -232,6 +233,11 @@ implements LoadController<I, O> {
 	public final void ioResultsOutput(final Output<O> ioTaskResultsOutput) {
 		this.ioResultsOutput = ioTaskResultsOutput;
 	}
+
+	@Override
+	public final int activeTasksCount() {
+		return driver.activeTaskCount();
+	}
 	
 	@Override
 	public final boolean put(final O ioTaskResult) {
@@ -377,9 +383,24 @@ implements LoadController<I, O> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
+
 		try {
 			resultsTransferFiber.start();
 		} catch(final RemoteException ignored) {
+		}
+
+		try {
+			driver.start();
+		} catch(final RemoteException ignored) {
+		} catch(final IllegalStateException e) {
+			LogUtil.exception(Level.WARN, e, "{}: failed to start the storage driver \"{}\"", id, driver);
+		}
+
+		try {
+			generator.start();
+		} catch(final RemoteException ignored) {
+		} catch(final IllegalStateException e) {
+			LogUtil.exception(Level.WARN, e, "{}: failed to start the load generator \"{}\"", id, generator);
 		}
 	}
 
@@ -431,8 +452,36 @@ implements LoadController<I, O> {
 	}
 
 	@Override
+	protected final void doShutdown() {
+
+		try(
+			final Instance ctx = CloseableThreadContext.put(KEY_STEP_ID, id)
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+		) {
+			generator.shutdown();
+			Loggers.MSG.debug("{}: load generator \"{}\" interrupted", id, generator.toString());
+		} catch(final RemoteException ignored) {
+		}
+
+		try(
+			final Instance ctx = CloseableThreadContext.put(KEY_STEP_ID, id)
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+		) {
+			driver.shutdown();
+			Loggers.MSG.debug("{}: next storage driver {} shutdown", id, driver.toString());
+		} catch(final RemoteException ignored) {
+		}
+	}
+
+	@Override
 	protected final void doStop()
 	throws IllegalStateException {
+
+		try {
+			driver.stop();
+		} catch(final RemoteException ignored) {
+		}
+		Loggers.MSG.debug("{}: next storage driver {} stopped", id, driver.toString());
 		
 		try {
 			resultsTransferFiber.stop();
@@ -440,8 +489,7 @@ implements LoadController<I, O> {
 		}
 
 		try(
-			final CloseableThreadContext.Instance ctx = CloseableThreadContext
-				.put(KEY_STEP_ID, id)
+			final Instance ctx = CloseableThreadContext.put(KEY_STEP_ID, id)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			try {
@@ -514,11 +562,30 @@ implements LoadController<I, O> {
 			}
 		}
 
-		Loggers.MSG.debug("{}: interrupted the load controller", id);
+		Loggers.MSG.debug("{}: interrupted the load step context", id);
 	}
 
 	@Override
 	protected final void doClose() {
+
+		try {
+			generator.close();
+		} catch(final IOException e) {
+			LogUtil.exception(
+				Level.ERROR, e, "Failed to close the load generator \"{}\"",
+				generator.toString()
+			);
+		}
+
+		try {
+			driver.close();
+		} catch(final IOException e) {
+			LogUtil.exception(
+				Level.ERROR, e, "Failed to close the storage driver \"{}\"",
+				driver.toString()
+			);
+		}
+
 		try {
 			resultsTransferFiber.close();
 		} catch(final IOException e) {
@@ -527,6 +594,7 @@ implements LoadController<I, O> {
 				resultsTransferFiber
 			);
 		}
-		Loggers.MSG.debug("{}: closed the load controller", id);
+
+		Loggers.MSG.debug("{}: closed the load step context", id);
 	}
 }

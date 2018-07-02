@@ -8,12 +8,12 @@ import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
 import com.emc.mongoose.item.ItemInfoFileOutput;
 import com.emc.mongoose.item.ItemType;
-import com.emc.mongoose.load.controller.LoadController;
+import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.load.generator.LoadGenerator;
 import com.emc.mongoose.load.generator.LoadGeneratorBuilder;
 import com.emc.mongoose.load.step.local.LoadStepLocalBase;
 import com.emc.mongoose.storage.driver.StorageDriver;
-import com.emc.mongoose.load.controller.LoadControllerImpl;
+import com.emc.mongoose.load.step.local.context.LoadStepContextImpl;
 import com.emc.mongoose.load.generator.LoadGeneratorBuilderImpl;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -71,9 +71,9 @@ extends LoadStepLocalBase {
 		// 1st pass: determine the weights map
 		final int[] weights = new int[subStepCount];
 		final List<Config> subConfigs = new ArrayList<>(subStepCount);
-		for(int i = 0; i < subStepCount; i ++) {
+		for(int originIndex = 0; originIndex < subStepCount; originIndex ++) {
 			final Map<String, Object> mergedConfigTree = reduceForest(
-				Arrays.asList(deepToMap(config), contexts.get(subStepCount))
+				Arrays.asList(deepToMap(config), contexts.get(originIndex))
 			);
 			final Config subConfig;
 			try {
@@ -84,7 +84,7 @@ extends LoadStepLocalBase {
 			}
 			subConfigs.add(subConfig);
 			final int weight = subConfig.intVal("load-generator-weight");
-			weights[i] = weight;
+			weights[originIndex] = weight;
 		}
 
 		final IndexThrottle weightThrottle = new SequentialWeightsThrottle(weights);
@@ -138,7 +138,6 @@ extends LoadStepLocalBase {
 					final StorageDriver driver = StorageDriver.instance(
 						extensions, loadConfig, storageConfig, dataInput, dataConfig.boolVal("verify"), testStepId
 					);
-					drivers.add(driver);
 
 					final ItemType itemType = ItemType.valueOf(itemConfig.stringVal("type").toUpperCase());
 					final ItemFactory<Item> itemFactory = ItemType.getItemFactory(itemType);
@@ -159,14 +158,13 @@ extends LoadStepLocalBase {
 							generatorBuilder.addThrottle(new RateThrottle(rateLimit));
 						}
 						final LoadGenerator generator = generatorBuilder.build();
-						generators.add(generator);
 
-						final LoadController controller = new LoadControllerImpl<>(
+						final LoadStepContext stepCtx = new LoadStepContextImpl<>(
 							testStepId, generator, driver, metricsContexts.get(originIndex), limitConfig,
 							outputConfig.boolVal("metrics-trace-persist"), loadConfig.intVal("batch-size"),
 							loadConfig.intVal("generator-recycle-limit")
 						);
-						controllers.add(controller);
+						stepContexts.add(stepCtx);
 
 						final String itemOutputFile = itemConfig.stringVal("output-file");
 						if(itemOutputFile != null && itemOutputFile.length() > 0) {
@@ -176,7 +174,7 @@ extends LoadStepLocalBase {
 							}
 							try {
 								final Output<? extends Item> itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
-								controller.ioResultsOutput(itemOutput);
+								stepCtx.ioResultsOutput(itemOutput);
 							} catch(final IOException e) {
 								LogUtil.exception(
 									Level.ERROR, e,

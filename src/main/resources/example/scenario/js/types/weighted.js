@@ -5,11 +5,12 @@ var itemOutputPath = "/weighted_load_example";
 
 // declare the cleanup shell command
 new java.lang.ProcessBuilder("sh", "-c", "rm -f " + itemsFile)
+    .inheritIO()
     .start()
     .waitFor();
 
 // prepare (create) the 10000 items on a storage before the test
-Load
+PreconditionLoad
     .config(
         {
             "item": {
@@ -22,9 +23,6 @@ Load
                 }
             },
             "load": {
-                "limit": {
-
-                },
                 "step": {
                     "limit": {
                         "concurrency": sharedConcurrency,
@@ -38,6 +36,17 @@ Load
 
 // declare the weighted load step instance (20% create operations, 80% read operations)
 WeightedLoad
+    .config(
+        {
+            "load": {
+                "step": {
+                    "limit": {
+                        "time": "100s"
+                    }
+                }
+            }
+        }
+    )
     .append(
         {
             "item": {
@@ -51,11 +60,6 @@ WeightedLoad
             "load": {
                 "generator": {
                     "weight": 20
-                },
-                "step": {
-                    "limit": {
-                        "time": 100
-                    }
                 }
             }
         }

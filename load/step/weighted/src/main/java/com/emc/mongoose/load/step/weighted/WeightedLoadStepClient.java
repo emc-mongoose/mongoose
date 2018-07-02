@@ -57,7 +57,7 @@ extends LoadStepClientBase {
 		for(int originIndex = 0; originIndex < subStepCount; originIndex ++) {
 
 			final Map<String, Object> mergedConfigTree = reduceForest(
-				Arrays.asList(deepToMap(config), contexts.get(subStepCount))
+				Arrays.asList(deepToMap(config), contexts.get(originIndex))
 			);
 			final Config subConfig;
 			try {
