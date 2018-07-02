@@ -248,5 +248,6 @@ public final class ReadUsingVariablePathTest {
 			stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
 			EXPECTED_COUNT, 0, itemSize.getValue()
 		);
+
 	}
 }

@@ -44,7 +44,7 @@ public class UnlimitedCreateTest {
         return EnvParams.PARAMS;
     }
 
-    private final String SCENARIO_PATH = Paths.get("", "example", "scenarios", "js", "default.js").toString();
+    //private final String SCENARIO_PATH = Paths.get("", "example", "scenarios", "js", "default.js").toString();
     private final String itemOutputPath;
 
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
