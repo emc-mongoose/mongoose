@@ -47,7 +47,8 @@ extends ContainerBase {
 	public static final String CONTAINER_HOME_PATH = "/root/.mongoose/" + APP_VERSION;
 
 	private static final String IMAGE_NAME = "emcmongoose/mongoose";
-	private static final String ENTRYPOINT_DEBUG = "/opt/mongoose/entrypoint-debug.sh";
+	private static final String ENTRYPOINT = "/opt/mongoose/entrypoint.sh";
+	private static final String ENTRYPOINT_DEBUG = "/opt/mongoose/entrypoint.sh";
 	private static final int PORT_DEBUG = 5005;
 	private static final int PORT_JMX = 9010;
 
@@ -128,6 +129,6 @@ extends ContainerBase {
 
 	@Override
 	protected final String entrypoint() {
-		return ENTRYPOINT_DEBUG;
+		return ENTRYPOINT;
 	}
 }
