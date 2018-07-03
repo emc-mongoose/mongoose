@@ -300,6 +300,18 @@ implements MetricsContext {
 	}
 
 	@Override
+	public final boolean equals(final Object other) {
+		if(null == other) {
+			return false;
+		}
+		if(other instanceof MetricsContext) {
+			return 0 == compareTo((MetricsContext) other);
+		} else {
+			return false;
+		}
+	}
+
+	@Override
 	public void close() {
 		prevElapsedTime = System.currentTimeMillis() - tsStart;
 		tsStart = -1;

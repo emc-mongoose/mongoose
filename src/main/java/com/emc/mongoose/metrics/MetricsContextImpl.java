@@ -46,9 +46,9 @@ implements MetricsContext {
 	private volatile boolean thresholdStateExitedFlag = false;
 
 	public MetricsContextImpl(
-		final String id, final IoType ioType, final IntSupplier actualConcurrencyGauge,
-		final int concurrency, final int thresholdConcurrency, final SizeInBytes itemDataSize,
-		final int updateIntervalSec, final boolean stdOutColorFlag
+		final String id, final IoType ioType, final IntSupplier actualConcurrencyGauge, final int concurrency,
+		final int thresholdConcurrency, final SizeInBytes itemDataSize, final int updateIntervalSec,
+		final boolean stdOutColorFlag
 	) {
 		this.id = id;
 		this.ioType = ioType;
@@ -361,6 +361,18 @@ implements MetricsContext {
 	@Override
 	public final int compareTo(final MetricsContext other) {
 		return Long.compare(hashCode(), other.hashCode());
+	}
+
+	@Override
+	public final boolean equals(final Object other) {
+		if(null == other) {
+			return false;
+		}
+		if(other instanceof MetricsContext) {
+			return 0 == compareTo((MetricsContext) other);
+		} else {
+			return false;
+		}
 	}
 	//
 	@Override

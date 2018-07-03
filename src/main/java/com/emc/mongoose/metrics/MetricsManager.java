@@ -18,7 +18,6 @@ import com.github.akurilov.fiber4j.FiberBase;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
@@ -84,8 +83,8 @@ extends DaemonBase {
 							if(nextConcurrencyThreshold > 0 && actualConcurrency >= nextConcurrencyThreshold) {
 								if(!metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
 									Loggers.MSG.info(
-										"{}: the threshold of {} active tasks count is " +
-											"reached, starting the additional metrics accounting",
+										"{}: the threshold of {} active tasks count is reached, starting the " +
+											"additional metrics accounting",
 										metricsCtx.toString(), metricsCtx.concurrencyThreshold()
 									);
 									metricsCtx.enterThresholdState();
