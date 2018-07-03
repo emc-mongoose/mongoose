@@ -59,6 +59,8 @@ import java.util.stream.Collectors;
 public interface LoadStepClient
 extends LoadStep {
 
+	int OUTPUT_PROGRESS_PERIOD_MILLIS = 10_000;
+
 	/**
 	 Configure the step
 	 @param config a dictionary of the configuration values to override the inherited config
@@ -256,12 +258,7 @@ extends LoadStep {
 
 		final Map<FileManager, ByteArrayOutputStream> itemsOutByteBuffs = fileMgrs
 			.stream()
-			.collect(
-				Collectors.toMap(
-					Function.identity(),
-					fileMgr -> new ByteArrayOutputStream(batchSize * 0x40)
-				)
-			);
+			.collect(Collectors.toMap(Function.identity(), fileMgr -> new ByteArrayOutputStream(batchSize * 0x40)));
 
 		final Map<FileManager, ObjectOutputStream> itemsOutputs = itemsOutByteBuffs
 			.entrySet()
@@ -280,7 +277,6 @@ extends LoadStep {
 			);
 
 		transferItemsInputData(itemInput, batchSize, fileMgrs, itemInputFileSlices, itemsOutByteBuffs, itemsOutputs);
-		Loggers.MSG.info("Items input data is distributed to the {} step slices", configSlices.size());
 
 		itemsOutputs
 			.values()
@@ -315,11 +311,17 @@ extends LoadStep {
 		final List<Item> itemsBuff = new ArrayList<>(batchSize);
 
 		int n;
+		long count = 0;
+		long lastProgressOutputTimeMillis = System.currentTimeMillis();
 		final ObjectOutputStream out = itemsOutputs
 			.values()
 			.stream()
 			.findFirst()
 			.orElseThrow(() -> new IllegalArgumentException("No outputs is available for items input data transfer"));
+
+		Loggers.MSG.info(
+			"Items input \"{}\": starting to distribute the items among the {} load step slices", itemInput, sliceCount
+		);
 
 		while(true) {
 
@@ -348,23 +350,40 @@ extends LoadStep {
 				itemsBuff.clear();
 
 				// write the text items data to the remote input files
-				for(final FileManager fileMgr : fileMgrs) {
-					final ByteArrayOutputStream buff = itemsOutByteBuffs.get(fileMgr);
-					final String itemInputFileName = itemInputFileSlices.get(fileMgr);
-					try {
-						final byte[] data = buff.toByteArray();
-						fileMgr.writeToFile(itemInputFileName, data);
-						buff.reset();
-					} catch(final IOException e) {
-						LogUtil.exception(
-							Level.WARN, e, "Failed to write the items input data to the file manager \"{}\"", fileMgr
-						);
-					}
+				fileMgrs
+					.parallelStream()
+					.forEach(
+						fileMgr -> {
+							final ByteArrayOutputStream buff = itemsOutByteBuffs.get(fileMgr);
+							final String itemInputFileName = itemInputFileSlices.get(fileMgr);
+							try {
+								final byte[] data = buff.toByteArray();
+								fileMgr.writeToFile(itemInputFileName, data);
+								buff.reset();
+							} catch(final IOException e) {
+								LogUtil.exception(
+									Level.WARN, e, "Failed to write the items input data to the file manager \"{}\"",
+									fileMgr
+								);
+							}
+						}
+					);
+
+				count += n;
+
+				if(System.currentTimeMillis() - lastProgressOutputTimeMillis > OUTPUT_PROGRESS_PERIOD_MILLIS) {
+					Loggers.MSG.info("Transferred {} items...", count);
+					lastProgressOutputTimeMillis = System.currentTimeMillis();
 				}
+
 			} else {
 				break;
 			}
 		}
+
+		Loggers.MSG.info(
+			"Items input \"{}\": {} items was distributed among the {} load step slices", itemInput, count, sliceCount
+		);
 	}
 
 	static Map<FileManager, String> sliceItemOutputFileConfig(
