@@ -140,13 +140,17 @@ implements MetricsContext {
 	) {
 		throughputSuccess.mark(count);
 		reqBytes.mark(bytes);
-		for(final long duration : durationValues) {
-			reqDuration.update(duration);
-			reqDurationSum.add(duration);
-		}
-		for(final long latency : latencyValues) {
-			respLatency.update(latency);
-			respLatencySum.add(latency);
+		final int timingsLen = Math.min(durationValues.length, latencyValues.length);
+		long duration, latency;
+		for(int i = 0; i < timingsLen; i ++) {
+			duration = durationValues[i];
+			latency = latencyValues[i];
+			if(latency > 0 && duration > latency) {
+				reqDuration.update(duration);
+				reqDurationSum.add(duration);
+				respLatency.update(latency);
+				respLatencySum.add(latency);
+			}
 		}
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.markSucc(count, bytes, durationValues, latencyValues);
@@ -154,17 +158,19 @@ implements MetricsContext {
 	}
 	//
 	@Override
-	public final void markPartSucc(
-		final long bytes, final long durationValues[], final long latencyValues[]
-	) {
+	public final void markPartSucc(final long bytes, final long durationValues[], final long latencyValues[]) {
 		reqBytes.mark(bytes);
-		for(final long duration : durationValues) {
-			reqDuration.update(duration);
-			reqDurationSum.add(duration);
-		}
-		for(final long latency : latencyValues) {
-			respLatency.update(latency);
-			respLatencySum.add(latency);
+		final int timingsLen = Math.min(durationValues.length, latencyValues.length);
+		long duration, latency;
+		for(int i = 0; i < timingsLen; i ++) {
+			duration = durationValues[i];
+			latency = latencyValues[i];
+			if(latency > 0 && duration > latency) {
+				reqDuration.update(duration);
+				reqDurationSum.add(duration);
+				respLatency.update(latency);
+				respLatencySum.add(latency);
+			}
 		}
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.markPartSucc(bytes, durationValues, latencyValues);

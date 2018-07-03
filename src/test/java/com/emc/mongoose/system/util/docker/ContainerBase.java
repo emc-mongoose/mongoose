@@ -171,7 +171,7 @@ implements Docker.Container {
 			try {
 				dockerClient.killContainerCmd(containerId).exec();
 			} catch(final Throwable tt) {
-				tt.printStackTrace(System.err);
+				System.err.println(tt.getMessage());
 			}
 		}
 

@@ -548,7 +548,7 @@ extends LoadStep {
 					}
 				}
 			);
-		Loggers.MSG.info("{}: closed all {} step slices", id, stepSlices.size());
+		Loggers.MSG.debug("{}: closed all {} step slices", id, stepSlices.size());
 		stepSlices.clear();
 	}
 
