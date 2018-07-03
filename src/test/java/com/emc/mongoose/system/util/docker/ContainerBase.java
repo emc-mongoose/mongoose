@@ -1,7 +1,7 @@
 package com.emc.mongoose.system.util.docker;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
-
+import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -11,6 +11,7 @@ import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.Volume;
+import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.dockerjava.core.command.WaitContainerResultCallback;
 
@@ -158,13 +159,15 @@ implements Docker.Container {
 
 	protected final void doClose() {
 
+		final DockerClient dockerClient = DockerClientBuilder.getInstance().build();
+
 		LOG.info("docker stop " + containerId + "...");
 		try {
-			Docker.CLIENT.stopContainerCmd(containerId).withTimeout(10).exec();
+			dockerClient.stopContainerCmd(containerId).withTimeout(10).exec();
 		} catch(final Throwable t) {
 			LOG.info("docker kill " + containerId + "...");
 			try {
-				Docker.CLIENT.killContainerCmd(containerId).exec();
+				dockerClient.killContainerCmd(containerId).exec();
 			} catch(final Throwable tt) {
 				tt.printStackTrace(System.err);
 			}
@@ -172,7 +175,7 @@ implements Docker.Container {
 
 		LOG.info("docker rm " + containerId + "...");
 		try {
-			Docker.CLIENT.removeContainerCmd(containerId).exec();
+			dockerClient.removeContainerCmd(containerId).exec();
 		} catch(final Throwable t) {
 			t.printStackTrace(System.err);
 		}
