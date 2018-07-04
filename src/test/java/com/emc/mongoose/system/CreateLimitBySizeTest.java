@@ -78,7 +78,7 @@ public class CreateLimitBySizeTest {
     private long expectedCount;
     private long duration;
     private int containerExitCode;
-    private int averagePeriod;
+    private long averagePeriod;
 
     private String stdOutContent = null;
     private String containerItemOutputPath;
@@ -93,7 +93,7 @@ public class CreateLimitBySizeTest {
                 APP_NAME, Thread.currentThread().getContextClassLoader());
         config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
 
-        averagePeriod = config.intVal("output-metrics-average-period");
+        averagePeriod = config.longVal("output-metrics-average-period");
 
         stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 
