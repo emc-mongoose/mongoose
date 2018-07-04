@@ -98,6 +98,28 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
+    # STORAGE_TYPE=atmos,fs RUN_MODE=local CONCURRENCY=low ITEM_SIZE=empty,medium,huge ./gradlew -Dtest.single=UnlimitedCreateTest systemTest
+    - env:
+      - TEST=UnlimitedCreateTest
+      - STORAGE_TYPE=atmos,fs
+      - RUN_MODE=local
+      - CONCURRENCY=low
+      - ITEM_SIZE=empty,medium,huge
+      - MONGOOSE_VERSION=$TAG
+      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+    # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=CreateLimitBySizeTest systemTest
+    - env:
+      - TEST=CreateLimitBySizeTest
+      - STORAGE_TYPE=fs
+      - RUN_MODE=local
+      - CONCURRENCY=low,high
+      - ITEM_SIZE=small,medium
+      - MONGOOSE_VERSION=$TAG
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+
+
     - stage: "Deploy"
       deploy:
         skip_cleanup: true
@@ -130,16 +152,6 @@ jobs:
       - CONCURRENCY=low,medium
       - ITEM_SIZE=small
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=GroovyCreateLimitBySizeTest systemTest
-    - env:
-      - TEST=GroovyCreateLimitBySizeTest
-      - STORAGE_TYPE=fs
-      - RUN_MODE=local
-      - CONCURRENCY=low,high
-      - ITEM_SIZE=small,medium
-      - MONGOOSE_VERSION=$TAG
-      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=swift RUN_MODE=distributed CONCURRENCY=medium ITEM_SIZE=small ./gradlew -Dtest.single=GroovyLoadTypeStepsTest systemTest
     - env:
@@ -332,15 +344,6 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=atmos,fs RUN_MODE=local CONCURRENCY=low ITEM_SIZE=empty,medium,huge ./gradlew -Dtest.single=PyCreateNoLimitTest systemTest
-    - env:
-      - TEST=PyCreateNoLimitTest
-      - STORAGE_TYPE=atmos,fs
-      - RUN_MODE=local
-      - CONCURRENCY=low
-      - ITEM_SIZE=empty,medium,huge
-      - MONGOOSE_VERSION=$TAG
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # failures:
     # https://travis-ci.org/emc-mongoose/mongoose/jobs/312914999
