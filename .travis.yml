@@ -136,6 +136,18 @@ jobs:
       - ITEM_SIZE=medium
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
+    # STORAGE_TYPE=s3,swift RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=large
+    - env:
+      - TEST=MultipartCreateTest
+      - STORAGE_TYPE=s3,swift
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=large
+      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+
+
+
 
 
     - stage: "Deploy"
@@ -269,15 +281,6 @@ jobs:
       - RUN_MODE=local
       - CONCURRENCY=single
       - ITEM_SIZE=empty,small
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # STORAGE_TYPE=s3,swift RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=large
-    - env:
-      - TEST=JsonMultiPartCreateTest
-      - STORAGE_TYPE=s3,swift
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=low,medium
-      - ITEM_SIZE=large
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMultipleFixedUpdateAndSingleFixedReadTest systemTest

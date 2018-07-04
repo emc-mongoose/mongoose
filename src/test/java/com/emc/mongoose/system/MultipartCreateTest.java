@@ -2,17 +2,19 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.system.util.EnvUtil;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
-import com.github.akurilov.commons.net.NetUtil;
+import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -21,7 +23,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -30,31 +34,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.*;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
-public class ChainWithDelayTest {
+public class MultipartCreateTest {
 
     @Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
     public static List<Object[]> envParams() {
         return EnvParams.PARAMS;
     }
 
-    private final int DELAY_SECONDS = 60;
-    private final int TIME_LIMIT = 180;
-    private final String zone1Addr = "127.0.0.1";
+    private final int timeoutInMillis = 1000_000;
+    private final String itemOutputFile = MultipartCreateTest.class.getSimpleName() + "Items.csv";
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
     private final MongooseContainer testContainer;
@@ -68,17 +69,32 @@ public class ChainWithDelayTest {
             + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
     private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 
-    private boolean finishedInTime;
-    private int containerExitCode;
     private int averagePeriod;
     private String stdOutContent = null;
     private String containerItemOutputPath;
-    private String zone2Addr;
+    private long expectedCountMin;
+    private long expectedCountMax;
+    private SizeInBytes partSize;
+    private SizeInBytes fullItemSize;
+    private SizeInBytes sizeLimit;
 
-    public ChainWithDelayTest(
+    public MultipartCreateTest(
             final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
             final ItemSize itemSize
     ) throws Exception {
+
+        partSize = itemSize.getValue();
+        fullItemSize = new SizeInBytes(partSize.get(), 100 * partSize.get(), 3);
+
+        Loggers.MSG.info("Item size: {}, part size: {}", fullItemSize, partSize);
+
+        sizeLimit = new SizeInBytes(
+                (runMode.getNodeCount() + 1) * concurrency.getValue() * fullItemSize.getAvg()
+        );
+        Loggers.MSG.info("Use the size limit: {}", sizeLimit);
+
+        expectedCountMin = sizeLimit.get() / fullItemSize.getMax();
+        expectedCountMax = sizeLimit.get() / fullItemSize.getMin();
 
         final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
                 APP_NAME, Thread.currentThread().getContextClassLoader());
@@ -116,25 +132,20 @@ public class ChainWithDelayTest {
                 .stream()
                 .map(e -> e.getKey() + "=" + e.getValue())
                 .collect(Collectors.toList());
-        try {
-            zone2Addr = NetUtil.getHostAddrString();
-        } catch (final Exception e) {
-            throw new RuntimeException(e);
-        }
-        env.add("ZONE1_ADDRS=" + zone1Addr);
-        env.add("ZONE2_ADDRS=" + zone2Addr);
+        env.add("PART_SIZE=" + partSize.toString());
+        env.add("ITEM_OUTPUT_FILE=" + itemOutputFile);
+        env.add("SIZE_LIMIT=" + sizeLimit.toString());
 
         final List<String> args = new ArrayList<>();
-
-        args.add("--storage-net-http-namespace=ns1");
-        args.add("--test-step-limit-time=" + TIME_LIMIT);
+        args.add("--item-data-size=" + fullItemSize);
 
         switch (storageType) {
             case ATMOS:
             case S3:
             case SWIFT:
                 final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
-                        HttpStorageMockContainer.DEFAULT_PORT, false, null, null, Character.MAX_RADIX,
+                        HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
+                        itemIdRadix,
                         HttpStorageMockContainer.DEFAULT_CAPACITY,
                         HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
                         HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
@@ -178,16 +189,8 @@ public class ChainWithDelayTest {
             throws Exception {
         storageMocks.values().forEach(AsyncRunnableBase::start);
         slaveNodes.values().forEach(AsyncRunnableBase::start);
-
-        long duration = System.currentTimeMillis();
-
         testContainer.start();
-        testContainer.await(TIME_LIMIT + 10, TimeUnit.SECONDS);
-
-        duration = System.currentTimeMillis() - duration;
-        finishedInTime = (TimeUnit.SECONDS.toMillis(duration) <= TIME_LIMIT + 15);
-
-        containerExitCode = testContainer.exitStatusCode();
+        testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
     }
 
     @After
@@ -220,54 +223,74 @@ public class ChainWithDelayTest {
     public final void test()
             throws Exception {
 
-        assertEquals("Container exit code should be 0", 0, containerExitCode);
-
-        testMetricsTableStdout(
-                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-                new HashMap<IoType, Integer>() {{
-                    put(IoType.CREATE, concurrency.getValue());
-                    put(IoType.READ, concurrency.getValue());
-                }}
-        );
-
-        final Map<String, Long> timingMap = new HashMap<>();
-        final Consumer<CSVRecord> ioTraceRecTestFunc = new Consumer<CSVRecord>() {
-
-            String storageNode;
-            String itemPath;
-            IoType ioType;
-            long reqTimeStart;
-            long duration;
-            Long prevOpFinishTime;
-
-            @Override
-            public final void accept(final CSVRecord ioTraceRec) {
-                storageNode = ioTraceRec.get("StorageNode");
-                itemPath = ioTraceRec.get("ItemPath");
-                ioType = IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))];
-                reqTimeStart = Long.parseLong(ioTraceRec.get("ReqTimeStart[us]"));
-                duration = Long.parseLong(ioTraceRec.get("Duration[us]"));
-                switch (ioType) {
-                    case CREATE:
-                        assertTrue(storageNode.startsWith(zone1Addr));
-                        timingMap.put(itemPath, reqTimeStart + duration);
-                        break;
-                    case READ:
-                        assertTrue(storageNode.startsWith(zone2Addr));
-                        prevOpFinishTime = timingMap.get(itemPath);
-                        if (prevOpFinishTime == null) {
-                            fail("No create I/O trace record for \"" + itemPath + "\"");
-                        } else {
-                            assertTrue((reqTimeStart - prevOpFinishTime) / M > DELAY_SECONDS);
-                        }
-                        break;
-                    default:
-                        fail("Unexpected I/O type: " + ioType);
+        final LongAdder ioTraceRecCount = new LongAdder();
+        final SizeInBytes ZERO_SIZE = new SizeInBytes(0);
+        final SizeInBytes TAIL_PART_SIZE = new SizeInBytes(1, partSize.get(), 1);
+        final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
+            try {
+                testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), ZERO_SIZE);
+            } catch (final AssertionError e) {
+                try {
+                    testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), partSize);
+                } catch (final AssertionError ee) {
+                    testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), TAIL_PART_SIZE);
                 }
             }
+            ioTraceRecCount.increment();
         };
-        testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
+        testIoTraceLogRecords(stepId, ioTraceRecFunc);
 
-        assertTrue("Scenario didn't finished in time", finishedInTime);
+        final List<CSVRecord> itemRecs = new ArrayList<>();
+        try (final BufferedReader br = new BufferedReader(new FileReader(itemOutputFile))) {
+            try (final CSVParser csvParser = CSVFormat.RFC4180.parse(br)) {
+                for (final CSVRecord csvRecord : csvParser) {
+                    itemRecs.add(csvRecord);
+                }
+            }
+        }
+        long nextItemSize;
+        long sizeSum = 0;
+        final int n = itemRecs.size();
+        assertTrue(n > 0);
+        assertTrue(
+                "Expected no less than " + expectedCountMin + " items, but got " + n,
+                expectedCountMin <= n
+        );
+        assertTrue(
+                "Expected no more than " + expectedCountMax + " items, but got " + n,
+                expectedCountMax >= n
+        );
+        for (final CSVRecord itemRec : itemRecs) {
+            nextItemSize = Long.parseLong(itemRec.get(2));
+            assertTrue(fullItemSize.getMin() <= nextItemSize);
+            assertTrue(fullItemSize.getMax() >= nextItemSize);
+            sizeSum += nextItemSize;
+        }
+        final long delta =
+                +runMode.getNodeCount() * concurrency.getValue() * partSize.getMax();
+        System.out.println(
+                "Expected transfer size: " + sizeLimit.get() + "+" + delta + ", actual: " + sizeSum
+        );
+        assertTrue(
+                "Expected to transfer no more than " + sizeLimit + "+" + delta
+                        + ", but transferred actually: " + new SizeInBytes(sizeSum),
+                sizeLimit.get() + delta >= sizeSum
+        );
+
+        final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
+        assertEquals(
+                "There should be 1 total metrics records in the log file", 1,
+                totalMetrcisLogRecords.size()
+        );
+        testTotalMetricsLogRecord(
+                totalMetrcisLogRecords.get(0), IoType.CREATE, concurrency.getValue(),
+                runMode.getNodeCount(), fullItemSize, 0, 0
+        );
+
+        testSingleMetricsStdout(
+                stdOutContent.replaceAll("[\r\n]+", " "),
+                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), fullItemSize,
+                averagePeriod
+        );
     }
 }

@@ -63,6 +63,7 @@ public final class MainInstaller
                     "example/scenario/js/systest/create_limit_by_size_test.js",
                     "example/scenario/js/systest/circular_read_limit_by_time_test.js",
                     "example/scenario/js/systest/chain_with_delay_test.js",
+                    "example/scenario/js/systest/multipart_create_test.js",
 
                     // custom scenario examples in python
                     "example/scenario/py/types/additional/copy_load_using_env_vars.py",
