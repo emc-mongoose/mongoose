@@ -2,7 +2,6 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
@@ -13,8 +12,6 @@ import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -23,9 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -37,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
@@ -44,10 +40,9 @@ import static com.emc.mongoose.system.util.LogValidationUtil.*;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
-public class MultipartCreateTest {
+public class MultipleFixedUpdateAndSingleFixedReadTest {
 
     @Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
     public static List<Object[]> envParams() {
@@ -55,7 +50,7 @@ public class MultipartCreateTest {
     }
 
     private final int timeoutInMillis = 1000_000;
-    private final String itemOutputFile = MultipartCreateTest.class.getSimpleName() + "Items.csv";
+    private final long EXPECTED_COUNT = 2000;
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
     private final MongooseContainer testContainer;
@@ -72,29 +67,14 @@ public class MultipartCreateTest {
     private int averagePeriod;
     private String stdOutContent = null;
     private String containerItemOutputPath;
-    private long expectedCountMin;
-    private long expectedCountMax;
-    private SizeInBytes partSize;
-    private SizeInBytes fullItemSize;
-    private SizeInBytes sizeLimit;
+    private SizeInBytes expectedUpdateSize;
+    private SizeInBytes expectedReadSize;
 
-    public MultipartCreateTest(
+
+    public MultipleFixedUpdateAndSingleFixedReadTest(
             final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
             final ItemSize itemSize
     ) throws Exception {
-
-        partSize = itemSize.getValue();
-        fullItemSize = new SizeInBytes(partSize.get(), 100 * partSize.get(), 3);
-
-        Loggers.MSG.info("Item size: {}, part size: {}", fullItemSize, partSize);
-
-        sizeLimit = new SizeInBytes(
-                (runMode.getNodeCount() + 1) * concurrency.getValue() * fullItemSize.getAvg()
-        );
-        Loggers.MSG.info("Use the size limit: {}", sizeLimit);
-
-        expectedCountMin = sizeLimit.get() / fullItemSize.getMax();
-        expectedCountMax = sizeLimit.get() / fullItemSize.getMin();
 
         final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
                 APP_NAME, Thread.currentThread().getContextClassLoader());
@@ -114,6 +94,8 @@ public class MultipartCreateTest {
         this.runMode = runMode;
         this.concurrency = concurrency;
         this.itemSize = itemSize;
+        this.expectedUpdateSize = new SizeInBytes(-LongStream.of(2 - 5, 10 - 20, 50 - 100, 200 - 500, 1000 - 2000).sum());
+        this.expectedReadSize = new SizeInBytes(itemSize.getValue().get() - 256);
 
         if (storageType.equals(StorageType.FS)) {
             try {
@@ -132,12 +114,8 @@ public class MultipartCreateTest {
                 .stream()
                 .map(e -> e.getKey() + "=" + e.getValue())
                 .collect(Collectors.toList());
-        env.add("PART_SIZE=" + partSize.toString());
-        env.add("ITEM_OUTPUT_FILE=" + itemOutputFile);
-        env.add("SIZE_LIMIT=" + sizeLimit.toString());
 
         final List<String> args = new ArrayList<>();
-        args.add("--item-data-size=" + fullItemSize);
 
         switch (storageType) {
             case ATMOS:
@@ -226,73 +204,62 @@ public class MultipartCreateTest {
     public final void test()
             throws Exception {
 
+        // I/O traces
         final LongAdder ioTraceRecCount = new LongAdder();
-        final SizeInBytes ZERO_SIZE = new SizeInBytes(0);
-        final SizeInBytes TAIL_PART_SIZE = new SizeInBytes(1, partSize.get(), 1);
-        final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
-            try {
-                testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), ZERO_SIZE);
-            } catch (final AssertionError e) {
-                try {
-                    testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), partSize);
-                } catch (final AssertionError ee) {
-                    testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), TAIL_PART_SIZE);
-                }
+        final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
+            if (ioTraceRecCount.sum() < EXPECTED_COUNT) {
+                testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(), expectedUpdateSize);
+            } else {
+                testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), expectedReadSize);
             }
             ioTraceRecCount.increment();
         };
-        testIoTraceLogRecords(stepId, ioTraceRecFunc);
-
-        final List<CSVRecord> itemRecs = new ArrayList<>();
-        try (final BufferedReader br = new BufferedReader(new FileReader(itemOutputFile))) {
-            try (final CSVParser csvParser = CSVFormat.RFC4180.parse(br)) {
-                for (final CSVRecord csvRecord : csvParser) {
-                    itemRecs.add(csvRecord);
-                }
-            }
-        }
-        long nextItemSize;
-        long sizeSum = 0;
-        final int n = itemRecs.size();
-        assertTrue(n > 0);
-        assertTrue(
-                "Expected no less than " + expectedCountMin + " items, but got " + n,
-                expectedCountMin <= n
-        );
-        assertTrue(
-                "Expected no more than " + expectedCountMax + " items, but got " + n,
-                expectedCountMax >= n
-        );
-        for (final CSVRecord itemRec : itemRecs) {
-            nextItemSize = Long.parseLong(itemRec.get(2));
-            assertTrue(fullItemSize.getMin() <= nextItemSize);
-            assertTrue(fullItemSize.getMax() >= nextItemSize);
-            sizeSum += nextItemSize;
-        }
-        final long delta =
-                +runMode.getNodeCount() * concurrency.getValue() * partSize.getMax();
-        System.out.println(
-                "Expected transfer size: " + sizeLimit.get() + "+" + delta + ", actual: " + sizeSum
-        );
-        assertTrue(
-                "Expected to transfer no more than " + sizeLimit + "+" + delta
-                        + ", but transferred actually: " + new SizeInBytes(sizeSum),
-                sizeLimit.get() + delta >= sizeSum
+        testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
+        assertEquals(
+                "There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
+                2 * EXPECTED_COUNT, ioTraceRecCount.sum()
         );
 
         final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
-        assertEquals(
-                "There should be 1 total metrics records in the log file", 1,
-                totalMetrcisLogRecords.size()
+        testTotalMetricsLogRecord(
+                totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(),
+                runMode.getNodeCount(), expectedUpdateSize, EXPECTED_COUNT, 0
         );
         testTotalMetricsLogRecord(
-                totalMetrcisLogRecords.get(0), IoType.CREATE, concurrency.getValue(),
-                runMode.getNodeCount(), fullItemSize, 0, 0
+                totalMetrcisLogRecords.get(1), IoType.READ, concurrency.getValue(),
+                runMode.getNodeCount(), expectedReadSize, EXPECTED_COUNT, 0
         );
 
+        final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
+        final List<CSVRecord> updateMetricsRecords = new ArrayList<>();
+        final List<CSVRecord> readMetricsRecords = new ArrayList<>();
+        for (final CSVRecord metricsLogRec : metricsLogRecords) {
+            if (IoType.UPDATE.name().equalsIgnoreCase(metricsLogRec.get("TypeLoad"))) {
+                updateMetricsRecords.add(metricsLogRec);
+            } else {
+                readMetricsRecords.add(metricsLogRec);
+            }
+        }
+        testMetricsLogRecords(
+                updateMetricsRecords, IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+                expectedUpdateSize, EXPECTED_COUNT, 0,
+                averagePeriod
+        );
+        testMetricsLogRecords(
+                readMetricsRecords, IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+                expectedReadSize, EXPECTED_COUNT, 0,
+                averagePeriod
+        );
+
+        final String stdOutput = stdOutContent.replaceAll("[\r\n]+", " ");
         testSingleMetricsStdout(
-                stdOutContent.replaceAll("[\r\n]+", " "),
-                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), fullItemSize,
+                stdOutput, IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+                expectedUpdateSize,
+                averagePeriod
+        );
+        testSingleMetricsStdout(
+                stdOutput, IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+                expectedReadSize,
                 averagePeriod
         );
     }

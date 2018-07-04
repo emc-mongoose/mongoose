@@ -149,6 +149,9 @@ public class ChainWithDelayTest {
                                 + storageMocks.keySet().stream().collect(Collectors.joining(","))
                 );
                 break;
+            case FS:
+                args.add("--item-output-path=" + containerItemOutputPath);
+                break;
         }
 
         switch (runMode) {
