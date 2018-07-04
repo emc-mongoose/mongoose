@@ -24,13 +24,16 @@ import static org.apache.logging.log4j.CloseableThreadContext.put;
 public class FileManagerImpl
 implements FileManager {
 
+	static String LOG_CONFIG_STEP_ID_PTRN = "${ctx:" + KEY_STEP_ID + "}";
+
 	@Override
 	public final String logFileName(final String loggerName, final String testStepId) {
 		try(final CloseableThreadContext.Instance logCtx = put(KEY_STEP_ID, testStepId)) {
 			final Logger logger = LogManager.getLogger(loggerName);
 			final Appender appender = ((AsyncLogger) logger).getAppenders().get("ioTraceFile");
 			final String filePtrn = ((RollingRandomAccessFileAppender) appender).getFilePattern();
-			return filePtrn.contains("${ctx:stepId}") ? filePtrn.replace("${ctx:stepId}", testStepId) : filePtrn;
+			return filePtrn.contains(LOG_CONFIG_STEP_ID_PTRN) ?
+				filePtrn.replace(LOG_CONFIG_STEP_ID_PTRN, testStepId) : filePtrn;
 		}
 	}
 
