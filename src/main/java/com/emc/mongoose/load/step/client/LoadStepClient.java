@@ -406,6 +406,7 @@ extends LoadStep {
 					try {
 						final String remoteItemOutputFileName = fileMgr.newTmpFileName();
 						configSlices.get(i).val("item-output-file", remoteItemOutputFileName);
+						itemOutputFileSlices.put(fileMgr, remoteItemOutputFileName);
 					} catch(final Exception e) {
 						LogUtil.exception(
 							Level.ERROR, e,
@@ -582,7 +583,7 @@ extends LoadStep {
 					while(true) {
 						TimeUnit.MILLISECONDS.sleep(OUTPUT_PROGRESS_PERIOD_MILLIS);
 						Loggers.MSG.info(
-							"\"{}\" <- transferred {} output items data...", localItemOutputFileName,
+							"\"{}\" <- transferred {} of the output items data...", localItemOutputFileName,
 							SizeInBytes.formatFixedSize(byteCounter.longValue())
 						);
 					}
