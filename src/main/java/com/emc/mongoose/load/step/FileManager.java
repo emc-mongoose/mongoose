@@ -67,7 +67,4 @@ public interface FileManager {
 
 	void deleteFile(final String fileName)
 	throws IOException;
-
-	void close()
-	throws IOException;
 }
