@@ -31,6 +31,8 @@ import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
 import static javax.script.ScriptContext.ENGINE_SCOPE;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
+
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.io.IOException;
@@ -54,8 +56,7 @@ public final class Main {
 		LogUtil.init(appHomePath.toString());
 
 		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_ID, initialStepId)
+			final Instance logCtx = put(KEY_STEP_ID, initialStepId)
 				.put(KEY_CLASS_NAME, Main.class.getSimpleName())
 		) {
 

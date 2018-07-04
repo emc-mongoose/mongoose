@@ -53,6 +53,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -487,53 +490,6 @@ extends LoadStep {
 		}
 	}
 
-	static void transferItemOutputData(
-		final FileManager fileMgr, final String remoteItemOutputFileName, final OutputStream localItemOutput
-	) {
-		long transferredByteCount = 0;
-		try(final Instance logCtx = put(KEY_CLASS_NAME, LoadStepClient.class.getSimpleName())) {
-			byte buff[];
-			while(true) {
-				buff = fileMgr.readFromFile(remoteItemOutputFileName, transferredByteCount);
-				synchronized(localItemOutput) {
-					localItemOutput.write(buff);
-				}
-				transferredByteCount += buff.length;
-			}
-		} catch(final EOFException ok) {
-		} catch(final IOException e) {
-			LogUtil.exception(Level.WARN, e, "Remote items output file transfer failure");
-		} finally {
-			Loggers.MSG.info(
-				"{} of items output data transferred from \"{}\" @ \"{}\" to \"{}\"",
-				SizeInBytes.formatFixedSize(transferredByteCount), remoteItemOutputFileName, fileMgr,
-				localItemOutput
-			);
-		}
-	}
-
-	static void transferIoTraceData(final FileManager fileMgr, final String remoteIoTraceLogFileName) {
-		long transferredByteCount = 0;
-		try(final Instance logCtx = put(KEY_CLASS_NAME, LoadStepClient.class.getSimpleName())) {
-			byte[] data;
-			while(true) {
-				data = fileMgr.readFromFile(remoteIoTraceLogFileName, transferredByteCount);
-				Loggers.IO_TRACE.info(new String(data));
-				transferredByteCount += data.length;
-			}
-		} catch(final EOFException ok) {
-		} catch(final RemoteException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to read the data from the remote file");
-		} catch(final IOException e) {
-			LogUtil.exception(Level.ERROR, e, "Unexpected I/O exception");
-		} finally {
-			Loggers.MSG.info(
-				"Transferred {} of the remote I/O traces data from the remote file \"{}\" @ \"{}\"",
-				SizeInBytes.formatFixedSize(transferredByteCount), remoteIoTraceLogFileName, fileMgr
-			);
-		}
-	}
-
 	static void stopMetricsSnapshotsSuppliers(
 		final String id, final Map<LoadStep, MetricsSnapshotsSupplierTask> metricsSnapshotsSuppliers
 	) {
@@ -616,11 +572,33 @@ extends LoadStep {
 	static void collectItemOutputFileAndRelease(
 		final String id, final Map<FileManager, String> itemOutputFileSlices, final String localItemOutputFileName
 	) {
+		final LongAdder byteCounter = new LongAdder();
+		final Thread progressOutputThread = new Thread(
+			() -> {
+				Loggers.MSG.info(
+					"\"{}\" <- start to transfer the output items data to the local file", localItemOutputFileName
+				);
+				try {
+					while(true) {
+						TimeUnit.MILLISECONDS.sleep(OUTPUT_PROGRESS_PERIOD_MILLIS);
+						Loggers.MSG.info(
+							"\"{}\" <- transferred {} output items data...", localItemOutputFileName,
+							SizeInBytes.formatFixedSize(byteCounter.longValue())
+						);
+					}
+				} catch(final InterruptedException ok) {
+				}
+			}
+		);
+		progressOutputThread.setDaemon(true);
+		progressOutputThread.start();
+
 		try(
 			final OutputStream localItemOutput = Files.newOutputStream(
 				Paths.get(localItemOutputFileName), APPEND_OPEN_OPTIONS
 			)
 		) {
+			final Lock localItemOutputLock = new ReentrantLock();
 			itemOutputFileSlices
 				.entrySet()
 				.parallelStream()
@@ -630,7 +608,9 @@ extends LoadStep {
 					entry -> {
 						final FileManager fileMgr = entry.getKey();
 						final String remoteItemOutputFileName = entry.getValue();
-						transferItemOutputData(fileMgr, remoteItemOutputFileName, localItemOutput);
+						transferItemOutputData(
+							fileMgr, remoteItemOutputFileName, localItemOutput, localItemOutputLock, byteCounter
+						);
 						try {
 							fileMgr.deleteFile(remoteItemOutputFileName);
 						} catch(final Exception e) {
@@ -646,33 +626,118 @@ extends LoadStep {
 				Level.WARN, e, "{}: failed to open the local item output file \"{}\" for appending", id,
 				localItemOutputFileName
 			);
+		} finally {
+			progressOutputThread.interrupt();
+			Loggers.MSG.info(
+				"\"{}\" <- transferred {} of the output items data", localItemOutputFileName,
+				SizeInBytes.formatFixedSize(byteCounter.longValue())
+			);
+			itemOutputFileSlices.clear();
 		}
-		itemOutputFileSlices.clear();
+	}
+
+	static void transferItemOutputData(
+		final FileManager fileMgr, final String remoteItemOutputFileName, final OutputStream localItemOutput,
+		final Lock localItemOutputLock, final LongAdder byteCounter
+	) {
+		long transferredByteCount = 0;
+		try(final Instance logCtx = put(KEY_CLASS_NAME, LoadStepClient.class.getSimpleName())) {
+			byte buff[];
+			while(true) {
+				buff = fileMgr.readFromFile(remoteItemOutputFileName, transferredByteCount);
+				localItemOutputLock.lock();
+				try {
+					localItemOutput.write(buff);
+				} finally {
+					localItemOutputLock.unlock();
+				}
+				transferredByteCount += buff.length;
+				byteCounter.add(buff.length);
+			}
+		} catch(final EOFException ok) {
+		} catch(final IOException e) {
+			LogUtil.exception(Level.WARN, e, "Remote items output file transfer failure");
+		} finally {
+			Loggers.MSG.debug(
+				"{} of items output data transferred from \"{}\" @ \"{}\" to \"{}\"",
+				SizeInBytes.formatFixedSize(transferredByteCount), remoteItemOutputFileName, fileMgr,
+				localItemOutput
+			);
+		}
 	}
 
 	static void collectIoTraceLogFileAndRelease(final String id, final Map<FileManager, String> ioTraceLogFileSlices) {
-		Loggers.MSG.info("{}: transfer the I/O traces data from the nodes", id);
-		ioTraceLogFileSlices
-			.entrySet()
-			.parallelStream()
-			// don't transfer the local file data
-			.filter(entry -> entry.getKey() instanceof FileManagerService)
-			.forEach(
-				entry -> {
-					final FileManager fileMgr = entry.getKey();
-					final String remoteIoTraceLogFileName = entry.getValue();
-					transferIoTraceData(fileMgr, remoteIoTraceLogFileName);
-					try {
-						fileMgr.deleteFile(remoteIoTraceLogFileName);
-					} catch(final Exception e) {
-						LogUtil.exception(
-							Level.WARN, e, "{}: failed to delete the file \"{}\" @ file manager \"{}\"", id,
-							remoteIoTraceLogFileName, fileMgr
+
+		final LongAdder byteCounter = new LongAdder();
+		final Thread progressOutputThread = new Thread(
+			() -> {
+				Loggers.MSG.info("\"{}\": start to transfer the I/O trace data to the local log file", id);
+				try {
+					while(true) {
+						TimeUnit.MILLISECONDS.sleep(OUTPUT_PROGRESS_PERIOD_MILLIS);
+						Loggers.MSG.info(
+							"\"{}\": transferred {} I/O trace data...", id,
+							SizeInBytes.formatFixedSize(byteCounter.longValue())
 						);
 					}
+				} catch(final InterruptedException ok) {
 				}
+			}
+		);
+		progressOutputThread.setDaemon(true);
+		progressOutputThread.start();
+
+		try {
+			ioTraceLogFileSlices
+				.entrySet()
+				.parallelStream()
+				// don't transfer the local file data
+				.filter(entry -> entry.getKey() instanceof FileManagerService)
+				.forEach(
+					entry -> {
+						final FileManager fileMgr = entry.getKey();
+						final String remoteIoTraceLogFileName = entry.getValue();
+						transferIoTraceData(fileMgr, remoteIoTraceLogFileName);
+						try {
+							fileMgr.deleteFile(remoteIoTraceLogFileName);
+						} catch(final Exception e) {
+							LogUtil.exception(
+								Level.WARN, e, "{}: failed to delete the file \"{}\" @ file manager \"{}\"", id,
+								remoteIoTraceLogFileName, fileMgr
+							);
+						}
+					}
+				);
+		} finally {
+			progressOutputThread.interrupt();
+			Loggers.MSG.info(
+				"\"{}\": transferred {} of the I/O trace data", id,
+				SizeInBytes.formatFixedSize(byteCounter.longValue())
 			);
-		ioTraceLogFileSlices.clear();
+			ioTraceLogFileSlices.clear();
+		}
+	}
+
+	static void transferIoTraceData(final FileManager fileMgr, final String remoteIoTraceLogFileName) {
+		long transferredByteCount = 0;
+		try(final Instance logCtx = put(KEY_CLASS_NAME, LoadStepClient.class.getSimpleName())) {
+			byte[] data;
+			while(true) {
+				data = fileMgr.readFromFile(remoteIoTraceLogFileName, transferredByteCount);
+				Loggers.IO_TRACE.info(new String(data));
+				transferredByteCount += data.length;
+			}
+		} catch(final EOFException ok) {
+		} catch(final RemoteException e) {
+			LogUtil.exception(Level.WARN, e, "Failed to read the data from the remote file");
+		} catch(final IOException e) {
+			LogUtil.exception(Level.ERROR, e, "Unexpected I/O exception");
+		} finally {
+			Loggers.MSG.debug(
+				"Transferred {} of the remote I/O traces data from the remote file \"{}\" @ \"{}\"",
+				SizeInBytes.formatFixedSize(transferredByteCount), remoteIoTraceLogFileName, fileMgr
+			);
+		}
 	}
 
 	static void releaseFileManagers(final String id, final List<FileManager> fileMgrs) {
