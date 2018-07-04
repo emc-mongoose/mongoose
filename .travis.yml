@@ -118,6 +118,16 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
+    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew -Dtest.single=CircularReadLimitByTimeTest systemTest
+    - env:
+      - TEST=CircularReadLimitByTimeTest
+      - STORAGE_TYPE=fs,s3
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=single,high
+      - ITEM_SIZE=empty,medium
+      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+
 
 
     - stage: "Deploy"
@@ -179,15 +189,6 @@ jobs:
       - RUN_MODE=distributed
       - CONCURRENCY=medium
       - ITEM_SIZE=small
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew -Dtest.single=JsonCircularReadSingleItemTest systemTest
-    - env:
-      - TEST=JsonCircularReadSingleItemTest
-      - STORAGE_TYPE=fs,s3
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=single,high
-      - ITEM_SIZE=empty,medium
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=emcs3 RUN_MODE=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonConcatRandomItemRangesTest systemTest
