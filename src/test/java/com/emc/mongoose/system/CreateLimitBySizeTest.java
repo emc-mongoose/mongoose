@@ -2,6 +2,7 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.ConfigUtil;
+import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
@@ -11,6 +12,7 @@ import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
+import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
@@ -78,7 +80,7 @@ public class CreateLimitBySizeTest {
     private long expectedCount;
     private long duration;
     private int containerExitCode;
-    private long averagePeriod;
+    private int averagePeriod;
 
     private String stdOutContent = null;
     private String containerItemOutputPath;
@@ -93,7 +95,12 @@ public class CreateLimitBySizeTest {
                 APP_NAME, Thread.currentThread().getContextClassLoader());
         config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
 
-        averagePeriod = config.longVal("output-metrics-average-period");
+        final Object avgPeriodRaw = config.val("output-metrics-average-period");
+        if (avgPeriodRaw instanceof String) {
+            averagePeriod = (int) TimeUtil.getTimeInSeconds((String) avgPeriodRaw);
+        } else {
+            averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
+        }
 
         stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 
