@@ -127,6 +127,14 @@ jobs:
       - ITEM_SIZE=empty,medium
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
+    # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=ChainWithDelayTest systemTest
+    - env:
+      - TEST=ChainWithDelayTest
+      - STORAGE_TYPE=atmos,s3
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=single,medium
+      - ITEM_SIZE=medium
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
 
 
@@ -357,17 +365,6 @@ jobs:
       - RUN_MODE=local,distributed
       - CONCURRENCY=low,medium
       - ITEM_SIZE=small
-      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915007
-    # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=JsonChainWithDelayTest systemTest
-    - env:
-      - TEST=JsonChainWithDelayTest
-      - STORAGE_TYPE=atmos,s3
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=single,medium
-      - ITEM_SIZE=medium
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # failures:

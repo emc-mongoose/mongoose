@@ -5,14 +5,14 @@ import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
+import com.emc.mongoose.system.util.EnvUtil;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
+import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -21,9 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -32,28 +30,31 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.*;
+import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
-public class CircularReadLimitByTimeTest {
+public class ChainWithDelayTest {
 
     @Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
     public static List<Object[]> envParams() {
         return EnvParams.PARAMS;
     }
 
-    private final int timeoutInMillis = 1000_000;
-    private final String ITEM_OUTPUT_FILE = "CircularReadLimitByTime.csv";
+    private final int DELAY_SECONDS = 60;
+    private final int TIME_LIMIT = 180;
+    private final String zone1Addr = "127.0.0.1";
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
     private final MongooseContainer testContainer;
@@ -66,17 +67,15 @@ public class CircularReadLimitByTimeTest {
     private final String hostItemOutputFile = HOST_SHARE_PATH + File.separator
             + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
     private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
-    private final int timeLimitInSec = 65; //1m + up to 5s for the precondition job
-
 
     private boolean finishedInTime;
     private int containerExitCode;
     private int averagePeriod;
-
     private String stdOutContent = null;
     private String containerItemOutputPath;
+    private String zone2Addr;
 
-    public CircularReadLimitByTimeTest(
+    public ChainWithDelayTest(
             final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
             final ItemSize itemSize
     ) throws Exception {
@@ -117,16 +116,25 @@ public class CircularReadLimitByTimeTest {
                 .stream()
                 .map(e -> e.getKey() + "=" + e.getValue())
                 .collect(Collectors.toList());
+        try {
+            zone2Addr = NetUtil.getHostAddrString();
+        } catch (final Exception e) {
+            throw new RuntimeException(e);
+        }
+        EnvUtil.set("ZONE1_ADDRS", zone1Addr);
+        EnvUtil.set("ZONE2_ADDRS", zone2Addr);
 
         final List<String> args = new ArrayList<>();
+
+        args.add("--storage-net-http-namespace=ns1");
+        args.add("--test-step-limit-time=" + TIME_LIMIT);
 
         switch (storageType) {
             case ATMOS:
             case S3:
             case SWIFT:
                 final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
-                        HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-                        itemIdRadix,
+                        HttpStorageMockContainer.DEFAULT_PORT, false, null, null, Character.MAX_RADIX,
                         HttpStorageMockContainer.DEFAULT_CAPACITY,
                         HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
                         HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
@@ -140,10 +148,6 @@ public class CircularReadLimitByTimeTest {
                         "--storage-net-node-addrs="
                                 + storageMocks.keySet().stream().collect(Collectors.joining(","))
                 );
-                args.add("--storage-net-http-namespace=ns1");
-                break;
-            case FS:
-                args.add("--item-output-path=" + containerItemOutputPath);
                 break;
         }
 
@@ -178,10 +182,10 @@ public class CircularReadLimitByTimeTest {
         long duration = System.currentTimeMillis();
 
         testContainer.start();
-        testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+        testContainer.await(TIME_LIMIT + 10, TimeUnit.SECONDS);
 
         duration = System.currentTimeMillis() - duration;
-        finishedInTime = (TimeUnit.SECONDS.toMillis(duration) <= timeLimitInSec);
+        finishedInTime = (TimeUnit.SECONDS.toMillis(duration) <= TIME_LIMIT + 15);
 
         containerExitCode = testContainer.exitStatusCode();
     }
@@ -218,72 +222,51 @@ public class CircularReadLimitByTimeTest {
 
         assertEquals("Container exit code should be 0", 0, containerExitCode);
 
-        final LongAdder ioTraceRecCount = new LongAdder();
-        final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
-            testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), itemSize.getValue());
-            ioTraceRecCount.increment();
-        };
-        testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
-        assertTrue(
-                "There should be more than 1 record in the I/O trace log file",
-                ioTraceRecCount.sum() > 1
+        testMetricsTableStdout(
+                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
+                new HashMap<IoType, Integer>() {{
+                    put(IoType.CREATE, concurrency.getValue());
+                    put(IoType.READ, concurrency.getValue());
+                }}
         );
 
-        final List<CSVRecord> items = new ArrayList<>();
-        try (final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
-            final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
-            for (final CSVRecord csvRecord : csvParser) {
-                items.add(csvRecord);
+        final Map<String, Long> timingMap = new HashMap<>();
+        final Consumer<CSVRecord> ioTraceRecTestFunc = new Consumer<CSVRecord>() {
+
+            String storageNode;
+            String itemPath;
+            IoType ioType;
+            long reqTimeStart;
+            long duration;
+            Long prevOpFinishTime;
+
+            @Override
+            public final void accept(final CSVRecord ioTraceRec) {
+                storageNode = ioTraceRec.get("StorageNode");
+                itemPath = ioTraceRec.get("ItemPath");
+                ioType = IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))];
+                reqTimeStart = Long.parseLong(ioTraceRec.get("ReqTimeStart[us]"));
+                duration = Long.parseLong(ioTraceRec.get("Duration[us]"));
+                switch (ioType) {
+                    case CREATE:
+                        assertTrue(storageNode.startsWith(zone1Addr));
+                        timingMap.put(itemPath, reqTimeStart + duration);
+                        break;
+                    case READ:
+                        assertTrue(storageNode.startsWith(zone2Addr));
+                        prevOpFinishTime = timingMap.get(itemPath);
+                        if (prevOpFinishTime == null) {
+                            fail("No create I/O trace record for \"" + itemPath + "\"");
+                        } else {
+                            assertTrue((reqTimeStart - prevOpFinishTime) / M > DELAY_SECONDS);
+                        }
+                        break;
+                    default:
+                        fail("Unexpected I/O type: " + ioType);
+                }
             }
-        }
-        assertEquals(1, items.size());
-
-        String itemPath, itemId;
-        long itemOffset;
-        long size;
-        String modLayerAndMask;
-        final CSVRecord itemRec = items.get(0);
-        itemPath = itemRec.get(0);
-        itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
-        itemOffset = Long.parseLong(itemRec.get(1), 0x10);
-        assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
-
-        size = Long.parseLong(itemRec.get(2));
-        assertEquals(itemSize.getValue().get(), size);
-
-        modLayerAndMask = itemRec.get(3);
-        assertEquals("0/0", modLayerAndMask);
-
-        testSingleMetricsStdout(
-                stdOutContent.replaceAll("[\r\n]+", " "),
-                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
-                averagePeriod
-        );
-        testFinalMetricsTableRowStdout(
-                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
-                0, 60, itemSize.getValue()
-        );
-
-        final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
-        assertEquals(
-                "There should be 1 total metrics records in the log file", 1,
-                totalMetrcisLogRecords.size()
-        );
-        testTotalMetricsLogRecord(
-                totalMetrcisLogRecords.get(0), IoType.READ, concurrency.getValue(),
-                runMode.getNodeCount(), itemSize.getValue(), 0, 60
-        );
-
-        final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
-        assertTrue(
-                "There should be more than 2 metrics records in the log file",
-                metricsLogRecords.size() > 1
-        );
-        testMetricsLogRecords(
-                metricsLogRecords, IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
-                itemSize.getValue(), 0, 60,
-                averagePeriod
-        );
+        };
+        testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
 
         assertTrue("Scenario didn't finished in time", finishedInTime);
     }
