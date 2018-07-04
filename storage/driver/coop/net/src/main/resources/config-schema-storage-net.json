@@ -15,8 +15,9 @@
 			"ssl": "boolean",
 			"node": {
 				"addrs": "list",
+				"connAttemptsLimit": "int32",
 				"port": "int32",
-				"connAttemptsLimit": "int32"
+				"slice": "boolean"
 			}
 		}
 	}

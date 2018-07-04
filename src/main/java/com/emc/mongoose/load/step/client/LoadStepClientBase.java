@@ -31,6 +31,7 @@ import static com.emc.mongoose.load.step.client.LoadStepClient.resolveFileManage
 import static com.emc.mongoose.load.step.client.LoadStepClient.sliceCountLimit;
 import static com.emc.mongoose.load.step.client.LoadStepClient.sliceItemInput;
 import static com.emc.mongoose.load.step.client.LoadStepClient.sliceItemOutputFileConfig;
+import static com.emc.mongoose.load.step.client.LoadStepClient.sliceStorageNodeAddrs;
 import static com.emc.mongoose.load.step.client.LoadStepClient.stopMetricsSnapshotsSuppliers;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsSnapshot;
@@ -58,6 +59,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
@@ -172,6 +174,15 @@ implements LoadStepClient {
 			final long countLimit = config.longVal("load-step-limit-count");
 			if(countLimit > 0) {
 				sliceCountLimit(countLimit, sliceCount, configSlices);
+			}
+
+			try {
+				final List<String> storageNodeAddrs = config.listVal("storage-net-node-addrs");
+				sliceStorageNodeAddrs(configSlices, storageNodeAddrs);
+			} catch(final InvalidValuePathException | NoSuchElementException e) {
+				LogUtil.exception(
+					Level.WARN, e, "Failed to get the \"storage-net-node-addrs\" configuration parameter value"
+				);
 			}
 
 			final int batchSize = config.intVal("load-batch-size");

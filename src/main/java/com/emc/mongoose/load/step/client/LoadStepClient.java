@@ -25,6 +25,7 @@ import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.file.BinFileInput;
+import com.github.akurilov.commons.math.MathUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.github.akurilov.confuse.Config;
@@ -46,6 +47,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -143,6 +145,28 @@ extends LoadStep {
 				Loggers.MSG.debug("Config slice #{}: count limit = {}", i, remainingCountLimit);
 				limitConfigSlice.val("count", remainingCountLimit);
 				remainingCountLimit = 0;
+			}
+		}
+	}
+
+	static void sliceStorageNodeAddrs(final List<Config> configSlices, final List<String> storageNodeAddrs) {
+		final int sliceCount = configSlices.size();
+		final int storageNodeCount = storageNodeAddrs.size();
+		if(storageNodeCount > 1) {
+			final int gcd = MathUtil.gcd(sliceCount, storageNodeCount);
+			final int sliceCountPerGcd = sliceCount / gcd;
+			final int storgeNodeCountPerGcd = storageNodeCount / gcd;
+			for(int i = 0; i < gcd; i ++) {
+				final List<String> storageNodeAddrsSlice = storageNodeAddrs.subList(
+					storgeNodeCountPerGcd * i, storgeNodeCountPerGcd * (i + 1)
+				);
+				for(int j = i * sliceCountPerGcd; j < (i + 1) * sliceCountPerGcd; j ++) {
+					Loggers.MSG.info(
+						"Load step slice #{} ({}) storage nodes: {}", j, (j == 0 ? "local" : "remote"),
+						Arrays.toString(storageNodeAddrsSlice.toArray())
+					);
+					configSlices.get(i).val("storage-net-node-addrs", storageNodeAddrsSlice);
+				}
 			}
 		}
 	}
