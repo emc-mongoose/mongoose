@@ -60,6 +60,7 @@ public final class MainInstaller
                     "example/scenario/js/systest/copy_using_input_path_test.js",
                     "example/scenario/js/systest/read_using_variable_path_test.js",
                     "example/scenario/js/systest/unlimited_create_test.js",
+                    "example/scenario/js/systest/create_limit_by_size_test.js",
 
                     // custom scenario examples in python
                     "example/scenario/py/types/additional/copy_load_using_env_vars.py",
