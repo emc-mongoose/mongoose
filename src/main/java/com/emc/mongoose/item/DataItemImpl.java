@@ -53,11 +53,13 @@ implements DataItem {
 		super();
 	}
 	//
-	public DataItemImpl(final String value) {
+	public DataItemImpl(final String value)
+	throws IllegalArgumentException {
 		this(value, value.indexOf(','));
 	}
 	//
-	private DataItemImpl(final String value, final int firstCommaPos) {
+	private DataItemImpl(final String value, final int firstCommaPos)
+	throws IllegalArgumentException {
 
 		super(value.substring(0, firstCommaPos));
 

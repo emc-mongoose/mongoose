@@ -167,27 +167,30 @@ implements LoadStepClient {
 			configSlices.add(configSlice);
 		}
 
-		final long countLimit = config.longVal("load-step-limit-count");
-		if(sliceCount > 1 && countLimit > 0) {
-			sliceCountLimit(countLimit, sliceCount, configSlices);
-		}
+		if(sliceCount > 1) {
 
-		final int batchSize = config.intVal("load-batch-size");
-		try(final Input<Item> itemInput = createItemInput(config, extensions, batchSize)) {
-			if(itemInput != null) {
-				Loggers.MSG.info("{}: slice the item input \"{}\"...", id(), itemInput);
-				itemInputFileSlices = sliceItemInput(itemInput, fileMgrs, configSlices, batchSize);
-				Loggers.MSG.info("{}: slice the item input \"{}\" done", id(), itemInput);
+			final long countLimit = config.longVal("load-step-limit-count");
+			if(countLimit > 0) {
+				sliceCountLimit(countLimit, sliceCount, configSlices);
 			}
-		} catch(final IOException e) {
-			LogUtil.exception(Level.WARN, e, "{}: failed to use the item input", id());
-		} catch(final Throwable cause) {
-			LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
-		}
 
-		final String itemOutputFile = config.stringVal("item-output-file");
-		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
-			itemOutputFileSlices = sliceItemOutputFileConfig(fileMgrs, configSlices, itemOutputFile);
+			final int batchSize = config.intVal("load-batch-size");
+			try(final Input<Item> itemInput = createItemInput(config, extensions, batchSize)) {
+				if(itemInput != null) {
+					Loggers.MSG.info("{}: slice the item input \"{}\"...", id(), itemInput);
+					itemInputFileSlices = sliceItemInput(itemInput, fileMgrs, configSlices, batchSize);
+					Loggers.MSG.info("{}: slice the item input \"{}\" done", id(), itemInput);
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(Level.WARN, e, "{}: failed to use the item input", id());
+			} catch(final Throwable cause) {
+				LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
+			}
+
+			final String itemOutputFile = config.stringVal("item-output-file");
+			if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
+				itemOutputFileSlices = sliceItemOutputFileConfig(fileMgrs, configSlices, itemOutputFile);
+			}
 		}
 
 		return configSlices;

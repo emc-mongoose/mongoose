@@ -337,17 +337,11 @@ extends LoadStep {
 
 			if(n > 0) {
 
-				if(sliceCount > 1) {
-					// distribute the items using the round robin
-					for(int i = 0; i < n; i ++) {
-						itemsOutputs
-							.get(fileMgrs.get(i % sliceCount))
-							.writeUnshared(itemsBuff.get(i));
-					}
-				} else {
-					for(int i = 0; i < n; i ++) {
-						out.writeUnshared(itemsBuff.get(i));
-					}
+				// distribute the items using the round robin
+				for(int i = 0; i < n; i ++) {
+					itemsOutputs
+						.get(fileMgrs.get(i % sliceCount))
+						.writeUnshared(itemsBuff.get(i));
 				}
 
 				itemsBuff.clear();
@@ -365,8 +359,9 @@ extends LoadStep {
 								buff.reset();
 							} catch(final IOException e) {
 								LogUtil.exception(
-									Level.WARN, e, "Failed to write the items input data to the file manager \"{}\"",
-									fileMgr
+									Level.WARN, e,
+									"Failed to write the items input data to the {} file \"{}\"",
+									itemInputFileName, (fileMgr instanceof FileManagerService ? "remote" : "local")
 								);
 							}
 						}
@@ -375,7 +370,7 @@ extends LoadStep {
 				count += n;
 
 				if(System.currentTimeMillis() - lastProgressOutputTimeMillis > OUTPUT_PROGRESS_PERIOD_MILLIS) {
-					Loggers.MSG.info("Transferred {} items...", count);
+					Loggers.MSG.info("Transferred {} items from the input \"{}\"...", count, itemInput);
 					lastProgressOutputTimeMillis = System.currentTimeMillis();
 				}
 

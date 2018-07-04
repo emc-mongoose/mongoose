@@ -8,9 +8,11 @@ import java.io.Serializable;
 public interface ItemFactory<I extends Item>
 extends Serializable {
 	
-	I getItem(final String name, final long id, final long size);
+	I getItem(final String name, final long id, final long size)
+	throws IllegalArgumentException;
 	
-	I getItem(final String line);
+	I getItem(final String line)
+	throws IllegalArgumentException;
 
 	Class<I> getItemClass();
 }
