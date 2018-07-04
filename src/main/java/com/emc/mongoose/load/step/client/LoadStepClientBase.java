@@ -22,7 +22,6 @@ import static com.emc.mongoose.load.step.client.LoadStepClient.initConfigSlice;
 import static com.emc.mongoose.load.step.client.LoadStepClient.awaitStepSlice;
 import static com.emc.mongoose.load.step.client.LoadStepClient.createItemInput;
 import static com.emc.mongoose.load.step.client.LoadStepClient.initIoTraceLogFileSlices;
-import static com.emc.mongoose.load.step.client.LoadStepClient.releaseFileManagers;
 import static com.emc.mongoose.load.step.client.LoadStepClient.releaseItemInputFileSlices;
 import static com.emc.mongoose.load.step.client.LoadStepClient.collectItemOutputFileAndRelease;
 import static com.emc.mongoose.load.step.client.LoadStepClient.releaseMetricsSnapshotsSuppliers;
@@ -309,7 +308,6 @@ implements LoadStepClient {
 			collectIoTraceLogFileAndRelease(id(), ioTraceLogFileSlices);
 			ioTraceLogFileSlices = null;
 		}
-		releaseFileManagers(id(), fileMgrs);
 	}
 
 	@Override

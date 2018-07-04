@@ -697,7 +697,7 @@ extends LoadStep {
 					entry -> {
 						final FileManager fileMgr = entry.getKey();
 						final String remoteIoTraceLogFileName = entry.getValue();
-						transferIoTraceData(fileMgr, remoteIoTraceLogFileName);
+						transferIoTraceData(fileMgr, remoteIoTraceLogFileName, byteCounter);
 						try {
 							fileMgr.deleteFile(remoteIoTraceLogFileName);
 						} catch(final Exception e) {
@@ -718,7 +718,9 @@ extends LoadStep {
 		}
 	}
 
-	static void transferIoTraceData(final FileManager fileMgr, final String remoteIoTraceLogFileName) {
+	static void transferIoTraceData(
+		final FileManager fileMgr, final String remoteIoTraceLogFileName, final LongAdder byteCounter
+	) {
 		long transferredByteCount = 0;
 		try(final Instance logCtx = put(KEY_CLASS_NAME, LoadStepClient.class.getSimpleName())) {
 			byte[] data;
@@ -726,6 +728,7 @@ extends LoadStep {
 				data = fileMgr.readFromFile(remoteIoTraceLogFileName, transferredByteCount);
 				Loggers.IO_TRACE.info(new String(data));
 				transferredByteCount += data.length;
+				byteCounter.add(data.length);
 			}
 		} catch(final EOFException ok) {
 		} catch(final RemoteException e) {
@@ -738,23 +741,5 @@ extends LoadStep {
 				SizeInBytes.formatFixedSize(transferredByteCount), remoteIoTraceLogFileName, fileMgr
 			);
 		}
-	}
-
-	static void releaseFileManagers(final String id, final List<FileManager> fileMgrs) {
-		fileMgrs
-			.parallelStream()
-			.filter(fileMgr -> fileMgr instanceof FileManagerService)
-			.forEach(
-				fileMgr -> {
-					try {
-						((FileManagerService) fileMgr).close();
-					} catch(final IOException e) {
-						LogUtil.exception(
-							Level.WARN, e, "{}: failed to close the file manager service \"{}\"", id, fileMgr
-						);
-					}
-				}
-			);
-		fileMgrs.clear();
 	}
 }
