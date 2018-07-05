@@ -131,10 +131,6 @@ public class CreateLimitBySizeTest {
         }
         expectedCount = sizeLimit.get() / itemSizeValue;
 
-        System.out.println("sizeLimit : " + sizeLimit);
-        System.out.println("sizeItem : " + itemSizeValue);
-        System.out.println("expCount : " + expectedCount);
-
         if (storageType.equals(StorageType.FS)) {
             try {
                 DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
@@ -312,10 +308,10 @@ public class CreateLimitBySizeTest {
 //        }
 //        assertEquals(items.size(), freq.getUniqueCount());
 //
-        testTotalMetricsLogRecord(
-                getContainerMetricsTotalLogRecords(stepId).get(0), IoType.CREATE, concurrency.getValue(),
-                runMode.getNodeCount(), itemSize.getValue(), 0, 0
-        );
+//        testTotalMetricsLogRecord(
+//                getContainerMetricsTotalLogRecords(stepId).get(0), IoType.CREATE, concurrency.getValue(),
+//                runMode.getNodeCount(), itemSize.getValue(), 0, 0
+//        );
 //
 //        testMetricsLogRecords(
 //                getContainerMetricsLogRecords(stepId), IoType.CREATE, concurrency.getValue(),
@@ -323,11 +319,11 @@ public class CreateLimitBySizeTest {
 //                averagePeriod
 //        );
 //
-//        testSingleMetricsStdout(
-//                stdOutContent.replaceAll("[\r\n]+", " "),
-//                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
-//                averagePeriod
-//        );
+        testSingleMetricsStdout(
+                stdOutContent.replaceAll("[\r\n]+", " "),
+                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+                averagePeriod
+        );
 //        testMetricsTableStdout(
 //                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
 //                new HashMap<IoType, Integer>() {{
