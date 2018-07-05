@@ -230,13 +230,13 @@ public class ChainWithDelayTest {
 
         assertEquals("Container exit code should be 0", 0, containerExitCode);
 
-        testMetricsTableStdout(
-                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-                new HashMap<IoType, Integer>() {{
-                    put(IoType.CREATE, concurrency.getValue());
-                    put(IoType.READ, concurrency.getValue());
-                }}
-        );
+//        testMetricsTableStdout(
+//                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
+//                new HashMap<IoType, Integer>() {{
+//                    put(IoType.CREATE, concurrency.getValue());
+//                    put(IoType.READ, concurrency.getValue());
+//                }}
+//        );
 //
 //        final Map<String, Long> timingMap = new HashMap<>();
 //        final Consumer<CSVRecord> ioTraceRecTestFunc = new Consumer<CSVRecord>() {
