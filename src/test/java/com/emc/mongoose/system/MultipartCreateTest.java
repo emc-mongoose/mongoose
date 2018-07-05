@@ -296,10 +296,10 @@ public class MultipartCreateTest {
 //                runMode.getNodeCount(), fullItemSize, 0, 0
 //        );
 //
-//        testSingleMetricsStdout(
-//                stdOutContent.replaceAll("[\r\n]+", " "),
-//                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), fullItemSize,
-//                averagePeriod
-//        );
+        testSingleMetricsStdout(
+                stdOutContent.replaceAll("[\r\n]+", " "),
+                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), fullItemSize,
+                averagePeriod
+        );
     }
 }

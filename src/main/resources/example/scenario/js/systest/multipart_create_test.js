@@ -1,5 +1,5 @@
 var cmd = new java.lang.ProcessBuilder()
-    .command("sh", "-c", "rm -f ${ITEM_OUTPUT_FILE}")
+    .command("/bin/sh", "-c", "rm -f ${ITEM_OUTPUT_FILE}")
     .inheritIO()
     .start();
 cmd.waitFor();
