@@ -109,7 +109,7 @@ Mongoose to execute the required work efficiently.
 Mongoose tasks may be divided into two types: service tasks and I/O tasks. So there are two different fixed thread pools
 for these types of tasks.
 
-![Calc vs I/O balance](doc/images/calc_vs_io_problem.png)
+![Calc vs I/O balance](../images/calc_vs_io_problem.png)
 
 ## Service Tasks
 
