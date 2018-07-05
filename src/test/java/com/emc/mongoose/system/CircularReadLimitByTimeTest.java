@@ -254,7 +254,7 @@ public class CircularReadLimitByTimeTest {
 //
         testSingleMetricsStdout(
                 stdOutContent.replaceAll("[\r\n]+", " "),
-                IoType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
                 averagePeriod
         );
 //        testFinalMetricsTableRowStdout(
