@@ -227,16 +227,16 @@ public class ChainWithDelayTest {
     @Test
     public final void test()
             throws Exception {
-//
-//        assertEquals("Container exit code should be 0", 0, containerExitCode);
-//
-//        testMetricsTableStdout(
-//                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-//                new HashMap<IoType, Integer>() {{
-//                    put(IoType.CREATE, concurrency.getValue());
-//                    put(IoType.READ, concurrency.getValue());
-//                }}
-//        );
+
+        assertEquals("Container exit code should be 0", 0, containerExitCode);
+
+        testMetricsTableStdout(
+                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
+                new HashMap<IoType, Integer>() {{
+                    put(IoType.CREATE, concurrency.getValue());
+                    put(IoType.READ, concurrency.getValue());
+                }}
+        );
 //
 //        final Map<String, Long> timingMap = new HashMap<>();
 //        final Consumer<CSVRecord> ioTraceRecTestFunc = new Consumer<CSVRecord>() {
@@ -276,6 +276,6 @@ public class ChainWithDelayTest {
 //        };
 //        testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
 
-        assertTrue("Scenario didn't finished in time", finishedInTime);
+//        assertTrue("Scenario didn't finished in time", finishedInTime);
     }
 }
