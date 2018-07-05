@@ -68,7 +68,7 @@ public class CircularReadLimitByTimeTest {
     private final String hostItemOutputFile = HOST_SHARE_PATH + File.separator
             + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
     private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
-    private final int timeLimitInSec = 100; //1m + up to 5s for the precondition job
+    private final int timeLimitInSec = 65; //1m + up to 5s for the precondition job
 
 
     private boolean finishedInTime;
@@ -252,11 +252,11 @@ public class CircularReadLimitByTimeTest {
 //        modLayerAndMask = itemRec.get(3);
 //        assertEquals("0/0", modLayerAndMask);
 //
-//        testSingleMetricsStdout(
-//                stdOutContent.replaceAll("[\r\n]+", " "),
-//                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
-//                averagePeriod
-//        );
+        testSingleMetricsStdout(
+                stdOutContent.replaceAll("[\r\n]+", " "),
+                IoType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+                averagePeriod
+        );
 //        testFinalMetricsTableRowStdout(
 //                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
 //                0, 60, itemSize.getValue()
@@ -283,6 +283,6 @@ public class CircularReadLimitByTimeTest {
 //                averagePeriod
 //        );
 //
-        assertTrue("Scenario didn't finished in time", finishedInTime);
+//        assertTrue("Scenario didn't finished in time", finishedInTime);
     }
 }
