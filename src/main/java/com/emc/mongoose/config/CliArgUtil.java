@@ -30,7 +30,6 @@ public interface CliArgUtil {
                         argValuePair -> argValuePair.length == 2 ?
                                 argValuePair : new String[]{argValuePair[0], Boolean.TRUE.toString()}
                 )
-                .peek(argValuePair -> System.out.println(argValuePair[0]))
                 .collect(
                         Collectors.toMap(
                                 argValuePair -> argValuePair[0],
