@@ -188,7 +188,7 @@ public class CircularReadLimitByTimeTest {
         testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
 
         duration = System.currentTimeMillis() - duration;
-        finishedInTime = (TimeUnit.SECONDS.toMillis(duration) <= timeLimitInSec);
+        finishedInTime = (TimeUnit.SECONDS.toMillis(duration) <= timeLimitInSec + 5);
         testContainer.exitStatusCode();
     }
 
