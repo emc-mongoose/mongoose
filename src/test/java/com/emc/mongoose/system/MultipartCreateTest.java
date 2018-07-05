@@ -247,20 +247,20 @@ public class MultipartCreateTest {
             }
             ioTraceRecCount.increment();
         };
-//        testIoTraceLogRecords(stepId, ioTraceRecFunc);
-//
-//        final List<CSVRecord> itemRecs = new ArrayList<>();
-//        try (final BufferedReader br = new BufferedReader(new FileReader(itemOutputFile))) {
-//            try (final CSVParser csvParser = CSVFormat.RFC4180.parse(br)) {
-//                for (final CSVRecord csvRecord : csvParser) {
-//                    itemRecs.add(csvRecord);
-//                }
-//            }
-//        }
-//        long nextItemSize;
-//        long sizeSum = 0;
-//        final int n = itemRecs.size();
-//        assertTrue(n > 0);
+        testIoTraceLogRecords(stepId, ioTraceRecFunc);
+
+        final List<CSVRecord> itemRecs = new ArrayList<>();
+        try (final BufferedReader br = new BufferedReader(new FileReader(itemOutputFile))) {
+            try (final CSVParser csvParser = CSVFormat.RFC4180.parse(br)) {
+                for (final CSVRecord csvRecord : csvParser) {
+                    itemRecs.add(csvRecord);
+                }
+            }
+        }
+        long nextItemSize;
+        long sizeSum = 0;
+        final int n = itemRecs.size();
+        assertTrue(n > 0);
 //        assertTrue(
 //                "Expected no less than " + expectedCountMin + " items, but got " + n,
 //                expectedCountMin <= n
