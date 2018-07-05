@@ -190,6 +190,7 @@ public class ChainWithDelayTest {
 
         testContainer.start();
         testContainer.await(TIME_LIMIT + 10, TimeUnit.SECONDS);
+        stdOutContent = testContainer.stdOutContent();
 
         duration = System.currentTimeMillis() - duration;
         finishedInTime = (TimeUnit.SECONDS.toMillis(duration) <= TIME_LIMIT + 15);
