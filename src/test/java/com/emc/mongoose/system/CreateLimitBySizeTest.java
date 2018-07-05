@@ -16,6 +16,7 @@ import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
+import com.github.dockerjava.api.exception.ConflictException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -138,7 +139,7 @@ public class CreateLimitBySizeTest {
         final List<String> args = new ArrayList<>();
 
         args.add("--item-output-file=" + containerItemOutputFile);
-        args.add("--test-step-limit-size=" + sizeLimit);
+        args.add("--load-step-limit-size=" + sizeLimit);
 
         switch (storageType) {
             case ATMOS:
@@ -157,7 +158,7 @@ public class CreateLimitBySizeTest {
                 final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
                 storageMocks.put(addr, storageMock);
                 args.add("--storage-net-node-addrs="
-                                + storageMocks.keySet().stream().collect(Collectors.joining(","))
+                        + storageMocks.keySet().stream().collect(Collectors.joining(","))
                 );
                 break;
         }
@@ -172,7 +173,7 @@ public class CreateLimitBySizeTest {
                     slaveNodes.put(addr, nodeSvc);
                 }
                 args.add("--load-step-node-addrs="
-                                + slaveNodes.keySet().stream().collect(Collectors.joining(","))
+                        + slaveNodes.keySet().stream().collect(Collectors.joining(","))
                 );
                 break;
         }
@@ -204,7 +205,11 @@ public class CreateLimitBySizeTest {
         slaveNodes.values().forEach(AsyncRunnableBase::start);
 
         duration = System.currentTimeMillis();
-        testContainer.start();
+        try {
+            testContainer.start();
+        } catch (final ConflictException e) {
+            e.printStackTrace();
+        }
         testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
         duration = System.currentTimeMillis() - duration;
 
