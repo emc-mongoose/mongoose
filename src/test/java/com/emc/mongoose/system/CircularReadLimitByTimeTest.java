@@ -184,6 +184,7 @@ public class CircularReadLimitByTimeTest {
 
         duration = System.currentTimeMillis() - duration;
         finishedInTime = (TimeUnit.SECONDS.toMillis(duration) <= timeLimitInSec);
+        stdOutContent = testContainer.stdOutContent();
     }
 
     @After
