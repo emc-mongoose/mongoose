@@ -276,20 +276,19 @@ public class CreateLimitBySizeTest {
             };
         }
 
- //       testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
+        //testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
 
-        //System.out.println("EX: " + expectedCount + "\nSUM: " + ioTraceRecCount.sum() + "\nDEL: " + expectedCount * requiredAccuracy);
         //assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount * requiredAccuracy);
 
-        final List<CSVRecord> items = new ArrayList<>();
-        try (final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
-            final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
-            for (final CSVRecord csvRecord : csvParser) {
-                items.add(csvRecord);
-            }
-        }
+//        final List<CSVRecord> items = new ArrayList<>();
+//        try (final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
+//            final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
+//            for (final CSVRecord csvRecord : csvParser) {
+//                items.add(csvRecord);
+//            }
+//        }
+//        assertEquals(expectedCount, items.size(), expectedCount * requiredAccuracy);
 
-        assertEquals(expectedCount, items.size(), expectedCount * requiredAccuracy);
 //        final Frequency freq = new Frequency();
 //        String itemPath, itemId;
 //        long itemOffset;
@@ -330,10 +329,10 @@ public class CreateLimitBySizeTest {
                     put(IoType.CREATE, concurrency.getValue());
                 }}
         );
-//        testFinalMetricsTableRowStdout(
-//                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
-//                0, 0, itemSize.getValue()
-//        );
+        testFinalMetricsTableRowStdout(
+                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
+                0, 0, itemSize.getValue()
+        );
 
         assertTrue(duration < timeoutInMillis);
     }
