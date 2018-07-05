@@ -201,6 +201,10 @@ public class CreateLimitBySizeTest {
         }
         expectedCount = sizeLimit.get() / itemSizeValue;
 
+        System.out.println("sizeLimit : " + sizeLimit);
+        System.out.println("sizeItem : " + itemSizeValue);
+        System.out.println("expCount : " + expectedCount);
+
         storageMocks.values().forEach(AsyncRunnableBase::start);
         slaveNodes.values().forEach(AsyncRunnableBase::start);
 
