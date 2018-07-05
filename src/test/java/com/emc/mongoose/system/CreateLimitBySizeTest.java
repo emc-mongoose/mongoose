@@ -281,15 +281,15 @@ public class CreateLimitBySizeTest {
         //System.out.println("EX: " + expectedCount + "\nSUM: " + ioTraceRecCount.sum() + "\nDEL: " + expectedCount * requiredAccuracy);
         //assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount * requiredAccuracy);
 
-//        final List<CSVRecord> items = new ArrayList<>();
-//        try (final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
-//            final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
-//            for (final CSVRecord csvRecord : csvParser) {
-//                items.add(csvRecord);
-//            }
-//        }
-//
-//        assertEquals(expectedCount, items.size(), expectedCount * requiredAccuracy);
+        final List<CSVRecord> items = new ArrayList<>();
+        try (final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
+            final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
+            for (final CSVRecord csvRecord : csvParser) {
+                items.add(csvRecord);
+            }
+        }
+
+        assertEquals(expectedCount, items.size(), expectedCount * requiredAccuracy);
 //        final Frequency freq = new Frequency();
 //        String itemPath, itemId;
 //        long itemOffset;
