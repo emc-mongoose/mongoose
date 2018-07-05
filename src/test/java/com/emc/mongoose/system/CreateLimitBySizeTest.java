@@ -324,12 +324,12 @@ public class CreateLimitBySizeTest {
                 IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
                 averagePeriod
         );
-//        testMetricsTableStdout(
-//                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-//                new HashMap<IoType, Integer>() {{
-//                    put(IoType.CREATE, concurrency.getValue());
-//                }}
-//        );
+        testMetricsTableStdout(
+                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
+                new HashMap<IoType, Integer>() {{
+                    put(IoType.CREATE, concurrency.getValue());
+                }}
+        );
 //        testFinalMetricsTableRowStdout(
 //                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
 //                0, 0, itemSize.getValue()
