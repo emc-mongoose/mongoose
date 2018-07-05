@@ -279,6 +279,7 @@ public class CreateLimitBySizeTest {
         try {
             testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
         } catch (Exception ignored){
+            stdOutContent += ignored.getMessage();
         }
 
         System.out.println("EX: " + expectedCount + "\nSUM: " + ioTraceRecCount.sum() + "\nDEL: " + expectedCount * requiredAccuracy);
