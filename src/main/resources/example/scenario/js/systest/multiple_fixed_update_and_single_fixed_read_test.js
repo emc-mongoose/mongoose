@@ -1,4 +1,4 @@
-var parentConfig = {
+var parentConfig_1 = {
   "storage" : {
     "net" : {
       "http" : {
