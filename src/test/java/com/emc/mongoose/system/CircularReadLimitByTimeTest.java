@@ -68,7 +68,7 @@ public class CircularReadLimitByTimeTest {
     private final String hostItemOutputFile = HOST_SHARE_PATH + File.separator
             + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
     private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
-    private final int timeLimitInSec = 65; //1m + up to 5s for the precondition job
+    private final int timeLimitInSec = 100; //1m + up to 5s for the precondition job
 
 
     private boolean finishedInTime;
@@ -179,17 +179,11 @@ public class CircularReadLimitByTimeTest {
 
         long duration = System.currentTimeMillis();
 
-        try {
-            testContainer.start();
-        } catch (Exception e){
-            System.err.println(e.getStackTrace());
-        }
-
+        testContainer.start();
         testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
 
         duration = System.currentTimeMillis() - duration;
-        finishedInTime = (TimeUnit.SECONDS.toMillis(duration) <= timeLimitInSec + 5);
-        testContainer.exitStatusCode();
+        finishedInTime = (TimeUnit.SECONDS.toMillis(duration) <= timeLimitInSec);
     }
 
     @After
