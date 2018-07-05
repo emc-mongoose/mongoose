@@ -276,63 +276,63 @@ public class CreateLimitBySizeTest {
             };
         }
 
-//        testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
-//        assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount * requiredAccuracy);
-//
-//        final List<CSVRecord> items = new ArrayList<>();
-//        try (final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
-//            final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
-//            for (final CSVRecord csvRecord : csvParser) {
-//                items.add(csvRecord);
-//            }
-//        }
-//
-//        assertEquals(expectedCount, items.size(), expectedCount * requiredAccuracy);
-//        final Frequency freq = new Frequency();
-//        String itemPath, itemId;
-//        long itemOffset;
-//        long size;
-//        String modLayerAndMask;
-//        for (final CSVRecord itemRec : items) {
-//            itemPath = itemRec.get(0);
-//            itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
-//            itemOffset = Long.parseLong(itemRec.get(1), 0x10);
-//            assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
-//            freq.addValue(itemOffset);
-//            size = Long.parseLong(itemRec.get(2));
-//            assertEquals(itemSize.getValue().get(), size);
-//            modLayerAndMask = itemRec.get(3);
-//            assertEquals("0/0", modLayerAndMask);
-//        }
-//        assertEquals(items.size(), freq.getUniqueCount());
-//
-//        testTotalMetricsLogRecord(
-//                getContainerMetricsTotalLogRecords(stepId).get(0), IoType.CREATE, concurrency.getValue(),
-//                runMode.getNodeCount(), itemSize.getValue(), 0, 0
-//        );
-//
-//        testMetricsLogRecords(
-//                getContainerMetricsLogRecords(stepId), IoType.CREATE, concurrency.getValue(),
-//                runMode.getNodeCount(), itemSize.getValue(), 0, 0,
-//                averagePeriod
-//        );
-//
-//        testSingleMetricsStdout(
-//                stdOutContent.replaceAll("[\r\n]+", " "),
-//                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
-//                averagePeriod
-//        );
-//        testMetricsTableStdout(
-//                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-//                new HashMap<IoType, Integer>() {{
-//                    put(IoType.CREATE, concurrency.getValue());
-//                }}
-//        );
-//        testFinalMetricsTableRowStdout(
-//                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
-//                0, 0, itemSize.getValue()
-//        );
-//
-//        assertTrue(duration < timeoutInMillis);
+        testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
+        assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount * requiredAccuracy);
+
+        final List<CSVRecord> items = new ArrayList<>();
+        try (final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
+            final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
+            for (final CSVRecord csvRecord : csvParser) {
+                items.add(csvRecord);
+            }
+        }
+
+        assertEquals(expectedCount, items.size(), expectedCount * requiredAccuracy);
+        final Frequency freq = new Frequency();
+        String itemPath, itemId;
+        long itemOffset;
+        long size;
+        String modLayerAndMask;
+        for (final CSVRecord itemRec : items) {
+            itemPath = itemRec.get(0);
+            itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
+            itemOffset = Long.parseLong(itemRec.get(1), 0x10);
+            assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
+            freq.addValue(itemOffset);
+            size = Long.parseLong(itemRec.get(2));
+            assertEquals(itemSize.getValue().get(), size);
+            modLayerAndMask = itemRec.get(3);
+            assertEquals("0/0", modLayerAndMask);
+        }
+        assertEquals(items.size(), freq.getUniqueCount());
+
+        testTotalMetricsLogRecord(
+                getContainerMetricsTotalLogRecords(stepId).get(0), IoType.CREATE, concurrency.getValue(),
+                runMode.getNodeCount(), itemSize.getValue(), 0, 0
+        );
+
+        testMetricsLogRecords(
+                getContainerMetricsLogRecords(stepId), IoType.CREATE, concurrency.getValue(),
+                runMode.getNodeCount(), itemSize.getValue(), 0, 0,
+                averagePeriod
+        );
+
+        testSingleMetricsStdout(
+                stdOutContent.replaceAll("[\r\n]+", " "),
+                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+                averagePeriod
+        );
+        testMetricsTableStdout(
+                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
+                new HashMap<IoType, Integer>() {{
+                    put(IoType.CREATE, concurrency.getValue());
+                }}
+        );
+        testFinalMetricsTableRowStdout(
+                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
+                0, 0, itemSize.getValue()
+        );
+
+        assertTrue(duration < timeoutInMillis);
     }
 }
