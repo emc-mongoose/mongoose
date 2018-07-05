@@ -284,26 +284,19 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 		}
 
-		// intercept the items input for the copy ranges support
+		// intercept the items input for the storage side concatenation support
 		final String itemDataRangesConcatConfig = rangesConfig.stringVal("concat");
 		if(itemDataRangesConcatConfig != null) {
 			final Range srcItemsCountRange = new Range(itemDataRangesConcatConfig);
-			if(
-				IoType.CREATE.equals(ioType)
-					&& ItemType.DATA.equals(itemType)
-					&& !(itemInput instanceof NewItemInput)
-			) {
+			if(IoType.CREATE.equals(ioType) && ItemType.DATA.equals(itemType) && !(itemInput instanceof NewItemInput)) {
 				final long srcItemsCountMin = srcItemsCountRange.getBeg();
 				final long srcItemsCountMax = srcItemsCountRange.getEnd();
 				if(srcItemsCountMin < 0) {
-					throw new OmgShootMyFootException(
-						"Source data items count min value should be more than 0"
-					);
+					throw new OmgShootMyFootException("Source data items count min value should be more than 0");
 				}
 				if(srcItemsCountMax == 0 || srcItemsCountMax < srcItemsCountMin) {
 					throw new OmgShootMyFootException(
-						"Source data items count max value should be more than 0 and not less than "
-							+ "min value"
+						"Source data items count max value should be more than 0 and not less than min value"
 					);
 				}
 				final List<I> srcItemsBuff = new ArrayList<>((int) M);
@@ -325,22 +318,20 @@ implements LoadGeneratorBuilder<I, O, T> {
 				}
 				if(srcItemsCount < srcItemsCountMin) {
 					throw new OmgShootMyFootException(
-						"Available source items count " + srcItemsCount + " is less than configured"
-							+ " min " + srcItemsCountMin
+						"Available source items count " + srcItemsCount + " is less than configured min "
+							+ srcItemsCountMin
 					);
 				}
 				if(srcItemsCount < srcItemsCountMax) {
 					throw new OmgShootMyFootException(
-						"Available source items count " + srcItemsCount + " is less than configured"
-							+ " max " + srcItemsCountMax
+						"Available source items count " + srcItemsCount + " is less than configured max "
+							+ srcItemsCountMax
 					);
 				}
 
 				// it's safe to cast to int here because the values will not be more than
 				// srcItemsCount which is not more than the integer limit
-				((DataIoTaskBuilder) ioTaskBuilder).setSrcItemsCount(
-					(int) srcItemsCountMin, (int) srcItemsCountMax
-				);
+				((DataIoTaskBuilder) ioTaskBuilder).setSrcItemsCount((int) srcItemsCountMin, (int) srcItemsCountMax);
 				((DataIoTaskBuilder) ioTaskBuilder).setSrcItemsForConcat(srcItemsBuff);
 				itemInput = newItemInput();
 			}
@@ -355,8 +346,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 
 		final Config recycleConfig = generatorConfig.configVal("recycle");
-		final int
-			recycleLimit = recycleConfig.boolVal("enabled") ? recycleConfig.intVal("limit") : 0;
+		final int recycleLimit = recycleConfig.boolVal("enabled") ? recycleConfig.intVal("limit") : 0;
 
 		return (T) new LoadGeneratorImpl<>(
 			itemInput, ioTaskBuilder, throttles, storageDriver, batchSize, countLimit, recycleLimit, shuffleFlag
