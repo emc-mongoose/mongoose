@@ -72,7 +72,6 @@ public class CircularReadLimitByTimeTest {
 
 
     private boolean finishedInTime;
-    private int containerExitCode;
     private int averagePeriod;
 
     private String stdOutContent = null;
@@ -190,8 +189,7 @@ public class CircularReadLimitByTimeTest {
 
         duration = System.currentTimeMillis() - duration;
         finishedInTime = (TimeUnit.SECONDS.toMillis(duration) <= timeLimitInSec);
-
-        containerExitCode = testContainer.exitStatusCode();
+        testContainer.exitStatusCode();
     }
 
     @After
@@ -223,8 +221,6 @@ public class CircularReadLimitByTimeTest {
     @Test
     public final void test()
             throws Exception {
-
-        //assertEquals("Container exit code should be 0", 0, containerExitCode);
 
 //        final LongAdder ioTraceRecCount = new LongAdder();
 //        final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
@@ -293,6 +289,6 @@ public class CircularReadLimitByTimeTest {
 //                averagePeriod
 //        );
 //
-//        assertTrue("Scenario didn't finished in time", finishedInTime);
+        assertTrue("Scenario didn't finished in time", finishedInTime);
     }
 }
