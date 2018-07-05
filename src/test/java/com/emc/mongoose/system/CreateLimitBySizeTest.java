@@ -245,37 +245,37 @@ public class CreateLimitBySizeTest {
 
         assertEquals("Container exit code should be 0", 0, containerExitCode);
 
-//        final LongAdder ioTraceRecCount = new LongAdder();
-//
-//        final Consumer<CSVRecord> ioTraceRecFunc;
-//        if (storageType.equals(StorageType.FS)) {
-//            ioTraceRecFunc = ioTraceRecord -> {
-//                File nextDstFile;
-//                final String nextItemPath = ioTraceRecord.get("ItemPath");
-//                final String nextItemId = nextItemPath.substring(
-//                        nextItemPath.lastIndexOf(File.separatorChar) + 1
-//                );
-//                nextDstFile = Paths.get(hostItemOutputPath, nextItemId).toFile();
-//                assertTrue("File \"" + nextDstFile + "\" doesn't exist", nextDstFile.exists());
-//                assertEquals(
-//                        "File (" + nextItemPath + ") size (" + nextDstFile.length() +
-//                                " is not equal to the configured: " + itemSize.getValue(),
-//                        itemSize.getValue().get(), nextDstFile.length()
-//                );
-//                ioTraceRecCount.increment();
-//            };
-//        } else {
-//            final String nodeAddr = storageMocks.keySet().iterator().next();
-//            ioTraceRecFunc = ioTraceRec -> {
-//                testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), itemSize.getValue());
-//                HttpStorageMockUtil.assertItemExists(
-//                        nodeAddr, ioTraceRec.get("ItemPath"),
-//                        Long.parseLong(ioTraceRec.get("TransferSize"))
-//                );
-//                ioTraceRecCount.increment();
-//            };
-//        }
-//
+        final LongAdder ioTraceRecCount = new LongAdder();
+
+        final Consumer<CSVRecord> ioTraceRecFunc;
+        if (storageType.equals(StorageType.FS)) {
+            ioTraceRecFunc = ioTraceRecord -> {
+                File nextDstFile;
+                final String nextItemPath = ioTraceRecord.get("ItemPath");
+                final String nextItemId = nextItemPath.substring(
+                        nextItemPath.lastIndexOf(File.separatorChar) + 1
+                );
+                nextDstFile = Paths.get(hostItemOutputPath, nextItemId).toFile();
+                assertTrue("File \"" + nextDstFile + "\" doesn't exist", nextDstFile.exists());
+                assertEquals(
+                        "File (" + nextItemPath + ") size (" + nextDstFile.length() +
+                                " is not equal to the configured: " + itemSize.getValue(),
+                        itemSize.getValue().get(), nextDstFile.length()
+                );
+                ioTraceRecCount.increment();
+            };
+        } else {
+            final String nodeAddr = storageMocks.keySet().iterator().next();
+            ioTraceRecFunc = ioTraceRec -> {
+                testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), itemSize.getValue());
+                HttpStorageMockUtil.assertItemExists(
+                        nodeAddr, ioTraceRec.get("ItemPath"),
+                        Long.parseLong(ioTraceRec.get("TransferSize"))
+                );
+                ioTraceRecCount.increment();
+            };
+        }
+
 //        testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
 //        assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount * requiredAccuracy);
 //
