@@ -104,8 +104,8 @@ public class CreateLimitBySizeTest {
 
         stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 
-        containerItemOutputPath = Paths.get(CONTAINER_SHARE_PATH, stepId).toString();
-        hostItemOutputPath = Paths.get(HOST_SHARE_PATH.toString(), stepId).toString();
+        containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
+        hostItemOutputPath = MongooseContainer.getHostItemOutputPath(stepId);
 
         try {
             FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
@@ -156,14 +156,9 @@ public class CreateLimitBySizeTest {
                 );
                 final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
                 storageMocks.put(addr, storageMock);
-                args.add(
-                        "--storage-net-node-addrs="
+                args.add("--storage-net-node-addrs="
                                 + storageMocks.keySet().stream().collect(Collectors.joining(","))
                 );
-                args.add("--storage-net-http-namespace=ns1");
-                break;
-            case FS:
-                args.add("--item-output-path=" + containerItemOutputPath);
                 break;
         }
 
@@ -176,8 +171,7 @@ public class CreateLimitBySizeTest {
                     final String addr = localExternalAddr + ":" + port;
                     slaveNodes.put(addr, nodeSvc);
                 }
-                args.add(
-                        "--load-step-node-addrs="
+                args.add("--load-step-node-addrs="
                                 + slaveNodes.keySet().stream().collect(Collectors.joining(","))
                 );
                 break;
