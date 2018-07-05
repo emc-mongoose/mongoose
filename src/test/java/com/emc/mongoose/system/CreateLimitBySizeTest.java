@@ -276,7 +276,12 @@ public class CreateLimitBySizeTest {
             };
         }
 
-//        testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
+        try {
+            testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
 //        assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount * requiredAccuracy);
 
 //        final List<CSVRecord> items = new ArrayList<>();
