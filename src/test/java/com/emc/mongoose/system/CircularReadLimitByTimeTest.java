@@ -178,12 +178,8 @@ public class CircularReadLimitByTimeTest {
         slaveNodes.values().forEach(AsyncRunnableBase::start);
 
         long duration = System.currentTimeMillis();
-        try {
-            testContainer.start();
-        } catch (Exception e){
-            e.printStackTrace();
-        }
 
+        testContainer.start();
         testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
 
         duration = System.currentTimeMillis() - duration;
