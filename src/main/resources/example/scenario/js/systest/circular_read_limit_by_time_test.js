@@ -1,7 +1,7 @@
 var fileName = "CircularReadLimitByTime.csv";
 
 var cmd = new java.lang.ProcessBuilder()
-    .command("-c", "rm -f " + fileName)
+    .command("/bin/usr/bash", "-c", "rm -f " + fileName)
     .inheritIO()
     .start();
 cmd.waitFor();
