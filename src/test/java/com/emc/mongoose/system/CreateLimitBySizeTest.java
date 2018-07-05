@@ -118,6 +118,23 @@ public class CreateLimitBySizeTest {
         this.concurrency = concurrency;
         this.itemSize = itemSize;
 
+        //set-up a izeLimit depending on the itemSize
+        final long itemSizeValue = itemSize.getValue().get();
+        if (itemSizeValue > SizeInBytes.toFixedSize("1GB")) {
+            sizeLimit = new SizeInBytes(100 * itemSizeValue);
+        } else if (itemSizeValue > SizeInBytes.toFixedSize("1MB")) {
+            sizeLimit = new SizeInBytes(1_000 * itemSizeValue);
+        } else if (itemSizeValue > SizeInBytes.toFixedSize("10KB")) {
+            sizeLimit = new SizeInBytes(10_000 * itemSizeValue);
+        } else {
+            sizeLimit = new SizeInBytes(100_000 * itemSizeValue);
+        }
+        expectedCount = sizeLimit.get() / itemSizeValue;
+
+        System.out.println("sizeLimit : " + sizeLimit);
+        System.out.println("sizeItem : " + itemSizeValue);
+        System.out.println("expCount : " + expectedCount);
+
         if (storageType.equals(StorageType.FS)) {
             try {
                 DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
@@ -187,23 +204,6 @@ public class CreateLimitBySizeTest {
     @Before
     public final void setUp()
             throws Exception {
-
-        //set-up a izeLimit depending on the itemSize
-        final long itemSizeValue = itemSize.getValue().get();
-        if (itemSizeValue > SizeInBytes.toFixedSize("1GB")) {
-            sizeLimit = new SizeInBytes(100 * itemSizeValue);
-        } else if (itemSizeValue > SizeInBytes.toFixedSize("1MB")) {
-            sizeLimit = new SizeInBytes(1_000 * itemSizeValue);
-        } else if (itemSizeValue > SizeInBytes.toFixedSize("10KB")) {
-            sizeLimit = new SizeInBytes(10_000 * itemSizeValue);
-        } else {
-            sizeLimit = new SizeInBytes(100_000 * itemSizeValue);
-        }
-        expectedCount = sizeLimit.get() / itemSizeValue;
-
-        System.out.println("sizeLimit : " + sizeLimit);
-        System.out.println("sizeItem : " + itemSizeValue);
-        System.out.println("expCount : " + expectedCount);
 
         storageMocks.values().forEach(AsyncRunnableBase::start);
         slaveNodes.values().forEach(AsyncRunnableBase::start);
