@@ -11,7 +11,7 @@ var parentConfig = {
 var fileName = "MultipleFixedUpdateAndSingleFixedRead";
 
 var cmd_1 = new java.lang.ProcessBuilder()
-    .command("sh", "-c", "rm -f " + fileName + "-0.csv " + fileName + "-1.csv")
+    .command("/bin/sh", "-c", "rm -f " + fileName + "-0.csv " + fileName + "-1.csv")
     .inheritIO()
     .start();
 cmd_1.waitFor();
@@ -35,7 +35,7 @@ PreconditionLoad
     .run();
 
 var cmd_2 = new java.lang.ProcessBuilder()
-    .command("sh", "-c", "sleep 5")
+    .command("/bin/sh", "-c", "sleep 5")
     .inheritIO()
     .start();
 cmd_2.waitFor();
@@ -63,7 +63,7 @@ UpdateLoad
     .run();
 
 var cmd_3 = new java.lang.ProcessBuilder()
-    .command("sh", "-c", "sleep 5")
+    .command("/bin/sh", "-c", "sleep 5")
     .inheritIO()
     .start();
 cmd_3.waitFor();
