@@ -147,10 +147,6 @@ public class CircularReadLimitByTimeTest {
                         "--storage-net-node-addrs="
                                 + storageMocks.keySet().stream().collect(Collectors.joining(","))
                 );
-                args.add("--storage-net-http-namespace=ns1");
-                break;
-            case FS:
-                args.add("--item-output-path=" + containerItemOutputPath);
                 break;
         }
 
