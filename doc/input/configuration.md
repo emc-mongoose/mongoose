@@ -118,8 +118,9 @@ is mentioned as the corresponding JSON node:
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
 | storage-net-node-addrs                         | List of strings | 127.0.0.1 | The list of the storage node IPs or hostnames to use for HTTP load. May include port numbers.
-| storage-net-node-port                          | Integer > 0 | 9020 | The common port number to access the storage nodes, may be overriden adding the port number to the storage-driver-addrs, for example: "127.0.0.1:9020,127.0.0.1:9022,..."
 | storage-net-node-connAttemptsLimit             | Integer >= 0 | 0 | The limit for the subsequent connection attempts for each storage endpoint node. The node is excluded from the connection pool forever if the node has more subsequent connection failures. The default value (0) means no limit.
+| storage-net-node-port                          | Integer > 0 | 9020 | The common port number to access the storage nodes, may be overriden adding the port number to the storage-driver-addrs, for example: "127.0.0.1:9020,127.0.0.1:9022,..."
+| storage-net-node-slice                         | Flag | false | Slice the storage node addresses between the mongoose nodes using the greatest common divisor or not
 | storage-net-bindBacklogSize                    | Integer >= 0 | 0 |
 | storage-net-interestOpQueued                   | Flag | false |
 | storage-net-keepAlive                          | Flag | true |

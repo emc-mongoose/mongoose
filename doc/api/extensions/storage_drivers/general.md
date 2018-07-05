@@ -70,30 +70,25 @@ the custom **storage driver implementation identifier**.
 
 # 3. Cooperative Storage Driver
 
-Cooperative storage drivers uses the fibers to process the I/O tasks in
-the most efficient way. Also it supports composite I/O tasks.
+Cooperative storage drivers uses the fibers to process the I/O tasks in the most efficient way. Also it supports
+composite I/O tasks.
 
 ## 3.1 NIO Storage Driver
 
-This abstract implementation uses few I/O threads to execute a lot if
-I/O tasks in parallel. Actual I/O work should be executed in the method
-`invokeNio(ioTask)` in the reentrant and non-blocking manner.
+This abstract implementation uses few I/O threads to execute a lot if I/O tasks in parallel. Actual I/O work should be
+executed in the method `invokeNio(ioTask)` in the reentrant and non-blocking manner.
 
 ## 3.2. Netty-Based Storage Driver
 
-This abstract implementation is intended to work with distributed
-storage with multiple endpoint nodes accessible via the network.
-Provides high-performance connection pool, simple endpoint node
-balancing, SSL/TLS functionality.
+This abstract implementation is intended to work with distributed storage with multiple endpoint nodes accessible via
+the network. Provides high-performance connection pool, simple endpoint node balancing, SSL/TLS functionality.
 
 ### 3.2.1. HTTP Storage Driver
 
-This abstract implementation inherits the Netty-Based one and adds the
-HTTP-related specific functionality.
+This abstract implementation inherits the Netty-Based one and adds the HTTP-related specific functionality.
 
 # 4. Preemptive Storage Driver
 
-Some storage APIs don't support non-blocking I/O calls. The storage
-driver should provide the OS thread entirely for each connection/open
-file to drive the I/O. This way is not very efficient while high
-concurrency level is used either large data blocks are transferred.
+Some storage APIs don't support non-blocking I/O calls. The storage driver should provide the OS thread entirely for
+each connection/open file to drive the I/O. This way is not very efficient while high concurrency level is used either
+large data blocks are transferred.

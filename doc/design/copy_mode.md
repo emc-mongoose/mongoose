@@ -1,6 +1,6 @@
 # Overview
 
-Sometimes it's very useful to perform a copy operation on the multiple
+The copy mode functionality allows to perform a copy operation on the multiple
 files instead of write one. The performance rates may be significantly
 different for the copy and write operations. Some cloud storage APIs
 also support copying the objects (S3 and Swift) so the functionality

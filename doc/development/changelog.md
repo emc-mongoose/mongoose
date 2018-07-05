@@ -78,6 +78,10 @@ implemented. The new [external library](https://github.com/akurilov/confuse) is 
 The configuration is assembled dynamically, including the
 sub-configurations provided by the extensions resolved in the runtime.
 
+#### 4. Storage Node Failover Support
+
+TODO
+
 ### Non-functional
 
 1. Mongoose v4.0.0 doesn't work with deprecated JSON scenarios anymore. So the tool converting the Mongoose v3.x
