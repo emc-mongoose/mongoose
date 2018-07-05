@@ -217,16 +217,16 @@ public class CircularReadLimitByTimeTest {
     public final void test()
             throws Exception {
 
-//        final LongAdder ioTraceRecCount = new LongAdder();
-//        final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
-//            testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), itemSize.getValue());
-//            ioTraceRecCount.increment();
-//        };
-//        testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
-//        assertTrue(
-//                "There should be more than 1 record in the I/O trace log file",
-//                ioTraceRecCount.sum() > 1
-//        );
+        final LongAdder ioTraceRecCount = new LongAdder();
+        final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
+            testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), itemSize.getValue());
+            ioTraceRecCount.increment();
+        };
+        testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
+        assertTrue(
+                "There should be more than 1 record in the I/O trace log file",
+                ioTraceRecCount.sum() > 1
+        );
 //
 //        final List<CSVRecord> items = new ArrayList<>();
 //        try (final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
@@ -258,10 +258,10 @@ public class CircularReadLimitByTimeTest {
                 IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
                 averagePeriod
         );
-//        testFinalMetricsTableRowStdout(
-//                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
-//                0, 60, itemSize.getValue()
-//        );
+        testFinalMetricsTableRowStdout(
+                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
+                0, 60, itemSize.getValue()
+        );
 //
 //        final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
 //        assertEquals(
