@@ -256,16 +256,16 @@ public class MultipleFixedUpdateAndSingleFixedReadTest {
 //                averagePeriod
 //        );
 //
-//        final String stdOutput = stdOutContent.replaceAll("[\r\n]+", " ");
-//        testSingleMetricsStdout(
-//                stdOutput, IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
-//                expectedUpdateSize,
-//                averagePeriod
-//        );
-//        testSingleMetricsStdout(
-//                stdOutput, IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
-//                expectedReadSize,
-//                averagePeriod
-//        );
+        final String stdOutput = stdOutContent.replaceAll("[\r\n]+", " ");
+        testSingleMetricsStdout(
+                stdOutput, IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+                expectedUpdateSize,
+                averagePeriod
+        );
+        testSingleMetricsStdout(
+                stdOutput, IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+                expectedReadSize,
+                averagePeriod
+        );
     }
 }
