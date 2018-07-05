@@ -95,7 +95,7 @@ public class CircularReadLimitByTimeTest {
         }
 
         stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-        containerItemOutputPath = Paths.get(CONTAINER_SHARE_PATH, stepId).toString();
+        containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 
         try {
             FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
