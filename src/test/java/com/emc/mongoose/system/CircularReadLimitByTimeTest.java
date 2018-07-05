@@ -180,7 +180,12 @@ public class CircularReadLimitByTimeTest {
 
         long duration = System.currentTimeMillis();
 
-        testContainer.start();
+        try {
+            testContainer.start();
+        } catch (Exception e){
+            System.err.println(e.getStackTrace());
+        }
+
         testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
 
         duration = System.currentTimeMillis() - duration;
