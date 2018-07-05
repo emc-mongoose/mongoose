@@ -2,7 +2,7 @@ PipelineLoad
     .append({
       "item" : {
         "output" : {
-          "delay" : "1m"
+          "delay" : "20s"
         }
       },
       "storage" : {

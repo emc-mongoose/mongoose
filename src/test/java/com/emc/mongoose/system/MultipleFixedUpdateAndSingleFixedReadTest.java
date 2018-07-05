@@ -90,7 +90,7 @@ public class MultipleFixedUpdateAndSingleFixedReadTest {
         }
 
         stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-        containerItemOutputPath = Paths.get(CONTAINER_SHARE_PATH, stepId).toString();
+        containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 
         try {
             FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
@@ -145,9 +145,6 @@ public class MultipleFixedUpdateAndSingleFixedReadTest {
                                 + storageMocks.keySet().stream().collect(Collectors.joining(","))
                 );
                 break;
-            case FS:
-                args.add("--item-output-path=" + containerItemOutputPath);
-                break;
         }
 
         switch (runMode) {
@@ -179,6 +176,7 @@ public class MultipleFixedUpdateAndSingleFixedReadTest {
         slaveNodes.values().forEach(AsyncRunnableBase::start);
         testContainer.start();
         testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+        stdOutContent = testContainer.stdOutContent();
     }
 
     @After

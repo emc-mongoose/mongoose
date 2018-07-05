@@ -54,8 +54,8 @@ public class ChainWithDelayTest {
         return EnvParams.PARAMS;
     }
 
-    private final int DELAY_SECONDS = 60;
-    private final int TIME_LIMIT = 180;
+    private final int DELAY_SECONDS = 20;
+    private final int TIME_LIMIT = 60;
     private final String zone1Addr = "127.0.0.1";
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
@@ -134,7 +134,7 @@ public class ChainWithDelayTest {
         final List<String> args = new ArrayList<>();
 
         args.add("--storage-net-http-namespace=ns1");
-        args.add("--test-step-limit-time=" + TIME_LIMIT);
+        args.add("--load-step-limit-time=" + TIME_LIMIT);
 
         switch (storageType) {
             case ATMOS:
@@ -275,7 +275,7 @@ public class ChainWithDelayTest {
 //            }
 //        };
 //        testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
-//
-//        assertTrue("Scenario didn't finished in time", finishedInTime);
+
+        assertTrue("Scenario didn't finished in time", finishedInTime);
     }
 }

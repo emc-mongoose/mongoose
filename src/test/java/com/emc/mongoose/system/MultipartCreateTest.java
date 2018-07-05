@@ -41,6 +41,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.system.util.LogValidationUtil.*;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
@@ -110,7 +111,7 @@ public class MultipartCreateTest {
         }
 
         stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-        containerItemOutputPath = Paths.get(CONTAINER_SHARE_PATH, stepId).toString();
+        containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 
         try {
             FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
@@ -167,9 +168,6 @@ public class MultipartCreateTest {
                                 + storageMocks.keySet().stream().collect(Collectors.joining(","))
                 );
                 break;
-            case FS:
-                args.add("--item-output-path=" + containerItemOutputPath);
-                break;
         }
 
         switch (runMode) {
@@ -201,6 +199,7 @@ public class MultipartCreateTest {
         slaveNodes.values().forEach(AsyncRunnableBase::start);
         testContainer.start();
         testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+        stdOutContent = testContainer.stdOutContent();
     }
 
     @After
