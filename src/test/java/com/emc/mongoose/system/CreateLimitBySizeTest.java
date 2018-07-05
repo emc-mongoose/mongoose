@@ -276,12 +276,9 @@ public class CreateLimitBySizeTest {
             };
         }
 
-        try {
-            testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+        testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
 
+        System.out.println("EX: " + expectedCount + "\nSUM: " + ioTraceRecCount.sum() + "\nDEL: " + expectedCount * requiredAccuracy);
         assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount * requiredAccuracy);
 
 //        final List<CSVRecord> items = new ArrayList<>();
