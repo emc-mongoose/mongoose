@@ -1,11 +1,11 @@
 var processBuilder = new java.lang.ProcessBuilder();
 
 var command1 = processBuilder
-    .command("sh", "-c", "echo Hello world!")
+    .command("/bin/sh", "-c", "echo Hello world!")
     .start();
 
 var command2 = processBuilder
-    .command("sh", "-c", "ps alx | grep java")
+    .command("/bin/sh", "-c", "ps alx | grep java")
     .start();
 
 var command1StdOut = new java.io.BufferedReader(

@@ -4,7 +4,7 @@ var itemsFile = "weighted_load_example.csv";
 var itemOutputPath = "/weighted_load_example";
 
 // declare the cleanup shell command
-new java.lang.ProcessBuilder("sh", "-c", "rm -f " + itemsFile)
+new java.lang.ProcessBuilder("/bin/sh", "-c", "rm -f " + itemsFile)
     .inheritIO()
     .start()
     .waitFor();

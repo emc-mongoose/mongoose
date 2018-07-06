@@ -1,7 +1,6 @@
 package com.emc.mongoose.logging;
 
 import com.emc.mongoose.concurrent.DaemonBase;
-
 import static com.emc.mongoose.Constants.KEY_HOME_DIR;
 import static com.emc.mongoose.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.env.DateUtil.TZ_UTC;
@@ -13,8 +12,6 @@ import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractOutputStreamAppender;
-import org.apache.logging.log4j.core.util.Cancellable;
-import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
 import org.apache.logging.log4j.core.util.datetime.DatePrinter;
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 import org.apache.logging.log4j.message.Message;
@@ -24,14 +21,12 @@ import java.util.Calendar;
 /**
  Created by kurila on 06.05.14.
  */
-public final class LogUtil
-implements ShutdownCallbackRegistry {
+public interface LogUtil {
 
-	public static final DatePrinter
-		FMT_DT = FastDateFormat.getInstance("yyyyMMdd.HHmmss.SSS", TZ_UTC, LOCALE_DEFAULT);
+	DatePrinter FMT_DT = FastDateFormat.getInstance("yyyyMMdd.HHmmss.SSS", TZ_UTC, LOCALE_DEFAULT);
 
 	// console colors
-	public static final String
+	String
 		RED = "\u001B[31m",
 		GREEN = "\u001B[32m",
 		YELLOW = "\u001B[33",
@@ -47,13 +42,11 @@ implements ShutdownCallbackRegistry {
 		DELETE_COLOR = "\u001B[38;5;137m",
 		LIST_COLOR = "\u001B[38;5;138m";
 
-	public static String getDateTimeStamp() {
-		return FMT_DT.format(
-			Calendar.getInstance(TZ_UTC, LOCALE_DEFAULT).getTime()
-		);
+	static String getDateTimeStamp() {
+		return FMT_DT.format(Calendar.getInstance(TZ_UTC, LOCALE_DEFAULT).getTime());
 	}
 
-	public static void init(final String homeDir) {
+	static void init(final String homeDir) {
 		ThreadContext.put(KEY_HOME_DIR, homeDir);
 		try {
 			Runtime.getRuntime().addShutdownHook(
@@ -69,7 +62,7 @@ implements ShutdownCallbackRegistry {
 		}
 	}
 
-	public static void flushAll() {
+	static void flushAll() {
 		final LoggerContext logCtx = ((LoggerContext) LogManager.getContext());
 		for(final org.apache.logging.log4j.core.Logger logger : logCtx.getLoggers()) {
 			for(final Appender appender : logger.getAppenders().values()) {
@@ -80,7 +73,7 @@ implements ShutdownCallbackRegistry {
 		}
 	}
 
-	public static void shutdown() {
+	static void shutdown() {
 		try {
 			DaemonBase.closeAll();
 			LogManager.shutdown();
@@ -89,7 +82,7 @@ implements ShutdownCallbackRegistry {
 		}
 	}
 
-	public static String getFailureRatioAnsiColorCode(final long succ, final long fail) {
+	static String getFailureRatioAnsiColorCode(final long succ, final long fail) {
 		if(fail == 0) {
 			return "\u001B[38;2;0;200;0m";
 		}
@@ -102,12 +95,9 @@ implements ShutdownCallbackRegistry {
 			/* B */ "0m";
 	}
 
-	private static final ThreadLocal<StringBuilder>
-		THR_LOC_MSG_BUILDER = ThreadLocal.withInitial(StringBuilder::new);
+	ThreadLocal<StringBuilder> THR_LOC_MSG_BUILDER = ThreadLocal.withInitial(StringBuilder::new);
 
-	public static void exception(
-		final Level level, final Throwable e, final String msgPattern, final Object... args
-	) {
+	static void exception(final Level level, final Throwable e, final String msgPattern, final Object... args) {
 		if(Loggers.ERR.isTraceEnabled()) {
 			trace(Loggers.ERR, level, e, msgPattern, args);
 		} else {
@@ -129,26 +119,9 @@ implements ShutdownCallbackRegistry {
 		}
 	}
 
-	public static void trace(
-		final Logger logger, final Level level, final Throwable e, final String msgPattern,
-		final Object... args
+	static void trace(
+		final Logger logger, final Level level, final Throwable e, final String msgPattern, final Object... args
 	) {
 		logger.log(level, logger.getMessageFactory().newMessage(msgPattern + ": " + e, args), e);
-	}
-
-	@Override
-	public final Cancellable addShutdownCallback(final Runnable callback) {
-		return new Cancellable() {
-			@Override
-			public final void cancel() {
-			}
-			@Override
-			public final void run() {
-				if(callback != null) {
-					System.out.println("Shutdown callback + \"" + callback + "\" run...");
-					callback.run();
-				}
-			}
-		};
 	}
 }

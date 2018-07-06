@@ -1,7 +1,10 @@
 package com.emc.mongoose.logging;
 
+import com.emc.mongoose.Constants;
 import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.util.StringBuilderFormattable;
+
+import java.text.NumberFormat;
 
 import static java.lang.ThreadLocal.withInitial;
 
@@ -37,13 +40,22 @@ implements Message, StringBuilderFormattable {
 	}
 	
 	protected static String formatFixedWidth(final double value, final int count) {
-		final String valueStr = Double.toString(value);
-		if(value < Math.pow(10, count) && valueStr.length() > count) {
-			return valueStr.substring(0, count);
-		} else if(value < Math.pow(10, - count + 2)) {
-			return "0";
+		final String result;
+		if(value > Math.pow(10, count - 2) && value < Math.pow(10, count)) {
+			result = Long.toString((long) value);
+		} else if(value >= Math.pow(10, count)) {
+			final String t = Double.toString(value);
+			result = t.substring(0, count - 2) + t.substring(t.length() - 2);
 		} else {
-			return valueStr;
+			final String valueStr = Double.toString(value);
+			if(value < Math.pow(10, count) && valueStr.length() > count) {
+				result = valueStr.substring(0, count);
+			} else if(value < Math.pow(10, - count + 2)) {
+				result = "0";
+			} else {
+				result = valueStr;
+			}
 		}
+		return result;
 	}
 }
