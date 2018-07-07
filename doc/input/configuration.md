@@ -63,7 +63,7 @@ is mentioned as the corresponding JSON node:
 | item-data-ranges-concat                        | Range | null | The number/range of numbers of the source objects used to concatenate every destination objec
 | item-data-ranges-fixed                         | Byte Range **list** | null | The fixed byte ranges to update or read (depends on the specified load type) |
 | item-data-ranges-random                        | Integer >= 0 | 0 | The count of the random ranges to update or read |
-| item-data-ranges-threshold                     | Size | 0 | The size threshold to enable multipart upload if supported by the configured storage driver |
+| item-data-ranges-threshold                     | Size | 0 | The size threshold to enable the multipart upload if supported by the configured storage driver |
 | item-data-size                                 | Size | 1MB | The size of the data items to process. Doesn't have any effect if item.type=container |
 | item-data-verify                               | Flag | false | Specifies whether to verify the content while reading the data items or not. Doesn't have any effect if load-type != read |
 | item-input-file                                | Path | null | The source file for the items to process. If null the behavior depends on the load type. |
@@ -140,7 +140,7 @@ is mentioned as the corresponding JSON node:
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
 | storage-net-http-fsAccess                      | Flag | false | Specifies whether filesystem access is enabled or not in the case of S3 or Atmos API
-| storage-net-http-headers                       | Map | { "Connection" : "keep-alive", "User-Agent" : "mongoose/3.6.0" } | Custom HTTP headers section. An user may place here a key-value pair which will be used as HTTP header.
+| storage-net-http-headers                       | Map | { "Connection" : "keep-alive", "User-Agent" : "mongoose/4.0.0" } | Custom HTTP headers section. An user may place here a key-value pair which will be used as HTTP header.
 | storage-net-http-namespace                     | String | null | The HTTP storage namespace. WARNING: the default value (null) will not work in the case of Swift API
 | storage-net-http-versioning                    | Flag | false | Specifies whether the versioning storage feature is used or not
 

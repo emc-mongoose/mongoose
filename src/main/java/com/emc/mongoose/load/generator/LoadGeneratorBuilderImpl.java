@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.exception.OmgShootMyFootException;
+import com.emc.mongoose.item.ItemInputFactory;
 import com.emc.mongoose.supply.BatchSupplier;
 import com.emc.mongoose.supply.ConstantStringSupplier;
 import com.emc.mongoose.supply.RangePatternDefinedSupplier;
@@ -12,7 +13,6 @@ import com.emc.mongoose.item.io.task.data.DataIoTaskBuilder;
 import com.emc.mongoose.item.io.task.path.PathIoTaskBuilderImpl;
 import com.emc.mongoose.item.io.task.token.TokenIoTaskBuilderImpl;
 import com.emc.mongoose.item.DataItemFactoryImpl;
-import com.emc.mongoose.item.CsvFileItemInput;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
@@ -21,7 +21,6 @@ import com.emc.mongoose.item.ItemNamingType;
 import com.emc.mongoose.item.ItemType;
 import com.emc.mongoose.item.NewDataItemInput;
 import com.emc.mongoose.item.NewItemInput;
-import com.emc.mongoose.item.StorageItemInput;
 import com.emc.mongoose.item.TransferConvertBuffer;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.logging.LogUtil;
@@ -35,7 +34,6 @@ import static com.emc.mongoose.storage.driver.StorageDriver.BUFF_SIZE_MIN;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.commons.io.Input;
-import com.github.akurilov.commons.io.file.BinFileInput;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.throttle.Throttle;
@@ -47,7 +45,6 @@ import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -121,9 +118,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	}
 	
 	@Override
-	public LoadGeneratorBuilderImpl<I, O, T> storageDriver(
-		final StorageDriver<I, O> storageDriver
-	) {
+	public LoadGeneratorBuilderImpl<I, O, T> storageDriver(final StorageDriver<I, O> storageDriver) {
 		this.storageDriver = storageDriver;
 		return this;
 	}
@@ -270,7 +265,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 		// init the items input
 		final String itemInputFile = inputConfig.stringVal("file");
 		if(itemInput == null) {
-			itemInput = itemInput(ioType, itemInputFile, itemInputPath);
+			if(
+				(itemInputFile == null || itemInputFile.isEmpty()) && (itemInputPath == null || itemInputPath.isEmpty())
+			) {
+				itemInput = newItemInput();
+			} else {
+				itemInput = ItemInputFactory.createItemInput(itemConfig, storageDriver, batchSize);
+			}
 			if(itemInput == null) {
 				throw new OmgShootMyFootException("No item input available");
 			}
@@ -451,50 +452,6 @@ implements LoadGeneratorBuilder<I, O, T> {
 			pathSupplier = new RangePatternDefinedSupplier(path);
 		}
 		return pathSupplier;
-	}
-
-	@SuppressWarnings("unchecked")
-	private Input<I> itemInput(
-		final IoType ioType, final String itemInputFile, final String itemInputPath
-	) throws OmgShootMyFootException {
-		
-		if(itemInputFile == null || itemInputFile.isEmpty()) {
-			if(itemInputPath == null || itemInputPath.isEmpty()) {
-				if(IoType.CREATE.equals(ioType) || IoType.NOOP.equals(ioType)) {
-					itemInput = newItemInput();
-				} else {
-					throw new OmgShootMyFootException(
-						"No input (file either path) is specified for non-create generator"
-					);
-				}
-			} else {
-				final Config namingConfig = itemConfig.configVal("naming");
-				final String namingPrefix = namingConfig.stringVal("prefix");
-				final int namingRadix = namingConfig.intVal("radix");
-				itemInput = new StorageItemInput<>(
-					storageDriver, batchSize, itemFactory, itemInputPath, namingPrefix, namingRadix
-				);
-			}
-		} else {
-			final Path itemInputFilePath = Paths.get(itemInputFile);
-			try {
-				if(itemInputFile.endsWith(".csv")) {
-					try {
-						itemInput = new CsvFileItemInput<>(itemInputFilePath, itemFactory);
-					} catch(final NoSuchMethodException e){
-						throw new RuntimeException(e);
-					}
-				} else {
-					itemInput = new BinFileInput<>(itemInputFilePath);
-				}
-			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.WARN, e, "Failed to use the item input file \"{}\"", itemInputFile
-				);
-			}
-		}
-
-		return itemInput;
 	}
 
 	private Input<I> newItemInput()

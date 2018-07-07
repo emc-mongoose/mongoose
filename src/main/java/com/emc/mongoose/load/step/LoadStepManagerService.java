@@ -13,7 +13,6 @@ extends Service {
 
 	String SVC_NAME = "load/step/manager";
 
-	String getStepService(
-		final String stepType, final Config config, final List<Map<String, Object>> stepConfigs
-	) throws RemoteException;
+	String getStepService(final String stepType, final Config config, final List<Config> ctxConfigs)
+	throws RemoteException;
 }

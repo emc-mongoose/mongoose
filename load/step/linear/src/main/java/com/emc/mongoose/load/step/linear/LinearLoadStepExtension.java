@@ -30,16 +30,14 @@ implements LoadStepFactory<T, U> {
 
 	@Override @SuppressWarnings("unchecked")
 	public final T createLocal(
-		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides
+		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs
 	) {
-		return (T) new LinearLoadStepLocal(baseConfig, extensions, overrides);
+		return (T) new LinearLoadStepLocal(baseConfig, extensions, contextConfigs);
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public final U createClient(
-		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides
-	) {
-		return (U) new LinearLoadStepClient(baseConfig, extensions, overrides);
+	public final U createClient(final Config baseConfig, final List<Extension> extensions) {
+		return (U) new LinearLoadStepClient(baseConfig, extensions, null);
 	}
 
 	@Override

@@ -1,5 +1,6 @@
 package com.emc.mongoose.data;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.io.IOException;
@@ -92,8 +93,7 @@ extends DataInputBase {
 	public void close()
 	throws IOException {
 		super.close();
-		final Int2ObjectOpenHashMap<MappedByteBuffer>
-			layersCache = thrLocLayersCache.get();
+		final Int2ObjectMap<MappedByteBuffer> layersCache = thrLocLayersCache.get();
 		if(layersCache != null) {
 			layersCache.clear();
 			thrLocLayersCache.set(null);

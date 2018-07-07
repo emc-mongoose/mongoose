@@ -40,9 +40,9 @@ extends LoadStepBase {
 	protected final List<LoadStepContext> stepContexts = new ArrayList<>();
 
 	protected LoadStepLocalBase(
-		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides
+		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs
 	) {
-		super(baseConfig, extensions, overrides);
+		super(baseConfig, extensions, contextConfigs);
 	}
 
 	@Override

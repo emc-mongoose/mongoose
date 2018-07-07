@@ -2,6 +2,7 @@ package com.emc.mongoose.item;
 
 import com.emc.mongoose.item.io.task.IoTask;
 import com.emc.mongoose.storage.driver.StorageDriver;
+
 import com.github.akurilov.commons.io.collection.BufferingInputBase;
 
 import java.io.IOException;
@@ -67,12 +68,5 @@ extends BufferingInputBase<I> {
 	throws IOException {
 		super.reset();
 		poisonedFlag = false;
-	}
-
-	@Override
-	public final void close()
-	throws IOException {
-		super.close();
-		storageDriver.close();
 	}
 }

@@ -18,7 +18,7 @@ import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
 import com.emc.mongoose.svc.Service;
 import com.emc.mongoose.load.step.ScriptEngineUtil;
-import com.emc.mongoose.load.step.service.FileManagerServiceImpl;
+import com.emc.mongoose.load.step.service.file.FileManagerServiceImpl;
 import com.emc.mongoose.load.step.service.LoadStepManagerServiceImpl;
 
 import com.github.akurilov.confuse.Config;
@@ -26,7 +26,7 @@ import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.logging.log4j.CloseableThreadContext;
+
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 

@@ -13,15 +13,13 @@ import java.util.stream.Collectors;
 public interface LoadStepFactory<T extends LoadStep, U extends LoadStepClient>
 extends Extension {
 
-	T createLocal(final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides);
+	T createLocal(final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs);
 
-	U createClient(
-		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides
-	);
+	U createClient(final Config baseConfig, final List<Extension> extensions);
 
 	@SuppressWarnings("unchecked")
 	static <T extends LoadStep> T createLocalLoadStep(
-		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides,
+		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs,
 		final String stepType
 	) {
 
@@ -42,6 +40,6 @@ extends Extension {
 				)
 			);
 
-		return (T) selectedFactory.createLocal(baseConfig, extensions, overrides);
+		return (T) selectedFactory.createLocal(baseConfig, extensions, contextConfigs);
 	}
 }

@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.step;
+package com.emc.mongoose.load.step.file;
 
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.LogManager;

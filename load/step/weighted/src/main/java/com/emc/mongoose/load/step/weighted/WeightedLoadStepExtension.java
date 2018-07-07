@@ -49,16 +49,14 @@ implements LoadStepFactory<T, U> {
 
 	@Override @SuppressWarnings("unchecked")
 	public final T createLocal(
-		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides
+		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs
 	) {
-		return (T) new WeightedLoadStepLocal(baseConfig, extensions, overrides);
+		return (T) new WeightedLoadStepLocal(baseConfig, extensions, contextConfigs);
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public final U createClient(
-		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> overrides
-	) {
-		return (U) new WeightedLoadStepClient(baseConfig, extensions, overrides);
+	public final U createClient(final Config baseConfig, final List<Extension> extensions) {
+		return (U) new WeightedLoadStepClient(baseConfig, extensions, null);
 	}
 
 	@Override
