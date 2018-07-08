@@ -100,16 +100,22 @@ implements LoadStepClient {
 
 			final int sliceCount = 1 + nodeAddrs.size();
 
-			// slice the base/shared config
+			// init the base/shared config slices
 			final List<Config> configSlices = sliceConfig(config, sliceCount);
+			addItemInputClientIfNeeded(config, configSlices);
+			addItemOutputFileClientIfNeeded(config, configSlices);
+			addIoTraceLogFileClientIfNeeded(config);
 
-			// slice the load step context configs
+			// init the config slices for each of the load step context configs
 			final List<List<Config>> ctxConfigsSlices = new ArrayList<>(sliceCount);
 			for(int i = 0; i < sliceCount; i ++) {
 				ctxConfigsSlices.add(new ArrayList<>());
 			}
 			for(final Config ctxConfig : ctxConfigs) {
 				final List<Config> ctxConfigSlices = sliceConfig(ctxConfig, sliceCount);
+				addItemInputClientIfNeeded(ctxConfig, ctxConfigSlices);
+				addItemOutputFileClientIfNeeded(ctxConfig, ctxConfigSlices);
+				addIoTraceLogFileClientIfNeeded(ctxConfig);
 				for(int i = 0; i < sliceCount; i ++) {
 					ctxConfigsSlices.get(i).add(ctxConfigSlices.get(i));
 				}
@@ -173,11 +179,9 @@ implements LoadStepClient {
 			configSlices.add(configSlice);
 		}
 
-		if(sliceCount > 1) {
+		if(sliceCount > 1) { // distributed mode
 
-			final Config loadConfig = config.configVal("load");
-			final Config loadStepConfig = loadConfig.configVal("step");
-			final Config loadStepLimitConfig = loadStepConfig.configVal("limit");
+			final Config loadStepLimitConfig = config.configVal("load-step-limit");
 
 			final long countLimit = loadStepLimitConfig.longVal("count");
 			if(countLimit > 0) {
@@ -205,10 +209,8 @@ implements LoadStepClient {
 				ConfigSliceUtil.sliceLongValue(sizeLimit, configSlices, "load-step-limit-size");
 			}
 
-			final Config storageConfig = config.configVal("storage");
-
 			try {
-				final Config storageNetNodeConfig = storageConfig.configVal("net-node");
+				final Config storageNetNodeConfig = config.configVal("storage-net-node");
 				final boolean sliceStorageNodesFlag = storageNetNodeConfig.boolVal("slice");
 				if(sliceStorageNodesFlag) {
 					final List<String> storageNodeAddrs = storageNetNodeConfig.listVal("addrs");
@@ -216,53 +218,61 @@ implements LoadStepClient {
 				}
 			} catch(final NoSuchElementException ignore) {
 			}
-
-			final int batchSize = loadConfig.intVal("batch-size");
-			final Config itemConfig = config.configVal("item");
-			final Config itemDataConfig = itemConfig.configVal("data");
-			final boolean verifyFlag = itemDataConfig.boolVal("verify");
-			final Config itemDataInputConfig = itemDataConfig.configVal("input");
-			final Config itemDataInputLayerConfig = itemDataInputConfig.configVal("layer");
-			final Object itemDataInputLayerSizeRaw = itemDataInputLayerConfig.val("size");
-			final SizeInBytes itemDataLayerSize;
-			if(itemDataInputLayerSizeRaw instanceof String) {
-				itemDataLayerSize = new SizeInBytes((String) itemDataInputLayerSizeRaw);
-			} else {
-				itemDataLayerSize = new SizeInBytes(TypeUtil.typeConvert(itemDataInputLayerSizeRaw, int.class));
-			}
-			try(
-				final DataInput dataInput = DataInput.instance(
-					itemDataInputConfig.stringVal("file"), itemDataInputConfig.stringVal("seed"), itemDataLayerSize,
-					itemDataInputLayerConfig.intVal("cache")
-				);
-				final StorageDriver<Item, IoTask<Item>> storageDriver = StorageDriver.instance(
-					extensions, loadConfig, storageConfig, dataInput, verifyFlag, id()
-				);
-				final Input<Item> itemInput = ItemInputFactory.createItemInput(itemConfig, storageDriver, batchSize)
-			) {
-				if(null != itemInput) {
-					itemInputClients.add(new ItemInputClient(id(), fileMgrs, configSlices, itemInput, batchSize));
-				}
-			} catch(final IOException e) {
-				LogUtil.exception(Level.WARN, e, "{}: failed to close the item input");
-			} catch(final OmgShootMyFootException e) {
-				LogUtil.exception(Level.ERROR, e, "{}: failed to init the storage driver");
-			} catch(final InterruptedException e) {
-				throw new CancellationException();
-			}
-
-			final String itemOutputFile = itemConfig.stringVal("output-file");
-			if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
-				itemOutputFileClients.add(new ItemOutputFileClient(id(), fileMgrs, configSlices, itemOutputFile));
-			}
-
-			if(config.boolVal("output-metrics-trace-persist")) {
-				ioTraceLogFileClients.add(new IoTraceLogFileClient(id(), fileMgrs));
-				Loggers.MSG.debug("{}: I/O trace log file client initialized", id());
-			}
 		}
 
 		return configSlices;
+	}
+
+	private void addItemInputClientIfNeeded(final Config config, final List<Config> configSlices) {
+		final Config loadConfig = config.configVal("load");
+		final Config storageConfig = config.configVal("storage");
+		final int batchSize = loadConfig.intVal("batch-size");
+		final Config itemConfig = config.configVal("item");
+		final Config itemDataConfig = itemConfig.configVal("data");
+		final boolean verifyFlag = itemDataConfig.boolVal("verify");
+		final Config itemDataInputConfig = itemDataConfig.configVal("input");
+		final Config itemDataInputLayerConfig = itemDataInputConfig.configVal("layer");
+		final Object itemDataInputLayerSizeRaw = itemDataInputLayerConfig.val("size");
+		final SizeInBytes itemDataLayerSize;
+		if(itemDataInputLayerSizeRaw instanceof String) {
+			itemDataLayerSize = new SizeInBytes((String) itemDataInputLayerSizeRaw);
+		} else {
+			itemDataLayerSize = new SizeInBytes(TypeUtil.typeConvert(itemDataInputLayerSizeRaw, int.class));
+		}
+		try(
+			final DataInput dataInput = DataInput.instance(
+				itemDataInputConfig.stringVal("file"), itemDataInputConfig.stringVal("seed"), itemDataLayerSize,
+				itemDataInputLayerConfig.intVal("cache")
+			);
+			final StorageDriver<Item, IoTask<Item>> storageDriver = StorageDriver.instance(
+				extensions, loadConfig, storageConfig, dataInput, verifyFlag, id()
+			);
+			final Input<Item> itemInput = ItemInputFactory.createItemInput(itemConfig, storageDriver, batchSize)
+		) {
+			if(null != itemInput) {
+				itemInputClients.add(new ItemInputClient(id(), fileMgrs, configSlices, itemInput, batchSize));
+			}
+		} catch(final IOException e) {
+			LogUtil.exception(Level.WARN, e, "{}: failed to close the item input");
+		} catch(final OmgShootMyFootException e) {
+			LogUtil.exception(Level.ERROR, e, "{}: failed to init the storage driver");
+		} catch(final InterruptedException e) {
+			throw new CancellationException();
+		}
+	}
+
+	private void addItemOutputFileClientIfNeeded(final Config config, final List<Config> configSlices) {
+		final String itemOutputFile = config.stringVal("item-output-file");
+		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
+			itemOutputFileClients.add(new ItemOutputFileClient(id(), fileMgrs, configSlices, itemOutputFile));
+		}
+	}
+
+	private void addIoTraceLogFileClientIfNeeded(final Config config) {
+		if(config.boolVal("output-metrics-trace-persist")) {
+			ioTraceLogFileClients.add(new IoTraceLogFileClient(id(), fileMgrs));
+			Loggers.MSG.debug("{}: I/O trace log file client initialized", id());
+		}
 	}
 
 	private int sliceCount() {
