@@ -250,7 +250,6 @@ implements LoadGeneratorBuilder<I, O, T> {
 			final Map<String, String> credentials = loadCredentials(authFile, (long) M);
 			ioTaskBuilder.setCredentialsMap(credentials);
 		} else {
-
 			final BatchSupplier<String> secretSupplier;
 			final String secret = authConfig.stringVal("secret");
 			if(secret == null) {

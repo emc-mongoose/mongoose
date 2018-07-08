@@ -25,14 +25,14 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public final class ItemInputClient
+public final class ItemInputFileSlicer
 implements AutoCloseable {
 
 	private final String loadStepId;
 	private final Map<FileManager, String> itemInputFileSlices;
 	private final List<FileManager> fileMgrs;
 
-	public <I extends Item> ItemInputClient(
+	public <I extends Item> ItemInputFileSlicer(
 		final String loadStepId, final List<FileManager> fileMgrs, final List<Config> configSlices,
 		final Input<I> itemInput, final int batchSize
 	) {

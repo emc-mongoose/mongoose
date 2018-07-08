@@ -29,14 +29,14 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public final class ItemOutputFileClient
+public final class ItemOutputFileAggregator
 implements AutoCloseable {
 
 	private final String loadStepId;
 	private final String itemOutputFile;
 	private final Map<FileManager, String> itemOutputFileSlices;
 
-	public ItemOutputFileClient(
+	public ItemOutputFileAggregator(
 		final String loadStepId, final List<FileManager> fileMgrs, final List<Config> configSlices,
 		final String itemOutputFile
 	) {
@@ -147,7 +147,7 @@ implements AutoCloseable {
 		final Lock localItemOutputLock, final LongAdder byteCounter
 	) {
 		long transferredByteCount = 0;
-		try(final Instance logCtx = put(KEY_CLASS_NAME, ItemOutputFileClient.class.getSimpleName())) {
+		try(final Instance logCtx = put(KEY_CLASS_NAME, ItemOutputFileAggregator.class.getSimpleName())) {
 			byte buff[];
 			while(true) {
 				buff = fileMgr.readFromFile(remoteItemOutputFileName, transferredByteCount);

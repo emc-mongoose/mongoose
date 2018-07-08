@@ -44,9 +44,7 @@ extends LogMessageBase {
 		this(metrics, false);
 	}
 
-	public MetricsAsciiTableLogMessage(
-		final Set<MetricsContext> metrics, final boolean summaryFlag
-	) {
+	public MetricsAsciiTableLogMessage(final Set<MetricsContext> metrics, final boolean summaryFlag) {
 		this.metrics = metrics;
 		this.summaryFlag = summaryFlag;
 	}

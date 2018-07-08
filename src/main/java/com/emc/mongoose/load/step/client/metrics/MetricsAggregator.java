@@ -6,7 +6,7 @@ import com.github.akurilov.commons.concurrent.AsyncRunnable;
 
 import java.util.List;
 
-public interface MetricsClient
+public interface MetricsAggregator
 extends AsyncRunnable {
 
 	List<MetricsSnapshot> metricsSnapshotsByIndex(final int originIndex);

@@ -24,13 +24,13 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class IoTraceLogFileClient
+public class IoTraceLogFileAggregator
 implements Closeable {
 
 	private final String loadStepId;
 	private final Map<FileManager, String> ioTraceLogFileSlices;
 
-	public IoTraceLogFileClient(final String loadStepId, final List<FileManager> fileMgrs) {
+	public IoTraceLogFileAggregator(final String loadStepId, final List<FileManager> fileMgrs) {
 		this.loadStepId = loadStepId;
 		this.ioTraceLogFileSlices = fileMgrs
 			.stream()
@@ -111,7 +111,7 @@ implements Closeable {
 		final FileManager fileMgr, final String remoteIoTraceLogFileName, final LongAdder byteCounter
 	) {
 		long transferredByteCount = 0;
-		try(final Instance logCtx = put(KEY_CLASS_NAME, IoTraceLogFileClient.class.getSimpleName())) {
+		try(final Instance logCtx = put(KEY_CLASS_NAME, IoTraceLogFileAggregator.class.getSimpleName())) {
 			byte[] data;
 			while(true) {
 				data = fileMgr.readFromFile(remoteIoTraceLogFileName, transferredByteCount);

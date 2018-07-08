@@ -21,14 +21,14 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public final class MetricsClientImpl
+public final class MetricsAggregatorImpl
 extends AsyncRunnableBase
-implements MetricsClient {
+implements MetricsAggregator {
 
 	private final String loadStepId;
 	private final Map<LoadStep, MetricsSnapshotsSupplierTask> snapshotSuppliers;
 
-	public MetricsClientImpl(final String loadStepId, final List<LoadStep> stepSlices) {
+	public MetricsAggregatorImpl(final String loadStepId, final List<LoadStep> stepSlices) {
 		this.loadStepId = loadStepId;
 		snapshotSuppliers = stepSlices
 			.stream()
