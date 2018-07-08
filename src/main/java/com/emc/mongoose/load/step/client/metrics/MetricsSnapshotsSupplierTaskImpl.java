@@ -44,6 +44,8 @@ implements MetricsSnapshotsSupplierTask {
 
 	@Override
 	protected final void doClose() {
-		snapshotsByOrigin.clear();
+		if(null != snapshotsByOrigin) {
+			snapshotsByOrigin.clear();
+		}
 	}
 }
