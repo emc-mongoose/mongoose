@@ -10,9 +10,9 @@ import com.emc.mongoose.svc.ServiceUtil;
 
 import com.github.akurilov.confuse.Config;
 
-import org.apache.logging.log4j.Level;
-
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
+
+import org.apache.logging.log4j.Level;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -82,7 +82,7 @@ public interface LoadStepSliceUtil {
 		protected final void invokeTimedExclusively(final long startTimeNanos) {
 			try {
 				try {
-					if(stepSlice.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+					if(stepSlice.await(1, TimeUnit.NANOSECONDS)) {
 						sharedCountDown.countDown();
 						stop();
 					}

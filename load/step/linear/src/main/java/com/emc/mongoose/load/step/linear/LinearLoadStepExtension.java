@@ -10,7 +10,6 @@ import com.github.akurilov.confuse.SchemaProvider;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public final class LinearLoadStepExtension<T extends LinearLoadStepLocal, U extends LinearLoadStepClient>
 extends ExtensionBase

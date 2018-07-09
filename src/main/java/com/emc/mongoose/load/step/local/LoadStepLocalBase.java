@@ -1,43 +1,46 @@
 package com.emc.mongoose.load.step.local;
 
+import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.load.step.LoadStepBase;
-import com.emc.mongoose.logging.LogContextThreadFactory;
+import com.emc.mongoose.load.step.local.context.LoadStepContextImpl;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsContextImpl;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
+import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+
+import com.github.akurilov.fiber4j.ExclusiveFiberBase;
+
 import org.apache.logging.log4j.Level;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import java.util.stream.Collectors;
 
 public abstract class LoadStepLocalBase
 extends LoadStepBase {
 
-	protected final List<LoadStepContext> stepContexts = new ArrayList<>();
+	protected final List<LoadStepContextImpl> stepContexts = new ArrayList<>();
 
 	protected LoadStepLocalBase(
 		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs
@@ -47,19 +50,7 @@ extends LoadStepBase {
 
 	@Override
 	protected void doStartWrapped() {
-		stepContexts.forEach(
-			stepCtx -> {
-				try {
-					stepCtx.start();
-				} catch(final RemoteException ignored) {
-				} catch(final IllegalStateException e) {
-					LogUtil.exception(
-						Level.WARN, e, "{}: failed to start the load step context \"{}\"", id(),
-						stepCtx
-					);
-				}
-			}
-		);
+		stepContexts.forEach(LoadStepContextImpl::start);
 	}
 
 	@Override
@@ -84,63 +75,63 @@ extends LoadStepBase {
 
 	@Override
 	protected final void doShutdown() {
-		stepContexts.forEach(
-			stepCtx -> {
-				try(
-					final Instance ctx = put(KEY_STEP_ID, id())
-						.put(KEY_CLASS_NAME, getClass().getSimpleName())
-				) {
-					stepCtx.shutdown();
-					Loggers.MSG.debug("{}: load step context shutdown", id());
-				} catch(final RemoteException ignored) {
-				}
-			}
-		);
+		stepContexts.forEach(LoadStepContextImpl::shutdown);
+		super.doShutdown();
 	}
 
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws IllegalStateException, InterruptedException {
-		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
-			stepContexts.size(), new LogContextThreadFactory(id())
-		);
-		final CountDownLatch latch = new CountDownLatch(stepContexts.size());
-		stepContexts
-			.forEach(
-				stepCtx -> {
-					awaitExecutor.submit(
-						() -> {
-							try {
-								if(stepCtx.await(timeout, timeUnit)) {
-									latch.countDown();
-								}
-							} catch(final InterruptedException e) {
-								throw new CancellationException();
-							} catch(final RemoteException ignored) {
-							}
-						}
-					);
-				}
-			);
-		awaitExecutor.shutdown();
+		final CountDownLatch awaitCountDown = new CountDownLatch(stepContexts.size());
+		final List<Closeable> awaitStepCtxTasks = stepContexts
+			.stream()
+			.map(stepCtx -> new AwaitTask(stepCtx, awaitCountDown))
+			.peek(AsyncRunnableBase::start)
+			.collect(Collectors.toList());
 		try {
-			awaitExecutor.awaitTermination(timeout, timeUnit);
+			return awaitCountDown.await(timeout, timeUnit);
 		} finally {
-			awaitExecutor.shutdownNow();
+			awaitStepCtxTasks
+				.forEach(
+					awaitStepCtxTask -> {
+						try {
+							awaitStepCtxTask.close();
+						} catch(final IOException ignored) {
+						}
+					}
+				);
 		}
-		return 0 == latch.getCount();
+	}
+
+	private static final class AwaitTask
+	extends ExclusiveFiberBase {
+
+		private final LoadStepContext loadStepCtx;
+		private final CountDownLatch sharedCountDown;
+
+		private AwaitTask(final LoadStepContext loadStepCtx, final CountDownLatch sharedCountDown) {
+			super(ServiceTaskExecutor.INSTANCE);
+			this.loadStepCtx = loadStepCtx;
+			this.sharedCountDown = sharedCountDown;
+		}
+
+		@Override
+		protected final void invokeTimedExclusively(final long startTimeNanos) {
+			try {
+				if(loadStepCtx.await(TIMEOUT_NANOS / 10, TimeUnit.NANOSECONDS)) {
+					sharedCountDown.countDown();
+					stop();
+				}
+			} catch(final InterruptedException e) {
+				throw new CancellationException();
+			} catch(final RemoteException ignored) {
+			}
+		}
 	}
 
 	@Override
 	protected final void doStop() {
-		stepContexts.forEach(
-			stepCtx -> {
-				try {
-					stepCtx.stop();
-				} catch(final RemoteException ignored) {
-				}
-			}
-		);
+		stepContexts.forEach(LoadStepContextImpl::stop);
 		super.doStop();
 	}
 

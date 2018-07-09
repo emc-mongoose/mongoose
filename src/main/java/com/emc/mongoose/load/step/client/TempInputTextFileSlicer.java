@@ -10,6 +10,7 @@ import static com.emc.mongoose.load.step.client.LoadStepClient.OUTPUT_PROGRESS_P
 
 import com.github.akurilov.commons.concurrent.AsyncRunnable;
 
+import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.confuse.Config;
 
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
@@ -108,7 +109,7 @@ implements AutoCloseable {
 			lineQueues.add(new ArrayBlockingQueue<>(batchSize));
 		}
 
-		final List<AsyncRunnable> tasks = new ArrayList<>(sliceCount + 1);
+		final List<AsyncRunnableBase> tasks = new ArrayList<>(sliceCount + 1);
 		tasks.add(new ReadTask(inputFinishFlag, lineQueues, srcFileName, sliceCount));
 
 		final CountDownLatch writeFinishCoundDown = new CountDownLatch(sliceCount);
@@ -119,15 +120,7 @@ implements AutoCloseable {
 			tasks.add(new WriteTask(inputFinishFlag, writeFinishCoundDown, lineQueue, fileMgr, dstFileName, batchSize));
 		}
 
-		tasks
-			.forEach(
-				task -> {
-					try {
-						task.start();
-					} catch(final RemoteException ignored) {
-					}
-				}
-			);
+		tasks.forEach(AsyncRunnableBase::start);
 
 		try {
 			writeFinishCoundDown.await();

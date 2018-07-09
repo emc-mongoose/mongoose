@@ -8,7 +8,6 @@ import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
 import com.emc.mongoose.item.ItemInfoFileOutput;
 import com.emc.mongoose.item.ItemType;
-import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.load.generator.LoadGenerator;
 import com.emc.mongoose.load.generator.LoadGeneratorBuilder;
 import com.emc.mongoose.load.step.local.LoadStepLocalBase;
@@ -123,7 +122,7 @@ extends LoadStepLocalBase {
 					}
 					final LoadGenerator generator = generatorBuilder.build();
 
-					final LoadStepContext stepCtx = new LoadStepContextImpl<>(
+					final LoadStepContextImpl stepCtx = new LoadStepContextImpl<>(
 						testStepId, generator, driver, metricsContexts.get(0), limitConfig,
 						outputConfig.boolVal("metrics-trace-persist"),
 						loadConfig.intVal("batch-size"),
