@@ -278,9 +278,9 @@ public class CreateLimitBySizeTest {
 
         testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
 
-        System.out.println(ioTraceRecCount.toString() + "\n" + expectedCount + "\n" + expectedCount * requiredAccuracy);
+        System.out.println(ioTraceRecCount.toString() + "\n" + expectedCount + "\n" + requiredAccuracy * expectedCount);
 
-        assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount * requiredAccuracy);
+        assertEquals(expectedCount, ioTraceRecCount.sum(), requiredAccuracy * expectedCount);
 
 //        final List<CSVRecord> items = new ArrayList<>();
 //        try (final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
