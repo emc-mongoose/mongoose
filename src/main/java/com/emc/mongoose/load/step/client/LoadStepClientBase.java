@@ -14,7 +14,6 @@ import com.emc.mongoose.load.step.client.metrics.MetricsAggregatorImpl;
 import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.load.step.LoadStepBase;
 import com.emc.mongoose.metrics.AggregatingMetricsContext;
-import com.emc.mongoose.logging.LogContextThreadFactory;
 import com.emc.mongoose.load.step.LoadStep;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -24,6 +23,8 @@ import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.storage.driver.StorageDriver;
 
 import com.github.akurilov.commons.collection.TreeUtil;
+import com.github.akurilov.commons.concurrent.AsyncRunnable;
+import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.reflection.TypeUtil;
@@ -48,8 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -352,15 +352,25 @@ implements LoadStepClient {
 		if(stepSlices == null || stepSlices.size() == 0) {
 			throw new IllegalStateException("No step slices are available");
 		}
-		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
-			stepSlices.size(), new LogContextThreadFactory("stepSliceAwaitWorker", true)
-		);
-		stepSlices
+		final CountDownLatch awaitSlicesCountDown = new CountDownLatch(stepSlices.size());
+		final List<AsyncRunnable> awaitSliceTasks = stepSlices
 			.stream()
-			.map(stepSlice -> (Runnable) (() -> LoadStepSliceUtil.await(stepSlice, timeout, timeUnit)))
-			.forEach(awaitExecutor::submit);
-		awaitExecutor.shutdown();
-		return awaitExecutor.awaitTermination(timeout, TimeUnit.SECONDS);
+			.map(stepSlice -> new LoadStepSliceUtil.AwaitTask(awaitSlicesCountDown, stepSlice))
+			.peek(AsyncRunnableBase::start)
+			.collect(Collectors.toList());
+		try {
+			return awaitSlicesCountDown.await(timeout, timeUnit);
+		} finally {
+			awaitSliceTasks
+				.forEach(
+					awaitSliceTask -> {
+						try {
+							awaitSliceTask.close();
+						} catch(final IOException ignore) {
+						}
+					}
+				);
+		}
 	}
 
 	@Override

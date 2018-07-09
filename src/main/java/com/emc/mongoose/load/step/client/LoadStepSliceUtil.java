@@ -1,23 +1,23 @@
 package com.emc.mongoose.load.step.client;
 
+import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.load.step.LoadStep;
 import com.emc.mongoose.load.step.LoadStepManagerService;
 import com.emc.mongoose.load.step.service.LoadStepService;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.svc.ServiceUtil;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import com.github.akurilov.confuse.Config;
 
-import static org.apache.logging.log4j.CloseableThreadContext.put;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
+
+import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public interface LoadStepSliceUtil {
@@ -65,30 +65,39 @@ public interface LoadStepSliceUtil {
 		return stepSvc;
 	}
 
-	static boolean await(final LoadStep stepSlice, final long timeout, final TimeUnit timeUnit) {
-		try(
-			final Instance logCtx = put(KEY_STEP_ID, stepSlice.id())
-				.put(KEY_CLASS_NAME, LoadStepClientBase.class.getSimpleName())
-		) {
-			long commFailCount = 0;
-			while(true) {
+	final class AwaitTask
+	extends ExclusiveFiberBase {
+
+		private final CountDownLatch sharedCountDown;
+		private final LoadStep stepSlice;
+		private int commFailCount = 0;
+
+		public AwaitTask(final CountDownLatch sharedCountDown, final LoadStep stepSlice) {
+			super(ServiceTaskExecutor.INSTANCE);
+			this.sharedCountDown = sharedCountDown;
+			this.stepSlice = stepSlice;
+		}
+
+		@Override
+		protected final void invokeTimedExclusively(final long startTimeNanos) {
+			try {
 				try {
-					if(stepSlice.await(timeout, timeUnit)) {
-						return true;
+					if(stepSlice.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+						sharedCountDown.countDown();
+						stop();
 					}
 				} catch(final RemoteException e) {
 					LogUtil.exception(
-						Level.DEBUG, e, "Failed to invoke the step slice \"{}\" await method {} times",
-						stepSlice, commFailCount
+						Level.DEBUG, e, "Failed to invoke the step slice \"{}\" await method {} times", stepSlice,
+						commFailCount
 					);
 					commFailCount ++;
 					Thread.sleep(commFailCount);
 				}
+			} catch(final InterruptedException e) {
+				stop();
+				throw new CancellationException();
 			}
-		} catch(final InterruptedException e) {
-			throw new CancellationException();
-		} catch(final RemoteException ignored) {
-			return false;
 		}
 	}
 }
