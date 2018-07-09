@@ -276,6 +276,8 @@ public class CreateLimitBySizeTest {
             };
         }
 
+        System.out.println(ioTraceRecCount.toString() + "\n" + expectedCount);
+
         //testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
 
         //assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount * requiredAccuracy);
