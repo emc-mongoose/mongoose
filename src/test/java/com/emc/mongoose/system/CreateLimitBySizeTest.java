@@ -280,7 +280,7 @@ public class CreateLimitBySizeTest {
 
         System.out.println(ioTraceRecCount.toString() + "\n" + expectedCount);
 
-        //assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount * requiredAccuracy);
+        assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount * requiredAccuracy);
 
 //        final List<CSVRecord> items = new ArrayList<>();
 //        try (final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
