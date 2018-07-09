@@ -60,7 +60,7 @@ public class CreateLimitBySizeTest {
     }
 
 
-    private final double requiredAccuracy = 0.001;
+    private final double requiredAccuracy = 0.01;
     private final int timeoutInMillis = 1000_000;
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
@@ -278,9 +278,9 @@ public class CreateLimitBySizeTest {
 
         testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
 
-        System.out.println(ioTraceRecCount.toString() + "\n" + expectedCount + "\n" + (double) expectedCount * requiredAccuracy);
+        System.out.println(ioTraceRecCount.toString() + "\n" + expectedCount + "\n" + expectedCount * requiredAccuracy);
 
-        assertEquals(expectedCount, ioTraceRecCount.sum(), (double) expectedCount * requiredAccuracy);
+        assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount * requiredAccuracy);
 
 //        final List<CSVRecord> items = new ArrayList<>();
 //        try (final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
