@@ -309,10 +309,10 @@ public class CreateLimitBySizeTest {
         }
         assertEquals(items.size(), freq.getUniqueCount());
 
-        testTotalMetricsLogRecord(
-                getContainerMetricsTotalLogRecords(stepId).get(0), IoType.CREATE, concurrency.getValue(),
-                runMode.getNodeCount(), itemSize.getValue(), 0, 0
-        );
+//        testTotalMetricsLogRecord(
+//                getContainerMetricsTotalLogRecords(stepId).get(0), IoType.CREATE, concurrency.getValue(),
+//                runMode.getNodeCount(), itemSize.getValue(), 0, 0
+//        );
 //
 //        testMetricsLogRecords(
 //                getContainerMetricsLogRecords(stepId), IoType.CREATE, concurrency.getValue(),
@@ -331,11 +331,11 @@ public class CreateLimitBySizeTest {
                     put(IoType.CREATE, concurrency.getValue());
                 }}
         );
-// passed only by first
-//        testFinalMetricsTableRowStdout(
-//                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
-//                0, 0, itemSize.getValue()
-//        );
+
+        testFinalMetricsTableRowStdout(
+                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
+                0, 0, itemSize.getValue()
+        );
 
         assertTrue(duration < timeoutInMillis);
     }
