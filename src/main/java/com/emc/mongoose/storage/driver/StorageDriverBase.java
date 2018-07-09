@@ -52,8 +52,8 @@ implements StorageDriver<I,O> {
 	protected Function<Credential, String> requestAuthTokenFunc = this::requestNewAuthToken;
 
 	protected StorageDriverBase(
-		final String stepId, final DataInput itemDataInput, final Config loadConfig,
-		final Config storageConfig, final boolean verifyFlag
+		final String stepId, final DataInput itemDataInput, final Config loadConfig, final Config storageConfig,
+		final boolean verifyFlag
 	) throws OmgShootMyFootException {
 
 		this.itemDataInput = itemDataInput;

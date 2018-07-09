@@ -38,9 +38,7 @@ import java.util.concurrent.CancellationException;
 public class LinearLoadStepLocal
 extends LoadStepLocalBase {
 
-	public LinearLoadStepLocal(
-		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> contexts
-	) {
+	public LinearLoadStepLocal(final Config baseConfig, final List<Extension> extensions, final List<Config> contexts) {
 		super(baseConfig, extensions, contexts);
 	}
 

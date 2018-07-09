@@ -1,41 +1,29 @@
 package com.emc.mongoose.load.step.client;
 
 import com.emc.mongoose.config.TimeUtil;
+import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.env.Extension;
+import com.emc.mongoose.exception.OmgShootMyFootException;
+import com.emc.mongoose.item.Item;
+import com.emc.mongoose.item.ItemInputFactory;
 import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.load.step.FileManager;
+import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.load.step.LoadStepFactory;
+import com.emc.mongoose.load.step.client.metrics.MetricsAggregator;
+import com.emc.mongoose.load.step.client.metrics.MetricsAggregatorImpl;
+import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.load.step.LoadStepBase;
 import com.emc.mongoose.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.logging.LogContextThreadFactory;
-import com.emc.mongoose.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.item.Item;
 import com.emc.mongoose.load.step.LoadStep;
-import com.emc.mongoose.load.step.metrics.MetricsSnapshotsSupplierTask;
-import com.emc.mongoose.load.step.metrics.MetricsSnapshotsSupplierTaskImpl;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static com.emc.mongoose.load.step.LoadStepFactory.createLocalLoadStep;
-import static com.emc.mongoose.load.step.client.LoadStepClient.collectIoTraceLogFileAndRelease;
-import static com.emc.mongoose.load.step.client.LoadStepClient.initConfigSlice;
-import static com.emc.mongoose.load.step.client.LoadStepClient.awaitStepSlice;
-import static com.emc.mongoose.load.step.client.LoadStepClient.createItemInput;
-import static com.emc.mongoose.load.step.client.LoadStepClient.initIoTraceLogFileSlices;
-import static com.emc.mongoose.load.step.client.LoadStepClient.releaseFileManagers;
-import static com.emc.mongoose.load.step.client.LoadStepClient.releaseItemInputFileSlices;
-import static com.emc.mongoose.load.step.client.LoadStepClient.collectItemOutputFileAndRelease;
-import static com.emc.mongoose.load.step.client.LoadStepClient.releaseMetricsSnapshotsSuppliers;
-import static com.emc.mongoose.load.step.client.LoadStepClient.releaseStepSlices;
-import static com.emc.mongoose.load.step.client.LoadStepClient.resolveRemoteLoadStepSlice;
-import static com.emc.mongoose.load.step.client.LoadStepClient.resolveFileManagers;
-import static com.emc.mongoose.load.step.client.LoadStepClient.sliceCountLimit;
-import static com.emc.mongoose.load.step.client.LoadStepClient.sliceItemInput;
-import static com.emc.mongoose.load.step.client.LoadStepClient.sliceItemOutputFileConfig;
-import static com.emc.mongoose.load.step.client.LoadStepClient.stopMetricsSnapshotsSuppliers;
 import com.emc.mongoose.metrics.MetricsContext;
-import com.emc.mongoose.metrics.MetricsSnapshot;
+import com.emc.mongoose.storage.driver.StorageDriver;
 
+import com.github.akurilov.commons.collection.TreeUtil;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.reflection.TypeUtil;
@@ -56,15 +44,13 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public abstract class LoadStepClientBase
@@ -72,23 +58,21 @@ extends LoadStepBase
 implements LoadStepClient {
 
 	private final List<LoadStep> stepSlices = new ArrayList<>();
-	private final Map<LoadStep, MetricsSnapshotsSupplierTask> metricsSnapshotsSuppliers = new HashMap<>();
 	private final List<FileManager> fileMgrs = new ArrayList<>();
+	private final List<AutoCloseable> itemInputFileSlicers = new ArrayList<>();
+	private final List<AutoCloseable> itemOutputFileAggregators = new ArrayList<>();
+	private final List<AutoCloseable> ioTraceLogFileAggregators = new ArrayList<>();
+	private final List<AutoCloseable> storageAuthFileSlicers = new ArrayList<>();
 
-	public LoadStepClientBase(
-		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> contexts
-	) {
-		super(baseConfig, extensions, contexts);
+	public LoadStepClientBase(final Config config, final List<Extension> extensions, final List<Config> ctxConfigs) {
+		super(config, extensions, ctxConfigs);
 	}
 
-	private Map<FileManager, String> itemInputFileSlices = null;
-	private Map<FileManager, String> itemOutputFileSlices = null;
-	private Map<FileManager, String> ioTraceLogFileSlices = null;
+	private MetricsAggregator metricsAggregator = null;
 
 	@Override
 	protected final void doStartWrapped()
 	throws IllegalArgumentException {
-
 		try(
 			final Instance logCtx = put(KEY_STEP_ID, id())
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
@@ -98,57 +82,31 @@ implements LoadStepClient {
 			config.val("load-step-id", id());
 			config.val("load-step-idAutoGenerated", false);
 
-			// determine the additional/remote full node addresses
-			final Config nodeConfig = config.configVal("load-step-node");
-			final int nodePort = nodeConfig.intVal("port");
-			final List<String> nodeAddrs = nodeConfig
-				.<String>listVal("addrs")
-				.stream()
-				.map(addr -> NetUtil.addPortIfMissing(addr, nodePort))
-				.collect(Collectors.toList());
-
-			resolveFileManagers(nodeAddrs, fileMgrs);
-
-			if(config.boolVal("output-metrics-trace-persist")) {
-				ioTraceLogFileSlices = initIoTraceLogFileSlices(fileMgrs, id());
-				Loggers.MSG.debug("{}: I/O trace log file slices initialized", id());
-			}
-
+			final List<String> nodeAddrs = remoteNodeAddrs(config);
+			initFileManagers(nodeAddrs, fileMgrs);
 			final int sliceCount = 1 + nodeAddrs.size();
-			final List<Config> configSlices = sliceConfigs(config, sliceCount);
 
-			final String stepTypeName;
-			try {
-				stepTypeName = getTypeName();
-			} catch(final RemoteException e) {
-				throw new AssertionError(e);
-			}
+			// init the base/shared config slices
+			final List<Config> configSlices = sliceConfig(config, sliceCount);
+			addFileClients(config, configSlices);
 
+			// init the config slices for each of the load step context configs
+			final List<List<Config>> ctxConfigsSlices = new ArrayList<>(sliceCount);
 			for(int i = 0; i < sliceCount; i ++) {
-
-				final Config configSlice = configSlices.get(i);
-				final LoadStep stepSlice;
-				if(i == 0) {
-					stepSlice = createLocalLoadStep(configSlice, extensions, contexts, stepTypeName);
-				} else {
-					final String nodeAddrWithPort = nodeAddrs.get(i - 1);
-					stepSlice = resolveRemoteLoadStepSlice(configSlice, contexts, stepTypeName, nodeAddrWithPort);
-				}
-				stepSlices.add(stepSlice);
-
-				if(stepSlice != null) {
-					try {
-						stepSlice.start();
-						final MetricsSnapshotsSupplierTask snapshotsSupplier = new MetricsSnapshotsSupplierTaskImpl(
-							ServiceTaskExecutor.INSTANCE, stepSlice
-						);
-						snapshotsSupplier.start();
-						metricsSnapshotsSuppliers.put(stepSlice, snapshotsSupplier);
-					} catch(final Exception e) {
-						LogUtil.exception(Level.ERROR, e, "{}: failed to start the step slice \"{}\"", id(), stepSlice);
+				ctxConfigsSlices.add(new ArrayList<>());
+			}
+			if(null != ctxConfigs) {
+				for(final Config ctxConfig : ctxConfigs) {
+					final List<Config> ctxConfigSlices = sliceConfig(ctxConfig, sliceCount);
+					addFileClients(ctxConfig, ctxConfigSlices);
+					for(int i = 0; i < sliceCount; i ++) {
+						ctxConfigsSlices.get(i).add(ctxConfigSlices.get(i));
 					}
 				}
 			}
+
+			initAndStartStepSlices(nodeAddrs, configSlices, ctxConfigsSlices);
+			initAndStartMetricsAggregator();
 
 			Loggers.MSG.info(
 				"{}: load step client started, additional nodes: {}", id(), Arrays.toString(nodeAddrs.toArray())
@@ -156,11 +114,139 @@ implements LoadStepClient {
 		}
 	}
 
-	private List<Config> sliceConfigs(final Config config, final int sliceCount) {
+	// determine the additional/remote full node addresses
+	private static List<String> remoteNodeAddrs(final Config config) {
+		final Config nodeConfig = config.configVal("load-step-node");
+		final int nodePort = nodeConfig.intVal("port");
+		return nodeConfig
+			.<String>listVal("addrs")
+			.stream()
+			.map(addr -> NetUtil.addPortIfMissing(addr, nodePort))
+			.collect(Collectors.toList());
+	}
+
+	private static void initFileManagers(final List<String> nodeAddrs, final List<FileManager> fileMgrsDst) {
+		// local file manager
+		fileMgrsDst.add(FileManager.INSTANCE);
+		// remote file managers
+		nodeAddrs
+			.stream()
+			.map(FileManagerClient::resolve)
+			.forEachOrdered(fileMgrsDst::add);
+	}
+
+	private void addFileClients(final Config config, final List<Config> configSlices) {
+		final Config loadConfig = config.configVal("load");
+		final Config storageConfig = config.configVal("storage");
+		final int batchSize = loadConfig.intVal("batch-size");
+		final Config itemConfig = config.configVal("item");
+		final Config itemDataConfig = itemConfig.configVal("data");
+		final boolean verifyFlag = itemDataConfig.boolVal("verify");
+		final Config itemDataInputConfig = itemDataConfig.configVal("input");
+		final Config itemDataInputLayerConfig = itemDataInputConfig.configVal("layer");
+		final Object itemDataInputLayerSizeRaw = itemDataInputLayerConfig.val("size");
+		final SizeInBytes itemDataLayerSize;
+		if(itemDataInputLayerSizeRaw instanceof String) {
+			itemDataLayerSize = new SizeInBytes((String) itemDataInputLayerSizeRaw);
+		} else {
+			itemDataLayerSize = new SizeInBytes(TypeUtil.typeConvert(itemDataInputLayerSizeRaw, int.class));
+		}
+		try(
+			final DataInput dataInput = DataInput.instance(
+				itemDataInputConfig.stringVal("file"), itemDataInputConfig.stringVal("seed"), itemDataLayerSize,
+				itemDataInputLayerConfig.intVal("cache")
+			);
+			final StorageDriver<Item, IoTask<Item>> storageDriver = StorageDriver.instance(
+				extensions, loadConfig, storageConfig, dataInput, verifyFlag, id()
+			);
+			final Input<Item> itemInput = ItemInputFactory.createItemInput(itemConfig, storageDriver, batchSize)
+		) {
+			if(null != itemInput) {
+				itemInputFileSlicers.add(new ItemInputFileSlicer(id(), fileMgrs, configSlices, itemInput, batchSize));
+				Loggers.MSG.debug("{}: item input file slicer initialized", id());
+			}
+		} catch(final IOException e) {
+			LogUtil.exception(Level.WARN, e, "{}: failed to close the item input");
+		} catch(final OmgShootMyFootException e) {
+			LogUtil.exception(Level.ERROR, e, "{}: failed to init the storage driver");
+		} catch(final InterruptedException e) {
+			throw new CancellationException();
+		}
+
+		final String itemOutputFile = config.stringVal("item-output-file");
+		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
+			itemOutputFileAggregators.add(new ItemOutputFileAggregator(id(), fileMgrs, configSlices, itemOutputFile));
+			Loggers.MSG.debug("{}: item output file aggregator initialized", id());
+		}
+
+		if(config.boolVal("output-metrics-trace-persist")) {
+			ioTraceLogFileAggregators.add(new IoTraceLogFileAggregator(id(), fileMgrs));
+			Loggers.MSG.debug("{}: I/O trace log file aggregator initialized", id());
+		}
+
+		final String storageAuthFile = storageConfig.stringVal("auth-file");
+		if(storageAuthFile != null && !storageAuthFile.isEmpty()) {
+			storageAuthFileSlicers.add(
+				new TempInputTextFileSlicer(
+					id(), storageAuthFile, fileMgrs, "storage-auth-file", configSlices, batchSize
+				)
+			);
+			Loggers.MSG.debug("{}: storage auth file slicer initialized", id());
+		}
+	}
+
+	private void initAndStartMetricsAggregator() {
+		metricsAggregator = new MetricsAggregatorImpl(id(), stepSlices);
+		try {
+			metricsAggregator.start();
+		} catch(final Exception e) {
+			LogUtil.exception(Level.ERROR, e, "{}: failed to start the metrics aggregator", id());
+		}
+	}
+
+	private void initAndStartStepSlices(
+		final List<String> nodeAddrs, final List<Config> configSlices, final List<List<Config>> ctxConfigsSlices
+	) {
+
+		final String stepTypeName;
+		try {
+			stepTypeName = getTypeName();
+		} catch(final RemoteException e) {
+			throw new AssertionError(e);
+		}
+
+		final int sliceCount = configSlices.size();
+		for(int i = 0; i < sliceCount; i ++) {
+
+			final Config configSlice = configSlices.get(i);
+			final LoadStep stepSlice;
+			if(i == 0) {
+				stepSlice = LoadStepFactory.createLocalLoadStep(
+					configSlice, extensions, ctxConfigsSlices.get(i), stepTypeName
+				);
+			} else {
+				final String nodeAddrWithPort = nodeAddrs.get(i - 1);
+				stepSlice = LoadStepSliceUtil.resolveRemote(
+					configSlice, ctxConfigsSlices.get(i), stepTypeName, nodeAddrWithPort
+				);
+			}
+			stepSlices.add(stepSlice);
+
+			if(stepSlice != null) {
+				try {
+					stepSlice.start();
+				} catch(final Exception e) {
+					LogUtil.exception(Level.ERROR, e, "{}: failed to start the step slice \"{}\"", id(), stepSlice);
+				}
+			}
+		}
+	}
+
+	private List<Config> sliceConfig(final Config config, final int sliceCount) {
 
 		final List<Config> configSlices = new ArrayList<>(sliceCount);
 		for(int i = 0; i < sliceCount; i ++) {
-			final Config configSlice = initConfigSlice(config);
+			final Config configSlice = ConfigSliceUtil.initSlice(config);
 			if(i == 0) {
 				// local step slice: disable the average metrics output
 				configSlice.val("output-metrics-average-period", "0s");
@@ -168,27 +254,45 @@ implements LoadStepClient {
 			configSlices.add(configSlice);
 		}
 
-		final long countLimit = config.longVal("load-step-limit-count");
-		if(sliceCount > 1 && countLimit > 0) {
-			sliceCountLimit(countLimit, sliceCount, configSlices);
-		}
+		if(sliceCount > 1) { // distributed mode
 
-		final int batchSize = config.intVal("load-batch-size");
-		try(final Input<Item> itemInput = createItemInput(config, extensions, batchSize)) {
-			if(itemInput != null) {
-				Loggers.MSG.info("{}: slice the item input \"{}\"...", id(), itemInput);
-				itemInputFileSlices = sliceItemInput(itemInput, fileMgrs, configSlices, batchSize);
-				Loggers.MSG.info("{}: slice the item input \"{}\" done", id(), itemInput);
+			final Config loadStepLimitConfig = config.configVal("load-step-limit");
+
+			final long countLimit = loadStepLimitConfig.longVal("count");
+			if(countLimit > 0) {
+				ConfigSliceUtil.sliceLongValue(countLimit, configSlices, "load-step-limit-count");
 			}
-		} catch(final IOException e) {
-			LogUtil.exception(Level.WARN, e, "{}: failed to use the item input", id());
-		} catch(final Throwable cause) {
-			LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
-		}
 
-		final String itemOutputFile = config.stringVal("item-output-file");
-		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
-			itemOutputFileSlices = sliceItemOutputFileConfig(fileMgrs, configSlices, itemOutputFile);
+			final long countFailLimit = loadStepLimitConfig.longVal("fail-count");
+			if(countFailLimit > 0) {
+				ConfigSliceUtil.sliceLongValue(countFailLimit, configSlices, "load-step-limit-fail-count");
+			}
+
+			final double rateLimit = loadStepLimitConfig.doubleVal("rate");
+			if(rateLimit > 0) {
+				ConfigSliceUtil.sliceDoubleValue(rateLimit, configSlices, "load-step-limit-rate");
+			}
+
+			final long sizeLimit;
+			final Object sizeLimitRaw = loadStepLimitConfig.val("size");
+			if(sizeLimitRaw instanceof String) {
+				sizeLimit = SizeInBytes.toFixedSize((String) sizeLimitRaw);
+			} else {
+				sizeLimit = TypeUtil.typeConvert(sizeLimitRaw, long.class);
+			}
+			if(sizeLimit > 0) {
+				ConfigSliceUtil.sliceLongValue(sizeLimit, configSlices, "load-step-limit-size");
+			}
+
+			try {
+				final Config storageNetNodeConfig = config.configVal("storage-net-node");
+				final boolean sliceStorageNodesFlag = storageNetNodeConfig.boolVal("slice");
+				if(sliceStorageNodesFlag) {
+					final List<String> storageNodeAddrs = storageNetNodeConfig.listVal("addrs");
+					ConfigSliceUtil.sliceStorageNodeAddrs(configSlices, storageNodeAddrs);
+				}
+			} catch(final NoSuchElementException ignore) {
+			}
 		}
 
 		return configSlices;
@@ -196,17 +300,6 @@ implements LoadStepClient {
 
 	private int sliceCount() {
 		return stepSlices.size();
-	}
-
-	private List<MetricsSnapshot> metricsSnapshotsByIndex(final int originIndex) {
-		return metricsSnapshotsSuppliers
-			.values()
-			.stream()
-			.map(Supplier::get)
-			.filter(Objects::nonNull)
-			.map(metricsSnapshots -> metricsSnapshots.get(originIndex))
-			.filter(Objects::nonNull)
-			.collect(Collectors.toList());
 	}
 
 	protected final void initMetrics(
@@ -230,7 +323,7 @@ implements LoadStepClient {
 		final MetricsContext metricsCtx = new AggregatingMetricsContext(
 			id(), ioType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
 			outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
-			() -> metricsSnapshotsByIndex(originIndex)
+			() -> metricsAggregator.metricsSnapshotsByIndex(originIndex)
 		);
 		metricsContexts.add(metricsCtx);
 	}
@@ -264,7 +357,7 @@ implements LoadStepClient {
 		);
 		stepSlices
 			.stream()
-			.map(stepSlice -> (Runnable) (() -> awaitStepSlice(stepSlice, timeout, timeUnit)))
+			.map(stepSlice -> (Runnable) (() -> LoadStepSliceUtil.await(stepSlice, timeout, timeUnit)))
 			.forEach(awaitExecutor::submit);
 		awaitExecutor.shutdown();
 		return awaitExecutor.awaitTermination(timeout, TimeUnit.SECONDS);
@@ -292,28 +385,103 @@ implements LoadStepClient {
 	@Override
 	protected final void doClose()
 	throws IOException {
+
 		super.doClose();
-		stopMetricsSnapshotsSuppliers(id(), metricsSnapshotsSuppliers);
-		releaseStepSlices(id(), stepSlices);
-		releaseMetricsSnapshotsSuppliers(id(), metricsSnapshotsSuppliers);
-		if(null != itemInputFileSlices) {
-			releaseItemInputFileSlices(id(), itemInputFileSlices);
-			itemInputFileSlices = null;
+
+		if(null != metricsAggregator) {
+			metricsAggregator.stop();
 		}
-		if(null != itemOutputFileSlices) {
-			final String localItemOutputFileName = config.stringVal("item-output-file");
-			collectItemOutputFileAndRelease(id(), itemOutputFileSlices, localItemOutputFileName);
-			itemOutputFileSlices = null;
+
+		stepSlices
+			.parallelStream()
+			.forEach(
+				stepSlice -> {
+					try {
+						stepSlice.close();
+						Loggers.MSG.debug("{}: step slice \"{}\" closed", id(), stepSlice);
+					} catch(final Exception e) {
+						LogUtil.exception(
+							Level.WARN, e, "{}: failed to close the step service \"{}\"", id(), stepSlice
+						);
+					}
+				}
+			);
+		Loggers.MSG.debug("{}: closed all {} step slices", id(), stepSlices.size());
+		stepSlices.clear();
+
+		if(null != metricsAggregator) {
+			metricsAggregator.close();
+			metricsAggregator = null;
 		}
-		if(null != ioTraceLogFileSlices) {
-			collectIoTraceLogFileAndRelease(id(), ioTraceLogFileSlices);
-			ioTraceLogFileSlices = null;
-		}
-		releaseFileManagers(id(), fileMgrs);
+
+		itemInputFileSlicers
+			.forEach(
+				itemInputFileSlicer -> {
+					try {
+						itemInputFileSlicer.close();
+					} catch(final Exception e) {
+						LogUtil.exception(
+							Level.WARN, e, "{}: failed to close the item input file slicer \"{}\"", id(),
+							itemInputFileSlicer
+						);
+					}
+				}
+			);
+		itemInputFileSlicers.clear();
+
+		itemOutputFileAggregators
+			.parallelStream()
+			.forEach(
+				itemOutputFileAggregator -> {
+					try {
+						itemOutputFileAggregator.close();
+					} catch(final Exception e) {
+						LogUtil.exception(
+							Level.WARN, e, "{}: failed to close the item output file aggregator \"{}\"", id(),
+							itemOutputFileAggregator
+						);
+					}
+				}
+			);
+
+		ioTraceLogFileAggregators
+			.parallelStream()
+			.forEach(
+				ioTraceLogFileAggregator -> {
+					try {
+						ioTraceLogFileAggregator.close();
+					} catch(final Exception e) {
+						LogUtil.exception(
+							Level.WARN, e, "{}: failed to close the I/O trace log file aggregator \"{}\"", id(),
+							ioTraceLogFileAggregator
+						);
+					}
+				}
+			);
+
+		storageAuthFileSlicers
+			.forEach(
+				storageAuthFileSlicer -> {
+					try {
+						storageAuthFileSlicer.close();
+					} catch(final Exception e) {
+						LogUtil.exception(
+							Level.WARN, e, "{}: failed to close the storage auth file slicer \"{}\"", id(),
+							storageAuthFileSlicer
+						);
+					}
+				}
+			);
+		storageAuthFileSlicers.clear();
 	}
 
 	@Override
 	public final <T extends LoadStepClient> T config(final Map<String, Object> configMap) {
+
+		if(ctxConfigs != null) {
+			throw new IllegalStateException("config(...) should be invoked before any append(...) call");
+		}
+
 		final Map<String, Object> baseConfigMap = deepToMap(config);
 		final Map<String, Object> mergedConfigMap = reduceForest(Arrays.asList(baseConfigMap, configMap));
 		final Config config;
@@ -323,36 +491,26 @@ implements LoadStepClient {
 			LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
 			throw new CancellationException();
 		}
-		return copyInstance(config, contexts);
+		return copyInstance(config, null);
 	}
 
 	@Override
 	public final <T extends LoadStepClient> T append(final Map<String, Object> context) {
-		final List<Map<String, Object>> contextsCopy = new ArrayList<>();
-		if(contexts != null) {
-			contextsCopy.addAll(contexts);
+		final List<Config> ctxConfigsCopy;
+		if(ctxConfigs == null) {
+			ctxConfigsCopy = new ArrayList<>();
+		} else {
+			ctxConfigsCopy = ctxConfigs
+				.stream()
+				.map(BasicConfig::new)
+				.collect(Collectors.toList());
 		}
-		final Map<String, Object> stepConfig = deepCopyTree(context);
-		contextsCopy.add(stepConfig);
-		return copyInstance(config, contextsCopy);
+		final Config ctxConfig = new BasicConfig(
+			config.pathSep(), config.schema(), TreeUtil.reduceForest(Arrays.asList(deepToMap(config), context))
+		);
+		ctxConfigsCopy.add(ctxConfig);
+		return copyInstance(config, ctxConfigsCopy);
 	}
 
-	private static Map<String, Object> deepCopyTree(final Map<String, Object> srcTree) {
-		return srcTree
-			.entrySet()
-			.stream()
-			.collect(
-				Collectors.toMap(
-					Map.Entry::getKey,
-					entry -> {
-						final Object value = entry.getValue();
-						return value instanceof Map ? deepCopyTree((Map<String, Object>) value) : value;
-					}
-				)
-			);
-	}
-
-	protected abstract <T extends LoadStepClient> T copyInstance(
-		final Config config, final List<Map<String, Object>> contexts
-	);
+	protected abstract <T extends LoadStepClient> T copyInstance(final Config config, final List<Config> ctxConfigs);
 }

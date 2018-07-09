@@ -29,14 +29,16 @@
 				"addrs": [
 					"127.0.0.1"
 				],
+				// The limit for the subsequent connection attempts for each storage endpoint node.
+				// The node is excluded from the connection pool forever if the node has more
+				// subsequent connection failures. The default value (0) means no limit.
+				"connAttemptsLimit": 0,
 				// The common port number to access the storage nodes,
 				// may be overridden adding the port number to the storage-driver-net-node-addrs,
 				// for example: "127.0.0.1:9020,127.0.0.1:9022,..."
 				"port": 9020,
-				// The limit for the subsequent connection attempts for each storage endpoint node.
-				// The node is excluded from the connection pool forever if the node has more
-				// subsequent connection failures. The default value (0) means no limit.
-				"connAttemptsLimit": 0
+				// Slice the storage node addresses between the mongoose nodes using the greatest common divisor or not
+				"slice": false
 			}
 		}
 	}

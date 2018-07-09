@@ -36,9 +36,7 @@ implements StorageDriverFactory<I, O, T> {
 		final String stepId, final DataInput dataInput, final Config loadConfig,
 		final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException, InterruptedException {
-		return (T) new FileStorageDriver<I, O>(
-			stepId, dataInput, loadConfig, storageConfig, verifyFlag
-		);
+		return (T) new FileStorageDriver<I, O>(stepId, dataInput, loadConfig, storageConfig, verifyFlag);
 	}
 
 	@Override

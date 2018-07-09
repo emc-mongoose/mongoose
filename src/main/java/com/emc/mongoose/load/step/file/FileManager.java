@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.step;
+package com.emc.mongoose.load.step.file;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 public interface FileManager {
+
+	FileManager INSTANCE = new FileManagerImpl();
 
 	byte[] EMPTY = new byte[0];
 	OpenOption[] READ_OPTIONS = new OpenOption[] {

@@ -18,7 +18,7 @@ import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
 import com.emc.mongoose.svc.Service;
 import com.emc.mongoose.load.step.ScriptEngineUtil;
-import com.emc.mongoose.load.step.service.FileManagerServiceImpl;
+import com.emc.mongoose.load.step.service.file.FileManagerServiceImpl;
 import com.emc.mongoose.load.step.service.LoadStepManagerServiceImpl;
 
 import com.github.akurilov.confuse.Config;
@@ -26,11 +26,13 @@ import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.logging.log4j.CloseableThreadContext;
+
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
 import static javax.script.ScriptContext.ENGINE_SCOPE;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
+
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.io.IOException;
@@ -54,8 +56,7 @@ public final class Main {
 		LogUtil.init(appHomePath.toString());
 
 		try(
-			final Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_ID, initialStepId)
+			final Instance logCtx = put(KEY_STEP_ID, initialStepId)
 				.put(KEY_CLASS_NAME, Main.class.getSimpleName())
 		) {
 
