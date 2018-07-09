@@ -278,7 +278,7 @@ public class CreateLimitBySizeTest {
 
         testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
 
-        System.out.println(ioTraceRecCount.toString() + "\n" + expectedCount);
+        System.out.println(ioTraceRecCount.toString() + "\n" + expectedCount + "\n" + expectedCount * requiredAccuracy);
 
         assertEquals(expectedCount, ioTraceRecCount.sum(), expectedCount * requiredAccuracy);
 
