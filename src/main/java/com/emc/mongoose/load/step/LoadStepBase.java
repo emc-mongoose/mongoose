@@ -26,7 +26,6 @@ import org.apache.logging.log4j.Level;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -37,18 +36,16 @@ implements LoadStep, Runnable {
 
 	protected final Config config;
 	protected final List<Extension> extensions;
-	protected final List<Map<String, Object>> contexts;
+	protected final List<Config> ctxConfigs;
 	protected final List<MetricsContext> metricsContexts = new ArrayList<>();
 
 	private volatile long timeLimitSec = Long.MAX_VALUE;
 	private volatile long startTimeSec = -1;
 
-	protected LoadStepBase(
-		final Config config, final List<Extension> extensions, final List<Map<String, Object>> contexts
-	) {
+	protected LoadStepBase(final Config config, final List<Extension> extensions, final List<Config> ctxConfigs) {
 		this.config = new BasicConfig(config);
 		this.extensions = extensions;
-		this.contexts = contexts;
+		this.ctxConfigs = ctxConfigs;
 	}
 
 	@Override
@@ -143,16 +140,18 @@ implements LoadStep, Runnable {
 	@Override
 	protected void doStop() {
 
-		metricsContexts
-			.forEach(
-				metricsCtx -> {
-					try {
-						MetricsManager.unregister(id(), metricsCtx);
-					} catch(final InterruptedException e) {
-						throw new CancellationException(e.getMessage());
+		if(metricsContexts != null) {
+			metricsContexts
+				.forEach(
+					metricsCtx -> {
+						try {
+							MetricsManager.unregister(id(), metricsCtx);
+						} catch(final InterruptedException e) {
+							throw new CancellationException(e.getMessage());
+						}
 					}
-				}
-			);
+				);
+		}
 
 		final long t = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - startTimeSec;
 		if(t < 0) {

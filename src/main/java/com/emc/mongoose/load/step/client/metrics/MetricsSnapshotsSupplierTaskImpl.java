@@ -1,5 +1,6 @@
-package com.emc.mongoose.load.step.metrics;
+package com.emc.mongoose.load.step.client.metrics;
 
+import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.load.step.LoadStep;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.logging.LogUtil;
@@ -17,6 +18,10 @@ implements MetricsSnapshotsSupplierTask {
 
 	private final LoadStep loadStep;
 	private volatile List<MetricsSnapshot> snapshotsByOrigin;
+
+	public MetricsSnapshotsSupplierTaskImpl(final LoadStep loadStep) {
+		this(ServiceTaskExecutor.INSTANCE, loadStep);
+	}
 
 	public MetricsSnapshotsSupplierTaskImpl(final FibersExecutor executor, final LoadStep loadStep) {
 		super(executor);
@@ -39,6 +44,8 @@ implements MetricsSnapshotsSupplierTask {
 
 	@Override
 	protected final void doClose() {
-		snapshotsByOrigin.clear();
+		if(null != snapshotsByOrigin) {
+			snapshotsByOrigin.clear();
+		}
 	}
 }

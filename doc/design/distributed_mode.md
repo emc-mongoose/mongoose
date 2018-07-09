@@ -53,6 +53,8 @@ node.
 | # | Description
 |---|------------
 | 1 | Using the additional node running locally will lead to output files content collision. Local additional nodes should run inside the isolated environment (Docker container, for example).
+| 2 | Item input slicing may take a long time before the actual load step starts. The progress info is displayed every 10s.
+| 3 | Item output file/trace metrics log aggregation may take a long time after the actual load step finishes. The progress info is displayed every 10s.
 
 ### Assumptions
 

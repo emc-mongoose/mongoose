@@ -5,25 +5,25 @@ import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.load.step.client.LoadStepClient;
 import com.emc.mongoose.load.step.client.LoadStepClientBase;
 import com.emc.mongoose.logging.LogUtil;
+
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 
 import java.util.List;
-import java.util.Map;
 
 public class LinearLoadStepClient
 extends LoadStepClientBase {
 
 	public LinearLoadStepClient(
-		final Config baseConfig, final List<Extension> extensions, final List<Map<String, Object>> contexts
+		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs
 	) {
-		super(baseConfig, extensions, contexts);
+		super(baseConfig, extensions, contextConfigs);
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	protected <T extends LoadStepClient> T copyInstance(final Config config, final List<Map<String, Object>> contexts) {
-		return (T) new LinearLoadStepClient(config, extensions, contexts);
+	protected <T extends LoadStepClient> T copyInstance(final Config config, final List<Config> ctxConfigs) {
+		return (T) new LinearLoadStepClient(config, extensions, ctxConfigs);
 	}
 
 	@Override

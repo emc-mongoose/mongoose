@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.step.metrics;
+package com.emc.mongoose.load.step.client.metrics;
 
 import com.emc.mongoose.metrics.MetricsSnapshot;
 
@@ -9,5 +9,4 @@ import java.util.function.Supplier;
 
 public interface MetricsSnapshotsSupplierTask
 extends Supplier<List<MetricsSnapshot>>, Fiber {
-
 }

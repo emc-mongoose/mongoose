@@ -11,12 +11,11 @@ compatibility:
 
 # Steps
 
-1. Ensure all tests are OK
+1. Ensure all [tests](testing.md) are OK
 2. Ensure the new version documentation is ready
-3. Create the corresponding version branch `release-v<X>.<Y>.<Z>` and
-   set the version in the configuration to <X>.<Y>.<Z>
-4. Share the testing build with QE and repeat this step until the
-   qualification is OK
+3. Create the corresponding version branch `release-v<X>.<Y>.<Z>` and set the version in the configuration to
+   <X>.<Y>.<Z>
+4. Share the testing build with QE and repeat this step until the qualification is OK
 5. Create/replace the corresponding VCS tags:
    ```bash
    git tag -a <X>.<Y>.<Z> -m <X>.<Y>.<Z>
@@ -30,5 +29,6 @@ compatibility:
     ```bash
     ./gradlew clean uploadArchives
     ```
-   2. Go to the https://oss.sonatype.org/#stagingRepositories
-      find the corresponding repository, close and then release it.
+   2. Go to the https://oss.sonatype.org/#stagingRepositories find the corresponding repository, close and then release
+      it.
+9. Update the projects depending on the Mongoose's API (storage drivers, at least)

@@ -44,9 +44,7 @@ extends LogMessageBase {
 		this(metrics, false);
 	}
 
-	public MetricsAsciiTableLogMessage(
-		final Set<MetricsContext> metrics, final boolean summaryFlag
-	) {
+	public MetricsAsciiTableLogMessage(final Set<MetricsContext> metrics, final boolean summaryFlag) {
 		this.metrics = metrics;
 		this.summaryFlag = summaryFlag;
 	}
@@ -108,9 +106,7 @@ extends LogMessageBase {
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadLeft(snapshot.actualConcurrencyLast(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight(
-						formatFixedWidth(snapshot.actualConcurrencyMean(), 10), 10, ' '
-					)
+					.appendFixedWidthPadRight(formatFixedWidth(snapshot.actualConcurrencyMean(), 10), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadLeft(succCount, 12, ' ').append(TABLE_BORDER_VERTICAL);
 				if(stdOutColorFlag) {
@@ -124,9 +120,9 @@ extends LogMessageBase {
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadRight((double) snapshot.elapsedTimeMillis() / 1000, 7, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight(snapshot.succRateLast(), 8, ' ')
+					.appendFixedWidthPadRight(formatFixedWidth(snapshot.succRateLast(), 8), 8, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight(snapshot.byteRateLast() / MIB, 7, ' ')
+					.appendFixedWidthPadRight(formatFixedWidth(snapshot.byteRateLast() / MIB, 7), 7, ' ')
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadLeft((long) snapshot.latencyMean(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)

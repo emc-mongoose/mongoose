@@ -44,10 +44,9 @@ implements LoadStepManagerService {
 	}
 
 	@Override
-	public final String getStepService(
-		final String stepType, final Config config, final List<Map<String, Object>> stepConfigs
-	) throws RemoteException {
-		final LoadStepService stepSvc = new LoadStepServiceImpl(port, extensions, stepType, config, stepConfigs);
+	public final String getStepService(final String stepType, final Config config, final List<Config> ctxConfigs)
+	throws RemoteException {
+		final LoadStepService stepSvc = new LoadStepServiceImpl(port, extensions, stepType, config, ctxConfigs);
 		Loggers.MSG.info("New step service started @ port #{}: {}", port, stepSvc.name());
 		return stepSvc.name();
 	}

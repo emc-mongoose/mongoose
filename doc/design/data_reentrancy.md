@@ -1,43 +1,35 @@
 # New Data Items
 
 The tool should be able to create large objects (terabyte size, petabyte size and more) and do it concurrenctly via
-thousands of simultaneous active channels. This means that the tool should stream the produced data
-directly, avoiding excessive memory allocation. On the other hand, if one produces and sends only
-one byte every time the execution rate will be too low because of frequent method calls and
-switching. Mongoose tool pre-produces some fixed amount of custom data into the memory.
-***[XOrShift](http://www.iro.umontreal.ca/~lecuyer/myftp/papers/xorshift.pdf)*** algorithm is used
-for data pre-production as far as it have been found the fastest. This data buffer acts like a
-circular one. Every data item is defined by the unique 64-bit offset in the data ring:
+thousands of simultaneous active channels. Mongoose tool pre-produces some fixed amount of custom data into the memory.
+***[XOrShift](http://www.iro.umontreal.ca/~lecuyer/myftp/papers/xorshift.pdf)*** algorithm is used for data
+pre-generation as far as it have been found the fastest. This data buffer acts like a circular one. Every data item is
+defined by the unique 64-bit offset in the data ring:
 
 ![](https://latex.codecogs.com/png.latex?%5Cfn_cm%20offset_%7Bk%7D%20%3D%20k%5C%3Bmod%5C%3Bsize_%7Bring%7D)
 
 # Custom Ring Buffer Data
 
-Versions prior to 1.1.0 using only one type of the ring buffer which is pre-filled with uniform
-random data. Since v1.1.0 there's an option to specify a file which may be used as a source for the
-ring buffer content. The specified file may be binary either text file. For demo and testing
-purposes there are two predefined files:
+Versions prior to 1.1.0 are using only one type of the ring buffer which is pre-filled with uniform random data. Since
+v1.1.0 there's an option to specify a file which may be used as a source for the ring buffer content. The specified file
+may be binary either text file. For demo and testing purposes there are two predefined files:
 
 1. config/content/zerobytes
 
    The file contains 1MB of zero bytes.
 
-2. config/content/equalbytes
-
-   The file contains 1MB of equal bytes (0x7F).
-
-3. conf/content/textexample
+2. conf/content/textexample
 
    The file contains ~30KB of text of "Rikki-Tikki-Tavi" tale by R. Kipling.
 
-By default mongoose doesn't use any external file for the ring buffer filling so it falls back to
-using the ring buffer filled with random data.
+By default mongoose doesn't use any external file for the ring buffer filling so it falls back to using the ring buffer
+filled with random data.
 
 # Random Range Update
 
-The data for updated ranges is produced from another ring buffer which shares the same size with the
-creation data ring buffer. The seed for the update ring buffer is calculated as the seed of the
-creation data ring after reversing the bytes order and reversing the bits order:
+The data for updated ranges is produced from another ring buffer which shares the same size with the creation data ring
+buffer. The seed for the update ring buffer is calculated as the seed of the creation data ring after reversing the
+bytes order and reversing the bits order:
 
 |                | hex value        | bin value                                                                       |
 |----------------|------------------|---------------------------------------------------------------------------------|

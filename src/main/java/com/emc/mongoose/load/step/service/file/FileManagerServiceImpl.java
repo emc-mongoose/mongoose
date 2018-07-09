@@ -1,7 +1,7 @@
-package com.emc.mongoose.load.step.service;
+package com.emc.mongoose.load.step.service.file;
 
-import com.emc.mongoose.load.step.FileManager;
-import com.emc.mongoose.load.step.FileManagerImpl;
+import com.emc.mongoose.load.step.file.FileManager;
+import com.emc.mongoose.load.step.file.FileManagerImpl;
 import com.emc.mongoose.svc.ServiceBase;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 

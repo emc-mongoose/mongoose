@@ -1,6 +1,6 @@
-package com.emc.mongoose.load.step.service;
+package com.emc.mongoose.load.step.service.file;
 
-import com.emc.mongoose.load.step.FileManager;
+import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.svc.Service;
 
 /**
