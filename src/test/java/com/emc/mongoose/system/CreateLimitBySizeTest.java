@@ -308,11 +308,11 @@ public class CreateLimitBySizeTest {
             assertEquals("0/0", modLayerAndMask);
         }
         assertEquals(items.size(), freq.getUniqueCount());
-//
-//        testTotalMetricsLogRecord(
-//                getContainerMetricsTotalLogRecords(stepId).get(0), IoType.CREATE, concurrency.getValue(),
-//                runMode.getNodeCount(), itemSize.getValue(), 0, 0
-//        );
+
+        testTotalMetricsLogRecord(
+                getContainerMetricsTotalLogRecords(stepId).get(0), IoType.CREATE, concurrency.getValue(),
+                runMode.getNodeCount(), itemSize.getValue(), 0, 0
+        );
 //
 //        testMetricsLogRecords(
 //                getContainerMetricsLogRecords(stepId), IoType.CREATE, concurrency.getValue(),
