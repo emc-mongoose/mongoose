@@ -375,6 +375,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					}
 				} else {
 					conn = connPool.lease();
+					System.out.println(connPool.toString());
 					if(conn == null) {
 						return i - from;
 					}
