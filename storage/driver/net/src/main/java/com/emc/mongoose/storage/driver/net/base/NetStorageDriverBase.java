@@ -381,49 +381,47 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
                     }
                 } else {
                     conn = connPool.lease();
-                    try {
-
-                        Field field = connPool.getClass().getDeclaredField("concurrencyThrottle");
-                        field.setAccessible(true);
-                        Object value = field.get(connPool);
-                        System.out.println(value);
-
-                        Field field2 = connPool.getClass().getDeclaredField("availableConns");
-                        field2.setAccessible(true);
-                        Map<String, Queue<Channel>> value2 = (Map<String, Queue<Channel>>) field2.get(connPool);
-                        System.out.println(value2);
-
-                        Field field3 = connPool.getClass().getDeclaredField("n");
-                        field3.setAccessible(true);
-                        Object value3 = field3.get(connPool);
-                        System.out.println(value3);
-
-                        Field field4 = connPool.getClass().getDeclaredField("nodes");
-                        field4.setAccessible(true);
-                        String[] value4 = (String[]) field4.get(connPool);
-                        for (String s : value4) {
-                            System.out.print(s);
-                        }
-                        System.out.println("\n");
-
-                        Queue<Channel> connQueue = value2.get(value4[0]);
-                        if (connQueue != null)
-                            System.out.println(connQueue);
-
-                        if (conn != null)
-                            System.out.println(conn.isOpen() + "  " + conn);
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    } catch (NoSuchFieldException e) {
-                        e.printStackTrace();
-                    }
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-
+//                    try {
+//
+//                        Field field = connPool.getClass().getDeclaredField("concurrencyThrottle");
+//                        field.setAccessible(true);
+//                        Object value = field.get(connPool);
+//                        System.out.println(value);
+//
+//                        Field field2 = connPool.getClass().getDeclaredField("availableConns");
+//                        field2.setAccessible(true);
+//                        Map<String, Queue<Channel>> value2 = (Map<String, Queue<Channel>>) field2.get(connPool);
+//                        System.out.println(value2);
+//
+//                        Field field3 = connPool.getClass().getDeclaredField("n");
+//                        field3.setAccessible(true);
+//                        Object value3 = field3.get(connPool);
+//                        System.out.println(value3);
+//
+//                        Field field4 = connPool.getClass().getDeclaredField("nodes");
+//                        field4.setAccessible(true);
+//                        String[] value4 = (String[]) field4.get(connPool);
+//                        for (String s : value4) {
+//                            System.out.print(s);
+//                        }
+//                        System.out.println("\n");
+//
+//                        Queue<Channel> connQueue = value2.get(value4[0]);
+//                        if (connQueue != null)
+//                            System.out.println(connQueue);
+//
+//                        if (conn != null)
+//                            System.out.println(conn.isOpen() + "  " + conn);
+//                    } catch (IllegalAccessException e) {
+//                        e.printStackTrace();
+//                    } catch (NoSuchFieldException e) {
+//                        e.printStackTrace();
+//                    }
+//                    try {
+//                        Thread.sleep(5000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
                     if (conn == null) {
                         return i - from;
                     }
