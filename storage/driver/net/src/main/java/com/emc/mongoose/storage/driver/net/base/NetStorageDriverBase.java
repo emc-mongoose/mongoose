@@ -379,35 +379,32 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
                     }
                 } else {
                     conn = connPool.lease();
-
-
-                    Field field = null;
                     try {
-                        field = connPool.getClass().getDeclaredField("concurrencyThrottle");
+
+                        Field field = connPool.getClass().getDeclaredField("concurrencyThrottle");
                         field.setAccessible(true);
-                        try {
-                            Object value = field.get(connPool);
-                            System.out.println(value);
+                        Object value = field.get(connPool);
+                        System.out.println(value);
 
-                            Field field2 = null;
-                            field2 = connPool.getClass().getDeclaredField("availableConns");
-                            field2.setAccessible(true);
+                        Field field2 = connPool.getClass().getDeclaredField("availableConns");
+                        field2.setAccessible(true);
+                        Object value2 = field2.get(connPool);
+                        System.out.println(value2);
 
-                            Object value2 = field2.get(connPool);
-                            System.out.println(value2);
+                        Field field3 = connPool.getClass().getDeclaredField("n");
+                        field3.setAccessible(true);
+                        Object value3 = field3.get(connPool);
+                        System.out.println(value3);
 
-                            Field field3 = null;
-                            field3 = connPool.getClass().getDeclaredField("n");
-                            field3.setAccessible(true);
+                        Field field4 = connPool.getClass().getDeclaredField("nodes");
+                        field4.setAccessible(true);
+                        Object value4 = field4.get(connPool);
+                        System.out.println(value4);
 
-                            Object value3 = field3.get(connPool);
-                            System.out.println(value3);
-
-                            if (conn != null)
-                                System.out.println(conn.isOpen() + "  " + conn);
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        }
+                        if (conn != null)
+                            System.out.println(conn.isOpen() + "  " + conn);
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
                     } catch (NoSuchFieldException e) {
                         e.printStackTrace();
                     }
