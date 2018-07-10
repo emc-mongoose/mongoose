@@ -398,8 +398,11 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
 
                         Field field4 = connPool.getClass().getDeclaredField("nodes");
                         field4.setAccessible(true);
-                        Object value4 = field4.get(connPool);
-                        System.out.println(value4.toString());
+                        String[] value4 = (String[]) field4.get(connPool);
+                        for (String s : value4) {
+                            System.out.print(s);
+                        }
+                        System.out.println("\n");
 
                         if (conn != null)
                             System.out.println(conn.isOpen() + "  " + conn);
