@@ -378,7 +378,6 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
                         return i - from;
                     }
                 } else {
-                    //conn = connPool.lease();
                     if (wasExc) {
                         Field field = null;
                         try {
@@ -387,8 +386,26 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
                             try {
                                 Object value = field.get(connPool);
                                 System.out.println(value);
-                                conn = connPool.lease();
-                                value = field.get(connPool);
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            }
+                        } catch (NoSuchFieldException e) {
+                            e.printStackTrace();
+                        }
+                        try {
+                            Thread.sleep(10000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    conn = connPool.lease();
+                    if (wasExc) {
+                        Field field = null;
+                        try {
+                            field = connPool.getClass().getDeclaredField("concurrencyThrottle");
+                            field.setAccessible(true);
+                            try {
+                                Object value = field.get(connPool);
                                 System.out.println(value);
                             } catch (IllegalAccessException e) {
                                 e.printStackTrace();
