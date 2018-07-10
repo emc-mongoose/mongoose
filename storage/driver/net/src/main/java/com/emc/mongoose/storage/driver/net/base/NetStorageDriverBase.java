@@ -65,6 +65,8 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.BitSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -388,7 +390,7 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
 
                         Field field2 = connPool.getClass().getDeclaredField("availableConns");
                         field2.setAccessible(true);
-                        Object value2 = field2.get(connPool);
+                        Map<String, Queue<Channel>> value2 = (Map<String, Queue<Channel>>) field2.get(connPool);
                         System.out.println(value2);
 
                         Field field3 = connPool.getClass().getDeclaredField("n");
@@ -403,6 +405,10 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
                             System.out.print(s);
                         }
                         System.out.println("\n");
+
+                        Queue<Channel> connQueue = value2.get(value4[0]);
+                        if (connQueue != null)
+                            System.out.println(connQueue);
 
                         if (conn != null)
                             System.out.println(conn.isOpen() + "  " + conn);
