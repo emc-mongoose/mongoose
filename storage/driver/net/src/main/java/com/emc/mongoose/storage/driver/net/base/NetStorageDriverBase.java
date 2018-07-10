@@ -378,7 +378,7 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
                         return i - from;
                     }
                 } else {
-                    conn = connPool.lease();
+                    //conn = connPool.lease();
                     if (wasExc) {
                         Field field = null;
                         try {
@@ -386,6 +386,9 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
                             field.setAccessible(true);
                             try {
                                 Object value = field.get(connPool);
+                                System.out.println(value);
+                                conn = connPool.lease();
+                                value = field.get(connPool);
                                 System.out.println(value);
                             } catch (IllegalAccessException e) {
                                 e.printStackTrace();
