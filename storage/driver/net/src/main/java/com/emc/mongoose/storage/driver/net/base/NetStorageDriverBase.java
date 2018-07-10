@@ -388,6 +388,7 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
                         try {
                             Object value = field.get(connPool);
                             System.out.println(value);
+                            System.out.println(conn.isOpen() + "  " + conn);
                         } catch (IllegalAccessException e) {
                             e.printStackTrace();
                         }
