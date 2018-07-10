@@ -87,6 +87,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	private final int socketTimeout;
 	private final boolean sslFlag;
 
+	private boolean wasExc = false;
+
 	@SuppressWarnings("unchecked")
 	protected NetStorageDriverBase(
 		final String jobName, final DataInput itemDataInput, final LoadConfig loadConfig,
@@ -337,11 +339,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
 			ioTask.setStatus(IoTask.Status.FAIL_IO);
 			complete(null, ioTask);
 		}
@@ -375,7 +372,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					}
 				} else {
 					conn = connPool.lease();
-					System.out.println(connPool.toString());
+					if (wasExc) System.out.println(connPool);
 					if(conn == null) {
 						return i - from;
 					}
@@ -395,12 +392,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				LogUtil.exception(Level.WARN, e, "Failed to submit the I/O task");
 			}
 		} catch(final ConnectException e) {
+			wasExc = true;
 			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
 			for(int i = from; i < to; i ++) {
 				nextIoTask = ioTasks.get(i);
 				nextIoTask.setStatus(IoTask.Status.FAIL_IO);
