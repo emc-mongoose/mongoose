@@ -109,7 +109,6 @@ subprojects {
 
 	repositories {
 		mavenCentral()
-		maven { url "https://oss.sonatype.org/content/repositories/comgithubakurilov-1105" }
 	}
 
 	jar {
