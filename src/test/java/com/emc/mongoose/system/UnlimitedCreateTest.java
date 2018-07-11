@@ -125,9 +125,9 @@ public class UnlimitedCreateTest {
                 break;
         }
 
-        final String containerScenarioPath = containerScenarioPath(getClass());
+        //use default scenario
         testContainer = new MongooseContainer(
-                stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args
+                stepId, storageType, runMode, concurrency, itemSize, null, env, args
         );
     }
 

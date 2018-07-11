@@ -114,7 +114,9 @@ public final class MongooseContainer
         this.args.add("--load-step-limit-concurrency=" + concurrency.getValue());
         this.args.add("--item-data-size=" + itemSize.getValue());
         this.args.add("--output-metrics-trace-persist");
-        this.args.add("--run-scenario=" + containerScenarioPath);
+        if (containerScenarioPath != null) {
+            this.args.add("--run-scenario=" + containerScenarioPath);
+        }
         this.args.add("--storage-driver-type=" + storageType.name().toLowerCase());
         switch (storageType) {
             case S3:
