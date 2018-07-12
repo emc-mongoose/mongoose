@@ -69,6 +69,7 @@ public final class MainInstaller
                     "example/scenario/js/systest/single_fixed_update_and_single_random_read_test.js",
                     "example/scenario/js/systest/single_random_update_and_multiple_random_read_test.js",
                     "example/scenario/js/systest/unlimited_concurrency_limit_by_rate_test.js",
+                    "example/scenario/js/systest/weighted_load_test.js",
 
                     // custom scenario examples in python
                     "example/scenario/py/types/additional/copy_load_using_env_vars.py",

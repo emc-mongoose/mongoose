@@ -216,7 +216,16 @@ jobs:
       - ITEM_SIZE=small,medium,large
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-
+# failures:
+# https://travis-ci.org/emc-mongoose/mongoose/jobs/315447302
+# STORAGE_TYPE=fs,s3,swift RUN_MODE=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=WeightedLoadTest systemTest
+    - env:
+      - TEST=WeightedLoadTest
+      - STORAGE_TYPE=fs,s3,swift
+      - RUN_MODE=distributed
+      - CONCURRENCY=single,medium
+      - ITEM_SIZE=empty,small
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
 
     - stage: "Deploy"
@@ -413,15 +422,4 @@ jobs:
       - RUN_MODE=local,distributed
       - CONCURRENCY=low,medium,high
       - ITEM_SIZE=medium
-      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose/jobs/315447302
-    # STORAGE_TYPE=fs,s3,swift RUN_MODE=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonWeightedLoadTest systemTest
-    - env:
-      - TEST=JsonWeightedLoadTest
-      - STORAGE_TYPE=fs,s3,swift
-      - RUN_MODE=distributed
-      - CONCURRENCY=single,medium
-      - ITEM_SIZE=empty,small
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
