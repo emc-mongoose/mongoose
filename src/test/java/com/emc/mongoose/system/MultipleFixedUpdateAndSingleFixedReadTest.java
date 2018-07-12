@@ -14,7 +14,6 @@ import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -31,17 +30,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.*;
+import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
-import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
 public class MultipleFixedUpdateAndSingleFixedReadTest {
@@ -53,6 +49,8 @@ public class MultipleFixedUpdateAndSingleFixedReadTest {
 
     private final int timeoutInMillis = 1000_000;
     private final long EXPECTED_COUNT = 2000;
+    private final SizeInBytes expectedUpdateSize;
+    private final SizeInBytes expectedReadSize;
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
     private final MongooseContainer testContainer;
@@ -62,16 +60,13 @@ public class MultipleFixedUpdateAndSingleFixedReadTest {
     private final Concurrency concurrency;
     private final ItemSize itemSize;
     private final Config config;
+    private final String containerItemOutputPath;
     private final String hostItemOutputFile = HOST_SHARE_PATH + File.separator
             + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
     private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
-
     private int averagePeriod;
-    private String stdOutContent = null;
-    private String containerItemOutputPath;
-    private SizeInBytes expectedUpdateSize;
-    private SizeInBytes expectedReadSize;
 
+    private String stdOutContent = null;
 
     public MultipleFixedUpdateAndSingleFixedReadTest(
             final StorageType storageType, final RunMode runMode, final Concurrency concurrency,

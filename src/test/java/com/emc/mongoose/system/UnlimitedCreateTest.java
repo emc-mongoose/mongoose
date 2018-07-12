@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -43,6 +42,7 @@ public class UnlimitedCreateTest {
 
     private final String containerItemOutputPath;
 
+    private final int timeoutInMillis = 60_000;
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
     private final MongooseContainer testContainer;
@@ -137,7 +137,7 @@ public class UnlimitedCreateTest {
         storageMocks.values().forEach(AsyncRunnableBase::start);
         slaveNodes.values().forEach(AsyncRunnableBase::start);
         testContainer.start();
-        testContainer.await(60, TimeUnit.SECONDS);
+        testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
     }
 
     @After

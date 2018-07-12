@@ -54,6 +54,8 @@ public class MultipleRandomUpdateAndSingleFixedReadTest {
     private final int timeoutInMillis = 1000_000;
     private final long EXPECTED_COUNT = 10_000;
     private final int UPDATE_RANDOM_RANGES_COUNT = 5;
+    private final SizeInBytes expectedUpdateSize;
+    private final SizeInBytes expectedReadSize;
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
     private final MongooseContainer testContainer;
@@ -63,16 +65,13 @@ public class MultipleRandomUpdateAndSingleFixedReadTest {
     private final Concurrency concurrency;
     private final ItemSize itemSize;
     private final Config config;
+    private final String containerItemOutputPath;
     private final String hostItemOutputFile = HOST_SHARE_PATH + File.separator
             + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
     private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
+    private final int averagePeriod;
 
-    private int averagePeriod;
     private String stdOutContent = null;
-    private String containerItemOutputPath;
-    private SizeInBytes expectedUpdateSize;
-    private SizeInBytes expectedReadSize;
-
 
     public MultipleRandomUpdateAndSingleFixedReadTest(
             final StorageType storageType, final RunMode runMode, final Concurrency concurrency,

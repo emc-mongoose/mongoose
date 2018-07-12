@@ -49,6 +49,7 @@ public class ReadCustomContentVerificationFailTest {
         return EnvParams.PARAMS;
     }
 
+    private final int timeoutInMillis = 1000_000;
     private final String ITEM_LIST_FILE = CONTAINER_SHARE_PATH + File.separator
             + "/example/content/textexample";
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
@@ -60,11 +61,11 @@ public class ReadCustomContentVerificationFailTest {
     private final Concurrency concurrency;
     private final ItemSize itemSize;
     private final Config config;
+    private final String containerItemOutputPath;
     private final String hostItemOutputFile = HOST_SHARE_PATH + File.separator
             + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
 
     private String stdOutContent = null;
-    private String containerItemOutputPath;
 
     public ReadCustomContentVerificationFailTest(
             final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
@@ -160,7 +161,7 @@ public class ReadCustomContentVerificationFailTest {
         storageMocks.values().forEach(AsyncRunnableBase::start);
         slaveNodes.values().forEach(AsyncRunnableBase::start);
         testContainer.start();
-        testContainer.await(1000, TimeUnit.SECONDS);
+        testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
         stdOutContent = testContainer.stdOutContent();
     }
 

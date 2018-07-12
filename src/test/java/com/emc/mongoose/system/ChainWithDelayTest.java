@@ -2,11 +2,9 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.system.util.EnvUtil;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
@@ -15,7 +13,6 @@ import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -32,19 +29,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class ChainWithDelayTest {
@@ -57,6 +48,7 @@ public class ChainWithDelayTest {
     private final int DELAY_SECONDS = 20;
     private final int TIME_LIMIT = 60;
     private final String zone1Addr = "127.0.0.1";
+    private final String zone2Addr;
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
     private final MongooseContainer testContainer;
@@ -66,16 +58,15 @@ public class ChainWithDelayTest {
     private final Concurrency concurrency;
     private final ItemSize itemSize;
     private final Config config;
+    private final int averagePeriod;
+    private final String containerItemOutputPath;
     private final String hostItemOutputFile = HOST_SHARE_PATH + File.separator
             + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
     private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 
     private boolean finishedInTime;
     private int containerExitCode;
-    private int averagePeriod;
     private String stdOutContent = null;
-    private String containerItemOutputPath;
-    private String zone2Addr;
 
     public ChainWithDelayTest(
             final StorageType storageType, final RunMode runMode, final Concurrency concurrency,

@@ -15,8 +15,6 @@ import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -25,9 +23,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -41,13 +37,11 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.*;
+import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
 public class MultipartCreateTest {
@@ -67,19 +61,19 @@ public class MultipartCreateTest {
     private final RunMode runMode;
     private final Concurrency concurrency;
     private final ItemSize itemSize;
+    private final SizeInBytes partSize;
+    private final SizeInBytes fullItemSize;
+    private final SizeInBytes sizeLimit;
     private final Config config;
+    private final String containerItemOutputPath;
     private final String hostItemOutputFile = HOST_SHARE_PATH + File.separator
             + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
     private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
+    private final int averagePeriod;
 
-    private int averagePeriod;
     private String stdOutContent = null;
-    private String containerItemOutputPath;
     private long expectedCountMin;
     private long expectedCountMax;
-    private SizeInBytes partSize;
-    private SizeInBytes fullItemSize;
-    private SizeInBytes sizeLimit;
 
     public MultipartCreateTest(
             final StorageType storageType, final RunMode runMode, final Concurrency concurrency,

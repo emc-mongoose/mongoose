@@ -181,6 +181,20 @@ jobs:
       - ITEM_SIZE=small
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
+# failures:
+# https://travis-ci.org/emc-mongoose/mongoose/jobs/312915013
+# https://travis-ci.org/emc-mongoose/mongoose/jobs/315447298
+# STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=SingleFixedUpdateAndSingleRandomReadTest systemTest
+    - env:
+      - TEST=SingleFixedUpdateAndSingleRandomReadTest
+      - STORAGE_TYPE=fs,s3,swift
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=single,low,medium,high
+      - ITEM_SIZE=small,medium
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+
+
 
 
     - stage: "Deploy"
@@ -365,18 +379,6 @@ jobs:
       - RUN_MODE=local,distributed
       - CONCURRENCY=low,medium
       - ITEM_SIZE=small
-      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915013
-    # https://travis-ci.org/emc-mongoose/mongoose/jobs/315447298
-    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonSingleFixedUpdateAndSingleRandomReadTest systemTest
-    - env:
-      - TEST=JsonSingleFixedUpdateAndSingleRandomReadTest
-      - STORAGE_TYPE=fs,s3,swift
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=single,low,medium,high
-      - ITEM_SIZE=small,medium
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # failures:

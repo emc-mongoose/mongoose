@@ -39,9 +39,9 @@ import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.system.util.LogValidationUtil.*;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
 public class ReadVerificationAfterCircularUpdateTest {
@@ -51,6 +51,7 @@ public class ReadVerificationAfterCircularUpdateTest {
         return EnvParams.PARAMS;
     }
 
+    private final int timeoutInMillis = 1000_000;
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
     private final MongooseContainer testContainer;
@@ -60,12 +61,12 @@ public class ReadVerificationAfterCircularUpdateTest {
     private final Concurrency concurrency;
     private final ItemSize itemSize;
     private final Config config;
+    private final String containerItemOutputPath;
     private final String hostItemOutputFile = HOST_SHARE_PATH + File.separator
             + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
+    private final int averagePeriod;
 
-    private int averagePeriod;
     private String stdOutContent = null;
-    private String containerItemOutputPath;
 
     public ReadVerificationAfterCircularUpdateTest(
             final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
@@ -166,7 +167,7 @@ public class ReadVerificationAfterCircularUpdateTest {
         storageMocks.values().forEach(AsyncRunnableBase::start);
         slaveNodes.values().forEach(AsyncRunnableBase::start);
         testContainer.start();
-        testContainer.await(1000, TimeUnit.SECONDS);
+        testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
         stdOutContent = testContainer.stdOutContent();
     }
 

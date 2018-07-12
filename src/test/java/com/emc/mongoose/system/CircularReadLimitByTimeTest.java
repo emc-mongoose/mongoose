@@ -13,8 +13,6 @@ import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -23,9 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -43,7 +39,6 @@ import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.system.util.LogValidationUtil.*;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
@@ -55,6 +50,7 @@ public class CircularReadLimitByTimeTest {
     }
 
     private final int timeoutInMillis = 1000_000;
+    private final int timeLimitInSec = 65; //1m + up to 5s for the precondition job
     private final String ITEM_OUTPUT_FILE = "CircularReadLimitByTime.csv";
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
@@ -65,17 +61,15 @@ public class CircularReadLimitByTimeTest {
     private final Concurrency concurrency;
     private final ItemSize itemSize;
     private final Config config;
+    private final String containerItemOutputPath;
     private final String hostItemOutputFile = HOST_SHARE_PATH + File.separator
             + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
     private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
-    private final int timeLimitInSec = 65; //1m + up to 5s for the precondition job
-
+    private final int averagePeriod;
 
     private boolean finishedInTime;
-    private int averagePeriod;
-
     private String stdOutContent = null;
-    private String containerItemOutputPath;
+
 
     public CircularReadLimitByTimeTest(
             final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
