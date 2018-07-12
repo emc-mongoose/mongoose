@@ -60,6 +60,7 @@ public final class MainInstaller
                     "example/scenario/js/systest/copy_using_input_path_test.js",
                     "example/scenario/js/systest/read_using_variable_path_test.js",
                     "example/scenario/js/systest/circular_read_limit_by_time_test.js",
+                    "example/scenario/js/systest/unlimited_create_test.js",
                     "example/scenario/js/systest/chain_with_delay_test.js",
                     "example/scenario/js/systest/multipart_create_test.js",
                     "example/scenario/js/systest/multiple_fixed_update_and_single_fixed_read_test.js",
