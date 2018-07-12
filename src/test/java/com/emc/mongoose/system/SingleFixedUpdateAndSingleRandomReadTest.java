@@ -39,8 +39,7 @@ import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.system.util.LogValidationUtil.*;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
@@ -51,8 +50,8 @@ public class SingleFixedUpdateAndSingleRandomReadTest {
         return EnvParams.PARAMS;
     }
 
-    private final long EXPECTED_COUNT = 2000;
-    private final int timeoutInMillis = 1000_000;
+    private static final long EXPECTED_COUNT = 2_000;
+    private final int timeoutInMillis = 1_000_000;
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
     private final MongooseContainer testContainer;
@@ -207,18 +206,18 @@ public class SingleFixedUpdateAndSingleRandomReadTest {
     @Test
     public final void test()
             throws Exception {
+
+// I/O traces
         final LongAdder ioTraceRecCount = new LongAdder();
-        final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
+        final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
             if (ioTraceRecCount.sum() < EXPECTED_COUNT) {
-                testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(),
-                        expectedUpdateSize
-                );
+                testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(), expectedUpdateSize);
             } else {
                 testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), expectedReadSize);
             }
             ioTraceRecCount.increment();
         };
-        testIoTraceLogRecords(stepId, ioTraceRecFunc);
+        testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
         assertEquals(
                 "There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
                 2 * EXPECTED_COUNT, ioTraceRecCount.sum()
@@ -226,12 +225,12 @@ public class SingleFixedUpdateAndSingleRandomReadTest {
 
         final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
         testTotalMetricsLogRecord(
-                totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(),
-                runMode.getNodeCount(), expectedUpdateSize, EXPECTED_COUNT, 0
+                totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+                expectedUpdateSize, EXPECTED_COUNT, 0
         );
         testTotalMetricsLogRecord(
-                totalMetrcisLogRecords.get(1), IoType.READ, concurrency.getValue(),
-                runMode.getNodeCount(), expectedReadSize, EXPECTED_COUNT, 0
+                totalMetrcisLogRecords.get(1), IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+                expectedReadSize, EXPECTED_COUNT, 0
         );
 
         final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);

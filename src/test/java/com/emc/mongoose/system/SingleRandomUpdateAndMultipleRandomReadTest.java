@@ -1,8 +1,8 @@
 package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
+import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.IoTask;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
@@ -10,6 +10,8 @@ import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
+import com.github.akurilov.commons.reflection.TypeUtil;
+import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import org.apache.commons.csv.CSVRecord;
@@ -35,22 +37,23 @@ import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.*;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
-public class ReadCustomContentVerificationFailTest {
+public class SingleRandomUpdateAndMultipleRandomReadTest {
 
     @Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
     public static List<Object[]> envParams() {
         return EnvParams.PARAMS;
     }
 
-    private final int timeoutInMillis = 1000_000;
+    private final long EXPECTED_COUNT = 1_000;
+    private static final int READ_RANDOM_RANGES_COUNT = 12;
     private final String ITEM_LIST_FILE = CONTAINER_SHARE_PATH + File.separator + "/example/content/textexample";
+    private final int timeoutInMillis = 1000_000;
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
     private final MongooseContainer testContainer;
@@ -59,6 +62,9 @@ public class ReadCustomContentVerificationFailTest {
     private final RunMode runMode;
     private final Concurrency concurrency;
     private final ItemSize itemSize;
+    private final SizeInBytes expectedUpdateSize;
+    private final SizeInBytes expectedReadSize;
+    private final int averagePeriod;
     private final Config config;
     private final String containerItemOutputPath;
     private final String hostItemOutputFile = HOST_SHARE_PATH + File.separator
@@ -66,7 +72,7 @@ public class ReadCustomContentVerificationFailTest {
 
     private String stdOutContent = null;
 
-    public ReadCustomContentVerificationFailTest(
+    public SingleRandomUpdateAndMultipleRandomReadTest(
             final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
             final ItemSize itemSize
     ) throws Exception {
@@ -74,6 +80,13 @@ public class ReadCustomContentVerificationFailTest {
         final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
                 APP_NAME, Thread.currentThread().getContextClassLoader());
         config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
+
+        final Object avgPeriodRaw = config.val("output-metrics-average-period");
+        if (avgPeriodRaw instanceof String) {
+            averagePeriod = (int) TimeUtil.getTimeInSeconds((String) avgPeriodRaw);
+        } else {
+            averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
+        }
 
         stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
         containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
@@ -87,6 +100,10 @@ public class ReadCustomContentVerificationFailTest {
         this.runMode = runMode;
         this.concurrency = concurrency;
         this.itemSize = itemSize;
+        this.expectedReadSize = new SizeInBytes(
+                2 << (READ_RANDOM_RANGES_COUNT - 2), itemSize.getValue().get(), 1
+        );
+        this.expectedUpdateSize = new SizeInBytes(1, itemSize.getValue().get(), 1);
 
         if (storageType.equals(StorageType.FS)) {
             try {
@@ -194,22 +211,63 @@ public class ReadCustomContentVerificationFailTest {
     public final void test()
             throws Exception {
         final LongAdder ioTraceRecCount = new LongAdder();
-        final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
-            assertEquals(
-                    "Record #" + ioTraceRecCount.sum() + ": unexpected operation type " +
-                            ioTraceRec.get("IoTypeCode"),
-                    IoType.READ,
-                    IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))]
-            );
-            assertEquals(
-                    "Record #" + ioTraceRecCount.sum() + ": unexpected status code " +
-                            ioTraceRec.get("StatusCode"),
-                    IoTask.Status.RESP_FAIL_CORRUPT,
-                    IoTask.Status.values()[Integer.parseInt(ioTraceRec.get("StatusCode"))]
-            );
+        final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
+            if (ioTraceRecCount.sum() < EXPECTED_COUNT) {
+                testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(),
+                        expectedUpdateSize
+                );
+            } else {
+                testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), expectedReadSize);
+            }
             ioTraceRecCount.increment();
         };
-        testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
-        assertTrue("The count of the I/O trace records should be > 0", ioTraceRecCount.sum() > 0);
+        testIoTraceLogRecords(stepId, ioTraceRecFunc);
+        assertEquals(
+                "There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
+                2 * EXPECTED_COUNT, ioTraceRecCount.sum()
+        );
+
+        final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
+        testTotalMetricsLogRecord(
+                totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(),
+                runMode.getNodeCount(), expectedUpdateSize, EXPECTED_COUNT, 0
+        );
+        testTotalMetricsLogRecord(
+                totalMetrcisLogRecords.get(1), IoType.READ, concurrency.getValue(),
+                runMode.getNodeCount(), expectedReadSize, EXPECTED_COUNT, 0
+        );
+
+        final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
+        final List<CSVRecord> updateMetricsRecords = new ArrayList<>();
+        final List<CSVRecord> readMetricsRecords = new ArrayList<>();
+        for (final CSVRecord metricsLogRec : metricsLogRecords) {
+            if (IoType.UPDATE.name().equalsIgnoreCase(metricsLogRec.get("TypeLoad"))) {
+                updateMetricsRecords.add(metricsLogRec);
+            } else {
+                readMetricsRecords.add(metricsLogRec);
+            }
+        }
+        testMetricsLogRecords(
+                updateMetricsRecords, IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+                expectedUpdateSize, EXPECTED_COUNT, 0,
+                averagePeriod
+        );
+        testMetricsLogRecords(
+                readMetricsRecords, IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+                expectedReadSize, EXPECTED_COUNT, 0,
+                averagePeriod
+        );
+
+        final String stdOutput = this.stdOutContent.replaceAll("[\r\n]+", " ");
+        testSingleMetricsStdout(
+                stdOutput, IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+                expectedUpdateSize,
+                averagePeriod
+        );
+        testSingleMetricsStdout(
+                stdOutput, IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+                expectedReadSize,
+                averagePeriod
+        );
     }
 }
