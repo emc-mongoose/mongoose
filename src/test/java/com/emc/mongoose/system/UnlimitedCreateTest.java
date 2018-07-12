@@ -180,6 +180,7 @@ public class UnlimitedCreateTest {
 
         final int expectedConcurrency = runMode.getNodeCount() * concurrency.getValue();
         if (storageType.equals(StorageType.FS)) {
+            //because of the following line the test is valid only in 'run_mode = local'
             final int actualConcurrency = OpenFilesCounter.getOpenFilesCount(containerItemOutputPath);
             assertTrue(
                     "Expected concurrency <= " + actualConcurrency + ", actual: " + actualConcurrency,

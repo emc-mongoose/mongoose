@@ -104,7 +104,7 @@ jobs:
       - STORAGE_TYPE=atmos,fs
       - RUN_MODE=local
       - CONCURRENCY=low
-      - ITEM_SIZE=empty,medium,huge
+      - ITEM_SIZE=medium,huge
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
