@@ -172,7 +172,14 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-
+# STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=ReadVerificationAfterCircularUpdateTest systemTest
+    - env:
+      - TEST=ReadVerificationAfterCircularUpdateTest
+      - STORAGE_TYPE=fs
+      - RUN_MODE=local
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=small
+      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
 
 
@@ -199,15 +206,6 @@ jobs:
       - CONCURRENCY=single,medium
       - ITEM_SIZE=small,medium
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonReadVerificationAfterCircularUpdateTest systemTest
-    - env:
-      - TEST=JsonReadVerificationAfterCircularUpdateTest
-      - STORAGE_TYPE=fs
-      - RUN_MODE=local
-      - CONCURRENCY=low,medium
-      - ITEM_SIZE=small
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=swift RUN_MODE=distributed CONCURRENCY=medium ITEM_SIZE=small ./gradlew -Dtest.single=GroovyLoadTypeStepsTest systemTest
     - env:

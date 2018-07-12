@@ -1,7 +1,7 @@
 var fileName = "ReadVerificationFailTest.csv";
 
 var cmd_1 = new java.lang.ProcessBuilder()
-    .command("sh", "-c", "rm -f " + fileName)
+    .command("/bin/sh", "-c", "rm -f " + fileName)
     .inheritIO()
     .start();
 cmd_1.waitFor();
