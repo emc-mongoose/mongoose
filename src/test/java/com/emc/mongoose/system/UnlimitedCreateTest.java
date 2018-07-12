@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -68,7 +67,6 @@ public class UnlimitedCreateTest {
 
         this.storageType = storageType;
         this.runMode = runMode;
-        //in unlimited test next params are unnecessary
         this.concurrency = concurrency;
         this.itemSize = itemSize;
 
@@ -127,9 +125,8 @@ public class UnlimitedCreateTest {
         }
 
         //use default scenario
-        final String containerScenarioPath = containerScenarioPath(getClass());
         testContainer = new MongooseContainer(
-                stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args
+                stepId, storageType, runMode, concurrency, itemSize, null, env, args
         );
     }
 
