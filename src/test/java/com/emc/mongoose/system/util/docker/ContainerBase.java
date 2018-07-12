@@ -151,7 +151,7 @@ implements Docker.Container {
 			containerExitCode = Docker.CLIENT
 				.waitContainerCmd(containerId)
 				.exec(new WaitContainerResultCallback())
-				.awaitStatusCode(timeout, TimeUnit.SECONDS);
+				.awaitStatusCode(timeout, timeUnit);
 			return true;
 		} catch(final DockerClientException e) {
 			System.err.println(e.getMessage());
