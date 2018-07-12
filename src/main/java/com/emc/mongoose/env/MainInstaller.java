@@ -64,6 +64,7 @@ public final class MainInstaller
                     "example/scenario/js/systest/multipart_create_test.js",
                     "example/scenario/js/systest/multiple_fixed_update_and_single_fixed_read_test.js",
                     "example/scenario/js/systest/multiple_random_update_and_single_fixed_read_test.js",
+                    "example/scenario/js/systest/read_custom_content_verification_fail_test.js",
 
                     // custom scenario examples in python
                     "example/scenario/py/types/additional/copy_load_using_env_vars.py",
