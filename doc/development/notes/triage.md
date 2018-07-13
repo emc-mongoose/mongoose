@@ -32,21 +32,16 @@ Triage rules
 
 5.
 
-
-
 | Priority | Description
 |----------|-------------
-| 0        | Crash
-|          | Hang
-|          | Not functioning
-|          | Functioning incorrectly
+| 0        | Crash<br/>Hang<br/>Not functioning<br/>Functioning incorrectly
 | 1        | Performance degradation
-| 2        | New feature
-|          | Bug having a workaround
-| 3        | Improvements: Performance/Usability/Cosmetic
-| 4        | Demo
-|          | Investigation
-|          | Release scope definition
+| 2        | New feature<br/>Bug having a workaround
+| 3        | Improvements: <br/>Performance<br/>Usability<br/>Cosmetic
+| 4        | Demo<br/>Investigation<br/>Release scope definition
+
+*Note**:
+> A Mongoose developer should not rely on the bug probability/frequency
 
 # Task Priorities
 
