@@ -2,6 +2,7 @@
 
 1. [Roles](#1-roles)<br/>
 2. [Priorities](#2-priorities)<br/>
+&nbsp;2.1. [Limitations](#21-limitations)<br/>
 3. [Scopes](#3-scopes)<br/>
 4. [Versions](#4-versions)<br/>
 5. [Issue Reporting](#5-issue-reporting)<br/>
@@ -16,8 +17,8 @@
 |------|------------------|------------------
 | User | Report issues in the [expected way](#5-issue-reporting) | N/A
 | Developer | <ul><li>Development</li><li>Testing</li><li>Automation</li><li>Documentation</li></ul> | <ul><li>Veronika Kochugova</li><li>Andrey Kurilov</li><ul>
-| Owner | <ul><li>*Next* version scope definition</li><li>Roadmap definition</li><li>User interaction</li></ul> | Andrey Kurilov
-| Manager | The explicit *next* version scope approval | ********
+| Owner | <ul><li>[*Next* version scope](#3-scopes) definition</li><li>Roadmap definition</li><li>User interaction</li></ul> | Andrey Kurilov
+| Manager | The explicit [*next* version scope](#3-scopes) approval | ********
 
 # 2. Priorities
 
@@ -28,8 +29,11 @@
 | P2       | New feature | next
 | P3       | <ul><li>Non-release: <ul><li>Demo</li><li>Investigation</li><li>Release scope definition</li></ul><li>Improvements: <ul><li>Performance</li><li>Usability</li><li>Cosmetic</li></ul></li></ul> | backlog
 
-***Note***:
-> A Mongoose developer should not rely on the bug probability/frequency
+## 2.1. Limitations
+
+The corresponding impact probability/frequency is not taken into account in the process currently. For example, all
+defects are assumed to be equally frequently occurring and affecting same users, regardless the particular scenario/
+use case. This approach is used due to the lack of the sufficient statistical information about the Mongoose usage.
 
 # 3. Scopes
 
@@ -40,9 +44,9 @@
 | next    | &lt;X&gt;.&lt;Y+1&gt;.0 | The next version which is considered to include the new features and fixes for the non-critical bugs | P1*, P2**
 | backlog | N/A | Backlog equivalent | P3
 
-(*)  P1 tasks are acceptable for the *next* version until the release
+(*)  P1 tasks are acceptable for the *next* scope until the corresponding version release
 
-(**) P2 tasks are acceptable for the *next* version until [PM](#1-roles) approves the scope
+(**) P2 tasks are acceptable for the *next* scope until [PM](#1-roles) approves the scope
 
 # 4. Versions
 
@@ -62,23 +66,13 @@ When reporting a defect make sure the ticket contains the following info:
 
 1. Specific conditions.
    1. The mongoose version used.
-   2. The particular CLI command.
-
-      *Leave only the essential things to reproduce: try to check if possible if the bug is reproducible using
- single local storage driver, different concurrency level, item data size, etc.*
-
-   3. The scenario file used.
-
-      *Note that the default scenario is used implicitly. Please don't clutter with large bedsheet scenario files.
-      Simplify the scenario leaving only the essential things.*
-
-2. Expected behavior.
-
-   *Specifying the reference to the particular documentation part describing the expected behavior would be great.*
-
-3. Observed behavior.
-
-   *Error message, errors.log output file, etc.*
+   2. The particular CLI command. Leave only the essential things to reproduce: try to check if possible if the bug is
+      reproducible w/o distributed mode, different concurrency level, item data size, etc.*
+   3. The scenario file used. Note that the default scenario is used implicitly. Don't clutter with large scenario
+       files. Simplify the scenario leaving only the essential things.
+2. Expected behavior. Specify the reference to the particular documentation part describing the expected behavior,
+   if possible.
+3. Observed behavior. Error message, errors.log output file, etc.
 
 ## 5.2. Feature
 
