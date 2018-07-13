@@ -1,14 +1,14 @@
 # Contents
 
-1. [Roles](#1-roles)
-2. [Priorities](#2-priorities)
-3. [Scopes](#3-scopes)
-4. [Versions](#4-versions)
-5. [Issue Reporting](#5-issue-reporting)
-&nbsp;&nbsp;5.1. [Defect](#51-defect)<br/>
-&nbsp;&nbsp;5.2. [Feature](#52-feature)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;5.2.1. [Input](#521-input)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;5.2.2. [Lifecycle](#522-lifecycle)<br/>
+1. [Roles](#1-roles)<br/>
+2. [Priorities](#2-priorities)<br/>
+3. [Scopes](#3-scopes)<br/>
+4. [Versions](#4-versions)<br/>
+5. [Issue Reporting](#5-issue-reporting)<br/>
+&nbsp;5.1. [Defect](#51-defect)<br/>
+&nbsp;5.2. [Feature](#52-feature)<br/>
+&nbsp;&nbsp;5.2.1. [Input](#521-input)<br/>
+&nbsp;&nbsp;5.2.2. [Lifecycle](#522-lifecycle)<br/>
 
 # 1. Roles
 
