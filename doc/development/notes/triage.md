@@ -36,9 +36,9 @@ Triage rules
 |----------|-------------
 | 0        | <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li></ul>
 | 1        | Performance degradation
-| 2        | New feature<br/>Bug having a workaround
-| 3        | Improvements: <br/>* Performance<br/>* Usability<br/>* Cosmetic
-| 4        | Demo<br/>Investigation<br/>Release scope definition
+| 2        | <ul><li>New feature</li><li>Bug having a workaround</li></ul>
+| 3        | Improvements: <ul><li>Performance</li><li>Usability</li><li>Cosmetic</li></ul>
+| 4        | Other: <ul><li>Demo</li><li>Investigation</li><li>Release scope definition</li><li>etc</li></ul>
 
 *Note**:
 > A Mongoose developer should not rely on the bug probability/frequency
