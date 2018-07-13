@@ -36,9 +36,9 @@ Version Aliases
 
 | Name   | Version Number | Description |
 |--------|----------------|-------------|
-| latest | <X>.<Y>.<Z>          | The latest released version
-| bugfix | X.Y.{Z+1}      | The version which is considered to be released ASAP and containing the fixes for the bugs found in the *latest* version **if they have no workaround**.
-| next   | X.{Y+1}.0      |
+| latest | &lt;X&gt;.&lt;Y&gt;.&lt;Z&gt;          | The latest released version
+| bugfix | &lt;X&gt;.&lt;Y&gt;.&lt;Z+1&gt;      | The version which is considered to be released ASAP and containing the fixes for the bugs found in the *latest* version **if they have no workaround**.
+| next   | &lt;X&gt;.&lt;Y+1&gt;.0      |
 | future | N/A
 
 | Priority | Description | Version to Accept
