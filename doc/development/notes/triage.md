@@ -34,7 +34,7 @@ Triage rules
 
 | Priority | Description
 |----------|-------------
-| 0        | <li><ul>Crash</ul><br/>Hang<br/>Not functioning<br/>Functioning incorrectly</li>
+| 0        | <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li></ul>
 | 1        | Performance degradation
 | 2        | New feature<br/>Bug having a workaround
 | 3        | Improvements: <br/>* Performance<br/>* Usability<br/>* Cosmetic
