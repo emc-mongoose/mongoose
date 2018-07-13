@@ -1,3 +1,12 @@
+# Roles
+
+| Name | Responsibilities
+|------|-----------------
+| User | Report issues in the expected way
+| Developer | <ul><li>Development</li><li>Testing</li><li>Automation</li><li>Documentation</li></ul>
+| Owner | <ul><li>*Next* version scope definition</li><li>Roadmap definition</li></ul>
+| Manager | The explicit *next* version scope approval
+
 # Priorities
 
 | Priority | Description | Version to Accept
@@ -10,14 +19,15 @@
 *Note**:
 > A Mongoose developer should not rely on the bug probability/frequency
 
-# Versions
+# Scopes
 
 | Name    | Version Number | Description | Scope Priority Threshold |
 |---------|----------------|-------------|-------|
 | latest  | &lt;X&gt;.&lt;Y&gt;.&lt;Z&gt; | The latest released version | N/A
 | bugfix  | &lt;X&gt;.&lt;Y&gt;.&lt;Z+1&gt; | The version which is considered to be released ASAP<br/>Interrupts the tasks for the *next* | P0 |
-| next    | &lt;X&gt;.&lt;Y+1&gt;.0 | The next version which is considered to include new features and fixes for the non-critical bugs | P1*, P2**
+| next    | &lt;X&gt;.&lt;Y+1&gt;.0 | The next version which is considered to include the new features and fixes for the non-critical bugs | P1*, P2**
 | backlog | N/A | Backlog equivalent | P3
 
 (*)  P1 tasks are acceptable for the *next* version until the release
+
 (**) P2 tasks are acceptable for the *next* version until PM approves the scope
