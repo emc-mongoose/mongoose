@@ -2,10 +2,10 @@
 
 | Name | Responsibilities | Current Assignees
 |------|------------------|------------------
-| User | Report issues in the expected way |
-| Developer | <ul><li>Development</li><li>Testing</li><li>Automation</li><li>Documentation</li></ul> | <ul><li>Veronika Kochugova</li><li>Andrey Kurilov<>/li><ul>
+| User | Report issues in the expected way | ********
+| Developer | <ul><li>Development</li><li>Testing</li><li>Automation</li><li>Documentation</li></ul> | <ul><li>Veronika Kochugova</li><li>Andrey Kurilov</li><ul>
 | Owner | <ul><li>*Next* version scope definition</li><li>Roadmap definition</li><li>User interaction</li></ul> | Andrey Kurilov
-| Manager | The explicit *next* version scope approval
+| Manager | The explicit *next* version scope approval | ********
 
 # Priorities
 
