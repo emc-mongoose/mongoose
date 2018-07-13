@@ -5,10 +5,10 @@
 3. [Scopes](#3-scopes)
 4. [Versions](#4-versions)
 5. [Issue Reporting](#5-issue-reporting)
-5.1. [Defect](#51-defect)
-5.2. [Feature](#52-feature)
-5.2.1. [Input](#521-input)
-5.2.2. [Lifecycle](#522-lifecycle)
+&nbsp;&nbsp;5.1. [Defect](#51-defect)<br/>
+&nbsp;&nbsp;5.2. [Feature](#52-feature)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;5.2.1. [Input](#521-input)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;5.2.2. [Lifecycle](#522-lifecycle)<br/>
 
 # 1. Roles
 
