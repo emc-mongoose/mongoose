@@ -32,12 +32,20 @@ Triage rules
 
 5.
 
+Version Aliases
+
+| Name   | Version Number | Description |
+|--------|----------------|-------------|
+| latest | <X>.<Y>.<Z>          | The latest released version
+| bugfix | X.Y.{Z+1}      | The version which is considered to be released ASAP and containing the fixes for the bugs found in the *latest* version **if they have no workaround**.
+| next   | X.{Y+1}.0      |
+| future | N/A
+
 | Priority | Description | Version to Accept
 |----------|-------------|------------------
-| 0        | <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li></ul> | Bugfix
-| 1        | Performance degradation | Bugfix
-| 2        | <ul><li>New feature</li><li>Bug having a workaround</li></ul> | Next
-| 3        | <ul><li>Non-release: <ul><li>Demo</li><li>Investigation</li><li>Release scope definition</li></ul><li><li>Improvements: <ul><li>Performance</li><li>Usability</li><li>Cosmetic</li></ul></li></ul> | Future
+| 0        | <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li><li>Performance degradation</li></ul> | Bugfix
+| 1        | <ul><li>New feature</li><li>Bug having a workaround</li></ul> | Next
+| 2        | <ul><li>Non-release: <ul><li>Demo</li><li>Investigation</li><li>Release scope definition</li></ul><li>Improvements: <ul><li>Performance</li><li>Usability</li><li>Cosmetic</li></ul></li></ul> | Future
 
 *Note**:
 > A Mongoose developer should not rely on the bug probability/frequency
