@@ -83,41 +83,34 @@ When reporting a defect make sure the ticket contains the following info:
 A requester should supply the information necessary to deliver any new
 functionality.
 
-1. Introduction*
-
+1. **Introduction***<br/>
    Purpose. Which particular problem should be solved with Mongoose?
-   1. Links
-
+   1. Links<br/>
       The links to the related documents and literature.
 2. Requirements
-   1. Functional*
-
+   1. **Functional***<br/>
       The list of the *functional* requirements. The list should be numbered in order to make it easy to refer to the
       particular requirements item.
-      1. Mandatory Requirements*
+      1. **Mandatory Requirements***
       2. Additional Requirements
       3. Possible Enhancements
-   2. Performance*
-3. Limitations
-
+   2. **Performance***
+3. Limitations<br/>
    List of limitations.
 4. Proposal
-    1. Design
-
+    1. Design<br/>
        Describe the possible way to get the required functionality working.
     2. Input
-       1. Configuration
-
+       1. Configuration<br/>
           Describe the possible new configuration options involved.
-       2. Other Input
-
+       2. Other Input<br/>
           Any other input required. Scenarios, external files, etc.
     4. Output
        1. Standard Output
        2. Log Files
        3. Other Output
 
-(*) Mandatory to specify for a requester
+(*) The items mandatory to specify for a requester are highlighted with **bold** text
 
 ### 5.2.2. Lifecycle
 
