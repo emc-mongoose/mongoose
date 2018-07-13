@@ -52,21 +52,22 @@ case. This approach is used due to the lack of the sufficient statistical inform
 
 ## 3.1. Processing
 
-1. Bugfix
-    1. Rename the current *bugfix* scope to *latest*.
-    2. Create the new *bugfix* scope.
-    3. Move the remaining tasks from the previous *bugfix* scope to the new one (**under exceptional circumstances only**).
-    4. Continue to work on the tasks from the *next* scope.
-2. Next
-    1. Rename the current *next* scope to *latest*.
+1. **Bugfix**
+    1. Rename the current *bugfix* scope to *latest*
+    2. Create the new *bugfix* scope
+    3. Move the remaining tasks from the previous *bugfix* scope to the new one (**under exceptional circumstances only**)
+    4. Continue to work on the tasks from the *next* scope
+2. **Next**
+    1. Rename the current *next* scope to *latest*
     2. Create the new *next* scope.
-    3. Move the remaining tasks from the previous *next* scope to the new one (**under exceptional circumstances only**).
-    4. Continue to work on the non-release tasks from the *backlog* scope.
-3. Backlog
-    1. Process the remaining tasks from the *backlog* scope.
+    3. Move the remaining tasks from the previous *next* scope to the new one (**under exceptional circumstances only**)
+    4. Continue to work on the non-release tasks from the *backlog* scope
+3. **Backlog**
+    1. Process the remaining tasks from the *backlog* scope
     2. Add some tasks from the *future* scope to the new *next* scope
     3. Add new tasks to the new *next* scope (**under exceptional circumstances only**)
     4. Acquire the [PM](#1-roles) approval for the new *next* scope
+    5. Start the work on the tasks from the new *next* scope
 
 # 4. Versions
 
