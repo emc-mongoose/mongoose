@@ -1,10 +1,12 @@
 # Contents
 
 ## 2018
-* [4.0.0](#400)
+* [4.0.0](#400) TBD
+* [3.6.2](#362) TBD
 * [3.6.1](#361) 03/26/18
 
 ## 2017
+* [3.6.0](#360) 12/24/17
 * [3.5.1](#351) 11/05/17
 * [3.4.2](#342) 08/18/17
 * [3.3.0](#330)
@@ -91,9 +93,19 @@ scenarios to v4.0.0 scenarios is provided: https://github.com/emc-mongoose/scena
 
 *
 
+# 3.6.2
+
+## Fixed Bugs
+
+* (1204) Storage node failover support
+
 # 3.6.1
 
-The latest version of the discontinued 3.x.x branch
+## Fixed Bugs
+
+* (1175) Mongoose reports and Descriptive Statistics discrepancies
+
+# 3.6.0
 
 ## New Features and Enhancements
 

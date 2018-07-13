@@ -1,12 +1,6 @@
 # General
 * Indent code with TAB having width of 4 characters
 * Code line width: 120 characters
-* Long line example:
-```java
-nextSubTask = new PartialDataIoTaskImpl<>(
-	originIndex, ioType, nextPart, srcPath, dstPath, credential, i, this
-);
-```
 * If interface is named `Foo` then:
   * Abstract implementation should be named as `FooBase`
   * Default concrete implementation should be names as `FooImpl`

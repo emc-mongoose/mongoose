@@ -18,12 +18,16 @@ compatibility:
 4. Share the testing build with QE and repeat this step until the qualification is OK
 5. Create/replace the corresponding VCS tags:
    ```bash
+   git tag -d latest
+   git push origin :refs/tags/latest
    git tag -a <X>.<Y>.<Z> -m <X>.<Y>.<Z>
    git tag -a latest -m <X>.<Y>.<Z>
    git push --tags --force
    ```
 6. Create the pull request to the `master` branch
 7. Merge the pull request if reviewed and approved
+   *Note*:
+   > This is a no-return point. Making any further changes will require a new version!
 8. Upload the artifacts to the Central Maven repo:
    1.
     ```bash

@@ -11,7 +11,8 @@ When reporting a bug make sure the ticket contains the following info:
 
    3. The scenario file used.
 
-      *Note that the default scenario is used implicitly. Please don't clutter with large bedsheet scenario files. Simplify the scenario leaving only the essential things.*
+      *Note that the default scenario is used implicitly. Please don't clutter with large bedsheet scenario files.
+      Simplify the scenario leaving only the essential things.*
 
 2. Expected behavior.
 
@@ -36,6 +37,8 @@ functionality.
 
    1. Links
 
+      *Optional for a requester*
+
       The links to the related documents and literature.
 
 2. Requirements
@@ -44,9 +47,8 @@ functionality.
 
       **Mandatory for a requester**
 
-      The list of the **functional** requirements. The list should be
-      numbered in order to make it easy to refer to the particular
-      requirements item.
+      The list of the **functional** requirements. The list should be numbered in order to make it easy to refer to the
+      particular requirements item.
 
       1. Mandatory Requirements
 
@@ -62,13 +64,7 @@ functionality.
 
    2. Performance
 
-      1. Mandatory Requirements
-
-         **Mandatory for a requester**
-
-      2. Additional Requirements
-
-         *Optional for a requester*
+      **Mandatory for a requester**
 
 3. Limitations
 
@@ -78,41 +74,28 @@ functionality.
 
 4. Proposal
 
+    *Optional for a requester*
+
     1. Design
 
-       *Optional for a requester*
-
-       Describe the possible way to get the required functionality
-       working.
+       Describe the possible way to get the required functionality working.
 
     3. Input
 
        1. Configuration
 
-          **Mandatory for a requester**
-
           Describe the possible new configuration options involved.
 
        2. Other Input
 
-          *Optional for a requester*
-
           Any other input required. Scenarios, external files, etc.
-          Optional for a requester.
 
     4. Output
 
        1. Standard Output
-
-          **Mandatory for a requester**
-
        2. Log Files
-
-          **Mandatory for a requester**
-
        3. Other Output
 
-          *Optional for a requester*
 
 ## Implementation Lifecycle
 
