@@ -1,13 +1,25 @@
-# Roles
+# Contents
+
+1. [Roles](#1-roles)
+2. [Priorities](#2-priorities)
+3. [Scopes](#3-scopes)
+4. [Versions](#4-versions)
+5. [Issue Reporting](#5-issue-reporting)
+5.1. [Defect](#51-defect)
+5.2. [Feature](#52-feature)
+5.2.1. [Input](#521-input)
+5.2.2. [Lifecycle](#522-lifecycle)
+
+# 1. Roles
 
 | Name | Responsibilities | Current Assignees
 |------|------------------|------------------
-| User | Report issues in the [expected way](#issue-reporting) | N/A
+| User | Report issues in the [expected way](#5-issue-reporting) | N/A
 | Developer | <ul><li>Development</li><li>Testing</li><li>Automation</li><li>Documentation</li></ul> | <ul><li>Veronika Kochugova</li><li>Andrey Kurilov</li><ul>
 | Owner | <ul><li>*Next* version scope definition</li><li>Roadmap definition</li><li>User interaction</li></ul> | Andrey Kurilov
 | Manager | The explicit *next* version scope approval | ********
 
-# Priorities
+# 2. Priorities
 
 | Priority | Description | Version to Accept
 |----------|-------------|------------------
@@ -19,7 +31,7 @@
 ***Note***:
 > A Mongoose developer should not rely on the bug probability/frequency
 
-# Scopes
+# 3. Scopes
 
 | Name    | Version Number | Description | Scope Priority Threshold |
 |---------|----------------|-------------|-------|
@@ -30,9 +42,9 @@
 
 (*)  P1 tasks are acceptable for the *next* version until the release
 
-(**) P2 tasks are acceptable for the *next* version until [PM](#roles) approves the scope
+(**) P2 tasks are acceptable for the *next* version until [PM](#1-roles) approves the scope
 
-# Versions
+# 4. Versions
 
 Mongoose uses the [semantic versioning](http://semver.org/). The following interfaces are mentioned as the subject of
 the backward compatibility:
@@ -42,9 +54,9 @@ the backward compatibility:
 4. Scenario files format
 5. Configuration options
 
-# Issue Reporting
+# 5. Issue Reporting
 
-## Defect
+## 5.1. Defect
 
 When reporting a defect make sure the ticket contains the following info:
 
@@ -68,9 +80,9 @@ When reporting a defect make sure the ticket contains the following info:
 
    *Error message, errors.log output file, etc.*
 
-## Feature
+## 5.2. Feature
 
-### Information Required
+### 5.2.1. Input
 
 A requester should supply the information necessary to deliver any new
 functionality.
@@ -143,13 +155,13 @@ functionality.
        3. Other Output
 
 
-### Implementation Lifecycle
+### 5.2.2. Lifecycle
 
 1. Requested
 2. Requirements Available
 2. Specification Available
 3. Estimated
-4. Approved by [PM](#roles) = included into the *next* version scope
+4. Approved by [PM](#1-roles) = included into the *next* version scope
 5. Under Development
 6. Tested Manually
 7. Usage Documentation Available
