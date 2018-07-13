@@ -25,9 +25,9 @@
 | Priority | Description | Target Scope
 |----------|-------------|------------------
 | P0       | Critical defect w/o a workaround: <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li><li>Performance degradation</li></ul> | bugfix
-| P1       | <ul><li>Non-critical defect</li><li>A workaround is available for the users</li></ul> | next
+| P1       | <ul><li>Non-critical defect</li><li>A defect w/ the workaround available for the users</li></ul> | next
 | P2       | <ul><li>New feature</li><li>Enhancement</li></ul> | next
-| P3       | Non-release: <ul><li>Demo</li><li>Investigation</li><li>Release scope definition</li></ul> | backlog
+| P3       | Non-release: <ul><li>Demo</li><li>Dependent software adoption</li><li>Future version scope definition</li></ul> | backlog
 | P4       | Improvements: <ul><li>Performance</li><li>Usability</li><li>Cosmetic</li></ul> | future
 
 ## 2.1. Limitations
@@ -50,21 +50,23 @@ case. This approach is used due to the lack of the sufficient statistical inform
 
 (**) P2 tasks are acceptable for the *next* scope until [PM](#1-roles) approves the scope
 
-## 3.1. Releasing
+## 3.1. Processing
 
-### 3.1.1. Bugfix
-
-1. Rename the current *bugfix* scope to *latest*.
-2. Create the new *bugfix* scope.
-3. Move the remaining tasks from the previous *bugfix* scope to the new one (**under exceptional circumstances only**).
-4. Continue to work on the tasks from the *next* scope.
-
-### 3.1.2. Next
-
-1. Rename the current *next* scope to *latest*.
-2. Create the new *next* scope.
-3. Move the remaining tasks from the previous *next* scope to the new one (**under exceptional circumstances only**).
-4. Continue to work on the non-release tasks from the *backlog* scope.
+1. Bugfix
+    1. Rename the current *bugfix* scope to *latest*.
+    2. Create the new *bugfix* scope.
+    3. Move the remaining tasks from the previous *bugfix* scope to the new one (**under exceptional circumstances only**).
+    4. Continue to work on the tasks from the *next* scope.
+2. Next
+    1. Rename the current *next* scope to *latest*.
+    2. Create the new *next* scope.
+    3. Move the remaining tasks from the previous *next* scope to the new one (**under exceptional circumstances only**).
+    4. Continue to work on the non-release tasks from the *backlog* scope.
+3. Backlog
+    1. Process the remaining tasks from the *backlog* scope.
+    2. Add some tasks from the *future* scope to the new *next* scope
+    3. Add new tasks to the new *next* scope (**under exceptional circumstances only**)
+    4. Acquire the [PM](#1-roles) approval for the new *next* scope
 
 # 4. Versions
 
