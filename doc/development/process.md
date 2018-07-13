@@ -15,38 +15,56 @@
 
 | Name | Responsibilities | Current Assignees
 |------|------------------|------------------
-| User | Report issues in the [expected way](#5-issue-reporting) | N/A
+| User | Report the issues in the [expected way](#5-issue-reporting) | N/A
 | Developer | <ul><li>Development</li><li>Testing</li><li>Automation</li><li>Documentation</li></ul> | <ul><li>Veronika Kochugova</li><li>Andrey Kurilov</li><ul>
 | Owner | <ul><li>[*Next* version scope](#3-scopes) definition</li><li>Roadmap definition</li><li>User interaction</li></ul> | Andrey Kurilov
 | Manager | The explicit [*next* version scope](#3-scopes) approval | ********
 
 # 2. Priorities
 
-| Priority | Description | Version to Accept
+| Priority | Description | Target Scope
 |----------|-------------|------------------
-| P0       | Critical defects w/o workaround: <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li><li>Performance degradation</li></ul> | bugfix
-| P1       | <ul><li>Non-critical defects</li><li>Workaround is available for the users</li></ul> | next
-| P2       | New feature | next
-| P3       | <ul><li>Non-release: <ul><li>Demo</li><li>Investigation</li><li>Release scope definition</li></ul><li>Improvements: <ul><li>Performance</li><li>Usability</li><li>Cosmetic</li></ul></li></ul> | backlog
+| P0       | Critical defect w/o a workaround: <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li><li>Performance degradation</li></ul> | bugfix
+| P1       | <ul><li>Non-critical defect</li><li>A workaround is available for the users</li></ul> | next
+| P2       | <ul><li>New feature</li><li>Enhancement</li></ul> | next
+| P3       | Non-release: <ul><li>Demo</li><li>Investigation</li><li>Release scope definition</li></ul> | backlog
+| P4       | Improvements: <ul><li>Performance</li><li>Usability</li><li>Cosmetic</li></ul> | future
 
 ## 2.1. Limitations
 
 The corresponding impact probability/frequency is not taken into account in the process currently. For example, all
-defects are assumed to be equally frequently occurring and affecting same users, regardless the particular scenario/
-use case. This approach is used due to the lack of the sufficient statistical information about the Mongoose usage.
+defects are assumed to be equally frequently occurring and affecting same users, regardless the particular scenario/use
+case. This approach is used due to the lack of the sufficient statistical information about the Mongoose usage.
 
 # 3. Scopes
 
 | Name    | Version Number | Description | Scope Priority Threshold |
 |---------|----------------|-------------|-------|
 | latest  | &lt;X&gt;.&lt;Y&gt;.&lt;Z&gt; | The latest released version | N/A
-| bugfix  | &lt;X&gt;.&lt;Y&gt;.&lt;Z+1&gt; | The version which is considered to be released ASAP<br/>Interrupts the tasks for the *next* | P0 |
+| bugfix  | &lt;X&gt;.&lt;Y&gt;.&lt;Z+1&gt; | The version which is considered to be released ASAP | P0 |
 | next    | &lt;X&gt;.&lt;Y+1&gt;.0 | The next version which is considered to include the new features and fixes for the non-critical bugs | P1*, P2**
-| backlog | N/A | Backlog equivalent | P3
+| backlog | N/A | Backlog | P3
+| future  | &lt;X&gt;.&lt;Y+2&gt;.0<br/>or<br/>&lt;X+1&gt;.0.0 | P4
 
 (*)  P1 tasks are acceptable for the *next* scope until the corresponding version release
 
 (**) P2 tasks are acceptable for the *next* scope until [PM](#1-roles) approves the scope
+
+## 3.1. Releasing
+
+### 3.1.1. Bugfix
+
+1. Rename the current *bugfix* scope to *latest*.
+2. Create the new *bugfix* scope.
+3. Move the remaining tasks from the previous *bugfix* scope to the new one (**under exceptional circumstances only**).
+4. Continue to work on the tasks from the *next* scope.
+
+### 3.1.2. Next
+
+1. Rename the current *next* scope to *latest*.
+2. Create the new *next* scope.
+3. Move the remaining tasks from the previous *next* scope to the new one (**under exceptional circumstances only**).
+4. Continue to work on the non-release tasks from the *backlog* scope.
 
 # 4. Versions
 
@@ -66,6 +84,7 @@ When reporting a defect make sure the ticket contains the following info:
 
 1. Specific conditions.
    1. The mongoose version used.
+      Note that only the [latest](#3-scopes) version may be used for defect reporting.
    2. The particular CLI command.
       Leave only the essential things to reproduce: try to check if possible if the bug is reproducible w/o distributed
       mode, different concurrency level, item data size, etc.
