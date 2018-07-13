@@ -32,13 +32,12 @@ Triage rules
 
 5.
 
-| Priority | Description
-|----------|-------------
-| 0        | <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li></ul>
-| 1        | Performance degradation
-| 2        | <ul><li>New feature</li><li>Bug having a workaround</li></ul>
-| 3        | Improvements: <ul><li>Performance</li><li>Usability</li><li>Cosmetic</li></ul>
-| 4        | Other: <ul><li>Demo</li><li>Investigation</li><li>Release scope definition</li><li>etc</li></ul>
+| Priority | Description | Version to Accept
+|----------|-------------|------------------
+| 0        | <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li></ul> | Bugfix
+| 1        | Performance degradation | Bugfix
+| 2        | <ul><li>New feature</li><li>Bug having a workaround</li></ul> | Next
+| 3        | <ul><li>Non-release: <ul><li>Demo</li><li>Investigation</li><li>Release scope definition</li></ul><li><li>Improvements: <ul><li>Performance</li><li>Usability</li><li>Cosmetic</li></ul></li></ul> | Future
 
 *Note**:
 > A Mongoose developer should not rely on the bug probability/frequency
