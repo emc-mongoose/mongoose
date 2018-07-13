@@ -16,7 +16,7 @@
 
 | Name | Responsibilities | Current Assignees
 |------|------------------|------------------
-| User | Report the issues in the [expected way](#5-issue-reporting) | N/A
+| User | Report the issues in the [expected way](#5-issue-reporting) | Definitely unknown
 | Developer | <ul><li>Development</li><li>Testing</li><li>Automation</li><li>Documentation</li></ul> | <ul><li>Veronika Kochugova</li><li>Andrey Kurilov</li><ul>
 | Owner | <ul><li>[*Next* version scope](#3-scopes) definition</li><li>Roadmap definition</li><li>User interaction</li></ul> | Andrey Kurilov
 | Manager | The explicit [*next* version scope](#3-scopes) approval | ********
@@ -45,7 +45,7 @@ case. This approach is used due to the lack of the sufficient statistical inform
 | bugfix  | &lt;X&gt;.&lt;Y&gt;.&lt;Z+1&gt; | The version which is considered to be released ASAP | P0 |
 | next    | &lt;X&gt;.&lt;Y+1&gt;.0 | The next version which is considered to include the new features and fixes for the non-critical bugs | P1*, P2**
 | backlog | N/A | Backlog | P3
-| future  | &lt;X&gt;.&lt;Y+2&gt;.0<br/>or<br/>&lt;X+1&gt;.0.0 | P4
+| future  | &lt;X&gt;.&lt;Y+2&gt;.0<br/>or<br/>&lt;X+1&gt;.0.0 | Dump | P4
 
 (*)  P1 tasks are acceptable for the *next* scope until the corresponding version release
 
