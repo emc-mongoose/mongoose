@@ -74,12 +74,8 @@ It is easily scalable to perform millions of IOPS and emulate millions of concur
     * [Pipeline Load](doc/design/pipeline_load.md)
     * [Weighted Load](doc/design/weighted_load.md)
 * Development
-    * Notes
-        * [Code Branches](doc/development/notes/branches.md)
-        * [Code Style](doc/development/notes/code_style.md)
-        * [Issue Reporting](doc/development/notes/issue_reporting.md)
-        * [Releasing](doc/development/notes/releasing.md)
-        * [Testing](doc/development/notes/testing.md)
+    * [Process](doc/development/process.md)
+    * [Notes](doc/development/notes.md)
     * [Changelog](doc/development/changelog.md)
 
 # Contributors
