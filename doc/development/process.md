@@ -4,6 +4,7 @@
 2. [Priorities](#2-priorities)<br/>
 &nbsp;2.1. [Limitations](#21-limitations)<br/>
 3. [Scopes](#3-scopes)<br/>
+&nbsp;3.1. [Processing](#31-processing)<br/>
 4. [Versions](#4-versions)<br/>
 5. [Issue Reporting](#5-issue-reporting)<br/>
 &nbsp;5.1. [Defect](#51-defect)<br/>
