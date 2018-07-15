@@ -23,13 +23,13 @@
 
 # 2. Priorities
 
-| Priority | Description | Target Scope
+| Priority | Name | Description | Target Scope
 |----------|-------------|------------------
-| P0       | Critical defect w/o a workaround: <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li><li>Performance degradation</li></ul> | bugfix
-| P1       | <ul><li>Non-critical defect</li><li>A defect w/ the workaround available for the users</li></ul> | next
-| P2       | <ul><li>New feature</li><li>Enhancement</li></ul> | next
-| P3       | Non-release: <ul><li>Demo</li><li>Dependent software adoption</li><li>Future version scope definition</li></ul> | backlog
-| P4       | Improvements: <ul><li>Performance</li><li>Usability</li><li>Cosmetic</li></ul> | future
+| 0        | Critiacal   | Critical defect w/o a workaround: <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li><li>Performance degradation</li></ul> | patch
+| 1        | Major       | <ul><li>Non-critical defect</li><li>A defect w/ the workaround available for the users</li></ul> | next
+| 2        | Medium      | Accepted for the next version scope:<ul><li>New feature</li><li>Enhancement</li><li>Improvement</li></ul> | next
+| 3        | Non-release | <ul><li>Demo</li><li>Dependent software adoption</li><li>Future version scope definition</li></ul> | backlog
+| 4        | Minor       | Accepted for the future versions scope:<ul><li>New feature</li><li>Enhancement</li><li>Improvement</li></ul> | future
 
 ## 2.1. Limitations
 
@@ -42,22 +42,22 @@ case. This approach is used due to the lack of the sufficient statistical inform
 | Name    | Version Number | Description | Scope Priority Threshold |
 |---------|----------------|-------------|-------|
 | latest  | &lt;X&gt;.&lt;Y&gt;.&lt;Z&gt; | The latest released version | N/A
-| bugfix  | &lt;X&gt;.&lt;Y&gt;.&lt;Z+1&gt; | The version which is considered to be released ASAP | P0 |
-| next    | &lt;X&gt;.&lt;Y+1&gt;.0 | The next version which is considered to include the new features and fixes for the non-critical bugs | P1*, P2**
-| backlog | N/A | Backlog | P3
-| future  | &lt;X&gt;.&lt;Y+2&gt;.0<br/>or<br/>&lt;X+1&gt;.0.0 | Dump | P4
+| patch  | &lt;X&gt;.&lt;Y&gt;.&lt;Z+1&gt; | The version which is considered to be released ASAP | 0 |
+| next    | &lt;X&gt;.&lt;Y+1&gt;.0 | The next version which is considered to include the new features and fixes for the non-critical bugs | 1*, 2**
+| backlog | N/A | Backlog | 3
+| future  | &lt;X&gt;.&lt;Y+2&gt;.0<br/>or<br/>&lt;X+1&gt;.0.0 | Dump | 4
 
-(*)  P1 tasks are acceptable for the *next* scope until the corresponding version release
+(*)  Priority #1 tasks are acceptable for the *next* scope until the corresponding version release
 
-(**) P2 tasks are acceptable for the *next* scope until [PM](#1-roles) approves the scope
+(**) Priority #2 tasks are acceptable for the *next* scope until [PM](#1-roles) approves the scope
 
 ## 3.1. Processing
 
-1. **Bugfix**
-    1. Process the remaining tasks from the *bugfix* scope
-    2. Rename the current *bugfix* scope to *latest*
-    3. Create the new *bugfix* scope
-    4. Move the remaining tasks from the previous *bugfix* scope to the new one (**under exceptional circumstances only**)
+1. **Patch**
+    1. Process the remaining tasks from the *patch* scope
+    2. Rename the current *patch* scope to *latest*
+    3. Create the new *patch* scope
+    4. Move the remaining tasks from the previous *patch* scope to the new one (**under exceptional circumstances only**)
     5. Continue to work on the tasks from the *next* scope
 2. **Next**
     1. Process the remaining tasks from the *next* scope
