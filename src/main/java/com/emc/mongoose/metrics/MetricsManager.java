@@ -148,7 +148,7 @@ extends DaemonBase {
 				INSTANCE.allMetricsLock.unlock();
 			}
 		} else {
-			Loggers.ERR.warn("Locking timeout at register call, thread dump:\n{}", new ThreadDump().toString());
+			//Loggers.ERR.warn("Locking timeout at register call, thread dump:\n{}", new ThreadDump().toString());
 		}
 	}
 	
