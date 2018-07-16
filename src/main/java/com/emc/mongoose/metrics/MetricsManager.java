@@ -62,7 +62,7 @@ public final class MetricsManager
                         metricsCtx.refreshLastSnapshot();
                     }
                 }
-            } catch (final Exception ignored) {
+            } catch (final ConcurrentModificationException ignored) {
             }
 
             if (allMetricsLock.tryLock()) {
