@@ -312,12 +312,12 @@ public class CreateLimitBySizeTest {
                 runMode.getNodeCount(), itemSize.getValue(), 0, 0
         );
 
-//        testMetricsLogRecords(
-//                getContainerMetricsLogRecords(stepId), IoType.CREATE, concurrency.getValue(),
-//                runMode.getNodeCount(), itemSize.getValue(), 0, 0,
-//                averagePeriod
-//        );
-//
+        testMetricsLogRecords(
+                getContainerMetricsLogRecords(stepId), IoType.CREATE, concurrency.getValue(),
+                runMode.getNodeCount(), itemSize.getValue(), 0, 0,
+                averagePeriod
+        );
+
         testSingleMetricsStdout(
                 stdOutContent.replaceAll("[\r\n]+", " "),
                 IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
