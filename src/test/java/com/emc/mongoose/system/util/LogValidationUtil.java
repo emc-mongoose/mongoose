@@ -771,9 +771,9 @@ public interface LogValidationUtil {
 				+ expectedIoType + "\" was not found",
 			rowFoundFlag
 		);
-//		assertTrue(actualConcurrencyCurr >= 0);
-//		assertTrue(nodeCount * expectedConcurrency >= actualConcurrencyCurr);
-//		assertTrue(actualConcurrencyLastMean >= 0);
+		assertTrue(actualConcurrencyCurr >= 0);
+		assertTrue(nodeCount * expectedConcurrency >= actualConcurrencyCurr);
+		assertTrue(actualConcurrencyLastMean >= 0);
 //		assertTrue(nodeCount * expectedConcurrency >= actualConcurrencyLastMean);
 //		assertTrue("Successful operations count should be > 0", succCount > 0);
 //		assertEquals("Failure count should be 0", failCount, 0);
