@@ -330,10 +330,10 @@ public class CreateLimitBySizeTest {
                 }}
         );
 
-//        testFinalMetricsTableRowStdout(
-//                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
-//                0, 0, itemSize.getValue()
-//        );
+        testFinalMetricsTableRowStdout(
+                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
+                0, 0, itemSize.getValue()
+        );
 
         assertTrue(duration < timeoutInMillis);
     }
