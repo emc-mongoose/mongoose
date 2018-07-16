@@ -58,7 +58,7 @@ public class CreateLimitBySizeTest {
     }
 
 
-    private final double requiredAccuracy = 0.01;
+    private final double requiredAccuracy = 0.1;
     private final int timeoutInMillis = 1000_000;
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
