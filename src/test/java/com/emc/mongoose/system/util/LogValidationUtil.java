@@ -771,45 +771,58 @@ public interface LogValidationUtil {
 				+ expectedIoType + "\" was not found",
 			rowFoundFlag
 		);
+		System.out.println("1");
 		assertTrue(actualConcurrencyCurr >= 0);
+		System.out.println("2");
 		assertTrue(nodeCount * expectedConcurrency >= actualConcurrencyCurr);
+		System.out.println("3");
 		assertTrue(actualConcurrencyLastMean >= 0);
-//		assertTrue(nodeCount * expectedConcurrency >= actualConcurrencyLastMean);
-//		assertTrue("Successful operations count should be > 0", succCount > 0);
-//		assertEquals("Failure count should be 0", failCount, 0);
-//		assertTrue("Step time should be > 0", stepTimeSec > 0);
-//		if(timeLimit > 0) {
-//			assertTrue(
-//				"Step time (" + stepTimeSec + ") should not be much more than time limit ("
-//					+ timeLimit + ")",
-//				stepTimeSec <= timeLimit + 10
-//			);
-//		}
-//		assertTrue("Final throughput should be >= 0", tp >= 0);
-//		if(expectedItemDataSize != null && tp > 0) {
-//			final float avgItemSize = MIB * bw / tp;
-//			if(expectedItemDataSize.getMin() == expectedItemDataSize.getMax()) {
-//				assertEquals(
-//					"Actual average items size (" + new SizeInBytes((long) avgItemSize)
-//						+ ") should be approx equal the expected (" + expectedItemDataSize + ")",
-//					expectedItemDataSize.get(), avgItemSize, expectedItemDataSize.get() / 10
-//				);
-//			} else {
-//				assertTrue(
-//					"Actual average items size (" + new SizeInBytes((long) avgItemSize)
-//						+ ") doesn't fit the expected (" + expectedItemDataSize + ")",
-//					avgItemSize >= expectedItemDataSize.getMin()
-//				);
-//				assertTrue(
-//					"Actual average items size (" + new SizeInBytes((long) avgItemSize)
-//						+ ") doesn't fit the expected (" + expectedItemDataSize + ")",
-//					avgItemSize <= expectedItemDataSize.getMax()
-//				);
-//			}
-//		}
-//		assertTrue(
-//			"Mean latency (" + lat + ") should not be more than mean duration (" + dur + ")",
-//			lat <= dur
-//		);
+		System.out.println("4");
+		assertTrue(nodeCount * expectedConcurrency >= actualConcurrencyLastMean);
+		System.out.println("5");
+		assertTrue("Successful operations count should be > 0", succCount > 0);
+		System.out.println("6");
+		assertEquals("Failure count should be 0", failCount, 0);
+		System.out.println("7");
+		assertTrue("Step time should be > 0", stepTimeSec > 0);
+		System.out.println("8");
+		if(timeLimit > 0) {
+			assertTrue(
+				"Step time (" + stepTimeSec + ") should not be much more than time limit ("
+					+ timeLimit + ")",
+				stepTimeSec <= timeLimit + 10
+			);
+		}
+		System.out.println("9");
+		assertTrue("Final throughput should be >= 0", tp >= 0);
+		System.out.println("10");
+		if(expectedItemDataSize != null && tp > 0) {
+			final float avgItemSize = MIB * bw / tp;
+			if(expectedItemDataSize.getMin() == expectedItemDataSize.getMax()) {
+				assertEquals(
+					"Actual average items size (" + new SizeInBytes((long) avgItemSize)
+						+ ") should be approx equal the expected (" + expectedItemDataSize + ")",
+					expectedItemDataSize.get(), avgItemSize, expectedItemDataSize.get() / 10
+				);
+				System.out.println("11");
+			} else {
+				assertTrue(
+					"Actual average items size (" + new SizeInBytes((long) avgItemSize)
+						+ ") doesn't fit the expected (" + expectedItemDataSize + ")",
+					avgItemSize >= expectedItemDataSize.getMin()
+				);
+				assertTrue(
+					"Actual average items size (" + new SizeInBytes((long) avgItemSize)
+						+ ") doesn't fit the expected (" + expectedItemDataSize + ")",
+					avgItemSize <= expectedItemDataSize.getMax()
+				);
+				System.out.println("12");
+			}
+		}
+		assertTrue(
+			"Mean latency (" + lat + ") should not be more than mean duration (" + dur + ")",
+			lat <= dur
+		);
+		System.out.println("13");
 	}
 }
