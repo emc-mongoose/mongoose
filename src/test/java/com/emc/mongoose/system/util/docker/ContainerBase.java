@@ -33,7 +33,7 @@ extends AsyncRunnableBase
 implements Docker.Container {
 
 	private static final Logger LOG = Logger.getLogger(HttpStorageMockContainer.class.getSimpleName());
-	private static final AtomicLong CONTAINER_COUNTER = new AtomicLong();
+	//private static final AtomicLong CONTAINER_COUNTER = new AtomicLong();
 
 	private final String version;
 	private final List<String> env;
@@ -112,7 +112,7 @@ implements Docker.Container {
 			.toArray(new ExposedPort[]{});
 		final CreateContainerCmd createContainerCmd = Docker.CLIENT
 			.createContainerCmd(imageNameWithVer)
-			.withName(imageName().replace('/', '_') + '_' + CONTAINER_COUNTER.getAndIncrement())
+			.withName(imageName().replace('/', '_') + '_' + this.hashCode())
 			.withNetworkMode("host")
 			.withExposedPorts(exposedPorts)
 			.withCmd(args);
@@ -151,7 +151,7 @@ implements Docker.Container {
 			containerExitCode = Docker.CLIENT
 				.waitContainerCmd(containerId)
 				.exec(new WaitContainerResultCallback())
-				.awaitStatusCode(timeout, TimeUnit.SECONDS);
+				.awaitStatusCode(timeout, timeUnit);
 			return true;
 		} catch(final DockerClientException e) {
 			System.err.println(e.getMessage());

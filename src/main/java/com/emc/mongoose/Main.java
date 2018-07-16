@@ -157,6 +157,7 @@ public final class Main {
 		} catch(final CancellationException e) {
 		} catch(final Exception e) {
 			LogUtil.exception(Level.FATAL, e, "Unexpected failure");
+			e.printStackTrace();
 		}
 	}
 

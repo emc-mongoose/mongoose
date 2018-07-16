@@ -9,21 +9,13 @@ import com.emc.mongoose.system.util.PortTools;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
-import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
-import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
-
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
-
 import org.apache.commons.io.FileUtils;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -34,6 +26,12 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
+import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 @RunWith(Parameterized.class)
 public class UnlimitedCreateTest {
 
@@ -42,9 +40,9 @@ public class UnlimitedCreateTest {
         return EnvParams.PARAMS;
     }
 
-    //private final String SCENARIO_PATH = Paths.get("", "example", "scenarios", "js", "default.js").toString();
-    private final String itemOutputPath;
+    private final String containerItemOutputPath;
 
+    private final int timeoutInMillis = 60_000;
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
     private final MongooseContainer testContainer;
@@ -60,7 +58,7 @@ public class UnlimitedCreateTest {
     ) throws Exception {
 
         stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-        itemOutputPath = Paths.get("", stepId).toString();
+        containerItemOutputPath = Paths.get(CONTAINER_SHARE_PATH, stepId).toString();
 
         try {
             FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
@@ -69,13 +67,12 @@ public class UnlimitedCreateTest {
 
         this.storageType = storageType;
         this.runMode = runMode;
-        //in unlimited test next params are unnecessary
         this.concurrency = concurrency;
         this.itemSize = itemSize;
 
         if (storageType.equals(StorageType.FS)) {
             try {
-                DirWithManyFilesDeleter.deleteExternal(itemOutputPath);
+                DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
             } catch (final Exception e) {
                 e.printStackTrace(System.err);
             }
@@ -127,9 +124,9 @@ public class UnlimitedCreateTest {
                 break;
         }
 
-        final String containerScenarioPath = containerScenarioPath(getClass());
+        //use default scenario
         testContainer = new MongooseContainer(
-                stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args
+                stepId, storageType, runMode, concurrency, itemSize, null, env, args
         );
     }
 
@@ -139,7 +136,7 @@ public class UnlimitedCreateTest {
         storageMocks.values().forEach(AsyncRunnableBase::start);
         slaveNodes.values().forEach(AsyncRunnableBase::start);
         testContainer.start();
-        testContainer.await(25, TimeUnit.SECONDS);
+        testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
     }
 
     @After
@@ -183,7 +180,8 @@ public class UnlimitedCreateTest {
 
         final int expectedConcurrency = runMode.getNodeCount() * concurrency.getValue();
         if (storageType.equals(StorageType.FS)) {
-            final int actualConcurrency = OpenFilesCounter.getOpenFilesCount(itemOutputPath);
+            //because of the following line the test is valid only in 'run_mode = local'
+            final int actualConcurrency = OpenFilesCounter.getOpenFilesCount(containerItemOutputPath);
             assertTrue(
                     "Expected concurrency <= " + actualConcurrency + ", actual: " + actualConcurrency,
                     actualConcurrency <= expectedConcurrency

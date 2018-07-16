@@ -98,6 +98,136 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
+    # STORAGE_TYPE=atmos,fs RUN_MODE=local CONCURRENCY=low ITEM_SIZE=empty,medium,huge ./gradlew -Dtest.single=UnlimitedCreateTest systemTest
+    - env:
+      - TEST=UnlimitedCreateTest
+      - STORAGE_TYPE=atmos,fs
+      - RUN_MODE=local
+      - CONCURRENCY=low
+      - ITEM_SIZE=medium,huge
+      - MONGOOSE_VERSION=$TAG
+      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+    # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=CreateLimitBySizeTest systemTest
+    - env:
+      - TEST=CreateLimitBySizeTest
+      - STORAGE_TYPE=fs
+      - RUN_MODE=local
+      - CONCURRENCY=low,high
+      - ITEM_SIZE=small,medium
+      - MONGOOSE_VERSION=$TAG
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew -Dtest.single=CircularReadLimitByTimeTest systemTest
+    - env:
+      - TEST=CircularReadLimitByTimeTest
+      - STORAGE_TYPE=fs,s3
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=single,high
+      - ITEM_SIZE=empty,medium
+      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+    # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=ChainWithDelayTest systemTest
+    - env:
+      - TEST=ChainWithDelayTest
+      - STORAGE_TYPE=atmos,s3
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=single,medium
+      - ITEM_SIZE=medium
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+    # STORAGE_TYPE=s3,swift RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=large
+    - env:
+      - TEST=MultipartCreateTest
+      - STORAGE_TYPE=s3,swift
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=large
+      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MultipleFixedUpdateAndSingleFixedReadTest systemTest
+    - env:
+      - TEST=MultipleFixedUpdateAndSingleFixedReadTest
+      - STORAGE_TYPE=fs,s3
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=small,medium
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+# STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MultipleRandomUpdateAndMultipleFixedReadTest systemTest
+    - env:
+      - TEST=MultipleRandomUpdateAndMultipleFixedReadTest
+      - STORAGE_TYPE=fs,s3
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=medium
+      - ITEM_SIZE=small,medium
+      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+# STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=ReadCustomContentVerificationFailTest systemTest
+    - env:
+      - TEST=ReadCustomContentVerificationFailTest
+      - STORAGE_TYPE=fs,s3,swift
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=small,medium
+      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+# STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=ReadVerificationAfterCircularUpdateTest systemTest
+    - env:
+      - TEST=ReadVerificationAfterCircularUpdateTest
+      - STORAGE_TYPE=fs
+      - RUN_MODE=local
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=small
+      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+# failures:
+# https://travis-ci.org/emc-mongoose/mongoose/jobs/312915013
+# https://travis-ci.org/emc-mongoose/mongoose/jobs/315447298
+# STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=SingleFixedUpdateAndSingleRandomReadTest systemTest
+    - env:
+      - TEST=SingleFixedUpdateAndSingleRandomReadTest
+      - STORAGE_TYPE=fs,s3,swift
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=single,low,medium,high
+      - ITEM_SIZE=small,medium
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+# failures:
+# https://travis-ci.org/emc-mongoose/mongoose/jobs/312915014
+# https://travis-ci.org/emc-mongoose/mongoose/jobs/315447299
+# STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=SingleRandomUpdateAndMultipleRandomReadTest systemTest
+    - env:
+      - TEST=SingleRandomUpdateAndMultipleRandomReadTest
+      - STORAGE_TYPE=fs,s3,swift
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=single,low,medium
+      - ITEM_SIZE=small,medium
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+# failures:
+# https://travis-ci.org/emc-mongoose/mongoose/jobs/312915017
+# STORAGE_TYPE=atmos,fs,swift RUN_MODE=local,distributed CONCURRENCY=unlimited ITEM_SIZE=small,medium,large ./gradlew -Dtest.single=UnlimitedConcurrencyLimitByRateTest systemTest
+    - env:
+      - TEST=UnlimitedConcurrencyLimitByRateTest
+      - STORAGE_TYPE=atmos,fs,swift
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=unlimited
+      - ITEM_SIZE=small,medium,large
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+# failures:
+# https://travis-ci.org/emc-mongoose/mongoose/jobs/315447302
+# STORAGE_TYPE=fs,s3,swift RUN_MODE=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=WeightedLoadTest systemTest
+    - env:
+      - TEST=WeightedLoadTest
+      - STORAGE_TYPE=fs,s3,swift
+      - RUN_MODE=distributed
+      - CONCURRENCY=single,medium
+      - ITEM_SIZE=empty,small
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+
     - stage: "Deploy"
       deploy:
         skip_cleanup: true
@@ -120,25 +250,6 @@ jobs:
       - RUN_MODE=local,distributed
       - CONCURRENCY=single,medium
       - ITEM_SIZE=small,medium
-      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonReadVerificationAfterCircularUpdateTest systemTest
-    - env:
-      - TEST=JsonReadVerificationAfterCircularUpdateTest
-      - STORAGE_TYPE=fs
-      - RUN_MODE=local
-      - CONCURRENCY=low,medium
-      - ITEM_SIZE=small
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=GroovyCreateLimitBySizeTest systemTest
-    - env:
-      - TEST=GroovyCreateLimitBySizeTest
-      - STORAGE_TYPE=fs
-      - RUN_MODE=local
-      - CONCURRENCY=low,high
-      - ITEM_SIZE=small,medium
-      - MONGOOSE_VERSION=$TAG
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=swift RUN_MODE=distributed CONCURRENCY=medium ITEM_SIZE=small ./gradlew -Dtest.single=GroovyLoadTypeStepsTest systemTest
@@ -167,15 +278,6 @@ jobs:
       - RUN_MODE=distributed
       - CONCURRENCY=medium
       - ITEM_SIZE=small
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew -Dtest.single=JsonCircularReadSingleItemTest systemTest
-    - env:
-      - TEST=JsonCircularReadSingleItemTest
-      - STORAGE_TYPE=fs,s3
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=single,high
-      - ITEM_SIZE=empty,medium
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=emcs3 RUN_MODE=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small ./gradlew -Dtest.single=JsonConcatRandomItemRangesTest systemTest
@@ -250,42 +352,6 @@ jobs:
       - ITEM_SIZE=empty,small
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=s3,swift RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=large
-    - env:
-      - TEST=JsonMultiPartCreateTest
-      - STORAGE_TYPE=s3,swift
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=low,medium
-      - ITEM_SIZE=large
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMultipleFixedUpdateAndSingleFixedReadTest systemTest
-    - env:
-      - TEST=JsonMultipleFixedUpdateAndSingleFixedReadTest
-      - STORAGE_TYPE=fs,s3
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=low,medium
-      - ITEM_SIZE=small,medium
-      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonMultipleRandomUpdateAndMultipleFixedReadTest systemTest
-    - env:
-      - TEST=JsonMultipleRandomUpdateAndMultipleFixedReadTest
-      - STORAGE_TYPE=fs,s3
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=medium
-      - ITEM_SIZE=small,medium
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonReadCustomContentVerificationFailTest systemTest
-    - env:
-      - TEST=JsonReadCustomContentVerificationFailTest
-      - STORAGE_TYPE=fs,s3,swift
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=low,medium
-      - ITEM_SIZE=small,medium
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
     # STORAGE_TYPE=fs,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonReadUsingInputFileLimitByCountTest systemTest
     - env:
       - TEST=JsonReadUsingInputFileLimitByCountTest
@@ -332,15 +398,6 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=atmos,fs RUN_MODE=local CONCURRENCY=low ITEM_SIZE=empty,medium,huge ./gradlew -Dtest.single=PyCreateNoLimitTest systemTest
-    - env:
-      - TEST=PyCreateNoLimitTest
-      - STORAGE_TYPE=atmos,fs
-      - RUN_MODE=local
-      - CONCURRENCY=low
-      - ITEM_SIZE=empty,medium,huge
-      - MONGOOSE_VERSION=$TAG
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # failures:
     # https://travis-ci.org/emc-mongoose/mongoose/jobs/312914999
@@ -356,52 +413,6 @@ jobs:
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915007
-    # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=JsonChainWithDelayTest systemTest
-    - env:
-      - TEST=JsonChainWithDelayTest
-      - STORAGE_TYPE=atmos,s3
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=single,medium
-      - ITEM_SIZE=medium
-      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915013
-    # https://travis-ci.org/emc-mongoose/mongoose/jobs/315447298
-    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonSingleFixedUpdateAndSingleRandomReadTest systemTest
-    - env:
-      - TEST=JsonSingleFixedUpdateAndSingleRandomReadTest
-      - STORAGE_TYPE=fs,s3,swift
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=single,low,medium,high
-      - ITEM_SIZE=small,medium
-      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915014
-    # https://travis-ci.org/emc-mongoose/mongoose/jobs/315447299
-    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=JsonSingleRandomUpdateAndMultipleRandomReadTest systemTest
-    - env:
-      - TEST=JsonSingleRandomUpdateAndMultipleRandomReadTest
-      - STORAGE_TYPE=fs,s3,swift
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=single,low,medium
-      - ITEM_SIZE=small,medium
-      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915017
-    # STORAGE_TYPE=atmos,fs,swift RUN_MODE=local,distributed CONCURRENCY=unlimited ITEM_SIZE=small,medium,large ./gradlew -Dtest.single=JsonUnlimitedConcurrencyLimitByRateTest systemTest
-    - env:
-      - TEST=JsonUnlimitedConcurrencyLimitByRateTest
-      - STORAGE_TYPE=atmos,fs,swift
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=unlimited
-      - ITEM_SIZE=small,medium,large
-      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # failures:
     # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915018
     # https://travis-ci.org/emc-mongoose/mongoose/jobs/315447301
     # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=low,medium,high ITEM_SIZE=medium ./gradlew -Dtest.single=JsonUpdateUsingInputFileLimitByTimeTest systemTest
@@ -411,15 +422,4 @@ jobs:
       - RUN_MODE=local,distributed
       - CONCURRENCY=low,medium,high
       - ITEM_SIZE=medium
-      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # failures:
-    # https://travis-ci.org/emc-mongoose/mongoose/jobs/315447302
-    # STORAGE_TYPE=fs,s3,swift RUN_MODE=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonWeightedLoadTest systemTest
-    - env:
-      - TEST=JsonWeightedLoadTest
-      - STORAGE_TYPE=fs,s3,swift
-      - RUN_MODE=distributed
-      - CONCURRENCY=single,medium
-      - ITEM_SIZE=empty,small
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"

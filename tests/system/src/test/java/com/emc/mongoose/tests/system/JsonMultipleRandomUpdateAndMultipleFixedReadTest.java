@@ -39,7 +39,7 @@ extends OldScenarioTestBase {
 	private SizeInBytes expectedUpdateSize;
 	private SizeInBytes expectedReadSize;
 	
-	private static final long EXPECTED_COUNT = 10000;
+	private static final long EXPECTED_COUNT = 10_000;
 	private static final int UPDATE_RANDOM_RANGES_COUNT = 5;
 
 	public JsonMultipleRandomUpdateAndMultipleFixedReadTest(

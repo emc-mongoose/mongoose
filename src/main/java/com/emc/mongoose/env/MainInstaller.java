@@ -59,7 +59,17 @@ public final class MainInstaller
                     "example/scenario/js/systest/circular_append_test.js",
                     "example/scenario/js/systest/copy_using_input_path_test.js",
                     "example/scenario/js/systest/read_using_variable_path_test.js",
-                    "example/scenario/js/systest/unlimited_create_test.js",
+                    "example/scenario/js/systest/circular_read_limit_by_time_test.js",
+                    "example/scenario/js/systest/chain_with_delay_test.js",
+                    "example/scenario/js/systest/multipart_create_test.js",
+                    "example/scenario/js/systest/multiple_fixed_update_and_single_fixed_read_test.js",
+                    "example/scenario/js/systest/multiple_random_update_and_single_fixed_read_test.js",
+                    "example/scenario/js/systest/read_custom_content_verification_fail_test.js",
+                    "example/scenario/js/systest/read_verification_after_circular_update_test.js",
+                    "example/scenario/js/systest/single_fixed_update_and_single_random_read_test.js",
+                    "example/scenario/js/systest/single_random_update_and_multiple_random_read_test.js",
+                    "example/scenario/js/systest/unlimited_concurrency_limit_by_rate_test.js",
+                    "example/scenario/js/systest/weighted_load_test.js",
 
                     // custom scenario examples in python
                     "example/scenario/py/types/additional/copy_load_using_env_vars.py",

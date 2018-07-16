@@ -1,7 +1,7 @@
 package com.emc.mongoose.system;
 
+import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.io.IoType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
@@ -9,8 +9,10 @@ import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
+import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.reflection.TypeUtil;
-import org.apache.commons.csv.CSVRecord;
+import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.SchemaProvider;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -20,34 +22,33 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.emc.mongoose.system.util.LogValidationUtil.*;
+import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
-public final class ReadUsingVariablePathTest {
+public class ChainWithDelayTest {
 
     @Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
     public static List<Object[]> envParams() {
         return EnvParams.PARAMS;
     }
 
-    private final String ITEM_LIST_FILE = CONTAINER_SHARE_PATH + File.separator + "read_using_variable_path_items.csv";
-    private final int EXPECTED_COUNT = 10000;
-    private final int timeoutInMillis = 1000_000;
+    private final int DELAY_SECONDS = 20;
+    private final int TIME_LIMIT = 60;
+    private final String zone1Addr = "127.0.0.1";
+    private final String zone2Addr;
     private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
     private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
     private final MongooseContainer testContainer;
@@ -56,14 +57,36 @@ public final class ReadUsingVariablePathTest {
     private final RunMode runMode;
     private final Concurrency concurrency;
     private final ItemSize itemSize;
-    private final String containerFileOutputPath;
+    private final Config config;
+    private final int averagePeriod;
+    private final String containerItemOutputPath;
+    private final String hostItemOutputFile = HOST_SHARE_PATH + File.separator
+            + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
+    private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 
-    public ReadUsingVariablePathTest(
+    private boolean finishedInTime;
+    private int containerExitCode;
+    private String stdOutContent = null;
+
+    public ChainWithDelayTest(
             final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
             final ItemSize itemSize
     ) throws Exception {
 
+        final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
+                APP_NAME, Thread.currentThread().getContextClassLoader());
+        config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
+
+        final Object avgPeriodRaw = config.val("output-metrics-average-period");
+        if (avgPeriodRaw instanceof String) {
+            averagePeriod = (int) TimeUtil.getTimeInSeconds((String) avgPeriodRaw);
+        } else {
+            averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
+        }
+
         stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
+        containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
+
         try {
             FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
         } catch (final IOException ignored) {
@@ -74,29 +97,35 @@ public final class ReadUsingVariablePathTest {
         this.concurrency = concurrency;
         this.itemSize = itemSize;
 
-        containerFileOutputPath = CONTAINER_SHARE_PATH + '/' + stepId;
         if (storageType.equals(StorageType.FS)) {
             try {
-                DirWithManyFilesDeleter.deleteExternal(
-                        containerFileOutputPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
-                );
-            } catch (final Throwable ignored) {
+                DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
+            } catch (final Exception e) {
+                e.printStackTrace(System.err);
             }
         }
-
-        new File(ITEM_LIST_FILE.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())).delete();
+        try {
+            Files.delete(Paths.get(hostItemOutputFile));
+        } catch (final Exception ignored) {
+        }
 
         final List<String> env = System.getenv()
                 .entrySet()
                 .stream()
                 .map(e -> e.getKey() + "=" + e.getValue())
                 .collect(Collectors.toList());
-        env.add("ITEM_DATA_SIZE=" + itemSize.getValue());
-        env.add("ITEM_LIST_FILE=" + ITEM_LIST_FILE);
-        env.add("ITEM_OUTPUT_PATH=" + containerFileOutputPath);
-        env.add("STEP_LIMIT_COUNT=" + EXPECTED_COUNT);
+        try {
+            zone2Addr = NetUtil.getHostAddrString();
+        } catch (final Exception e) {
+            throw new RuntimeException(e);
+        }
+        env.add("ZONE1_ADDRS=" + zone1Addr);
+        env.add("ZONE2_ADDRS=" + zone2Addr);
 
         final List<String> args = new ArrayList<>();
+
+        args.add("--storage-net-http-namespace=ns1");
+        args.add("--load-step-limit-time=" + TIME_LIMIT);
 
         switch (storageType) {
             case ATMOS:
@@ -147,8 +176,17 @@ public final class ReadUsingVariablePathTest {
             throws Exception {
         storageMocks.values().forEach(AsyncRunnableBase::start);
         slaveNodes.values().forEach(AsyncRunnableBase::start);
+
+        long duration = System.currentTimeMillis();
+
         testContainer.start();
-        testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+        testContainer.await(TIME_LIMIT + 10, TimeUnit.SECONDS);
+        stdOutContent = testContainer.stdOutContent();
+
+        duration = System.currentTimeMillis() - duration;
+        finishedInTime = (TimeUnit.SECONDS.toMillis(duration) <= TIME_LIMIT + 15);
+
+        containerExitCode = testContainer.exitStatusCode();
     }
 
     @After
@@ -181,57 +219,54 @@ public final class ReadUsingVariablePathTest {
     public final void test()
             throws Exception {
 
-        final LongAdder ioTraceRecCount = new LongAdder();
-        final int baseOutputPathLen = containerFileOutputPath.length();
-        // Item path should look like:
-        // ${FILE_OUTPUT_PATH}/1/b/0123456789abcdef
-        // ${FILE_OUTPUT_PATH}/b/fedcba9876543210
-        final Pattern subPathPtrn = Pattern.compile("(/[0-9a-f]){1,2}/[0-9a-f]{16}");
-        final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
-            testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), itemSize.getValue());
-            String nextFilePath = ioTraceRec.get("ItemPath");
-            assertTrue(nextFilePath.startsWith(containerFileOutputPath));
-            nextFilePath = nextFilePath.substring(baseOutputPathLen);
-            final Matcher m = subPathPtrn.matcher(nextFilePath);
-            assertTrue(m.matches());
-            ioTraceRecCount.increment();
-        };
-        testContainerIoTraceLogRecords(stepId, ioTraceReqTestFunc);
-        assertEquals(
-                "There should be more than 1 record in the I/O trace log file",
-                EXPECTED_COUNT, ioTraceRecCount.sum()
-        );
+        assertEquals("Container exit code should be 0", 0, containerExitCode);
 
-        final int outputMetricsAveragePeriod;
-        final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");
-        if (outputMetricsAveragePeriodRaw instanceof String) {
-            outputMetricsAveragePeriod = (int) TimeUtil.getTimeInSeconds((String) outputMetricsAveragePeriodRaw);
-        } else {
-            outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
-        }
+//        testMetricsTableStdout(
+//                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
+//                new HashMap<IoType, Integer>() {{
+//                    put(IoType.CREATE, concurrency.getValue());
+//                    put(IoType.READ, concurrency.getValue());
+//                }}
+//        );
+//
+//        final Map<String, Long> timingMap = new HashMap<>();
+//        final Consumer<CSVRecord> ioTraceRecTestFunc = new Consumer<CSVRecord>() {
+//
+//            String storageNode;
+//            String itemPath;
+//            IoType ioType;
+//            long reqTimeStart;
+//            long duration;
+//            Long prevOpFinishTime;
+//
+//            @Override
+//            public final void accept(final CSVRecord ioTraceRec) {
+//                storageNode = ioTraceRec.get("StorageNode");
+//                itemPath = ioTraceRec.get("ItemPath");
+//                ioType = IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))];
+//                reqTimeStart = Long.parseLong(ioTraceRec.get("ReqTimeStart[us]"));
+//                duration = Long.parseLong(ioTraceRec.get("Duration[us]"));
+//                switch (ioType) {
+//                    case CREATE:
+//                        assertTrue(storageNode.startsWith(zone1Addr));
+//                        timingMap.put(itemPath, reqTimeStart + duration);
+//                        break;
+//                    case READ:
+//                        assertTrue(storageNode.startsWith(zone2Addr));
+//                        prevOpFinishTime = timingMap.get(itemPath);
+//                        if (prevOpFinishTime == null) {
+//                            fail("No create I/O trace record for \"" + itemPath + "\"");
+//                        } else {
+//                            assertTrue((reqTimeStart - prevOpFinishTime) / M > DELAY_SECONDS);
+//                        }
+//                        break;
+//                    default:
+//                        fail("Unexpected I/O type: " + ioType);
+//                }
+//            }
+//        };
+//        testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
 
-        testMetricsLogRecords(
-                getContainerMetricsLogRecords(stepId), IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
-                itemSize.getValue(), EXPECTED_COUNT, 0, outputMetricsAveragePeriod
-        );
-
-        testTotalMetricsLogRecord(
-                getContainerMetricsTotalLogRecords(stepId).get(0),
-                IoType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
-                EXPECTED_COUNT, 0
-        );
-
-        final String stdOutContent = testContainer.stdOutContent();
-
-        testSingleMetricsStdout(
-                stdOutContent.replaceAll("[\r\n]+", " "), IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
-                itemSize.getValue(), outputMetricsAveragePeriod
-        );
-
-        testFinalMetricsTableRowStdout(
-                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
-                EXPECTED_COUNT, 0, itemSize.getValue()
-        );
-
+//        assertTrue("Scenario didn't finished in time", finishedInTime);
     }
 }
