@@ -816,13 +816,14 @@ public interface LogValidationUtil {
 						+ ") doesn't fit the expected (" + expectedItemDataSize + ")",
 					avgItemSize <= expectedItemDataSize.getMax()
 				);
-				System.out.println("12");
+				System.out.println("11");
 			}
 		}
+		System.out.println("latancy : " + lat + "\nduration : " + dur);
 		assertTrue(
 			"Mean latency (" + lat + ") should not be more than mean duration (" + dur + ")",
 			lat <= dur
 		);
-		System.out.println("13");
+		System.out.println("12");
 	}
 }
