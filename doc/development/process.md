@@ -24,23 +24,23 @@
 # 2. Priorities
 
 | Priority | Name        | Description | Target Scope |
-|----------|-------------|----------------------------|
+|----------|-------------|-------------|--------------|
 | 0        | Critical    | Critical defect w/o a workaround: <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li><li>Performance degradation</li></ul> | patch
 
 | Priority | Name        | Description | Target Scope |
-|----------|-------------|----------------------------|
+|----------|-------------|-------------|--------------|
 | 1        | Major       | <ul><li>Non-critical defect</li><li>A defect w/ the workaround available for the users</li></ul> | next
 
 | Priority | Name        | Description | Target Scope |
-|----------|-------------|----------------------------|
+|----------|-------------|-------------|--------------|
 | 2        | Medium      | Accepted for the next version scope:<ul><li>New feature</li><li>Enhancement</li><li>Improvement</li></ul> | next
 
 | Priority | Name        | Description | Target Scope |
-|----------|-------------|----------------------------|
+|----------|-------------|-------------|--------------|
 | 3        | Non-release | <ul><li>Demo</li><li>Dependent software adoption</li><li>Future version scope definition</li></ul> | backlog
 
 | Priority | Name        | Description | Target Scope |
-|----------|-------------|----------------------------|
+|----------|-------------|-------------|--------------|
 | 4        | Minor       | Accepted for the future versions scope:<ul><li>New feature</li><li>Enhancement</li><li>Improvement</li></ul> | future
 
 ## 2.1. Limitations
