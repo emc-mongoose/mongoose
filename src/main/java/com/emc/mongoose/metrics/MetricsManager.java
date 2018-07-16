@@ -150,7 +150,7 @@ public final class MetricsManager
                 INSTANCE.allMetricsLock.unlock();
             }
         } else {
-            Loggers.ERR.warn("Locking TIMEOUT at register call, thread dump:\n{}", new ThreadDump().toString());
+            Loggers.ERR.warn("Locking timeout at register call, thread dump:\n{}", new ThreadDump().toString());
         }
     }
 
@@ -205,7 +205,7 @@ public final class MetricsManager
                 Loggers.MSG.debug("Metrics context \"{}\" unregistered", metricsCtx);
             }
         } else {
-            Loggers.ERR.warn("Locking TIMEOUT at unregister call, thread dump:\n{}", new ThreadDump().toString());
+            Loggers.ERR.warn("Locking timeout at unregister call, thread dump:\n{}", new ThreadDump().toString());
         }
     }
 
@@ -235,7 +235,7 @@ public final class MetricsManager
                     allMetricsLock.unlock();
                 }
             } else {
-                Loggers.ERR.warn("Locking TIMEOUT at starting, thread dump:\n{}", new ThreadDump().toString());
+                Loggers.ERR.warn("Locking timeout at starting, thread dump:\n{}", new ThreadDump().toString());
             }
         } catch (final InterruptedException e) {
             LogUtil.exception(Level.DEBUG, e, "Got interrupted exception");
@@ -257,7 +257,7 @@ public final class MetricsManager
                     allMetricsLock.unlock();
                 }
             } else {
-                Loggers.ERR.warn("Locking TIMEOUT at stopping, thread dump:\n{}", new ThreadDump().toString());
+                Loggers.ERR.warn("Locking timeout at stopping, thread dump:\n{}", new ThreadDump().toString());
             }
         } catch (final InterruptedException e) {
             LogUtil.exception(Level.DEBUG, e, "Got interrupted exception");
@@ -277,7 +277,7 @@ public final class MetricsManager
                     allMetricsLock.unlock();
                 }
             } else {
-                Loggers.ERR.warn("Locking TIMEOUT at closing, thread dump:\n{}", new ThreadDump().toString());
+                Loggers.ERR.warn("Locking timeout at closing, thread dump:\n{}", new ThreadDump().toString());
             }
         } catch (final InterruptedException e) {
             LogUtil.exception(Level.DEBUG, e, "Got interrupted exception");
