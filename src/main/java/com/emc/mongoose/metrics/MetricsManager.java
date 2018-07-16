@@ -54,6 +54,17 @@ public final class MetricsManager
 
         @Override
         protected final void invokeTimed(final long startTimeNanos) {
+
+            try {
+                for (final String id : allMetrics.keySet()) {
+                    for (final MetricsContext metricsCtx : allMetrics.get(id).keySet()) {
+
+                        metricsCtx.refreshLastSnapshot();
+                    }
+                }
+            } catch (final ConcurrentModificationException ignored) {
+            }
+
             if (allMetricsLock.tryLock()) {
 
                 ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
@@ -67,7 +78,7 @@ public final class MetricsManager
                             ThreadContext.put(KEY_STEP_ID, metricsCtx.stepId());
 
                             actualConcurrency = metricsCtx.actualConcurrency();
-                            metricsCtx.refreshLastSnapshot();
+                            //metricsCtx.refreshLastSnapshot();
 
                             // threshold load state checks
                             nextConcurrencyThreshold = metricsCtx.concurrencyThreshold();
