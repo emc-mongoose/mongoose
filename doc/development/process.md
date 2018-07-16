@@ -23,7 +23,7 @@
 
 # 2. Priorities
 
-| Priority | Name | Description | Target Scope
+| Priority | Name        | Description | Target Scope
 |----------|-------------|------------------
 | 0        | Critiacal   | Critical defect w/o a workaround: <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li><li>Performance degradation</li></ul> | patch
 | 1        | Major       | <ul><li>Non-critical defect</li><li>A defect w/ the workaround available for the users</li></ul> | next
