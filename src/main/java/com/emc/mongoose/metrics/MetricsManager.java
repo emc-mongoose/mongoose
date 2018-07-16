@@ -203,7 +203,7 @@ extends DaemonBase {
 				Loggers.MSG.debug("Metrics context \"{}\" unregistered", metricsCtx);
 			}
 		} else {
-			Loggers.ERR.warn("Locking timeout at unregister call, thread dump:\n{}", new ThreadDump().toString());
+			//Loggers.ERR.warn("Locking timeout at unregister call, thread dump:\n{}", new ThreadDump().toString());
 		}
 	}
 
@@ -233,7 +233,7 @@ extends DaemonBase {
 					allMetricsLock.unlock();
 				}
 			} else {
-				Loggers.ERR.warn("Locking timeout at starting, thread dump:\n{}", new ThreadDump().toString());
+				//Loggers.ERR.warn("Locking timeout at starting, thread dump:\n{}", new ThreadDump().toString());
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(Level.DEBUG, e, "Got interrupted exception");
@@ -255,7 +255,7 @@ extends DaemonBase {
 					allMetricsLock.unlock();
 				}
 			} else {
-				Loggers.ERR.warn("Locking timeout at stopping, thread dump:\n{}", new ThreadDump().toString());
+				//Loggers.ERR.warn("Locking timeout at stopping, thread dump:\n{}", new ThreadDump().toString());
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(Level.DEBUG, e, "Got interrupted exception");
@@ -275,7 +275,7 @@ extends DaemonBase {
 					allMetricsLock.unlock();
 				}
 			} else {
-				Loggers.ERR.warn("Locking timeout at closing, thread dump:\n{}", new ThreadDump().toString());
+				//Loggers.ERR.warn("Locking timeout at closing, thread dump:\n{}", new ThreadDump().toString());
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(Level.DEBUG, e, "Got interrupted exception");
