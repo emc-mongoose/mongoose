@@ -41,6 +41,9 @@
 | Recycle mode          |      y    |y (only for creation)|            |        |
 
 ## Storages support
+
+* Locust and LoadRunner are tools for testing web services
+
 |                                          | Mongoose  | COSBench |
 | ---                                      | :---:     | :---:    |
 | Supported storages                       |Amazon S3, EMC Atmos, OpenStack Swift, Filesystem, HDFS|OpenStack Swift, Amazon S3, Amplidata, Scality, Ceph, CDMI, Google Cloud Storage, Aliyun OSS|
