@@ -221,6 +221,7 @@ public class CircularReadLimitByTimeTest {
             testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), itemSize.getValue());
             ioTraceRecCount.increment();
         };
+        System.out.println(stepId);
         testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
         assertTrue(
                 "There should be more than 1 record in the I/O trace log file",
