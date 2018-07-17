@@ -13,8 +13,8 @@
 |                   | Mongoose  | COSBench | LoadRunner | Locust |
 | ---               | :---:     | :---:    | :---:      | :---:  |
 |**[Load testing](https://en.wikipedia.org/wiki/Load_testing)** |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
-|**[Stress testing](https://en.wikipedia.org/wiki/Stress_testing)** |:heavy_check_mark:|:heavy_check_mark:|      |      |
-|**[Endurance testing](https://en.wikipedia.org/wiki/Soak_testing)**|:heavy_check_mark:|          |       |      |
+|**[Stress testing](https://en.wikipedia.org/wiki/Stress_testing)** |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|      |
+|**[Endurance testing](https://en.wikipedia.org/wiki/Soak_testing)**|:heavy_check_mark:|          |:heavy_check_mark:|      |
 
 ## Scalability
 |                                                    | Mongoose  | COSBench | LoadRunner | Locust |
