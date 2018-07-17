@@ -15,7 +15,6 @@
 | [Load testing](https://en.wikipedia.org/wiki/Load_testing)      | :heavy_check_mark:  |  :heavy_check_mark:  |   :heavy_check_mark:   | :heavy_check_mark: |
 | [Stress testing](https://en.wikipedia.org/wiki/Stress_testing)    | :heavy_check_mark:  |  :heavy_check_mark:  |            |        |
 | [Endurance testing](https://en.wikipedia.org/wiki/Soak_testing) | :heavy_check_mark:  |          |            |        |
-| [Sanity testing](https://en.wikipedia.org/wiki/Sanity_check)    | :heavy_check_mark:  |          |            |        |
 
 ## Scalability
 |                                                    | Mongoose  | COSBench | LoadRunner | Locust |
@@ -27,22 +26,21 @@
 |                  | Mongoose  | COSBench | LoadRunner | Locust |
 | ---              | :---:     | :---:    | :---:      | :---:  |
 | GUI              |    :heavy_multiplication_x:  |   :heavy_check_mark: |  :heavy_check_mark:    | :heavy_multiplication_x:  |
-| [Parameterization](https://github.com/emc-mongoose/mongoose/wiki/v3.6-Configuration#2-parametrization) |    :heavy_check_mark: |   :heavy_multiplication_x:  |            |  :heavy_check_mark:|
-| Scriptable       |   :heavy_check_mark:  |  :heavy_check_mark:  |   :heavy_check_mark:   |  :heavy_check_mark:|
-| Script format    |[JSR-223](https://en.wikipedia.org/wiki/Scripting_for_the_Java_Platform) compatible languages|[XML](https://en.wikipedia.org/wiki/XML)|[ANSI C, Java, .Net, JS](https://en.wikipedia.org/wiki/LoadRunner)|[Python](https://en.wikipedia.org/wiki/Python)|
+| [Parameterization](https://github.com/emc-mongoose/mongoose/wiki/v3.6-Configuration#2-parametrization) |    :heavy_check_mark: |   :heavy_check_mark:  |            |  :heavy_check_mark: (at the level of the language)|
+| Script (scenario) format    |[JSR-223](https://en.wikipedia.org/wiki/Scripting_for_the_Java_Platform) compatible languages|[XML](https://en.wikipedia.org/wiki/XML)|[ANSI C, Java, .Net, JS](https://en.wikipedia.org/wiki/LoadRunner)|[Python](https://en.wikipedia.org/wiki/Python)|
 
 ## Output
 |                                      | Mongoose  | COSBench | LoadRunner | Locust |
 | ---                                  | :---:     | :---:    | :---:      | :---:  |
-| Metrics for each operation available |   :heavy_check_mark:  |   :heavy_check_mark: |            |        |
+| Metrics for each operation available |   :heavy_check_mark:  |   :heavy_multiplication_x:  |            |:heavy_multiplication_x:|
 | Saturation concurrency measurement   |   :heavy_check_mark:  |   :heavy_multiplication_x:  |            |        |
 
 ## Load generation patterns
 |                       | Mongoose  | COSBench | LoadRunner | Locust |
 | ---                   | :---:     | :---:    | :---:      | :---:  |
-| [Weighted load](https://github.com/emc-mongoose/mongoose/blob/feature-v4-doc/doc/design/weighted_load.md) support |    :heavy_check_mark: | :heavy_check_mark:   |            |        |
-| [Pipeline load](https://github.com/emc-mongoose/mongoose/blob/feature-v4-doc/doc/design/pipeline_load.md)         |    :heavy_check_mark: | :heavy_multiplication_x:    |            |        |
-| [Recycle mode](https://github.com/emc-mongoose/mongoose/blob/feature-v4-doc/doc/design/recycle_mode.md)          |    :heavy_check_mark: |:heavy_check_mark: [(only for creation)](https://github.com/intel-cloud/cosbench/blob/master/COSBenchUserGuide.pdf)|            |        |
+| [Weighted load](https://github.com/emc-mongoose/mongoose/blob/feature-v4-doc/doc/design/weighted_load.md) support |    :heavy_check_mark: | :heavy_check_mark:   |            |:heavy_multiplication_x:|
+| [Pipeline load](https://github.com/emc-mongoose/mongoose/blob/feature-v4-doc/doc/design/pipeline_load.md)         |    :heavy_check_mark: | :heavy_multiplication_x:    |            |:heavy_multiplication_x:|
+| [Recycle mode](https://github.com/emc-mongoose/mongoose/blob/feature-v4-doc/doc/design/recycle_mode.md)          |    :heavy_check_mark: |:heavy_multiplication_x:|            |        |
 
 ## Storages support
 
@@ -50,5 +48,5 @@
 
 |                                          | Mongoose  | COSBench |
 | ---                                      | :---:     | :---:    |
-| Supported storages                       |Amazon S3, EMC Atmos, OpenStack Swift, Filesystem, HDFS|OpenStack Swift, Amazon S3, Amplidata, Scality, Ceph, CDMI, Google Cloud Storage, Aliyun OSS|
+| Supported storages                       |<ul><li>Amazon S3</li><li>EMC Atmos</li><li>OpenStack Swift</li><li>Filesystem</li><li>HDFS</li><ul>|<ul><li>Amazon S3</li><li>Amplidata</li><li>OpenStack Swift</li><li>Scality</li><li>Ceph</li><li>Google Cloud Storage</li><li>Aliyun OSS</li><ul>|
 | Extensible to support custom storage API |  :heavy_check_mark:   |  :heavy_check_mark:  |
