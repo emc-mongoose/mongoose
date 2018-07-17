@@ -10,7 +10,7 @@
 |                   | Mongoose  | COSBench | LoadRunner | Locust |
 | ---               | :---:     | :---:    | :---:      | :---:  |
 | Load testing      |     y     |    y     |     y      |        |
-| Stress testing    |     y     |          |            |        |
+| Stress testing    |     y     |    y     |            |        |
 | Endurance testing |     y     |          |            |        |
 | Sanity testing    |     y     |          |            |        |
 
@@ -37,12 +37,12 @@
 ## Load generation patterns
 |                       | Mongoose  | COSBench | LoadRunner | Locust |
 | ---                   | :---:     | :---:    | :---:      | :---:  |
-| Weighted load support |      y    |          |            |        |
-| Pipeline load         |      y    |          |            |        |
-| Recycle mode          |      y    |          |            |        |
+| Weighted load support |      y    |   y      |            |        |
+| Pipeline load         |      y    |   n      |            |        |
+| Recycle mode          |      y    |y (only for creation)|            |        |
 
 ## Storages support
 |                                          | Mongoose  | COSBench | LoadRunner | Locust |
 | ---                                      | :---:     | :---:    | :---:      | :---:  |
-| Supported storages                       |Amazon S3, EMC Atmos, OpenStack Swift, Filesystem, HDFS|Amazon S3, Swift, Ceph, Amplistor, Scality, CDMI|            |        |
-| Extensible to support custom storage API |           |          |            |        |
+| Supported storages                       |Amazon S3, EMC Atmos, OpenStack Swift, Filesystem, HDFS|OpenStack Swift, Amazon S3, Amplidata, Scality, Ceph, CDMI, Google Cloud Storage, Aliyun OSS|            |        |
+| Extensible to support custom storage API |    y      |    y     |            |        |
