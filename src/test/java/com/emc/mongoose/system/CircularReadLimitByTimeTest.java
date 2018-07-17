@@ -13,6 +13,8 @@ import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -21,7 +23,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -39,6 +43,7 @@ import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.system.util.LogValidationUtil.*;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
@@ -221,15 +226,15 @@ public class CircularReadLimitByTimeTest {
                 "There should be more than 1 record in the I/O trace log file",
                 ioTraceRecCount.sum() > 1
         );
-//
-//        final List<CSVRecord> items = new ArrayList<>();
-//        try (final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
-//            final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
-//            for (final CSVRecord csvRecord : csvParser) {
-//                items.add(csvRecord);
-//            }
-//        }
-//        assertEquals(1, items.size());
+
+        final List<CSVRecord> items = new ArrayList<>();
+        try (final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
+            final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
+            for (final CSVRecord csvRecord : csvParser) {
+                items.add(csvRecord);
+            }
+        }
+        assertEquals(1, items.size());
 //
 //        String itemPath, itemId;
 //        long itemOffset;
