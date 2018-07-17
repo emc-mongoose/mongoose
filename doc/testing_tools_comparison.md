@@ -25,7 +25,7 @@
 ## Input
 |                  | Mongoose  | COSBench | LoadRunner | Locust |
 | ---              | :---:     | :---:    | :---:      | :---:  |
-|**GUI**           |:x:|:heavy_check_mark:|:heavy_check_mark:|:x:|
+|**GUI**           |:x:|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
 |**[Parameterization](https://github.com/emc-mongoose/mongoose/wiki/v3.6-Configuration#2-parametrization)**|:heavy_check_mark:|   :heavy_check_mark:  |            |:heavy_check_mark:(at the level of the language)|
 |**Script (scenario) format**|[JSR-223](https://en.wikipedia.org/wiki/Scripting_for_the_Java_Platform) compatible languages|[XML](https://en.wikipedia.org/wiki/XML)|[ANSI C, Java, .Net, JS](https://en.wikipedia.org/wiki/LoadRunner)|[Python](https://en.wikipedia.org/wiki/Python)|
 
