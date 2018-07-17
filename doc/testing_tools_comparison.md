@@ -24,8 +24,9 @@
 |                  | Mongoose  | COSBench | LoadRunner | Locust |
 | ---              | :---:     | :---:    | :---:      | :---:  |
 | GUI              |    :heavy_multiplication_x:  |   :heavy_check_mark: |  :heavy_check_mark:    | :heavy_multiplication_x:  |
-| Parameterization |    :heavy_check_mark: |   :heavy_multiplication_x:  |            |  :heavy_check_mark:|
+| [Parameterization](https://github.com/emc-mongoose/mongoose/wiki/v3.6-Configuration#2-parametrization) |    :heavy_check_mark: |   :heavy_multiplication_x:  |            |  :heavy_check_mark:|
 | Scriptable       |   :heavy_check_mark:  |  :heavy_check_mark:  |   :heavy_check_mark:   |  :heavy_check_mark:|
+| Script format    |JSR-223 compatible languages|XML|[ANSI C, Java, .Net, JS](https://en.wikipedia.org/wiki/LoadRunner)|Python|
 
 ## Output
 |                                      | Mongoose  | COSBench | LoadRunner | Locust |
