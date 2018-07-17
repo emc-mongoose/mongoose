@@ -18,7 +18,7 @@
 |                                                    | Mongoose  | COSBench | LoadRunner | Locust |
 | ---                                                | :---:     | :---:    | :---:      | :---:  |
 | Horizontally (Distributed Mode)                    |   :heavy_check_mark:  |   :heavy_check_mark: |            |  :heavy_check_mark:|
-| Vertically (Max sustained concurrency per instance)|1_048_576  |          |            |1_000_000|
+| Vertically (Max sustained concurrency per instance)|1_048_576  |[1024](http://cosbench.1094679.n5.nabble.com/how-many-connections-users-can-cosbench-create-to-test-one-swift-storage-tp325p326.html)|            |1_000_000|
 
 ## Input
 |                  | Mongoose  | COSBench | LoadRunner | Locust |
