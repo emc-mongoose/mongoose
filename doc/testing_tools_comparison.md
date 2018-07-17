@@ -4,41 +4,41 @@
 |                   | Mongoose  | COSBench | LoadRunner         | Locust |
 | ---               | :---:     | :---:    | :---:              | :---:  |
 | License           |MIT License|Apache 2.0|proprietary software|MIT License|
-| Open Source       |  y        |  y       |      n             |    y   |
+| Open Source       |:heavy_check_mark:|:heavy_check_mark:    |    :heavy_multiplication_x:           |  :heavy_check_mark:|
 
 ## Purpose
 |                   | Mongoose  | COSBench | LoadRunner | Locust |
 | ---               | :---:     | :---:    | :---:      | :---:  |
-| Load testing      |     y     |    y     |     y      |   y    |
-| Stress testing    |     y     |    y     |            |        |
-| Endurance testing |     y     |          |            |        |
-| Sanity testing    |     y     |          |            |        |
+| Load testing      | :heavy_check_mark:  |  :heavy_check_mark:  |   :heavy_check_mark:   | :heavy_check_mark: |
+| Stress testing    | :heavy_check_mark:  |  :heavy_check_mark:  |            |        |
+| Endurance testing | :heavy_check_mark:  |          |            |        |
+| Sanity testing    | :heavy_check_mark:  |          |            |        |
 
 ## Scalability
 |                                                    | Mongoose  | COSBench | LoadRunner | Locust |
 | ---                                                | :---:     | :---:    | :---:      | :---:  |
-| Horizontally (Distributed Mode)                    |     y     |     y    |            |    y   |
+| Horizontally (Distributed Mode)                    |   :heavy_check_mark:  |   :heavy_check_mark: |            |  :heavy_check_mark:|
 | Vertically (Max sustained concurrency per instance)|1_048_576  |          |            |1_000_000|
 
 ## Input
 |                  | Mongoose  | COSBench | LoadRunner | Locust |
 | ---              | :---:     | :---:    | :---:      | :---:  |
-| GUI              |      n    |     y    |    y       |   n    |
-| Parameterization |      y    |     n    |            |    y   |
-| Scriptable       |     y     |    y     |     y      |    y   |
+| GUI              |    :heavy_multiplication_x:  |   :heavy_check_mark: |  :heavy_check_mark:    | :heavy_multiplication_x:  |
+| Parameterization |    :heavy_check_mark: |   :heavy_multiplication_x:  |            |  :heavy_check_mark:|
+| Scriptable       |   :heavy_check_mark:  |  :heavy_check_mark:  |   :heavy_check_mark:   |  :heavy_check_mark:|
 
 ## Output
 |                                      | Mongoose  | COSBench | LoadRunner | Locust |
 | ---                                  | :---:     | :---:    | :---:      | :---:  |
-| Metrics for each operation available |     y     |     y    |            |        |
-| Saturation concurrency measurement   |     y     |     n    |            |        |
+| Metrics for each operation available |   :heavy_check_mark:  |   :heavy_check_mark: |            |        |
+| Saturation concurrency measurement   |   :heavy_check_mark:  |   :heavy_multiplication_x:  |            |        |
 
 ## Load generation patterns
 |                       | Mongoose  | COSBench | LoadRunner | Locust |
 | ---                   | :---:     | :---:    | :---:      | :---:  |
-| Weighted load support |      y    |   y      |            |        |
-| Pipeline load         |      y    |   n      |            |        |
-| Recycle mode          |      y    |y (only for creation)|            |        |
+| Weighted load support |    :heavy_check_mark: | :heavy_check_mark:   |            |        |
+| Pipeline load         |    :heavy_check_mark: | :heavy_multiplication_x:    |            |        |
+| Recycle mode          |    :heavy_check_mark: |:heavy_check_mark: (only for creation)|            |        |
 
 ## Storages support
 
@@ -47,4 +47,4 @@
 |                                          | Mongoose  | COSBench |
 | ---                                      | :---:     | :---:    |
 | Supported storages                       |Amazon S3, EMC Atmos, OpenStack Swift, Filesystem, HDFS|OpenStack Swift, Amazon S3, Amplidata, Scality, Ceph, CDMI, Google Cloud Storage, Aliyun OSS|
-| Extensible to support custom storage API |    y      |    y     |
+| Extensible to support custom storage API |  :heavy_check_mark:   |  :heavy_check_mark:  |
