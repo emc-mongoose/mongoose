@@ -24,7 +24,7 @@
 |                  | Mongoose  | COSBench | LoadRunner | Locust |
 | ---              | :---:     | :---:    | :---:      | :---:  |
 | GUI              |      n    |     y    |    y       |   n    |
-| Parameterization |      y    |     y    |            |        |
+| Parameterization |      y    |     n    |            |    y   |
 | Scriptable       |     y     |    y     |     y      |    y   |
 
 ## Output
