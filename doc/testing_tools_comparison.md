@@ -3,7 +3,7 @@
 ## General
 |                   | Mongoose  | COSBench | LoadRunner         | Locust |
 | ---               | :---:     | :---:    | :---:              | :---:  |
-| License           |           |Apache 2.0|proprietary software|        |
+| License           |MIT License|Apache 2.0|proprietary software|MIT License|
 | Open Source       | y         |  y       |      n             |    y   |
 
 ## Purpose
