@@ -4,7 +4,7 @@
 |                   | Mongoose  | COSBench | LoadRunner         | Locust |
 | ---               | :---:     | :---:    | :---:              | :---:  |
 | License           |MIT License|Apache 2.0|proprietary software|MIT License|
-| Open Source       | y         |  y       |      n             |    y   |
+| Open Source       |  y        |  y       |      n             |    y   |
 
 ## Purpose
 |                   | Mongoose  | COSBench | LoadRunner | Locust |
@@ -18,7 +18,7 @@
 |                                                    | Mongoose  | COSBench | LoadRunner | Locust |
 | ---                                                | :---:     | :---:    | :---:      | :---:  |
 | Horizontally (Distributed Mode)                    |     y     |     y    |            |    y   |
-| Vertically (Max sustained concurrency per instance)|1_048_576  |          |            |> 1_000_000|
+| Vertically (Max sustained concurrency per instance)|1_048_576  |          |            |1_000_000|
 
 ## Input
 |                  | Mongoose  | COSBench | LoadRunner | Locust |
