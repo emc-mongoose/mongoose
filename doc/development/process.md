@@ -18,14 +18,12 @@ The following interfaces are mentioned as the subject of the backward compatibil
 
 Mongoose uses the [semantic versioning](http://semver.org/). This means that the ***X.Y.Z*** version notation is used:
 
-* ***X***
+* ***X***<br/>
     Major version number. Points to significant design and interfaces change. The backward compatibility is not
     guaranteed.
-
-* ***Y***
+* ***Y***<br/>
     Minor version number. The *backward compatibility* is guaranteed.
-
-* ***Z***
+* ***Z***<br/>
     Patch version number. Includes only the defect fixes.
 
 # 3. Tasks
