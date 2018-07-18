@@ -2,7 +2,7 @@
 
 | Name | Responsibilities | Current Assignees
 |------|------------------|------------------
-| User | Report the issues in the [expected way](#5-issue-reporting) | Definitely unknown
+| User | Report the issues | Definitely unknown
 | Developer | <ul><li>Development</li><li>Testing</li><li>Automation</li><li>Documentation</li></ul> | <ul><li>Veronika Kochugova</li><li>Andrey Kurilov</li><ul>
 | Owner | <ul><li>[*Next* version scope](#3-scopes) definition</li><li>Roadmap definition</li><li>User interaction</li></ul> | Andrey Kurilov
 | Manager | The explicit scopes approval | ********
@@ -16,11 +16,13 @@ The following interfaces are mentioned as the subject of the backward compatibil
 2. Output files containing the metrics
 3. API
 
+## 2.2. Numbers
+
 Mongoose uses the [semantic versioning](http://semver.org/). This means that the ***X.Y.Z*** version notation is used:
 
 * ***X***<br/>
-    Major version number. Points to significant design and interfaces change. The backward compatibility is not
-    guaranteed.
+    Major version number. Points to significant design and interfaces change. The *backward compatibility* is **not
+    guaranteed**.
 * ***Y***<br/>
     Minor version number. The *backward compatibility* is guaranteed.
 * ***Z***<br/>
@@ -55,7 +57,15 @@ Mongoose uses the [semantic versioning](http://semver.org/). This means that the
 | Task     |                      | <ul><li>Version</li><li>Description</li>
 | Sub-task |                      | <ul><li>Version</li><li>Description<li>
 
-## 3.3. Specific Properties
+### 3.2.1. Defects
+
+| Priority     | Conditions | Target state as a result of the review
+|--------------|------------|---------------------------------------
+| Critical     | No workaround available **and** any of the following: <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li><li>Performance degradation</li></ul> | `ESCALATED`
+| Non-critical | Not *critical* **and** not *minor* | `ACCEPTED` (for the next minor/major version)
+| Minor        | Any of the following: <ul><li>Usability issue</li><li>Cosmetic</li></ul> | `OPEN` or `ACCEPTED`
+
+**Specific properties**:
 
 | Name                  | Applicable task type | Who is responsible to specify  | Notes
 |-----------------------|----------------------|--------------------------------|-------|
@@ -66,8 +76,22 @@ Mongoose uses the [semantic versioning](http://semver.org/). This means that the
 | Steps                 | Defect               | Reporter: user/developer/owner |
 | Expected behaviour    | Defect               | Reporter: user/developer/owner | The reference to the particular documentation part describing the expected behavior is preferable.
 | Observed behaviour    | Defect               | Reporter: user/developer/owner | Error message, errors.log output file, etc.
+
+### 3.2.2. Stories
+
+**Specific properties**:
+
+| Name                  | Applicable task type | Who is responsible to specify  | Notes
+|-----------------------|----------------------|--------------------------------|-------|
 | Purpose               | Story                | Reporter: user/developer/owner | Which particular problem should be solved with Mongoose? The links to the related documents and literature are encouraged.
 | Requirements          | Story                | Reporter: user/developer/owner | Both functional and performance requirements are mandatory. Optionally the additional requirements/possible enhancements may be specified.
 | Limitations           | Story                | Reviewer: developer/owner      |
+
+### 3.2.3. Tasks and sub-tasks
+
+**Specific properties**:
+
+| Name                  | Applicable task type | Who is responsible to specify  | Notes
+|-----------------------|----------------------|--------------------------------|-------|
 | Version               | Task/Sub-task        | Reviewer: developer/owner      |
 | Description           | Task/Sub-task        | Reporter: user/developer/owner |
