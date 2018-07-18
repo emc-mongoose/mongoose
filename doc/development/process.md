@@ -52,13 +52,15 @@ Mongoose uses the [semantic versioning](http://semver.org/). This means that the
 
 ### 3.2.1. Defects
 
+#### 3.2.2.1. Priorities
+
 | Priority     | Conditions | Target state as a result of the review
 |--------------|------------|---------------------------------------
 | Critical     | No workaround available **and** any of the following: <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li><li>Performance degradation</li></ul> | `ESCALATED`
 | Non-critical | Not *critical* **and** not *minor* | `ACCEPTED` (for the next minor/major version)
 | Minor        | Any of the following: <ul><li>Usability issue</li><li>Cosmetic</li></ul> | `OPEN` or `ACCEPTED`
 
-**Specific properties**:
+#### 3.2.2.2. Specific properties
 
 | Name                  | Applicable task type | Who is responsible to specify  | Notes
 |-----------------------|----------------------|--------------------------------|-------|
