@@ -30,6 +30,12 @@ Mongoose uses the [semantic versioning](http://semver.org/). This means that the
 
 # 3. Tasks
 
+Types:
+* Defect
+* Story
+* Task
+* Sub-task
+
 ## 3.1. States
 
 | State       | Description |
@@ -49,11 +55,7 @@ Mongoose uses the [semantic versioning](http://semver.org/). This means that the
 > scenario/use case. This approach is used due to the lack of the sufficient statistical information about the Mongoose
 > usage.
 
-## 3.2. Types
-
-### 3.2.1. Defects
-
-#### 3.2.2.1. Priorities
+## 3.2. Defects Priority
 
 | Priority     | Conditions | Target state as a result of the review
 |--------------|------------|---------------------------------------
@@ -61,33 +63,22 @@ Mongoose uses the [semantic versioning](http://semver.org/). This means that the
 | Non-critical | Not *critical* **and** not *minor* | `ACCEPTED` (for the next minor/major version)
 | Minor        | Any of the following: <ul><li>Usability issue</li><li>Cosmetic</li></ul> | `OPEN` or `ACCEPTED`
 
-#### 3.2.2.2. Specific properties
+## 3.3. Specific properties
 
-| Name                  | Applicable task type | Who is responsible to specify  | Notes
-|-----------------------|----------------------|--------------------------------|-------|
-| Affected version      | Defect               | Reporter: user/developer/owner | Only the *latest* version may be used for the defect reporting. The task should be *rejected* if the reported version is not *latest*.
-| Fix version           | Defect               | Reviewer: developer/owner      |
-| Start command/request | Defect               | Reporter: user/developer/owner | Leave only the essential things to reproduce: try to check if possible if the bug is reproducible w/o distributed mode, different concurrency level, item data size, etc.
-| Scenario              | Defect               | Reporter: user/developer/owner | Don't clutter with large scenario files. Simplify the scenario leaving only the essential things.
-| Steps                 | Defect               | Reporter: user/developer/owner |
-| Expected behaviour    | Defect               | Reporter: user/developer/owner | The reference to the particular documentation part describing the expected behavior is preferable.
-| Observed behaviour    | Defect               | Reporter: user/developer/owner | Error message, errors.log output file, etc.
-
-### 3.2.2. Stories
-
-**Specific properties**:
-
-| Name                  | Applicable task type | Who is responsible to specify  | Notes
-|-----------------------|----------------------|--------------------------------|-------|
-| Purpose               | Story                | Reporter: user/developer/owner | Which particular problem should be solved with Mongoose? The links to the related documents and literature are encouraged.
-| Requirements          | Story                | Reporter: user/developer/owner | Both functional and performance requirements are mandatory. Optionally the additional requirements/possible enhancements may be specified.
-| Limitations           | Story                | Reviewer: developer/owner      |
-
-### 3.2.3. Tasks and sub-tasks
-
-**Specific properties**:
-
-| Name                  | Applicable task type | Who is responsible to specify  | Notes
-|-----------------------|----------------------|--------------------------------|-------|
-| Version               | Task/Sub-task        | Reviewer: developer/owner      |
-| Description           | Task/Sub-task        | Reporter: user/developer/owner |
+| Name                  | Applicable Task Types  | Who is responsible to specify  | Notes
+|-----------------------|------------------------|--------------------------------|-------|
+| Affected version      | Defect                 | Reporter: user/developer/owner | Only the *latest* version may be used for the defect reporting. The task should be *rejected* if the reported version is not *latest*.
+| Branch                | Defect, Task, Sub-task | Reviewer: developer/owner      |
+| Description           | Task, Sub-task         | Reporter: user/developer/owner |
+| Expected behaviour    | Defect                 | Reporter: user/developer/owner | The reference to the particular documentation part describing the expected behavior is preferable.
+| Fix version           | Defect, Task, Sub-task | Reviewer: developer/owner      |
+| Limitations           | Story                  | Reviewer: developer/owner      |
+| Observed behaviour    | Defect                 | Reporter: user/developer/owner | Error message, errors.log output file, etc.
+| Pull request          | Defect, Task, Sub-task | Reviewer: developer/owner      |
+| Resolution commit     | Defect, Task, Sub-task | Reviewer: developer/owner      |
+| Root cause            | Defect                 | Reviewer: developer/owner      |
+| Start command/request | Defect                 | Reporter: user/developer/owner | Leave only the essential things to reproduce: try to check if possible if the bug is reproducible w/o distributed mode, different concurrency level, item data size, etc.
+| Scenario              | Defect                 | Reporter: user/developer/owner | Don't clutter with large scenario files. Simplify the scenario leaving only the essential things.
+| Steps                 | Defect                 | Reporter: user/developer/owner |
+| Purpose               | Story                  | Reporter: user/developer/owner | Which particular problem should be solved with Mongoose? The links to the related documents and literature are encouraged.
+| Requirements          | Story                  | Reporter: user/developer/owner | Both functional and performance requirements are mandatory. Optionally the additional requirements/possible enhancements may be specified.
