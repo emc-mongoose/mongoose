@@ -32,15 +32,16 @@ Mongoose uses the [semantic versioning](http://semver.org/). This means that the
 
 ## 3.1. States
 
-| State     | Description |
-|-----------|-------------|
-| OPEN      | All new tasks should have this state. The tasks are selected from the set of the *OPEN* tasks for the proposal and review process. The task is updated w/ the corresponding comment but left in the *OPEN* state if it's considered incomplete/incorrect. Also incomplete/incorrect task should be assigned back to the reporter.
-| PROPOSED  | The task is selected for the approval by the *manager*.
-| DEFERRED  | Manager has approved the task to be processed after the next major/minor (non-patch) version is released.
-| ACCEPTED  | Manager approved the task to be processed before the next major/minor (non-patch) version is released.
-| ESCALATED | Critical defect which interrupts all *DEFERRED*/*ACCEPTED* tasks processing. Causes the new *patch* version release ASAP.
-| RESOLVED  | Task is done and the corresponding changes are merged into the `integration` branch.
-| CLOSED    | Task is done and the corresponding changes are merged into the `master` branch (= version release, availability for the user).
+| State       | Description |
+|-------------|-------------|
+| OPEN        | All new tasks should have this state. The tasks are selected from the set of the *OPEN* tasks for the proposal and review process. The task is updated w/ the corresponding comment but left in the *OPEN* state if it's considered incomplete/incorrect. Also incomplete/incorrect task should be assigned back to the reporter.
+| PROPOSED    | The task is selected for the approval by the *manager*.
+| DEFERRED    | Manager has approved the task to be processed after the next major/minor (non-patch) version is released.
+| ACCEPTED    | Manager approved the task to be processed before the next major/minor (non-patch) version is released.
+| ESCALATED   | Critical defect which interrupts all *DEFERRED*/*ACCEPTED* tasks processing. Causes the new *patch* version release ASAP.
+| IN PROGRESS | The task is in progress currently
+| RESOLVED    | Task is done and the corresponding changes are merged into the `integration` branch.
+| CLOSED      | Task is done and the corresponding changes are merged into the `master` branch (= version release, availability for the user).
 
 **Note**:
 > The corresponding impact probability/frequency is not taken into account in the process currently. For example, all
