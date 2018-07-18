@@ -25,6 +25,8 @@ It is designed to be used for:
 
 It is easily scalable to perform millions of IOPS and emulate millions of concurrent clients.
 
+See also the **[comparison with similiar tools](doc/comparison.md)**.
+
 # Features
 
 1. [Scalability](doc/features.md#1-scalability)<br/>

@@ -1,17 +1,3 @@
-# Contents
-
-1. [Roles](#1-roles)<br/>
-2. [Priorities](#2-priorities)<br/>
-&nbsp;2.1. [Limitations](#21-limitations)<br/>
-3. [Scopes](#3-scopes)<br/>
-&nbsp;3.1. [Processing](#31-processing)<br/>
-4. [Versions](#4-versions)<br/>
-5. [Issue Reporting](#5-issue-reporting)<br/>
-&nbsp;5.1. [Defect](#51-defect)<br/>
-&nbsp;5.2. [Feature](#52-feature)<br/>
-&nbsp;&nbsp;5.2.1. [Input](#521-input)<br/>
-&nbsp;&nbsp;5.2.2. [Lifecycle](#522-lifecycle)<br/>
-
 # 1. Roles
 
 | Name | Responsibilities | Current Assignees
@@ -19,135 +5,71 @@
 | User | Report the issues in the [expected way](#5-issue-reporting) | Definitely unknown
 | Developer | <ul><li>Development</li><li>Testing</li><li>Automation</li><li>Documentation</li></ul> | <ul><li>Veronika Kochugova</li><li>Andrey Kurilov</li><ul>
 | Owner | <ul><li>[*Next* version scope](#3-scopes) definition</li><li>Roadmap definition</li><li>User interaction</li></ul> | Andrey Kurilov
-| Manager | The explicit [*next* version scope](#3-scopes) approval | ********
+| Manager | The explicit scopes approval | ********
 
-# 2. Priorities
+# 2. Versions
 
-| Priority | Name        | Description | Target Scope |
-|----------|-------------|-------------|--------------|
-| 0        | Critical    | Critical defect w/o a workaround: <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li><li>Performance degradation</li></ul> | patch
-| 1        | Major       | <ul><li>Non-critical defect</li><li>A defect w/ the workaround available for the users</li></ul> | next
-| 2        | Medium      | Accepted for the next version scope:<ul><li>New feature</li><li>Enhancement</li><li>Improvement</li></ul> | next
-| 3        | Non-release | <ul><li>Demo</li><li>Dependent software adoption</li><li>Future version scope definition</li></ul> | backlog
-| 4        | Minor       | Accepted for the future versions scope:<ul><li>New feature</li><li>Enhancement</li><li>Improvement</li></ul> | future
+## 2.1. Backward Compatibility
 
-## 2.1. Limitations
-
-The corresponding impact probability/frequency is not taken into account in the process currently. For example, all
-defects are assumed to be equally frequently occurring and affecting same users, regardless the particular scenario/use
-case. This approach is used due to the lack of the sufficient statistical information about the Mongoose usage.
-
-# 3. Scopes
-
-| Name    | Version Number | Description | Scope Priority Threshold |
-|---------|----------------|-------------|-------|
-| latest  | &lt;X&gt;.&lt;Y&gt;.&lt;Z&gt; | The latest released version | N/A
-| patch  | &lt;X&gt;.&lt;Y&gt;.&lt;Z+1&gt; | The version which is considered to be released ASAP | 0 |
-| next    | &lt;X&gt;.&lt;Y+1&gt;.0 | The next version which is considered to include the new features and fixes for the non-critical bugs | 1*, 2**
-| backlog | N/A | Backlog | 3
-| future  | &lt;X&gt;.&lt;Y+2&gt;.0<br/>or<br/>&lt;X+1&gt;.0.0 | Dump | 4
-
-(*)  Priority #1 tasks are acceptable for the *next* scope until the corresponding version release
-
-(**) Priority #2 tasks are acceptable for the *next* scope until [PM](#1-roles) approves the scope
-
-## 3.1. Processing
-
-1. **Patch**
-    1. Process the remaining tasks from the *patch* scope
-    2. Rename the current *patch* scope to *latest*
-    3. Create the new *patch* scope
-    4. Move the remaining tasks from the previous *patch* scope to the new one (**under exceptional circumstances only**)
-    5. Continue to work on the tasks from the *next* scope
-2. **Next**
-    1. Process the remaining tasks from the *next* scope
-    2. Rename the current *next* scope to *latest*
-    3. Create the new *next* scope.
-    4. Move the remaining tasks from the previous *next* scope to the new one (**under exceptional circumstances only**)
-    5. Continue to work on the non-release tasks from the *backlog* scope
-3. **Backlog**
-    1. Process the remaining tasks from the *backlog* scope
-    2. Add some tasks from the *future* scope to the new *next* scope
-    3. Add new tasks to the new *next* scope (**under exceptional circumstances only**)
-    4. Acquire the [PM](#1-roles) approval for the new *next* scope
-    5. Start the work on the tasks from the new *next* scope
-
-# 4. Versions
-
-Mongoose uses the [semantic versioning](http://semver.org/). The following interfaces are mentioned as the subject of
-the backward compatibility:
-1. API
+The following interfaces are mentioned as the subject of the backward compatibility:
+1. Input (item list files, scenario files, configuration options)
 2. Output files containing the metrics
-3. Item list files
-4. Scenario files format
-5. Configuration options
+3. API
 
-# 5. Issue Reporting
+Mongoose uses the [semantic versioning](http://semver.org/). This means that the ***X.Y.Z*** version notation is used:
 
-## 5.1. Defect
+* ***X***
+    Major version number. Points to significant design and interfaces change. The backward compatibility is not
+    guaranteed.
 
-When reporting a defect make sure the ticket contains the following info:
+* ***Y***
+    Minor version number. The *backward compatibility* is guaranteed.
 
-1. Specific conditions.
-   1. The mongoose version used.
-      Note that only the [latest](#3-scopes) version may be used for defect reporting.
-   2. The particular CLI command.
-      Leave only the essential things to reproduce: try to check if possible if the bug is reproducible w/o distributed
-      mode, different concurrency level, item data size, etc.
-   3. The scenario file used.
-      Don't clutter with large scenario files. Simplify the scenario leaving only the essential things.
-2. Expected behavior.
-   Specify the reference to the particular documentation part describing the expected behavior, if possible.
-3. Observed behavior.
-   Error message, errors.log output file, etc.
+* ***Z***
+    Patch version number. Includes only the defect fixes.
 
-## 5.2. Feature
+# 3. Tasks
 
-### 5.2.1. Input
+## 3.1. States
 
-A requester should supply the information necessary to deliver any new
-functionality.
+| State     | Description |
+|-----------|-------------|
+| OPEN      | All new tasks should have this state. The tasks are selected from the set of the *OPEN* tasks for the proposal and review process. The task is updated w/ the corresponding comment but left in the *OPEN* state if it's considered incomplete/incorrect. Also incomplete/incorrect task should be assigned back to the reporter.
+| PROPOSED  | The task is selected for the approval by the *manager*.
+| DEFERRED  | Manager has approved the task to be processed after the next major/minor (non-patch) version is released.
+| ACCEPTED  | Manager approved the task to be processed before the next major/minor (non-patch) version is released.
+| ESCALATED | Critical defect which interrupts all *DEFERRED*/*ACCEPTED* tasks processing. Causes the new *patch* version release ASAP.
+| RESOLVED  | Task is done and the corresponding changes are merged into the `integration` branch.
+| CLOSED    | Task is done and the corresponding changes are merged into the `master` branch (= version release, availability for the user).
 
-1. **Introduction***<br/>
-   Purpose. Which particular problem should be solved with Mongoose?
-   1. Links<br/>
-      The links to the related documents and literature.
-2. Requirements
-   1. **Functional***<br/>
-      The list of the *functional* requirements. The list should be numbered in order to make it easy to refer to the
-      particular requirements item.
-      1. **Mandatory Requirements***
-      2. Additional Requirements
-      3. Possible Enhancements
-   2. **Performance***
-3. Limitations<br/>
-   List of limitations.
-4. Proposal
-    1. Design<br/>
-       Describe the possible way to get the required functionality working.
-    2. Input
-       1. Configuration<br/>
-          Describe the possible new configuration options involved.
-       2. Other Input<br/>
-          Any other input required. Scenarios, external files, etc.
-    4. Output
-       1. Standard Output
-       2. Log Files
-       3. Other Output
+**Note**:
+> The corresponding impact probability/frequency is not taken into account in the process currently. For example, all
+> defects are assumed to be equally frequently occurring and affecting same users, regardless the particular
+> scenario/use case. This approach is used due to the lack of the sufficient statistical information about the Mongoose
+> usage.
 
-(*) The items mandatory to specify for a requester are highlighted with **bold** text
+## 3.2. Types
 
-### 5.2.2. Lifecycle
+| Type     | Description          | Specific Properties |
+|----------|----------------------|---------------------|
+| Defect   | <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li><li>Performance degradation</li><li>Non-critical defect</li><li>A defect w/ the workaround available for the users</li><li>etc</li></ul> | <ul><li>Affected version</li><li>Fix version</li><li>Start command/request</li><li>Scenario</li><li>Steps</li><li>Expected behaviour</li><li>Observed behaviour</li></ul>
+| Story    | High-level use cases | <ul><li>Purpose</li><li>Requirements</li><li>Limitations</li></ul>
+| Task     |                      | <ul><li>Version</li><li>Description</li>
+| Sub-task |                      | <ul><li>Version</li><li>Description<li>
 
-1. Requested
-2. Requirements Available
-2. Specification Available
-3. Estimated
-4. Approved by [PM](#1-roles) = included into the *next* version scope
-5. Under Development
-6. Tested Manually
-7. Usage Documentation Available
-8. Released
-9. Covered With Automated Tests
-10. Enhanced
+## 3.3. Specific Properties
 
+| Name                  | Applicable task type | Who is responsible to specify  | Notes
+|-----------------------|----------------------|--------------------------------|-------|
+| Affected version      | Defect               | Reporter: user/developer/owner | Only the *latest* version may be used for the defect reporting. The task should be *rejected* if the reported version is not *latest*.
+| Fix version           | Defect               | Reviewer: developer/owner      |
+| Start command/request | Defect               | Reporter: user/developer/owner | Leave only the essential things to reproduce: try to check if possible if the bug is reproducible w/o distributed mode, different concurrency level, item data size, etc.
+| Scenario              | Defect               | Reporter: user/developer/owner | Don't clutter with large scenario files. Simplify the scenario leaving only the essential things.
+| Steps                 | Defect               | Reporter: user/developer/owner |
+| Expected behaviour    | Defect               | Reporter: user/developer/owner | The reference to the particular documentation part describing the expected behavior is preferable.
+| Observed behaviour    | Defect               | Reporter: user/developer/owner | Error message, errors.log output file, etc.
+| Purpose               | Story                | Reporter: user/developer/owner | Which particular problem should be solved with Mongoose? The links to the related documents and literature are encouraged.
+| Requirements          | Story                | Reporter: user/developer/owner | Both functional and performance requirements are mandatory. Optionally the additional requirements/possible enhancements may be specified.
+| Limitations           | Story                | Reviewer: developer/owner      |
+| Version               | Task/Sub-task        | Reviewer: developer/owner      |
+| Description           | Task/Sub-task        | Reporter: user/developer/owner |
