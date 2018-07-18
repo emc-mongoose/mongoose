@@ -4,7 +4,7 @@
 |------|------------------|------------------
 | User | Report the issues | Definitely unknown
 | Developer | <ul><li>Development</li><li>Testing</li><li>Automation</li><li>Documentation</li></ul> | <ul><li>Veronika Kochugova</li><li>Andrey Kurilov</li><ul>
-| Owner | <ul><li>[*Next* version scope](#3-scopes) definition</li><li>Roadmap definition</li><li>User interaction</li></ul> | Andrey Kurilov
+| Owner | <ul><li>The next version scope definition</li><li>Roadmap definition</li><li>User interaction</li></ul> | Andrey Kurilov
 | Manager | The explicit scopes approval | ********
 
 # 2. Versions
@@ -49,13 +49,6 @@ Mongoose uses the [semantic versioning](http://semver.org/). This means that the
 > usage.
 
 ## 3.2. Types
-
-| Type     | Description          | Specific Properties |
-|----------|----------------------|---------------------|
-| Defect   | <ul><li>Crash</li><li>Hang</li><li>Not functioning</li><li>Functioning incorrectly</li><li>Performance degradation</li><li>Non-critical defect</li><li>A defect w/ the workaround available for the users</li><li>etc</li></ul> | <ul><li>Affected version</li><li>Fix version</li><li>Start command/request</li><li>Scenario</li><li>Steps</li><li>Expected behaviour</li><li>Observed behaviour</li></ul>
-| Story    | High-level use cases | <ul><li>Purpose</li><li>Requirements</li><li>Limitations</li></ul>
-| Task     |                      | <ul><li>Version</li><li>Description</li>
-| Sub-task |                      | <ul><li>Version</li><li>Description<li>
 
 ### 3.2.1. Defects
 
