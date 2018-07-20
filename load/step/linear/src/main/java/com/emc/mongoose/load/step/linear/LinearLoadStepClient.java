@@ -1,7 +1,7 @@
 package com.emc.mongoose.load.step.linear;
 
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.load.step.client.LoadStepClient;
 import com.emc.mongoose.load.step.client.LoadStepClientBase;
 import com.emc.mongoose.logging.LogUtil;
@@ -37,7 +37,7 @@ extends LoadStepClientBase {
 
 		final Config loadConfig = config.configVal("load");
 		final Config stepConfig = loadConfig.configVal("step");
-		final IoType ioType = IoType.valueOf(loadConfig.stringVal("type").toUpperCase());
+		final OpType opType = OpType.valueOf(loadConfig.stringVal("type").toUpperCase());
 		final int concurrency = stepConfig.intVal("limit-concurrency");
 		final Config outputConfig = config.configVal("output");
 		final Config metricsConfig = outputConfig.configVal("metrics");
@@ -51,7 +51,7 @@ extends LoadStepClientBase {
 		final int originIndex = 0;
 		final boolean colorFlag = outputConfig.boolVal("color");
 
-		initMetrics(originIndex, ioType, concurrency, metricsConfig, itemDataSize, colorFlag);
+		initMetrics(originIndex, opType, concurrency, metricsConfig, itemDataSize, colorFlag);
 	}
 
 	@Override

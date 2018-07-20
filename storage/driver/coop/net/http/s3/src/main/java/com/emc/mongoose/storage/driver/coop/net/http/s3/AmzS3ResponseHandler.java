@@ -1,9 +1,9 @@
 package com.emc.mongoose.storage.driver.coop.net.http.s3;
 
 import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.io.task.IoTask;
-import com.emc.mongoose.item.io.task.composite.data.CompositeDataIoTask;
-import com.emc.mongoose.item.io.task.partial.data.PartialDataIoTask;
+import com.emc.mongoose.item.op.Operation;
+import com.emc.mongoose.item.op.composite.data.CompositeDataOperation;
+import com.emc.mongoose.item.op.partial.data.PartialDataOperation;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
@@ -27,7 +27,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  Created by andrey on 25.11.16.
  */
-public final class AmzS3ResponseHandler<I extends Item, O extends IoTask<I>>
+public final class AmzS3ResponseHandler<I extends Item, O extends Operation<I>>
 extends HttpResponseHandlerBase<I, O> {
 
 	private static final AttributeKey<ByteBuf> CONTENT_ATTR_KEY = AttributeKey.newInstance(
@@ -44,23 +44,23 @@ extends HttpResponseHandlerBase<I, O> {
 	}
 
 	@Override
-	protected final void handleResponseHeaders(final O ioTask, final HttpHeaders respHeaders) {
-		if(ioTask instanceof PartialDataIoTask) {
-			final PartialDataIoTask subTask = (PartialDataIoTask) ioTask;
+	protected final void handleResponseHeaders(final O op, final HttpHeaders respHeaders) {
+		if(op instanceof PartialDataOperation) {
+			final PartialDataOperation subTask = (PartialDataOperation) op;
 			final String eTag = respHeaders.get(HttpHeaderNames.ETAG);
-			final CompositeDataIoTask mpuTask = subTask.parent();
+			final CompositeDataOperation mpuTask = subTask.parent();
 			mpuTask.put(Integer.toString(subTask.partNumber() + 1), eTag);
 		}
 	}
 
 	@Override
 	protected final void handleResponseContentChunk(
-		final Channel channel, final O ioTask, final ByteBuf contentChunk
+		final Channel channel, final O op, final ByteBuf contentChunk
 	) throws IOException {
-		if(ioTask instanceof CompositeDataIoTask) {
+		if(op instanceof CompositeDataOperation) {
 			handleInitMultipartUploadResponseContentChunk(channel, contentChunk);
 		} else {
-			super.handleResponseContentChunk(channel, ioTask, contentChunk);
+			super.handleResponseContentChunk(channel, op, contentChunk);
 		}
 	}
 
@@ -82,13 +82,13 @@ extends HttpResponseHandlerBase<I, O> {
 	}
 
 	@Override
-	protected final void handleResponseContentFinish(final Channel channel, final O ioTask) {
+	protected final void handleResponseContentFinish(final Channel channel, final O op) {
 		final Attribute<ByteBuf> contentAttr = channel.attr(CONTENT_ATTR_KEY);
 		final ByteBuf content = contentAttr.get();
 		if(content != null && content.readableBytes() > 0) {
-			if(ioTask instanceof CompositeDataIoTask) {
-				final CompositeDataIoTask mpuIoTask = (CompositeDataIoTask) ioTask;
-				if(!mpuIoTask.allSubTasksDone()) {
+			if(op instanceof CompositeDataOperation) {
+				final CompositeDataOperation mpuOp = (CompositeDataOperation) op;
+				if(!mpuOp.allSubOperationsDone()) {
 					// this is an MPU init response
 					final String contentStr = content.toString(UTF_8);
 					final Matcher m = PATTERN_UPLOAD_ID.matcher(contentStr);
@@ -103,6 +103,6 @@ extends HttpResponseHandlerBase<I, O> {
 			}
 			content.clear();
 		}
-		super.handleResponseContentFinish(channel, ioTask);
+		super.handleResponseContentFinish(channel, op);
 	}
 }

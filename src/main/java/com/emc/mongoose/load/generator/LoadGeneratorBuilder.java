@@ -1,7 +1,7 @@
 package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.exception.OmgShootMyFootException;
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
 import com.emc.mongoose.item.ItemType;
@@ -17,9 +17,7 @@ import java.io.IOException;
 /**
  Created by andrey on 12.11.16.
  */
-public interface LoadGeneratorBuilder<
-	I extends Item, O extends IoTask<I>, T extends LoadGenerator<I, O>
-> {
+public interface LoadGeneratorBuilder<I extends Item, O extends Operation<I>, T extends LoadGenerator<I, O>> {
 
 	LoadGeneratorBuilder<I, O, T> itemConfig(final Config itemConfig);
 

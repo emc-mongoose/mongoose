@@ -4,8 +4,8 @@ import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.concurrent.DaemonBase;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.exception.OmgShootMyFootException;
-import com.emc.mongoose.item.io.task.IoTask;
-import com.emc.mongoose.item.io.task.data.DataIoTask;
+import com.emc.mongoose.item.op.Operation;
+import com.emc.mongoose.item.op.data.DataOperation;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.storage.Credential;
 import com.github.akurilov.commons.concurrent.ThreadUtil;
@@ -29,14 +29,14 @@ import static com.emc.mongoose.Constants.KEY_STEP_ID;
 /**
  Created by kurila on 11.07.16.
  */
-public abstract class StorageDriverBase<I extends Item, O extends IoTask<I>>
+public abstract class StorageDriverBase<I extends Item, O extends Operation<I>>
 extends DaemonBase
 implements StorageDriver<I,O> {
 
 	private final DataInput itemDataInput;
 	protected final String stepId;
-	private final BlockingQueue<O> ioResultsQueue;
-	protected final int concurrencyLevel;
+	private final BlockingQueue<O> opResultsQueue;
+	protected final int concurrencyLimit;
 	protected final int ioWorkerCount;
 	protected final Credential credential;
 	protected final boolean verifyFlag;
@@ -52,15 +52,14 @@ implements StorageDriver<I,O> {
 	protected Function<Credential, String> requestAuthTokenFunc = this::requestNewAuthToken;
 
 	protected StorageDriverBase(
-		final String stepId, final DataInput itemDataInput, final Config loadConfig, final Config storageConfig,
-		final boolean verifyFlag
+		final String stepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
 
 		this.itemDataInput = itemDataInput;
 		final Config driverConfig = storageConfig.configVal("driver");
 		final Config queueConfig = driverConfig.configVal("queue");
 		final int outputQueueCapacity = queueConfig.intVal("output");
-		this.ioResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
+		this.opResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
 		this.stepId = stepId;
 		final Config authConfig = storageConfig.configVal("auth");
 		this.credential = Credential.getInstance(
@@ -74,26 +73,26 @@ implements StorageDriver<I,O> {
 				this.authTokens.put(credential, authToken);
 			}
 		}
-		this.concurrencyLevel = loadConfig.intVal("step-limit-concurrency");
+		this.concurrencyLimit = storageConfig.intVal("limit-concurrency");
 		this.verifyFlag = verifyFlag;
 
 		final int confWorkerCount = driverConfig.intVal("threads");
 		if(confWorkerCount > 0) {
 			ioWorkerCount = confWorkerCount;
-		} else if(concurrencyLevel > 0) {
-			ioWorkerCount = Math.min(concurrencyLevel, ThreadUtil.getHardwareThreadCount());
+		} else if(concurrencyLimit > 0) {
+			ioWorkerCount = Math.min(concurrencyLimit, ThreadUtil.getHardwareThreadCount());
 		} else {
 			ioWorkerCount = ThreadUtil.getHardwareThreadCount();
 		}
 	}
 
-	protected void prepareIoTask(final O ioTask) {
-		ioTask.reset();
-		if(ioTask instanceof DataIoTask) {
-			((DataIoTask) ioTask).item().dataInput(itemDataInput);
+	protected void prepareOperation(final O op) {
+		op.reset();
+		if(op instanceof DataOperation) {
+			((DataOperation) op).item().dataInput(itemDataInput);
 		}
-		final String dstPath = ioTask.dstPath();
-		final Credential credential = ioTask.credential();
+		final String dstPath = op.dstPath();
+		final Credential credential = op.credential();
 		if(credential != null) {
 			pathToCredMap.putIfAbsent(dstPath == null ? "" : dstPath, credential);
 			if(requestAuthTokenFunc != null) {
@@ -105,53 +104,51 @@ implements StorageDriver<I,O> {
 			if(dstPath != null && !dstPath.isEmpty()) {
 				if(null == pathMap.computeIfAbsent(dstPath, requestNewPathFunc)) {
 					Loggers.ERR.debug(
-						"Failed to compute the destination path for the I/O task {}", ioTask
+						"Failed to compute the destination path for the operation: {}", op
 					);
-					ioTask.status(IoTask.Status.FAIL_UNKNOWN);
+					op.status(Operation.Status.FAIL_UNKNOWN);
 				}
 			}
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	protected void ioTaskCompleted(final O ioTask) {
+	protected void opCompleted(final O op) {
 		if(Loggers.MSG.isTraceEnabled()) {
-			Loggers.MSG.trace("{}: I/O task completed", ioTask);
+			Loggers.MSG.trace("{}: Load operation completed", op);
 		}
-		final O ioTaskResult = ioTask.result();
-		if(!ioResultsQueue.offer(ioTaskResult)) {
-			Loggers.ERR.warn(
-				"{}: I/O task results queue overflow, dropping the result", toString()
-			);
+		final O opResult = op.result();
+		if(!opResultsQueue.offer(opResult)) {
+			Loggers.ERR.warn("{}: Load operations results queue overflow, dropping the result", toString());
 		}
 	}
 
 	@Override
-	public final int getConcurrencyLevel() {
-		return concurrencyLevel;
+	public final int concurrencyLimit() {
+		return concurrencyLimit;
 	}
 
 	@Override
 	public final O get() {
-		return ioResultsQueue.poll();
+		return opResultsQueue.poll();
 	}
 
 	@Override
 	public final List<O> getAll() {
-		final int n = ioResultsQueue.size();
+		final int n = opResultsQueue.size();
 		if(n == 0) {
 			return Collections.emptyList();
 		}
-		final List<O> ioTaskResults = new ArrayList<>(n);
-		ioResultsQueue.drainTo(ioTaskResults, n);
-		return ioTaskResults;
+		final List<O> opResults = new ArrayList<>(n);
+		opResultsQueue.drainTo(opResults, n);
+		return opResults;
 	}
 
 	@Override
 	public final long skip(final long count) {
 		int n = (int) Math.min(count, Integer.MAX_VALUE);
 		final List<O> tmpBuff = new ArrayList<>(n);
-		n = ioResultsQueue.drainTo(tmpBuff, n);
+		n = opResultsQueue.drainTo(tmpBuff, n);
 		tmpBuff.clear();
 		return n;
 	}
@@ -170,14 +167,13 @@ implements StorageDriver<I,O> {
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			itemDataInput.close();
-			final int ioResultsQueueSize = ioResultsQueue.size();
-			if(ioResultsQueueSize > 0) {
+			final int opResultsQueueSize = opResultsQueue.size();
+			if(opResultsQueueSize > 0) {
 				Loggers.ERR.warn(
-					"{}: I/O results queue contains {} unhandled elements", toString(),
-					ioResultsQueueSize
+					"{}: Load operations results queue contains {} unhandled elements", toString(), opResultsQueueSize
 				);
 			}
-			ioResultsQueue.clear();
+			opResultsQueue.clear();
 			authTokens.clear();
 			pathToCredMap.clear();
 			pathMap.clear();
@@ -187,6 +183,6 @@ implements StorageDriver<I,O> {
 
 	@Override
 	public String toString() {
-		return "storage/driver/" + concurrencyLevel + "/%s/" + hashCode();
+		return "storage/driver/" + concurrencyLimit + "/%s/" + hashCode();
 	}
 }

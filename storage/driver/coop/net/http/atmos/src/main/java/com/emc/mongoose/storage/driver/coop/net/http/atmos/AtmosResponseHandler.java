@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.net.http.atmos;
 
 import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.driver.coop.net.http.HttpResponseHandlerBase;
 import com.emc.mongoose.storage.driver.coop.net.http.HttpStorageDriverBase;
@@ -15,7 +15,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 /**
  Created by kurila on 11.11.16.
  */
-public final class AtmosResponseHandler<I extends Item, O extends IoTask<I>>
+public final class AtmosResponseHandler<I extends Item, O extends Operation<I>>
 extends HttpResponseHandlerBase<I, O> {
 	
 	private final boolean fsAccess;
@@ -29,21 +29,21 @@ extends HttpResponseHandlerBase<I, O> {
 	}
 	
 	@Override
-	protected final void handleResponseHeaders(final O ioTask, final HttpHeaders respHeaders) {
+	protected final void handleResponseHeaders(final O op, final HttpHeaders respHeaders) {
 		if(!fsAccess) {
 			final String location = respHeaders.get(HttpHeaderNames.LOCATION);
 			if(location != null && !location.isEmpty()) {
 				if(location.startsWith(NS_URI_BASE)) {
-					ioTask.item().setName(location.substring(NS_URI_BASE.length()));
+					op.item().setName(location.substring(NS_URI_BASE.length()));
 				} else if(location.startsWith(OBJ_URI_BASE)) {
-					ioTask.item().setName(location.substring(OBJ_URI_BASE.length()));
+					op.item().setName(location.substring(OBJ_URI_BASE.length()));
 				} else {
-					ioTask.item().setName(location);
+					op.item().setName(location);
 					Loggers.ERR.warn("Unexpected location value: \"{}\"", location);
 				}
-				// set the paths to null to avoid the path calculation in the ioTaskCompleted call
-				ioTask.srcPath(null);
-				ioTask.dstPath(null);
+				// set the paths to null to avoid the path calculation in the opCompleted call
+				op.srcPath(null);
+				op.dstPath(null);
 			}
 		}
 	}

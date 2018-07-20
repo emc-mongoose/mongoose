@@ -1,7 +1,7 @@
 package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
@@ -186,7 +186,7 @@ public final class CircularAppendTest {
                 outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
             }
             testMetricsLogRecords(
-                    metricsLogRecords, IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+                    metricsLogRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
                     (long) (1.1 * EXPECTED_APPEND_COUNT * EXPECTED_COUNT), 0, outputMetricsAveragePeriod
             );
         } catch (final FileNotFoundException ignored) {
@@ -199,7 +199,7 @@ public final class CircularAppendTest {
                 totalMetrcisLogRecords.size()
         );
         testTotalMetricsLogRecord(
-                totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(),
+                totalMetrcisLogRecords.get(0), OpType.UPDATE, concurrency.getValue(),
                 runMode.getNodeCount(), itemSize.getValue(), 0, 0
         );
 
@@ -212,13 +212,13 @@ public final class CircularAppendTest {
             outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
         }
         testSingleMetricsStdout(
-                stdOutContent.replaceAll("[\r\n]+", " "), IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+                stdOutContent.replaceAll("[\r\n]+", " "), OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
                 itemSize.getValue(), outputMetricsAveragePeriod
         );
 
         final LongAdder ioTraceRecCount = new LongAdder();
         final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
-            testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(), itemSize.getValue());
+            testIoTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), itemSize.getValue());
             ioTraceRecCount.increment();
         };
         testContainerIoTraceLogRecords(stepId, ioTraceReqTestFunc);

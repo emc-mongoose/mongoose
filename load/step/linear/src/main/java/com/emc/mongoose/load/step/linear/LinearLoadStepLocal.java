@@ -3,10 +3,10 @@ package com.emc.mongoose.load.step.linear;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.data.DataInput;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
-import com.emc.mongoose.item.ItemInfoFileOutput;
+import com.emc.mongoose.item.io.ItemInfoFileOutput;
 import com.emc.mongoose.item.ItemType;
 import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.load.generator.LoadGenerator;
@@ -32,7 +32,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 
 public class LinearLoadStepLocal
@@ -57,7 +56,7 @@ extends LoadStepLocalBase {
 
 		final Config loadConfig = config.configVal("load");
 		final Config stepConfig = loadConfig.configVal("step");
-		final IoType ioType = IoType.valueOf(loadConfig.stringVal("type").toUpperCase());
+		final OpType opType = OpType.valueOf(loadConfig.stringVal("type").toUpperCase());
 		final int concurrency = stepConfig.intVal("limit-concurrency");
 		final Config outputConfig = config.configVal("output");
 		final Config metricsConfig = outputConfig.configVal("metrics");
@@ -70,7 +69,7 @@ extends LoadStepLocalBase {
 		}
 		final int originIndex = 0;
 		final boolean outputColorFlag = outputConfig.boolVal("color");
-		initMetrics(originIndex, ioType, concurrency, metricsConfig, itemDataSize, outputColorFlag);
+		initMetrics(originIndex, opType, concurrency, metricsConfig, itemDataSize, outputColorFlag);
 
 		final Config itemConfig = config.configVal("item");
 		final Config storageConfig = config.configVal("storage");
@@ -96,17 +95,19 @@ extends LoadStepLocalBase {
 				dataLayerConfig.intVal("cache")
 			);
 
+			final int batchSize = loadConfig.intVal("batch-size");
+
 			try {
 
 				final StorageDriver driver = StorageDriver.instance(
-					extensions, loadConfig, storageConfig, dataInput, dataConfig.boolVal("verify"), testStepId
+					extensions, storageConfig, dataInput, dataConfig.boolVal("verify"), batchSize, testStepId
 				);
 
 				final ItemType itemType = ItemType.valueOf(
 					itemConfig.stringVal("type").toUpperCase()
 				);
 				final ItemFactory<Item> itemFactory = ItemType.getItemFactory(itemType);
-				final double rateLimit = stepConfig.doubleVal("limit-rate");
+				final double rateLimit = loadConfig.doubleVal("generator-limit-rate");
 
 				try {
 					final LoadGeneratorBuilder generatorBuilder = new LoadGeneratorBuilderImpl<>()
@@ -125,8 +126,7 @@ extends LoadStepLocalBase {
 
 					final LoadStepContext stepCtx = new LoadStepContextImpl<>(
 						testStepId, generator, driver, metricsContexts.get(0), limitConfig,
-						outputConfig.boolVal("metrics-trace-persist"),
-						loadConfig.intVal("batch-size"),
+						outputConfig.boolVal("metrics-trace-persist"), batchSize,
 						loadConfig.intVal("generator-recycle-limit")
 					);
 					stepContexts.add(stepCtx);
@@ -139,7 +139,7 @@ extends LoadStepLocalBase {
 						}
 						try {
 							final Output<? extends Item> itemOutput = new ItemInfoFileOutput<>(itemOutputPath);
-							stepCtx.ioResultsOutput(itemOutput);
+							stepCtx.operationsResultsOutput(itemOutput);
 						} catch(final IOException e) {
 							LogUtil.exception(
 								Level.ERROR, e,

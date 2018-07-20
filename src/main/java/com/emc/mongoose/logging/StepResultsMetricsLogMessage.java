@@ -3,7 +3,7 @@ package com.emc.mongoose.logging;
 import com.emc.mongoose.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsSnapshot;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import static com.emc.mongoose.Constants.K;
 import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.Constants.MIB;
@@ -33,10 +33,10 @@ extends LogMessageBase {
 		final MetricsSnapshot snapshot = metricsCtx.lastSnapshot();
 		final long succCount = snapshot.succCount();
 		final long failCount = snapshot.failCount();
-		final IoType ioType = metricsCtx.ioType();
+		final OpType opType = metricsCtx.ioType();
 		final boolean stdOutColorFlag = metricsCtx.stdOutColorEnabled();
 		String ioTypeColorCode = WHITE;
-		switch(ioType) {
+		switch(opType) {
 			case NOOP:
 				ioTypeColorCode = LogUtil.NOOP_COLOR;
 				break;

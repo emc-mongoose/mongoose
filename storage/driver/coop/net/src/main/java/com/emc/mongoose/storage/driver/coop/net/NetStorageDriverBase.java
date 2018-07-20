@@ -20,15 +20,15 @@ import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.concurrent.ThreadDump;
 import com.emc.mongoose.data.DataInput;
-import com.emc.mongoose.item.io.task.composite.data.CompositeDataIoTask;
-import com.emc.mongoose.item.io.task.data.DataIoTask;
+import com.emc.mongoose.item.op.composite.data.CompositeDataOperation;
+import com.emc.mongoose.item.op.data.DataOperation;
 import com.emc.mongoose.item.DataItem;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.Item;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static com.emc.mongoose.item.io.task.IoTask.Status.SUCC;
+import static com.emc.mongoose.item.op.Operation.Status.SUCC;
 import static com.emc.mongoose.item.DataItem.rangeCount;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -47,6 +47,7 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 
 import org.apache.logging.log4j.CloseableThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
@@ -66,7 +67,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 30.09.16.
  */
-public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
+public abstract class NetStorageDriverBase<I extends Item, O extends Operation<I>>
 extends CoopStorageDriverBase<I, O>
 implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
@@ -87,16 +88,16 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	@SuppressWarnings("unchecked")
 	protected NetStorageDriverBase(
-		final String jobName, final DataInput itemDataInput, final Config loadConfig,
-		final Config storageConfig, final boolean verifyFlag
+		final String stepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag,
+		final int batchSize
 	) throws OmgShootMyFootException, InterruptedException {
 
-		super(jobName, itemDataInput, loadConfig, storageConfig, verifyFlag);
+		super(stepId, itemDataInput, storageConfig, verifyFlag, batchSize);
 
 		final Config netConfig = storageConfig.configVal("net");
 		sslFlag = netConfig.boolVal("ssl");
 		if(sslFlag) {
-			Loggers.MSG.info("{}: SSL/TLS is enabled", jobName);
+			Loggers.MSG.info("{}: SSL/TLS is enabled", stepId);
 		}
 		final int sto = netConfig.intVal("timeoutMilliSec");
 		if(sto > 0) {
@@ -200,8 +201,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.SO_REUSEADDR, netConfig.boolVal("reuseAddr"));
 		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.boolVal("tcpNoDelay"));
 		try(
-			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
-				.put(KEY_STEP_ID, stepId)
+			final Instance logCtx = CloseableThreadContext
+				.put(KEY_STEP_ID, this.stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			connPool = createConnectionPool();
@@ -216,10 +217,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	}
 	
 	@Override
-	public final void adjustIoBuffers(final long avgTransferSize, final IoType ioType) {
+	public final void adjustIoBuffers(final long avgTransferSize, final OpType opType) {
 		final int size;
 		try(
-			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+			final Instance logCtx = CloseableThreadContext
 				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
@@ -230,13 +231,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			} else {
 				size = (int) avgTransferSize;
 			}
-			if(IoType.CREATE.equals(ioType)) {
+			if(OpType.CREATE.equals(opType)) {
 				Loggers.MSG.info(
 					"Adjust output buffer size: {}", SizeInBytes.formatFixedSize(size)
 				);
 				bootstrap.option(ChannelOption.SO_RCVBUF, BUFF_SIZE_MIN);
 				bootstrap.option(ChannelOption.SO_SNDBUF, size);
-			} else if(IoType.READ.equals(ioType)) {
+			} else if(OpType.READ.equals(opType)) {
 				Loggers.MSG.info("Adjust input buffer size: {}", SizeInBytes.formatFixedSize(size));
 				bootstrap.option(ChannelOption.SO_RCVBUF, size);
 				bootstrap.option(ChannelOption.SO_SNDBUF, BUFF_SIZE_MIN);
@@ -268,7 +269,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					protected final void initChannel(final SocketChannel channel)
 					throws Exception {
 						try(
-							final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+							final Instance logCtx = CloseableThreadContext
 								.put(KEY_STEP_ID, stepId)
 								.put(KEY_CLASS_NAME, CLS_NAME)
 						) {
@@ -289,9 +290,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected void doStart()
 	throws IllegalStateException {
 		super.doStart();
-		if(concurrencyLevel > 0) {
+		if(concurrencyLimit > 0) {
 			try {
-				connPool.preCreateConnections(concurrencyLevel);
+				connPool.preCreateConnections(concurrencyLimit);
 			} catch(final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to pre-create the connections");
 			}
@@ -299,7 +300,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	}
 	
 	@Override
-	protected boolean submit(final O ioTask)
+	protected boolean submit(final O op)
 	throws IllegalStateException {
 
 		ThreadContext.put(KEY_STEP_ID, stepId);
@@ -309,15 +310,15 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			throw new IllegalStateException();
 		}
 		try {
-			if(IoType.NOOP.equals(ioTask.ioType())) {
+			if(OpType.NOOP.equals(op.type())) {
 				if(concurrencyThrottle.tryAcquire()) {
-					ioTask.startRequest();
-					sendRequest(null, null, ioTask);
-					ioTask.finishRequest();
+					op.startRequest();
+					sendRequest(null, null, op);
+					op.finishRequest();
 					concurrencyThrottle.release();
-					ioTask.status(SUCC);
-					ioTask.startResponse();
-					complete(null, ioTask);
+					op.status(SUCC);
+					op.startResponse();
+					complete(null, op);
 				} else {
 					return false;
 				}
@@ -326,45 +327,45 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				if(conn == null) {
 					return false;
 				}
-				conn.attr(ATTR_KEY_IOTASK).set(ioTask);
-				ioTask.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
-				ioTask.startRequest();
+				conn.attr(ATTR_KEY_OPERATION).set(op);
+				op.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
+				op.startRequest();
 				sendRequest(
-					conn, conn.newPromise().addListener(new RequestSentCallback(ioTask)), ioTask
+					conn, conn.newPromise().addListener(new RequestSentCallback(op)), op
 				);
 			}
 		} catch(final IllegalStateException e) {
-			LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
+			LogUtil.exception(Level.WARN, e, "Submit the load operation in the invalid state");
 		} catch(final ConnectException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
-			ioTask.status(IoTask.Status.FAIL_IO);
-			complete(null, ioTask);
+			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the load operation");
+			op.status(Operation.Status.FAIL_IO);
+			complete(null, op);
 		}
 		return true;
 
 	}
 	
 	@Override @SuppressWarnings("unchecked")
-	protected int submit(final List<O> ioTasks, final int from, final int to)
+	protected int submit(final List<O> ops, final int from, final int to)
 	throws IllegalStateException {
 
 		ThreadContext.put(KEY_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
 		Channel conn;
-		O nextIoTask;
+		O nextOp;
 		try {
 			for(int i = from; i < to && isStarted(); i ++) {
-				nextIoTask = ioTasks.get(i);
-				if(IoType.NOOP.equals(nextIoTask.ioType())) {
+				nextOp = ops.get(i);
+				if(OpType.NOOP.equals(nextOp.type())) {
 					if(concurrencyThrottle.tryAcquire()) {
-						nextIoTask.startRequest();
-						sendRequest(null, null, nextIoTask);
-						nextIoTask.finishRequest();
+						nextOp.startRequest();
+						sendRequest(null, null, nextOp);
+						nextOp.finishRequest();
 						concurrencyThrottle.release();
-						nextIoTask.status(SUCC);
-						nextIoTask.startResponse();
-						complete(null, nextIoTask);
+						nextOp.status(SUCC);
+						nextOp.startResponse();
+						complete(null, nextOp);
 					} else {
 						return i - from;
 					}
@@ -373,61 +374,56 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					if(conn == null) {
 						return i - from;
 					}
-					conn.attr(ATTR_KEY_IOTASK).set(nextIoTask);
-					nextIoTask.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
-					nextIoTask.startRequest();
-					sendRequest(
-						conn, conn.newPromise().addListener(new RequestSentCallback(nextIoTask)),
-						nextIoTask
-					);
+					conn.attr(ATTR_KEY_OPERATION).set(nextOp);
+					nextOp.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
+					nextOp.startRequest();
+					sendRequest(conn, conn.newPromise().addListener(new RequestSentCallback(nextOp)), nextOp);
 				}
 			}
 		} catch(final IllegalStateException e) {
-			LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
+			LogUtil.exception(Level.WARN, e, "Submit the load operation in the invalid state");
 		} catch(final RejectedExecutionException e) {
 			if(!isStopped()) {
-				LogUtil.exception(Level.WARN, e, "Failed to submit the I/O task");
+				LogUtil.exception(Level.WARN, e, "Failed to submit the load operation");
 			}
 		} catch(final ConnectException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
+			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the load operation");
 			for(int i = from; i < to; i ++) {
-				nextIoTask = ioTasks.get(i);
-				nextIoTask.status(IoTask.Status.FAIL_IO);
-				complete(null, nextIoTask);
+				nextOp = ops.get(i);
+				nextOp.status(Operation.Status.FAIL_IO);
+				complete(null, nextOp);
 			}
 		}
 		return to - from;
 	}
 	
 	@Override
-	protected final int submit(final List<O> ioTasks)
+	protected final int submit(final List<O> ops)
 	throws IllegalStateException {
-		return submit(ioTasks, 0, ioTasks.size());
+		return submit(ops, 0, ops.size());
 	}
 	
 	/**
 	 Note that the particular implementation should also invoke
-	 the {@link #sendRequestData(Channel, IoTask)} method to send the actual payload (if any).
+	 the {@link #sendRequestData(Channel, Operation)} method to send the actual payload (if any).
 	 @param channel the channel to send request to
 	 @param channelPromise the promise which will be invoked when the request is sent completely
-	 @param ioTask the I/O task describing the item and the operation to perform
+	 @param op the load operation describing the item and the operation type to perform
 	 */
-	protected abstract void sendRequest(
-		final Channel channel, final ChannelPromise channelPromise, final O ioTask
-	);
+	protected abstract void sendRequest(final Channel channel, final ChannelPromise channelPromise, final O op);
 	
-	protected final void sendRequestData(final Channel channel, final O ioTask)
+	protected final void sendRequestData(final Channel channel, final O op)
 	throws IOException {
 		
-		final IoType ioType = ioTask.ioType();
+		final OpType opType = op.type();
 		
-		if(IoType.CREATE.equals(ioType)) {
-			final I item = ioTask.item();
+		if(OpType.CREATE.equals(opType)) {
+			final I item = op.item();
 			if(item instanceof DataItem) {
-				final DataIoTask dataIoTask = (DataIoTask) ioTask;
-				if(!(dataIoTask instanceof CompositeDataIoTask)) {
+				final DataOperation dataOp = (DataOperation) op;
+				if(!(dataOp instanceof CompositeDataOperation)) {
 					final DataItem dataItem = (DataItem) item;
-					final String srcPath = dataIoTask.srcPath();
+					final String srcPath = dataOp.srcPath();
 					if(0 < dataItem.size() && (null == srcPath || srcPath.isEmpty())) {
 						if(sslFlag) {
 							channel.write(new SeekableByteChannelChunkedNioStream(dataItem));
@@ -435,28 +431,28 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 							channel.write(new DataItemFileRegion(dataItem));
 						}
 					}
-					dataIoTask.countBytesDone(dataItem.size());
+					dataOp.countBytesDone(dataItem.size());
 				}
 			}
-		} else if(IoType.UPDATE.equals(ioType)) {
-			final I item = ioTask.item();
+		} else if(OpType.UPDATE.equals(opType)) {
+			final I item = op.item();
 			if(item instanceof DataItem) {
 				
 				final DataItem dataItem = (DataItem) item;
-				final DataIoTask dataIoTask = (DataIoTask) ioTask;
+				final DataOperation dataOp = (DataOperation) op;
 				
-				final List<Range> fixedRanges = dataIoTask.fixedRanges();
+				final List<Range> fixedRanges = dataOp.fixedRanges();
 				if(fixedRanges == null || fixedRanges.isEmpty()) {
 					// random ranges update case
-					final BitSet updRangesMaskPair[] = dataIoTask.markedRangesMaskPair();
+					final BitSet updRangesMaskPair[] = dataOp.markedRangesMaskPair();
 					final int rangeCount = rangeCount(dataItem.size());
 					DataItem updatedRange;
 					if(sslFlag) {
 						// current layer updates first
 						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[0].get(i)) {
-								dataIoTask.currRangeIdx(i);
-								updatedRange = dataIoTask.currRangeUpdate();
+								dataOp.currRangeIdx(i);
+								updatedRange = dataOp.currRangeUpdate();
 								channel.write(
 									new SeekableByteChannelChunkedNioStream(updatedRange)
 								);
@@ -465,8 +461,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						// then next layer updates if any
 						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[1].get(i)) {
-								dataIoTask.currRangeIdx(i);
-								updatedRange = dataIoTask.currRangeUpdate();
+								dataOp.currRangeIdx(i);
+								updatedRange = dataOp.currRangeUpdate();
 								channel.write(
 									new SeekableByteChannelChunkedNioStream(updatedRange)
 								);
@@ -476,21 +472,21 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						// current layer updates first
 						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[0].get(i)) {
-								dataIoTask.currRangeIdx(i);
-								updatedRange = dataIoTask.currRangeUpdate();
+								dataOp.currRangeIdx(i);
+								updatedRange = dataOp.currRangeUpdate();
 								channel.write(new DataItemFileRegion(updatedRange));
 							}
 						}
 						// then next layer updates if any
 						for(int i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[1].get(i)) {
-								dataIoTask.currRangeIdx(i);
-								updatedRange = dataIoTask.currRangeUpdate();
+								dataOp.currRangeIdx(i);
+								updatedRange = dataOp.currRangeUpdate();
 								channel.write(new DataItemFileRegion(updatedRange));
 							}
 						}
 					}
-					dataItem.commitUpdatedRanges(dataIoTask.markedRangesMaskPair());
+					dataItem.commitUpdatedRanges(dataOp.markedRangesMaskPair());
 				} else { // fixed byte ranges case
 					final long baseItemSize = dataItem.size();
 					long beg;
@@ -515,7 +511,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 								beg = baseItemSize;
 								// note down the new size
 								dataItem.size(
-									dataItem.size() + dataIoTask.markedRangesSize()
+									dataItem.size() + dataOp.markedRangesSize()
 								);
 							}
 							channel.write(
@@ -543,33 +539,33 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 								beg = baseItemSize;
 								// note down the new size
 								dataItem.size(
-									dataItem.size() + dataIoTask.markedRangesSize()
+									dataItem.size() + dataOp.markedRangesSize()
 								);
 							}
 							channel.write(new DataItemFileRegion(dataItem.slice(beg, size)));
 						}
 					}
 				}
-				dataIoTask.countBytesDone(dataIoTask.markedRangesSize());
+				dataOp.countBytesDone(dataOp.markedRangesSize());
 			}
 		}
 	}
 
 	@Override
-	public void complete(final Channel channel, final O ioTask) {
+	public void complete(final Channel channel, final O op) {
 
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 		ThreadContext.put(KEY_STEP_ID, stepId);
 
 		try {
-			ioTask.finishResponse();
+			op.finishResponse();
 		} catch(final IllegalStateException e) {
-			LogUtil.exception(Level.DEBUG, e, "{}: invalid I/O task state", ioTask.toString());
+			LogUtil.exception(Level.DEBUG, e, "{}: invalid load operation state", op.toString());
 		}
 		if(channel != null) {
 			connPool.release(channel);
 		}
-		ioTaskCompleted(ioTask);
+		opCompleted(op);
 	}
 
 	@Override
@@ -586,16 +582,13 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	public final void channelCreated(final Channel channel)
 	throws Exception {
 		try(
-			final CloseableThreadContext.Instance ctx = CloseableThreadContext
-				.put(KEY_STEP_ID, stepId)
+			final Instance ctx = CloseableThreadContext.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			final ChannelPipeline pipeline = channel.pipeline();
 			appendHandlers(pipeline);
 			if(Loggers.MSG.isTraceEnabled()) {
-				Loggers.MSG.trace(
-					"{}: new channel pipeline configured: {}", stepId, pipeline.toString()
-				);
+				Loggers.MSG.trace("{}: new channel pipeline configured: {}", stepId, pipeline.toString());
 			}
 		}
 	}
@@ -638,7 +631,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected final void doStop()
 	throws IllegalStateException {
 		try(
-			final CloseableThreadContext.Instance ctx = CloseableThreadContext
+			final Instance ctx = CloseableThreadContext
 				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {

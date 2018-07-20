@@ -1,8 +1,6 @@
 package com.emc.mongoose.item
 
-import com.emc.mongoose.item.io.IoType
-import com.emc.mongoose.item.io.task.IoTaskBuilder
-import com.emc.mongoose.item.io.task.data.{DataIoTask, DataIoTaskBuilderImpl}
+import com.emc.mongoose.item.op.data.{DataOperation, DataIoTaskBuilderImpl, DataOperationsBuilderImpl}
 import com.emc.mongoose.supply.ConstantStringSupplier
 import com.github.akurilov.commons.io.Input
 import com.github.akurilov.commons.system.SizeInBytes
@@ -12,6 +10,8 @@ import java.util
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
 
+import com.emc.mongoose.item.io.{DelayedTransferConvertBuffer, NewDataItemInput}
+import com.emc.mongoose.item.op.{OperationsBuilder, OpType}
 import org.junit.Assert.fail
 
 final class DelayedTransferBufferTest {
@@ -21,8 +21,8 @@ final class DelayedTransferBufferTest {
 	private val TIMEOUT = 100
 
 	private var itemInput = null : Input[DataItem]
-	private var ioTaskBuilder = null : IoTaskBuilder[DataItem, DataIoTask[DataItem]]
-	private var buff = null : TransferConvertBuffer[DataItem, DataIoTask[DataItem]]
+	private var ioTaskBuilder = null : OperationsBuilder[DataItem, DataOperation[DataItem]]
+	private var buff = null : TransferConvertBuffer[DataItem, DataOperation[DataItem]]
 
 	@Before @throws[Exception]
 	def setUp(): Unit = {
@@ -31,12 +31,12 @@ final class DelayedTransferBufferTest {
 			new ItemNameSupplier(ItemNamingType.ASC, null, 13, Character.MAX_RADIX, 0),
 			new SizeInBytes(0)
 		)
-		ioTaskBuilder = new DataIoTaskBuilderImpl[DataItem, DataIoTask[DataItem]](0)
-		ioTaskBuilder.setIoType(IoType.NOOP)
-		ioTaskBuilder.setOutputPathSupplier(new ConstantStringSupplier("/default"))
-		ioTaskBuilder.setUidSupplier(new ConstantStringSupplier("uid1"))
-		ioTaskBuilder.setSecretSupplier(new ConstantStringSupplier("secret1"))
-		buff = new DelayedTransferConvertBuffer[DataItem, DataIoTask[DataItem]](
+		ioTaskBuilder = new DataOperationsBuilderImpl[DataItem, DataOperation[DataItem]](0)
+		ioTaskBuilder.opType(OpType.NOOP)
+		ioTaskBuilder.outputPathSupplier(new ConstantStringSupplier("/default"))
+		ioTaskBuilder.uidSupplier(new ConstantStringSupplier("uid1"))
+		ioTaskBuilder.secretSupplier(new ConstantStringSupplier("secret1"))
+		buff = new DelayedTransferConvertBuffer[DataItem, DataOperation[DataItem]](
 			BUFF_CAPACITY, 0, TimeUnit.SECONDS
 		)
 	}
@@ -54,13 +54,13 @@ final class DelayedTransferBufferTest {
 
 		val producerThread: Thread = new Thread(() => {
 			val dataItemsBuff: util.List[DataItem] = new util.ArrayList[DataItem](BATCH_SIZE)
-			val ioTaskBuff: util.List[DataIoTask[DataItem]] = new util.ArrayList[DataIoTask[DataItem]](BATCH_SIZE)
+			val ioTaskBuff: util.List[DataOperation[DataItem]] = new util.ArrayList[DataOperation[DataItem]](BATCH_SIZE)
 			try {
 				while(true) {
 					if(BATCH_SIZE != itemInput.get(dataItemsBuff, BATCH_SIZE)) {
 						fail()
 					}
-					ioTaskBuilder.getInstances(dataItemsBuff, ioTaskBuff)
+					ioTaskBuilder.buildOps(dataItemsBuff, ioTaskBuff)
 					var n: Int = 0
 					while(n < BATCH_SIZE) {
 						n += buff.put(ioTaskBuff, n, BATCH_SIZE)

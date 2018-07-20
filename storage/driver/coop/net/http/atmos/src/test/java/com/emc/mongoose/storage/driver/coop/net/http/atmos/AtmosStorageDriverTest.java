@@ -5,9 +5,9 @@ import com.emc.mongoose.env.DateUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.item.DataItemImpl;
 import com.emc.mongoose.item.DataItem;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.data.DataIoTaskImpl;
-import com.emc.mongoose.item.io.task.data.DataIoTask;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.data.DataOperationImpl;
+import com.emc.mongoose.item.op.data.DataOperation;
 import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.net.http.EmcConstants;
 import com.github.akurilov.commons.collection.TreeUtil;
@@ -122,7 +122,7 @@ extends AtmosStorageDriver {
 		super(
 			"test-storage-driver-atmos",
 			DataInput.instance(null, "7a42d9c483244167", new SizeInBytes("4MB"), 16),
-			config.configVal("load"), config.configVal("storage"), false
+			config.configVal("storage"), false, config.intVal("load-batch-size")
 		);
 	}
 
@@ -175,11 +175,11 @@ extends AtmosStorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong("00003brre8lgz", Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
-			hashCode(), IoType.READ, dataItem, null, null, credential, null, 0
+		final DataOperation<DataItem> op = new DataOperationImpl<>(
+			hashCode(), OpType.READ, dataItem, null, null, credential, null, 0
 		);
 
-		final HttpRequest req = getHttpRequest(ioTask, storageNodeAddrs[0]);
+		final HttpRequest req = httpRequest(op, storageNodeAddrs[0]);
 		assertEquals(HttpMethod.GET, req.method());
 		assertEquals(AtmosApi.OBJ_URI_BASE + '/' + itemId, req.uri());
 

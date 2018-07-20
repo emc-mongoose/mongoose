@@ -6,17 +6,17 @@ import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.IoTask;
-import com.emc.mongoose.item.io.task.composite.data.CompositeDataIoTask;
-import com.emc.mongoose.item.io.task.partial.data.PartialDataIoTask;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.Operation;
+import com.emc.mongoose.item.op.composite.data.CompositeDataOperation;
+import com.emc.mongoose.item.op.partial.data.PartialDataOperation;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.net.http.HttpStorageDriverBase;
 
-import static com.emc.mongoose.item.io.IoType.CREATE;
-import static com.emc.mongoose.item.io.task.IoTask.SLASH;
+import static com.emc.mongoose.item.op.OpType.CREATE;
+import static com.emc.mongoose.item.op.Operation.SLASH;
 import static com.emc.mongoose.storage.driver.coop.net.http.swift.SwiftApi.AUTH_URI;
 import static com.emc.mongoose.storage.driver.coop.net.http.swift.SwiftApi.DEFAULT_VERSIONS_LOCATION;
 import static com.emc.mongoose.storage.driver.coop.net.http.swift.SwiftApi.KEY_X_AUTH_KEY;
@@ -65,7 +65,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by andrey on 07.10.16.
  */
-public class SwiftStorageDriver<I extends Item, O extends IoTask<I>>
+public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 extends HttpStorageDriverBase<I, O> {
 
 	private static final String PART_NUM_MASK = "0000000";
@@ -75,10 +75,10 @@ extends HttpStorageDriverBase<I, O> {
 	private final String namespacePath;
 
 	public SwiftStorageDriver(
-		final String stepId, final DataInput dataInput, final Config loadConfig,
-		final Config storageConfig, final boolean verifyFlag
+		final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+		final int batchSize
 	) throws OmgShootMyFootException, InterruptedException {
-		super(stepId, dataInput, loadConfig, storageConfig, verifyFlag);
+		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 		if(namespace == null) {
 			throw new IllegalArgumentNameException("Namespace is not set");
 		}
@@ -286,71 +286,69 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	protected final boolean submit(final O ioTask)
+	protected final boolean submit(final O op)
 	throws IllegalStateException {
 		if(!isStarted()) {
 			throw new IllegalStateException();
 		}
-		ioTask.reset();
-		if(ioTask instanceof CompositeDataIoTask) {
-			final CompositeDataIoTask compositeTask = (CompositeDataIoTask) ioTask;
-			if(compositeTask.allSubTasksDone()) {
-				return super.submit(ioTask);
+		op.reset();
+		if(op instanceof CompositeDataOperation) {
+			final CompositeDataOperation compositeOp = (CompositeDataOperation) op;
+			if(compositeOp.allSubOperationsDone()) {
+				return super.submit(op);
 			} else {
-				final List<O> subTasks = compositeTask.subTasks();
-				final int n = subTasks.size();
-				for(int i = 0; i < n; i += super.submit(subTasks, i, n)) {
+				final List<O> subOps = compositeOp.subOperations();
+				final int n = subOps.size();
+				for(int i = 0; i < n; i += super.submit(subOps, i, n)) {
 					LockSupport.parkNanos(1);
 				}
 				return true;
 			}
 		} else {
-			return super.submit(ioTask);
+			return super.submit(op);
 		}
 	}
 	
 	@Override @SuppressWarnings("unchecked")
-	protected final int submit(final List<O> ioTasks, final int from, final int to)
+	protected final int submit(final List<O> ops, final int from, final int to)
 	throws IllegalStateException {
 		if(!isStarted()) {
 			throw new IllegalStateException();
 		}
-		O nextIoTask;
+		O nextOp;
 		for(int i = from; i < to; i ++) {
-			nextIoTask = ioTasks.get(i);
-			nextIoTask.reset();
-			if(nextIoTask instanceof CompositeDataIoTask) {
-				final CompositeDataIoTask compositeTask = (CompositeDataIoTask) nextIoTask;
-				if(compositeTask.allSubTasksDone()) {
-					if(!super.submit(nextIoTask)) {
+			nextOp = ops.get(i);
+			nextOp.reset();
+			if(nextOp instanceof CompositeDataOperation) {
+				final CompositeDataOperation compositeOp = (CompositeDataOperation) nextOp;
+				if(compositeOp.allSubOperationsDone()) {
+					if(!super.submit(nextOp)) {
 						return i - from;
 					}
 				} else {
-					final List<O> subTasks = compositeTask.subTasks();
-					final int n = subTasks.size();
+					final List<O> subOps = compositeOp.subOperations();
+					final int n = subOps.size();
 					if(n > 0) {
-						// NOTE: blocking subtasks submission
-						while(!super.submit(subTasks.get(0))) {
+						// NOTE: blocking sub-ops submission
+						while(!super.submit(subOps.get(0))) {
 							LockSupport.parkNanos(1);
 						}
 						try {
 							for(int j = 1; j < n; j ++) {
-								childTasksQueue.put(subTasks.get(j));
+								childOpQueue.put(subOps.get(j));
 							}
 						} catch(final InterruptedException e) {
 							LogUtil.exception(
-								Level.DEBUG, e,
-								"{}: interrupted while enqueueing the child subtasks",
-								toString()
+								Level.DEBUG, e, "{}: interrupted while enqueueing the child sub-operations", toString()
 							);
 							throw new CancellationException();
 						}
 					} else {
-						throw new AssertionError("Composite I/O task yields 0 sub-tasks");
+						throw new AssertionError("Composite load operation yields 0 sub-operations");
 					}
 				}
 			} else {
-				if(!super.submit(nextIoTask)) {
+				if(!super.submit(nextOp)) {
 					return i - from;
 				}
 			}
@@ -359,43 +357,37 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	protected final HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+	protected final HttpRequest httpRequest(final O op, final String nodeAddr)
 	throws URISyntaxException {
 		
 		final HttpRequest httpRequest;
-		final IoType ioType = ioTask.ioType();
-		if(ioTask instanceof CompositeDataIoTask) {
-			if(CREATE.equals(ioType)) {
-				final CompositeDataIoTask mpuTask = (CompositeDataIoTask) ioTask;
-				if(mpuTask.allSubTasksDone()) {
-					httpRequest = getManifestCreateRequest(mpuTask, nodeAddr);
+		final OpType opType = op.type();
+		if(op instanceof CompositeDataOperation) {
+			if(CREATE.equals(opType)) {
+				final CompositeDataOperation compositeDataOp = (CompositeDataOperation) op;
+				if(compositeDataOp.allSubOperationsDone()) {
+					httpRequest = manifestCreateRequest(compositeDataOp, nodeAddr);
 				} else { // this is the initial state of the task
-					throw new AssertionError(
-						"Initial request for the composite I/O task is not allowed"
-					);
+					throw new AssertionError("Initial request for the composite load operation is not allowed");
 				}
 			} else {
-				throw new AssertionError(
-					"Non-create multipart operations are not implemented yet"
-				);
+				throw new AssertionError("Non-create composite load operations are not implemented yet");
 			}
-		} else if(ioTask instanceof PartialDataIoTask) {
-			if(CREATE.equals(ioType)) {
-				httpRequest = getUploadPartRequest((PartialDataIoTask) ioTask, nodeAddr);
+		} else if(op instanceof PartialDataOperation) {
+			if(CREATE.equals(opType)) {
+				httpRequest = uploadPartRequest((PartialDataOperation) op, nodeAddr);
 			} else {
-				throw new AssertionError(
-					"Non-create multipart operations are not implemented yet"
-				);
+				throw new AssertionError("Non-create composite operations are not implemented yet");
 			}
 		} else {
-			httpRequest = super.getHttpRequest(ioTask, nodeAddr);
+			httpRequest = super.httpRequest(op, nodeAddr);
 		}
 		return httpRequest;
 	}
 
 	@Override
-	protected final HttpMethod getTokenHttpMethod(final IoType ioType) {
-		switch(ioType) {
+	protected final HttpMethod tokenHttpMethod(final OpType opType) {
+		switch(opType) {
 			case NOOP:
 			case CREATE:
 				return HttpMethod.GET;
@@ -405,8 +397,8 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected final HttpMethod getPathHttpMethod(final IoType ioType) {
-		switch(ioType) {
+	protected final HttpMethod pathHttpMethod(final OpType opType) {
+		switch(opType) {
 			case NOOP:
 			case CREATE:
 				return HttpMethod.PUT;
@@ -419,41 +411,35 @@ extends HttpStorageDriverBase<I, O> {
 		}
 	}
 
-	private HttpRequest getManifestCreateRequest(
-		final CompositeDataIoTask mpuTask, final String nodeAddr
-	) {
-		final I item = (I) mpuTask.item();
-		final String srcPath = mpuTask.srcPath();
-		final String uriPath = getDataUriPath(item, srcPath, mpuTask.dstPath(), CREATE);
+	private HttpRequest manifestCreateRequest(final CompositeDataOperation compositeDataOp, final String nodeAddr) {
+		final I item = (I) compositeDataOp.item();
+		final String srcPath = compositeDataOp.srcPath();
+		final String uriPath = dataUriPath(item, srcPath, compositeDataOp.dstPath(), CREATE);
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
 		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		final String objManifestPath = super.getDataUriPath(
-			item, srcPath, mpuTask.dstPath(), CREATE
-		);
+		final String objManifestPath = super.dataUriPath(item, srcPath, compositeDataOp.dstPath(), CREATE);
 		httpHeaders.set(
 			KEY_X_OBJECT_MANIFEST,
 			(objManifestPath.startsWith("/") ? objManifestPath.substring(1) : objManifestPath) + "/"
 		);
 		final HttpMethod httpMethod = HttpMethod.PUT;
-		final HttpRequest httpRequest = new DefaultHttpRequest(
-			HTTP_1_1, httpMethod, uriPath, httpHeaders
-		);
+		final HttpRequest httpRequest = new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, mpuTask.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, compositeDataOp.credential());
 		return httpRequest;
 	}
 	
-	private HttpRequest getUploadPartRequest(final PartialDataIoTask ioTask, final String nodeAddr) {
-		final I item = (I) ioTask.item();
-		final String srcPath = ioTask.srcPath();
-		final String partNumStr = Integer.toString(ioTask.partNumber() + 1);
-		final String uriPath = getDataUriPath(item, srcPath, ioTask.dstPath(), CREATE) +
+	private HttpRequest uploadPartRequest(final PartialDataOperation partialDataOp, final String nodeAddr) {
+		final I item = (I) partialDataOp.item();
+		final String srcPath = partialDataOp.srcPath();
+		final String partNumStr = Integer.toString(partialDataOp.partNumber() + 1);
+		final String uriPath = dataUriPath(item, srcPath, partialDataOp.dstPath(), CREATE) +
 			"/" + PART_NUM_MASK.substring(partNumStr.length()) + partNumStr;
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		if(nodeAddr != null) {
@@ -471,7 +457,7 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, partialDataOp.credential());
 		return httpRequest;
 	}
 
@@ -482,23 +468,17 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected final String getDataUriPath(
-		final I item, final String srcPath, final String dstPath, final IoType ioType
-	) {
-		return namespacePath + super.getDataUriPath(item, srcPath, dstPath, ioType);
+	protected final String dataUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
+		return namespacePath + super.dataUriPath(item, srcPath, dstPath, opType);
 	}
 
 	@Override
-	protected final String getTokenUriPath(
-		final I item, final String srcPath, final String dstPath, final IoType ioType
-	) {
+	protected final String tokenUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
 		return AUTH_URI;
 	}
 
 	@Override
-	protected final String getPathUriPath(
-		final I item, final String srcPath, final String dstPath, final IoType ioType
-	) {
+	protected final String pathUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
 		final String itemName = item.getName();
 		if(itemName.startsWith(SLASH)) {
 			return namespacePath + itemName;

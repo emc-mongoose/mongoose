@@ -1,8 +1,8 @@
 package com.emc.mongoose.system.base;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.system.base.params.Concurrency;
 import com.emc.mongoose.system.base.params.ItemSize;
 import com.emc.mongoose.system.base.params.RunMode;
@@ -17,8 +17,8 @@ import static com.emc.mongoose.Constants.USER_HOME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.env.DateUtil.FMT_DATE_ISO8601;
 import static com.emc.mongoose.env.DateUtil.FMT_DATE_METRICS_TABLE;
-import static com.emc.mongoose.item.io.task.IoTask.Status.INTERRUPTED;
-import static com.emc.mongoose.item.io.task.IoTask.Status.SUCC;
+import static com.emc.mongoose.item.op.Operation.Status.INTERRUPTED;
+import static com.emc.mongoose.item.op.Operation.Status.SUCC;
 import static com.emc.mongoose.logging.MetricsAsciiTableLogMessage.TABLE_HEADER;
 import static com.emc.mongoose.logging.MetricsAsciiTableLogMessage.TABLE_HEADER_PERIOD;
 import com.emc.mongoose.logging.LogUtil;
@@ -264,12 +264,12 @@ extends ParameterizedSysTestBase {
 
 	protected List<CSVRecord> getIoTraceLogRecords()
 	throws IOException {
-		return getLogFileCsvRecords("io.trace.csv");
+		return getLogFileCsvRecords("op.trace.csv");
 	}
 
 	protected List<CSVRecord> getContainerIoTraceLogRecords()
 	throws IOException {
-		return getContainerLogFileCsvRecords("io.trace.csv");
+		return getContainerLogFileCsvRecords("op.trace.csv");
 	}
 
 	private void waitLogFile(final File logFile) {
@@ -302,14 +302,14 @@ extends ParameterizedSysTestBase {
 
 	protected void testIoTraceLogRecords(final Consumer<CSVRecord> csvRecordTestFunc)
 	throws IOException {
-		final File logFile = getLogFile("io.trace.csv");
+		final File logFile = getLogFile("op.trace.csv");
 		waitLogFile(logFile);
 		testIoTraceLogFile(logFile, csvRecordTestFunc);
 	}
 
 	protected void testContainerIoTraceLogRecords(final Consumer<CSVRecord> csvRecordTestFunc)
 	throws IOException {
-		final File logFile = getContainerLogFile("io.trace.csv");
+		final File logFile = getContainerLogFile("op.trace.csv");
 		waitLogFile(logFile);
 		testIoTraceLogFile(logFile, csvRecordTestFunc);
 	}
@@ -325,7 +325,7 @@ extends ParameterizedSysTestBase {
 	}
 
 	protected static void testMetricsLogRecords(
-		final List<CSVRecord> metrics, final IoType expectedIoType, final int expectedConcurrency,
+		final List<CSVRecord> metrics, final OpType expectedOpType, final int expectedConcurrency,
 		final int expectedNodeCount, final SizeInBytes expectedItemDataSize,
 		final long expectedMaxCount, final int expectedLoadJobTime, final long metricsPeriodSec
 	) throws Exception {
@@ -364,8 +364,8 @@ extends ParameterizedSysTestBase {
 				);
 			}
 			lastTimeStamp = nextDateTimeStamp;
-			ioTypeStr = nextRecord.get("TypeLoad").toUpperCase();
-			assertEquals(expectedIoType.name(), ioTypeStr);
+			ioTypeStr = nextRecord.get("OpType").toUpperCase();
+			assertEquals(expectedOpType.name(), ioTypeStr);
 			concurrencyLevel = Integer.parseInt(nextRecord.get("Concurrency"));
 			assertEquals(
 				"Expected concurrency level: " + expectedConcurrency, expectedConcurrency,
@@ -467,7 +467,7 @@ extends ParameterizedSysTestBase {
 
 	protected static void testTotalMetricsLogRecord(
 		final CSVRecord metrics,
-		final IoType expectedIoType, final int expectedConcurrency, final int expectedNodeCount,
+		final OpType expectedOpType, final int expectedConcurrency, final int expectedNodeCount,
 		final SizeInBytes expectedItemDataSize, final long expectedMaxCount,
 		final int expectedLoadJobTime
 	) throws Exception {
@@ -476,8 +476,8 @@ extends ParameterizedSysTestBase {
 		} catch(final ParseException e) {
 			fail(e.toString());
 		}
-		final String ioTypeStr = metrics.get("TypeLoad").toUpperCase();
-		assertEquals(ioTypeStr, expectedIoType.name(), ioTypeStr);
+		final String ioTypeStr = metrics.get("OpType").toUpperCase();
+		assertEquals(ioTypeStr, expectedOpType.name(), ioTypeStr);
 		final int concurrencyLevel = Integer.parseInt(metrics.get("Concurrency"));
 		assertEquals(Integer.toString(concurrencyLevel), expectedConcurrency, concurrencyLevel);
 		final int nodeCount = Integer.parseInt(metrics.get("NodeCount"));
@@ -492,8 +492,8 @@ extends ParameterizedSysTestBase {
 		if(
 			expectedMaxCount > 0 && expectedItemDataSize.get() > 0 &&
 				(
-					IoType.CREATE.equals(expectedIoType) || IoType.READ.equals(expectedIoType) ||
-						IoType.UPDATE.equals(expectedIoType)
+					OpType.CREATE.equals(expectedOpType) || OpType.READ.equals(expectedOpType) ||
+						OpType.UPDATE.equals(expectedOpType)
 				)
 		) {
 			assertTrue(Long.toString(totalBytes), totalBytes > 0);
@@ -573,13 +573,13 @@ extends ParameterizedSysTestBase {
 	protected static void testIoTraceRecord(
 		final CSVRecord ioTraceRecord, final int ioTypeCodeExpected, final SizeInBytes sizeExpected
 	) {
-		assertEquals(ioTypeCodeExpected, Integer.parseInt(ioTraceRecord.get("IoTypeCode")));
+		assertEquals(ioTypeCodeExpected, Integer.parseInt(ioTraceRecord.get("OpTypeCode")));
 		final int actualStatusCode = Integer.parseInt(ioTraceRecord.get("StatusCode"));
 		if(INTERRUPTED.ordinal() == actualStatusCode) {
 			return;
 		}
 		assertEquals(
-			"Actual status code is " + IoTask.Status.values()[actualStatusCode],
+			"Actual status code is " + Operation.Status.values()[actualStatusCode],
 			SUCC.ordinal(), actualStatusCode
 		);
 		final long duration = Long.parseLong(ioTraceRecord.get("Duration[us]"));
@@ -618,7 +618,7 @@ extends ParameterizedSysTestBase {
 	
 	protected static void testSingleMetricsStdout(
 		final String stdOutContent,
-		final IoType expectedIoType, final int expectedConcurrency, final int expectedNodeCount,
+		final OpType expectedOpType, final int expectedConcurrency, final int expectedNodeCount,
 		final SizeInBytes expectedItemDataSize, final long metricsPeriodSec
 	) throws Exception {
 		Date lastTimeStamp = null, nextDateTimeStamp;
@@ -651,7 +651,7 @@ extends ParameterizedSysTestBase {
 			}
 			lastTimeStamp = nextDateTimeStamp;
 			ioTypeStr = m.group("typeLoad").toUpperCase();
-			assertEquals(ioTypeStr, expectedIoType.name(), ioTypeStr);
+			assertEquals(ioTypeStr, expectedOpType.name(), ioTypeStr);
 			concurrencyLevel = Integer.parseInt(m.group("concurrency"));
 			assertEquals(Integer.toString(concurrencyLevel), expectedConcurrency, concurrencyLevel);
 			nodeCount = Integer.parseInt(m.group("nodeCount"));
@@ -727,7 +727,7 @@ extends ParameterizedSysTestBase {
 
 	protected void testMetricsTableStdout(
 		final String stdOutContent, final String stepName, final int nodeCount,
-		final long countLimit, final Map<IoType, Integer> configConcurrencyMap
+		final long countLimit, final Map<OpType, Integer> configConcurrencyMap
 	) throws Exception {
 
 		final Matcher m = LogPatterns.STD_OUT_METRICS_TABLE_ROW.matcher(stdOutContent);
@@ -739,7 +739,7 @@ extends ParameterizedSysTestBase {
 
 			final String actualStepNameEnding = m.group("stepName");
 			final Date nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
-			final IoType actualIoType = IoType.valueOf(m.group("ioType"));
+			final OpType actualOpType = OpType.valueOf(m.group("opType"));
 			final int actualConcurrencyCurr = Integer.parseInt(m.group("concurrencyCurr"));
 			final float actualConcurrencyLastMean = Float.parseFloat(m.group("concurrencyLastMean"));
 			final long succCount = Long.parseLong(m.group("succCount"));
@@ -755,17 +755,17 @@ extends ParameterizedSysTestBase {
 				actualStepNameEnding
 			);
 			ioTypeFoundFlag = false;
-			for(final IoType nextIoType : configConcurrencyMap.keySet()) {
-				if(nextIoType.equals(actualIoType)) {
+			for(final OpType nextOpType : configConcurrencyMap.keySet()) {
+				if(nextOpType.equals(actualOpType)) {
 					ioTypeFoundFlag = true;
 					break;
 				}
 			}
 			assertTrue(
-				"I/O type \"" + actualIoType + "\" was found but expected one of: " +
+				"I/O type \"" + actualOpType + "\" was found but expected one of: " +
 					Arrays.toString(configConcurrencyMap.keySet().toArray()), ioTypeFoundFlag
 			);
-			final int expectedConfigConcurrency = configConcurrencyMap.get(actualIoType);
+			final int expectedConfigConcurrency = configConcurrencyMap.get(actualOpType);
 			if(expectedConfigConcurrency > 0) {
 				assertTrue(actualConcurrencyCurr <= nodeCount * expectedConfigConcurrency);
 				assertTrue(actualConcurrencyLastMean <= nodeCount * expectedConfigConcurrency);
@@ -797,7 +797,7 @@ extends ParameterizedSysTestBase {
 	}
 
 	protected void testFinalMetricsTableRowStdout(
-		final String stdOutContent, final String stepId, final IoType expectedIoType,
+		final String stdOutContent, final String stepId, final OpType expectedOpType,
 		final int nodeCount, final int expectedConcurrency, final long countLimit,
 		final long timeLimit, final SizeInBytes expectedItemDataSize
 	) throws Exception {
@@ -818,8 +818,8 @@ extends ParameterizedSysTestBase {
 		while(m.find()) {
 			final String actualStepNameEnding = m.group("stepName");
 			if(stepId.endsWith(actualStepNameEnding) || stepId.equals(actualStepNameEnding)) {
-				final IoType actualIoType = IoType.valueOf(m.group("ioType"));
-				if(actualIoType.equals(expectedIoType)) {
+				final OpType actualOpType = OpType.valueOf(m.group("opType"));
+				if(actualOpType.equals(expectedOpType)) {
 					rowFoundFlag = true;
 					nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
 					actualConcurrencyCurr = Integer.parseInt(m.group("concurrencyCurr"));
@@ -838,7 +838,7 @@ extends ParameterizedSysTestBase {
 
 		assertTrue(
 			"Summary metrics row with step id ending with \"" + stepId + "\" and I/O type \""
-				+ expectedIoType + "\" was not found",
+				+ expectedOpType + "\" was not found",
 			rowFoundFlag
 		);
 		assertTrue(actualConcurrencyCurr >= 0);

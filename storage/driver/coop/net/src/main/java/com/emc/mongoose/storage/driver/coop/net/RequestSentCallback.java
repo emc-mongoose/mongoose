@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.net;
 
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.logging.LogUtil;
 
 import io.netty.util.concurrent.Future;
@@ -14,19 +14,19 @@ import org.apache.logging.log4j.Level;
 public final class RequestSentCallback
 implements FutureListener<Void> {
 
-	private final IoTask ioTask;
+	private final Operation op;
 
-	public RequestSentCallback(final IoTask ioTask) {
-		this.ioTask = ioTask;
+	public RequestSentCallback(final Operation op) {
+		this.op = op;
 	}
 
 	@Override
 	public final void operationComplete(final Future<Void> future)
 	throws Exception {
 		try {
-			ioTask.finishRequest();
+			op.finishRequest();
 		} catch(final IllegalStateException e) {
-			LogUtil.exception(Level.DEBUG, e, "{}", ioTask.toString());
+			LogUtil.exception(Level.DEBUG, e, "{}", op.toString());
 		}
 	}
 }

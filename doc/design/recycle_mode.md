@@ -24,15 +24,15 @@ objects/files in the unlimited manner (infinitely either using time limit).
 # Approach
 
 The [Load Generator](architecture.md#load-generator) component is
-responsible for the tasks recycling. There are two additional methods in
+responsible for the operations recycling. There are two additional methods in
 its interface to support the recycling:
-* Check if the load generator is configured to recycle the tasks:
+* Check if the load generator is configured to recycle the operations:
     ```java
     boolean isRecycling();
     ```
-* Enqueue the load task for further recycling:
+* Enqueue the load operation for further recycling:
     ```java
-    void recycle(final O ioTask);
+    void recycle(final O op);
     ```
 
 The [Load Step Context](architecture.md#load-step-context) component keeps in memory the latest state for all items
@@ -41,43 +41,42 @@ being processed in the recycle mode to meet the requirement (5).
 Also, there's a specific ***"nothing to recycle"*** state which requires
 a Load Step Context to detect it to not to hang up the test step. Specific
 conditions:
-1. The Load Generator is finished to produce *new* load tasks.
+1. The Load Generator is finished to produce *new* load operations.
 2. The Load Generator is recycling.
-3. All new load tasks executed at least once.
-4. No successful load task results.
+3. All new load operations executed at least once.
+4. No successful load operation results.
 
 ## Recycle Flow
 
 1. Load Generator:
-    1. Produces the new load tasks which count is no more than the
+    1. Produces the new load operations which count is no more than the
         configured recycle queue size
 2. Storage Driver:
-    1. Resets the next load task state (status, timestamps, etc)
-    2. Executes the next load task
-    3. Outputs the next completed load task to the Load Controller
+    1. Resets the next load operation state (status, timestamps, etc)
+    2. Executes the next load operation
+    3. Outputs the next completed load operation to the Load Controller
 3. Load Step Context:
-    1. Receives the next completed load task
-    2. Drops the load task if its status is not successful
-    3. Determines the load task *origin* (the Load Generator produced
-        this load task)
+    1. Receives the next completed load operation
+    2. Drops the load operation if its status is not successful
+    3. Determines the load operation *origin* (the Load Generator produced
+        this load operation)
     4. Checks if the resolved Load Generator *is in the recycling mode*
     5. Updates the latest results for the corresponding item.
-    6. Enqueues the load task back to the Load Generator for further
+    6. Enqueues the load operation back to the Load Generator for further
         recycle
 4. Load Generator:
     1. Begins to recycle only if items input is exhausted
-    2. Produces the recycling load tasks from the recycle queue
+    2. Produces the recycling load operations from the recycle queue
 
 # Configuration
 
-1. `load-generator-recycle-enabled`
+1. `load-op-recycle`
 
     The flag to enable the recycle mode. Disabled by default.
 
-2. `load-generator-recycle-limit`
+2. `load-op-imit-recycle`
 
-    The recycle queue size. Note that this queue size is also used by
-    storage drivers internal queues.
+    The recycle queue size. Note that this queue size is also used by storage drivers internal queues.
 
 # Output
 

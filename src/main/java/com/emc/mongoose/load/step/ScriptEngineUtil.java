@@ -1,7 +1,7 @@
 package com.emc.mongoose.load.step;
 
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
@@ -118,9 +118,9 @@ public interface ScriptEngineUtil {
 		specificConfig.val("output-metrics-trace-persist", false);
 		se.put("PreconditionLoad", baseLoadStepFactory.createClient(specificConfig, extensions));
 
-		for(final IoType ioType : IoType.values()) {
+		for(final OpType opType : OpType.values()) {
 			specificConfig = new BasicConfig(config);
-			final String ioTypeName = ioType.name().toLowerCase();
+			final String ioTypeName = opType.name().toLowerCase();
 			specificConfig.val("load-type", ioTypeName);
 			final String stepName = ioTypeName.substring(0, 1).toUpperCase()
 				+ ioTypeName.substring(1) + "Load";
@@ -128,17 +128,17 @@ public interface ScriptEngineUtil {
 		}
 
 		specificConfig = new BasicConfig(config);
-		specificConfig.val("load-type", IoType.READ.name().toLowerCase());
+		specificConfig.val("load-type", OpType.READ.name().toLowerCase());
 		specificConfig.val("item-data-verify", true);
 		se.put("ReadVerifyLoad", baseLoadStepFactory.createClient(specificConfig, extensions));
 
 		specificConfig = new BasicConfig(config);
-		specificConfig.val("load-type", IoType.READ.name().toLowerCase());
+		specificConfig.val("load-type", OpType.READ.name().toLowerCase());
 		specificConfig.val("item-data-ranges-random", 1);
 		se.put("ReadRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions));
 
 		specificConfig = new BasicConfig(config);
-		specificConfig.val("load-type", IoType.READ.name().toLowerCase());
+		specificConfig.val("load-type", OpType.READ.name().toLowerCase());
 		specificConfig.val("item-data-verify", true);
 		specificConfig.val("item-data-ranges-random", 1);
 		se.put(
@@ -146,7 +146,7 @@ public interface ScriptEngineUtil {
 		);
 
 		specificConfig = new BasicConfig(config);
-		specificConfig.val("load-type", IoType.UPDATE.name().toLowerCase());
+		specificConfig.val("load-type", OpType.UPDATE.name().toLowerCase());
 		specificConfig.val("item-data-ranges-random", 1);
 		se.put(
 			"UpdateRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions)

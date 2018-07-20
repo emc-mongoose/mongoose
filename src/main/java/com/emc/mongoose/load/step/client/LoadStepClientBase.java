@@ -5,9 +5,9 @@ import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.ItemInputFactory;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.io.ItemInputFactory;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.load.step.LoadStepFactory;
 import com.emc.mongoose.load.step.client.metrics.MetricsAggregator;
 import com.emc.mongoose.load.step.client.metrics.MetricsAggregatorImpl;
@@ -137,8 +137,8 @@ implements LoadStepClient {
 
 	private void addFileClients(final Config config, final List<Config> configSlices) {
 		final Config loadConfig = config.configVal("load");
-		final Config storageConfig = config.configVal("storage");
 		final int batchSize = loadConfig.intVal("batch-size");
+		final Config storageConfig = config.configVal("storage");
 		final Config itemConfig = config.configVal("item");
 		final Config itemDataConfig = itemConfig.configVal("data");
 		final boolean verifyFlag = itemDataConfig.boolVal("verify");
@@ -156,8 +156,8 @@ implements LoadStepClient {
 				itemDataInputConfig.stringVal("file"), itemDataInputConfig.stringVal("seed"), itemDataLayerSize,
 				itemDataInputLayerConfig.intVal("cache")
 			);
-			final StorageDriver<Item, IoTask<Item>> storageDriver = StorageDriver.instance(
-				extensions, loadConfig, storageConfig, dataInput, verifyFlag, id()
+			final StorageDriver<Item, Operation<Item>> storageDriver = StorageDriver.instance(
+				extensions, storageConfig, dataInput, verifyFlag, batchSize, id()
 			);
 			final Input<Item> itemInput = ItemInputFactory.createItemInput(itemConfig, storageDriver, batchSize)
 		) {
@@ -256,25 +256,23 @@ implements LoadStepClient {
 
 		if(sliceCount > 1) { // distributed mode
 
-			final Config loadStepLimitConfig = config.configVal("load-step-limit");
-
-			final long countLimit = loadStepLimitConfig.longVal("count");
+			final long countLimit = config.longVal("load-step-limit-count");
 			if(countLimit > 0) {
 				ConfigSliceUtil.sliceLongValue(countLimit, configSlices, "load-step-limit-count");
 			}
 
-			final long countFailLimit = loadStepLimitConfig.longVal("fail-count");
+			final long countFailLimit = config.longVal("load-step-limit-fail-count");
 			if(countFailLimit > 0) {
 				ConfigSliceUtil.sliceLongValue(countFailLimit, configSlices, "load-step-limit-fail-count");
 			}
 
-			final double rateLimit = loadStepLimitConfig.doubleVal("rate");
+			final double rateLimit = config.doubleVal("load-generator-limit-rate");
 			if(rateLimit > 0) {
-				ConfigSliceUtil.sliceDoubleValue(rateLimit, configSlices, "load-step-limit-rate");
+				ConfigSliceUtil.sliceDoubleValue(rateLimit, configSlices, "load-generator-limit-rate");
 			}
 
 			final long sizeLimit;
-			final Object sizeLimitRaw = loadStepLimitConfig.val("size");
+			final Object sizeLimitRaw = config.val("load-step-limit-size");
 			if(sizeLimitRaw instanceof String) {
 				sizeLimit = SizeInBytes.toFixedSize((String) sizeLimitRaw);
 			} else {
@@ -303,7 +301,7 @@ implements LoadStepClient {
 	}
 
 	protected final void initMetrics(
-		final int originIndex, final IoType ioType, final int concurrencyLimit, final Config metricsConfig,
+		final int originIndex, final OpType opType, final int concurrencyLimit, final Config metricsConfig,
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
 		final double concurrencyThreshold = concurrencyLimit * metricsConfig.doubleVal("threshold");
@@ -321,7 +319,7 @@ implements LoadStepClient {
 		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
 		// further usage
 		final MetricsContext metricsCtx = new AggregatingMetricsContext(
-			id(), ioType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
+			id(), opType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
 			outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
 			() -> metricsAggregator.metricsSnapshotsByIndex(originIndex)
 		);

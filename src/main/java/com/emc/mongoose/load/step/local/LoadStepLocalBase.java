@@ -2,7 +2,7 @@ package com.emc.mongoose.load.step.local;
 
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.load.step.LoadStepBase;
 import com.emc.mongoose.logging.LogContextThreadFactory;
@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
@@ -64,7 +63,7 @@ extends LoadStepBase {
 
 	@Override
 	protected final void initMetrics(
-		final int originIndex, final IoType ioType, final int concurrency, final Config metricsConfig,
+		final int originIndex, final OpType opType, final int concurrency, final Config metricsConfig,
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
 		final int metricsAvgPeriod;
@@ -75,7 +74,7 @@ extends LoadStepBase {
 			metricsAvgPeriod = TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
 		}
 		final MetricsContext metricsCtx = new MetricsContextImpl(
-			id(), ioType, () -> stepContexts.stream().mapToInt(LoadStepContext::activeTasksCount).sum(),
+			id(), opType, () -> stepContexts.stream().mapToInt(LoadStepContext::activeOpCount).sum(),
 			concurrency, (int) (concurrency * metricsConfig.doubleVal("threshold")), itemDataSize, metricsAvgPeriod,
 			outputColorFlag
 		);

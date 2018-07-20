@@ -1,8 +1,8 @@
 package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
@@ -197,15 +197,15 @@ public class ReadCustomContentVerificationFailTest {
         final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
             assertEquals(
                     "Record #" + ioTraceRecCount.sum() + ": unexpected operation type " +
-                            ioTraceRec.get("IoTypeCode"),
-                    IoType.READ,
-                    IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))]
+                            ioTraceRec.get("OpTypeCode"),
+                    OpType.READ,
+                    OpType.values()[Integer.parseInt(ioTraceRec.get("OpTypeCode"))]
             );
             assertEquals(
                     "Record #" + ioTraceRecCount.sum() + ": unexpected status code " +
                             ioTraceRec.get("StatusCode"),
-                    IoTask.Status.RESP_FAIL_CORRUPT,
-                    IoTask.Status.values()[Integer.parseInt(ioTraceRec.get("StatusCode"))]
+                    Operation.Status.RESP_FAIL_CORRUPT,
+                    Operation.Status.values()[Integer.parseInt(ioTraceRec.get("StatusCode"))]
             );
             ioTraceRecCount.increment();
         };

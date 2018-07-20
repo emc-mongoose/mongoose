@@ -2,7 +2,7 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
@@ -265,7 +265,7 @@ public class CreateLimitBySizeTest {
         } else {
             final String nodeAddr = storageMocks.keySet().iterator().next();
             ioTraceRecFunc = ioTraceRec -> {
-                testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), itemSize.getValue());
+                testIoTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), itemSize.getValue());
                 HttpStorageMockUtil.assertItemExists(
                         nodeAddr, ioTraceRec.get("ItemPath"),
                         Long.parseLong(ioTraceRec.get("TransferSize"))
@@ -308,30 +308,30 @@ public class CreateLimitBySizeTest {
         assertEquals(items.size(), freq.getUniqueCount());
 
         testTotalMetricsLogRecord(
-                getContainerMetricsTotalLogRecords(stepId).get(0), IoType.CREATE, concurrency.getValue(),
+                getContainerMetricsTotalLogRecords(stepId).get(0), OpType.CREATE, concurrency.getValue(),
                 runMode.getNodeCount(), itemSize.getValue(), 0, 0
         );
 
         testMetricsLogRecords(
-                getContainerMetricsLogRecords(stepId), IoType.CREATE, concurrency.getValue(),
+                getContainerMetricsLogRecords(stepId), OpType.CREATE, concurrency.getValue(),
                 runMode.getNodeCount(), itemSize.getValue(), 0, 0,
                 averagePeriod
         );
 
         testSingleMetricsStdout(
                 stdOutContent.replaceAll("[\r\n]+", " "),
-                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+                OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
                 averagePeriod
         );
         testMetricsTableStdout(
                 stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-                new HashMap<IoType, Integer>() {{
-                    put(IoType.CREATE, concurrency.getValue());
+                new HashMap<OpType, Integer>() {{
+                    put(OpType.CREATE, concurrency.getValue());
                 }}
         );
 
         testFinalMetricsTableRowStdout(
-                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
+                stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
                 0, 0, itemSize.getValue()
         );
 

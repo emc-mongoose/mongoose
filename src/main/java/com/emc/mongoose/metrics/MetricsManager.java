@@ -85,8 +85,8 @@ public final class MetricsManager
                             if (nextConcurrencyThreshold > 0 && actualConcurrency >= nextConcurrencyThreshold) {
                                 if (!metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
                                     Loggers.MSG.info(
-                                            "{}: the threshold of {} active tasks count is reached, starting the " +
-                                                    "additional metrics accounting",
+                                            "{}: the threshold of {} active load operations count is reached, "
+	                                            + "starting the additional metrics accounting",
                                             metricsCtx.toString(), metricsCtx.concurrencyThreshold()
                                     );
                                     metricsCtx.enterThresholdState();
@@ -211,7 +211,8 @@ public final class MetricsManager
 
     private static void exitMetricsThresholdState(final MetricsContext metricsCtx) {
         Loggers.MSG.info(
-                "{}: the active tasks count is below the threshold of {}, stopping the additional metrics accounting",
+                "{}: the active load operations count is below the threshold of {}, stopping the additional metrics "
+	                + "accounting",
                 metricsCtx.toString(), metricsCtx.concurrencyThreshold()
         );
         final MetricsContext lastThresholdMetrics = metricsCtx.thresholdMetrics();
