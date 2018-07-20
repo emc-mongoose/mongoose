@@ -266,9 +266,9 @@ implements LoadStepClient {
 				ConfigSliceUtil.sliceLongValue(countFailLimit, configSlices, "load-step-limit-fail-count");
 			}
 
-			final double rateLimit = config.doubleVal("load-generator-limit-rate");
+			final double rateLimit = config.doubleVal("load-op-limit-rate");
 			if(rateLimit > 0) {
-				ConfigSliceUtil.sliceDoubleValue(rateLimit, configSlices, "load-generator-limit-rate");
+				ConfigSliceUtil.sliceDoubleValue(rateLimit, configSlices, "load-op-limit-rate");
 			}
 
 			final long sizeLimit;

@@ -121,24 +121,24 @@ public interface ScriptEngineUtil {
 		for(final OpType opType : OpType.values()) {
 			specificConfig = new BasicConfig(config);
 			final String ioTypeName = opType.name().toLowerCase();
-			specificConfig.val("load-type", ioTypeName);
+			specificConfig.val("load-op-type", ioTypeName);
 			final String stepName = ioTypeName.substring(0, 1).toUpperCase()
 				+ ioTypeName.substring(1) + "Load";
 			se.put(stepName, baseLoadStepFactory.createClient(specificConfig, extensions));
 		}
 
 		specificConfig = new BasicConfig(config);
-		specificConfig.val("load-type", OpType.READ.name().toLowerCase());
+		specificConfig.val("load-op-type", OpType.READ.name().toLowerCase());
 		specificConfig.val("item-data-verify", true);
 		se.put("ReadVerifyLoad", baseLoadStepFactory.createClient(specificConfig, extensions));
 
 		specificConfig = new BasicConfig(config);
-		specificConfig.val("load-type", OpType.READ.name().toLowerCase());
+		specificConfig.val("load-op-type", OpType.READ.name().toLowerCase());
 		specificConfig.val("item-data-ranges-random", 1);
 		se.put("ReadRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions));
 
 		specificConfig = new BasicConfig(config);
-		specificConfig.val("load-type", OpType.READ.name().toLowerCase());
+		specificConfig.val("load-op-type", OpType.READ.name().toLowerCase());
 		specificConfig.val("item-data-verify", true);
 		specificConfig.val("item-data-ranges-random", 1);
 		se.put(
@@ -146,10 +146,8 @@ public interface ScriptEngineUtil {
 		);
 
 		specificConfig = new BasicConfig(config);
-		specificConfig.val("load-type", OpType.UPDATE.name().toLowerCase());
+		specificConfig.val("load-op-type", OpType.UPDATE.name().toLowerCase());
 		specificConfig.val("item-data-ranges-random", 1);
-		se.put(
-			"UpdateRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions)
-		);
+		se.put("UpdateRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions));
 	}
 }

@@ -81,7 +81,9 @@ implements LoadStepContext<I, O> {
 		final Config limitConfig,
 		final boolean tracePersistFlag,
 		final int batchSize,
-		final int recycleLimit
+		final int recycleLimit,
+		final boolean recycleFlag,
+		final boolean retryFlag
 	) {
 		this.id = id;
 		this.generator = generator;
@@ -89,9 +91,9 @@ implements LoadStepContext<I, O> {
 		this.metricsCtx = metricsCtx;
 		this.tracePersistFlag = tracePersistFlag;
 		this.batchSize = batchSize;
-		this.recycleFlag = generator.isRecycling();
-		this.retryFlag = generator.isRetrying();
-		if(recycleFlag) {
+		this.recycleFlag = recycleFlag;
+		this.retryFlag = retryFlag;
+		if(recycleFlag || retryFlag) {
 			latestIoResultByItem = new ConcurrentHashMap<>(recycleLimit);
 		} else {
 			latestIoResultByItem = null;
@@ -292,9 +294,14 @@ implements LoadStepContext<I, O> {
 				counterResults.increment();
 			}
 		} else if(!Status.INTERRUPTED.equals(status)) {
-			Loggers.ERR.debug("{}: {}", opResult.toString(), status.toString());
-			metricsCtx.markFail();
-			counterResults.increment();
+			if(retryFlag) {
+				latestIoResultByItem.put(opResult.item(), opResult);
+				generator.recycle(opResult);
+			} else {
+				Loggers.ERR.debug("{}: {}", opResult.toString(), status.toString());
+				metricsCtx.markFail();
+				counterResults.increment();
+			}
 		}
 
 		return true;
@@ -362,9 +369,14 @@ implements LoadStepContext<I, O> {
 					counterResults.increment();
 				}
 			} else if(!Status.INTERRUPTED.equals(status)) {
-				Loggers.ERR.debug("{}: {}", opResult.toString(), status.toString());
-				metricsCtx.markFail();
-				counterResults.increment();
+				if(retryFlag) {
+					latestIoResultByItem.put(opResult.item(), opResult);
+					generator.recycle(opResult);
+				} else {
+					Loggers.ERR.debug("{}: {}", opResult.toString(), status.toString());
+					metricsCtx.markFail();
+					counterResults.increment();
+				}
 			}
 		}
 		
@@ -430,9 +442,7 @@ implements LoadStepContext<I, O> {
 				return true;
 			}
 			if(!recycleFlag && allOperationsCompleted()) {
-				Loggers.MSG.debug(
-					"{}: await exit because all load operations have been completed", id
-				);
+				Loggers.MSG.debug("{}: await exit because all load operations have been completed", id);
 				return true;
 			}
 			// issue SLTM-938 fix

@@ -67,9 +67,8 @@ extends LoadStepClientBase {
 				throw new CancellationException();
 			}
 
-			final Config loadConfig = subConfig.configVal("load");
-			final OpType opType = OpType.valueOf(loadConfig.stringVal("type").toUpperCase());
-			final int concurrency = loadConfig.intVal("step-limit-concurrency");
+			final OpType opType = OpType.valueOf(config.stringVal("op-type").toUpperCase());
+			final int concurrency = config.intVal("storage-driver-limit-concurrency");
 			final Config outputConfig = subConfig.configVal("output");
 			final Config metricsConfig = outputConfig.configVal("metrics");
 			final SizeInBytes itemDataSize;

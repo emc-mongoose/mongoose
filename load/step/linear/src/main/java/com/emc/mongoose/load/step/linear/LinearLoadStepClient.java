@@ -35,10 +35,8 @@ extends LoadStepClientBase {
 			config.val("load-step-id", autoStepId);
 		}
 
-		final Config loadConfig = config.configVal("load");
-		final Config stepConfig = loadConfig.configVal("step");
-		final OpType opType = OpType.valueOf(loadConfig.stringVal("type").toUpperCase());
-		final int concurrency = stepConfig.intVal("limit-concurrency");
+		final OpType opType = OpType.valueOf(config.stringVal("load-op-type").toUpperCase());
+		final int concurrency = config.intVal("storage-driver-limit-concurrency");
 		final Config outputConfig = config.configVal("output");
 		final Config metricsConfig = outputConfig.configVal("metrics");
 		final SizeInBytes itemDataSize;

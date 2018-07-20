@@ -41,9 +41,9 @@ implements StorageDriver<I, O> {
 		final int batchSize
 	) throws OmgShootMyFootException {
 		super(testStepId, dataInput, storageConfig, verifyFlag);
-		final Config queueConfig = storageConfig.configVal("driver-limit-queue");
-		this.childOpQueue = new ArrayBlockingQueue<>(queueConfig.intVal("input"));
-		this.inOpQueue = new ArrayBlockingQueue<>(queueConfig.intVal("input"));
+		final int inQueueLimit = storageConfig.intVal("driver-limit-queue-input");
+		this.childOpQueue = new ArrayBlockingQueue<>(inQueueLimit);
+		this.inOpQueue = new ArrayBlockingQueue<>(inQueueLimit);
 		if(concurrencyLimit > 0) {
 			this.concurrencyThrottle = new Semaphore(concurrencyLimit, true);
 		} else {

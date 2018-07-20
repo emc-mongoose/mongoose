@@ -1,6 +1,6 @@
 package com.emc.mongoose.item
 
-import com.emc.mongoose.item.op.data.{DataOperation, DataIoTaskBuilderImpl, DataOperationsBuilderImpl}
+import com.emc.mongoose.item.op.data.{DataOperation, DataOperationsBuilderImpl}
 import com.emc.mongoose.supply.ConstantStringSupplier
 import com.github.akurilov.commons.io.Input
 import com.github.akurilov.commons.system.SizeInBytes

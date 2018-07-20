@@ -60,16 +60,16 @@
 		"service": {
 			"threads": "int32"
 		},
-		"tasks": {
+		"op": {
 			"limit": {
 				"rate": "float64",
 				"recycle": "int32"
 			},
 			"recycle": "boolean",
 			"retry": "boolean",
-			"shuffle": "boolean"
-		},
-		"type": "string"
+			"shuffle": "boolean",
+			"type": "string"
+		}
 	},
 	"output": {
 		"color": "boolean",

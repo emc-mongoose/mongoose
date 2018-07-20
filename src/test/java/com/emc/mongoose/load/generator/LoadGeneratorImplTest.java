@@ -138,7 +138,7 @@ public class LoadGeneratorImplTest {
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl<>(
 				itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
-				Long.MAX_VALUE, 0, shuffleFlag
+				Long.MAX_VALUE, 1, false, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -169,7 +169,7 @@ public class LoadGeneratorImplTest {
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
 				itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter),BATCH_SIZE,
-				Long.MAX_VALUE, 0, shuffleFlag
+				Long.MAX_VALUE, 1, false, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -200,7 +200,7 @@ public class LoadGeneratorImplTest {
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
 				itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
-				Long.MAX_VALUE, 0, shuffleFlag
+				Long.MAX_VALUE, 1, false, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -231,7 +231,7 @@ public class LoadGeneratorImplTest {
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
 				itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
-				Long.MAX_VALUE, 0, shuffleFlag
+				Long.MAX_VALUE, 1, false, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -264,7 +264,7 @@ public class LoadGeneratorImplTest {
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
 				itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
-				Long.MAX_VALUE, 0, shuffleFlag
+				Long.MAX_VALUE, 1, false, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -297,7 +297,7 @@ public class LoadGeneratorImplTest {
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
 				itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
-				Long.MAX_VALUE, 0, shuffleFlag
+				Long.MAX_VALUE, 1, false, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -331,7 +331,7 @@ public class LoadGeneratorImplTest {
 			try(
 				final LoadGenerator loadGenerator = new LoadGeneratorImpl(
 					itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
-					Long.MAX_VALUE, 0, shuffleFlag
+					Long.MAX_VALUE, 1_000_000, true, shuffleFlag
 				)
 			) {
 				((RecyclingAndCountingOutput) taskOutput).loadGenerator = loadGenerator;

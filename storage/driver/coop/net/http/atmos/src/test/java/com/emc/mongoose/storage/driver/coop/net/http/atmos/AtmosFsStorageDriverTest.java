@@ -79,7 +79,7 @@ extends AtmosStorageDriver {
 			final Map<String, Object> configSchema = TreeUtil.reduceForest(configSchemas);
 			final Config config = new BasicConfig("-", configSchema);
 			config.val("load-batch-size", 4096);
-			config.val("load-step-limit-concurrency", 0);
+			config.val("storage-driver-limit-concurrency", 0);
 			config.val("storage-net-transport", "epoll");
 			config.val("storage-net-reuseAddr", true);
 			config.val("storage-net-bindBacklogSize", 0);
@@ -103,8 +103,8 @@ extends AtmosStorageDriver {
 			config.val("storage-auth-token", AUTH_TOKEN);
 			config.val("storage-auth-secret", CREDENTIAL.getSecret());
 			config.val("storage-driver-threads", 0);
-			config.val("storage-driver-queue-input", 1_000_000);
-			config.val("storage-driver-queue-output", 1_000_000);
+			config.val("storage-driver-limit-queue-input", 1_000_000);
+			config.val("storage-driver-limit-queue-output", 1_000_000);
 			return config;
 		} catch(final Throwable cause) {
 			throw new RuntimeException(cause);

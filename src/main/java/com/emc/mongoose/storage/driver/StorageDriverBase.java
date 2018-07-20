@@ -57,8 +57,8 @@ implements StorageDriver<I,O> {
 
 		this.itemDataInput = itemDataInput;
 		final Config driverConfig = storageConfig.configVal("driver");
-		final Config queueConfig = driverConfig.configVal("queue");
-		final int outputQueueCapacity = queueConfig.intVal("output");
+		final Config limitConfig = driverConfig.configVal("limit");
+		final int outputQueueCapacity = limitConfig.intVal("queue-output");
 		this.opResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
 		this.stepId = stepId;
 		final Config authConfig = storageConfig.configVal("auth");
@@ -73,7 +73,7 @@ implements StorageDriver<I,O> {
 				this.authTokens.put(credential, authToken);
 			}
 		}
-		this.concurrencyLimit = storageConfig.intVal("limit-concurrency");
+		this.concurrencyLimit = limitConfig.intVal("concurrency");
 		this.verifyFlag = verifyFlag;
 
 		final int confWorkerCount = driverConfig.intVal("threads");

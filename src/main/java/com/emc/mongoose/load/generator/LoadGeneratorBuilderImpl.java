@@ -129,7 +129,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		// pipeline transfer buffer is not resettable
 		if(!(itemInput instanceof TransferConvertBuffer)) {
 			sizeEstimate = estimateTransferSize(
-				null, OpType.valueOf(loadConfig.stringVal("type").toUpperCase()),
+				null, OpType.valueOf(loadConfig.stringVal("op-type").toUpperCase()),
 				(Input<DataItem>) itemInput
 			);
 		}
@@ -167,8 +167,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(loadConfig == null) {
 			throw new OmgShootMyFootException("Load config is not set");
 		}
-		final Config generatorConfig = loadConfig.configVal("generator");
-		final boolean shuffleFlag = generatorConfig.boolVal("shuffle");
+		final Config opConfig = loadConfig.configVal("op");
+		final boolean shuffleFlag = opConfig.boolVal("shuffle");
 		if(itemConfig == null) {
 			throw new OmgShootMyFootException("Item config is not set");
 		}
@@ -211,7 +211,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 
 		// determine the operations type
-		final OpType opType = OpType.valueOf(loadConfig.stringVal("type").toUpperCase());
+		final OpType opType = OpType.valueOf(opConfig.stringVal("type").toUpperCase());
 		opsBuilder.opType(opType);
 
 		// determine the input path
@@ -345,16 +345,16 @@ implements LoadGeneratorBuilder<I, O, T> {
 			storageDriver.adjustIoBuffers(sizeEstimate, opType);
 		}
 
-		final Config recycleConfig = generatorConfig.configVal("recycle");
-		final boolean recycleFlag = recycleConfig.boolVal("enabled");
-		final boolean retryFlag =
-		final int recycleLimit = recycleConfig.intVal("limit");
+		final boolean recycleFlag = opConfig.boolVal("recycle");
+		final boolean retryFlag = opConfig.boolVal("retry");
+		final int recycleLimit = opConfig.intVal("limit-recycle");
 		if(recycleLimit < 1) {
 			throw new OmgShootMyFootException("Recycle limit should be > 0");
 		}
 
 		return (T) new LoadGeneratorImpl<>(
-			itemInput, opsBuilder, throttles, storageDriver, batchSize, countLimit, recycleLimit, shuffleFlag
+			itemInput, opsBuilder, throttles, storageDriver, batchSize, countLimit, recycleLimit,
+			(recycleFlag || retryFlag), shuffleFlag
 		);
 	}
 	

@@ -79,8 +79,10 @@ extends LoadStepLocalBase {
 				throw new CancellationException();
 			}
 			final Config loadConfig = subConfig.configVal("load");
-			final OpType opType = OpType.valueOf(loadConfig.stringVal("type").toUpperCase());
-			final int concurrency = loadConfig.intVal("step-limit-concurrency");
+			final Config opConfig = loadConfig.configVal("op");
+			final OpType opType = OpType.valueOf(opConfig.stringVal("type").toUpperCase());
+			final Config storageConfig = subConfig.configVal("storage");
+			final int concurrency = storageConfig.intVal("driver-limit-concurrency");
 			final Config outputConfig = subConfig.configVal("output");
 			final Config metricsConfig = outputConfig.configVal("metrics");
 			final SizeInBytes itemDataSize;
@@ -94,7 +96,6 @@ extends LoadStepLocalBase {
 			initMetrics(originIndex, opType, concurrency, metricsConfig, itemDataSize, outputColorFlag);
 
 			final Config itemConfig = subConfig.configVal("item");
-			final Config storageConfig = subConfig.configVal("storage");
 			final Config dataConfig = itemConfig.configVal("data");
 			final Config dataInputConfig = dataConfig.configVal("input");
 			final Config limitConfig = stepConfig.configVal("limit");
@@ -127,8 +128,7 @@ extends LoadStepLocalBase {
 
 					final ItemType itemType = ItemType.valueOf(itemConfig.stringVal("type").toUpperCase());
 					final ItemFactory<? extends Item> itemFactory = ItemType.getItemFactory(itemType);
-					final Config generatorConfig = loadConfig.configVal("generator");
-					final double rateLimit = generatorConfig.doubleVal("limit-rate");
+					final double rateLimit = opConfig.doubleVal("limit-rate");
 
 					try {
 						final LoadGeneratorBuilder generatorBuilder = new LoadGeneratorBuilderImpl<>()
@@ -150,8 +150,8 @@ extends LoadStepLocalBase {
 
 						final LoadStepContext stepCtx = new LoadStepContextImpl<>(
 							testStepId, generator, driver, metricsContexts.get(originIndex), limitConfig,
-							outputConfig.boolVal("metrics-trace-persist"), batchSize,
-							generatorConfig.intVal("limit-recycle")
+							outputConfig.boolVal("metrics-trace-persist"), batchSize, opConfig.intVal("limit-recycle"),
+							opConfig.boolVal("recycle"), opConfig.boolVal("retry")
 						);
 						stepContexts.add(stepCtx);
 
@@ -164,7 +164,7 @@ extends LoadStepLocalBase {
 								itemOutputDelay = TypeUtil.typeConvert(itemOutputDelayRaw, long.class);
 							}
 							nextItemBuff = new DelayedTransferConvertBuffer<>(
-								storageConfig.intVal("driver-queue-output"), itemOutputDelay, TimeUnit.SECONDS
+								storageConfig.intVal("driver-limit-queue-output"), itemOutputDelay, TimeUnit.SECONDS
 							);
 							stepCtx.operationsResultsOutput(nextItemBuff);
 						} else {

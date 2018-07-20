@@ -34,7 +34,7 @@ implements StorageDriver<I,O> {
 					+ " concurrency limit (" + concurrencyLimit + ")"
 			);
 		}
-		final int inQueueSize = storageConfig.intVal("driver-queue-input");
+		final int inQueueSize = storageConfig.intVal("driver-limit-queue-input");
 		ioExecutor = new ThreadPoolExecutor(
 			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(inQueueSize),

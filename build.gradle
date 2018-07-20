@@ -26,7 +26,7 @@ ext {
 		metrics: "4.0.2",
 		nagaina: "3.6.10",
 		netty: "4.1.25.Final",
-		nettyConnectionPool: "1.0.2",
+		nettyConnectionPool: "1.0.3",
 	]
 
 	leafProjects = subprojects.findAll {

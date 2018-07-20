@@ -55,9 +55,11 @@ extends LoadStepLocalBase {
 		}
 
 		final Config loadConfig = config.configVal("load");
+		final Config opConfig = loadConfig.configVal("op");
 		final Config stepConfig = loadConfig.configVal("step");
-		final OpType opType = OpType.valueOf(loadConfig.stringVal("type").toUpperCase());
-		final int concurrency = stepConfig.intVal("limit-concurrency");
+		final OpType opType = OpType.valueOf(opConfig.stringVal("type").toUpperCase());
+		final Config storageConfig = config.configVal("storage");
+		final int concurrency = storageConfig.intVal("driver-limit-concurrency");
 		final Config outputConfig = config.configVal("output");
 		final Config metricsConfig = outputConfig.configVal("metrics");
 		final SizeInBytes itemDataSize;
@@ -72,7 +74,6 @@ extends LoadStepLocalBase {
 		initMetrics(originIndex, opType, concurrency, metricsConfig, itemDataSize, outputColorFlag);
 
 		final Config itemConfig = config.configVal("item");
-		final Config storageConfig = config.configVal("storage");
 		final Config dataConfig = itemConfig.configVal("data");
 		final Config dataInputConfig = dataConfig.configVal("input");
 		final Config limitConfig = stepConfig.configVal("limit");
@@ -103,11 +104,9 @@ extends LoadStepLocalBase {
 					extensions, storageConfig, dataInput, dataConfig.boolVal("verify"), batchSize, testStepId
 				);
 
-				final ItemType itemType = ItemType.valueOf(
-					itemConfig.stringVal("type").toUpperCase()
-				);
+				final ItemType itemType = ItemType.valueOf(itemConfig.stringVal("type").toUpperCase());
 				final ItemFactory<Item> itemFactory = ItemType.getItemFactory(itemType);
-				final double rateLimit = loadConfig.doubleVal("generator-limit-rate");
+				final double rateLimit = opConfig.doubleVal("limit-rate");
 
 				try {
 					final LoadGeneratorBuilder generatorBuilder = new LoadGeneratorBuilderImpl<>()
@@ -126,8 +125,8 @@ extends LoadStepLocalBase {
 
 					final LoadStepContext stepCtx = new LoadStepContextImpl<>(
 						testStepId, generator, driver, metricsContexts.get(0), limitConfig,
-						outputConfig.boolVal("metrics-trace-persist"), batchSize,
-						loadConfig.intVal("generator-recycle-limit")
+						outputConfig.boolVal("metrics-trace-persist"), batchSize, opConfig.intVal("limit-recycle"),
+						opConfig.boolVal("recycle"), opConfig.boolVal("retry")
 					);
 					stepContexts.add(stepCtx);
 

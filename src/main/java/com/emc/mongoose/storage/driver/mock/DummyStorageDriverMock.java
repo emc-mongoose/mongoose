@@ -30,14 +30,15 @@ public final class DummyStorageDriverMock<I extends Item, O extends Operation<I>
 extends DaemonBase
 implements StorageDriver<I, O> {
 
-	private final int concurrencyLevel;
+	private final int concurrencyLimit;
 	private final BlockingQueue<O> opsResultsQueue;
 	private final LongAdder scheduledOpCount = new LongAdder();
 	private final LongAdder completedOpCount = new LongAdder();
 
 	public DummyStorageDriverMock(final Config storageConfig) {
-		final int outputQueueCapacity = storageConfig.intVal("driver-queue-output");
-		this.concurrencyLevel = storageConfig.intVal("driver-limit-concurrency");
+		final Config limitConfig = storageConfig.configVal("driver-limit");
+		final int outputQueueCapacity = limitConfig.intVal("queue-output");
+		this.concurrencyLimit = limitConfig.intVal("concurrency");
 		this.opsResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
 	}
 
@@ -180,7 +181,7 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final int concurrencyLimit() {
-		return concurrencyLevel;
+		return concurrencyLimit;
 	}
 
 	@Override

@@ -1,5 +1,7 @@
 package com.emc.mongoose.item.io;
 
+import com.emc.mongoose.item.Item;
+
 import com.github.akurilov.commons.io.Input;
 
 import java.util.List;
