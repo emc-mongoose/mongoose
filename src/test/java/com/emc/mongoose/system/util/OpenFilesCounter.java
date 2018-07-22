@@ -15,11 +15,7 @@ public interface OpenFilesCounter {
 		final String[] cmd = { "/bin/sh", "-c", "lsof -b | grep " + path };
 		final Process p = Runtime.getRuntime().exec(cmd);
 		final List<String> lines = new ArrayList<>();
-		try(
-			final Scanner s = new Scanner(
-				p.getInputStream(), "IBM850").useDelimiter(System.lineSeparator()
-			)
-		) {
+		try(final Scanner s = new Scanner(p.getInputStream(), "IBM850").useDelimiter(System.lineSeparator())) {
 			while(s.hasNext()) {
 				lines.add(s.next());
 			}

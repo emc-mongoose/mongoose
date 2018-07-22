@@ -120,10 +120,7 @@ public final class CircularAppendTest {
                     final String addr = localExternalAddr + ":" + port;
                     slaveNodes.put(addr, nodeSvc);
                 }
-                args.add(
-                        "--load-step-node-addrs="
-                                + slaveNodes.keySet().stream().collect(Collectors.joining(","))
-                );
+                args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
                 break;
         }
 
