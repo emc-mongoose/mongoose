@@ -34,7 +34,7 @@ implements StorageDriver<I, O> {
 	private final BlockingQueue<O> inOpQueue;
 	private final LongAdder scheduledOpCount = new LongAdder();
 	private final LongAdder completedOpCount = new LongAdder();
-	private final OperationDispatchTask opDispatchFiber;
+	private final OperationDispatchTask opDispatchTask;
 
 	protected CoopStorageDriverBase(
 		final String testStepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
@@ -49,7 +49,7 @@ implements StorageDriver<I, O> {
 		} else {
 			this.concurrencyThrottle = new Semaphore(Integer.MAX_VALUE, false);
 		}
-		this.opDispatchFiber = new OperationDispatchTask<>(
+		this.opDispatchTask = new OperationDispatchTask<>(
 			ServiceTaskExecutor.INSTANCE, this, inOpQueue, childOpQueue, stepId, batchSize
 		);
 	}
@@ -57,7 +57,7 @@ implements StorageDriver<I, O> {
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		opDispatchFiber.start();
+		opDispatchTask.start();
 	}
 
 	@Override
@@ -190,7 +190,7 @@ implements StorageDriver<I, O> {
 
 	@Override
 	protected void doShutdown() {
-		opDispatchFiber.stop();
+		opDispatchTask.stop();
 		Loggers.MSG.debug("{}: shut down", toString());
 	}
 
@@ -209,7 +209,7 @@ implements StorageDriver<I, O> {
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			super.doClose();
-			opDispatchFiber.close();
+			opDispatchTask.close();
 			childOpQueue.clear();
 			inOpQueue.clear();
 		}
