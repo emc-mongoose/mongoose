@@ -37,6 +37,7 @@ import org.apache.logging.log4j.ThreadContext;
 import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -68,7 +69,7 @@ implements LoadStepContext<I, O> {
 	private final boolean tracePersistFlag;
 	private final int batchSize;
 
-	private volatile Output<O> ioResultsOutput;
+	private volatile Output<O> opsResultsOutput;
 	
 	/**
 	 @param id test step id
@@ -235,7 +236,7 @@ implements LoadStepContext<I, O> {
 
 	@Override
 	public final void operationsResultsOutput(final Output<O> opsResultsOutput) {
-		this.ioResultsOutput = opsResultsOutput;
+		this.opsResultsOutput = opsResultsOutput;
 	}
 
 	@Override
@@ -279,9 +280,9 @@ implements LoadStepContext<I, O> {
 				if(recycleFlag) {
 					latestIoResultByItem.put(opResult.item(), opResult);
 					generator.recycle(opResult);
-				} else if(ioResultsOutput != null) {
+				} else if(opsResultsOutput != null) {
 					try {
-						if(!ioResultsOutput.put(opResult)) {
+						if(!opsResultsOutput.put(opResult)) {
 							Loggers.ERR.warn("Failed to output the I/O result");
 						}
 					} catch(final EOFException e) {
@@ -351,9 +352,9 @@ implements LoadStepContext<I, O> {
 					if(recycleFlag) {
 						latestIoResultByItem.put(opResult.item(), opResult);
 						generator.recycle(opResult);
-					} else if(ioResultsOutput != null) {
+					} else if(opsResultsOutput != null) {
 						try {
-							if(!ioResultsOutput.put(opResult)) {
+							if(! opsResultsOutput.put(opResult)) {
 								Loggers.ERR.warn("Failed to output the op result");
 							}
 						} catch(final EOFException e) {
@@ -497,29 +498,24 @@ implements LoadStepContext<I, O> {
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			try {
-				final List<O> finalResults = driver.getAll();
-				if(finalResults != null) {
-					final int finalResultsCount = finalResults.size();
-					if(finalResultsCount > 0) {
-						Loggers.MSG.debug(
-							"{}: the driver \"{}\" returned {} final I/O results to process", id,
-							driver.toString(), finalResults.size()
-						);
-						for(int i = 0; i < finalResultsCount; i += batchSize) {
-							put(finalResults, i, Math.min(i + batchSize, finalResultsCount));
-						}
+				final List<O> finalResults = new ArrayList<>(batchSize);
+				int n;
+				Loggers.MSG.debug("{}: final results processing start", id);
+				while(0 < (n = driver.get(finalResults, batchSize))) {
+					for(int i = 0; i < n; i += batchSize) {
+						put(finalResults, i, Math.min(i + batchSize, n));
 					}
 				}
+				Loggers.MSG.debug("{}: final results processing done", id);
 			} catch(final Throwable cause) {
 				LogUtil.exception(
-					Level.WARN, cause,
-					"{}: failed to process the final results for the driver {}",
-					id, driver.toString()
+					Level.WARN, cause, "{}: failed to process the final results for the driver {}", id,
+					driver.toString()
 				);
 			}
 		}
 
-		if(latestIoResultByItem != null && ioResultsOutput != null) {
+		if(latestIoResultByItem != null && opsResultsOutput != null) {
 			try {
 				final int ioResultCount = latestIoResultByItem.size();
 				Loggers.MSG.info(
@@ -527,12 +523,12 @@ implements LoadStepContext<I, O> {
 				);
 				for(final O latestItemIoResult : latestIoResultByItem.values()) {
 					try {
-						if(!ioResultsOutput.put(latestItemIoResult)) {
+						if(! opsResultsOutput.put(latestItemIoResult)) {
 							Loggers.ERR.debug(
 								"{}: item info output fails to ingest, blocking the closing method",
 								id
 							);
-							while(!ioResultsOutput.put(latestItemIoResult)) {
+							while(! opsResultsOutput.put(latestItemIoResult)) {
 								Thread.sleep(1);
 							}
 							Loggers.MSG.debug("{}: closing method unblocked", id);
@@ -550,9 +546,9 @@ implements LoadStepContext<I, O> {
 			}
 			latestIoResultByItem.clear();
 		}
-		if(ioResultsOutput != null) {
+		if(opsResultsOutput != null) {
 			try {
-				ioResultsOutput.put((O) null);
+				opsResultsOutput.put((O) null);
 				Loggers.MSG.debug("{}: poisoned the items output", id);
 			} catch(final IOException e) {
 				LogUtil.exception(
@@ -560,8 +556,7 @@ implements LoadStepContext<I, O> {
 				);
 			} catch(final NullPointerException e) {
 				LogUtil.exception(
-					Level.ERROR, e, "{}: results output \"{}\" failed to eat the poison", id,
-					ioResultsOutput
+					Level.ERROR, e, "{}: results output \"{}\" failed to eat the poison", id, opsResultsOutput
 				);
 			}
 		}

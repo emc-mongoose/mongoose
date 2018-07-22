@@ -22,10 +22,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by andrey on 23.08.17.
  */
-public final class OperationDispatchFiber<I extends Item, O extends Operation<I>>
+public final class OperationDispatchTask<I extends Item, O extends Operation<I>>
 extends ExclusiveFiberBase {
 
-	private static final String CLS_NAME = OperationDispatchFiber.class.getSimpleName();
+	private static final String CLS_NAME = OperationDispatchTask.class.getSimpleName();
 
 	private final String stepId;
 	private final int batchSize;
@@ -36,7 +36,7 @@ extends ExclusiveFiberBase {
 
 	private int n = 0; // the current count of the load operations in the buffer
 
-	public OperationDispatchFiber(
+	public OperationDispatchTask(
 		final FibersExecutor executor, final CoopStorageDriverBase<I, O> storageDriver,
 		final BlockingQueue<O> inOpQueue, final BlockingQueue<O> childOpQueue, final String stepId,
 		final int batchSize
@@ -44,7 +44,7 @@ extends ExclusiveFiberBase {
 		this(executor, new OptLockArrayBuffer<>(batchSize), storageDriver, inOpQueue, childOpQueue, stepId, batchSize);
 	}
 
-	private OperationDispatchFiber(
+	private OperationDispatchTask(
 		final FibersExecutor executor, final OptLockBuffer<O> buff, final CoopStorageDriverBase<I, O> storageDriver,
 		final BlockingQueue<O> inOpQueue, final BlockingQueue<O> childOpQueue, final String stepId,
 		final int batchSize

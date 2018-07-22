@@ -18,7 +18,6 @@ import static com.github.akurilov.netty.connection.pool.NonBlockingConnPool.ATTR
 import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 
 import com.emc.mongoose.exception.OmgShootMyFootException;
-import com.emc.mongoose.concurrent.ThreadDump;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.item.op.composite.data.CompositeDataOperation;
 import com.emc.mongoose.item.op.data.DataOperation;
@@ -50,6 +49,7 @@ import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.message.ThreadDumpMessage;
 
 import javax.net.ssl.SSLEngine;
 import java.io.IOException;
@@ -164,10 +164,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				IO_EXECUTOR_LOCK.unlock();
 			}
 		} else {
-			Loggers.ERR.error(
-				"Failed to obtain the I/O executor lock in time, thread dump:\n{}",
-				new ThreadDump().toString()
-			);
+			Loggers.ERR.error(new ThreadDumpMessage("Failed to obtain the I/O executor lock in time"));
 		}
 
 		final String socketChannelClsName = SOCKET_CHANNEL_IMPLS.get(transportKey);
@@ -660,10 +657,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						IO_EXECUTOR_LOCK.unlock();
 					}
 				} else {
-					Loggers.ERR.error(
-						"Failed to obtain the I/O executor lock in time, thread dump:\n{}",
-						new ThreadDump().toString()
-					);
+					Loggers.ERR.error(new ThreadDumpMessage("Failed to obtain the I/O executor lock in time"));
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(Level.WARN, e, "Graceful I/O workers shutdown was interrupted");

@@ -38,11 +38,6 @@ extends AsyncRunnable, Input<O>, Output<O> {
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
 	) throws IOException;
-
-	@Override
-	default int get(final List<O> buff, final int limit) {
-		throw new AssertionError("Shouldn't be invoked");
-	}
 	
 	@Override
 	default void reset() {

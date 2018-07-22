@@ -142,15 +142,12 @@ extends LoadStepLocalBase {
 						} catch(final IOException e) {
 							LogUtil.exception(
 								Level.ERROR, e,
-								"Failed to initialize the item output, the processed items " +
-									"info won't be persisted"
+								"Failed to initialize the item output, the processed items info won't be persisted"
 							);
 						}
 					}
 				} catch(final OmgShootMyFootException e) {
-					throw new IllegalStateException(
-						"Failed to initialize the load generator", e
-					);
+					throw new IllegalStateException("Failed to initialize the load generator", e);
 				}
 			} catch(final OmgShootMyFootException e) {
 				throw new IllegalStateException("Failed to initialize the storage driver", e);

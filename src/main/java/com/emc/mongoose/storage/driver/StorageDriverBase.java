@@ -15,7 +15,6 @@ import org.apache.logging.log4j.CloseableThreadContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -35,7 +34,7 @@ implements StorageDriver<I,O> {
 
 	private final DataInput itemDataInput;
 	protected final String stepId;
-	private final BlockingQueue<O> opResultsQueue;
+	private final BlockingQueue<O> opsResultsQueue;
 	protected final int concurrencyLimit;
 	protected final int ioWorkerCount;
 	protected final Credential credential;
@@ -59,7 +58,7 @@ implements StorageDriver<I,O> {
 		final Config driverConfig = storageConfig.configVal("driver");
 		final Config limitConfig = driverConfig.configVal("limit");
 		final int outputQueueCapacity = limitConfig.intVal("queue-output");
-		this.opResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
+		this.opsResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
 		this.stepId = stepId;
 		final Config authConfig = storageConfig.configVal("auth");
 		this.credential = Credential.getInstance(
@@ -118,7 +117,7 @@ implements StorageDriver<I,O> {
 			Loggers.MSG.trace("{}: Load operation completed", op);
 		}
 		final O opResult = op.result();
-		if(!opResultsQueue.offer(opResult)) {
+		if(! opsResultsQueue.offer(opResult)) {
 			Loggers.ERR.warn("{}: Load operations results queue overflow, dropping the result", toString());
 		}
 	}
@@ -130,25 +129,19 @@ implements StorageDriver<I,O> {
 
 	@Override
 	public final O get() {
-		return opResultsQueue.poll();
+		return opsResultsQueue.poll();
 	}
 
 	@Override
-	public final List<O> getAll() {
-		final int n = opResultsQueue.size();
-		if(n == 0) {
-			return Collections.emptyList();
-		}
-		final List<O> opResults = new ArrayList<>(n);
-		opResultsQueue.drainTo(opResults, n);
-		return opResults;
+	public final int get(final List<O> buffer, final int limit) {
+		return opsResultsQueue.drainTo(buffer, limit);
 	}
 
 	@Override
 	public final long skip(final long count) {
 		int n = (int) Math.min(count, Integer.MAX_VALUE);
 		final List<O> tmpBuff = new ArrayList<>(n);
-		n = opResultsQueue.drainTo(tmpBuff, n);
+		n = opsResultsQueue.drainTo(tmpBuff, n);
 		tmpBuff.clear();
 		return n;
 	}
@@ -167,13 +160,13 @@ implements StorageDriver<I,O> {
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			itemDataInput.close();
-			final int opResultsQueueSize = opResultsQueue.size();
+			final int opResultsQueueSize = opsResultsQueue.size();
 			if(opResultsQueueSize > 0) {
 				Loggers.ERR.warn(
 					"{}: Load operations results queue contains {} unhandled elements", toString(), opResultsQueueSize
 				);
 			}
-			opResultsQueue.clear();
+			opsResultsQueue.clear();
 			authTokens.clear();
 			pathToCredMap.clear();
 			pathMap.clear();

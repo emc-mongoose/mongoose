@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.driver.coop.nio;
 
-import com.emc.mongoose.concurrent.ThreadDump;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.Item;
@@ -25,8 +24,10 @@ import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FibersExecutor;
 
 import org.apache.logging.log4j.CloseableThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.message.ThreadDumpMessage;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -71,7 +72,7 @@ implements NioStorageDriver<I, O> {
 		opBuffCapacity = Math.max(MIN_TASK_BUFF_CAPACITY, concurrencyLimit / ioWorkerCount);
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			opBuffs[i] = new OptLockArrayBuffer<>(opBuffCapacity);
-			ioFibers.add(new NioFiber(IO_EXECUTOR, opBuffs[i]));
+			ioFibers.add(new NioWorkerTask(IO_EXECUTOR, opBuffs[i]));
 		}
 	}
 
@@ -80,7 +81,7 @@ implements NioStorageDriver<I, O> {
 	 The load operation itself may correspond to a large data transfer so it can't be non-blocking.
 	 So the load operation may be invoked multiple times (in the reentrant manner).
 	 */
-	private final class NioFiber
+	private final class NioWorkerTask
 	extends ExclusiveFiberBase {
 
 		private final OptLockBuffer<O> opBuff;
@@ -89,7 +90,7 @@ implements NioStorageDriver<I, O> {
 		private int opBuffSize;
 		private O op;
 
-		public NioFiber(final FibersExecutor executor, final OptLockBuffer<O> opBuff) {
+		public NioWorkerTask(final FibersExecutor executor, final OptLockBuffer<O> opBuff) {
 			super(executor, opBuff);
 			this.opBuff = opBuff;
 			this.opLocalBuff = new ArrayList<>(opBuffCapacity);
@@ -275,18 +276,11 @@ implements NioStorageDriver<I, O> {
 			ioFiber.close();
 		}
 		for(int i = 0; i < ioWorkerCount; i ++) {
-			try(
-				final CloseableThreadContext.Instance logCtx = CloseableThreadContext.put(
-					KEY_CLASS_NAME, CLS_NAME
-				)
-			) {
+			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
 				if(opBuffs[i].tryLock(Fiber.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 					opBuffs[i].clear();
 				} else if(opBuffs[i].size() > 0){
-					Loggers.ERR.debug(
-						"Failed to obtain the load operations buff lock in time, thread dump:\n{}",
-						new ThreadDump().toString()
-					);
+					Loggers.ERR.debug(new ThreadDumpMessage("Failed to obtain the load operations buff lock in time"));
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(

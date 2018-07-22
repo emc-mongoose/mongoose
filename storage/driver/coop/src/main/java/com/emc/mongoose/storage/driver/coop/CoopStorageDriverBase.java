@@ -34,7 +34,7 @@ implements StorageDriver<I, O> {
 	private final BlockingQueue<O> inOpQueue;
 	private final LongAdder scheduledOpCount = new LongAdder();
 	private final LongAdder completedOpCount = new LongAdder();
-	private final OperationDispatchFiber opDispatchFiber;
+	private final OperationDispatchTask opDispatchFiber;
 
 	protected CoopStorageDriverBase(
 		final String testStepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
@@ -49,7 +49,7 @@ implements StorageDriver<I, O> {
 		} else {
 			this.concurrencyThrottle = new Semaphore(Integer.MAX_VALUE, false);
 		}
-		this.opDispatchFiber = new OperationDispatchFiber<>(
+		this.opDispatchFiber = new OperationDispatchTask<>(
 			ServiceTaskExecutor.INSTANCE, this, inOpQueue, childOpQueue, stepId, batchSize
 		);
 	}
