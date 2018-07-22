@@ -4,9 +4,9 @@ import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.io.task.IoTask;
-import com.emc.mongoose.item.io.task.composite.CompositeIoTask;
-import com.emc.mongoose.item.io.task.partial.PartialIoTask;
+import com.emc.mongoose.item.op.Operation;
+import com.emc.mongoose.item.op.composite.CompositeOperation;
+import com.emc.mongoose.item.op.partial.PartialOperation;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.storage.driver.StorageDriverBase;
@@ -25,51 +25,50 @@ import java.util.concurrent.atomic.LongAdder;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
-public abstract class CoopStorageDriverBase<I extends Item, O extends IoTask<I>>
+public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<I>>
 extends StorageDriverBase<I, O>
 implements StorageDriver<I, O> {
 
 	protected final Semaphore concurrencyThrottle;
-	protected final BlockingQueue<O> childTasksQueue;
-	private final BlockingQueue<O> inTasksQueue;
-	private final LongAdder scheduledTaskCount = new LongAdder();
-	private final LongAdder completedTaskCount = new LongAdder();
-	private final IoTasksDispatchFiber ioTasksDispatchFiber;
+	protected final BlockingQueue<O> childOpQueue;
+	private final BlockingQueue<O> inOpQueue;
+	private final LongAdder scheduledOpCount = new LongAdder();
+	private final LongAdder completedOpCount = new LongAdder();
+	private final OperationDispatchTask opDispatchFiber;
 
 	protected CoopStorageDriverBase(
-		final String testStepId, final DataInput dataInput, final Config loadConfig,
-		final Config storageConfig, final boolean verifyFlag
+		final String testStepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+		final int batchSize
 	) throws OmgShootMyFootException {
-		super(testStepId, dataInput, loadConfig, storageConfig, verifyFlag);
-		final Config queueConfig = storageConfig.configVal("driver-queue");
-		this.childTasksQueue = new ArrayBlockingQueue<>(queueConfig.intVal("input"));
-		this.inTasksQueue = new ArrayBlockingQueue<>(queueConfig.intVal("input"));
-		if(concurrencyLevel > 0) {
-			this.concurrencyThrottle = new Semaphore(concurrencyLevel, true);
+		super(testStepId, dataInput, storageConfig, verifyFlag);
+		final int inQueueLimit = storageConfig.intVal("driver-limit-queue-input");
+		this.childOpQueue = new ArrayBlockingQueue<>(inQueueLimit);
+		this.inOpQueue = new ArrayBlockingQueue<>(inQueueLimit);
+		if(concurrencyLimit > 0) {
+			this.concurrencyThrottle = new Semaphore(concurrencyLimit, true);
 		} else {
 			this.concurrencyThrottle = new Semaphore(Integer.MAX_VALUE, false);
 		}
-		final int batchSize = loadConfig.intVal("batch-size");
-		this.ioTasksDispatchFiber = new IoTasksDispatchFiber<>(
-			ServiceTaskExecutor.INSTANCE, this, inTasksQueue, childTasksQueue, stepId, batchSize
+		this.opDispatchFiber = new OperationDispatchTask<>(
+			ServiceTaskExecutor.INSTANCE, this, inOpQueue, childOpQueue, stepId, batchSize
 		);
 	}
 
 	@Override
 	protected void doStart()
 	throws IllegalStateException {
-		ioTasksDispatchFiber.start();
+		opDispatchFiber.start();
 	}
 
 	@Override
-	public final boolean put(final O task)
+	public final boolean put(final O op)
 	throws EOFException {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
-		prepareIoTask(task);
-		if(inTasksQueue.offer(task)) {
-			scheduledTaskCount.increment();
+		prepareOperation(op);
+		if(inOpQueue.offer(op)) {
+			scheduledOpCount.increment();
 			return true;
 		} else {
 			return false;
@@ -77,38 +76,38 @@ implements StorageDriver<I, O> {
 	}
 
 	@Override
-	public final int put(final List<O> tasks, final int from, final int to)
+	public final int put(final List<O> ops, final int from, final int to)
 	throws EOFException {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
 		int i = from;
-		O nextTask;
+		O nextOp;
 		while(i < to && isStarted()) {
-			nextTask = tasks.get(i);
-			prepareIoTask(nextTask);
-			if(inTasksQueue.offer(tasks.get(i))) {
+			nextOp = ops.get(i);
+			prepareOperation(nextOp);
+			if(inOpQueue.offer(ops.get(i))) {
 				i ++;
 			} else {
 				break;
 			}
 		}
 		final int n = i - from;
-		scheduledTaskCount.add(n);
+		scheduledOpCount.add(n);
 		return n;
 	}
 
 	@Override
-	public final int put(final List<O> tasks)
+	public final int put(final List<O> ops)
 	throws EOFException {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
 		int n = 0;
-		for(final O nextIoTask : tasks) {
+		for(final O nextOp: ops) {
 			if(isStarted()) {
-				prepareIoTask(nextIoTask);
-				if(inTasksQueue.offer(nextIoTask)) {
+				prepareOperation(nextOp);
+				if(inOpQueue.offer(nextOp)) {
 					n ++;
 				} else {
 					break;
@@ -117,78 +116,73 @@ implements StorageDriver<I, O> {
 				break;
 			}
 		}
-		scheduledTaskCount.add(n);
+		scheduledOpCount.add(n);
 		return n;
 	}
 
 	@Override
-	public final int activeTaskCount() {
-		if(concurrencyLevel > 0) {
-			return concurrencyLevel - concurrencyThrottle.availablePermits();
+	public final int activeOpCount() {
+		if(concurrencyLimit > 0) {
+			return concurrencyLimit - concurrencyThrottle.availablePermits();
 		} else {
 			return Integer.MAX_VALUE - concurrencyThrottle.availablePermits();
 		}
 	}
 
 	@Override
-	public final long getScheduledTaskCount() {
-		return scheduledTaskCount.sum();
+	public final long scheduledOpCount() {
+		return scheduledOpCount.sum();
 	}
 
 	@Override
-	public final long getCompletedTaskCount() {
-		return completedTaskCount.sum();
+	public final long completedOpCount() {
+		return completedOpCount.sum();
 	}
 
 	@Override
 	public final boolean isIdle() {
-		if(concurrencyLevel > 0) {
+		if(concurrencyLimit > 0) {
 			return !concurrencyThrottle.hasQueuedThreads()
-				&& concurrencyThrottle.availablePermits() >= concurrencyLevel;
+				&& concurrencyThrottle.availablePermits() >= concurrencyLimit;
 		} else {
 			return concurrencyThrottle.availablePermits() == Integer.MAX_VALUE;
 		}
 	}
 
-	protected abstract boolean submit(final O ioTask)
+	protected abstract boolean submit(final O op)
 	throws IllegalStateException;
 
-	protected abstract int submit(final List<O> ioTasks, final int from, final int to)
+	protected abstract int submit(final List<O> ops, final int from, final int to)
 	throws IllegalStateException;
 
-	protected abstract int submit(final List<O> ioTasks)
+	protected abstract int submit(final List<O> ops)
 	throws IllegalStateException;
 
 	@SuppressWarnings("unchecked")
-	protected final void ioTaskCompleted(final O ioTask) {
-		super.ioTaskCompleted(ioTask);
+	protected final void opCompleted(final O op) {
+		super.opCompleted(op);
 
-		completedTaskCount.increment();
+		completedOpCount.increment();
 
-		if(ioTask instanceof CompositeIoTask) {
-			final CompositeIoTask parentTask = (CompositeIoTask) ioTask;
-			if(!parentTask.allSubTasksDone()) {
-				final List<O> subTasks = parentTask.subTasks();
-				for(final O nextSubTask : subTasks) {
-					if(!childTasksQueue.offer(nextSubTask/*, 1, TimeUnit.MICROSECONDS*/)) {
-						Loggers.ERR.warn(
-							"{}: I/O child tasks queue overflow, dropping the I/O sub-task",
-							toString()
-						);
+		if(op instanceof CompositeOperation) {
+			final CompositeOperation parentOp = (CompositeOperation) op;
+			if(!parentOp.allSubOperationsDone()) {
+				final List<O> subOps = parentOp.subOperations();
+				for(final O nextSubOp: subOps) {
+					if(!childOpQueue.offer(nextSubOp/*, 1, TimeUnit.MICROSECONDS*/)) {
+						Loggers.ERR.warn("{}: Child operations queue overflow, dropping the operation", toString());
 						break;
 					}
 				}
 			}
-		} else if(ioTask instanceof PartialIoTask) {
-			final PartialIoTask subTask = (PartialIoTask) ioTask;
-			final CompositeIoTask parentTask = subTask.parent();
-			if(parentTask.allSubTasksDone()) {
+		} else if(op instanceof PartialOperation) {
+			final PartialOperation subOp = (PartialOperation) op;
+			final CompositeOperation parentOp = subOp.parent();
+			if(parentOp.allSubOperationsDone()) {
 				// execute once again to finalize the things if necessary:
 				// complete the multipart upload, for example
-				if(!childTasksQueue.offer((O) parentTask/*, 1, TimeUnit.MICROSECONDS*/)) {
-					Loggers.ERR.warn(
-						"{}: I/O child tasks queue overflow, dropping the I/O task", toString()
-					);
+				if(!childOpQueue.offer((O) parentOp/*, 1, TimeUnit.MICROSECONDS*/)) {
+					Loggers.ERR.warn("{}: Child operations queue overflow, dropping the operation", toString());
 				}
 			}
 		}
@@ -196,7 +190,7 @@ implements StorageDriver<I, O> {
 
 	@Override
 	protected void doShutdown() {
-		ioTasksDispatchFiber.stop();
+		opDispatchFiber.stop();
 		Loggers.MSG.debug("{}: shut down", toString());
 	}
 
@@ -215,9 +209,9 @@ implements StorageDriver<I, O> {
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {
 			super.doClose();
-			ioTasksDispatchFiber.close();
-			childTasksQueue.clear();
-			inTasksQueue.clear();
+			opDispatchFiber.close();
+			childOpQueue.clear();
+			inOpQueue.clear();
 		}
 	}
 }

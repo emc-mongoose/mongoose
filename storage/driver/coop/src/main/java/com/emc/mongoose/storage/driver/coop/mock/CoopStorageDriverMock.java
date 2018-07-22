@@ -5,9 +5,9 @@ import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.IoTask;
-import com.emc.mongoose.item.io.task.data.DataIoTask;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.Operation;
+import com.emc.mongoose.item.op.data.DataOperation;
 import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import com.github.akurilov.commons.collection.Range;
@@ -17,78 +17,78 @@ import com.github.akurilov.confuse.Config;
 import java.io.IOException;
 import java.util.List;
 
-public class CoopStorageDriverMock<I extends Item, O extends IoTask<I>>
+public class CoopStorageDriverMock<I extends Item, O extends Operation<I>>
 extends CoopStorageDriverBase<I, O> {
 
 	private final Random rnd = new Random();
 
 	public CoopStorageDriverMock(
-		final String testStepId, final DataInput dataInput, final Config loadConfig,
-		final Config storageConfig, final boolean verifyFlag
+		final String testStepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+		final int batchSize
 	) throws OmgShootMyFootException {
-		super(testStepId, dataInput, loadConfig, storageConfig, verifyFlag);
+		super(testStepId, dataInput, storageConfig, verifyFlag, batchSize);
 	}
 
 	@Override
-	protected boolean submit(final O ioTask)
+	protected boolean submit(final O op)
 	throws IllegalStateException {
-		ioTask.startRequest();
-		ioTask.finishRequest();
-		ioTask.startResponse();
-		if(ioTask instanceof DataIoTask) {
-			final DataIoTask dataIoTask = (DataIoTask) ioTask;
-			final DataItem dataItem = dataIoTask.item();
-			switch(dataIoTask.ioType()) {
+		op.startRequest();
+		op.finishRequest();
+		op.startResponse();
+		if(op instanceof DataOperation) {
+			final DataOperation dataOp = (DataOperation) op;
+			final DataItem dataItem = dataOp.item();
+			switch(dataOp.type()) {
 				case CREATE:
 					try {
-						dataIoTask.countBytesDone(dataItem.size());
+						dataOp.countBytesDone(dataItem.size());
 					} catch(final IOException ignored) {
 					}
 					break;
 				case READ:
-					dataIoTask.startDataResponse();
+					dataOp.startDataResponse();
 					break;
 				case UPDATE:
-					final List<Range> fixedRanges = dataIoTask.fixedRanges();
+					final List<Range> fixedRanges = dataOp.fixedRanges();
 					if(fixedRanges == null || fixedRanges.isEmpty()) {
-						if(dataIoTask.hasMarkedRanges()) {
-							dataIoTask.countBytesDone(dataIoTask.markedRangesSize());
+						if(dataOp.hasMarkedRanges()) {
+							dataOp.countBytesDone(dataOp.markedRangesSize());
 						} else {
 							try {
-								dataIoTask.countBytesDone(dataItem.size());
+								dataOp.countBytesDone(dataItem.size());
 							} catch(final IOException ignored) {
 							}
 						}
 					} else {
-						dataIoTask.countBytesDone(dataIoTask.markedRangesSize());
+						dataOp.countBytesDone(dataOp.markedRangesSize());
 					}
 					break;
 				default:
 					break;
 			}
 		}
-		ioTask.finishResponse();
-		ioTask.status(IoTask.Status.SUCC);
-		ioTaskCompleted(ioTask);
+		op.finishResponse();
+		op.status(Operation.Status.SUCC);
+		opCompleted(op);
 		return true;
 	}
 
 	@Override
-	protected int submit(final List<O> ioTasks, final int from, final int to)
+	protected int submit(final List<O> ops, final int from, final int to)
 	throws IllegalStateException {
 		for(int i = from; i < to; i ++) {
-			submit(ioTasks.get(i));
+			submit(ops.get(i));
 		}
 		return to - from;
 	}
 
 	@Override
-	protected int submit(final List<O> ioTasks)
+	protected int submit(final List<O> ops)
 	throws IllegalStateException {
-		for(final O ioTask : ioTasks) {
-			submit(ioTask);
+		for(final O op: ops) {
+			submit(op);
 		}
-		return ioTasks.size();
+		return ops.size();
 	}
 
 	@Override
@@ -110,7 +110,7 @@ extends CoopStorageDriverBase<I, O> {
 	}
 
 	@Override
-	public void adjustIoBuffers(final long avgTransferSize, final IoType ioType) {
+	public void adjustIoBuffers(final long avgTransferSize, final OpType opType) {
 
 	}
 }

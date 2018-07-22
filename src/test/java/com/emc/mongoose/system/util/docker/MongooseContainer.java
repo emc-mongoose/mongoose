@@ -111,7 +111,7 @@ public final class MongooseContainer
         super(version, env, VOLUME_BINDS, true, PORT_DEBUG, PORT_JMX);
         this.args = args;
         this.args.add("--load-step-id=" + stepId);
-        this.args.add("--load-step-limit-concurrency=" + concurrency.getValue());
+        this.args.add("--storage-driver-limit-concurrency=" + concurrency.getValue());
         this.args.add("--item-data-size=" + itemSize.getValue());
         this.args.add("--output-metrics-trace-persist");
         if (containerScenarioPath != null) {

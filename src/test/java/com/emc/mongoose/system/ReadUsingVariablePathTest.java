@@ -1,7 +1,7 @@
 package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
@@ -188,7 +188,7 @@ public final class ReadUsingVariablePathTest {
         // ${FILE_OUTPUT_PATH}/b/fedcba9876543210
         final Pattern subPathPtrn = Pattern.compile("(/[0-9a-f]){1,2}/[0-9a-f]{16}");
         final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
-            testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), itemSize.getValue());
+            testIoTraceRecord(ioTraceRec, OpType.READ.ordinal(), itemSize.getValue());
             String nextFilePath = ioTraceRec.get("ItemPath");
             assertTrue(nextFilePath.startsWith(containerFileOutputPath));
             nextFilePath = nextFilePath.substring(baseOutputPathLen);
@@ -211,25 +211,25 @@ public final class ReadUsingVariablePathTest {
         }
 
         testMetricsLogRecords(
-                getContainerMetricsLogRecords(stepId), IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+                getContainerMetricsLogRecords(stepId), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
                 itemSize.getValue(), EXPECTED_COUNT, 0, outputMetricsAveragePeriod
         );
 
         testTotalMetricsLogRecord(
                 getContainerMetricsTotalLogRecords(stepId).get(0),
-                IoType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+                OpType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
                 EXPECTED_COUNT, 0
         );
 
         final String stdOutContent = testContainer.stdOutContent();
 
         testSingleMetricsStdout(
-                stdOutContent.replaceAll("[\r\n]+", " "), IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+                stdOutContent.replaceAll("[\r\n]+", " "), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
                 itemSize.getValue(), outputMetricsAveragePeriod
         );
 
         testFinalMetricsTableRowStdout(
-                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
+                stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
                 EXPECTED_COUNT, 0, itemSize.getValue()
         );
 

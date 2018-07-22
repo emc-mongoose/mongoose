@@ -1,7 +1,7 @@
 package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
@@ -123,10 +123,7 @@ public final class CopyUsingInputPathTest {
                 );
                 final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
                 storageMocks.put(addr, storageMock);
-                args.add(
-                        "--storage-net-node-addrs="
-                                + storageMocks.keySet().stream().collect(Collectors.joining(","))
-                );
+                args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
                 break;
         }
 
@@ -224,14 +221,14 @@ public final class CopyUsingInputPathTest {
                     );
                 }
                 testIoTraceRecord(
-                        ioTraceRecord, IoType.CREATE.ordinal(), new SizeInBytes(nextSrcFile.length())
+                        ioTraceRecord, OpType.CREATE.ordinal(), new SizeInBytes(nextSrcFile.length())
                 );
                 ioTraceRecCount.increment();
             };
         } else {
             final String node = storageMocks.keySet().iterator().next();
             ioTraceRecTestFunc = ioTraceRecord -> {
-                testIoTraceRecord(ioTraceRecord, IoType.CREATE.ordinal(), itemSize.getValue());
+                testIoTraceRecord(ioTraceRecord, OpType.CREATE.ordinal(), itemSize.getValue());
                 final String nextItemPath = ioTraceRecord.get("ItemPath");
                 if (HttpStorageMockUtil.getContentLength(node, nextItemPath) < 0) {
                     // not found
@@ -263,13 +260,13 @@ public final class CopyUsingInputPathTest {
         if (storageType.equals(StorageType.FS)) {
             // some files may remain not written fully
             testTotalMetricsLogRecord(
-                    totalMetricsLogRecords.get(0), IoType.CREATE, concurrency.getValue(),
+                    totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(),
                     runMode.getNodeCount(),
                     new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0, 0
             );
         } else {
             testTotalMetricsLogRecord(
-                    totalMetricsLogRecords.get(0), IoType.CREATE, concurrency.getValue(),
+                    totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(),
                     runMode.getNodeCount(), itemSize.getValue(), 0, 0
             );
         }
@@ -290,24 +287,24 @@ public final class CopyUsingInputPathTest {
         if (storageType.equals(StorageType.FS)) {
             // some files may remain not written fully
             testMetricsLogRecords(
-                    metricsLogRecords, IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
+                    metricsLogRecords, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
                     new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0, 0,
                     outputMetricsAveragePeriod
             );
         } else {
             testMetricsLogRecords(
-                    metricsLogRecords, IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+                    metricsLogRecords, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
                     0, 0, outputMetricsAveragePeriod
             );
         }
 
         final String stdOutContent = testContainer.stdOutContent();
         testSingleMetricsStdout(
-                stdOutContent.replaceAll("[\r\n]+", " "), IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
+                stdOutContent.replaceAll("[\r\n]+", " "), OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
                 itemSize.getValue(), outputMetricsAveragePeriod
         );
         testFinalMetricsTableRowStdout(
-                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(), 0, 0,
+                stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(), concurrency.getValue(), 0, 0,
                 itemSize.getValue()
         );
     }

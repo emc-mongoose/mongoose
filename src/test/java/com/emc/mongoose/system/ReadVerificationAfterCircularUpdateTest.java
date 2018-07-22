@@ -2,8 +2,8 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
@@ -205,40 +205,40 @@ public class ReadVerificationAfterCircularUpdateTest {
         final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
             assertEquals(
                     "Record #" + ioTraceRecCount.sum() + ": unexpected operation type " +
-                            ioTraceRec.get("IoTypeCode"),
-                    IoType.READ, IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))]
+                            ioTraceRec.get("OpTypeCode"),
+                    OpType.READ, OpType.values()[Integer.parseInt(ioTraceRec.get("OpTypeCode"))]
             );
             assertEquals(
                     "Record #" + ioTraceRecCount.sum() + ": unexpected status code " +
                             ioTraceRec.get("StatusCode"),
-                    IoTask.Status.SUCC,
-                    IoTask.Status.values()[Integer.parseInt(ioTraceRec.get("StatusCode"))]
+                    Operation.Status.SUCC,
+                    Operation.Status.values()[Integer.parseInt(ioTraceRec.get("StatusCode"))]
             );
         };
         testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
 
         testTotalMetricsLogRecord(
                 getMetricsTotalLogRecords(stepId).get(0),
-                IoType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), 0, 0
+                OpType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), 0, 0
         );
 
         testMetricsLogRecords(
                 getMetricsLogRecords(stepId),
-                IoType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), 0, 0,
+                OpType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), 0, 0,
                 averagePeriod
         );
 
         testSingleMetricsStdout(
                 stdOutContent.replaceAll("[\r\n]+", " "),
-                IoType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+                OpType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
                 averagePeriod
         );
         testMetricsTableStdout(
                 stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-                new HashMap<IoType, Integer>() {{
-                    put(IoType.CREATE, concurrency.getValue());
-                    put(IoType.UPDATE, concurrency.getValue());
-                    put(IoType.READ, concurrency.getValue());
+                new HashMap<OpType, Integer>() {{
+                    put(OpType.CREATE, concurrency.getValue());
+                    put(OpType.UPDATE, concurrency.getValue());
+                    put(OpType.READ, concurrency.getValue());
                 }}
         );
     }

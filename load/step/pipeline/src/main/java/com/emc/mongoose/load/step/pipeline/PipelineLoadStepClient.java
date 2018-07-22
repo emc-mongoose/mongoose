@@ -1,7 +1,7 @@
 package com.emc.mongoose.load.step.pipeline;
 
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.load.step.client.LoadStepClient;
 import com.emc.mongoose.load.step.client.LoadStepClientBase;
 import com.emc.mongoose.logging.LogUtil;
@@ -60,9 +60,8 @@ extends LoadStepClientBase  {
 				LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
 				throw new CancellationException();
 			}
-			final Config loadConfig = subConfig.configVal("load");
-			final IoType ioType = IoType.valueOf(loadConfig.stringVal("type").toUpperCase());
-			final int concurrency = loadConfig.intVal("step-limit-concurrency");
+			final OpType opType = OpType.valueOf(config.stringVal("load-op-type").toUpperCase());
+			final int concurrency = config.intVal("storage-driver-limit-concurrency");
 			final Config outputConfig = subConfig.configVal("output");
 			final Config metricsConfig = outputConfig.configVal("metrics");
 			final SizeInBytes itemDataSize;
@@ -74,7 +73,7 @@ extends LoadStepClientBase  {
 			}
 			final boolean colorFlag = outputConfig.boolVal("color");
 
-			initMetrics(originIndex, ioType, concurrency, metricsConfig, itemDataSize, colorFlag);
+			initMetrics(originIndex, opType, concurrency, metricsConfig, itemDataSize, colorFlag);
 		}
 	}
 

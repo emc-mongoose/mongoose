@@ -6,18 +6,18 @@ import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.io.collection.CircularListInput;
 
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.supply.ConstantStringSupplier;
 import com.emc.mongoose.supply.RangePatternDefinedSupplier;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.IoTaskBuilder;
-import com.emc.mongoose.item.io.task.data.DataIoTaskBuilderImpl;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.OperationsBuilder;
+import com.emc.mongoose.item.op.data.DataOperationsBuilderImpl;
 import com.emc.mongoose.item.DataItemImpl;
 import com.emc.mongoose.item.DataItemFactoryImpl;
 import com.emc.mongoose.item.ItemFactory;
 import com.emc.mongoose.item.ItemNameSupplier;
 import com.emc.mongoose.item.ItemNamingType;
-import com.emc.mongoose.item.NewDataItemInput;
+import com.emc.mongoose.item.io.NewDataItemInput;
 
 import org.junit.Test;
 
@@ -91,7 +91,7 @@ public class LoadGeneratorImplTest {
 		@Override
 		public boolean put(final T item)
 		throws IOException {
-			loadGenerator.recycle((IoTask) item);
+			loadGenerator.recycle((Operation) item);
 			return super.put(item);
 		}
 
@@ -99,7 +99,7 @@ public class LoadGeneratorImplTest {
 		public int put(final List<T> buffer, final int from, final int to)
 		throws IOException {
 			for(int i = from; i < to; i ++) {
-				loadGenerator.recycle((IoTask) buffer.get(i));
+				loadGenerator.recycle((Operation) buffer.get(i));
 			}
 			return super.put(buffer, from, to);
 		}
@@ -108,7 +108,7 @@ public class LoadGeneratorImplTest {
 		public int put(final List<T> buffer)
 		throws IOException {
 			for(int i = 0; i < buffer.size(); i ++) {
-				loadGenerator.recycle((IoTask) buffer.get(i));
+				loadGenerator.recycle((Operation) buffer.get(i));
 			}
 			return super.put(buffer);
 		}
@@ -128,17 +128,17 @@ public class LoadGeneratorImplTest {
 		final Input itemInput = new NewDataItemInput<>(
 			itemFactory, itemNameInput, itemSize
 		);
-		final IoTaskBuilder ioTaskBuilder = new DataIoTaskBuilderImpl(0)
-			.setIoType(IoType.CREATE)
-			.setOutputPathSupplier(new ConstantStringSupplier("/default"))
-			.setUidSupplier(null)
-			.setSecretSupplier(null);
+		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
+			.opType(OpType.CREATE)
+			.outputPathSupplier(new ConstantStringSupplier("/default"))
+			.uidSupplier(null)
+			.secretSupplier(null);
 		final boolean shuffleFlag = false;
 		
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl<>(
-				itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
-				Long.MAX_VALUE, 0, shuffleFlag
+				itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
+				Long.MAX_VALUE, 1, false, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -159,17 +159,17 @@ public class LoadGeneratorImplTest {
 			ItemNamingType.ASC, null, 10, 10, 0
 		);
 		final Input itemInput = new NewDataItemInput(itemFactory, itemNameInput, itemSize);
-		final IoTaskBuilder ioTaskBuilder = new DataIoTaskBuilderImpl(0)
-			.setIoType(IoType.CREATE)
-			.setOutputPathSupplier(new ConstantStringSupplier("/default"))
-			.setUidSupplier(null)
-			.setSecretSupplier(null);
+		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
+			.opType(OpType.CREATE)
+			.outputPathSupplier(new ConstantStringSupplier("/default"))
+			.uidSupplier(null)
+			.secretSupplier(null);
 		final boolean shuffleFlag = false;
 		
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
-				itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter),BATCH_SIZE,
-				Long.MAX_VALUE, 0, shuffleFlag
+				itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter),BATCH_SIZE,
+				Long.MAX_VALUE, 1, false, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -190,17 +190,17 @@ public class LoadGeneratorImplTest {
 			ItemNamingType.RANDOM, null, 13, Character.MAX_RADIX, 0
 		);
 		final Input itemInput = new NewDataItemInput(itemFactory, itemNameInput, itemSize);
-		final IoTaskBuilder ioTaskBuilder = new DataIoTaskBuilderImpl(0)
-			.setIoType(IoType.CREATE)
-			.setOutputPathSupplier(new ConstantStringSupplier("/default"))
-			.setUidSupplier(new ConstantStringSupplier("wuser1@sanity.local"))
-			.setSecretSupplier(new ConstantStringSupplier("secret"));
+		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
+			.opType(OpType.CREATE)
+			.outputPathSupplier(new ConstantStringSupplier("/default"))
+			.uidSupplier(new ConstantStringSupplier("wuser1@sanity.local"))
+			.secretSupplier(new ConstantStringSupplier("secret"));
 		final boolean shuffleFlag = false;
 		
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
-				itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
-				Long.MAX_VALUE, 0, shuffleFlag
+				itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
+				Long.MAX_VALUE, 1, false, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -221,17 +221,17 @@ public class LoadGeneratorImplTest {
 			ItemNamingType.RANDOM, null, 13, Character.MAX_RADIX, 0
 		);
 		final Input itemInput = new NewDataItemInput(itemFactory, itemNameInput, itemSize);
-		final IoTaskBuilder ioTaskBuilder = new DataIoTaskBuilderImpl(0)
-			.setIoType(IoType.CREATE)
-			.setOutputPathSupplier(new RangePatternDefinedSupplier("$p{16;2}"))
-			.setUidSupplier(null)
-			.setSecretSupplier(null);
+		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
+			.opType(OpType.CREATE)
+			.outputPathSupplier(new RangePatternDefinedSupplier("$p{16;2}"))
+			.uidSupplier(null)
+			.secretSupplier(null);
 		final boolean shuffleFlag = false;
 		
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
-				itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
-				Long.MAX_VALUE, 0, shuffleFlag
+				itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
+				Long.MAX_VALUE, 1, false, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -254,17 +254,17 @@ public class LoadGeneratorImplTest {
 			items.add(item);
 		}
 		final Input itemInput = new CircularListInput(items);
-		final IoTaskBuilder ioTaskBuilder = new DataIoTaskBuilderImpl(0)
-			.setIoType(IoType.READ)
-			.setOutputPathSupplier(null)
-			.setUidSupplier(null)
-			.setSecretSupplier(null);
+		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
+			.opType(OpType.READ)
+			.outputPathSupplier(null)
+			.uidSupplier(null)
+			.secretSupplier(null);
 		final boolean shuffleFlag = false;
 		
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
-				itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
-				Long.MAX_VALUE, 0, shuffleFlag
+				itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
+				Long.MAX_VALUE, 1, false, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -287,17 +287,17 @@ public class LoadGeneratorImplTest {
 			items.add(item);
 		}
 		final Input itemInput = new CircularListInput(items);
-		final IoTaskBuilder ioTaskBuilder = new DataIoTaskBuilderImpl(0)
-			.setIoType(IoType.READ)
-			.setOutputPathSupplier(null)
-			.setUidSupplier(null)
-			.setSecretSupplier(null);
+		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
+			.opType(OpType.READ)
+			.outputPathSupplier(null)
+			.uidSupplier(null)
+			.secretSupplier(null);
 		final boolean shuffleFlag = true;
 		
 		try(
 			final LoadGenerator loadGenerator = new LoadGeneratorImpl(
-				itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
-				Long.MAX_VALUE, 0, shuffleFlag
+				itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
+				Long.MAX_VALUE, 1, false, shuffleFlag
 			)
 		) {
 			loadGenerator.start();
@@ -320,18 +320,18 @@ public class LoadGeneratorImplTest {
 			items.add(item);
 		}
 		final Input itemInput = new ListInput(items);
-		final IoTaskBuilder ioTaskBuilder = new DataIoTaskBuilderImpl(0)
-			.setIoType(IoType.READ)
-			.setOutputPathSupplier(null)
-			.setUidSupplier(null)
-			.setSecretSupplier(null);
+		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
+			.opType(OpType.READ)
+			.outputPathSupplier(null)
+			.uidSupplier(null)
+			.secretSupplier(null);
 		final boolean shuffleFlag = false;
 
 		try(final Output taskOutput = new RecyclingAndCountingOutput(counter)) {
 			try(
 				final LoadGenerator loadGenerator = new LoadGeneratorImpl(
-					itemInput, ioTaskBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
-					Long.MAX_VALUE, 0, shuffleFlag
+					itemInput, opsBuilder, Collections.emptyList(), new CountingOutput(counter), BATCH_SIZE,
+					Long.MAX_VALUE, 1_000_000, true, shuffleFlag
 				)
 			) {
 				((RecyclingAndCountingOutput) taskOutput).loadGenerator = loadGenerator;

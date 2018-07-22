@@ -3,7 +3,7 @@ package com.emc.mongoose.logging;
 import static com.emc.mongoose.Constants.MIB;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsSnapshot;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -45,7 +45,7 @@ extends LogMessageBase {
 		buffer.append("EndDate=\"").append(FMT_DATE_RESULTS.format(endDate)).append("\" ");
 		buffer.append("EndTimestamp=\"").append(endTimeStamp).append("\" ");
 		final int ioTypeCode = metricsCtx.ioType().ordinal();
-		buffer.append("operation=\"").append(IoType.values()[ioTypeCode].name()).append("\" ");
+		buffer.append("operation=\"").append(OpType.values()[ioTypeCode].name()).append("\" ");
 		final int concurrency = metricsCtx.concurrencyLimit();
 		final int nodeCount = metricsCtx.nodeCount();
 		buffer.append("threads=\"").append(concurrency * nodeCount).append("\" ");

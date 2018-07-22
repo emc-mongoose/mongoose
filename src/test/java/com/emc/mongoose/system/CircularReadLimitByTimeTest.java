@@ -2,7 +2,7 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
@@ -213,7 +213,7 @@ public class CircularReadLimitByTimeTest {
 
         final LongAdder ioTraceRecCount = new LongAdder();
         final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
-            testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), itemSize.getValue());
+            testIoTraceRecord(ioTraceRec, OpType.READ.ordinal(), itemSize.getValue());
             ioTraceRecCount.increment();
         };
         testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
@@ -249,11 +249,11 @@ public class CircularReadLimitByTimeTest {
 //
         testSingleMetricsStdout(
                 stdOutContent.replaceAll("[\r\n]+", " "),
-                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+                OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
                 averagePeriod
         );
         testFinalMetricsTableRowStdout(
-                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
+                stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
                 0, 60, itemSize.getValue()
         );
 //
@@ -263,7 +263,7 @@ public class CircularReadLimitByTimeTest {
 //                totalMetrcisLogRecords.size()
 //        );
 //        testTotalMetricsLogRecord(
-//                totalMetrcisLogRecords.get(0), IoType.READ, concurrency.getValue(),
+//                totalMetrcisLogRecords.get(0), OpType.READ, concurrency.getValue(),
 //                runMode.getNodeCount(), itemSize.getValue(), 0, 60
 //        );
 //
@@ -273,7 +273,7 @@ public class CircularReadLimitByTimeTest {
 //                metricsLogRecords.size() > 1
 //        );
 //        testMetricsLogRecords(
-//                metricsLogRecords, IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+//                metricsLogRecords, OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
 //                itemSize.getValue(), 0, 60,
 //                averagePeriod
 //        );

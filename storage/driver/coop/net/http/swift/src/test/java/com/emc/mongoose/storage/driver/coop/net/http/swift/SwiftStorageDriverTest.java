@@ -8,12 +8,12 @@ import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
 import com.emc.mongoose.item.ItemType;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.composite.data.CompositeDataIoTaskImpl;
-import com.emc.mongoose.item.io.task.composite.data.CompositeDataIoTask;
-import com.emc.mongoose.item.io.task.data.DataIoTaskImpl;
-import com.emc.mongoose.item.io.task.data.DataIoTask;
-import com.emc.mongoose.item.io.task.partial.data.PartialDataIoTask;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.composite.data.CompositeDataOperationImpl;
+import com.emc.mongoose.item.op.composite.data.CompositeDataOperation;
+import com.emc.mongoose.item.op.data.DataOperationImpl;
+import com.emc.mongoose.item.op.data.DataOperation;
+import com.emc.mongoose.item.op.partial.data.PartialDataOperation;
 import com.emc.mongoose.storage.Credential;
 import static com.emc.mongoose.Constants.APP_NAME;
 
@@ -84,7 +84,7 @@ extends SwiftStorageDriver {
 			final Map<String, Object> configSchema = TreeUtil.reduceForest(configSchemas);
 			final Config config = new BasicConfig("-", configSchema);
 			config.val("load-batch-size", 4096);
-			config.val("load-step-limit-concurrency", 0);
+			config.val("storage-driver-limit-concurrency", 0);
 			config.val("storage-net-transport", "epoll");
 			config.val("storage-net-reuseAddr", true);
 			config.val("storage-net-bindBacklogSize", 0);
@@ -108,8 +108,8 @@ extends SwiftStorageDriver {
 			config.val("storage-auth-token", AUTH_TOKEN);
 			config.val("storage-auth-secret", CREDENTIAL.getSecret());
 			config.val("storage-driver-threads", 0);
-			config.val("storage-driver-queue-input", 1_000_000);
-			config.val("storage-driver-queue-output", 1_000_000);
+			config.val("storage-driver-limit-queue-input", 1_000_000);
+			config.val("storage-driver-limit-queue-output", 1_000_000);
 			return config;
 		} catch(final Throwable cause) {
 			throw new RuntimeException(cause);
@@ -127,8 +127,8 @@ extends SwiftStorageDriver {
 	throws Exception {
 		super(
 			"test-storage-driver-swift",
-			DataInput.instance(null, "7a42d9c483244167", new SizeInBytes("4MB"), 16),
-			config.configVal("load"), config.configVal("storage"), false
+			DataInput.instance(null, "7a42d9c483244167", new SizeInBytes("4MB"), 16), config.configVal("storage"),
+			false, config.intVal("load-batch-size")
 		);
 	}
 
@@ -242,11 +242,10 @@ extends SwiftStorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
-			hashCode(), IoType.CREATE, dataItem, containerSrcName, containerDstName, CREDENTIAL,
-			null, 0
+		final DataOperation<DataItem> dataOp = new DataOperationImpl<>(
+			hashCode(), OpType.CREATE, dataItem, containerSrcName, containerDstName, CREDENTIAL, null, 0
 		);
-		final HttpRequest req = getHttpRequest(ioTask, storageNodeAddrs[0]);
+		final HttpRequest req = httpRequest(dataOp, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.PUT, req.method());
 		assertEquals(SwiftApi.URI_BASE + '/' + NS + containerDstName + '/' + itemId, req.uri());
@@ -272,11 +271,11 @@ extends SwiftStorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final CompositeDataIoTask<DataItem> dloTask = new CompositeDataIoTaskImpl<>(
-			hashCode(), IoType.CREATE, dataItem, null, container, CREDENTIAL, null, 0, partSize
+		final CompositeDataOperation<DataItem> dloOp = new CompositeDataOperationImpl<>(
+			hashCode(), OpType.CREATE, dataItem, null, container, CREDENTIAL, null, 0, partSize
 		);
-		final PartialDataIoTask<DataItem> dloSubTask = dloTask.subTasks().get(0);
-		final HttpRequest req = getHttpRequest(dloSubTask, storageNodeAddrs[0]);
+		final PartialDataOperation<DataItem> dloSubOp = dloOp.subOperations().get(0);
+		final HttpRequest req = httpRequest(dloSubOp, storageNodeAddrs[0]);
 		assertEquals(HttpMethod.PUT, req.method());
 		assertEquals(
 			SwiftApi.URI_BASE + '/' + NS + container + '/' + itemId + "/0000001",  req.uri()
@@ -297,25 +296,22 @@ extends SwiftStorageDriver {
 		final long itemSize = 12345;
 		final long partSize = 1234;
 		final String itemId = "00003brre8lgz";
-		final DataItem dataItem = new DataItemImpl(
-			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
-		);
-		final CompositeDataIoTask<DataItem> dloTask = new CompositeDataIoTaskImpl<>(
-			hashCode(), IoType.CREATE, dataItem, null, '/' + container, CREDENTIAL, null, 0,
-			partSize
+		final DataItem dataItem = new DataItemImpl(itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize);
+		final CompositeDataOperation<DataItem> dloOp = new CompositeDataOperationImpl<>(
+			hashCode(), OpType.CREATE, dataItem, null, '/' + container, CREDENTIAL, null, 0, partSize
 		);
 
 		// emulate DLO parts creation
-		final List<? extends PartialDataIoTask<DataItem>> subTasks = dloTask.subTasks();
-		for(final PartialDataIoTask<DataItem> subTask : subTasks) {
-			subTask.startRequest();
-			subTask.finishRequest();
-			subTask.startResponse();
-			subTask.finishResponse();
+		final List<? extends PartialDataOperation<DataItem>> subOps = dloOp.subOperations();
+		for(final PartialDataOperation<DataItem> subOp : subOps) {
+			subOp.startRequest();
+			subOp.finishRequest();
+			subOp.startResponse();
+			subOp.finishResponse();
 		}
-		assertTrue(dloTask.allSubTasksDone());
+		assertTrue(dloOp.allSubOperationsDone());
 
-		final HttpRequest req = getHttpRequest(dloTask, storageNodeAddrs[0]);
+		final HttpRequest req = httpRequest(dloOp, storageNodeAddrs[0]);
 		assertEquals(HttpMethod.PUT, req.method());
 		assertEquals(SwiftApi.URI_BASE + '/' + NS + '/' + container + '/' + itemId,  req.uri());
 		final HttpHeaders reqHeaders = req.headers();

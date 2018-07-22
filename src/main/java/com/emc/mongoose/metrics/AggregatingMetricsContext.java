@@ -3,7 +3,7 @@ package com.emc.mongoose.metrics;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.UniformSnapshot;
 
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 
@@ -18,7 +18,7 @@ implements MetricsContext {
 
 	private final long ts;
 	private final String stepId;
-	private final IoType ioType;
+	private final OpType opType;
 	private final IntSupplier nodeCountSupplier;
 	private final int concurrencyLimit;
 	private final double concurrencyThreshold;
@@ -38,14 +38,14 @@ implements MetricsContext {
 	private volatile boolean thresholdStateExitedFlag = false;
 
 	public AggregatingMetricsContext(
-		final String stepId, final IoType ioType, final IntSupplier nodeCountSupplier, final int concurrencyLimit,
+		final String stepId, final OpType opType, final IntSupplier nodeCountSupplier, final int concurrencyLimit,
 		final double concurrencyThreshold, final SizeInBytes itemDataSize, final int updateIntervalSec,
 		final boolean stdOutColorFlag, final boolean avgPersistFlag, final boolean sumPersistFlag,
 		final boolean perfDbResultsFileFlag, final Supplier<List<MetricsSnapshot>> snapshotsSupplier
 	) {
 		this.ts = System.nanoTime();
 		this.stepId = stepId;
-		this.ioType = ioType;
+		this.opType = opType;
 		this.nodeCountSupplier = nodeCountSupplier;
 		this.concurrencyLimit = concurrencyLimit;
 		this.concurrencyThreshold = concurrencyThreshold > 0 ? concurrencyThreshold : Long.MAX_VALUE;
@@ -103,8 +103,8 @@ implements MetricsContext {
 	}
 
 	@Override
-	public IoType ioType() {
-		return ioType;
+	public OpType ioType() {
+		return opType;
 	}
 
 	@Override
@@ -255,7 +255,7 @@ implements MetricsContext {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
 		thresholdMetricsCtx = new AggregatingMetricsContext(
-			stepId, ioType, nodeCountSupplier, concurrencyLimit, 0, itemDataSize,
+			stepId, opType, nodeCountSupplier, concurrencyLimit, 0, itemDataSize,
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag, avgPersistFlag, sumPersistFlag,
 			perfDbResultsFileFlag, snapshotsSupplier
 		);

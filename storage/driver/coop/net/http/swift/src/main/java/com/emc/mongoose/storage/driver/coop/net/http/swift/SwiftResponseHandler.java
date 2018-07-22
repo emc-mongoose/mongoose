@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.net.http.swift;
 
 import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.storage.driver.coop.net.http.HttpResponseHandlerBase;
 import com.emc.mongoose.storage.driver.coop.net.http.HttpStorageDriverBase;
 
@@ -10,7 +10,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 /**
  Created by andrey on 26.11.16.
  */
-public final class SwiftResponseHandler<I extends Item, O extends IoTask<I>>
+public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 extends HttpResponseHandlerBase<I, O> {
 
 	public SwiftResponseHandler(
@@ -21,7 +21,7 @@ extends HttpResponseHandlerBase<I, O> {
 
 	@Override
 	protected final void handleResponseHeaders(
-		final O ioTask, final HttpHeaders respHeaders
+		final O op, final HttpHeaders respHeaders
 	) {
 	}
 }

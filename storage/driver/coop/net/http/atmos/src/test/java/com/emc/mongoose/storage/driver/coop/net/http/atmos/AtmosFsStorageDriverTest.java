@@ -5,9 +5,9 @@ import com.emc.mongoose.env.DateUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.item.DataItemImpl;
 import com.emc.mongoose.item.DataItem;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.data.DataIoTaskImpl;
-import com.emc.mongoose.item.io.task.data.DataIoTask;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.data.DataOperationImpl;
+import com.emc.mongoose.item.op.data.DataOperation;
 import com.emc.mongoose.storage.Credential;
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.storage.driver.coop.net.http.atmos.AtmosApi.SUBTENANT_URI_BASE;
@@ -79,7 +79,7 @@ extends AtmosStorageDriver {
 			final Map<String, Object> configSchema = TreeUtil.reduceForest(configSchemas);
 			final Config config = new BasicConfig("-", configSchema);
 			config.val("load-batch-size", 4096);
-			config.val("load-step-limit-concurrency", 0);
+			config.val("storage-driver-limit-concurrency", 0);
 			config.val("storage-net-transport", "epoll");
 			config.val("storage-net-reuseAddr", true);
 			config.val("storage-net-bindBacklogSize", 0);
@@ -103,8 +103,8 @@ extends AtmosStorageDriver {
 			config.val("storage-auth-token", AUTH_TOKEN);
 			config.val("storage-auth-secret", CREDENTIAL.getSecret());
 			config.val("storage-driver-threads", 0);
-			config.val("storage-driver-queue-input", 1_000_000);
-			config.val("storage-driver-queue-output", 1_000_000);
+			config.val("storage-driver-limit-queue-input", 1_000_000);
+			config.val("storage-driver-limit-queue-output", 1_000_000);
 			return config;
 		} catch(final Throwable cause) {
 			throw new RuntimeException(cause);
@@ -123,8 +123,8 @@ extends AtmosStorageDriver {
 		super(
 			"test-storage-driver-atmos-fs",
 			DataInput.instance(null, "7a42d9c483244167", new SizeInBytes("4MB"), 16),
-			config.configVal("load"), config.configVal("storage"), false
-		);
+			config.configVal("storage"), false, config.intVal("load-batch-size")
+			);
 	}
 
 	@Override
@@ -178,11 +178,11 @@ extends AtmosStorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
-			hashCode(), IoType.CREATE, dataItem, null, dir, credential, null, 0
+		final DataOperation<DataItem> op = new DataOperationImpl<>(
+			hashCode(), OpType.CREATE, dataItem, null, dir, credential, null, 0
 		);
 
-		final HttpRequest req = getHttpRequest(ioTask, storageNodeAddrs[0]);
+		final HttpRequest req = httpRequest(op, storageNodeAddrs[0]);
 		assertEquals(HttpMethod.POST, req.method());
 		assertEquals(AtmosApi.NS_URI_BASE + dir + '/' + itemId, req.uri());
 

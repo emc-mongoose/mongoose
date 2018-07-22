@@ -2,7 +2,7 @@ package com.emc.mongoose.logging;
 
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsSnapshot;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import static com.emc.mongoose.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static com.emc.mongoose.logging.LogUtil.RESET;
 import static com.emc.mongoose.Constants.MIB;
@@ -56,13 +56,13 @@ extends LogMessageBase {
 			MetricsSnapshot snapshot;
 			long succCount;
 			long failCount;
-			IoType ioType;
+			OpType opType;
 			boolean stdOutColorFlag;
 			for(final MetricsContext metricsCtx : metrics) {
 				snapshot = metricsCtx.lastSnapshot();
 				succCount = snapshot.succCount();
 				failCount = snapshot.failCount();
-				ioType = metricsCtx.ioType();
+				opType = metricsCtx.ioType();
 				stdOutColorFlag = metricsCtx.stdOutColorEnabled();
 				if(0 == ROW_OUTPUT_COUNTER % TABLE_HEADER_PERIOD) {
 					strb.append(TABLE_HEADER);
@@ -77,7 +77,7 @@ extends LogMessageBase {
 					.appendFixedWidthPadLeft(FMT_DATE_METRICS_TABLE.format(new Date()), 12, ' ')
 					.append(TABLE_BORDER_VERTICAL);
 				if(stdOutColorFlag) {
-					switch(ioType) {
+					switch(opType) {
 						case NOOP:
 							strb.append(LogUtil.NOOP_COLOR);
 							break;

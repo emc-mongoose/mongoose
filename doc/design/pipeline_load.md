@@ -53,15 +53,15 @@ same item in the operations pipeline.
 
 The pipeline step is implemented as a sequence of the separate load
 contexts interconnected with the volatile memory FIFO buffer. This
-buffer acts as an I/O tasks result output for the previous load
+buffer acts as a load operations result output for the previous load
 context in the sequence and as an items input for the next load
 context. To support the configurable transfer delay
-([Req.3](#Requirements)) the buffer contains the I/O tasks results which
-contain the information about the corresponding I/O task finish time.
+([Req.3](#Requirements)) the buffer contains the load operations results which
+contain the information about the corresponding load operation finish time.
 
 The following rules work while the next load context requests the buffer for the new items:
-1. Retain every I/O task result if its finish time is later than the current time minus the configured delay.
-2. If the I/O task result is not retained by rule (1) it is converted to the corresponding item and yielded to the load
+1. Retain every load operation result if its finish time is later than the current time minus the configured delay.
+2. If the load operation result is not retained by rule (1) it is converted to the corresponding item and yielded to the load
 context requested the next batch of items.
 
 # Configuration

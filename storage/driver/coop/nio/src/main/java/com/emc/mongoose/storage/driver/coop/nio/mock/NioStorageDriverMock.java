@@ -5,9 +5,9 @@ import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.IoTask;
-import com.emc.mongoose.item.io.task.data.DataIoTask;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.Operation;
+import com.emc.mongoose.item.op.data.DataOperation;
 import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.nio.NioStorageDriverBase;
 import com.github.akurilov.commons.collection.Range;
@@ -17,55 +17,55 @@ import com.github.akurilov.confuse.Config;
 import java.io.IOException;
 import java.util.List;
 
-public class NioStorageDriverMock<I extends Item, O extends IoTask<I>>
+public class NioStorageDriverMock<I extends Item, O extends Operation<I>>
 extends NioStorageDriverBase<I, O> {
 
 	private final Random rnd = new Random();
 
 	public NioStorageDriverMock(
-		final String testSteoName, final DataInput dataInput, final Config loadConfig,
-		final Config storageConfig, final boolean verifyFlag
+		final String testSteoName, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+		final int batchSize
 	) throws OmgShootMyFootException {
-		super(testSteoName, dataInput, loadConfig, storageConfig, verifyFlag);
+		super(testSteoName, dataInput, storageConfig, verifyFlag, batchSize);
 	}
 
 	@Override
-	protected void invokeNio(final O ioTask) {
-		ioTask.startResponse();
-		if(ioTask instanceof DataIoTask) {
-			final DataIoTask dataIoTask = (DataIoTask) ioTask;
-			final DataItem dataItem = dataIoTask.item();
-			switch(dataIoTask.ioType()) {
+	protected void invokeNio(final O op) {
+		op.startResponse();
+		if(op instanceof DataOperation) {
+			final DataOperation dataOp = (DataOperation) op;
+			final DataItem dataItem = dataOp.item();
+			switch(dataOp.type()) {
 				case CREATE:
 					try {
-						dataIoTask.countBytesDone(dataItem.size());
+						dataOp.countBytesDone(dataItem.size());
 					} catch(final IOException ignored) {
 					}
 					break;
 				case READ:
-					dataIoTask.startDataResponse();
+					dataOp.startDataResponse();
 				case UPDATE:
-					final List<Range> fixedRanges = dataIoTask.fixedRanges();
+					final List<Range> fixedRanges = dataOp.fixedRanges();
 					if(fixedRanges == null || fixedRanges.isEmpty()) {
-						if(dataIoTask.hasMarkedRanges()) {
-							dataIoTask.countBytesDone(dataIoTask.markedRangesSize());
+						if(dataOp.hasMarkedRanges()) {
+							dataOp.countBytesDone(dataOp.markedRangesSize());
 						} else {
 							try {
-								dataIoTask.countBytesDone(dataItem.size());
+								dataOp.countBytesDone(dataItem.size());
 							} catch(final IOException ignored) {
 							}
 						}
 					} else {
-						dataIoTask.countBytesDone(dataIoTask.markedRangesSize());
+						dataOp.countBytesDone(dataOp.markedRangesSize());
 					}
 					break;
 				default:
 					break;
 			}
-			dataIoTask.startDataResponse();
+			dataOp.startDataResponse();
 		}
-		ioTask.finishResponse();
-		ioTask.status(IoTask.Status.SUCC);
+		op.finishResponse();
+		op.status(Operation.Status.SUCC);
 	}
 
 	@Override
@@ -87,6 +87,6 @@ extends NioStorageDriverBase<I, O> {
 	}
 
 	@Override
-	public void adjustIoBuffers(final long avgTransferSize, final IoType ioType) {
+	public void adjustIoBuffers(final long avgTransferSize, final OpType opType) {
 	}
 }

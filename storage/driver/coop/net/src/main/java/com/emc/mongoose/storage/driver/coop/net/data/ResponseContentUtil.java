@@ -5,8 +5,8 @@ import com.github.akurilov.commons.system.DirectMemUtil;
 import com.emc.mongoose.data.DataCorruptionException;
 import com.emc.mongoose.data.DataSizeException;
 import com.emc.mongoose.data.DataVerificationException;
-import com.emc.mongoose.item.io.task.IoTask;
-import com.emc.mongoose.item.io.task.data.DataIoTask;
+import com.emc.mongoose.item.op.Operation;
+import com.emc.mongoose.item.op.data.DataOperation;
 import com.emc.mongoose.item.DataItem;
 import static com.emc.mongoose.item.DataItem.rangeCount;
 import static com.emc.mongoose.item.DataItem.rangeOffset;
@@ -26,25 +26,25 @@ import java.util.List;
 public abstract class ResponseContentUtil {
 
 	public static void verifyChunk(
-		final DataIoTask dataIoTask, final long countBytesDone, final ByteBuf contentChunk,
+		final DataOperation dataOp, final long countBytesDone, final ByteBuf contentChunk,
 		final int chunkSize
 	) throws IOException {
-		final List<Range> byteRanges = dataIoTask.fixedRanges();
-		final DataItem item = dataIoTask.item();
+		final List<Range> byteRanges = dataOp.fixedRanges();
+		final DataItem item = dataOp.item();
 		try {
 			if(byteRanges != null && !byteRanges.isEmpty()) {
 				verifyChunkDataAndSize(
-					dataIoTask, item, countBytesDone, contentChunk, chunkSize, byteRanges
+					dataOp, item, countBytesDone, contentChunk, chunkSize, byteRanges
 				);
-			} else if(dataIoTask.hasMarkedRanges()) {
+			} else if(dataOp.hasMarkedRanges()) {
 				verifyChunkDataAndSize(
-					dataIoTask, item, countBytesDone, contentChunk, chunkSize,
-					dataIoTask.markedRangesMaskPair()
+					dataOp, item, countBytesDone, contentChunk, chunkSize,
+					dataOp.markedRangesMaskPair()
 				);
 			} else {
 				if(item.isUpdated()){
 					verifyChunkUpdatedData(
-						dataIoTask, item, countBytesDone, contentChunk, chunkSize
+						dataOp, item, countBytesDone, contentChunk, chunkSize
 					);
 				} else {
 					if(chunkSize > item.size() - countBytesDone) {
@@ -52,12 +52,12 @@ public abstract class ResponseContentUtil {
 					}
 					verifyChunkData(item, contentChunk, 0, chunkSize);
 				}
-				dataIoTask.countBytesDone(countBytesDone + chunkSize);
+				dataOp.countBytesDone(countBytesDone + chunkSize);
 			}
 		} catch(final DataVerificationException e) {
-			final DataItem dataItem = dataIoTask.item();
-			dataIoTask.countBytesDone(e.getOffset());
-			dataIoTask.status(IoTask.Status.RESP_FAIL_CORRUPT);
+			final DataItem dataItem = dataOp.item();
+			dataOp.countBytesDone(e.getOffset());
+			dataOp.status(Operation.Status.RESP_FAIL_CORRUPT);
 			if(e instanceof DataSizeException) {
 				try {
 					Loggers.MSG.debug(
@@ -79,14 +79,14 @@ public abstract class ResponseContentUtil {
 	}
 
 	private static void verifyChunkDataAndSize(
-		final DataIoTask dataIoTask, final DataItem dataItem, final long countBytesDone,
+		final DataOperation dataOp, final DataItem dataItem, final long countBytesDone,
 		final ByteBuf chunkData, final int chunkSize, final List<Range> byteRanges
 	) throws DataCorruptionException, IOException {
 
-		final long rangesSizeSum = dataIoTask.markedRangesSize();
+		final long rangesSizeSum = dataOp.markedRangesSize();
 		if(chunkSize > rangesSizeSum - countBytesDone) {
 			throw new DataSizeException(
-				dataIoTask.markedRangesSize(), countBytesDone + chunkSize
+				dataOp.markedRangesSize(), countBytesDone + chunkSize
 			);
 		}
 		final long baseItemSize = dataItem.size();
@@ -105,7 +105,7 @@ public abstract class ResponseContentUtil {
 		int n;
 
 		while(chunkOffset < chunkSize) {
-			currRangeIdx = dataIoTask.currRangeIdx();
+			currRangeIdx = dataOp.currRangeIdx();
 			byteRange = byteRanges.get(currRangeIdx);
 			currOffset = byteRange.getBeg();
 			rangeEnd = byteRange.getEnd();
@@ -147,24 +147,24 @@ public abstract class ResponseContentUtil {
 				// current byte range verification is finished
 				if(currRangeIdx == byteRanges.size() - 1) {
 					// current byte range was last in the list
-					dataIoTask.countBytesDone(rangesSizeSum);
+					dataOp.countBytesDone(rangesSizeSum);
 					break;
 				} else {
-					dataIoTask.currRangeIdx(currRangeIdx + 1);
+					dataOp.currRangeIdx(currRangeIdx + 1);
 					rangeBytesDone = 0;
 				}
 			}
-			dataIoTask.countBytesDone(rangeBytesDone);
+			dataOp.countBytesDone(rangeBytesDone);
 		}
 	}
 
 	private static void verifyChunkDataAndSize(
-		final DataIoTask dataIoTask, final DataItem dataItem, final long countBytesDone,
+		final DataOperation dataOp, final DataItem dataItem, final long countBytesDone,
 		final ByteBuf chunkData, final int chunkSize, final BitSet markedRangesMaskPair[]
 	) throws DataCorruptionException, IOException {
-		if(chunkSize > dataIoTask.markedRangesSize() - countBytesDone) {
+		if(chunkSize > dataOp.markedRangesSize() - countBytesDone) {
 			throw new DataSizeException(
-				dataIoTask.markedRangesSize(), countBytesDone + chunkSize
+				dataOp.markedRangesSize(), countBytesDone + chunkSize
 			);
 		}
 
@@ -177,7 +177,7 @@ public abstract class ResponseContentUtil {
 		int n;
 
 		while(chunkOffset < chunkSize) {
-			currRangeIdx = dataIoTask.currRangeIdx();
+			currRangeIdx = dataOp.currRangeIdx();
 			if(
 				!markedRangesMaskPair[0].get(currRangeIdx) &&
 					!markedRangesMaskPair[1].get(currRangeIdx)
@@ -186,13 +186,13 @@ public abstract class ResponseContentUtil {
 					-1 == markedRangesMaskPair[0].nextSetBit(currRangeIdx) &&
 						-1 == markedRangesMaskPair[1].nextSetBit(currRangeIdx)
 					) {
-					dataIoTask.countBytesDone(dataIoTask.markedRangesSize());
+					dataOp.countBytesDone(dataOp.markedRangesSize());
 					return;
 				}
-				dataIoTask.currRangeIdx(currRangeIdx + 1);
+				dataOp.currRangeIdx(currRangeIdx + 1);
 				continue;
 			}
-			currRange = dataIoTask.currRange();
+			currRange = dataOp.currRange();
 			rangeSize = dataItem.rangeSize(currRangeIdx);
 
 			currRange.position(rangeBytesDone);
@@ -208,19 +208,19 @@ public abstract class ResponseContentUtil {
 						-1 == markedRangesMaskPair[1].nextSetBit(currRangeIdx + 1)
 					) {
 					// current byte range was last in the list
-					dataIoTask.countBytesDone(dataIoTask.markedRangesSize());
+					dataOp.countBytesDone(dataOp.markedRangesSize());
 					return;
 				} else {
-					dataIoTask.currRangeIdx(currRangeIdx + 1);
+					dataOp.currRangeIdx(currRangeIdx + 1);
 					rangeBytesDone = 0;
 				}
 			}
-			dataIoTask.countBytesDone(rangeBytesDone);
+			dataOp.countBytesDone(rangeBytesDone);
 		}
 	}
 
 	private static void verifyChunkUpdatedData(
-		final DataIoTask dataIoTask, final DataItem item, final long countBytesDone,
+		final DataOperation dataOp, final DataItem item, final long countBytesDone,
 		final ByteBuf chunkData, final int chunkSize
 	) throws DataCorruptionException, IOException {
 
@@ -231,18 +231,18 @@ public abstract class ResponseContentUtil {
 
 		while(chunkCountDone < chunkSize) {
 
-			currRangeIdx = dataIoTask.currRangeIdx();
+			currRangeIdx = dataOp.currRangeIdx();
 			nextRangeOffset = rangeOffset(currRangeIdx + 1);
 			if(countBytesDone + chunkCountDone == nextRangeOffset) {
 				if(nextRangeOffset < item.size()) {
 					currRangeIdx ++;
 					nextRangeOffset = rangeOffset(currRangeIdx + 1);
-					dataIoTask.currRangeIdx(currRangeIdx);
+					dataOp.currRangeIdx(currRangeIdx);
 				} else {
 					throw new DataSizeException(item.size(), countBytesDone + chunkSize);
 				}
 			}
-			currRange = dataIoTask.currRange();
+			currRange = dataOp.currRange();
 
 			try {
 				remainingSize = (int) Math.min(
@@ -252,7 +252,7 @@ public abstract class ResponseContentUtil {
 				chunkCountDone += remainingSize;
 			} catch(final DataCorruptionException e) {
 				throw new DataCorruptionException(
-					rangeOffset(dataIoTask.currRangeIdx()) + e.getOffset(), e.expected,
+					rangeOffset(dataOp.currRangeIdx()) + e.getOffset(), e.expected,
 					e.actual
 				);
 			}

@@ -6,10 +6,10 @@ import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.IoTask;
-import com.emc.mongoose.item.io.task.composite.data.CompositeDataIoTask;
-import com.emc.mongoose.item.io.task.partial.data.PartialDataIoTask;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.Operation;
+import com.emc.mongoose.item.op.composite.data.CompositeDataOperation;
+import com.emc.mongoose.item.op.partial.data.PartialDataOperation;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.Credential;
@@ -68,7 +68,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  Created by kurila on 01.08.16.
  */
-public class AmzS3StorageDriver<I extends Item, O extends IoTask<I>>
+public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 extends HttpStorageDriverBase<I, O> {
 	
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
@@ -92,10 +92,10 @@ extends HttpStorageDriverBase<I, O> {
 	};
 
 	public AmzS3StorageDriver(
-		final String stepId, final DataInput itemDataInput, final Config loadConfig,
-		final Config storageConfig, final boolean verifyFlag
+		final String stepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag,
+		final int batchSize
 	) throws OmgShootMyFootException, InterruptedException {
-		super(stepId, itemDataInput, loadConfig, storageConfig, verifyFlag);
+		super(stepId, itemDataInput, storageConfig, verifyFlag, batchSize);
 		requestAuthTokenFunc = null; // do not use
 	}
 	
@@ -358,48 +358,48 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+	protected HttpRequest httpRequest(final O op, final String nodeAddr)
 	throws URISyntaxException {
 
 		final HttpRequest httpRequest;
-		final IoType ioType = ioTask.ioType();
+		final OpType opType = op.type();
 
-		if(ioTask instanceof CompositeDataIoTask) {
-			if(IoType.CREATE.equals(ioType)) {
-				final CompositeDataIoTask mpuTask = (CompositeDataIoTask) ioTask;
-				if(mpuTask.allSubTasksDone()) {
-					httpRequest = getCompleteMpuRequest(mpuTask, nodeAddr);
+		if(op instanceof CompositeDataOperation) {
+			if(OpType.CREATE.equals(opType)) {
+				final CompositeDataOperation mpuOp = (CompositeDataOperation) op;
+				if(mpuOp.allSubOperationsDone()) {
+					httpRequest = getCompleteMpuRequest(mpuOp, nodeAddr);
 				} else { // this is the initial state of the task
-					httpRequest = getInitMpuRequest(ioTask, nodeAddr);
+					httpRequest = getInitMpuRequest(op, nodeAddr);
 				}
 			} else {
 				throw new AssertionError(
 					"Non-create multipart operations are not implemented yet"
 				);
 			}
-		} else if(ioTask instanceof PartialDataIoTask) {
-			if(IoType.CREATE.equals(ioType)) {
-				httpRequest = getUploadPartRequest((PartialDataIoTask) ioTask, nodeAddr);
+		} else if(op instanceof PartialDataOperation) {
+			if(OpType.CREATE.equals(opType)) {
+				httpRequest = getUploadPartRequest((PartialDataOperation) op, nodeAddr);
 			} else {
 				throw new AssertionError(
 					"Non-create multipart operations are not implemented yet"
 				);
 			}
 		} else {
-			httpRequest = super.getHttpRequest(ioTask, nodeAddr);
+			httpRequest = super.httpRequest(op, nodeAddr);
 		}
 
 		return httpRequest;
 	}
 
 	@Override
-	protected final HttpMethod getTokenHttpMethod(final IoType ioType) {
+	protected final HttpMethod tokenHttpMethod(final OpType opType) {
 		throw new AssertionError("Not implemented yet");
 	}
 
 	@Override
-	protected final HttpMethod getPathHttpMethod(final IoType ioType) {
-		switch(ioType) {
+	protected final HttpMethod pathHttpMethod(final OpType opType) {
+		switch(opType) {
 			case UPDATE:
 				throw new AssertionError("Not implemnted yet");
 			case READ:
@@ -412,15 +412,15 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected final String getTokenUriPath(
-		final I item, final String srcPath, final String dstPath, final IoType ioType
+	protected final String tokenUriPath(
+		final I item, final String srcPath, final String dstPath, final OpType opType
 	) {
 		throw new AssertionError("Not implemented");
 	}
 
 	@Override
-	protected final String getPathUriPath(
-		final I item, final String srcPath, final String dstPath, final IoType ioType
+	protected final String pathUriPath(
+		final I item, final String srcPath, final String dstPath, final OpType opType
 	) {
 		final String itemName = item.getName();
 		if(itemName.startsWith("/")) {
@@ -434,16 +434,15 @@ extends HttpStorageDriverBase<I, O> {
 	protected void applyMetaDataHeaders(final HttpHeaders httpHeaders) {
 	}
 
-	private HttpRequest getInitMpuRequest(final O ioTask, final String nodeAddr) {
-		final I item = ioTask.item();
-		final String srcPath = ioTask.srcPath();
+	private HttpRequest getInitMpuRequest(final O op, final String nodeAddr) {
+		final I item = op.item();
+		final String srcPath = op.srcPath();
 		if(srcPath != null && !srcPath.isEmpty()) {
 			throw new AssertionError(
 				"Multipart copy operation is not implemented yet"
 			);
 		}
-		final String uriPath = getDataUriPath(item, srcPath, ioTask.dstPath(), IoType.CREATE) +
-			"?uploads";
+		final String uriPath = dataUriPath(item, srcPath, op.dstPath(), OpType.CREATE) + "?uploads";
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
@@ -457,19 +456,19 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, op.credential());
 		return httpRequest;
 	}
 
 	private HttpRequest getUploadPartRequest(
-		final PartialDataIoTask ioTask, final String nodeAddr
+		final PartialDataOperation partialDataOp, final String nodeAddr
 	) {
-		final I item = (I) ioTask.item();
+		final I item = (I) partialDataOp.item();
 
-		final String srcPath = ioTask.srcPath();
-		final String uriPath = getDataUriPath(item, srcPath, ioTask.dstPath(), IoType.CREATE) +
-			"?partNumber=" + (ioTask.partNumber() + 1) +
-			"&uploadId=" + ioTask.parent().get(AmzS3Api.KEY_UPLOAD_ID);
+		final String srcPath = partialDataOp.srcPath();
+		final String uriPath = dataUriPath(item, srcPath, partialDataOp.dstPath(), OpType.CREATE)
+			+ "?partNumber=" + (partialDataOp.partNumber() + 1)
+			+ "&uploadId=" + partialDataOp.parent().get(AmzS3Api.KEY_UPLOAD_ID);
 
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		if(nodeAddr != null) {
@@ -487,29 +486,23 @@ extends HttpStorageDriverBase<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, partialDataOp.credential());
 		return httpRequest;
 	}
 
-	private final static ThreadLocal<StringBuilder>
-		THREAD_LOCAL_STRB = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
+	private final static ThreadLocal<StringBuilder> THREAD_LOCAL_STRB = ThreadLocal.withInitial(StringBuilder::new);
 
 	private FullHttpRequest getCompleteMpuRequest(
-		final CompositeDataIoTask mpuTask, final String nodeAddr
+		final CompositeDataOperation mpuTask, final String nodeAddr
 	) {
 		final StringBuilder content = THREAD_LOCAL_STRB.get();
 		content.setLength(0);
 		content.append(AmzS3Api.COMPLETE_MPU_HEADER);
 
-		final List<PartialDataIoTask> subTasks = mpuTask.subTasks();
+		final List<PartialDataOperation> subTasks = mpuTask.subOperations();
 		int nextPartNum;
 		String nextEtag;
-		for(final PartialDataIoTask subTask : subTasks) {
+		for(final PartialDataOperation subTask : subTasks) {
 			nextPartNum = subTask.partNumber() + 1;
 			nextEtag = mpuTask.get(Integer.toString(nextPartNum));
 			content
@@ -524,7 +517,7 @@ extends HttpStorageDriverBase<I, O> {
 		final String srcPath = mpuTask.srcPath();
 		final I item = (I) mpuTask.item();
 		final String uploadId = mpuTask.get(AmzS3Api.KEY_UPLOAD_ID);
-		final String uriPath = getDataUriPath(item, srcPath, mpuTask.dstPath(), IoType.CREATE) +
+		final String uriPath = dataUriPath(item, srcPath, mpuTask.dstPath(), OpType.CREATE) +
 			"?uploadId=" + uploadId;
 
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
@@ -546,25 +539,25 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	public void complete(final Channel channel, final O ioTask) {
-		if(channel != null && ioTask instanceof CompositeDataIoTask) {
-			final CompositeDataIoTask compositeIoTask = (CompositeDataIoTask) ioTask;
-			if(compositeIoTask.allSubTasksDone()) {
+	public void complete(final Channel channel, final O op) {
+		if(channel != null && op instanceof CompositeDataOperation) {
+			final CompositeDataOperation compositeOp = (CompositeDataOperation) op;
+			if(compositeOp.allSubOperationsDone()) {
 				Loggers.MULTIPART.info(
-					"{},{},{}", compositeIoTask.item().getName(),
-					compositeIoTask.get(AmzS3Api.KEY_UPLOAD_ID), compositeIoTask.latency()
+					"{},{},{}", compositeOp.item().getName(),
+					compositeOp.get(AmzS3Api.KEY_UPLOAD_ID), compositeOp.latency()
 				);
 			} else {
 				final String uploadId = channel.attr(AmzS3Api.KEY_ATTR_UPLOAD_ID).get();
 				if(uploadId == null) {
-					ioTask.status(IoTask.Status.RESP_FAIL_NOT_FOUND);
+					op.status(Operation.Status.RESP_FAIL_NOT_FOUND);
 				} else {
-					// multipart upload has been initialized as a result of this I/O task
-					compositeIoTask.put(AmzS3Api.KEY_UPLOAD_ID, uploadId);
+					// multipart upload has been initialized as a result of this load operation
+					compositeOp.put(AmzS3Api.KEY_UPLOAD_ID, uploadId);
 				}
 			}
 		}
-		super.complete(channel, ioTask);
+		super.complete(channel, op);
 	}
 
 	@Override

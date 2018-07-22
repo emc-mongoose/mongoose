@@ -70,13 +70,13 @@ the custom **storage driver implementation identifier**.
 
 # 3. Cooperative Storage Driver
 
-Cooperative storage drivers uses the fibers to process the I/O tasks in the most efficient way. Also it supports
-composite I/O tasks.
+Cooperative storage drivers uses the fibers to execute the load operations in the most efficient way. Also it supports
+composite load operations.
 
 ## 3.1 NIO Storage Driver
 
-This abstract implementation uses few I/O threads to execute a lot if I/O tasks in parallel. Actual I/O work should be
-executed in the method `invokeNio(ioTask)` in the reentrant and non-blocking manner.
+This abstract implementation uses few I/O threads to execute a lot if load operations concurrently. Actual I/O work
+should be executed in the method `invokeNio(op)` in the reentrant and non-blocking manner.
 
 ## 3.2. Netty-Based Storage Driver
 

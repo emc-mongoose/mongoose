@@ -1,7 +1,7 @@
 package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
@@ -201,9 +201,9 @@ public class WeightedLoadTest {
     public final void test()
             throws Exception {
 
-        final Map<IoType, Integer> concurrencyMap = new HashMap<>();
-        concurrencyMap.put(IoType.CREATE, concurrency.getValue());
-        concurrencyMap.put(IoType.READ, concurrency.getValue());
+        final Map<OpType, Integer> concurrencyMap = new HashMap<>();
+        concurrencyMap.put(OpType.CREATE, concurrency.getValue());
+        concurrencyMap.put(OpType.READ, concurrency.getValue());
 
         testMetricsTableStdout(stdOutContent, stepId, storageType, runMode.getNodeCount(), 0, concurrencyMap);
         assertTrue(

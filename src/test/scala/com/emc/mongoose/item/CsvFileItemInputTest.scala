@@ -1,14 +1,14 @@
 package com.emc.mongoose.item
 
 import com.github.akurilov.commons.system.SizeInBytes
-
 import org.junit.{Assert, Before, Test}
-
 import java.io.EOFException
 import java.nio.file.{Files, Paths}
 import java.util
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
+
+import com.emc.mongoose.item.io.{CsvFileItemInput, CsvFileItemOutput, NewDataItemInput}
 
 final class CsvFileItemInputTest {
 
