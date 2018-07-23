@@ -274,7 +274,7 @@ public class CreateLimitBySizeTest {
             };
         }
 
-        testContainerIoTraceLogRecords(stepId, ioTraceRecFunc);
+        testIoTraceLogRecords(stepId, ioTraceRecFunc);
 
 //        System.out.println(expectedCount + "\n" + ioTraceRecCount.sum() + "\n" + requiredAccuracy * expectedCount);
 
@@ -308,12 +308,12 @@ public class CreateLimitBySizeTest {
         assertEquals(items.size(), freq.getUniqueCount());
 
         testTotalMetricsLogRecord(
-                getContainerMetricsTotalLogRecords(stepId).get(0), IoType.CREATE, concurrency.getValue(),
+                getMetricsTotalLogRecords(stepId).get(0), IoType.CREATE, concurrency.getValue(),
                 runMode.getNodeCount(), itemSize.getValue(), 0, 0
         );
 
         testMetricsLogRecords(
-                getContainerMetricsLogRecords(stepId), IoType.CREATE, concurrency.getValue(),
+                getMetricsLogRecords(stepId), IoType.CREATE, concurrency.getValue(),
                 runMode.getNodeCount(), itemSize.getValue(), 0, 0,
                 averagePeriod
         );

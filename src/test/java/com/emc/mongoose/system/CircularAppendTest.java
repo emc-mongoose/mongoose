@@ -173,7 +173,7 @@ public final class CircularAppendTest {
             throws Exception {
 
         try {
-            final List<CSVRecord> metricsLogRecords = getContainerMetricsLogRecords(stepId);
+            final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
             assertTrue(
                     "There should be more than 0 metrics records in the log file",
                     metricsLogRecords.size() > 0
@@ -193,7 +193,7 @@ public final class CircularAppendTest {
             // there may be no metrics file if append step duration is less than 10s
         }
 
-        final List<CSVRecord> totalMetrcisLogRecords = getContainerMetricsTotalLogRecords(stepId);
+        final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
         assertEquals(
                 "There should be 1 total metrics records in the log file", 1,
                 totalMetrcisLogRecords.size()
@@ -221,7 +221,7 @@ public final class CircularAppendTest {
             testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(), itemSize.getValue());
             ioTraceRecCount.increment();
         };
-        testContainerIoTraceLogRecords(stepId, ioTraceReqTestFunc);
+        testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
         assertTrue(
                 "There should be more than " + EXPECTED_COUNT +
                         " records in the I/O trace log file, but got: " + ioTraceRecCount.sum(),

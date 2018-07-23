@@ -246,7 +246,7 @@ public final class CopyUsingInputPathTest {
                 ioTraceRecCount.increment();
             };
         }
-        testContainerIoTraceLogRecords(stepId, ioTraceRecTestFunc);
+        testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
 
         assertTrue(
                 "There should be " + COUNT_LIMIT + " records in the I/O trace log file but got "
@@ -255,7 +255,7 @@ public final class CopyUsingInputPathTest {
         );
         assertEquals(0, lostItemsCount.sum(), COUNT_LIMIT / 10_000);
 
-        final List<CSVRecord> totalMetricsLogRecords = getContainerMetricsTotalLogRecords(stepId);
+        final List<CSVRecord> totalMetricsLogRecords = getMetricsTotalLogRecords(stepId);
         assertEquals(
                 "There should be 1 total metrics records in the log file", 1,
                 totalMetricsLogRecords.size()
@@ -274,7 +274,7 @@ public final class CopyUsingInputPathTest {
             );
         }
 
-        final List<CSVRecord> metricsLogRecords = getContainerMetricsLogRecords(stepId);
+        final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
         assertTrue(
                 "There should be more than 0 metrics records in the log file",
                 metricsLogRecords.size() > 0
