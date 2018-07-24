@@ -232,7 +232,7 @@ import static org.junit.Assert.assertTrue;
         } else {
             final String nodeAddr = storageMocks.keySet().iterator().next();
             ioTraceRecFunc = ioTraceRec -> {
-                testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), itemSize.getValue());
+                testIoTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), itemSize.getValue());
                 HttpStorageMockUtil.assertItemExists(
                         nodeAddr, ioTraceRec.get("ItemPath"),
                         Long.parseLong(ioTraceRec.get("TransferSize"))
@@ -275,30 +275,30 @@ import static org.junit.Assert.assertTrue;
         assertEquals(items.size(), freq.getUniqueCount());
 
         testTotalMetricsLogRecord(
-                getMetricsTotalLogRecords(stepId).get(0), IoType.CREATE, concurrency.getValue(),
+                getMetricsTotalLogRecords(stepId).get(0), OpType.CREATE, concurrency.getValue(),
                 runMode.getNodeCount(), itemSize.getValue(), 0, 0
         );
 
         testMetricsLogRecords(
-                getMetricsLogRecords(stepId), IoType.CREATE, concurrency.getValue(),
+                getMetricsLogRecords(stepId), OpType.CREATE, concurrency.getValue(),
                 runMode.getNodeCount(), itemSize.getValue(), 0, 0,
                 averagePeriod
         );
 
         testSingleMetricsStdout(
                 stdOutContent.replaceAll("[\r\n]+", " "),
-                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+                OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
                 averagePeriod
         );
         testMetricsTableStdout(
                 stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-                new HashMap<IoType, Integer>() {{
-                    put(IoType.CREATE, concurrency.getValue());
+                new HashMap<OpType, Integer>() {{
+                    put(OpType.CREATE, concurrency.getValue());
                 }}
         );
 
         testFinalMetricsTableRowStdout(
-                stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
+                stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
                 0, 0, itemSize.getValue()
         );
 

@@ -211,7 +211,7 @@ public final class ReadUsingVariablePathTest {
         }
 
         testMetricsLogRecords(
-                getMetricsLogRecords(stepId), IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+                getMetricsLogRecords(stepId), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
                 itemSize.getValue(), EXPECTED_COUNT, 0, outputMetricsAveragePeriod
         );
 

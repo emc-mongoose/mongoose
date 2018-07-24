@@ -169,7 +169,7 @@ public interface LogValidationUtil {
 	}
 
 	static void testMetricsLogRecords(
-		final List<CSVRecord> metrics, final IoType expectedIoType, final int expectedConcurrency,
+		final List<CSVRecord> metrics, final OpType expectedOpType, final int expectedConcurrency,
 		final int expectedNodeCount, final SizeInBytes expectedItemDataSize, final long expectedMaxCount,
 		final int expectedLoadJobTime, final long metricsPeriodSec
 	)
@@ -179,7 +179,7 @@ public interface LogValidationUtil {
 			assertTrue(expectedLoadJobTime + metricsPeriodSec >= countRecords * metricsPeriodSec);
 		}
 		Date lastTimeStamp = null, nextDateTimeStamp;
-		String ioTypeStr;
+		String OpTypeStr;
 		int concurrencyLevel;
 		int nodeCount;
 		int concurrencyCurr;
@@ -204,8 +204,8 @@ public interface LogValidationUtil {
 				);
 			}
 			lastTimeStamp = nextDateTimeStamp;
-			ioTypeStr = nextRecord.get("TypeLoad").toUpperCase();
-			assertEquals(expectedIoType.name(), ioTypeStr);
+			OpTypeStr = nextRecord.get("TypeLoad").toUpperCase();
+			assertEquals(expectedOpType.name(), OpTypeStr);
 			concurrencyLevel = Integer.parseInt(nextRecord.get("Concurrency"));
 			assertEquals("Expected concurrency level: " + expectedNodeCount * expectedConcurrency,
 				expectedNodeCount * expectedConcurrency, concurrencyLevel
@@ -299,7 +299,7 @@ public interface LogValidationUtil {
 	}
 
 	static void testTotalMetricsLogRecord(
-		final CSVRecord metrics, final IoType expectedIoType, final int expectedConcurrency,
+		final CSVRecord metrics, final OpType expectedOpType, final int expectedConcurrency,
 		final int expectedNodeCount, final SizeInBytes expectedItemDataSize, final long expectedMaxCount,
 		final int expectedLoadJobTime
 	)
@@ -309,8 +309,8 @@ public interface LogValidationUtil {
 		} catch(final ParseException e) {
 			fail(e.toString());
 		}
-		final String ioTypeStr = metrics.get("TypeLoad").toUpperCase();
-		assertEquals(ioTypeStr, expectedIoType.name(), ioTypeStr);
+		final String OpTypeStr = metrics.get("TypeLoad").toUpperCase();
+		assertEquals(OpTypeStr, expectedOpType.name(), OpTypeStr);
 		System.out.println("1");
 		final int concurrencyLevel = Integer.parseInt(metrics.get("Concurrency"));
 		assertEquals(Integer.toString(concurrencyLevel), expectedNodeCount * expectedConcurrency, concurrencyLevel);
@@ -327,8 +327,8 @@ public interface LogValidationUtil {
 		System.out.println("4");
 		final long totalBytes = SizeInBytes.toFixedSize(metrics.get("Size"));
 		if(expectedMaxCount > 0 && expectedItemDataSize.get() > 0 &&
-			(IoType.CREATE.equals(expectedIoType) || IoType.READ.equals(expectedIoType) ||
-				IoType.UPDATE.equals(expectedIoType))) {
+			(OpType.CREATE.equals(expectedOpType) || OpType.READ.equals(expectedOpType) ||
+				OpType.UPDATE.equals(expectedOpType))) {
 			assertTrue(Long.toString(totalBytes), totalBytes > 0);
 		}
 		System.out.println("5");
@@ -419,14 +419,14 @@ public interface LogValidationUtil {
 	}
 
 	static void testIoTraceRecord(
-		final CSVRecord ioTraceRecord, final int ioTypeCodeExpected, final SizeInBytes sizeExpected
+		final CSVRecord ioTraceRecord, final int OpTypeCodeExpected, final SizeInBytes sizeExpected
 	) {
-		assertEquals(ioTypeCodeExpected, Integer.parseInt(ioTraceRecord.get("IoTypeCode")));
+		assertEquals(OpTypeCodeExpected, Integer.parseInt(ioTraceRecord.get("OpTypeCode")));
 		final int actualStatusCode = Integer.parseInt(ioTraceRecord.get("StatusCode"));
 		if(INTERRUPTED.ordinal() == actualStatusCode) {
 			return;
 		}
-		assertEquals("Actual status code is " + IoTask.Status.values()[actualStatusCode], SUCC.ordinal(),
+		assertEquals("Actual status code is " + Operation.Status.values()[actualStatusCode], SUCC.ordinal(),
 			actualStatusCode
 		);
 		final long duration = Long.parseLong(ioTraceRecord.get("Duration[us]"));
@@ -462,12 +462,12 @@ public interface LogValidationUtil {
 	}
 
 	static void testSingleMetricsStdout(
-		final String stdOutContent, final IoType expectedIoType, final int expectedConcurrency,
+		final String stdOutContent, final OpType expectedOpType, final int expectedConcurrency,
 		final int expectedNodeCount, final SizeInBytes expectedItemDataSize, final long metricsPeriodSec
 	)
 	throws Exception {
 		Date lastTimeStamp = null, nextDateTimeStamp;
-		String ioTypeStr;
+		String OpTypeStr;
 		int concurrencyLevel;
 		int nodeCount;
 		double concurrencyMean;
@@ -492,8 +492,8 @@ public interface LogValidationUtil {
 				);
 			}
 			lastTimeStamp = nextDateTimeStamp;
-			ioTypeStr = m.group("typeLoad").toUpperCase();
-			assertEquals(ioTypeStr, expectedIoType.name(), ioTypeStr);
+			OpTypeStr = m.group("typeLoad").toUpperCase();
+			assertEquals(OpTypeStr, expectedOpType.name(), OpTypeStr);
 			concurrencyLevel = Integer.parseInt(m.group("concurrency"));
 			assertEquals(Integer.toString(concurrencyLevel), expectedConcurrency, concurrencyLevel);
 			nodeCount = Integer.parseInt(m.group("nodeCount"));
@@ -565,17 +565,17 @@ public interface LogValidationUtil {
 
 	static void testMetricsTableStdout(
 		final String stdOutContent, final String stepId, final StorageType storageType, final int nodeCount,
-		final long countLimit, final Map<IoType, Integer> configConcurrencyMap
+		final long countLimit, final Map<OpType, Integer> configConcurrencyMap
 	)
 	throws Exception {
 		final Matcher m = LogPatterns.STD_OUT_METRICS_TABLE_ROW.matcher(stdOutContent);
-		boolean ioTypeFoundFlag;
+		boolean OpTypeFoundFlag;
 		int rowCount = 0;
 		while(m.find()) {
 			rowCount++;
 			final String actualStepNameEnding = m.group("stepName");
 			final Date nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
-			final IoType actualIoType = IoType.valueOf(m.group("ioType"));
+			final OpType actualOpType = OpType.valueOf(m.group("OpType"));
 			final int actualConcurrencyCurr = Integer.parseInt(m.group("concurrencyCurr"));
 			final float actualConcurrencyLastMean = Float.parseFloat(m.group("concurrencyLastMean"));
 			final long succCount = Long.parseLong(m.group("succCount"));
@@ -586,16 +586,16 @@ public interface LogValidationUtil {
 			final long lat = Long.parseLong(m.group("lat"));
 			final long dur = Long.parseLong(m.group("dur"));
 			assertEquals(stepId.length() > 10 ? stepId.substring(stepId.length() - 10) : stepId, actualStepNameEnding);
-			ioTypeFoundFlag = false;
-			for(final IoType nextIoType : configConcurrencyMap.keySet()) {
-				if(nextIoType.equals(actualIoType)) {
-					ioTypeFoundFlag = true;
+			OpTypeFoundFlag = false;
+			for(final OpType nextOpType : configConcurrencyMap.keySet()) {
+				if(nextOpType.equals(actualOpType)) {
+					OpTypeFoundFlag = true;
 					break;
 				}
 			}
-			assertTrue("I/O type \"" + actualIoType + "\" was found but expected one of: " +
-				Arrays.toString(configConcurrencyMap.keySet().toArray()), ioTypeFoundFlag);
-			final int expectedConfigConcurrency = configConcurrencyMap.get(actualIoType);
+			assertTrue("I/O type \"" + actualOpType + "\" was found but expected one of: " +
+				Arrays.toString(configConcurrencyMap.keySet().toArray()), OpTypeFoundFlag);
+			final int expectedConfigConcurrency = configConcurrencyMap.get(actualOpType);
 			if(expectedConfigConcurrency > 0) {
 				assertTrue(actualConcurrencyCurr <= nodeCount * expectedConfigConcurrency);
 				assertTrue(actualConcurrencyLastMean <= nodeCount * expectedConfigConcurrency);
@@ -624,7 +624,7 @@ public interface LogValidationUtil {
 	}
 
 	static void testFinalMetricsTableRowStdout(
-		final String stdOutContent, final String stepId, final IoType expectedIoType, final int nodeCount,
+		final String stdOutContent, final String stepId, final OpType expectedOpType, final int nodeCount,
 		final int expectedConcurrency, final long countLimit, final long timeLimit,
 		final SizeInBytes expectedItemDataSize
 	)
@@ -644,8 +644,8 @@ public interface LogValidationUtil {
 		while(m.find()) {
 			final String actualStepNameEnding = m.group("stepName");
 			if(stepId.endsWith(actualStepNameEnding) || stepId.equals(actualStepNameEnding)) {
-				final IoType actualIoType = IoType.valueOf(m.group("ioType"));
-				if(actualIoType.equals(expectedIoType)) {
+				final OpType actualOpType = OpType.valueOf(m.group("OpType"));
+				if(actualOpType.equals(expectedOpType)) {
 					rowFoundFlag = true;
 					nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
 					actualConcurrencyCurr = Integer.parseInt(m.group("concurrencyCurr"));
@@ -661,7 +661,7 @@ public interface LogValidationUtil {
 				}
 			}
 		}
-		assertTrue("Summary metrics row with step id ending with \"" + stepId + "\" and I/O type \"" + expectedIoType +
+		assertTrue("Summary metrics row with step id ending with \"" + stepId + "\" and I/O type \"" + expectedOpType +
 			"\" was not found", rowFoundFlag);
 		assertTrue(actualConcurrencyCurr >= 0);
 		assertTrue(nodeCount * expectedConcurrency >= actualConcurrencyCurr);

@@ -185,7 +185,7 @@ import static org.junit.Assert.assertTrue;
 		final LongAdder ioTraceRecCount = new LongAdder();
 
 		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
-			testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), itemSize.getValue());
+			testIoTraceRecord(ioTraceRec, OpType.READ.ordinal(), itemSize.getValue());
 			ioTraceRecCount.increment();
 		};
 		testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
@@ -213,24 +213,24 @@ import static org.junit.Assert.assertTrue;
 		modLayerAndMask = itemRec.get(3);
 		assertEquals("0/0", modLayerAndMask);
 
-		testSingleMetricsStdout(stdOutContent.replaceAll("[\r\n]+", " "), IoType.CREATE, concurrency.getValue(),
+		testSingleMetricsStdout(stdOutContent.replaceAll("[\r\n]+", " "), OpType.CREATE, concurrency.getValue(),
 			runMode.getNodeCount(), itemSize.getValue(), averagePeriod
 		);
-		testFinalMetricsTableRowStdout(stdOutContent, stepId, IoType.CREATE, runMode.getNodeCount(),
+		testFinalMetricsTableRowStdout(stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(),
 			concurrency.getValue(), 0, 60, itemSize.getValue()
 		);
 
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
 		assertEquals("There should be 1 total metrics records in the log file", 1, totalMetrcisLogRecords.size());
 
-		testTotalMetricsLogRecord(totalMetrcisLogRecords.get(0), IoType.READ, concurrency.getValue(),
+		testTotalMetricsLogRecord(totalMetrcisLogRecords.get(0), OpType.READ, concurrency.getValue(),
 			runMode.getNodeCount(), itemSize.getValue(), 0, 60
 		);
 
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
 		assertTrue("There should be more than 2 metrics records in the log file", metricsLogRecords.size() > 1);
 
-		testMetricsLogRecords(metricsLogRecords, IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+		testMetricsLogRecords(metricsLogRecords, OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
 			itemSize.getValue(), 0, 60, averagePeriod
 		);
 

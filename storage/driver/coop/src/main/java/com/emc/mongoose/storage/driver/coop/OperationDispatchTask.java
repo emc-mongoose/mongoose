@@ -41,21 +41,24 @@ extends ExclusiveFiberBase {
 		final BlockingQueue<O> inOpQueue, final BlockingQueue<O> childOpQueue, final String stepId,
 		final int batchSize
 	) {
-		this(executor, new OptLockArrayBuffer<>(batchSize), storageDriver, inOpQueue, childOpQueue, stepId, batchSize);
+		this(
+			executor, new OptLockArrayBuffer<>(batchSize), storageDriver, inOpQueue, childOpQueue,
+			stepId, batchSize
+		);
 	}
 
 	private OperationDispatchTask(
-		final FibersExecutor executor, final OptLockBuffer<O> buff, final CoopStorageDriverBase<I, O> storageDriver,
-		final BlockingQueue<O> inOpQueue, final BlockingQueue<O> childOpQueue, final String stepId,
-		final int batchSize
+		final FibersExecutor executor, final OptLockBuffer<O> buff,
+		final CoopStorageDriverBase<I, O> storageDriver, final BlockingQueue<O> inOpQueue,
+		final BlockingQueue<O> childOpQueue, final String stepId, final int batchSize
 	) {
 		super(executor, buff);
+		this.buff = buff;
 		this.storageDriver = storageDriver;
 		this.inOpQueue = inOpQueue;
 		this.childOpQueue = childOpQueue;
 		this.stepId = stepId;
 		this.batchSize = batchSize;
-		this.buff = buff;
 	}
 
 	@Override
@@ -66,37 +69,37 @@ extends ExclusiveFiberBase {
 
 		try {
 			// child ops go first
-			if (n < batchSize) {
+			if(n < batchSize) {
 				n += childOpQueue.drainTo(buff, batchSize - n);
 			}
 			// check for the fiber invocation timeout
-			if (TIMEOUT_NANOS <= System.nanoTime() - startTimeNanos) {
+			if(TIMEOUT_NANOS <= System.nanoTime() - startTimeNanos) {
 				return;
 			}
 			// new tasks
-			if (n < batchSize) {
+			if(n < batchSize) {
 				n += inOpQueue.drainTo(buff, batchSize - n);
 			}
 			// check for the fiber invocation timeout
-			if (TIMEOUT_NANOS <= System.nanoTime() - startTimeNanos) {
+			if(TIMEOUT_NANOS <= System.nanoTime() - startTimeNanos) {
 				return;
 			}
 			// submit the tasks if any
-			if (n > 0) {
+			if(n > 0) {
 				if (n == 1) { // non-batch mode
-					if (storageDriver.submit(buff.get(0))) {
+					if(storageDriver.submit(buff.get(0))) {
 						buff.clear();
 						n --;
 					}
 				} else { // batch mode
 					final int m = storageDriver.submit(buff, 0, n);
-					if (m > 0) {
+					if(m > 0) {
 						buff.removeRange(0, m);
 						n -= m;
 					}
 				}
 			}
-		} catch (final IllegalStateException e) {
+		} catch(final IllegalStateException e) {
 			LogUtil.exception(
 				Level.DEBUG, e,
 				"{}: failed to submit some load operations due to the illegal storage driver state ({})",
