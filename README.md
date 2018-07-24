@@ -25,6 +25,8 @@ It is designed to be used for:
 
 It is easily scalable to perform millions of IOPS and emulate millions of concurrent clients.
 
+See also the **[comparison with similiar tools](doc/comparison.md)**.
+
 # Features
 
 1. [Scalability](doc/features.md#1-scalability)<br/>
@@ -74,12 +76,8 @@ It is easily scalable to perform millions of IOPS and emulate millions of concur
     * [Pipeline Load](doc/design/pipeline_load.md)
     * [Weighted Load](doc/design/weighted_load.md)
 * Development
-    * Notes
-        * [Code Branches](doc/development/notes/branches.md)
-        * [Code Style](doc/development/notes/code_style.md)
-        * [Issue Reporting](doc/development/notes/issue_reporting.md)
-        * [Releasing](doc/development/notes/releasing.md)
-        * [Testing](doc/development/notes/testing.md)
+    * [Process](doc/development/process.md)
+    * [Notes](doc/development/notes.md)
     * [Changelog](doc/development/changelog.md)
 
 # Contributors
@@ -94,5 +92,6 @@ It is easily scalable to perform millions of IOPS and emulate millions of concur
 * [Veronika Kochugova](https://github.com/veronikaKochugova)
 
 # Links
+* [Issue Tracker](https://mongoose-issues.atlassian.net/projects/BASE)
 * [Travis CI](https://travis-ci.org/emc-mongoose/mongoose)
 * [Docker Hub](https://hub.docker.com/r/emcmongoose/mongoose)
