@@ -196,7 +196,7 @@ public final class ReadUsingVariablePathTest {
             assertTrue(m.matches());
             ioTraceRecCount.increment();
         };
-        testContainerIoTraceLogRecords(stepId, ioTraceReqTestFunc);
+        testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
         assertEquals(
                 "There should be more than 1 record in the I/O trace log file",
                 EXPECTED_COUNT, ioTraceRecCount.sum()
@@ -211,12 +211,12 @@ public final class ReadUsingVariablePathTest {
         }
 
         testMetricsLogRecords(
-                getContainerMetricsLogRecords(stepId), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
+                getMetricsLogRecords(stepId), IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
                 itemSize.getValue(), EXPECTED_COUNT, 0, outputMetricsAveragePeriod
         );
 
         testTotalMetricsLogRecord(
-                getContainerMetricsTotalLogRecords(stepId).get(0),
+                getMetricsTotalLogRecords(stepId).get(0),
                 OpType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
                 EXPECTED_COUNT, 0
         );
