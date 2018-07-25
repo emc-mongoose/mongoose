@@ -7,8 +7,9 @@ import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
-import com.github.akurilov.commons.collection.OptLockArrayBuffer;
-import com.github.akurilov.commons.collection.OptLockBuffer;
+import com.github.akurilov.commons.collection.CircularArrayBuffer;
+import com.github.akurilov.commons.collection.CircularBuffer;
+
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 import com.github.akurilov.fiber4j.FibersExecutor;
 
@@ -18,6 +19,8 @@ import org.apache.logging.log4j.ThreadContext;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by andrey on 23.08.17.
@@ -32,7 +35,8 @@ extends ExclusiveFiberBase {
 	private final BlockingQueue<O> childOpQueue;
 	private final BlockingQueue<O> inOpQueue;
 	private final CoopStorageDriverBase<I, O> storageDriver;
-	private final OptLockBuffer<O> buff;
+	private final CircularBuffer<O> buff;
+	private final Lock buffLock;
 
 	private int n = 0; // the current count of the load operations in the buffer
 
@@ -41,21 +45,25 @@ extends ExclusiveFiberBase {
 		final BlockingQueue<O> inOpQueue, final BlockingQueue<O> childOpQueue, final String stepId,
 		final int batchSize
 	) {
-		this(executor, new OptLockArrayBuffer<>(batchSize), storageDriver, inOpQueue, childOpQueue, stepId, batchSize);
+		this(
+			executor, new CircularArrayBuffer<>(batchSize), new ReentrantLock(), storageDriver, inOpQueue, childOpQueue,
+			stepId, batchSize
+		);
 	}
 
 	private OperationDispatchTask(
-		final FibersExecutor executor, final OptLockBuffer<O> buff, final CoopStorageDriverBase<I, O> storageDriver,
-		final BlockingQueue<O> inOpQueue, final BlockingQueue<O> childOpQueue, final String stepId,
-		final int batchSize
+		final FibersExecutor executor, final CircularBuffer<O> buff, final Lock buffLock,
+		final CoopStorageDriverBase<I, O> storageDriver, final BlockingQueue<O> inOpQueue,
+		final BlockingQueue<O> childOpQueue, final String stepId, final int batchSize
 	) {
-		super(executor, buff);
+		super(executor, buffLock);
+		this.buff = buff;
+		this.buffLock = buffLock;
 		this.storageDriver = storageDriver;
 		this.inOpQueue = inOpQueue;
 		this.childOpQueue = childOpQueue;
 		this.stepId = stepId;
 		this.batchSize = batchSize;
-		this.buff = buff;
 	}
 
 	@Override
@@ -91,7 +99,7 @@ extends ExclusiveFiberBase {
 				} else { // batch mode
 					final int m = storageDriver.submit(buff, 0, n);
 					if (m > 0) {
-						buff.removeRange(0, m);
+						buff.removeFirst(m);
 						n -= m;
 					}
 				}
@@ -108,7 +116,7 @@ extends ExclusiveFiberBase {
 	@Override
 	protected final void doClose() {
 		try {
-			if(buff.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+			if(buffLock.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 				buff.clear();
 			} else {
 				Loggers.ERR.warn("BufferLock timeout on close");

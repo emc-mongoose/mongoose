@@ -27,7 +27,9 @@ PreconditionLoad
 PreconditionLoad
     .config({
       "load" : {
-        "type" : "update"
+        "op" : {
+          "type" : "update"
+        }
       },
       "item" : {
         "data" : {
@@ -45,7 +47,9 @@ PreconditionLoad
 ReadLoad
     .config({
       "load" : {
-        "type" : "read"
+        "op" : {
+          "type" : "read"
+        }
       },
       "item" : {
         "data" : {

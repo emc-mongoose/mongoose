@@ -1,6 +1,6 @@
 {
 	"configuration" : {
-		"status" : "warn",
+		"status" : "info",
 		"name" : "mongoose",
 		"monitorInterval" : 1000,
 		"packages" : "com.emc.mongoose.logging",

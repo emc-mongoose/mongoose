@@ -26,11 +26,11 @@ var step_1 = PreconditionLoad
 PreconditionLoad
     .config({
       "load" : {
-        "type" : "update",
-        "generator" : {
+        "op" : {
           "recycle" : {
             "enabled" : true
-          }
+          },
+          "type" : "update"
         },
         "step" : {
           "limit" : {
@@ -63,7 +63,9 @@ cmd_2.waitFor();
 ReadLoad
     .config({
       "load" : {
-        "type" : "read"
+        "op" : {
+          "type" : "read"
+        }
       },
       "item" : {
         "data" : {

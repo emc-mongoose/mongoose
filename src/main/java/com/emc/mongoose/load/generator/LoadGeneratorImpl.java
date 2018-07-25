@@ -8,8 +8,8 @@ import com.emc.mongoose.item.Item;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
-import com.github.akurilov.commons.collection.OptLockArrayBuffer;
-import com.github.akurilov.commons.collection.OptLockBuffer;
+import com.github.akurilov.commons.collection.CircularArrayBuffer;
+import com.github.akurilov.commons.collection.CircularBuffer;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
@@ -64,7 +64,7 @@ implements LoadGenerator<I, O> {
 	private final boolean shuffleFlag;
 	private final Random rnd;
 	private final String name;
-	private final ThreadLocal<OptLockBuffer<O>> threadLocalOpBuff;
+	private final ThreadLocal<CircularBuffer<O>> threadLocalOpBuff;
 	private final LongAdder builtTasksCounter = new LongAdder();
 	private final LongAdder recycledOpCounter = new LongAdder();
 	private final LongAdder outputOpCounter = new LongAdder();
@@ -93,14 +93,14 @@ implements LoadGenerator<I, O> {
 		name = Character.toUpperCase(ioStr.charAt(0)) + ioStr.substring(1).toLowerCase() +
 			(countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "") +
 			itemInput.toString();
-		threadLocalOpBuff = ThreadLocal.withInitial(() -> new OptLockArrayBuffer<>(batchSize));
+		threadLocalOpBuff = ThreadLocal.withInitial(() -> new CircularArrayBuffer<>(batchSize));
 	}
 
 	@Override
 	protected final void invokeTimed(final long startTimeNanos) {
 
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
-		final OptLockBuffer<O> opBuff = threadLocalOpBuff.get();
+		final CircularBuffer<O> opBuff = threadLocalOpBuff.get();
 		int pendingOpCount = opBuff.size();
 		int n = batchSize - pendingOpCount;
 
@@ -180,7 +180,7 @@ implements LoadGenerator<I, O> {
 							n = opOutput.put(opBuff, 0, n);
 							outputOpCounter.add(n);
 							if(n < pendingOpCount) {
-								opBuff.removeRange(0, n);
+								opBuff.removeFirst(n);
 							} else {
 								opBuff.clear();
 							}
@@ -231,7 +231,7 @@ implements LoadGenerator<I, O> {
 	}
 
 	// build new tasks for the corresponding items
-	private long buildOps(final List<I> items, final OptLockBuffer<O> opBuff, final int n)
+	private long buildOps(final List<I> items, final CircularBuffer<O> opBuff, final int n)
 	throws IOException {
 		if(shuffleFlag) {
 			Collections.shuffle(items, rnd);

@@ -12,8 +12,8 @@ var limitConcurrency = 1;
 
 function configLimitConcurrency(c) {
     return {
-        "load": {
-            "step": {
+        "storage": {
+            "driver": {
                 "limit": {
                     "concurrency": c
                 }

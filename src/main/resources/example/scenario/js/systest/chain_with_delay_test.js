@@ -15,7 +15,9 @@ PipelineLoad
     })
     .append({
       "load" : {
-        "type" : "read"
+        "op" : {
+          "type" : "read"
+       	}
       },
       "storage" : {
         "net" : {

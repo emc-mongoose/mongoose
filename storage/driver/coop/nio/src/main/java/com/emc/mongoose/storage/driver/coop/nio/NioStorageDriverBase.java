@@ -13,8 +13,8 @@ import static com.emc.mongoose.item.op.Operation.Status.ACTIVE;
 import static com.emc.mongoose.item.op.Operation.Status.INTERRUPTED;
 import static com.emc.mongoose.item.op.Operation.Status.PENDING;
 
-import com.github.akurilov.commons.collection.OptLockArrayBuffer;
-import com.github.akurilov.commons.collection.OptLockBuffer;
+import com.github.akurilov.commons.collection.CircularArrayBuffer;
+import com.github.akurilov.commons.collection.CircularBuffer;
 import com.github.akurilov.commons.concurrent.ThreadUtil;
 
 import com.github.akurilov.confuse.Config;
@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  Created by kurila on 19.07.16.
@@ -50,7 +52,8 @@ implements NioStorageDriver<I, O> {
 	private final int ioWorkerCount;
 	private final int opBuffCapacity;
 	private final List<Fiber> ioFibers;
-	private final OptLockBuffer<O> opBuffs[];
+	private final CircularBuffer<O>[] opBuffs;
+	private final Lock[] opBuffLocks;
 	private final AtomicLong rrc = new AtomicLong(0);
 
 	@SuppressWarnings("unchecked")
@@ -68,11 +71,13 @@ implements NioStorageDriver<I, O> {
 			ioWorkerCount = ThreadUtil.getHardwareThreadCount();
 		}
 		ioFibers = new ArrayList<>(ioWorkerCount);
-		opBuffs = new OptLockBuffer[ioWorkerCount];
+		opBuffs = new CircularBuffer[ioWorkerCount];
+		opBuffLocks = new Lock[ioWorkerCount];
 		opBuffCapacity = Math.max(MIN_TASK_BUFF_CAPACITY, concurrencyLimit / ioWorkerCount);
 		for(int i = 0; i < ioWorkerCount; i ++) {
-			opBuffs[i] = new OptLockArrayBuffer<>(opBuffCapacity);
-			ioFibers.add(new NioWorkerTask(IO_EXECUTOR, opBuffs[i]));
+			opBuffs[i] = new CircularArrayBuffer<>(opBuffCapacity);
+			opBuffLocks[i] = new ReentrantLock();
+			ioFibers.add(new NioWorkerTask(IO_EXECUTOR, opBuffs[i], opBuffLocks[i]));
 		}
 	}
 
@@ -84,14 +89,14 @@ implements NioStorageDriver<I, O> {
 	private final class NioWorkerTask
 	extends ExclusiveFiberBase {
 
-		private final OptLockBuffer<O> opBuff;
+		private final CircularBuffer<O> opBuff;
 		private final List<O> opLocalBuff;
 
 		private int opBuffSize;
 		private O op;
 
-		public NioWorkerTask(final FibersExecutor executor, final OptLockBuffer<O> opBuff) {
-			super(executor, opBuff);
+		public NioWorkerTask(final FibersExecutor executor, final CircularBuffer<O> opBuff, final Lock opBuffLock) {
+			super(executor, opBuffLock);
 			this.opBuff = opBuff;
 			this.opLocalBuff = new ArrayList<>(opBuffCapacity);
 		}
@@ -203,17 +208,21 @@ implements NioStorageDriver<I, O> {
 	@Override
 	protected final boolean submit(final O op)
 	throws IllegalStateException {
-		OptLockBuffer<O> opBuff;
+		CircularBuffer<O> opBuff;
+		Lock opBuffLock;
+		int j;
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			if(!isStarted()) {
 				throw new IllegalStateException();
 			}
-			opBuff = opBuffs[(int) (rrc.getAndIncrement() % ioWorkerCount)];
-			if(opBuff.tryLock()) {
+			j = (int) (rrc.getAndIncrement() % ioWorkerCount);
+			opBuff = opBuffs[j];
+			opBuffLock = opBuffLocks[j];
+			if(opBuffLock.tryLock()) {
 				try {
 					return opBuff.size() < opBuffCapacity && opBuff.add(op);
 				} finally {
-					opBuff.unlock();
+					opBuffLock.unlock();
 				}
 			} else {
 				i ++;
@@ -225,16 +234,20 @@ implements NioStorageDriver<I, O> {
 	@Override
 	protected final int submit(final List<O> ops, final int from, final int to)
 	throws IllegalStateException {
-		OptLockBuffer<O> opBuff;
+		CircularBuffer<O> opBuff;
+		Lock opBuffLock;
 		int j = from;
 		int k;
 		int n;
+		int m;
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			if(!isStarted()) {
 				throw new IllegalStateException();
 			}
-			opBuff = opBuffs[(int) (rrc.getAndIncrement() % ioWorkerCount)];
-			if(opBuff.tryLock()) {
+			m = (int) (rrc.getAndIncrement() % ioWorkerCount);
+			opBuff = opBuffs[m];
+			opBuffLock = opBuffLocks[m];
+			if(opBuffLock.tryLock()) {
 				try {
 					n = Math.min(to - j, opBuffCapacity - opBuff.size());
 					for(k = 0; k < n; k ++) {
@@ -242,7 +255,7 @@ implements NioStorageDriver<I, O> {
 					}
 					j += n;
 				} finally {
-					opBuff.unlock();
+					opBuffLock.unlock();
 				}
 			}
 		}
@@ -277,7 +290,7 @@ implements NioStorageDriver<I, O> {
 		}
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
-				if(opBuffs[i].tryLock(Fiber.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+				if(opBuffLocks[i].tryLock(Fiber.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 					opBuffs[i].clear();
 				} else if(opBuffs[i].size() > 0){
 					Loggers.ERR.debug(new ThreadDumpMessage("Failed to obtain the load operations buff lock in time"));

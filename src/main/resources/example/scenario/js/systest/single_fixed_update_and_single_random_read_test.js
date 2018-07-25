@@ -44,7 +44,9 @@ UpdateLoad
     .config(parentConfig_1)
     .config({
       "load" : {
-        "type" : "update"
+        "op" : {
+          "type" : "update"
+        }
       },
       "item" : {
         "data" : {
@@ -72,7 +74,9 @@ ReadLoad
     .config(parentConfig_1)
     .config({
       "load" : {
-        "type" : "read"
+        "op" : {
+          "type" : "read"
+        }
       },
       "item" : {
         "data" : {

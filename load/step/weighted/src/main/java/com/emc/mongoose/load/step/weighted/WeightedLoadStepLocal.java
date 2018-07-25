@@ -83,7 +83,7 @@ extends LoadStepLocalBase {
 				throw new CancellationException();
 			}
 			subConfigs.add(subConfig);
-			final int weight = subConfig.intVal("load-generator-weight");
+			final int weight = subConfig.intVal("load-op-weight");
 			weights[originIndex] = weight;
 		}
 
