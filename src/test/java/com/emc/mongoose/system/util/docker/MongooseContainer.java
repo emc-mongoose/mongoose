@@ -63,7 +63,7 @@ public final class MongooseContainer
     }
 
     private static final String CONTAINER_LOG_PATH = CONTAINER_HOME_PATH + "/log";
-    public static final Path HOST_LOG_PATH = Paths.get(HOST_SHARE_PATH.toString(), "log");
+    public static final Path HOST_LOG_PATH = Paths.get(APP_HOME_DIR, "log");
 
     static {
         HOST_LOG_PATH.toFile().mkdir();

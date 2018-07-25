@@ -1,7 +1,7 @@
-var fileName = "CircularReadLimitByTime.csv";
+
 
 var cmd = new java.lang.ProcessBuilder()
-    .command("/bin/sh", "-c", "rm -f " + fileName)
+    .command("/bin/sh", "-c", "/bin/rm -f " + FILE_NAME)
     .inheritIO()
     .start();
 cmd.waitFor();
@@ -17,7 +17,7 @@ PreconditionLoad
       },
       "item" : {
         "output" : {
-          "file" : fileName
+          "file" : FILE_NAME
         }
       }
     })
@@ -40,7 +40,7 @@ ReadLoad
       },
       "item" : {
         "input" : {
-          "file" : fileName
+          "file" : FILE_NAME
         }
       }
     })

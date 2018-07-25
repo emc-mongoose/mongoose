@@ -121,7 +121,7 @@ allprojects {
 
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
-		maxHeapSize "1g"
+		maxHeapSize "2g"
 		testLogging {
 			events "passed", "skipped", "failed", "standardOut"
 			showExceptions = true
