@@ -61,7 +61,7 @@ implements LoadStepClient {
 	private final List<FileManager> fileMgrs = new ArrayList<>();
 	private final List<AutoCloseable> itemInputFileSlicers = new ArrayList<>();
 	private final List<AutoCloseable> itemOutputFileAggregators = new ArrayList<>();
-	private final List<AutoCloseable> ioTraceLogFileAggregators = new ArrayList<>();
+	private final List<AutoCloseable> opTraceLogFileAggregators = new ArrayList<>();
 	private final List<AutoCloseable> storageAuthFileSlicers = new ArrayList<>();
 
 	public LoadStepClientBase(final Config config, final List<Extension> extensions, final List<Config> ctxConfigs) {
@@ -180,8 +180,8 @@ implements LoadStepClient {
 		}
 
 		if(config.boolVal("output-metrics-trace-persist")) {
-			ioTraceLogFileAggregators.add(new IoTraceLogFileAggregator(id(), fileMgrs));
-			Loggers.MSG.debug("{}: I/O trace log file aggregator initialized", id());
+			opTraceLogFileAggregators.add(new OpTraceLogFileAggregator(id(), fileMgrs));
+			Loggers.MSG.debug("{}: operation traces log file aggregator initialized", id());
 		}
 
 		final String storageAuthFile = storageConfig.stringVal("auth-file");
@@ -442,16 +442,16 @@ implements LoadStepClient {
 				}
 			);
 
-		ioTraceLogFileAggregators
+		opTraceLogFileAggregators
 			.parallelStream()
 			.forEach(
-				ioTraceLogFileAggregator -> {
+				opTraceLogFileAggregator -> {
 					try {
-						ioTraceLogFileAggregator.close();
+						opTraceLogFileAggregator.close();
 					} catch(final Exception e) {
 						LogUtil.exception(
-							Level.WARN, e, "{}: failed to close the I/O trace log file aggregator \"{}\"", id(),
-							ioTraceLogFileAggregator
+							Level.WARN, e, "{}: failed to close the operation traces log file aggregator \"{}\"", id(),
+							opTraceLogFileAggregator
 						);
 					}
 				}
