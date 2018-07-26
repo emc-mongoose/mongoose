@@ -8,7 +8,7 @@ import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.concurrent.DaemonBase;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
@@ -133,7 +133,7 @@ implements LoadStep, Runnable {
 	throws IllegalStateException;
 
 	protected abstract void initMetrics(
-		final int originIndex, final IoType ioType, final int concurrency, final Config metricsConfig,
+		final int originIndex, final OpType opType, final int concurrency, final Config metricsConfig,
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	);
 

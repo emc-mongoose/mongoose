@@ -21,7 +21,9 @@ var config1 = {
 // each item)
 var config2 = {
     "load": {
-        "type": "read"
+        "op": {
+          "type": "read"
+        }
     },
     "storage": {
         "net": {

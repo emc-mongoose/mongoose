@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.preempt;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.logging.LogContextThreadFactory;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.driver.StorageDriver;
@@ -18,24 +18,23 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public abstract class PreemptStorageDriverBase<I extends Item, O extends IoTask<I>>
+public abstract class PreemptStorageDriverBase<I extends Item, O extends Operation<I>>
 extends StorageDriverBase<I, O>
 implements StorageDriver<I,O> {
 
 	private final ThreadPoolExecutor ioExecutor;
 
 	protected PreemptStorageDriverBase(
-		final String stepId, final DataInput itemDataInput, final Config loadConfig,
-		final Config storageConfig, final boolean verifyFlag
+		final String stepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag
 	) throws OmgShootMyFootException {
-		super(stepId, itemDataInput, loadConfig, storageConfig, verifyFlag);
-		if(ioWorkerCount != concurrencyLevel) {
+		super(stepId, itemDataInput, storageConfig, verifyFlag);
+		if(ioWorkerCount != concurrencyLimit) {
 			throw new IllegalArgumentException(
 				"Storage driver I/O worker count (" + ioWorkerCount + ") should be equal to the "
-					+ " concurrency limit (" + concurrencyLevel + ")"
+					+ " concurrency limit (" + concurrencyLimit + ")"
 			);
 		}
-		final int inQueueSize = storageConfig.intVal("driver-queue-input");
+		final int inQueueSize = storageConfig.intVal("driver-limit-queue-input");
 		ioExecutor = new ThreadPoolExecutor(
 			ioWorkerCount, ioWorkerCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<>(inQueueSize),
@@ -44,10 +43,10 @@ implements StorageDriver<I,O> {
 	}
 
 	@Override
-	public final boolean put(final O ioTask)
+	public final boolean put(final O op)
 	throws EOFException {
 		try {
-			ioExecutor.execute(blockingIoTask(ioTask));
+			ioExecutor.execute(wrapBlockingOperation(op));
 			return true;
 		} catch(final RejectedExecutionException e) {
 			if(!isStarted() || ioExecutor.isShutdown() || ioExecutor.isTerminated()) {
@@ -58,7 +57,7 @@ implements StorageDriver<I,O> {
 	}
 
 	@Override
-	public final int put(final List<O> ioTasks, final int from, final int to)
+	public final int put(final List<O> ops, final int from, final int to)
 	throws EOFException {
 		if(!isStarted() || ioExecutor.isShutdown() || ioExecutor.isTerminated()) {
 			throw new EOFException();
@@ -66,7 +65,7 @@ implements StorageDriver<I,O> {
 		int i = from;
 		try {
 			while(i < to) {
-				ioExecutor.execute(blockingIoTask(ioTasks.get(i)));
+				ioExecutor.execute(wrapBlockingOperation(ops.get(i)));
 				i ++;
 			}
 		} catch(final RejectedExecutionException ignored) {
@@ -75,33 +74,33 @@ implements StorageDriver<I,O> {
 	}
 
 	@Override
-	public final int put(final List<O> ioTasks)
+	public final int put(final List<O> ops)
 	throws EOFException {
-		return put(ioTasks, 0, ioTasks.size());
+		return put(ops, 0, ops.size());
 	}
 
-	private Runnable blockingIoTask(final O ioTask) {
-		prepareIoTask(ioTask);
+	private Runnable wrapBlockingOperation(final O op) {
+		prepareOperation(op);
 		return () -> {
-			execute(ioTask);
-			ioTaskCompleted(ioTask);
+			execute(op);
+			opCompleted(op);
 		};
 	}
 
-	protected abstract void execute(final O ioTask);
+	protected abstract void execute(final O op);
 
 	@Override
-	public final int activeTaskCount() {
+	public final int activeOpCount() {
 		return ioExecutor.getActiveCount();
 	}
 
 	@Override
-	public final long getScheduledTaskCount() {
+	public final long scheduledOpCount() {
 		return ioExecutor.getTaskCount();
 	}
 
 	@Override
-	public final long getCompletedTaskCount() {
+	public final long completedOpCount() {
 		return ioExecutor.getCompletedTaskCount();
 	}
 
@@ -118,9 +117,9 @@ implements StorageDriver<I,O> {
 
 	@Override
 	protected void doShutdown() {
-		// prevent enqueuing new I/O tasks
+		// prevent enqueuing new load operations
 		ioExecutor.shutdown();
-		// drop all pending I/O tasks
+		// drop all pending load operations
 		ioExecutor.getQueue().clear();
 		Loggers.MSG.debug("{}: shut down", toString());
 	}

@@ -88,7 +88,7 @@ public class ChainWithDelayTest {
         containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 
         try {
-            FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
+	        FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
         } catch (final IOException ignored) {
         }
 
@@ -223,9 +223,9 @@ public class ChainWithDelayTest {
 
 //        testMetricsTableStdout(
 //                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-//                new HashMap<IoType, Integer>() {{
-//                    put(IoType.CREATE, concurrency.getValue());
-//                    put(IoType.READ, concurrency.getValue());
+//                new HashMap<OpType, Integer>() {{
+//                    put(OpType.CREATE, concurrency.getValue());
+//                    put(OpType.READ, concurrency.getValue());
 //                }}
 //        );
 //
@@ -234,7 +234,7 @@ public class ChainWithDelayTest {
 //
 //            String storageNode;
 //            String itemPath;
-//            IoType ioType;
+//            OpType opType;
 //            long reqTimeStart;
 //            long duration;
 //            Long prevOpFinishTime;
@@ -243,10 +243,10 @@ public class ChainWithDelayTest {
 //            public final void accept(final CSVRecord ioTraceRec) {
 //                storageNode = ioTraceRec.get("StorageNode");
 //                itemPath = ioTraceRec.get("ItemPath");
-//                ioType = IoType.values()[Integer.parseInt(ioTraceRec.get("IoTypeCode"))];
+//                opType = OpType.values()[Integer.parseInt(ioTraceRec.get("OpTypeCode"))];
 //                reqTimeStart = Long.parseLong(ioTraceRec.get("ReqTimeStart[us]"));
 //                duration = Long.parseLong(ioTraceRec.get("Duration[us]"));
-//                switch (ioType) {
+//                switch (opType) {
 //                    case CREATE:
 //                        assertTrue(storageNode.startsWith(zone1Addr));
 //                        timingMap.put(itemPath, reqTimeStart + duration);
@@ -261,7 +261,7 @@ public class ChainWithDelayTest {
 //                        }
 //                        break;
 //                    default:
-//                        fail("Unexpected I/O type: " + ioType);
+//                        fail("Unexpected I/O type: " + opType);
 //                }
 //            }
 //        };

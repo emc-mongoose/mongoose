@@ -2,7 +2,7 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.item.io.IoType.CREATE;
+import static com.emc.mongoose.item.op.OpType.CREATE;
 import static com.emc.mongoose.system.util.LogValidationUtil.*;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
@@ -93,7 +93,7 @@ public class UnlimitedConcurrencyLimitByRateTest {
         containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 
         try {
-            FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
+	        FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
         } catch (final IOException ignored) {
         }
 
@@ -211,7 +211,7 @@ public class UnlimitedConcurrencyLimitByRateTest {
             throws Exception {
         testMetricsTableStdout(
                 stdOutContent, stepId, storageType, runMode.getNodeCount(), COUNT_LIMIT,
-                new HashMap<IoType, Integer>() {{
+                new HashMap<OpType, Integer>() {{
                     put(CREATE, 0);
                 }}
         );

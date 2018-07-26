@@ -33,7 +33,7 @@ extends LoggingTestBase {
 		configArgs.add("--item-data-size=" + itemSize.getValue());
 		configArgs.add("--load-step-id=" + stepId);
 		configArgs.add("--load-step-idTmp=false");
-		configArgs.add("--load-step-limit-concurrency=" + concurrency.getValue());
+		configArgs.add("--storage-driver-limit-concurrency=" + concurrency.getValue());
 		configArgs.add("--output-metrics-trace-persist=true");
 		configArgs.add("--storage-driver-type=" + storageType.name().toLowerCase());
 	}

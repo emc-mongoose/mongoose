@@ -14,7 +14,7 @@ import java.util.Date;
 /**
  Created by kurila on 18.05.17.
  
- TypeLoad,
+ OpLoad,
  Concurrency,
  DriverCount,
  ConcurrencyCurr,

@@ -67,7 +67,7 @@ Field Name            | Description
 Step Name             | The configured step name. Automatic value is used if not configured obviously. Note that only last 10 characters are displayed in the table.
 Timestamp             | The datetime of the record output in the "yyMMddHHmmss" format (year is specified by the 2 last digits)
 Op Type               | Load operation type. Colored for readability.
-Concurrency / Current | The current summary concurrency level (count of concurrently executed tasks)
+Concurrency / Current | The current summary concurrency level (count of concurrently executed load operations)
 Concurrency / Mean    | The mean summary concurrency level for the last *period* (10s by default)
 Count / Success       | The count of the items processed sucessfully.
 Count / Failed        | The count of the items processed with a failure.
@@ -87,32 +87,32 @@ mode).
 Field Name      | Description
 ----------------|------------
 DateTimeISO8601 | Timestamp in the ISO8601 format
-TypeLoad        | Load type (CREATE/READ/...)
+OpType          | Load operation type (CREATE/READ/...)
 Concurrency     | The configured concurrency level (per storage driver)
 NodeCount       | Count of the mongoose nodes used for the load (1 in case of the standalone mode, >1 in case of the distributed mode)
-ConcurrencyCurr | The current summary concurrency level (count of concurrently executed tasks)
+ConcurrencyCurr | The current summary concurrency level (count of concurrently executed load operations)
 ConcurrencyMean | The mean summary concurrency level for the last *period* (10s by default)
-CountSucc       | Total successful I/O tasks count
-CountFail       | Total failed I/O tasks count
+CountSucc       | Total successful operations count
+CountFail       | Total failed operations count
 Size            | Total transferred byte count
 JobDuration[s]  | Total step duration
-DurationSum[s]  | Total sum of the I/O tasks durations
+DurationSum[s]  | Total sum of the operations durations
 TPAvg[op/s]     | Total average throughput
 TPLast[op/s]    | Last final moving average throughput
 BWAvg[MB/s]     | Total average bandwidth
 BWLast[MB/s]    | Last final moving average bandwidth
-DurationAvg[us] | Total average I/O tasks duration
-DurationMin[us] | Minimum I/O task duration
-DurationLoQ[us] | Low quartile of the I/O tasks duration distribution
-DurationMed[us] | Median of the I/O tasks duration distribution
-DurationHiQ[us] | High quartile of the I/O tasks duration distribution
-DurationMax[us] | Maximum I/O task duration
-LatencyAvg[us]  | Total average I/O tasks latency
-LatencyMin[us]  | Minimum I/O task latency
-LatencyLoQ[us]  | Low quartile of the I/O tasks latency distribution
-LatencyMed[us]  | Median of the I/O tasks latency distribution
-LatencyHiQ[us]  | High quartile of the I/O tasks latency distribution
-LatencyMax[us]  | Maximum I/O task latency
+DurationAvg[us] | Total average operations duration
+DurationMin[us] | Minimum operation duration
+DurationLoQ[us] | Low quartile of the operations duration distribution
+DurationMed[us] | Median of the operations duration distribution
+DurationHiQ[us] | High quartile of the operations duration distribution
+DurationMax[us] | Maximum operation duration
+LatencyAvg[us]  | Total average operations latency
+LatencyMin[us]  | Minimum operation latency
+LatencyLoQ[us]  | Low quartile of the operations latency distribution
+LatencyMed[us]  | Median of the operations latency distribution
+LatencyHiQ[us]  | High quartile of the operations latency distribution
+LatencyMax[us]  | Maximum operation latency
 
 # 2. Step Summary
 
@@ -127,7 +127,7 @@ At the end of each load step the summary metrics are produced.
 
 The record pattern is:
 ```
-<LOAD_TYPE>-<CONFIGURED_CURRENCY_LEVEL>x<DRIVER_COUNT>:
+<OP_TYPE>-<CONFIGURED_CONCURRENCY_LIMIT>x<DRIVER_COUNT>:
     c=(<LAST_MEAN_SUMMARY_CONCURRENCY>);
 	n=(<COUNT_SUCCESS>/<COUNT_FAIL>);
 	t[s]=(<ELAPSED_TIME>/<OPERATIONS_DURATION_SUM>)
@@ -166,7 +166,7 @@ The console output is absent.
 
 The file output is disabled by default.
 To enable the file output, set the `output-metrics-trace-persist` configuration parameter to "true".
-**Output file**: `io.trace.csv` with *dynamic path*.
+**Output file**: `op.trace.csv` with *dynamic path*.
 
 **Available fields**
 
@@ -174,17 +174,17 @@ To enable the file output, set the `output-metrics-trace-persist` configuration 
 | ------------- | -----------------------------------------------------------------
 | StorageNode   | The target storage node address/hostname
 | ItemPath      | The resulting item path
-| IoTypeCode    | The I/O operation type code
-| StatusCode    | The I/O operation resulting status code
-| ReqTimeStart  | The I/O operation start timestamp in microseconds
-| Duration      | The I/O operation total duration in microseconds
-| RespLatency   | The I/O operation response latency in microseconds
-| DataLatency   | The I/O operation response data latency ("1st byte" of the response content) in microseconds
-| TransferSize  | The count of the bytes transferred within the I/O operation
+| OpTypeCode    | The load operation type code
+| StatusCode    | The load operation resulting status code
+| ReqTimeStart  | The load operation start timestamp in microseconds
+| Duration      | The load operation total duration in microseconds
+| RespLatency   | The load operation response latency in microseconds
+| DataLatency   | The load operation response data latency ("1st byte" of the response content) in microseconds
+| TransferSize  | The count of the bytes transferred within the load operation
 
-**IoTypeCode**
+**OpTypeCode**
 
-| Code | I/O Type
+| Code | Op Type
 | ---- | --------
 | 0    | NOOP
 | 1    | CREATE
@@ -215,17 +215,17 @@ To enable the file output, set the `output-metrics-trace-persist` configuration 
 
 Mongoose controls the concurrency level by accounting the active channels at any moment of the time.
 The channel may be an open file either established network connection. The channel is active when
-it's assigned for an I/O task execution which is marked as active.
+it's assigned for an operation execution which is marked as active.
 
 When Mongoose test step starts there's some short delay before the warmup is done and all channels
-are busy with I/O tasks (active). It's expected that the performance rates are lower during this
-warmup time range. Moreover, at the test step end some channels may remain active with the I/O task
-while other channels are not selected for new I/O tasks.
+are busy with operations (active). It's expected that the performance rates are lower during this
+warmup time range. Moreover, at the test step end some channels may remain active with the operation
+while other channels are not selected for new operations.
 
 To address these issues, it's necessary to account the performance metrics only while the active
 channels count is higher than the configured threshold value (***threshold reached*** condition).
 However, it's possible that the test step will never reach the *threshold reached* condition due to
-some reasons (errors, very short I/O tasks, etc).
+some reasons (errors, very short operations, etc).
 
 * Let the configured threshold be ***P***.
 * Let configured concurrency level be ***C*** which is >0 and current busy channel count be ***N***.
@@ -245,7 +245,7 @@ The configuration parameter is `output-metrics-threshold`
 CLI example: account the additional (threshold) metrics while the actual concurrency level is more than 80:
 ```bash
 java -jar mongoose-<VER>.jar \
-    --load-step-limit-concurrency=100 \
+    --storage-driver-limit-concurrency=100 \
     --output-metrics-threshold=0.8
 ```
 
@@ -253,11 +253,11 @@ java -jar mongoose-<VER>.jar \
 
 1. The threshold state entrance is marked with the following log message:
 
-   `<CONTEXT>: the threshold of <COUNT> active tasks count is reached, starting the additional metrics accounting`
+   `<CONTEXT>: the threshold of <COUNT> active load operations count is reached, starting the additional metrics accounting`
 
 2. The threshold state exit is marked with the following log message:
 
-   `<CONTEXT>: the active tasks count is below the threshold of <COUNT>, stopping the additional metrics accounting`
+   `<CONTEXT>: the active load operations count is below the threshold of <COUNT>, stopping the additional metrics accounting`
 
 ## 4.2. Files
 

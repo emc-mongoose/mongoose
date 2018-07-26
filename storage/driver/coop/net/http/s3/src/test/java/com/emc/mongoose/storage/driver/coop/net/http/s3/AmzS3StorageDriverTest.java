@@ -8,12 +8,12 @@ import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
 import com.emc.mongoose.item.ItemType;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.composite.data.CompositeDataIoTaskImpl;
-import com.emc.mongoose.item.io.task.composite.data.CompositeDataIoTask;
-import com.emc.mongoose.item.io.task.data.DataIoTaskImpl;
-import com.emc.mongoose.item.io.task.data.DataIoTask;
-import com.emc.mongoose.item.io.task.partial.data.PartialDataIoTask;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.composite.data.CompositeDataOperationImpl;
+import com.emc.mongoose.item.op.composite.data.CompositeDataOperation;
+import com.emc.mongoose.item.op.data.DataOperationImpl;
+import com.emc.mongoose.item.op.data.DataOperation;
+import com.emc.mongoose.item.op.partial.data.PartialDataOperation;
 import com.emc.mongoose.storage.Credential;
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.storage.driver.coop.net.http.s3.AmzS3Api.KEY_UPLOAD_ID;
@@ -86,7 +86,7 @@ extends AmzS3StorageDriver {
 			final Map<String, Object> configSchema = TreeUtil.reduceForest(configSchemas);
 			final Config config = new BasicConfig("-", configSchema);
 			config.val("load-batch-size", 4096);
-			config.val("load-step-limit-concurrency", 0);
+			config.val("storage-driver-limit-concurrency", 0);
 			config.val("storage-net-transport", "epoll");
 			config.val("storage-net-reuseAddr", true);
 			config.val("storage-net-bindBacklogSize", 0);
@@ -110,8 +110,8 @@ extends AmzS3StorageDriver {
 			config.val("storage-auth-token", null);
 			config.val("storage-auth-secret", CREDENTIAL.getSecret());
 			config.val("storage-driver-threads", 0);
-			config.val("storage-driver-queue-input", 1_000_000);
-			config.val("storage-driver-queue-output", 1_000_000);
+			config.val("storage-driver-limit-queue-input", 1_000_000);
+			config.val("storage-driver-limit-queue-output", 1_000_000);
 			return config;
 		} catch(final Throwable cause) {
 			throw new RuntimeException(cause);
@@ -130,7 +130,7 @@ extends AmzS3StorageDriver {
 		super(
 			"test-storage-driver-s3",
 			DataInput.instance(null, "7a42d9c483244167", new SizeInBytes("4MB"), 16),
-			config.configVal("load"), config.configVal("storage"), false
+			config.configVal("storage"), false, config.intVal("load-batch-size")
 		);
 	}
 
@@ -245,11 +245,11 @@ extends AmzS3StorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
-			hashCode(), IoType.CREATE, dataItem, null, bucketName,
+		final DataOperation<DataItem> op = new DataOperationImpl<>(
+			hashCode(), OpType.CREATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
+		final HttpRequest httpRequest = httpRequest(op, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.PUT, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
@@ -281,11 +281,11 @@ extends AmzS3StorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
-			hashCode(), IoType.CREATE, dataItem, bucketSrcName, bucketDstName,
+		final DataOperation<DataItem> op = new DataOperationImpl<>(
+			hashCode(), OpType.CREATE, dataItem, bucketSrcName, bucketDstName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
+		final HttpRequest httpRequest = httpRequest(op, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.PUT, httpRequest.method());
 		assertEquals(bucketDstName + "/" + itemId, httpRequest.uri());
@@ -320,12 +320,12 @@ extends AmzS3StorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final CompositeDataIoTask<DataItem> mpuTask = new CompositeDataIoTaskImpl<>(
-			hashCode(), IoType.CREATE, dataItem, null, bucketName,
+		final CompositeDataOperation<DataItem> mpuTask = new CompositeDataOperationImpl<>(
+			hashCode(), OpType.CREATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0, partSize
 		);
 
-		final HttpRequest httpRequest = getHttpRequest(mpuTask, storageNodeAddrs[0]);
+		final HttpRequest httpRequest = httpRequest(mpuTask, storageNodeAddrs[0]);
 		final HttpHeaders reqHeaders = httpRequest.headers();
 
 		assertEquals(HttpMethod.POST, httpRequest.method());
@@ -358,24 +358,24 @@ extends AmzS3StorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final CompositeDataIoTask<DataItem> mpuTask = new CompositeDataIoTaskImpl<>(
-			hashCode(), IoType.CREATE, dataItem, null, bucketName,
+		final CompositeDataOperation<DataItem> mpuTask = new CompositeDataOperationImpl<>(
+			hashCode(), OpType.CREATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0, partSize
 		);
 
 		// emulate the upload id setting
 		mpuTask.put(KEY_UPLOAD_ID, "qazxswedc");
 		// emulate the sub-tasks completion
-		final List<? extends PartialDataIoTask<DataItem>> subTasks = mpuTask.subTasks();
-		for(final PartialDataIoTask<DataItem> subTask : subTasks) {
+		final List<? extends PartialDataOperation<DataItem>> subTasks = mpuTask.subOperations();
+		for(final PartialDataOperation<DataItem> subTask : subTasks) {
 			subTask.startRequest();
 			subTask.finishRequest();
 			subTask.startResponse();
 			subTask.finishResponse();
 		}
-		assertTrue(mpuTask.allSubTasksDone());
+		assertTrue(mpuTask.allSubOperationsDone());
 
-		final HttpRequest httpRequest = getHttpRequest(mpuTask, storageNodeAddrs[0]);
+		final HttpRequest httpRequest = httpRequest(mpuTask, storageNodeAddrs[0]);
 		final HttpHeaders reqHeaders = httpRequest.headers();
 
 		assertEquals(HttpMethod.POST, httpRequest.method());
@@ -411,23 +411,23 @@ extends AmzS3StorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final CompositeDataIoTask<DataItem> mpuTask = new CompositeDataIoTaskImpl<>(
-			hashCode(), IoType.CREATE, dataItem, null, bucketName,
+		final CompositeDataOperation<DataItem> mpuTask = new CompositeDataOperationImpl<>(
+			hashCode(), OpType.CREATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0, partSize
 		);
 
 		// emulate the upload id setting
 		mpuTask.put(KEY_UPLOAD_ID, "vfrtgbnhy");
 
-		final List<? extends PartialDataIoTask> subTasks = mpuTask.subTasks();
+		final List<? extends PartialDataOperation> subTasks = mpuTask.subOperations();
 		final int subTasksCount = subTasks.size();
 		assertEquals(itemSize / partSize + (itemSize % partSize > 0 ? 1 : 0), subTasksCount);
-		PartialDataIoTask subTask;
+		PartialDataOperation subTask;
 
 		for(int i = 0; i < subTasksCount; i ++) {
 
 			subTask = subTasks.get(i);
-			final HttpRequest httpRequest = getHttpRequest(subTask, storageNodeAddrs[0]);
+			final HttpRequest httpRequest = httpRequest(subTask, storageNodeAddrs[0]);
 			assertEquals(HttpMethod.PUT, httpRequest.method());
 			assertEquals(
 				bucketName + '/' + itemId + "?partNumber=" + (i + 1) + "&uploadId=vfrtgbnhy",
@@ -467,11 +467,11 @@ extends AmzS3StorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
-			hashCode(), IoType.READ, dataItem, null, bucketName,
+		final DataOperation<DataItem> op = new DataOperationImpl<>(
+			hashCode(), OpType.READ, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
+		final HttpRequest httpRequest = httpRequest(op, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.GET, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
@@ -506,11 +506,11 @@ extends AmzS3StorageDriver {
 		fixedRanges.add(new Range(0, 0, -1));
 		fixedRanges.add(new Range(1, 1, -1));
 		fixedRanges.add(new Range(2, 2, -1));
-		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
-			hashCode(), IoType.READ, dataItem, null, bucketName,
+		final DataOperation<DataItem> op = new DataOperationImpl<>(
+			hashCode(), OpType.READ, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), fixedRanges, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
+		final HttpRequest httpRequest = httpRequest(op, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.GET, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
@@ -543,11 +543,11 @@ extends AmzS3StorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
-			hashCode(), IoType.READ, dataItem, null, bucketName,
+		final DataOperation<DataItem> op = new DataOperationImpl<>(
+			hashCode(), OpType.READ, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, rndRangeCount
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
+		final HttpRequest httpRequest = httpRequest(op, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.GET, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
@@ -585,11 +585,11 @@ extends AmzS3StorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
-			hashCode(), IoType.UPDATE, dataItem, null, bucketName,
+		final DataOperation<DataItem> op = new DataOperationImpl<>(
+			hashCode(), OpType.UPDATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
+		final HttpRequest httpRequest = httpRequest(op, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.PUT, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
@@ -624,11 +624,11 @@ extends AmzS3StorageDriver {
 		fixedRanges.add(new Range(0, 0, -1));
 		fixedRanges.add(new Range(1, 1, -1));
 		fixedRanges.add(new Range(2, 2, -1));
-		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
-			hashCode(), IoType.UPDATE, dataItem, null, bucketName,
+		final DataOperation<DataItem> op = new DataOperationImpl<>(
+			hashCode(), OpType.UPDATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), fixedRanges, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
+		final HttpRequest httpRequest = httpRequest(op, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.PUT, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
@@ -661,11 +661,11 @@ extends AmzS3StorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
-			hashCode(), IoType.UPDATE, dataItem, null, bucketName,
+		final DataOperation<DataItem> op = new DataOperationImpl<>(
+			hashCode(), OpType.UPDATE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, rndRangeCount
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
+		final HttpRequest httpRequest = httpRequest(op, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.PUT, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());
@@ -704,11 +704,11 @@ extends AmzS3StorageDriver {
 		final DataItem dataItem = new DataItemImpl(
 			itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize
 		);
-		final DataIoTask<DataItem> ioTask = new DataIoTaskImpl<>(
-			hashCode(), IoType.DELETE, dataItem, null, bucketName,
+		final DataOperation<DataItem> op = new DataOperationImpl<>(
+			hashCode(), OpType.DELETE, dataItem, null, bucketName,
 			Credential.getInstance(CREDENTIAL.getUid(), CREDENTIAL.getSecret()), null, 0
 		);
-		final HttpRequest httpRequest = getHttpRequest(ioTask, storageNodeAddrs[0]);
+		final HttpRequest httpRequest = httpRequest(op, storageNodeAddrs[0]);
 
 		assertEquals(HttpMethod.DELETE, httpRequest.method());
 		assertEquals(bucketName + "/" + itemId, httpRequest.uri());

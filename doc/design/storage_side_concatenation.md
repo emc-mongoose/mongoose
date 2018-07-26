@@ -13,9 +13,9 @@ Storage-side concatenation (further - ***SSC***).
 
 # Approach
 
-Mongoose has the so called *I/O task* abstraction. I/O tasks are executed by the specific storage
-drivers. The storage driver may be able to detect the special *composite* I/O tasks and execute the
-corresponding sequence of the *partial sub-tasks*:
+Mongoose has the so called *load operation* abstraction. Load operations are executed by the specific storage
+drivers. The storage driver may be able to detect the special *composite* load operations and execute the
+corresponding sequence of the *partial sub-operations*:
 
 1. Initiate the SSC for the given data item.
 2. Create the data item parts on the storage.
@@ -43,7 +43,7 @@ being split into the 2 or more parts with the size not more than the configured 
 ## Parts List Output
 
 The record containing the object name and the corresponding upload id is written to the
-`parts.upload.csv` file if SSC I/O task is finished. The upload completion response latency is also
+`parts.upload.csv` file if SSC operation is finished. The upload completion response latency is also
 persisted in the 3rd column.
 
 # Future Enhancements

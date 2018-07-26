@@ -2,7 +2,7 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
@@ -93,7 +93,7 @@ public class MultipleRandomUpdateAndSingleFixedReadTest {
         containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 
         try {
-            FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
+	        FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
         } catch (final IOException ignored) {
         }
 
@@ -216,11 +216,11 @@ public class MultipleRandomUpdateAndSingleFixedReadTest {
         final LongAdder ioTraceRecCount = new LongAdder();
         final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
             if (ioTraceRecCount.sum() < EXPECTED_COUNT) {
-                testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(),
+                testIoTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(),
                         expectedUpdateSize
                 );
             } else {
-                testIoTraceRecord(ioTraceRec, IoType.READ.ordinal(), expectedReadSize);
+                testIoTraceRecord(ioTraceRec, OpType.READ.ordinal(), expectedReadSize);
             }
             ioTraceRecCount.increment();
         };
@@ -232,11 +232,11 @@ public class MultipleRandomUpdateAndSingleFixedReadTest {
 
         final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
         testTotalMetricsLogRecord(
-                totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(),
+                totalMetrcisLogRecords.get(0), OpType.UPDATE, concurrency.getValue(),
                 runMode.getNodeCount(), expectedUpdateSize, EXPECTED_COUNT, 0
         );
         testTotalMetricsLogRecord(
-                totalMetrcisLogRecords.get(1), IoType.READ, concurrency.getValue(),
+                totalMetrcisLogRecords.get(1), OpType.READ, concurrency.getValue(),
                 runMode.getNodeCount(), expectedReadSize, EXPECTED_COUNT, 0
         );
 
@@ -244,30 +244,30 @@ public class MultipleRandomUpdateAndSingleFixedReadTest {
         final List<CSVRecord> updateMetricsRecords = new ArrayList<>();
         final List<CSVRecord> readMetricsRecords = new ArrayList<>();
         for (final CSVRecord metricsLogRec : metricsLogRecords) {
-            if (IoType.UPDATE.name().equalsIgnoreCase(metricsLogRec.get("TypeLoad"))) {
+            if (OpType.UPDATE.name().equalsIgnoreCase(metricsLogRec.get("OpType"))) {
                 updateMetricsRecords.add(metricsLogRec);
             } else {
                 readMetricsRecords.add(metricsLogRec);
             }
         }
         testMetricsLogRecords(
-                updateMetricsRecords, IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+                updateMetricsRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
                 expectedUpdateSize, EXPECTED_COUNT, 0,
                 averagePeriod
         );
         testMetricsLogRecords(
-                readMetricsRecords, IoType.READ, concurrency.getValue(), runMode.getNodeCount(),
+                readMetricsRecords, OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
                 expectedReadSize, EXPECTED_COUNT, 0,
                 averagePeriod
         );
 
         final String stdOutput = this.stdOutContent.replaceAll("[\r\n]+", " ");
         testSingleMetricsStdout(
-                stdOutput, IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), expectedUpdateSize,
+                stdOutput, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), expectedUpdateSize,
                 averagePeriod
         );
         testSingleMetricsStdout(
-                stdOutput, IoType.READ, concurrency.getValue(), runMode.getNodeCount(), expectedReadSize,
+                stdOutput, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), expectedReadSize,
                 averagePeriod
         );
     }

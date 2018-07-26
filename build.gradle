@@ -15,17 +15,17 @@ ext {
 		commonsCodec: "1.11",
 		commonsLang: "2.6",
 		disruptor: "3.4.2",
-		fiber4j: "1.0.0",
-		jackson: "2.9.5",
-		javaCommons: "2.1.3",
-		javassist: "3.22.0-GA",
+		fiber4j: "1.0.1",
+		jackson: "2.9.6",
+		javaCommons: "2.1.5",
+		javassist: "3.23.1-GA",
 		junit: "4+",
 		scala: "2.12.6",
 		slf4j: "1.7.25",
 		log4j: "2.8.2",
-		metrics: "4.0.2",
+		metrics: "4.0.3",
 		nagaina: "3.6.10",
-		netty: "4.1.25.Final",
+		netty: "4.1.26.Final",
 		nettyConnectionPool: "1.0.3",
 	]
 
@@ -121,7 +121,7 @@ allprojects {
 
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
-		maxHeapSize "1g"
+		maxHeapSize "2g"
 		testLogging {
 			events "passed", "skipped", "failed", "standardOut"
 			showExceptions = true

@@ -27,7 +27,7 @@ ReadLoad
     .config({
       "load" : {
         "type" : "read",
-        "generator" : {
+        "op" : {
           "recycle" : {
             "enabled" : true
           }

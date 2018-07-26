@@ -4,7 +4,8 @@ import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.UniformReservoir;
 import com.codahale.metrics.UniformSnapshot;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
+
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.io.IOException;
@@ -29,7 +30,7 @@ public class MetricsContextImpl
 	private final long ts;
 	private volatile long tsStart = - 1, prevElapsedTime = 0;
 	private final String id;
-	private final IoType ioType;
+	private final OpType opType;
 	private final IntSupplier actualConcurrencyGauge;
 	private final int concurrency;
 	private final int thresholdConcurrency;
@@ -43,12 +44,12 @@ public class MetricsContextImpl
 	private volatile boolean thresholdStateExitedFlag = false;
 
 	public MetricsContextImpl(
-		final String id, final IoType ioType, final IntSupplier actualConcurrencyGauge, final int concurrency,
+		final String id, final OpType opType, final IntSupplier actualConcurrencyGauge, final int concurrency,
 		final int thresholdConcurrency, final SizeInBytes itemDataSize, final int updateIntervalSec,
 		final boolean stdOutColorFlag
 	) {
 		this.id = id;
-		this.ioType = ioType;
+		this.opType = opType;
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
 		this.concurrency = concurrency;
 		this.thresholdConcurrency = thresholdConcurrency > 0 ? thresholdConcurrency : Integer.MAX_VALUE;
@@ -205,8 +206,8 @@ public class MetricsContextImpl
 
 	//
 	@Override
-	public final IoType ioType() {
-		return ioType;
+	public final OpType ioType() {
+		return opType;
 	}
 
 	//
@@ -335,7 +336,8 @@ public class MetricsContextImpl
 		if(thresholdMetricsCtx != null) {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
-		thresholdMetricsCtx = new MetricsContextImpl(id, ioType, actualConcurrencyGauge, concurrency, 0, itemDataSize,
+		thresholdMetricsCtx = new MetricsContextImpl(
+			id, opType, actualConcurrencyGauge, concurrency, 0, itemDataSize,
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag
 		);
 		thresholdMetricsCtx.start();
@@ -399,7 +401,7 @@ public class MetricsContextImpl
 	//
 	@Override
 	public final String toString() {
-		return "MetricsContext(" + ioType.name() + '-' + concurrency + "x1@" + id + ")";
+		return "MetricsContext(" + opType.name() + '-' + concurrency + "x1@" + id + ")";
 	}
 
 	//

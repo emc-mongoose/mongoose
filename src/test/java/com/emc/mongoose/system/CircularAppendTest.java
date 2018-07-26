@@ -1,7 +1,7 @@
 package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
@@ -25,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +71,7 @@ public final class CircularAppendTest {
 
         stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
         try {
-            FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
+	        FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
         } catch (final IOException ignored) {
         }
 
@@ -120,10 +121,7 @@ public final class CircularAppendTest {
                     final String addr = localExternalAddr + ":" + port;
                     slaveNodes.put(addr, nodeSvc);
                 }
-                args.add(
-                        "--load-step-node-addrs="
-                                + slaveNodes.keySet().stream().collect(Collectors.joining(","))
-                );
+                args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
                 break;
         }
 
@@ -186,7 +184,7 @@ public final class CircularAppendTest {
                 outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
             }
             testMetricsLogRecords(
-                    metricsLogRecords, IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+                    metricsLogRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
                     (long) (1.1 * EXPECTED_APPEND_COUNT * EXPECTED_COUNT), 0, outputMetricsAveragePeriod
             );
         } catch (final FileNotFoundException ignored) {
@@ -199,7 +197,7 @@ public final class CircularAppendTest {
                 totalMetrcisLogRecords.size()
         );
         testTotalMetricsLogRecord(
-                totalMetrcisLogRecords.get(0), IoType.UPDATE, concurrency.getValue(),
+                totalMetrcisLogRecords.get(0), OpType.UPDATE, concurrency.getValue(),
                 runMode.getNodeCount(), itemSize.getValue(), 0, 0
         );
 
@@ -212,13 +210,13 @@ public final class CircularAppendTest {
             outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
         }
         testSingleMetricsStdout(
-                stdOutContent.replaceAll("[\r\n]+", " "), IoType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+                stdOutContent.replaceAll("[\r\n]+", " "), OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
                 itemSize.getValue(), outputMetricsAveragePeriod
         );
 
         final LongAdder ioTraceRecCount = new LongAdder();
         final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
-            testIoTraceRecord(ioTraceRec, IoType.UPDATE.ordinal(), itemSize.getValue());
+            testIoTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), itemSize.getValue());
             ioTraceRecCount.increment();
         };
         testIoTraceLogRecords(stepId, ioTraceReqTestFunc);

@@ -42,7 +42,7 @@ implements Closeable {
 					fileMgr -> {
 						String ioTraceLogFileSliceName = null;
 						try {
-							ioTraceLogFileSliceName = fileMgr.logFileName(Loggers.IO_TRACE.getName(), loadStepId);
+							ioTraceLogFileSliceName = fileMgr.logFileName(Loggers.OP_TRACES.getName(), loadStepId);
 							Loggers.MSG.debug(
 								"{}: the remote file manager \"{}\" returned the file name \"{}\" for the I/O traces",
 								loadStepId, fileMgr, ioTraceLogFileSliceName
@@ -115,7 +115,7 @@ implements Closeable {
 			byte[] data;
 			while(true) {
 				data = fileMgr.readFromFile(remoteIoTraceLogFileName, transferredByteCount);
-				Loggers.IO_TRACE.info(new String(data));
+				Loggers.OP_TRACES.info(new String(data));
 				transferredByteCount += data.length;
 				byteCounter.add(data.length);
 			}
