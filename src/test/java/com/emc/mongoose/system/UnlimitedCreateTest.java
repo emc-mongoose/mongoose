@@ -1,6 +1,6 @@
 package com.emc.mongoose.system;
 
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
@@ -61,7 +61,7 @@ public class UnlimitedCreateTest {
         containerItemOutputPath = Paths.get(CONTAINER_SHARE_PATH, stepId).toString();
 
         try {
-            FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
+	        FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
         } catch (final IOException ignored) {
         }
 
@@ -173,8 +173,8 @@ public class UnlimitedCreateTest {
 
         testMetricsTableStdout(
                 stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-                new HashMap<IoType, Integer>() {{
-                    put(IoType.CREATE, concurrency.getValue());
+                new HashMap<OpType, Integer>() {{
+                    put(OpType.CREATE, concurrency.getValue());
                 }}
         );
 

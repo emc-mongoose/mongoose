@@ -24,7 +24,7 @@ implements MeterMBean {
 		this.metricsCtx = metricsCtx;
 		final Hashtable<String, String> props = new Hashtable<>();
 		props.put(KEY_STEP_ID, metricsCtx.stepId());
-		props.put(KEY_LOAD_TYPE, metricsCtx.ioType().name());
+		props.put(KEY_OP_TYPE, metricsCtx.ioType().name());
 		props.put(KEY_NODE_COUNT, Integer.toString(metricsCtx.nodeCount()));
 		props.put(KEY_CONCURRENCY_LIMIT, Integer.toString(metricsCtx.concurrencyLimit()));
 		props.put(KEY_ITEM_DATA_SIZE, metricsCtx.itemDataSize().toString());

@@ -17,7 +17,7 @@ public interface TestCaseUtil {
 		final Class testCaseCls, final StorageType storageType, final RunMode runMode,
 		final Concurrency concurrency, final ItemSize itemSize
 	) {
-		return snakeCaseName(testCaseCls) + '_' + storageType.name() + '_'
-			+ runMode.name() + 'x' + concurrency.name() + '_' + itemSize.name();
+		return snakeCaseName(testCaseCls) + '_' + storageType.name() + '_' + runMode.name() + 'x' + concurrency.name()
+			+ '_' + itemSize.name();
 	}
 }

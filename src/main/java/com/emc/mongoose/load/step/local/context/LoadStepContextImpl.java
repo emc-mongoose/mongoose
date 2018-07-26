@@ -4,17 +4,17 @@ import com.emc.mongoose.load.generator.LoadGenerator;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.concurrent.DaemonBase;
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.logging.IoTraceCsvLogMessage;
-import com.emc.mongoose.item.io.task.IoTask.Status;
-import com.emc.mongoose.item.io.task.composite.CompositeIoTask;
-import com.emc.mongoose.item.io.task.data.DataIoTask;
-import com.emc.mongoose.item.io.task.partial.PartialIoTask;
-import com.emc.mongoose.item.io.task.path.PathIoTask;
+import com.emc.mongoose.logging.OperationTraceCsvLogMessage;
+import com.emc.mongoose.item.op.Operation.Status;
+import com.emc.mongoose.item.op.composite.CompositeOperation;
+import com.emc.mongoose.item.op.data.DataOperation;
+import com.emc.mongoose.item.op.partial.PartialOperation;
+import com.emc.mongoose.item.op.path.PathOperation;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import com.emc.mongoose.logging.IoTraceCsvBatchLogMessage;
+import com.emc.mongoose.logging.OperationTraceCsvBatchLogMessage;
 import com.emc.mongoose.logging.LogUtil;
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.metrics.MetricsContext;
@@ -37,6 +37,7 @@ import org.apache.logging.log4j.ThreadContext;
 import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -48,7 +49,7 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  Created by kurila on 12.07.16.
  */
-public class LoadStepContextImpl<I extends Item, O extends IoTask<I>>
+public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 extends DaemonBase
 implements LoadStepContext<I, O> {
 	
@@ -60,14 +61,15 @@ implements LoadStepContext<I, O> {
 	private final long failCountLimit;
 	private final boolean failRateLimitFlag;
 	private final ConcurrentMap<I, O> latestIoResultByItem;
-	private final boolean isRecycling;
+	private final boolean recycleFlag;
+	private final boolean retryFlag;
 	private final Fiber resultsTransferFiber;
 	private final MetricsContext metricsCtx;
 	private final LongAdder counterResults = new LongAdder();
 	private final boolean tracePersistFlag;
 	private final int batchSize;
 
-	private volatile Output<O> ioResultsOutput;
+	private volatile Output<O> opsResultsOutput;
 	
 	/**
 	 @param id test step id
@@ -80,7 +82,9 @@ implements LoadStepContext<I, O> {
 		final Config limitConfig,
 		final boolean tracePersistFlag,
 		final int batchSize,
-		final int recycleLimit
+		final int recycleLimit,
+		final boolean recycleFlag,
+		final boolean retryFlag
 	) {
 		this.id = id;
 		this.generator = generator;
@@ -88,8 +92,9 @@ implements LoadStepContext<I, O> {
 		this.metricsCtx = metricsCtx;
 		this.tracePersistFlag = tracePersistFlag;
 		this.batchSize = batchSize;
-		this.isRecycling = generator.isRecycling();
-		if(isRecycling) {
+		this.recycleFlag = recycleFlag;
+		this.retryFlag = retryFlag;
+		if(recycleFlag || retryFlag) {
 			latestIoResultByItem = new ConcurrentHashMap<>(recycleLimit);
 		} else {
 			latestIoResultByItem = null;
@@ -150,10 +155,10 @@ implements LoadStepContext<I, O> {
 		return false;
 	}
 
-	private boolean allIoTasksCompleted() {
+	private boolean allOperationsCompleted() {
 		try {
 			if(generator.isStopped()) {
-				return counterResults.longValue() >= generator.getGeneratedTasksCount();
+				return counterResults.longValue() >= generator.generatedOpCount();
 			}
 		} catch(final RemoteException ignored) {
 		}
@@ -169,11 +174,11 @@ implements LoadStepContext<I, O> {
 		} catch(final RemoteException ignored) {
 		}
 		// load generator has done its work
-		final long generatedIoTasks = generator.getGeneratedTasksCount();
-		return isRecycling &&
-				// all generated I/O tasks executed at least once
-				counterResults.sum() >= generatedIoTasks &&
-				// no successful I/O results
+		final long generatedOpCount = generator.generatedOpCount();
+		return recycleFlag &&
+				// all generated ops executed at least once
+				counterResults.sum() >= generatedOpCount &&
+				// no successful op results
 				latestIoResultByItem.size() == 0;
 	}
 
@@ -230,89 +235,90 @@ implements LoadStepContext<I, O> {
 	}
 
 	@Override
-	public final void ioResultsOutput(final Output<O> ioTaskResultsOutput) {
-		this.ioResultsOutput = ioTaskResultsOutput;
+	public final void operationsResultsOutput(final Output<O> opsResultsOutput) {
+		this.opsResultsOutput = opsResultsOutput;
 	}
 
 	@Override
-	public final int activeTasksCount() {
-		return driver.activeTaskCount();
+	public final int activeOpCount() {
+		return driver.activeOpCount();
 	}
 	
 	@Override
-	public final boolean put(final O ioTaskResult) {
+	public final boolean put(final O opResult) {
 
 		ThreadContext.put(KEY_STEP_ID, id);
 		
 		// I/O trace logging
 		if(tracePersistFlag) {
-			Loggers.IO_TRACE.info(new IoTraceCsvLogMessage<>(ioTaskResult));
+			Loggers.OP_TRACES.info(new OperationTraceCsvLogMessage<>(opResult));
 		}
 		
-		if( // account only completed composite I/O tasks
-			ioTaskResult instanceof CompositeIoTask &&
-				!((CompositeIoTask) ioTaskResult).allSubTasksDone()
+		if( // account only completed composite ops
+			opResult instanceof CompositeOperation &&
+				!((CompositeOperation) opResult).allSubOperationsDone()
 		) {
 			return true;
 		}
 
-		final Status status = ioTaskResult.status();
+		final Status status = opResult.status();
 		if(Status.SUCC.equals(status)) {
-			final long reqDuration = ioTaskResult.duration();
-			final long respLatency = ioTaskResult.latency();
+			final long reqDuration = opResult.duration();
+			final long respLatency = opResult.latency();
 			final long countBytesDone;
-			if(ioTaskResult instanceof DataIoTask) {
-				countBytesDone = ((DataIoTask) ioTaskResult).countBytesDone();
-			} else if(ioTaskResult instanceof PathIoTask) {
-				countBytesDone = ((PathIoTask) ioTaskResult).getCountBytesDone();
+			if(opResult instanceof DataOperation) {
+				countBytesDone = ((DataOperation) opResult).countBytesDone();
+			} else if(opResult instanceof PathOperation) {
+				countBytesDone = ((PathOperation) opResult).countBytesDone();
 			} else {
 				countBytesDone = 0;
 			}
 			
-			if(ioTaskResult instanceof PartialIoTask) {
+			if(opResult instanceof PartialOperation) {
 				metricsCtx.markPartSucc(countBytesDone, reqDuration, respLatency);
 			} else {
-				if(isRecycling) {
-					latestIoResultByItem.put(ioTaskResult.item(), ioTaskResult);
-					generator.recycle(ioTaskResult);
-				} else if(ioResultsOutput != null) {
+				if(recycleFlag) {
+					latestIoResultByItem.put(opResult.item(), opResult);
+					generator.recycle(opResult);
+				} else if(opsResultsOutput != null) {
 					try {
-						if(!ioResultsOutput.put(ioTaskResult)) {
+						if(!opsResultsOutput.put(opResult)) {
 							Loggers.ERR.warn("Failed to output the I/O result");
 						}
 					} catch(final EOFException e) {
-						LogUtil.exception(
-							Level.DEBUG, e, "I/O task destination end of input"
-						);
+						LogUtil.exception(Level.DEBUG, e, "Load operations results destination end of input");
 					} catch(final IOException e) {
-						LogUtil.exception(
-							Level.WARN, e, "Failed to put the I/O task to the destination"
-						);
+						LogUtil.exception(Level.WARN, e, "Failed to put the load operation to the destination");
 					}
 				}
 				metricsCtx.markSucc(countBytesDone, reqDuration, respLatency);
 				counterResults.increment();
 			}
 		} else if(!Status.INTERRUPTED.equals(status)) {
-			Loggers.ERR.debug("{}: {}", ioTaskResult.toString(), status.toString());
-			metricsCtx.markFail();
-			counterResults.increment();
+			if(retryFlag) {
+				latestIoResultByItem.put(opResult.item(), opResult);
+				generator.recycle(opResult);
+			} else {
+				Loggers.ERR.debug("{}: {}", opResult.toString(), status.toString());
+				metricsCtx.markFail();
+				counterResults.increment();
+			}
 		}
 
 		return true;
 	}
 	
 	@Override
-	public final int put(final List<O> ioTaskResults, final int from, final int to) {
+	public final int put(final List<O> opResults, final int from, final int to) {
 
 		ThreadContext.put(KEY_STEP_ID, id);
 		
 		// I/O trace logging
 		if(tracePersistFlag) {
-			Loggers.IO_TRACE.info(new IoTraceCsvBatchLogMessage<>(ioTaskResults, from, to));
+			Loggers.OP_TRACES.info(new OperationTraceCsvBatchLogMessage<>(opResults, from, to));
 		}
 
-		O ioTaskResult;
+		O opResult;
 		Status status;
 		long reqDuration;
 		long respLatency;
@@ -321,43 +327,41 @@ implements LoadStepContext<I, O> {
 		int i;
 		for(i = from; i < to; i++) {
 
-			ioTaskResult = ioTaskResults.get(i);
+			opResult = opResults.get(i);
 			
-			if( // account only completed composite I/O tasks
-				ioTaskResult instanceof CompositeIoTask &&
-					!((CompositeIoTask) ioTaskResult).allSubTasksDone()
+			if( // account only completed composite ops
+				opResult instanceof CompositeOperation &&
+					!((CompositeOperation) opResult).allSubOperationsDone()
 			) {
 				continue;
 			}
 
-			status = ioTaskResult.status();
-			reqDuration = ioTaskResult.duration();
-			respLatency = ioTaskResult.latency();
-			if(ioTaskResult instanceof DataIoTask) {
-				countBytesDone = ((DataIoTask) ioTaskResult).countBytesDone();
-			} else if(ioTaskResult instanceof PathIoTask) {
-				countBytesDone = ((PathIoTask) ioTaskResult).getCountBytesDone();
+			status = opResult.status();
+			reqDuration = opResult.duration();
+			respLatency = opResult.latency();
+			if(opResult instanceof DataOperation) {
+				countBytesDone = ((DataOperation) opResult).countBytesDone();
+			} else if(opResult instanceof PathOperation) {
+				countBytesDone = ((PathOperation) opResult).countBytesDone();
 			}
 
 			if(Status.SUCC.equals(status)) {
-				if(ioTaskResult instanceof PartialIoTask) {
+				if(opResult instanceof PartialOperation) {
 					metricsCtx.markPartSucc(countBytesDone, reqDuration, respLatency);
 				} else {
-					if(isRecycling) {
-						latestIoResultByItem.put(ioTaskResult.item(), ioTaskResult);
-						generator.recycle(ioTaskResult);
-					} else if(ioResultsOutput != null) {
+					if(recycleFlag) {
+						latestIoResultByItem.put(opResult.item(), opResult);
+						generator.recycle(opResult);
+					} else if(opsResultsOutput != null) {
 						try {
-							if(!ioResultsOutput.put(ioTaskResult)) {
-								Loggers.ERR.warn("Failed to output the I/O result");
+							if(! opsResultsOutput.put(opResult)) {
+								Loggers.ERR.warn("Failed to output the op result");
 							}
 						} catch(final EOFException e) {
-							LogUtil.exception(
-								Level.DEBUG, e, "I/O task destination end of input"
-							);
+							LogUtil.exception(Level.DEBUG, e, "Load operations results destination end of input");
 						} catch(final IOException e) {
 							LogUtil.exception(
-								Level.WARN, e, "Failed to put the I/O task to the destination"
+								Level.WARN, e, "Failed to put the load operation result to the destination"
 							);
 						}
 					}
@@ -366,9 +370,14 @@ implements LoadStepContext<I, O> {
 					counterResults.increment();
 				}
 			} else if(!Status.INTERRUPTED.equals(status)) {
-				Loggers.ERR.debug("{}: {}", ioTaskResult.toString(), status.toString());
-				metricsCtx.markFail();
-				counterResults.increment();
+				if(retryFlag) {
+					latestIoResultByItem.put(opResult.item(), opResult);
+					generator.recycle(opResult);
+				} else {
+					Loggers.ERR.debug("{}: {}", opResult.toString(), status.toString());
+					metricsCtx.markFail();
+					counterResults.increment();
+				}
 			}
 		}
 		
@@ -376,8 +385,8 @@ implements LoadStepContext<I, O> {
 	}
 	
 	@Override
-	public final int put(final List<O> ioTaskResults) {
-		return put(ioTaskResults, 0, ioTaskResults.size());
+	public final int put(final List<O> opsResults) {
+		return put(opsResults, 0, opsResults.size());
 	}
 	
 	@Override
@@ -433,17 +442,13 @@ implements LoadStepContext<I, O> {
 				Loggers.MSG.debug("{}: await exit due to \"BAD\" state", id);
 				return true;
 			}
-			if(!isRecycling && allIoTasksCompleted()) {
-				Loggers.MSG.debug(
-					"{}: await exit because all I/O tasks have been completed", id
-				);
+			if(!recycleFlag && allOperationsCompleted()) {
+				Loggers.MSG.debug("{}: await exit because all load operations have been completed", id);
 				return true;
 			}
 			// issue SLTM-938 fix
 			if(nothingToRecycle()) {
-				Loggers.ERR.debug(
-					"{}: exit because there's no I/O task to recycle (all failed)", id
-				);
+				Loggers.ERR.debug("{}: exit because there's no load operations to recycle (all failed)", id);
 				return true;
 			}
 		}
@@ -493,29 +498,24 @@ implements LoadStepContext<I, O> {
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			try {
-				final List<O> finalResults = driver.getAll();
-				if(finalResults != null) {
-					final int finalResultsCount = finalResults.size();
-					if(finalResultsCount > 0) {
-						Loggers.MSG.debug(
-							"{}: the driver \"{}\" returned {} final I/O results to process", id,
-							driver.toString(), finalResults.size()
-						);
-						for(int i = 0; i < finalResultsCount; i += batchSize) {
-							put(finalResults, i, Math.min(i + batchSize, finalResultsCount));
-						}
+				final List<O> finalResults = new ArrayList<>(batchSize);
+				int n;
+				Loggers.MSG.debug("{}: final results processing start", id);
+				while(0 < (n = driver.get(finalResults, batchSize))) {
+					for(int i = 0; i < n; i += batchSize) {
+						put(finalResults, i, Math.min(i + batchSize, n));
 					}
 				}
+				Loggers.MSG.debug("{}: final results processing done", id);
 			} catch(final Throwable cause) {
 				LogUtil.exception(
-					Level.WARN, cause,
-					"{}: failed to process the final results for the driver {}",
-					id, driver.toString()
+					Level.WARN, cause, "{}: failed to process the final results for the driver {}", id,
+					driver.toString()
 				);
 			}
 		}
 
-		if(latestIoResultByItem != null && ioResultsOutput != null) {
+		if(latestIoResultByItem != null && opsResultsOutput != null) {
 			try {
 				final int ioResultCount = latestIoResultByItem.size();
 				Loggers.MSG.info(
@@ -523,12 +523,12 @@ implements LoadStepContext<I, O> {
 				);
 				for(final O latestItemIoResult : latestIoResultByItem.values()) {
 					try {
-						if(!ioResultsOutput.put(latestItemIoResult)) {
+						if(! opsResultsOutput.put(latestItemIoResult)) {
 							Loggers.ERR.debug(
 								"{}: item info output fails to ingest, blocking the closing method",
 								id
 							);
-							while(!ioResultsOutput.put(latestItemIoResult)) {
+							while(! opsResultsOutput.put(latestItemIoResult)) {
 								Thread.sleep(1);
 							}
 							Loggers.MSG.debug("{}: closing method unblocked", id);
@@ -546,9 +546,9 @@ implements LoadStepContext<I, O> {
 			}
 			latestIoResultByItem.clear();
 		}
-		if(ioResultsOutput != null) {
+		if(opsResultsOutput != null) {
 			try {
-				ioResultsOutput.put((O) null);
+				opsResultsOutput.put((O) null);
 				Loggers.MSG.debug("{}: poisoned the items output", id);
 			} catch(final IOException e) {
 				LogUtil.exception(
@@ -556,8 +556,7 @@ implements LoadStepContext<I, O> {
 				);
 			} catch(final NullPointerException e) {
 				LogUtil.exception(
-					Level.ERROR, e, "{}: results output \"{}\" failed to eat the poison", id,
-					ioResultsOutput
+					Level.ERROR, e, "{}: results output \"{}\" failed to eat the poison", id, opsResultsOutput
 				);
 			}
 		}

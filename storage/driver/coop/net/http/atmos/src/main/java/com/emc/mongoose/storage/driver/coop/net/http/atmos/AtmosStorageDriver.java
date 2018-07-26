@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.net.http.atmos;
 
-import static com.emc.mongoose.item.io.IoType.CREATE;
+import static com.emc.mongoose.item.op.OpType.CREATE;
 import static com.emc.mongoose.storage.driver.coop.net.http.atmos.AtmosApi.HEADERS_CANONICAL;
 import static com.emc.mongoose.storage.driver.coop.net.http.atmos.AtmosApi.KEY_SUBTENANT_ID;
 import static com.emc.mongoose.storage.driver.coop.net.http.atmos.AtmosApi.NS_URI_BASE;
@@ -16,8 +16,8 @@ import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.Credential;
@@ -59,7 +59,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  Created by kurila on 11.11.16.
  */
-public class AtmosStorageDriver<I extends Item, O extends IoTask<I>>
+public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
 extends HttpStorageDriverBase<I, O> {
 	
 	private static final ThreadLocal<StringBuilder>
@@ -90,10 +90,10 @@ extends HttpStorageDriverBase<I, O> {
 	};
 	
 	public AtmosStorageDriver(
-		final String jobName, final DataInput contentSrc, final Config loadConfig,
-		final Config storageConfig, final boolean verifyFlag
+		final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+		final int batchSize
 	) throws OmgShootMyFootException, InterruptedException {
-		super(jobName, contentSrc, loadConfig, storageConfig, verifyFlag);
+		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 		if(namespace != null && !namespace.isEmpty()) {
 			sharedHeaders.set(KEY_X_EMC_NAMESPACE, namespace);
 		}
@@ -165,8 +165,8 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected final HttpMethod getDataHttpMethod(final IoType ioType) {
-		switch(ioType) {
+	protected final HttpMethod getDataHttpMethod(final OpType opType) {
+		switch(opType) {
 			case NOOP:
 				return HttpMethod.HEAD;
 			case CREATE:
@@ -178,13 +178,13 @@ extends HttpStorageDriverBase<I, O> {
 			case DELETE:
 				return HttpMethod.DELETE;
 			default:
-				throw new AssertionError("Unsupported I/O type: " + ioType);
+				throw new AssertionError("Unsupported I/O type: " + opType);
 		}
 	}
 
 	@Override
-	protected final HttpMethod getTokenHttpMethod(final IoType ioType) {
-		switch(ioType) {
+	protected final HttpMethod tokenHttpMethod(final OpType opType) {
+		switch(opType) {
 			case NOOP:
 				return HttpMethod.HEAD;
 			case CREATE:
@@ -199,28 +199,28 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected final HttpMethod getPathHttpMethod(final IoType ioType) {
+	protected final HttpMethod pathHttpMethod(final OpType opType) {
 		throw new AssertionError("Not implemented yet");
 	}
 
 	@Override
-	protected final String getDataUriPath(
-		final I item, final String srcPath, final String dstPath, final IoType ioType
+	protected final String dataUriPath(
+		final I item, final String srcPath, final String dstPath, final OpType opType
 	) {
 		if(fsAccess) {
-			return NS_URI_BASE + super.getDataUriPath(item, srcPath, dstPath, ioType);
-		} else if(CREATE.equals(ioType)) {
+			return NS_URI_BASE + super.dataUriPath(item, srcPath, dstPath, opType);
+		} else if(CREATE.equals(opType)) {
 			return OBJ_URI_BASE;
 		} else {
-			return OBJ_URI_BASE + super.getDataUriPath(item, srcPath, dstPath, ioType);
+			return OBJ_URI_BASE + super.dataUriPath(item, srcPath, dstPath, opType);
 		}
 	}
 
 	@Override
-	protected final String getTokenUriPath(
-		final I item, final String srcPath, final String dstPath, final IoType ioType
+	protected final String tokenUriPath(
+		final I item, final String srcPath, final String dstPath, final OpType opType
 	) {
-		if(CREATE.equals(ioType)) {
+		if(CREATE.equals(opType)) {
 			return SUBTENANT_URI_BASE;
 		} else {
 			return SUBTENANT_URI_BASE + '/' + item.getName();
@@ -228,8 +228,8 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected final String getPathUriPath(
-		final I item, final String srcPath, final String dstPath, final IoType ioType
+	protected final String pathUriPath(
+		final I item, final String srcPath, final String dstPath, final OpType opType
 	) {
 		throw new AssertionError("Not implemented yet");
 	}

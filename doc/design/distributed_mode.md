@@ -15,7 +15,7 @@ node.
 * **v3.x.x**
     * The "controller" is used to initiate the run
     * The "controller" is located at separate host usually
-    * The "drivers" are "thin": execute the I/O tasks only (in other words, contains storage driver only)
+    * The "drivers" are "thin": execute the load operations and control the concurrency level only
     * The "controller" is "rich"
 * **v4.x.x**
     * The *entry node* is used to initiate the run
@@ -43,7 +43,7 @@ node.
 | 4  | 0 | Slice a load step input items if an items input is configured and transfer these item input slices to all the nodes involved in the particular load step run
 | 5  | 0 | Aggregate the metrics during the load step run
 | 6  | 0 | Aggregate the item output file on the entry node if configured
-| 7  | 0 | Aggregate the I/O trace log file on the entry node if configured
+| 7  | 0 | Aggregate the load operation traces log file on the entry node if configured
 | 8  | 0 | Share the same load step id for all load step slices for a given load step
 | 9  | 1 | Be able to slice the storage node addresses set among the Mongoose nodes involved in the particular load step run
 | 10 | 1 | The node should also server the incoming requests to initiate the new run

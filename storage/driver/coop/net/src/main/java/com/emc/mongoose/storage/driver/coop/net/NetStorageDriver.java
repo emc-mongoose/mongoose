@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.net;
 
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.storage.driver.StorageDriver;
 
@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  Created by kurila on 30.09.16.
  */
-public interface NetStorageDriver<I extends Item, O extends IoTask<I>>
+public interface NetStorageDriver<I extends Item, O extends Operation<I>>
 extends StorageDriver<I, O> {
 
 	enum Transport {
@@ -38,7 +38,7 @@ extends StorageDriver<I, O> {
 		}
 	};
 	
-	AttributeKey<IoTask> ATTR_KEY_IOTASK = AttributeKey.valueOf("ioTask");
+	AttributeKey<Operation> ATTR_KEY_OPERATION = AttributeKey.valueOf("op");
 
-	void complete(final Channel channel, final O ioTask);
+	void complete(final Channel channel, final O op);
 }

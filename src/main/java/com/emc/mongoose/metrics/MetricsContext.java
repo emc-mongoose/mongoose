@@ -1,6 +1,6 @@
 package com.emc.mongoose.metrics;
 
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 
@@ -17,7 +17,7 @@ extends Closeable, Comparable<MetricsContext> {
 
 	// these are useful as labels/tags
 	String stepId();
-	IoType ioType();
+	OpType ioType();
 	int nodeCount();
 	int concurrencyLimit();
 	SizeInBytes itemDataSize();

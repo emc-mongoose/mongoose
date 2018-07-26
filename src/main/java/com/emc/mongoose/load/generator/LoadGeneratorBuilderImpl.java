@@ -1,17 +1,17 @@
 package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.exception.OmgShootMyFootException;
-import com.emc.mongoose.item.ItemInputFactory;
+import com.emc.mongoose.item.io.ItemInputFactory;
 import com.emc.mongoose.supply.BatchSupplier;
 import com.emc.mongoose.supply.ConstantStringSupplier;
 import com.emc.mongoose.supply.RangePatternDefinedSupplier;
-import com.emc.mongoose.item.io.IoType;
-import com.emc.mongoose.item.io.task.IoTask;
-import com.emc.mongoose.item.io.task.IoTaskBuilder;
-import com.emc.mongoose.item.io.task.data.DataIoTaskBuilderImpl;
-import com.emc.mongoose.item.io.task.data.DataIoTaskBuilder;
-import com.emc.mongoose.item.io.task.path.PathIoTaskBuilderImpl;
-import com.emc.mongoose.item.io.task.token.TokenIoTaskBuilderImpl;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.item.op.Operation;
+import com.emc.mongoose.item.op.OperationsBuilder;
+import com.emc.mongoose.item.op.data.DataOperationsBuilderImpl;
+import com.emc.mongoose.item.op.data.DataOperationsBuilder;
+import com.emc.mongoose.item.op.path.PathOperationsBuilderImpl;
+import com.emc.mongoose.item.op.token.TokenOperationsBuilderImpl;
 import com.emc.mongoose.item.DataItemFactoryImpl;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
@@ -19,8 +19,8 @@ import com.emc.mongoose.item.ItemFactory;
 import com.emc.mongoose.item.ItemNameSupplier;
 import com.emc.mongoose.item.ItemNamingType;
 import com.emc.mongoose.item.ItemType;
-import com.emc.mongoose.item.NewDataItemInput;
-import com.emc.mongoose.item.NewItemInput;
+import com.emc.mongoose.item.io.NewDataItemInput;
+import com.emc.mongoose.item.io.NewItemInput;
 import com.emc.mongoose.item.TransferConvertBuffer;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.logging.LogUtil;
@@ -63,7 +63,7 @@ import java.util.stream.Collectors;
  Created by andrey on 12.11.16.
  */
 public class LoadGeneratorBuilderImpl<
-	I extends Item, O extends IoTask<I>, T extends LoadGeneratorImpl<I, O>
+	I extends Item, O extends Operation<I>, T extends LoadGeneratorImpl<I, O>
 >
 implements LoadGeneratorBuilder<I, O, T> {
 
@@ -129,7 +129,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		// pipeline transfer buffer is not resettable
 		if(!(itemInput instanceof TransferConvertBuffer)) {
 			sizeEstimate = estimateTransferSize(
-				null, IoType.valueOf(loadConfig.stringVal("type").toUpperCase()),
+				null, OpType.valueOf(loadConfig.stringVal("op-type").toUpperCase()),
 				(Input<DataItem>) itemInput
 			);
 		}
@@ -159,7 +159,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	throws OmgShootMyFootException {
 
 		// prepare
-		final IoTaskBuilder<I, O> ioTaskBuilder;
+		final OperationsBuilder<I, O> opsBuilder;
 		if(limitConfig == null) {
 			throw new OmgShootMyFootException("Test step limit config is not set");
 		}
@@ -167,8 +167,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(loadConfig == null) {
 			throw new OmgShootMyFootException("Load config is not set");
 		}
-		final Config generatorConfig = loadConfig.configVal("generator");
-		final boolean shuffleFlag = generatorConfig.boolVal("shuffle");
+		final Config opConfig = loadConfig.configVal("op");
+		final boolean shuffleFlag = opConfig.boolVal("shuffle");
 		if(itemConfig == null) {
 			throw new OmgShootMyFootException("Item config is not set");
 		}
@@ -181,7 +181,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(originIndex < 0) {
 			throw new OmgShootMyFootException("No origin index is set");
 		}
-		// init the I/O task builder
+		// init the op builder
 		if(ItemType.DATA.equals(itemType)) {
 			final List<String> fixedRangesConfig = rangesConfig.listVal("fixed");
 			final List<Range> fixedRanges;
@@ -200,35 +200,35 @@ implements LoadGeneratorBuilder<I, O, T> {
 			} else {
 				sizeThreshold = TypeUtil.typeConvert(sizeThresholdRaw, long.class);
 			}
-			ioTaskBuilder = (IoTaskBuilder<I, O>) new DataIoTaskBuilderImpl(originIndex)
-				.setFixedRanges(fixedRanges)
-				.setRandomRangesCount(rangesConfig.intVal("random"))
-				.setSizeThreshold(sizeThreshold);
+			opsBuilder = (OperationsBuilder<I, O>) new DataOperationsBuilderImpl(originIndex)
+				.fixedRanges(fixedRanges)
+				.randomRangesCount(rangesConfig.intVal("random"))
+				.sizeThreshold(sizeThreshold);
 		} else if(ItemType.PATH.equals(itemType)){
-			ioTaskBuilder = (IoTaskBuilder<I, O>) new PathIoTaskBuilderImpl(originIndex);
+			opsBuilder = (OperationsBuilder<I, O>) new PathOperationsBuilderImpl(originIndex);
 		} else {
-			ioTaskBuilder = (IoTaskBuilder<I, O>) new TokenIoTaskBuilderImpl(originIndex);
+			opsBuilder = (OperationsBuilder<I, O>) new TokenOperationsBuilderImpl(originIndex);
 		}
 
 		// determine the operations type
-		final IoType ioType = IoType.valueOf(loadConfig.stringVal("type").toUpperCase());
-		ioTaskBuilder.setIoType(ioType);
+		final OpType opType = OpType.valueOf(opConfig.stringVal("type").toUpperCase());
+		opsBuilder.opType(opType);
 
 		// determine the input path
 		String itemInputPath = inputConfig.stringVal("path");
 		if(itemInputPath != null && itemInputPath.indexOf('/') != 0) {
 			itemInputPath = '/' + itemInputPath;
 		}
-		ioTaskBuilder.setInputPath(itemInputPath);
+		opsBuilder.inputPath(itemInputPath);
 
 		// determine the output path
 		final BatchSupplier<String> outputPathSupplier;
-		if(IoType.CREATE.equals(ioType) && ItemType.DATA.equals(itemType)) {
+		if(OpType.CREATE.equals(opType) && ItemType.DATA.equals(itemType)) {
 			outputPathSupplier = getOutputPathSupplier();
 		} else {
 			outputPathSupplier = null;
 		}
-		ioTaskBuilder.setOutputPathSupplier(outputPathSupplier);
+		opsBuilder.outputPathSupplier(outputPathSupplier);
 
 		// init the credentials, multi-user case support
 		final BatchSupplier<String> uidSupplier;
@@ -243,12 +243,12 @@ implements LoadGeneratorBuilder<I, O, T> {
 		} else {
 			uidSupplier = new ConstantStringSupplier(uid);
 		}
-		ioTaskBuilder.setUidSupplier(uidSupplier);
+		opsBuilder.uidSupplier(uidSupplier);
 
 		final String authFile = authConfig.stringVal("file");
 		if(authFile != null && !authFile.isEmpty()) {
 			final Map<String, String> credentials = loadCredentials(authFile, (long) M);
-			ioTaskBuilder.setCredentialsMap(credentials);
+			opsBuilder.credentialsMap(credentials);
 		} else {
 			final BatchSupplier<String> secretSupplier;
 			final String secret = authConfig.stringVal("secret");
@@ -258,7 +258,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 				secretSupplier = new ConstantStringSupplier(secret);
 			}
 			
-			ioTaskBuilder.setSecretSupplier(secretSupplier);
+			opsBuilder.secretSupplier(secretSupplier);
 		}
 
 		// init the items input
@@ -276,7 +276,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 			if(ItemType.DATA.equals(itemType)) {
 				sizeEstimate = estimateTransferSize(
-					(DataIoTaskBuilder) ioTaskBuilder, ioTaskBuilder.getIoType(),
+					(DataOperationsBuilder) opsBuilder, opsBuilder.opType(),
 					(Input<DataItem>) itemInput
 				);
 			} else {
@@ -288,7 +288,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		final String itemDataRangesConcatConfig = rangesConfig.stringVal("concat");
 		if(itemDataRangesConcatConfig != null) {
 			final Range srcItemsCountRange = new Range(itemDataRangesConcatConfig);
-			if(IoType.CREATE.equals(ioType) && ItemType.DATA.equals(itemType) && !(itemInput instanceof NewItemInput)) {
+			if(OpType.CREATE.equals(opType) && ItemType.DATA.equals(itemType) && !(itemInput instanceof NewItemInput)) {
 				final long srcItemsCountMin = srcItemsCountRange.getBeg();
 				final long srcItemsCountMax = srcItemsCountRange.getEnd();
 				if(srcItemsCountMin < 0) {
@@ -331,8 +331,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 				// it's safe to cast to int here because the values will not be more than
 				// srcItemsCount which is not more than the integer limit
-				((DataIoTaskBuilder) ioTaskBuilder).setSrcItemsCount((int) srcItemsCountMin, (int) srcItemsCountMax);
-				((DataIoTaskBuilder) ioTaskBuilder).setSrcItemsForConcat(srcItemsBuff);
+				((DataOperationsBuilder) opsBuilder).srcItemsCount((int) srcItemsCountMin, (int) srcItemsCountMax);
+				((DataOperationsBuilder) opsBuilder).srcItemsForConcat(srcItemsBuff);
 				itemInput = newItemInput();
 			}
 		}
@@ -342,28 +342,32 @@ implements LoadGeneratorBuilder<I, O, T> {
 			throw new OmgShootMyFootException("Storage driver is not set");
 		}
 		if(sizeEstimate > 0 && ItemType.DATA.equals(itemType)) {
-			storageDriver.adjustIoBuffers(sizeEstimate, ioType);
+			storageDriver.adjustIoBuffers(sizeEstimate, opType);
 		}
 
-		final Config recycleConfig = generatorConfig.configVal("recycle");
-		final int recycleLimit = recycleConfig.boolVal("enabled") ? recycleConfig.intVal("limit") : 0;
+		final boolean recycleFlag = opConfig.boolVal("recycle");
+		final boolean retryFlag = opConfig.boolVal("retry");
+		final int recycleLimit = opConfig.intVal("limit-recycle");
+		if(recycleLimit < 1) {
+			throw new OmgShootMyFootException("Recycle limit should be > 0");
+		}
 
 		return (T) new LoadGeneratorImpl<>(
-			itemInput, ioTaskBuilder, throttles, storageDriver, batchSize, countLimit, recycleLimit, shuffleFlag
+			itemInput, opsBuilder, throttles, storageDriver, batchSize, countLimit, recycleLimit,
+			(recycleFlag || retryFlag), shuffleFlag
 		);
 	}
 	
 	private static long estimateTransferSize(
-		final DataIoTaskBuilder dataIoTaskBuilder, final IoType ioType,
-		final Input<DataItem> itemInput
+		final DataOperationsBuilder dataOpBuilder, final OpType opType, final Input<DataItem> itemInput
 	) {
 		long sizeThreshold = 0;
 		int randomRangesCount = 0;
 		List<Range> fixedRanges = null;
-		if(dataIoTaskBuilder != null) {
-			sizeThreshold = dataIoTaskBuilder.getSizeThreshold();
-			randomRangesCount = dataIoTaskBuilder.getRandomRangesCount();
-			fixedRanges = dataIoTaskBuilder.getFixedRanges();
+		if(dataOpBuilder != null) {
+			sizeThreshold = dataOpBuilder.sizeThreshold();
+			randomRangesCount = dataOpBuilder.randomRangesCount();
+			fixedRanges = dataOpBuilder.fixedRanges();
 		}
 		
 		long itemSize = 0;
@@ -407,7 +411,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 			itemSize = minSize == maxSize ? sumSize / n : (minSize + maxSize) / 2;
 		}
 		
-		switch(ioType) {
+		switch(opType) {
 			case CREATE:
 				return Math.min(itemSize, sizeThreshold);
 			case READ:

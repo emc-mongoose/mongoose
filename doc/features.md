@@ -17,7 +17,7 @@
 
 ## 1.1. Vertical
 
-Using [fibers](https://github.com/akurilov/fiber4j) allows to sustain millions of concurrent tasks easily without
+Using [fibers](https://github.com/akurilov/fiber4j) allows to sustain millions of concurrent operations easily without
 significant performance degradation.
 
 ## 1.2. Horizontal

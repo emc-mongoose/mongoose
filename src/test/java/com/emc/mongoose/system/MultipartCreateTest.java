@@ -2,7 +2,7 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.*;
@@ -108,7 +108,7 @@ public class MultipartCreateTest {
         containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 
         try {
-            FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
+	        FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
         } catch (final IOException ignored) {
         }
 
@@ -231,12 +231,12 @@ public class MultipartCreateTest {
         final SizeInBytes TAIL_PART_SIZE = new SizeInBytes(1, partSize.get(), 1);
         final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
             try {
-                testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), ZERO_SIZE);
+                testIoTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), ZERO_SIZE);
             } catch (final AssertionError e) {
                 try {
-                    testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), partSize);
+                    testIoTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), partSize);
                 } catch (final AssertionError ee) {
-                    testIoTraceRecord(ioTraceRec, IoType.CREATE.ordinal(), TAIL_PART_SIZE);
+                    testIoTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), TAIL_PART_SIZE);
                 }
             }
             ioTraceRecCount.increment();
@@ -286,13 +286,13 @@ public class MultipartCreateTest {
 //                totalMetrcisLogRecords.size()
 //        );
 //        testTotalMetricsLogRecord(
-//                totalMetrcisLogRecords.get(0), IoType.CREATE, concurrency.getValue(),
+//                totalMetrcisLogRecords.get(0), OpType.CREATE, concurrency.getValue(),
 //                runMode.getNodeCount(), fullItemSize, 0, 0
 //        );
 //
         testSingleMetricsStdout(
                 stdOutContent.replaceAll("[\r\n]+", " "),
-                IoType.CREATE, concurrency.getValue(), runMode.getNodeCount(), fullItemSize,
+                OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(), fullItemSize,
                 averagePeriod
         );
     }

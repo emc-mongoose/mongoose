@@ -1,20 +1,20 @@
 package com.emc.mongoose.storage.driver.coop.net.http;
 
-import com.emc.mongoose.item.io.task.data.DataIoTask;
-import com.emc.mongoose.item.io.task.IoTask;
-import com.emc.mongoose.item.io.task.path.PathIoTask;
-import com.emc.mongoose.item.io.task.token.TokenIoTask;
+import com.emc.mongoose.item.op.data.DataOperation;
+import com.emc.mongoose.item.op.Operation;
+import com.emc.mongoose.item.op.path.PathOperation;
+import com.emc.mongoose.item.op.token.TokenOperation;
 import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.io.IoType;
-import static com.emc.mongoose.item.io.task.IoTask.Status.FAIL_TIMEOUT;
-import static com.emc.mongoose.item.io.task.IoTask.Status.FAIL_UNKNOWN;
-import static com.emc.mongoose.item.io.task.IoTask.Status.RESP_FAIL_AUTH;
-import static com.emc.mongoose.item.io.task.IoTask.Status.RESP_FAIL_CLIENT;
-import static com.emc.mongoose.item.io.task.IoTask.Status.RESP_FAIL_CORRUPT;
-import static com.emc.mongoose.item.io.task.IoTask.Status.RESP_FAIL_NOT_FOUND;
-import static com.emc.mongoose.item.io.task.IoTask.Status.RESP_FAIL_SPACE;
-import static com.emc.mongoose.item.io.task.IoTask.Status.RESP_FAIL_SVC;
-import static com.emc.mongoose.item.io.task.IoTask.Status.SUCC;
+import com.emc.mongoose.item.op.OpType;
+import static com.emc.mongoose.item.op.Operation.Status.FAIL_TIMEOUT;
+import static com.emc.mongoose.item.op.Operation.Status.FAIL_UNKNOWN;
+import static com.emc.mongoose.item.op.Operation.Status.RESP_FAIL_AUTH;
+import static com.emc.mongoose.item.op.Operation.Status.RESP_FAIL_CLIENT;
+import static com.emc.mongoose.item.op.Operation.Status.RESP_FAIL_CORRUPT;
+import static com.emc.mongoose.item.op.Operation.Status.RESP_FAIL_NOT_FOUND;
+import static com.emc.mongoose.item.op.Operation.Status.RESP_FAIL_SPACE;
+import static com.emc.mongoose.item.op.Operation.Status.RESP_FAIL_SVC;
+import static com.emc.mongoose.item.op.Operation.Status.SUCC;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
@@ -39,7 +39,7 @@ import java.io.IOException;
 /**
  Created by kurila on 05.09.16.
  */
-public abstract class HttpResponseHandlerBase<I extends Item, O extends IoTask<I>>
+public abstract class HttpResponseHandlerBase<I extends Item, O extends Operation<I>>
 extends ResponseHandlerBase<HttpObject, I, O> {
 	
 	protected HttpResponseHandlerBase(
@@ -49,100 +49,100 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 	}
 
 	protected boolean handleResponseStatus(
-		final O ioTask, final HttpStatusClass statusClass, final HttpResponseStatus responseStatus
+		final O op, final HttpStatusClass statusClass, final HttpResponseStatus responseStatus
 	) {
 		switch(statusClass) {
 			case INFORMATIONAL:
-				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
-				ioTask.status(RESP_FAIL_CLIENT);
+				Loggers.ERR.warn("{}: {}", op.toString(), responseStatus.toString());
+				op.status(RESP_FAIL_CLIENT);
 				break;
 			case SUCCESS:
-				ioTask.status(SUCC);
+				op.status(SUCC);
 				return true;
 			case REDIRECTION:
-				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
-				ioTask.status(RESP_FAIL_CLIENT);
+				Loggers.ERR.warn("{}: {}", op.toString(), responseStatus.toString());
+				op.status(RESP_FAIL_CLIENT);
 				break;
 			case CLIENT_ERROR:
-				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
+				Loggers.ERR.warn("{}: {}", op.toString(), responseStatus.toString());
 				if(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE.equals(responseStatus)) {
-					ioTask.status(RESP_FAIL_SVC);
+					op.status(RESP_FAIL_SVC);
 				} else if(HttpResponseStatus.REQUEST_URI_TOO_LONG.equals(responseStatus)) {
-					ioTask.status(RESP_FAIL_SVC);
+					op.status(RESP_FAIL_SVC);
 				} else if(HttpResponseStatus.UNAUTHORIZED.equals(responseStatus)) {
-					ioTask.status(RESP_FAIL_AUTH);
+					op.status(RESP_FAIL_AUTH);
 				} else if(HttpResponseStatus.FORBIDDEN.equals(responseStatus)) {
-					ioTask.status(RESP_FAIL_AUTH);
+					op.status(RESP_FAIL_AUTH);
 				} else if(HttpResponseStatus.NOT_FOUND.equals(responseStatus)) {
-					ioTask.status(RESP_FAIL_NOT_FOUND);
+					op.status(RESP_FAIL_NOT_FOUND);
 				} else {
-					ioTask.status(RESP_FAIL_CLIENT);
+					op.status(RESP_FAIL_CLIENT);
 				}
 				break;
 			case SERVER_ERROR:
-				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
+				Loggers.ERR.warn("{}: {}", op.toString(), responseStatus.toString());
 				if(HttpResponseStatus.GATEWAY_TIMEOUT.equals(responseStatus)) {
-					ioTask.status(FAIL_TIMEOUT);
+					op.status(FAIL_TIMEOUT);
 				} else if(HttpResponseStatus.INSUFFICIENT_STORAGE.equals(responseStatus)) {
-					ioTask.status(RESP_FAIL_SPACE);
+					op.status(RESP_FAIL_SPACE);
 				} else {
-					ioTask.status(RESP_FAIL_SVC);
+					op.status(RESP_FAIL_SVC);
 				}
 				break;
 			case UNKNOWN:
-				Loggers.ERR.warn("{}: {}", ioTask.toString(), responseStatus.toString());
-				ioTask.status(FAIL_UNKNOWN);
+				Loggers.ERR.warn("{}: {}", op.toString(), responseStatus.toString());
+				op.status(FAIL_UNKNOWN);
 				break;
 		}
 		
 		return false;
 	}
 	
-	protected abstract void handleResponseHeaders(final O ioTask, final HttpHeaders respHeaders);
+	protected abstract void handleResponseHeaders(final O op, final HttpHeaders respHeaders);
 
 	protected void handleResponseContentChunk(
-		final Channel channel, final O ioTask, final ByteBuf contentChunk
+		final Channel channel, final O op, final ByteBuf contentChunk
 	) throws IOException {
-		if(IoType.READ.equals(ioTask.ioType())) {
-			if(ioTask instanceof DataIoTask) {
-				final DataIoTask dataIoTask = (DataIoTask) ioTask;
-				final long countBytesDone = dataIoTask.countBytesDone();
-				if(dataIoTask.respDataTimeStart() == 0) { // if not set yet - 1st time
+		if(OpType.READ.equals(op.type())) {
+			if(op instanceof DataOperation) {
+				final DataOperation dataOp = (DataOperation) op;
+				final long countBytesDone = dataOp.countBytesDone();
+				if(dataOp.respDataTimeStart() == 0) { // if not set yet - 1st time
 					try {
-						dataIoTask.startDataResponse();
+						dataOp.startDataResponse();
 					} catch(final IllegalStateException e) {
-						LogUtil.exception(Level.DEBUG, e, "{}", dataIoTask.toString());
+						LogUtil.exception(Level.DEBUG, e, "{}", dataOp.toString());
 					}
 				}
 				final int chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
 					if(verifyFlag) {
-						if(!RESP_FAIL_CORRUPT.equals(ioTask.status())) {
-							verifyChunk(dataIoTask, countBytesDone, contentChunk, chunkSize);
+						if(!RESP_FAIL_CORRUPT.equals(op.status())) {
+							verifyChunk(dataOp, countBytesDone, contentChunk, chunkSize);
 						}
 					} else {
-						dataIoTask.countBytesDone(countBytesDone + chunkSize);
+						dataOp.countBytesDone(countBytesDone + chunkSize);
 					}
 				}
-			} else if(ioTask instanceof PathIoTask) {
-				final PathIoTask pathIoTask = (PathIoTask) ioTask;
-				final long countBytesDone = pathIoTask.getCountBytesDone();
-				if(pathIoTask.getRespDataTimeStart() == 0) { // if not set yet - 1st time
-					pathIoTask.startDataResponse();
+			} else if(op instanceof PathOperation) {
+				final PathOperation pathOp = (PathOperation) op;
+				final long countBytesDone = pathOp.countBytesDone();
+				if(pathOp.respDataTimeStart() == 0) { // if not set yet - 1st time
+					pathOp.startDataResponse();
 				}
 				final int chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
-					pathIoTask.setCountBytesDone(countBytesDone + chunkSize);
+					pathOp.countBytesDone(countBytesDone + chunkSize);
 				}
-			} else if(ioTask instanceof TokenIoTask) {
-				final TokenIoTask tokenIoTask = (TokenIoTask) ioTask;
-				final long countBytesDone = tokenIoTask.getCountBytesDone();
-				if(tokenIoTask.getRespDataTimeStart() == 0) { // if not set yet - 1st time
-					tokenIoTask.startDataResponse();
+			} else if(op instanceof TokenOperation) {
+				final TokenOperation tokenOp = (TokenOperation) op;
+				final long countBytesDone = tokenOp.countBytesDone();
+				if(tokenOp.respDataTimeStart() == 0) { // if not set yet - 1st time
+					tokenOp.startDataResponse();
 				}
 				final int chunkSize = contentChunk.readableBytes();
 				if(chunkSize > 0) {
-					tokenIoTask.setCountBytesDone(countBytesDone + chunkSize);
+					tokenOp.countBytesDone(countBytesDone + chunkSize);
 				}
 			} else {
 				throw new AssertionError("Not implemented yet");
@@ -150,37 +150,37 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 		}
 	}
 
-	protected void handleResponseContentFinish(final Channel channel, final O ioTask) {
-		driver.complete(channel, ioTask);
+	protected void handleResponseContentFinish(final Channel channel, final O op) {
+		driver.complete(channel, op);
 	}
 
 	@Override
-	protected final void handle(final Channel channel, final O ioTask, final HttpObject msg)
+	protected final void handle(final Channel channel, final O op, final HttpObject msg)
 	throws IOException {
 		
 		if(msg instanceof HttpResponse) {
 			try {
-				ioTask.startResponse();
+				op.startResponse();
 			} catch(final IllegalStateException e) {
-				LogUtil.exception(Level.DEBUG, e, "{}", ioTask.toString());
+				LogUtil.exception(Level.DEBUG, e, "{}", op.toString());
 			}
 			final HttpResponse httpResponse = (HttpResponse) msg;
 			if(Loggers.MSG.isTraceEnabled()) {
-				Loggers.MSG.trace("{} <<<< {}", ioTask.hashCode(), httpResponse.status());
+				Loggers.MSG.trace("{} <<<< {}", op.hashCode(), httpResponse.status());
 			}
 			final HttpResponseStatus httpResponseStatus = httpResponse.status();
-			handleResponseStatus(ioTask, httpResponseStatus.codeClass(), httpResponseStatus);
-			handleResponseHeaders(ioTask, httpResponse.headers());
+			handleResponseStatus(op, httpResponseStatus.codeClass(), httpResponseStatus);
+			handleResponseHeaders(op, httpResponse.headers());
 			if(msg instanceof FullHttpResponse) {
 				final ByteBuf fullRespContent = ((FullHttpResponse) msg).content();
-				handleResponseContentChunk(channel, ioTask, fullRespContent);
+				handleResponseContentChunk(channel, op, fullRespContent);
 			}
 		}
 
 		if(msg instanceof HttpContent) {
-			handleResponseContentChunk(channel, ioTask, ((HttpContent) msg).content());
+			handleResponseContentChunk(channel, op, ((HttpContent) msg).content());
 			if(msg instanceof LastHttpContent) {
-				handleResponseContentFinish(channel, ioTask);
+				handleResponseContentFinish(channel, op);
 			}
 		}
 	}

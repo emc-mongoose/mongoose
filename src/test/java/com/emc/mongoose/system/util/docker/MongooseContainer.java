@@ -15,7 +15,6 @@ import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -43,7 +42,7 @@ public final class MongooseContainer
 	public static final String CONTAINER_HOME_PATH = "/root/.mongoose/" + APP_VERSION;
 	private static final String IMAGE_NAME = "emcmongoose/mongoose";
 	private static final String ENTRYPOINT = "/opt/mongoose/entrypoint.sh";
-	private static final String ENTRYPOINT_DEBUG = "/opt/mongoose/entrypoint.sh";
+	private static final String ENTRYPOINT_DEBUG = "/opt/mongoose/entrypoint-debug.sh";
 	private static final int PORT_DEBUG = 5005;
 	private static final int PORT_JMX = 9010;
 	public static final String CONTAINER_SHARE_PATH = CONTAINER_HOME_PATH + "/share";
@@ -93,12 +92,11 @@ public final class MongooseContainer
 		final String version, final String stepId, final StorageType storageType, final RunMode runMode,
 		final Concurrency concurrency, final ItemSize itemSize, final String containerScenarioPath,
 		final List<String> env, final List<String> args
-	)
-	throws InterruptedException {
+	) throws InterruptedException {
 		super(version, env, VOLUME_BINDS, true, PORT_DEBUG, PORT_JMX);
 		this.args = args;
 		this.args.add("--load-step-id=" + stepId);
-		this.args.add("--load-step-limit-concurrency=" + concurrency.getValue());
+		this.args.add("--storage-driver-limit-concurrency=" + concurrency.getValue());
 		this.args.add("--item-data-size=" + itemSize.getValue());
 		this.args.add("--output-metrics-trace-persist");
 		if(containerScenarioPath != null) {

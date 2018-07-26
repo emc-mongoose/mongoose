@@ -8,15 +8,15 @@ import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.supply.BatchSupplier;
 import com.emc.mongoose.supply.async.AsyncPatternDefinedSupplier;
 import com.emc.mongoose.data.DataInput;
-import com.emc.mongoose.item.io.task.data.DataIoTask;
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.data.DataOperation;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.io.IoType;
+import com.emc.mongoose.item.op.OpType;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.supply.PatternDefinedSupplier.PATTERN_CHAR;
-import static com.emc.mongoose.item.io.task.IoTask.SLASH;
+import static com.emc.mongoose.item.op.Operation.SLASH;
 import static com.emc.mongoose.item.DataItem.rangeCount;
 import static com.emc.mongoose.item.DataItem.rangeOffset;
 import com.emc.mongoose.item.PathItem;
@@ -65,9 +65,9 @@ import java.util.function.Function;
 
 /**
  Created by kurila on 29.07.16.
- Netty-based concurrent HTTP client executing the submitted I/O tasks.
+ Netty-based concurrent HTTP client executing the submitted load operations.
  */
-public abstract class HttpStorageDriverBase<I extends Item, O extends IoTask<I>>
+public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<I>>
 extends NetStorageDriverBase<I, O>
 implements HttpStorageDriver<I, O> {
 
@@ -101,11 +101,11 @@ implements HttpStorageDriver<I, O> {
 	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
 	
 	protected HttpStorageDriverBase(
-		final String testStepId, final DataInput itemDataInput, final Config loadConfig,
-		final Config storageConfig, final boolean verifyFlag
+		final String testStepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag,
+		final int batchSize
 	) throws OmgShootMyFootException, InterruptedException {
 
-		super(testStepId, itemDataInput, loadConfig, storageConfig, verifyFlag);
+		super(testStepId, itemDataInput, storageConfig, verifyFlag, batchSize);
 		
 		final Config httpConfig = storageConfig.configVal("net-http");
 		
@@ -167,24 +167,24 @@ implements HttpStorageDriver<I, O> {
 		pipeline.addLast(new ChunkedWriteHandler());
 	}
 
-	protected HttpRequest getHttpRequest(final O ioTask, final String nodeAddr)
+	protected HttpRequest httpRequest(final O op, final String nodeAddr)
 	throws URISyntaxException {
 
-		final I item = ioTask.item();
-		final IoType ioType = ioTask.ioType();
-		final String srcPath = ioTask.srcPath();
+		final I item = op.item();
+		final OpType opType = op.type();
+		final String srcPath = op.srcPath();
 
 		final HttpMethod httpMethod;
 		final String uriPath;
 		if(item instanceof DataItem) {
-			httpMethod = getDataHttpMethod(ioType);
-			uriPath = getDataUriPath(item, srcPath, ioTask.dstPath(), ioType);
+			httpMethod = getDataHttpMethod(opType);
+			uriPath = dataUriPath(item, srcPath, op.dstPath(), opType);
 		} else if(item instanceof TokenItem) {
-			httpMethod = getTokenHttpMethod(ioType);
-			uriPath = getTokenUriPath(item, srcPath, ioTask.dstPath(), ioType);
+			httpMethod = tokenHttpMethod(opType);
+			uriPath = tokenUriPath(item, srcPath, op.dstPath(), opType);
 		} else if(item instanceof PathItem) {
-			httpMethod = getPathHttpMethod(ioType);
-			uriPath = getPathUriPath(item, srcPath, ioTask.dstPath(), ioType);
+			httpMethod = pathHttpMethod(opType);
+			uriPath = pathUriPath(item, srcPath, op.dstPath(), opType);
 		} else {
 			throw new AssertionError("Unsupported item class: " + item.getClass().getName());
 		}
@@ -198,7 +198,7 @@ implements HttpStorageDriver<I, O> {
 			HTTP_1_1, httpMethod, uriPath, httpHeaders
 		);
 
-		switch(ioType) {
+		switch(opType) {
 			case CREATE:
 				if(srcPath == null || srcPath.isEmpty()) {
 					if(item instanceof DataItem) {
@@ -212,20 +212,20 @@ implements HttpStorageDriver<I, O> {
 						httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 					}
 				} else {
-					applyCopyHeaders(httpHeaders, getDataUriPath(item, srcPath, null, ioType));
+					applyCopyHeaders(httpHeaders, dataUriPath(item, srcPath, null, opType));
 					httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 				}
 				break;
 			case READ:
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-				if(ioTask instanceof DataIoTask) {
-					applyRangesHeaders(httpHeaders, (DataIoTask) ioTask);
+				if(op instanceof DataOperation) {
+					applyRangesHeaders(httpHeaders, (DataOperation) op);
 				}
 				break;
 			case UPDATE:
-				final DataIoTask dataIoTask = (DataIoTask) ioTask;
-				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, dataIoTask.markedRangesSize());
-				applyRangesHeaders(httpHeaders, dataIoTask);
+				final DataOperation dataOp = (DataOperation) op;
+				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, dataOp.markedRangesSize());
+				applyRangesHeaders(httpHeaders, dataOp);
 				break;
 			case DELETE:
 				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
@@ -235,13 +235,13 @@ implements HttpStorageDriver<I, O> {
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, ioTask.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, op.credential());
 
 		return httpRequest;
 	}
 	
-	protected HttpMethod getDataHttpMethod(final IoType ioType) {
-		switch(ioType) {
+	protected HttpMethod getDataHttpMethod(final OpType opType) {
+		switch(opType) {
 			case READ:
 				return HttpMethod.GET;
 			case DELETE:
@@ -251,13 +251,11 @@ implements HttpStorageDriver<I, O> {
 		}
 	}
 
-	protected abstract HttpMethod getTokenHttpMethod(final IoType ioType);
+	protected abstract HttpMethod tokenHttpMethod(final OpType opType);
 
-	protected abstract HttpMethod getPathHttpMethod(final IoType ioType);
+	protected abstract HttpMethod pathHttpMethod(final OpType opType);
 
-	protected String getDataUriPath(
-		final I item, final String srcPath, final String dstPath, final IoType ioType
-	) {
+	protected String dataUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
 		final String itemName = item.getName();
 		if(dstPath == null) {
 			if(srcPath == null) {
@@ -278,37 +276,30 @@ implements HttpStorageDriver<I, O> {
 		}
 	}
 
-	protected abstract String getTokenUriPath(
-		final I item, final String srcPath, final String dstPath, final IoType ioType
+	protected abstract String tokenUriPath(
+		final I item, final String srcPath, final String dstPath, final OpType opType
 	);
 
-	protected abstract String getPathUriPath(
-		final I item, final String srcPath, final String dstPath, final IoType ioType
+	protected abstract String pathUriPath(
+		final I item, final String srcPath, final String dstPath, final OpType opType
 	);
 	
 	private final static ThreadLocal<StringBuilder>
-		THR_LOC_RANGES_BUILDER = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
+		THR_LOC_RANGES_BUILDER = ThreadLocal.withInitial(StringBuilder::new);
 	
-	protected void applyRangesHeaders(
-		final HttpHeaders httpHeaders, final DataIoTask dataIoTask
-	) {
+	protected void applyRangesHeaders(final HttpHeaders httpHeaders, final DataOperation dataOp) {
 		final long baseItemSize;
 		try {
-			baseItemSize = dataIoTask.item().size();
+			baseItemSize = dataOp.item().size();
 		} catch(final IOException e) {
 			throw new AssertionError(e);
 		}
-		final List<Range> fixedRanges = dataIoTask.fixedRanges();
+		final List<Range> fixedRanges = dataOp.fixedRanges();
 		final StringBuilder strb = THR_LOC_RANGES_BUILDER.get();
 		strb.setLength(0);
 
 		if(fixedRanges == null || fixedRanges.isEmpty()) {
-			final BitSet rangesMaskPair[] = dataIoTask.markedRangesMaskPair();
+			final BitSet rangesMaskPair[] = dataOp.markedRangesMaskPair();
 			if(rangesMaskPair[0].isEmpty() && rangesMaskPair[1].isEmpty()) {
 				return; // do not set the ranges header
 			}
@@ -418,25 +409,21 @@ implements HttpStorageDriver<I, O> {
 	throws URISyntaxException;
 
 	@Override
-	protected final void sendRequest(
-		final Channel channel, final ChannelPromise channelPromise, final O ioTask
-	) {
+	protected final void sendRequest(final Channel channel, final ChannelPromise channelPromise, final O op) {
 
-		final String nodeAddr = ioTask.nodeAddr();
+		final String nodeAddr = op.nodeAddr();
 		try {
-			final HttpRequest httpRequest = getHttpRequest(ioTask, nodeAddr);
+			final HttpRequest httpRequest = httpRequest(op, nodeAddr);
 			if(channel == null) {
 				return;
 			} else {
 				channel.write(httpRequest);
 				if(Loggers.MSG.isTraceEnabled()) {
-					Loggers.MSG.trace(
-						"{} >>>> {} {}", ioTask.hashCode(), httpRequest.method(), httpRequest.uri()
-					);
+					Loggers.MSG.trace("{} >>>> {} {}", op.hashCode(), httpRequest.method(), httpRequest.uri());
 				}
 			}
 			if(!(httpRequest instanceof FullHttpRequest)) {
-				sendRequestData(channel, ioTask);
+				sendRequestData(channel, op);
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to write the data");

@@ -43,7 +43,7 @@ Load
 			},
 			"load": {
 				"type": "update",
-				"generator": {
+				"op": {
 					"recycle": {
 						"enabled": true
 					}

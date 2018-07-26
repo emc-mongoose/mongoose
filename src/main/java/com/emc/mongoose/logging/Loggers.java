@@ -15,7 +15,7 @@ public interface Loggers {
 	Logger CLI = LogManager.getLogger(BASE + "Cli");
 	Logger CONFIG = LogManager.getLogger(BASE + "Config");
 	Logger ERR = LogManager.getLogger(BASE + "Errors");
-	Logger IO_TRACE = LogManager.getLogger(BASE + "IoTraces");
+	Logger OP_TRACES = LogManager.getLogger(BASE + "OpTraces");
 	Logger METRICS_EXT_RESULTS_FILE = LogManager.getLogger(BASE_METRICS + "ExtResultsFile");
 	Logger METRICS_FILE = LogManager.getLogger(BASE_METRICS + "File");
 	Logger METRICS_FILE_TOTAL = LogManager.getLogger(BASE_METRICS + "FileTotal");

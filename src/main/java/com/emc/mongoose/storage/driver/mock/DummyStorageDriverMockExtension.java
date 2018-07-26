@@ -4,7 +4,7 @@ import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.env.ExtensionBase;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.io.task.IoTask;
+import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.storage.driver.StorageDriverFactory;
 
 import com.github.akurilov.confuse.Config;
@@ -18,7 +18,7 @@ import java.util.List;
  Created by andrey on 19.09.17.
  */
 public final class DummyStorageDriverMockExtension<
-	I extends Item, O extends IoTask<I>, T extends DummyStorageDriverMock<I, O>
+	I extends Item, O extends Operation<I>, T extends DummyStorageDriverMock<I, O>
 >
 extends ExtensionBase
 implements StorageDriverFactory<I, O, T> {
@@ -35,12 +35,10 @@ implements StorageDriverFactory<I, O, T> {
 
 	@Override @SuppressWarnings("unchecked")
 	public final T create(
-		final String stepId, final DataInput dataInput, final Config loadConfig,
-		final Config storageConfig, final boolean verifyFlag
+		final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+		final int batchSize
 	) throws OmgShootMyFootException {
-		return (T) new DummyStorageDriverMock<>(
-			stepId, dataInput, loadConfig, storageConfig, verifyFlag
-		);
+		return (T) new DummyStorageDriverMock<I, O>(storageConfig);
 	}
 
 	@Override

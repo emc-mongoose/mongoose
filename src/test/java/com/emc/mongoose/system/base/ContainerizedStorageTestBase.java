@@ -132,8 +132,8 @@ extends ConfiguredTestBase {
 
 					httpStorageMocks.put(nodeAddr, containedId);
 					Loggers.TEST.info(
-						"Started the storage mock service @ port #{} in the container {}",
-						(storageNodePort + i), containedId
+						"Started the storage mock service @ port #{} in the container {}", (storageNodePort + i),
+						containedId
 					);
 					nodeAddrs.add(nodeAddr);
 				}

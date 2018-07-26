@@ -18,8 +18,8 @@ var sharedConfig = {
 			"path": itemOutputPath
 		}
 	},
-	 "load": {
-		"step": {
+	"storage": {
+		"driver": {
 			"limit": {
 				"concurrency": sharedConcurrency
 			}
@@ -65,7 +65,7 @@ WeightedLoad
 	.append(
 		{
 			"load": {
-				"generator": {
+				"op": {
 					"weight": 20
 				}
 			}
@@ -79,7 +79,7 @@ WeightedLoad
 				}
 			},
 			"load": {
-				"generator": {
+				"op": {
 					"recycle": {
 						"enabled": true
 					},

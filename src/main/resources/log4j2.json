@@ -1,6 +1,6 @@
 {
 	"configuration" : {
-		"status" : "warn",
+		"status" : "info",
 		"name" : "mongoose",
 		"monitorInterval" : 1000,
 		"packages" : "com.emc.mongoose.logging",
@@ -103,7 +103,7 @@
 					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
-						"header" : "DateTimeISO8601,TypeLoad,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"header" : "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
 					}
 				},
@@ -117,7 +117,7 @@
 					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
-						"header" : "DateTimeISO8601,TypeLoad,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"header" : "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
 					}
 				},
@@ -131,7 +131,7 @@
 					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
-						"header" : "DateTimeISO8601,TypeLoad,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"header" : "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
 					}
 				},
@@ -145,21 +145,21 @@
 					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
-						"header" : "DateTimeISO8601,TypeLoad,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"header" : "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
 					}
 				},
 				{
-					"name" : "ioTraceFile",
+					"name" : "opTraceFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}io.trace.csv",
-					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}io.trace.csv",
+					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}op.trace.csv",
+					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}op.trace.csv",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
-						"header" : "StorageNode,ItemPath,IoTypeCode,StatusCode,ReqTimeStart[us],Duration[us],RespLatency[us],DataLatency[us],TransferSize\n",
+						"header" : "StorageNode,ItemPath,OpTypeCode,StatusCode,ReqTimeStart[us],Duration[us],RespLatency[us],DataLatency[us],TransferSize\n",
 						"pattern" : "%m"
 					}
 				},
@@ -299,10 +299,10 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.IoTraces",
+					"name" : "com.emc.mongoose.logging.OpTraces",
 					"level" : "INFO",
 					"AppenderRef" : {
-						"ref" : "ioTraceFile"
+						"ref" : "opTraceFile"
 					},
 					"additivity" : false
 				},
