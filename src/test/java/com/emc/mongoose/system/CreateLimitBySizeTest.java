@@ -83,8 +83,7 @@ import static org.junit.Assert.assertTrue;
 
 	public CreateLimitBySizeTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
+	) throws Exception {
 		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
 			APP_NAME, Thread.currentThread().getContextClassLoader()
 		);
@@ -99,7 +98,7 @@ import static org.junit.Assert.assertTrue;
 		containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 		hostItemOutputPath = MongooseContainer.getHostItemOutputPath(stepId);
 		try {
-			FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
 		this.storageType = storageType;

@@ -61,7 +61,7 @@ public class UnlimitedCreateTest {
         containerItemOutputPath = Paths.get(CONTAINER_SHARE_PATH, stepId).toString();
 
         try {
-            FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
+	        FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
         } catch (final IOException ignored) {
         }
 

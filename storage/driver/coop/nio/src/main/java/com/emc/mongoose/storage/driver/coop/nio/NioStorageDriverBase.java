@@ -29,6 +29,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.message.ThreadDumpMessage;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -284,14 +285,26 @@ implements NioStorageDriver<I, O> {
 	@Override
 	protected void doClose()
 	throws IOException {
-		super.doClose();
-		for(final Fiber ioFiber : ioFibers) {
-			ioFiber.close();
-		}
+
+		ioFibers.forEach(
+			fiber -> {
+				try {
+					fiber.close();
+				} catch(final Exception e) {
+					LogUtil.exception(Level.WARN, e, "Failed to close the I/O fiber: {}", fiber);
+				}
+			}
+		);
+		ioFibers.clear();
+
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
 				if(opBuffLocks[i].tryLock(Fiber.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
-					opBuffs[i].clear();
+					try {
+						opBuffs[i].clear();
+					} finally {
+						opBuffLocks[i].unlock();
+					}
 				} else if(opBuffs[i].size() > 0){
 					Loggers.ERR.debug(new ThreadDumpMessage("Failed to obtain the load operations buff lock in time"));
 				}
@@ -302,6 +315,7 @@ implements NioStorageDriver<I, O> {
 			}
 			opBuffs[i] = null;
 		}
-		ioFibers.clear();
+
+		super.doClose();
 	}
 }

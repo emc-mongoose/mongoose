@@ -27,6 +27,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.spi.AbstractInterruptibleChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.NoSuchFileException;
@@ -322,7 +323,7 @@ implements NioStorageDriver<I, O> {
 					try {
 						srcChannel.close();
 					} catch(final IOException e) {
-						Loggers.ERR.warn("Failed to close the source I/O channel");
+						Loggers.ERR.warn("Failed to close the source file channel");
 					}
 				}
 			}
@@ -333,7 +334,7 @@ implements NioStorageDriver<I, O> {
 					try {
 						dstChannel.close();
 					} catch(final IOException e) {
-						Loggers.ERR.warn("Failed to close the destination I/O channel");
+						Loggers.ERR.warn("Failed to close the destination file channel");
 					}
 				}
 			}
@@ -353,19 +354,38 @@ implements NioStorageDriver<I, O> {
 	@Override
 	protected final void doClose()
 	throws IOException {
-		super.doClose();
-		for(final FileChannel srcChannel : srcOpenFiles.values()) {
-			if(srcChannel.isOpen()) {
-				srcChannel.close();
-			}
-		}
+
+		srcOpenFiles
+			.values()
+			.stream()
+			.filter(AbstractInterruptibleChannel::isOpen)
+			.forEach(
+				channel -> {
+					try {
+						channel.close();
+					} catch(final IOException e) {
+						LogUtil.exception(Level.WARN, e, "Failed to close the source file channel {}", channel);
+					}
+				}
+			);
 		srcOpenFiles.clear();
-		for(final FileChannel dstChannel : dstOpenFiles.values()) {
-			if(dstChannel.isOpen()) {
-				dstChannel.close();
-			}
-		}
+
+		dstOpenFiles
+			.values()
+			.stream()
+			.filter(AbstractInterruptibleChannel::isOpen)
+			.forEach(
+				channel -> {
+					try {
+						channel.close();
+					} catch(final IOException e) {
+						LogUtil.exception(Level.WARN, e, "Failed to close the source file channel {}", channel);
+					}
+				}
+			);
 		dstOpenFiles.clear();
+
+		super.doClose();
 	}
 	
 	@Override

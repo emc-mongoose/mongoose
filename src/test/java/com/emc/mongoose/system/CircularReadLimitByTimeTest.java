@@ -89,7 +89,7 @@ import static org.junit.Assert.assertTrue;
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 		try {
-			FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
 		this.storageType = storageType;

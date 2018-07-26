@@ -18,15 +18,9 @@ public interface LogPatterns {
 	Pattern STD_OUT_THREAD_NAME = Pattern.compile("(?<nameThread>\\w[\\w\\s#.\\-<>]+\\w)");
 	
 	// metrics
-	Pattern TYPE_LOAD = Pattern.compile(
-		ASCII_COLOR.pattern() + "(?<typeLoad>[CREATDLUPNO]{4,6})" + ASCII_COLOR.pattern()
-	);
-	Pattern STD_OUT_CONCURRENCY = Pattern.compile(
-		"(?<concurrency>[0-9]{1,7})x(?<driverCount>[0-9]{1,7})"
-	);
-	Pattern STD_OUT_CONCURRENCY_ACTUAL = Pattern.compile(
-		"c=\\((?<concurrencyLastMean>[0-9.]+)\\)"
-	);
+	Pattern OP_TYPE = Pattern.compile(ASCII_COLOR.pattern() + "(?<opType>[CREATDLUPNO]{4,6})" + ASCII_COLOR.pattern());
+	Pattern STD_OUT_CONCURRENCY = Pattern.compile("(?<concurrency>[0-9]{1,7})x(?<driverCount>[0-9]{1,7})");
+	Pattern STD_OUT_CONCURRENCY_ACTUAL = Pattern.compile("c=\\((?<concurrencyLastMean>[0-9.]+)\\)");
 	Pattern STD_OUT_ITEM_COUNTS = Pattern.compile(
 		"n=\\((?<countSucc>\\d+)/\\\u001B*\\[*\\d*m*(?<countFail>\\d+)\\\u001B*\\[*\\d*m*\\)"
 	);
@@ -51,7 +45,7 @@ public interface LogPatterns {
 	Pattern STD_OUT_METRICS_SINGLE = Pattern.compile(
 		ASCII_COLOR.pattern() + DATE_TIME_ISO8601.pattern() + "\\s+" + STD_OUT_LOG_LEVEL.pattern() +
 			"\\s+" + STD_OUT_CLASS_NAME.pattern() + "\\s" + STD_OUT_THREAD_NAME.pattern() + "\\s+" +
-			TYPE_LOAD.pattern() + "-" + STD_OUT_CONCURRENCY.pattern() + ":\\s+" +
+			OP_TYPE.pattern() + "-" + STD_OUT_CONCURRENCY.pattern() + ":\\s+" +
 			STD_OUT_CONCURRENCY_ACTUAL.pattern() + ";\\s+" +
 			STD_OUT_ITEM_COUNTS.pattern() + ";\\s+" + STD_OUT_METRICS_TIME.pattern() + ";\\s+" +
 			STD_OUT_METRICS_SIZE.pattern() + ";\\s+" + STD_OUT_METRICS_TP.pattern() + ";\\s+" +
@@ -60,7 +54,7 @@ public interface LogPatterns {
 	);
 	Pattern STD_OUT_METRICS_TABLE_ROW = Pattern.compile(
 		"\\s*(?<stepName>[\\w\\-_.,;:~=+@]{1,10})\\|(?<timestamp>[\\d]{12})" +
-			"\\|" + ASCII_COLOR.pattern() + "(?<ioType>[NOPCREATDULIS]{4,6})\\s*" + ASCII_COLOR.pattern() +
+			"\\|" + OP_TYPE.pattern() +
 			"\\|\\s*(?<concurrencyCurr>[\\d]{1,10})" +
 			"\\|(?<concurrencyLastMean>[\\d]+\\.?[\\d]*)\\s*" +
 			"\\|\\s*(?<succCount>[\\d]{1,12})" +

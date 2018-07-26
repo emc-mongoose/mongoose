@@ -668,7 +668,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	@Override
 	protected void doClose()
 	throws IllegalStateException, IOException {
-		super.doClose();
+		
 		try {
 			connPool.close();
 		} catch(final IOException e) {
@@ -676,5 +676,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				Level.WARN, e, "{}: failed to close the connection pool", toString()
 			);
 		}
+
+		super.doClose();
 	}
 }

@@ -650,7 +650,7 @@ extends ParameterizedSysTestBase {
 				);
 			}
 			lastTimeStamp = nextDateTimeStamp;
-			ioTypeStr = m.group("typeLoad").toUpperCase();
+			ioTypeStr = m.group("opType").toUpperCase();
 			assertEquals(ioTypeStr, expectedOpType.name(), ioTypeStr);
 			concurrencyLevel = Integer.parseInt(m.group("concurrency"));
 			assertEquals(Integer.toString(concurrencyLevel), expectedConcurrency, concurrencyLevel);

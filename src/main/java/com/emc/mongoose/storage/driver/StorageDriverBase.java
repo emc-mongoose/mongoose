@@ -8,9 +8,13 @@ import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.op.data.DataOperation;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.storage.Credential;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+
 import com.github.akurilov.commons.concurrent.ThreadUtil;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.confuse.Config;
+
 import org.apache.logging.log4j.CloseableThreadContext;
 
 import java.io.IOException;
@@ -21,9 +25,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 /**
  Created by kurila on 11.07.16.
@@ -117,8 +118,8 @@ implements StorageDriver<I,O> {
 			Loggers.MSG.trace("{}: Load operation completed", op);
 		}
 		final O opResult = op.result();
-		if(! opsResultsQueue.offer(opResult)) {
-			Loggers.ERR.warn("{}: Load operations results queue overflow, dropping the result", toString());
+		if(!opsResultsQueue.offer(opResult)) {
+			Loggers.ERR.error("{}: Load operations results queue overflow, dropping the result", toString());
 		}
 	}
 
@@ -170,6 +171,7 @@ implements StorageDriver<I,O> {
 			authTokens.clear();
 			pathToCredMap.clear();
 			pathMap.clear();
+			super.doClose();
 			Loggers.MSG.debug("{}: closed", toString());
 		}
 	}

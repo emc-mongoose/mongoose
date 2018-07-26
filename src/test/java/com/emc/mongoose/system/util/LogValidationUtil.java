@@ -122,7 +122,7 @@ public interface LogValidationUtil {
 
 	static List<CSVRecord> getIoTraceLogRecords(final String stepId)
 	throws IOException {
-		return getLogFileCsvRecords(stepId, "io.trace.csv");
+		return getLogFileCsvRecords(stepId, "op.trace.csv");
 	}
 
 	static void waitLogFile(final File logFile) {
@@ -158,7 +158,7 @@ public interface LogValidationUtil {
 		final String stepId, final Consumer<CSVRecord> csvRecordTestFunc
 	)
 	throws IOException {
-		final File logFile = getLogFile(stepId, "io.trace.csv");
+		final File logFile = getLogFile(stepId, "op.trace.csv");
 		waitLogFile(logFile);
 		testIoTraceLogFile(logFile, csvRecordTestFunc);
 	}
@@ -204,7 +204,7 @@ public interface LogValidationUtil {
 				);
 			}
 			lastTimeStamp = nextDateTimeStamp;
-			OpTypeStr = nextRecord.get("TypeLoad").toUpperCase();
+			OpTypeStr = nextRecord.get("OpType").toUpperCase();
 			assertEquals(expectedOpType.name(), OpTypeStr);
 			concurrencyLevel = Integer.parseInt(nextRecord.get("Concurrency"));
 			assertEquals("Expected concurrency level: " + expectedNodeCount * expectedConcurrency,
@@ -309,29 +309,28 @@ public interface LogValidationUtil {
 		} catch(final ParseException e) {
 			fail(e.toString());
 		}
-		final String OpTypeStr = metrics.get("TypeLoad").toUpperCase();
+		final String OpTypeStr = metrics.get("OpType").toUpperCase();
 		assertEquals(OpTypeStr, expectedOpType.name(), OpTypeStr);
-		System.out.println("1");
 		final int concurrencyLevel = Integer.parseInt(metrics.get("Concurrency"));
 		assertEquals(Integer.toString(concurrencyLevel), expectedNodeCount * expectedConcurrency, concurrencyLevel);
-		System.out.println("2");
 		final int nodeCount = Integer.parseInt(metrics.get("NodeCount"));
 		assertEquals(Integer.toString(nodeCount), expectedNodeCount, nodeCount);
-		System.out.println("3");
 		final double concurrencyLastMean = Double.parseDouble(metrics.get("ConcurrencyMean"));
 		if(expectedConcurrency > 0) {
 			assertTrue(concurrencyLastMean <= nodeCount * expectedConcurrency);
 		} else {
 			assertTrue(concurrencyLastMean >= 0);
 		}
-		System.out.println("4");
 		final long totalBytes = SizeInBytes.toFixedSize(metrics.get("Size"));
-		if(expectedMaxCount > 0 && expectedItemDataSize.get() > 0 &&
-			(OpType.CREATE.equals(expectedOpType) || OpType.READ.equals(expectedOpType) ||
-				OpType.UPDATE.equals(expectedOpType))) {
+		if(
+			expectedMaxCount > 0 && expectedItemDataSize.get() > 0
+				&& (
+					OpType.CREATE.equals(expectedOpType) || OpType.READ.equals(expectedOpType)
+						|| OpType.UPDATE.equals(expectedOpType)
+				)
+		) {
 			assertTrue(Long.toString(totalBytes), totalBytes > 0);
 		}
-		System.out.println("5");
 		final long countSucc = Long.parseLong(metrics.get("CountSucc"));
 		if(expectedMaxCount > 0) {
 			if(expectedLoadJobTime > 0) {
@@ -341,10 +340,8 @@ public interface LogValidationUtil {
 			}
 			assertTrue(Long.toString(countSucc), countSucc > 0);
 		}
-		System.out.println("6");
 		final long countFail = Long.parseLong(metrics.get("CountFail"));
 		assertTrue("Failures count: " + Long.toString(countFail), countFail < 1);
-		System.out.println("7");
 		if(countSucc > 0) {
 			final long avgItemSize = totalBytes / countSucc;
 			if(expectedItemDataSize.getMin() < expectedItemDataSize.getMax()) {
@@ -356,7 +353,6 @@ public interface LogValidationUtil {
 				);
 			}
 		}
-		System.out.println("8");
 		final double jobDuration = Double.parseDouble(metrics.get("JobDuration[s]"));
 		if(expectedLoadJobTime > 0) {
 			assertTrue(
@@ -364,7 +360,6 @@ public interface LogValidationUtil {
 				jobDuration <= expectedLoadJobTime + 5
 			);
 		}
-		System.out.println("9");
 		final double durationSum = Double.parseDouble(metrics.get("DurationSum[s]"));
 		final double effEstimate = durationSum / (expectedConcurrency * expectedNodeCount * jobDuration);
 		if(countSucc > 0 && expectedConcurrency > 0 && jobDuration > 1) {
@@ -372,50 +367,36 @@ public interface LogValidationUtil {
 				", concurrency limit: " + expectedConcurrency + ", driver count: " + nodeCount + ", job duration: " +
 				jobDuration, effEstimate <= 1 && effEstimate >= 0);
 		}
-		System.out.println("10");
 		final double tpAvg = Double.parseDouble(metrics.get("TPAvg[op/s]"));
 		final double tpLast = Double.parseDouble(metrics.get("TPLast[op/s]"));
 		final double bwAvg = Double.parseDouble(metrics.get("BWAvg[MB/s]"));
 		final double bwLast = Double.parseDouble(metrics.get("BWLast[MB/s]"));
 		assertEquals(bwAvg / tpAvg, bwAvg / tpAvg, expectedItemDataSize.getAvg() / 100);
-		System.out.println("11");
 		assertEquals(bwLast / tpLast, bwLast / tpLast, expectedItemDataSize.getAvg() / 100);
-		System.out.println("12");
 		final double durAvg = Double.parseDouble(metrics.get("DurationAvg[us]"));
 		assertTrue(durAvg >= 0);
-		System.out.println("13");
 		final int durMin = Integer.parseInt(metrics.get("DurationMin[us]"));
 		assertTrue(durAvg >= durMin);
-		System.out.println("14");
 		final int durLoQ = Integer.parseInt(metrics.get("DurationLoQ[us]"));
 		assertTrue(durLoQ >= durMin);
 		final int durMed = Integer.parseInt(metrics.get("DurationMed[us]"));
 		assertTrue(durMed >= durLoQ);
-		System.out.println("15");
 		final int durHiQ = Integer.parseInt(metrics.get("DurationHiQ[us]"));
 		assertTrue(durHiQ >= durMed);
-		System.out.println("16");
 		final int durMax = Integer.parseInt(metrics.get("DurationMax[us]"));
 		assertTrue(durMax >= durHiQ);
-		System.out.println("17");
 		final double latAvg = Double.parseDouble(metrics.get("LatencyAvg[us]"));
 		assertTrue(latAvg >= 0);
-		System.out.println("18");
 		final int latMin = Integer.parseInt(metrics.get("LatencyMin[us]"));
 		assertTrue(latAvg >= latMin);
-		System.out.println("19");
 		final int latLoQ = Integer.parseInt(metrics.get("LatencyLoQ[us]"));
 		assertTrue(latLoQ >= latMin);
-		System.out.println("20");
 		final int latMed = Integer.parseInt(metrics.get("LatencyMed[us]"));
 		assertTrue(latMed >= latLoQ);
-		System.out.println("21");
 		final int latHiQ = Integer.parseInt(metrics.get("LatencyHiQ[us]"));
 		assertTrue(latHiQ >= latMed);
-		System.out.println("22");
 		final int latMax = Integer.parseInt(metrics.get("LatencyMax[us]"));
 		assertTrue(latMax >= latHiQ);
-		System.out.println("23");
 	}
 
 	static void testIoTraceRecord(
@@ -492,7 +473,7 @@ public interface LogValidationUtil {
 				);
 			}
 			lastTimeStamp = nextDateTimeStamp;
-			OpTypeStr = m.group("typeLoad").toUpperCase();
+			OpTypeStr = m.group("opType").toUpperCase();
 			assertEquals(OpTypeStr, expectedOpType.name(), OpTypeStr);
 			concurrencyLevel = Integer.parseInt(m.group("concurrency"));
 			assertEquals(Integer.toString(concurrencyLevel), expectedConcurrency, concurrencyLevel);
@@ -566,8 +547,7 @@ public interface LogValidationUtil {
 	static void testMetricsTableStdout(
 		final String stdOutContent, final String stepId, final StorageType storageType, final int nodeCount,
 		final long countLimit, final Map<OpType, Integer> configConcurrencyMap
-	)
-	throws Exception {
+	) throws Exception {
 		final Matcher m = LogPatterns.STD_OUT_METRICS_TABLE_ROW.matcher(stdOutContent);
 		boolean OpTypeFoundFlag;
 		int rowCount = 0;
@@ -575,7 +555,7 @@ public interface LogValidationUtil {
 			rowCount++;
 			final String actualStepNameEnding = m.group("stepName");
 			final Date nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
-			final OpType actualOpType = OpType.valueOf(m.group("OpType"));
+			final OpType actualOpType = OpType.valueOf(m.group("opType"));
 			final int actualConcurrencyCurr = Integer.parseInt(m.group("concurrencyCurr"));
 			final float actualConcurrencyLastMean = Float.parseFloat(m.group("concurrencyLastMean"));
 			final long succCount = Long.parseLong(m.group("succCount"));
@@ -606,7 +586,7 @@ public interface LogValidationUtil {
 			if(countLimit > 0) {
 				assertTrue(countLimit >= succCount); // count succ
 			}
-			assertTrue(failCount == 0);
+			assertEquals(0, failCount);
 			assertTrue(stepTimeSec >= 0);
 			assertTrue(tp >= 0);
 			assertTrue(bw >= 0);
@@ -627,8 +607,7 @@ public interface LogValidationUtil {
 		final String stdOutContent, final String stepId, final OpType expectedOpType, final int nodeCount,
 		final int expectedConcurrency, final long countLimit, final long timeLimit,
 		final SizeInBytes expectedItemDataSize
-	)
-	throws Exception {
+	) throws Exception {
 		final Matcher m = LogPatterns.STD_OUT_METRICS_TABLE_ROW_FINAL.matcher(stdOutContent);
 		boolean rowFoundFlag = false;
 		Date nextTimstamp = null;
@@ -644,7 +623,7 @@ public interface LogValidationUtil {
 		while(m.find()) {
 			final String actualStepNameEnding = m.group("stepName");
 			if(stepId.endsWith(actualStepNameEnding) || stepId.equals(actualStepNameEnding)) {
-				final OpType actualOpType = OpType.valueOf(m.group("OpType"));
+				final OpType actualOpType = OpType.valueOf(m.group("opType"));
 				if(actualOpType.equals(expectedOpType)) {
 					rowFoundFlag = true;
 					nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));

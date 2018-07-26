@@ -88,7 +88,7 @@ public class ReadVerificationAfterCircularUpdateTest {
         containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 
         try {
-            FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
+	        FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
         } catch (final IOException ignored) {
         }
 

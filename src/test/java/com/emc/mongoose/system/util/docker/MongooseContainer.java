@@ -15,7 +15,6 @@ import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -43,7 +42,7 @@ public final class MongooseContainer
 	public static final String CONTAINER_HOME_PATH = "/root/.mongoose/" + APP_VERSION;
 	private static final String IMAGE_NAME = "emcmongoose/mongoose";
 	private static final String ENTRYPOINT = "/opt/mongoose/entrypoint.sh";
-	private static final String ENTRYPOINT_DEBUG = "/opt/mongoose/entrypoint.sh";
+	private static final String ENTRYPOINT_DEBUG = "/opt/mongoose/entrypoint-debug.sh";
 	private static final int PORT_DEBUG = 5005;
 	private static final int PORT_JMX = 9010;
 	public static final String CONTAINER_SHARE_PATH = CONTAINER_HOME_PATH + "/share";

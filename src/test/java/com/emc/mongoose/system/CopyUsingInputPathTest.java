@@ -66,7 +66,7 @@ public final class CopyUsingInputPathTest {
 
         stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
         try {
-            FileUtils.deleteDirectory(MongooseContainer.HOST_LOG_PATH.toFile());
+	        FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
         } catch (final IOException ignored) {
         }
 

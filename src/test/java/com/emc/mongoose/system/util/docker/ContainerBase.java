@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
@@ -106,6 +107,7 @@ implements Docker.Container {
 	private String createContainer() {
 		final String imageNameWithVer = imageName() + ":" + this.version;
 		final List<String> args = containerArgs();
+		LOG.info("Docker container args: " + Arrays.toString(args.toArray(new String[]{})));
 		final ExposedPort[] exposedPorts = Arrays.stream(exposedTcpPorts)
 			.mapToObj(ExposedPort::tcp)
 			.collect(Collectors.toList())
