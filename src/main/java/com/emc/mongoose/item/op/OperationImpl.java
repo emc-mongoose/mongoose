@@ -3,10 +3,6 @@ package com.emc.mongoose.item.op;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.storage.Credential;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import static java.lang.System.nanoTime;
 
 /**
@@ -236,40 +232,6 @@ implements Operation<I> {
 			.append(item.toString()).append(',')
 			.append(dstPath == null ? "" : dstPath).append(',')
 			.toString();
-	}
-	
-	@Override
-	public void writeExternal(final ObjectOutput out)
-	throws IOException {
-		out.writeInt(originIndex);
-		out.writeInt(opType.ordinal());
-		out.writeObject(item);
-		out.writeUTF(srcPath == null ? "" : srcPath);
-		out.writeUTF(dstPath == null ? "" : dstPath);
-		out.writeObject(credential);
-		out.writeUTF(nodeAddr == null ? "" : nodeAddr);
-		out.writeInt(status == null ? Status.PENDING.ordinal() : status.ordinal());
-		out.writeLong(reqTimeStart);
-		out.writeLong(reqTimeDone);
-		out.writeLong(respTimeStart);
-		out.writeLong(respTimeDone);
-	}
-	
-	@Override
-	public void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		originIndex = in.readInt();
-		opType = OpType.values()[in.readInt()];
-		item = (I) in.readObject();
-		srcPath = in.readUTF();
-		dstPath = in.readUTF();
-		credential = (Credential) in.readObject();
-		nodeAddr = in.readUTF();
-		status = Status.values()[in.readInt()];
-		reqTimeStart = in.readLong();
-		reqTimeDone = in.readLong();
-		respTimeStart = in.readLong();
-		respTimeDone = in.readLong();
 	}
 
 	@Override

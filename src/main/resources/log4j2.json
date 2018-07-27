@@ -103,7 +103,7 @@
 					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
-						"header" : "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"header" : "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,StepDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
 					}
 				},
@@ -117,7 +117,7 @@
 					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
-						"header" : "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"header" : "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,StepDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
 					}
 				},
@@ -131,7 +131,7 @@
 					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
-						"header" : "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"header" : "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,StepDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
 					}
 				},
@@ -145,7 +145,7 @@
 					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
-						"header" : "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,JobDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
+						"header" : "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,StepDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n",
 						"pattern" : "%m%n"
 					}
 				},

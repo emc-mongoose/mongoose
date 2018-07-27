@@ -344,7 +344,7 @@ extends ParameterizedSysTestBase {
 		long prevCountSucc = Long.MIN_VALUE, countSucc;
 		long countFail;
 		long avgItemSize;
-		double jobDuration;
+		double stepDuration;
 		double prevDurationSum = Double.NaN, durationSum;
 		double tpAvg, tpLast;
 		double bwAvg, bwLast;
@@ -411,11 +411,11 @@ extends ParameterizedSysTestBase {
 					);
 				}
 			}
-			jobDuration = Double.parseDouble(nextRecord.get("JobDuration[s]"));
+			stepDuration = Double.parseDouble(nextRecord.get("StepDuration[s]"));
 			if(expectedLoadJobTime > 0) {
 				assertTrue(
-					"Step duration limit (" + expectedLoadJobTime + ") is broken: " + jobDuration,
-					jobDuration <= expectedLoadJobTime + 1
+					"Step duration limit (" + expectedLoadJobTime + ") is broken: " + stepDuration,
+					stepDuration <= expectedLoadJobTime + 1
 				);
 			}
 			durationSum = Double.parseDouble(nextRecord.get("DurationSum[s]"));
@@ -423,9 +423,9 @@ extends ParameterizedSysTestBase {
 				assertTrue(durationSum >= 0);
 			} else {
 				assertTrue(durationSum >= prevDurationSum);
-				if(expectedConcurrency > 0 && jobDuration > 1) {
+				if(expectedConcurrency > 0 && stepDuration > 1) {
 					final double
-						effEstimate = durationSum / (nodeCount * expectedConcurrency * jobDuration);
+						effEstimate = durationSum / (nodeCount * expectedConcurrency * stepDuration);
 					assertTrue(
 						"Efficiency estimate: " + effEstimate, effEstimate <= 1 && effEstimate >= 0
 					);
@@ -521,20 +521,20 @@ extends ParameterizedSysTestBase {
 				);
 			}
 		}
-		final double jobDuration = Double.parseDouble(metrics.get("JobDuration[s]"));
+		final double stepDuration = Double.parseDouble(metrics.get("StepDuration[s]"));
 		if(expectedLoadJobTime > 0) {
 			assertTrue(
-				"Step duration was " + jobDuration + ", but expected not more than" +
-					expectedLoadJobTime + 5, jobDuration <= expectedLoadJobTime + 5
+				"Step duration was " + stepDuration + ", but expected not more than" +
+					expectedLoadJobTime + 5, stepDuration <= expectedLoadJobTime + 5
 			);
 		}
 		final double durationSum = Double.parseDouble(metrics.get("DurationSum[s]"));
-		final double effEstimate = durationSum / (expectedConcurrency * expectedNodeCount * jobDuration);
-		if(countSucc > 0 && expectedConcurrency > 0 && jobDuration > 1) {
+		final double effEstimate = durationSum / (expectedConcurrency * expectedNodeCount * stepDuration);
+		if(countSucc > 0 && expectedConcurrency > 0 && stepDuration > 1) {
 			assertTrue(
 				"Invalid efficiency estimate: " + effEstimate + ", summary duration: " + durationSum
 					+ ", concurrency limit: " + expectedConcurrency + ", driver count: "
-					+ nodeCount + ", job duration: " + jobDuration,
+					+ nodeCount + ", job duration: " + stepDuration,
 				effEstimate <= 1 && effEstimate >= 0
 			);
 		}
@@ -630,7 +630,7 @@ extends ParameterizedSysTestBase {
 		long prevCountSucc = Long.MIN_VALUE, countSucc;
 		long countFail;
 		long avgItemSize;
-		double prevJobDuration = Double.NaN, jobDuration;
+		double prevStepDuration = Double.NaN, stepDuration;
 		double prevDurationSum = Double.NaN, durationSum;
 		double tpAvg, tpLast;
 		double bwAvg, bwLast;
@@ -685,15 +685,15 @@ extends ParameterizedSysTestBase {
 					expectedItemDataSize.getAvg() / 100
 				);
 			}
-			jobDuration = Double.parseDouble(m.group("jobDur"));
-			if(Double.isNaN(prevJobDuration)) {
-				assertEquals(Double.toString(jobDuration), 0, jobDuration, 1);
+			stepDuration = Double.parseDouble(m.group("stepDur"));
+			if(Double.isNaN(prevStepDuration)) {
+				assertEquals(Double.toString(stepDuration), 0, stepDuration, 1);
 			} else {
 				assertEquals(
-					Double.toString(jobDuration), prevJobDuration + metricsPeriodSec, jobDuration, 1
+					Double.toString(stepDuration), prevStepDuration + metricsPeriodSec, stepDuration, 1
 				);
 			}
-			prevJobDuration = jobDuration;
+			prevStepDuration = stepDuration;
 			durationSum = Double.parseDouble(m.group("sumDur"));
 			if(Double.isNaN(prevDurationSum)) {
 				assertTrue(durationSum >= 0);
@@ -701,7 +701,7 @@ extends ParameterizedSysTestBase {
 				assertTrue(durationSum >= prevDurationSum);
 			}
 			final double
-				effEstimate = durationSum / (concurrencyLevel * nodeCount * jobDuration);
+				effEstimate = durationSum / (concurrencyLevel * nodeCount * stepDuration);
 			assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate >= 0);
 			prevDurationSum = durationSum;
 			tpAvg = Double.parseDouble(m.group("tpMean"));
