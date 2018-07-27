@@ -68,7 +68,7 @@ extends LoadStepClientBase {
 			}
 
 			final OpType opType = OpType.valueOf(config.stringVal("op-type").toUpperCase());
-			final int concurrency = config.intVal("storage-driver-limit-concurrency");
+			final int concurrencyLimit = config.intVal("storage-driver-limit-concurrency");
 			final Config outputConfig = subConfig.configVal("output");
 			final Config metricsConfig = outputConfig.configVal("metrics");
 			final SizeInBytes itemDataSize;
@@ -80,7 +80,7 @@ extends LoadStepClientBase {
 			}
 			final boolean colorFlag = outputConfig.boolVal("color");
 
-			initMetrics(originIndex, opType, concurrency, metricsConfig, itemDataSize, colorFlag);
+			initMetrics(originIndex, opType, concurrencyLimit, metricsConfig, itemDataSize, colorFlag);
 		}
 	}
 }

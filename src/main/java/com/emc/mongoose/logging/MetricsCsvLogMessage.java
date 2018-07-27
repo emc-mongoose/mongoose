@@ -22,7 +22,7 @@ import java.util.Date;
  CountSucc,
  CountFail,
  Size,
- JobDuration[s],
+ StepDuration[s],
  DurationSum[s],
  ActualConcurrency,
  TPAvg[op/s],

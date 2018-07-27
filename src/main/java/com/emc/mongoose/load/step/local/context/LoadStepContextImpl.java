@@ -352,7 +352,7 @@ implements LoadStepContext<I, O> {
 						generator.recycle(opResult);
 					} else if(opsResultsOutput != null) {
 						try {
-							if(! opsResultsOutput.put(opResult)) {
+							if(!opsResultsOutput.put(opResult)) {
 								Loggers.ERR.warn("Failed to output the op result");
 							}
 						} catch(final EOFException e) {
