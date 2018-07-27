@@ -2,15 +2,15 @@ package com.emc.mongoose.metrics;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.UniformReservoir;
 import com.codahale.metrics.UniformSnapshot;
 import com.emc.mongoose.item.op.OpType;
-
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntSupplier;
 
 /**
@@ -42,6 +42,7 @@ public class MetricsContextImpl
 	private volatile MetricsListener metricsListener = null;
 	private volatile MetricsContext thresholdMetricsCtx = null;
 	private volatile boolean thresholdStateExitedFlag = false;
+	private final Lock timingLock = new ReentrantLock();
 
 	public MetricsContextImpl(
 		final String id, final OpType opType, final IntSupplier actualConcurrencyGauge, final int concurrency,
@@ -56,12 +57,12 @@ public class MetricsContextImpl
 		this.itemDataSize = itemDataSize;
 		this.stdOutColorFlag = stdOutColorFlag;
 		this.outputPeriodMillis = TimeUnit.SECONDS.toMillis(updateIntervalSec);
-		respLatency = new Histogram(new UniformReservoir(DEFAULT_RESERVOIR_SIZE));
+		respLatency = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		respLatSnapshot = respLatency.getSnapshot();
 		respLatencySum = new LongAdder();
-		reqDuration = new Histogram(new UniformReservoir(DEFAULT_RESERVOIR_SIZE));
+		reqDuration = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		reqDurSnapshot = reqDuration.getSnapshot();
-		actualConcurrency = new Histogram(new UniformReservoir(DEFAULT_RESERVOIR_SIZE));
+		actualConcurrency = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
@@ -110,8 +111,13 @@ public class MetricsContextImpl
 		throughputSuccess.mark();
 		reqBytes.mark(size);
 		if(latency > 0 && duration > latency) {
-			reqDuration.update(duration);
-			respLatency.update(latency);
+			try {
+				timingLock.lock();
+				reqDuration.update(duration);
+				respLatency.update(latency);
+			} finally {
+				timingLock.unlock();
+			}
 			reqDurationSum.add(duration);
 			respLatencySum.add(latency);
 		}
@@ -125,8 +131,13 @@ public class MetricsContextImpl
 	public final void markPartSucc(final long size, final long duration, final long latency) {
 		reqBytes.mark(size);
 		if(latency > 0 && duration > latency) {
-			reqDuration.update(duration);
-			respLatency.update(latency);
+			try {
+				timingLock.lock();
+				reqDuration.update(duration);
+				respLatency.update(latency);
+			} finally {
+				timingLock.unlock();
+			}
 			reqDurationSum.add(duration);
 			respLatencySum.add(latency);
 		}
@@ -161,7 +172,9 @@ public class MetricsContextImpl
 
 	//
 	@Override
-	public final void markPartSucc(final long bytes, final long durationValues[], final long latencyValues[]) {
+	public final void markPartSucc(
+		final long bytes, final long durationValues[], final long latencyValues[]
+	) {
 		reqBytes.mark(bytes);
 		final int timingsLen = Math.min(durationValues.length, latencyValues.length);
 		long duration, latency;
@@ -287,18 +300,21 @@ public class MetricsContextImpl
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
 		if(currentTimeMillis - lastOutputTs > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
 			if(lastDurationSum != reqDurationSum.sum() || lastLatencySum != respLatencySum.sum()) {
-				lastDurationSum = reqDurationSum.sum();
-				reqDurSnapshot = reqDuration.getSnapshot();
+				if(timingLock.tryLock()) {
+					reqDurSnapshot = reqDuration.getSnapshot();
+					respLatSnapshot = respLatency.getSnapshot();
+					timingLock.unlock();
+				}
 				lastLatencySum = respLatencySum.sum();
-				respLatSnapshot = respLatency.getSnapshot();
+				lastDurationSum = reqDurationSum.sum();
 			}
 			actualConcurrency.update(lastConcurrency);
 			actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		}
-		lastSnapshot = new MetricsSnapshotImpl(throughputSuccess.getCount(), throughputSuccess.getLastRate(),
-			throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(), reqBytes.getLastRate(),
-			tsStart, prevElapsedTime + currElapsedTime, lastConcurrency, actualConcurrencySnapshot.getMean(),
-			lastDurationSum, lastLatencySum, reqDurSnapshot, respLatSnapshot
+		lastSnapshot = new MetricsSnapshotImpl(throughputSuccess.getCount(), throughputSuccess.
+			getLastRate(), throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
+			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime, lastConcurrency,
+			actualConcurrencySnapshot.getMean(), lastDurationSum, lastLatencySum, reqDurSnapshot, respLatSnapshot
 		);
 		if(metricsListener != null) {
 			metricsListener.notify(lastSnapshot);
@@ -336,8 +352,7 @@ public class MetricsContextImpl
 		if(thresholdMetricsCtx != null) {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
-		thresholdMetricsCtx = new MetricsContextImpl(
-			id, opType, actualConcurrencyGauge, concurrency, 0, itemDataSize,
+		thresholdMetricsCtx = new MetricsContextImpl(id, opType, actualConcurrencyGauge, concurrency, 0, itemDataSize,
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag
 		);
 		thresholdMetricsCtx.start();

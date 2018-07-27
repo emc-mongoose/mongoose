@@ -13,7 +13,7 @@ public interface MetricsContext
 extends Closeable, Comparable<MetricsContext> {
 
 	int DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
-	int DEFAULT_RESERVOIR_SIZE = 0x10_00;
+	int DEFAULT_RESERVOIR_SIZE = 0x1_000;
 
 	// these are useful as labels/tags
 	String stepId();
