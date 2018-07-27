@@ -80,7 +80,7 @@ public final class MetricsManager
 					for(final String id : allMetrics.keySet()) {
 						for(final MetricsContext metricsCtx : allMetrics.get(id).keySet()) {
 							ThreadContext.put(KEY_STEP_ID, metricsCtx.stepId());
-							actualConcurrency = metricsCtx.actualConcurrency();
+							actualConcurrency = metricsCtx.lastSnapshot().actualConcurrencyLast();
 							//metricsCtx.refreshLastSnapshot();
 							// threshold load state checks
 							nextConcurrencyThreshold = metricsCtx.concurrencyThreshold();

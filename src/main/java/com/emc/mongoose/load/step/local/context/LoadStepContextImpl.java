@@ -63,7 +63,7 @@ implements LoadStepContext<I, O> {
 	private final ConcurrentMap<I, O> latestIoResultByItem;
 	private final boolean recycleFlag;
 	private final boolean retryFlag;
-	private final Fiber resultsTransferFiber;
+	private final Fiber resultsTransferTask;
 	private final MetricsContext metricsCtx;
 	private final LongAdder counterResults = new LongAdder();
 	private final boolean tracePersistFlag;
@@ -99,7 +99,7 @@ implements LoadStepContext<I, O> {
 		} else {
 			latestIoResultByItem = null;
 		}
-		resultsTransferFiber = new TransferFiber<>(
+		resultsTransferTask = new TransferFiber<>(
 			ServiceTaskExecutor.INSTANCE, driver, this, batchSize
 		);
 		final long configCountLimit = limitConfig.longVal("count");
@@ -122,8 +122,7 @@ implements LoadStepContext<I, O> {
 		if(countLimit > 0) {
 			if(counterResults.sum() >= countLimit) {
 				Loggers.MSG.debug(
-					"{}: count limit reached, {} results >= {} limit", id, counterResults.sum(),
-					countLimit
+					"{}: count limit reached, {} results >= {} limit", id, counterResults.sum(), countLimit
 				);
 				return true;
 			}
@@ -132,8 +131,8 @@ implements LoadStepContext<I, O> {
 			final long failCountSum = lastStats.failCount();
 			if(succCountSum + failCountSum >= countLimit) {
 				Loggers.MSG.debug(
-					"{}: count limit reached, {} successful + {} failed >= {} limit", id,
-					succCountSum, failCountSum, countLimit
+					"{}: count limit reached, {} successful + {} failed >= {} limit", id, succCountSum, failCountSum,
+					countLimit
 				);
 				return true;
 			}
@@ -146,8 +145,7 @@ implements LoadStepContext<I, O> {
 			final long sizeSum = metricsCtx.lastSnapshot().byteCount();
 			if(sizeSum >= sizeLimit) {
 				Loggers.MSG.debug(
-					"{}: size limit reached, done {} >= {} limit", id,
-					SizeInBytes.formatFixedSize(sizeSum), sizeLimit
+					"{}: size limit reached, done {} >= {} limit", id, SizeInBytes.formatFixedSize(sizeSum), sizeLimit
 				);
 				return true;
 			}
@@ -394,7 +392,7 @@ implements LoadStepContext<I, O> {
 	throws IllegalStateException {
 
 		try {
-			resultsTransferFiber.start();
+			resultsTransferTask.start();
 		} catch(final RemoteException ignored) {
 		}
 
@@ -489,7 +487,7 @@ implements LoadStepContext<I, O> {
 		Loggers.MSG.debug("{}: next storage driver {} stopped", id, driver.toString());
 		
 		try {
-			resultsTransferFiber.stop();
+			resultsTransferTask.stop();
 		} catch(final RemoteException ignored) {
 		}
 
@@ -586,11 +584,11 @@ implements LoadStepContext<I, O> {
 		}
 
 		try {
-			resultsTransferFiber.close();
+			resultsTransferTask.close();
 		} catch(final IOException e) {
 			LogUtil.exception(
 				Level.WARN, e, "{}: failed to stop the service coroutine {}",
-				resultsTransferFiber
+				resultsTransferTask
 			);
 		}
 
