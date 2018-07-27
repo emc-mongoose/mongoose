@@ -108,7 +108,7 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,high ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.CreateLimitBySizeTest
+   # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,high ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.CreateLimitBySizeTest
     - env:
       - TEST=CreateLimitBySizeTest
       - STORAGE_TYPE=fs

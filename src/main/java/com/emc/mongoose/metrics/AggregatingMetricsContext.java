@@ -70,11 +70,11 @@ implements MetricsContext {
 	}
 
 	@Override
-	public void markSucc(final long size, final long duration, final long latency) {
+	public void markSucc(final long bytes, final long duration, final long latency) {
 	}
 
 	@Override
-	public void markPartSucc(final long size, final long duration, final long latency) {
+	public void markPartSucc(final long bytes, final long duration, final long latency) {
 	}
 
 	@Override
@@ -120,11 +120,6 @@ implements MetricsContext {
 	@Override
 	public int concurrencyThreshold() {
 		return (int) (concurrencyThreshold * nodeCount());
-	}
-
-	@Override
-	public int actualConcurrency() {
-		return lastSnapshot().actualConcurrencyLast();
 	}
 
 	@Override
@@ -216,7 +211,7 @@ implements MetricsContext {
 		final long currentTimeMillis = System.currentTimeMillis();
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
 
-		lastSnapshot = new MetricsContextImpl.MetricsSnapshotImpl(
+		lastSnapshot = new MetricsSnapshotImpl(
 			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast, tsStart,
 			prevElapsedTime + currElapsedTime, actualConcurrencyLast, actualConcurrencyMean, sumDur, sumLat,
 			durSnapshot, latSnapshot
@@ -241,6 +236,11 @@ implements MetricsContext {
 	@Override
 	public void metricsListener(final MetricsListener metricsListener) {
 		this.metricsListener = metricsListener;
+	}
+
+	@Override
+	public long transferSizeSum() {
+		return lastSnapshot.byteCount();
 	}
 
 	@Override
