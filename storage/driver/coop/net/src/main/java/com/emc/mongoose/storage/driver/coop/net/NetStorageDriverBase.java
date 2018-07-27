@@ -2,8 +2,8 @@ package com.emc.mongoose.storage.driver.coop.net;
 
 import com.emc.mongoose.storage.driver.coop.net.data.DataItemFileRegion;
 import com.emc.mongoose.storage.driver.coop.net.data.SeekableByteChannelChunkedNioStream;
+
 import com.github.akurilov.commons.collection.Range;
-import com.github.akurilov.commons.net.ssl.SslContext;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.ThreadUtil;
 
@@ -40,9 +40,10 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.kqueue.KQueue;
 import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 
 import org.apache.logging.log4j.CloseableThreadContext;
@@ -51,7 +52,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.message.ThreadDumpMessage;
 
-import javax.net.ssl.SSLEngine;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
@@ -123,10 +123,20 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		} else {
 			workerCount = confWorkerCount;
 		}
-		final int ioRatio = netConfig.intVal("ioRatio");
-		final Transport transportKey = Transport.valueOf(
-			netConfig.stringVal("transport").toUpperCase()
-		);
+
+		final Transport transportKey;
+		final String transportConfig = netConfig.stringVal("transport");
+		if(transportConfig == null || transportConfig.isEmpty()) {
+			if(Epoll.isAvailable()) {
+				transportKey = Transport.EPOLL;
+			} else if(KQueue.isAvailable()) {
+				transportKey = Transport.KQUEUE;
+			} else {
+				transportKey = Transport.NIO;
+			}
+		} else {
+			transportKey = Transport.valueOf(transportConfig.toUpperCase());
+		}
 
 		if(IO_EXECUTOR_LOCK.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 			try {
@@ -136,6 +146,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 						throw new AssertionError("I/O executor reference count should be 0");
 					}
 					try {
+
 						final String ioExecutorClsName = IO_EXECUTOR_IMPLS.get(transportKey);
 						final Class<EventLoopGroup> transportCls = (Class<EventLoopGroup>) Class
 							.forName(ioExecutorClsName);
@@ -143,14 +154,15 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 							.getConstructor(Integer.TYPE, ThreadFactory.class)
 							.newInstance(workerCount, new LogContextThreadFactory("ioWorker", true));
 						Loggers.MSG.info("{}: use {} I/O workers", toString(), workerCount);
+
+						final int ioRatio = netConfig.intVal("ioRatio");
 						try {
-							final Method setIoRatioMethod = transportCls.getMethod(
-								"setIoRatio", Integer.TYPE
-							);
+							final Method setIoRatioMethod = transportCls.getMethod("setIoRatio", Integer.TYPE);
 							setIoRatioMethod.invoke(IO_EXECUTOR, ioRatio);
 						} catch(final ReflectiveOperationException e) {
 							LogUtil.exception(Level.ERROR, e, "Failed to set the I/O ratio");
 						}
+
 					} catch(final ReflectiveOperationException e) {
 						throw new AssertionError(e);
 					}
@@ -270,10 +282,10 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 								.put(KEY_STEP_ID, stepId)
 								.put(KEY_CLASS_NAME, CLS_NAME)
 						) {
-							appendHandlers(channel.pipeline());
+							appendHandlers(channel);
 							Loggers.MSG.debug(
-								"{}: new unpooled channel {}, pipeline: {}", stepId,
-								channel.hashCode(), channel.pipeline()
+								"{}: new unpooled channel {}, pipeline: {}", stepId, channel.hashCode(),
+								channel.pipeline()
 							);
 						}
 					}
@@ -450,9 +462,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 							if(updRangesMaskPair[0].get(i)) {
 								dataOp.currRangeIdx(i);
 								updatedRange = dataOp.currRangeUpdate();
-								channel.write(
-									new SeekableByteChannelChunkedNioStream(updatedRange)
-								);
+								channel.write(new SeekableByteChannelChunkedNioStream(updatedRange));
 							}
 						}
 						// then next layer updates if any
@@ -460,9 +470,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 							if(updRangesMaskPair[1].get(i)) {
 								dataOp.currRangeIdx(i);
 								updatedRange = dataOp.currRangeUpdate();
-								channel.write(
-									new SeekableByteChannelChunkedNioStream(updatedRange)
-								);
+								channel.write(new SeekableByteChannelChunkedNioStream(updatedRange));
 							}
 						}
 					} else {
@@ -511,11 +519,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 									dataItem.size() + dataOp.markedRangesSize()
 								);
 							}
-							channel.write(
-								new SeekableByteChannelChunkedNioStream(
-									dataItem.slice(beg, size)
-								)
-							);
+							channel.write(new SeekableByteChannelChunkedNioStream(dataItem.slice(beg, size)));
 						}
 					} else {
 						for(final Range fixedRange : fixedRanges) {
@@ -582,45 +586,21 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			final Instance ctx = CloseableThreadContext.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
-			final ChannelPipeline pipeline = channel.pipeline();
-			appendHandlers(pipeline);
+			appendHandlers(channel);
 			if(Loggers.MSG.isTraceEnabled()) {
-				Loggers.MSG.trace("{}: new channel pipeline configured: {}", stepId, pipeline.toString());
+				Loggers.MSG.trace("{}: new channel pipeline configured: {}", stepId, channel.pipeline().toString());
 			}
 		}
 	}
 
-	protected void appendHandlers(final ChannelPipeline pipeline) {
+	protected void appendHandlers(final Channel channel) {
+		final ChannelPipeline pipeline = channel.pipeline();
 		if(sslFlag) {
 			Loggers.MSG.debug("{}: SSL/TLS is enabled for the channel", stepId);
-			final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
-			sslEngine.setEnabledProtocols(
-				new String[] { "TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3" }
-			);
-			sslEngine.setUseClientMode(true);
-			sslEngine.setEnabledCipherSuites(
-				SslContext.INSTANCE.getServerSocketFactory().getSupportedCipherSuites()
-			);
-			pipeline.addLast(new SslHandler(sslEngine));
-			/*try {
-				final SslContext sslCtx = SslContextBuilder
-					.forClient()
-					.trustManager(InsecureTrustManagerFactory.INSTANCE)
-					.build();
-				pipeline.addLast(sslCtx.newHandler(pipeline.channel().alloc()));
-			} catch(final SSLException e) {
-				LogUtil.exception(
-					Level.ERROR, e, "Failed to enable the SSL/TLS for the connection: {}",
-					pipeline.channel()
-				);
-			}*/
+			pipeline.addLast(SslUtil.CLIENT_SSL_CONTEXT.newHandler(channel.alloc()));
 		}
 		if(socketTimeout > 0) {
-			pipeline.addLast(
-				new IdleStateHandler(
-					socketTimeout, socketTimeout, socketTimeout, TimeUnit.MILLISECONDS
-				)
-			);
+			pipeline.addLast(new IdleStateHandler(socketTimeout, socketTimeout, socketTimeout, TimeUnit.MILLISECONDS));
 		}
 	}
 	

@@ -161,10 +161,12 @@ implements HttpStorageDriver<I, O> {
 	}
 
 	@Override
-	protected void appendHandlers(final ChannelPipeline pipeline) {
-		super.appendHandlers(pipeline);
-		pipeline.addLast(new HttpClientCodec(REQ_LINE_LEN, HEADERS_LEN, CHUNK_SIZE, true));
-		pipeline.addLast(new ChunkedWriteHandler());
+	protected void appendHandlers(final Channel channel) {
+		super.appendHandlers(channel);
+		channel
+			.pipeline()
+			.addLast(new HttpClientCodec(REQ_LINE_LEN, HEADERS_LEN, CHUNK_SIZE, true))
+			.addLast(new ChunkedWriteHandler());
 	}
 
 	protected HttpRequest httpRequest(final O op, final String nodeAddr)
