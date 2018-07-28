@@ -27,6 +27,7 @@ ext {
 		nagaina: "3.6.10",
 		netty: "4.1.26.Final",
 		nettyConnectionPool: "1.0.3",
+		nettyTcNative: "2.0.12.Final",
 	]
 
 	leafProjects = subprojects.findAll {
