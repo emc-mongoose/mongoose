@@ -43,12 +43,9 @@ public interface ListingHelper {
 		final List<I> buff = new ArrayList<>(count);
 
 		try(
-			final DirectoryStream<Path> dirStream = FsConstants.FS_PROVIDER.newDirectoryStream(
-				Paths.get(path), filter
-			)
+			final DirectoryStream<Path> dirStream = FsConstants.FS_PROVIDER.newDirectoryStream(Paths.get(path), filter)
 		) {
-			final int prefixLength = (prefix == null || prefix.isEmpty()) ?
-				0 : prefix.length();
+			final int prefixLength = (prefix == null || prefix.isEmpty()) ? 0 : prefix.length();
 
 			File nextFile;
 			String nextFileName;
@@ -76,14 +73,10 @@ public interface ListingHelper {
 						} else {
 							offset = Long.parseLong(nextFileName, idRadix);
 						}
-						nextItem = itemFactory.getItem(
-							nextFile.getAbsolutePath(), offset, nextFile.length()
-						);
+						nextItem = itemFactory.getItem(nextFile.getAbsolutePath(), offset, nextFile.length());
 					} catch(final NumberFormatException e) {
 						// try to not use the offset (read verification should be disabled)
-						nextItem = itemFactory.getItem(
-							nextFile.getAbsolutePath(), 0, nextFile.length()
-						);
+						nextItem = itemFactory.getItem(nextFile.getAbsolutePath(), 0, nextFile.length());
 					}
 					buff.add(nextItem);
 					if(count == buff.size()) {

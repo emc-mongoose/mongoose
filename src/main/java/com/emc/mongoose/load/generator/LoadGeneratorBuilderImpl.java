@@ -276,19 +276,19 @@ implements LoadGeneratorBuilder<I, O, T> {
 			}
 			if(ItemType.DATA.equals(itemType)) {
 				sizeEstimate = estimateTransferSize(
-					(DataOperationsBuilder) opsBuilder, opsBuilder.opType(),
-					(Input<DataItem>) itemInput
+					(DataOperationsBuilder) opsBuilder, opsBuilder.opType(), (Input<DataItem>) itemInput
 				);
 			} else {
 				sizeEstimate = BUFF_SIZE_MIN;
 			}
 		}
 
-		// intercept the items input for the storage side concatenation support
-		final String itemDataRangesConcatConfig = rangesConfig.stringVal("concat");
-		if(itemDataRangesConcatConfig != null) {
-			final Range srcItemsCountRange = new Range(itemDataRangesConcatConfig);
-			if(OpType.CREATE.equals(opType) && ItemType.DATA.equals(itemType) && !(itemInput instanceof NewItemInput)) {
+		// check for the copy mode
+		if(OpType.CREATE.equals(opType) && ItemType.DATA.equals(itemType) && !(itemInput instanceof NewItemInput)) {
+			// intercept the items input for the storage side concatenation support
+			final String itemDataRangesConcatConfig = rangesConfig.stringVal("concat");
+			if(itemDataRangesConcatConfig != null) {
+				final Range srcItemsCountRange = new Range(itemDataRangesConcatConfig);
 				final long srcItemsCountMin = srcItemsCountRange.getBeg();
 				final long srcItemsCountMax = srcItemsCountRange.getEnd();
 				if(srcItemsCountMin < 0) {

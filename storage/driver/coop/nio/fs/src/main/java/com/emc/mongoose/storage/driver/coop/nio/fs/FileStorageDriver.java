@@ -184,8 +184,7 @@ implements NioStorageDriver<I, O> {
 								if(op.hasMarkedRanges()) {
 									if(
 										FileIoHelper.invokeReadAndVerifyRandomRanges(
-											item, op, srcChannel,
-											op.markedRangesMaskPair()
+											item, op, srcChannel, op.markedRangesMaskPair()
 										)
 									) {
 										finishOperation((O) op);
@@ -197,30 +196,26 @@ implements NioStorageDriver<I, O> {
 								}
 							} else {
 								if(
-									FileIoHelper.invokeReadAndVerifyFixedRanges(
-										item, op, srcChannel, fixedRangesToRead
-									)
+									FileIoHelper.invokeReadAndVerifyFixedRanges(item, op, srcChannel, fixedRangesToRead)
 								) {
 									finishOperation((O) op);
 								};
 							}
 						} catch(final DataSizeException e) {
 							op.status(Operation.Status.RESP_FAIL_CORRUPT);
-							final long
-								countBytesDone = op.countBytesDone() + e.getOffset();
+							final long countBytesDone = op.countBytesDone() + e.getOffset();
 							op.countBytesDone(countBytesDone);
 							Loggers.MSG.debug(
-								"{}: content size mismatch, expected: {}, actual: {}",
-								item.getName(), item.size(), countBytesDone
+								"{}: content size mismatch, expected: {}, actual: {}", item.getName(), item.size(),
+								countBytesDone
 							);
 						} catch(final DataCorruptionException e) {
 							op.status(Operation.Status.RESP_FAIL_CORRUPT);
 							final long countBytesDone = op.countBytesDone() + e.getOffset();
 							op.countBytesDone(countBytesDone);
 							Loggers.MSG.debug(
-								"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
-								item.getName(), countBytesDone,
-								String.format("\"0x%X\"", (int) (e.expected & 0xFF)),
+								"{}: content mismatch @ offset {}, expected: {}, actual: {} ", item.getName(),
+								countBytesDone, String.format("\"0x%X\"", (int) (e.expected & 0xFF)),
 								String.format("\"0x%X\"", (int) (e.actual & 0xFF))
 							);
 						}
@@ -228,9 +223,7 @@ implements NioStorageDriver<I, O> {
 						if(fixedRangesToRead == null || fixedRangesToRead.isEmpty()) {
 							if(op.hasMarkedRanges()) {
 								if(
-									FileIoHelper.invokeReadRandomRanges(
-										item, op, srcChannel, op.markedRangesMaskPair()
-									)
+									FileIoHelper.invokeReadRandomRanges(item, op, srcChannel, op.markedRangesMaskPair())
 								) {
 									finishOperation((O) op);
 								}
@@ -240,11 +233,7 @@ implements NioStorageDriver<I, O> {
 								}
 							}
 						} else {
-							if(
-								FileIoHelper.invokeReadFixedRanges(
-									item, op, srcChannel, fixedRangesToRead
-								)
-							) {
+							if(FileIoHelper.invokeReadFixedRanges(item, op, srcChannel, fixedRangesToRead)) {
 								finishOperation((O) op);
 							}
 						}
@@ -269,11 +258,7 @@ implements NioStorageDriver<I, O> {
 							}
 						}
 					} else {
-						if(
-							FileIoHelper.invokeFixedRangesUpdate(
-								item, op, dstChannel, fixedRangesToUpdate
-							)
-						) {
+						if(FileIoHelper.invokeFixedRangesUpdate(item, op, dstChannel, fixedRangesToUpdate)) {
 							finishOperation((O) op);
 						}
 					}
