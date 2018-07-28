@@ -250,6 +250,7 @@ dependencies {
 
 	testCompile(
 		"junit:junit:${depVersion.junit}",
+		"org.scala-lang:scala-compiler:${depVersion.scala}",
 		"org.scala-lang:scala-library:${depVersion.scala}",
 		"com.github.docker-java:docker-java:3+",
 		"org.apache.commons:commons-csv:1.1",

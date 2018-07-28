@@ -37,13 +37,13 @@ public interface CliArgUtil {
 		schema
 			.entrySet()
 			.stream()
-			.map(schemaEntry -> _argsFromSchemaEntry(ARG_PREFIX, sep, schemaEntry))
+			.map(schemaEntry -> argsFromSchemaEntry(ARG_PREFIX, sep, schemaEntry))
 			.forEach(allArgs::addAll);
 		return allArgs;
 	}
 
 	@SuppressWarnings({ "CollectionWithoutInitialCapacity", "unchecked" })
-	static List<String> _argsFromSchemaEntry(
+	static List<String> argsFromSchemaEntry(
 		final String prefix, final String sep, final Map.Entry<String, Object> schemaEntry
 	) {
 		final List<String> args = new ArrayList<>();
@@ -53,7 +53,7 @@ public interface CliArgUtil {
 			((Map<String, Object>) schemaVal)
 				.entrySet()
 				.stream()
-				.map(e -> _argsFromSchemaEntry(prefix + schemaKey + sep, sep, e))
+				.map(e -> argsFromSchemaEntry(prefix + schemaKey + sep, sep, e))
 				.forEach(args::addAll);
 		} else {
 			args.add(prefix + schemaKey + ARG_VAL_SEP + '<' + schemaVal + '>');

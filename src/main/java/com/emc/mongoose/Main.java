@@ -118,17 +118,14 @@ public final class Main {
 			try {
 				final Map<String, String> parsedArgs = CliArgUtil.parseArgs(args);
 				final List<Map<String, Object>> aliasingConfig = config.listVal("aliasing");
-				final Map<String, String> aliasedArgs = AliasingUtil.apply(
-					parsedArgs, aliasingConfig
-				);
+				final Map<String, String> aliasedArgs = AliasingUtil.apply(parsedArgs, aliasingConfig);
 				aliasedArgs.forEach(config::val);
 			} catch(final IllegalArgumentNameException e) {
 				final String formattedAllCliArgs = allCliArgs(config.schema(), config.pathSep())
 					.stream()
 					.collect(Collectors.joining("\n", "\t", ""));
 				Loggers.ERR.fatal(
-					"Invalid argument: \"{}\"\nThe list of all possible args:\n{}",
-					e.getMessage(), formattedAllCliArgs
+					"Invalid argument: \"{}\"\nThe list of all possible args:\n{}", e.getMessage(), formattedAllCliArgs
 				);
 				return;
 			} catch(final InvalidValuePathException e) {
