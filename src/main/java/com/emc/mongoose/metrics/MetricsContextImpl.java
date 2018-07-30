@@ -2,7 +2,7 @@ package com.emc.mongoose.metrics;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.UniformReservoir;
+
 import com.emc.mongoose.item.op.OpType;
 
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -10,6 +10,8 @@ import com.github.akurilov.commons.system.SizeInBytes;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntSupplier;
 
 /**
@@ -40,6 +42,7 @@ implements MetricsContext {
 	private volatile MetricsListener metricsListener = null;
 	private volatile MetricsContext thresholdMetricsCtx = null;
 	private volatile boolean thresholdStateExitedFlag = false;
+	private final Lock timingLock = new ReentrantLock();
 
 	public MetricsContextImpl(
 		final String id, final OpType opType, final IntSupplier actualConcurrencyGauge, final int concurrencyLimit,
@@ -54,12 +57,12 @@ implements MetricsContext {
 		this.itemDataSize = itemDataSize;
 		this.stdOutColorFlag = stdOutColorFlag;
 		this.outputPeriodMillis = TimeUnit.SECONDS.toMillis(updateIntervalSec);
-		respLatency = new Histogram(new UniformReservoir(DEFAULT_RESERVOIR_SIZE));
+		respLatency = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		respLatSnapshot = respLatency.getSnapshot();
 		respLatencySum = new LongAdder();
-		reqDuration = new Histogram(new UniformReservoir(DEFAULT_RESERVOIR_SIZE));
+		reqDuration = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		reqDurSnapshot = reqDuration.getSnapshot();
-		actualConcurrency = new Histogram(new UniformReservoir(DEFAULT_RESERVOIR_SIZE));
+		actualConcurrency = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
@@ -103,8 +106,13 @@ implements MetricsContext {
 		throughputSuccess.mark();
 		reqBytes.mark(bytes);
 		if(latency > 0 && duration > latency) {
-			reqDuration.update(duration);
-			respLatency.update(latency);
+			timingLock.lock();
+			try {
+				reqDuration.update(duration);
+				respLatency.update(latency);
+			} finally {
+				timingLock.unlock();
+			}
 			reqDurationSum.add(duration);
 			respLatencySum.add(latency);
 		}
@@ -117,8 +125,13 @@ implements MetricsContext {
 	public final void markPartSucc(final long bytes, final long duration, final long latency) {
 		reqBytes.mark(bytes);
 		if(latency > 0 && duration > latency) {
-			reqDuration.update(duration);
-			respLatency.update(latency);
+			timingLock.lock();
+			try {
+				reqDuration.update(duration);
+				respLatency.update(latency);
+			} finally {
+				timingLock.unlock();
+			}
 			reqDurationSum.add(duration);
 			respLatencySum.add(latency);
 		}
@@ -139,9 +152,14 @@ implements MetricsContext {
 			duration = durationValues[i];
 			latency = latencyValues[i];
 			if(latency > 0 && duration > latency) {
-				reqDuration.update(duration);
+				timingLock.lock();
+				try {
+					reqDuration.update(duration);
+					respLatency.update(latency);
+				} finally {
+					timingLock.unlock();
+				}
 				reqDurationSum.add(duration);
-				respLatency.update(latency);
 				respLatencySum.add(latency);
 			}
 		}
@@ -151,7 +169,9 @@ implements MetricsContext {
 	}
 
 	@Override
-	public final void markPartSucc(final long bytes, final long durationValues[], final long latencyValues[]) {
+	public final void markPartSucc(
+		final long bytes, final long durationValues[], final long latencyValues[]
+	) {
 		reqBytes.mark(bytes);
 		final int timingsLen = Math.min(durationValues.length, latencyValues.length);
 		long duration, latency;
@@ -159,9 +179,14 @@ implements MetricsContext {
 			duration = durationValues[i];
 			latency = latencyValues[i];
 			if(latency > 0 && duration > latency) {
-				reqDuration.update(duration);
+				timingLock.lock();
+				try {
+					reqDuration.update(duration);
+					respLatency.update(latency);
+				} finally {
+					timingLock.unlock();
+				}
 				reqDurationSum.add(duration);
-				respLatency.update(latency);
 				respLatencySum.add(latency);
 			}
 		}
@@ -257,19 +282,24 @@ implements MetricsContext {
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
 		if(currentTimeMillis - lastOutputTs > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
 			if(lastDurationSum != reqDurationSum.sum() || lastLatencySum != respLatencySum.sum()) {
-				lastDurationSum = reqDurationSum.sum();
-				reqDurSnapshot = reqDuration.getSnapshot();
+				if(timingLock.tryLock()) {
+					try {
+						reqDurSnapshot = reqDuration.getSnapshot();
+						respLatSnapshot = respLatency.getSnapshot();
+					} finally {
+						timingLock.unlock();
+					}
+				}
 				lastLatencySum = respLatencySum.sum();
-				respLatSnapshot = respLatency.getSnapshot();
+				lastDurationSum = reqDurationSum.sum();
 			}
 			actualConcurrency.update(actualConcurrencyGauge.getAsInt());
 			actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		}
-		lastSnapshot = new MetricsSnapshotImpl(
-			throughputSuccess.getCount(), throughputSuccess.getLastRate(), throughputFail.getCount(),
-			throughputFail.getLastRate(), reqBytes.getCount(), reqBytes.getLastRate(), tsStart,
-			prevElapsedTime + currElapsedTime, actualConcurrencyGauge.getAsInt(), actualConcurrencySnapshot.getMean(),
-			lastDurationSum, lastLatencySum, reqDurSnapshot, respLatSnapshot
+		lastSnapshot = new MetricsSnapshotImpl(throughputSuccess.getCount(), throughputSuccess.
+			getLastRate(), throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
+			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyGauge.getAsInt(),
+			actualConcurrencySnapshot.getMean(), lastDurationSum, lastLatencySum, reqDurSnapshot, respLatSnapshot
 		);
 		if(metricsListener != null) {
 			metricsListener.notify(lastSnapshot);
@@ -308,9 +338,8 @@ implements MetricsContext {
 		if(thresholdMetricsCtx != null) {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
-		thresholdMetricsCtx = new MetricsContextImpl(
-			id, opType, actualConcurrencyGauge, concurrencyLimit, 0, itemDataSize,
-			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag
+		thresholdMetricsCtx = new MetricsContextImpl(id, opType, actualConcurrencyGauge, concurrencyLimit, 0,
+			itemDataSize, (int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag
 		);
 		thresholdMetricsCtx.start();
 	}
