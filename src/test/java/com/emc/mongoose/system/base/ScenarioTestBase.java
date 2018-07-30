@@ -34,7 +34,7 @@ public abstract class ScenarioTestBase
 extends ContainerizedStorageTestBase {
 
 	protected static final String BASE_DIR = new File("").getAbsolutePath();
-	private static final String DEFAULT_SCENARIO_PATH = "js" + File.separator + "default.js";
+	private static final String DEFAULT_SCENARIO_PATH = "js" + "/" + "default.js";
 	protected static final String CONTAINER_HOME_PATH = "/root/.mongoose/" + APP_VERSION;
 	protected static final String CONTAINER_SHARE_PATH = CONTAINER_HOME_PATH + "/share";
 	protected final static Path HOST_SHARE_PATH = Paths.get(BASE_DIR, "share");

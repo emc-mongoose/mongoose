@@ -58,7 +58,8 @@ import java.util.stream.Collectors;
 		return EnvParams.PARAMS;
 	}
 
-	private final double requiredAccuracy = 0.02;
+	private final String SCENARIO_PATH = null; //default
+	private final double requiredAccuracy = 0.1;
 	private final int timeoutInMillis = 1000_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
@@ -83,10 +84,10 @@ import java.util.stream.Collectors;
 
 	public CreateLimitBySizeTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	) throws Exception {
-		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
-			APP_NAME, Thread.currentThread().getContextClassLoader()
-		);
+	)
+	throws Exception {
+		final Map<String, Object> schema =
+			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
 		config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
 		final Object avgPeriodRaw = config.val("output-metrics-average-period");
 		if(avgPeriodRaw instanceof String) {
@@ -145,14 +146,13 @@ import java.util.stream.Collectors;
 			case ATMOS:
 			case S3:
 			case SWIFT:
-				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
-					HttpStorageMockContainer.DEFAULT_PORT, false, null, null, itemIdRadix,
-					HttpStorageMockContainer.DEFAULT_CAPACITY,
-					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
-					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
-					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
-				);
+				final HttpStorageMockContainer storageMock =
+					new HttpStorageMockContainer(HttpStorageMockContainer.DEFAULT_PORT, false, null, null, itemIdRadix,
+						HttpStorageMockContainer.DEFAULT_CAPACITY, HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+						HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
+						HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+					);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
@@ -171,7 +171,8 @@ import java.util.stream.Collectors;
 				break;
 		}
 		//use default scenario
-		testContainer = new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, null, env, args);
+		testContainer =
+			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
 	}
 
 	@Before
@@ -207,104 +208,79 @@ import java.util.stream.Collectors;
 		});
 	}
 
-    @Test
-    public final void test()
-            throws Exception {
-
-        assertEquals("Container exit code should be 0", 0, containerExitCode);
-
-        final LongAdder ioTraceRecCount = new LongAdder();
-
-        final Consumer<CSVRecord> ioTraceRecFunc;
-        if (storageType.equals(StorageType.FS)) {
-            ioTraceRecFunc = ioTraceRecord -> {
-                File nextDstFile;
-                final String nextItemPath = ioTraceRecord.get("ItemPath");
-                final String nextItemId = nextItemPath.substring(
-                        nextItemPath.lastIndexOf(File.separatorChar) + 1
-                );
-                nextDstFile = Paths.get(hostItemOutputPath, nextItemId).toFile();
-                assertTrue("File \"" + nextDstFile + "\" doesn't exist", nextDstFile.exists());
-                assertEquals(
-                        "File (" + nextItemPath + ") size (" + nextDstFile.length() +
-                                " is not equal to the configured: " + itemSize.getValue(),
-                        itemSize.getValue().get(), nextDstFile.length()
-                );
-                ioTraceRecCount.increment();
-            };
-        } else {
-            final String nodeAddr = storageMocks.keySet().iterator().next();
-            ioTraceRecFunc = ioTraceRec -> {
-                testIoTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), itemSize.getValue());
-                HttpStorageMockUtil.assertItemExists(
-                        nodeAddr, ioTraceRec.get("ItemPath"),
-                        Long.parseLong(ioTraceRec.get("TransferSize"))
-                );
-                ioTraceRecCount.increment();
-            };
-        }
-
-        testIoTraceLogRecords(stepId, ioTraceRecFunc);
-
-//        System.out.println(expectedCount + "\n" + ioTraceRecCount.sum() + "\n" + requiredAccuracy * expectedCount);
-
-        assertEquals(expectedCount, ioTraceRecCount.sum(), requiredAccuracy * expectedCount);
-
-        final List<CSVRecord> items = new ArrayList<>();
-        try (final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
-            final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
-            for (final CSVRecord csvRecord : csvParser) {
-                items.add(csvRecord);
-            }
-        }
-        assertEquals(expectedCount, items.size(), expectedCount * requiredAccuracy);
-
-        final Frequency freq = new Frequency();
-        String itemPath, itemId;
-        long itemOffset;
-        long size;
-        String modLayerAndMask;
-        for (final CSVRecord itemRec : items) {
-            itemPath = itemRec.get(0);
-            itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
-            itemOffset = Long.parseLong(itemRec.get(1), 0x10);
-            assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
-            freq.addValue(itemOffset);
-            size = Long.parseLong(itemRec.get(2));
-            assertEquals(itemSize.getValue().get(), size);
-            modLayerAndMask = itemRec.get(3);
-            assertEquals("0/0", modLayerAndMask);
-        }
-        assertEquals(items.size(), freq.getUniqueCount());
-
-        testTotalMetricsLogRecord(
-                getMetricsTotalLogRecords(stepId).get(0), OpType.CREATE, concurrency.getValue(),
-                runMode.getNodeCount(), itemSize.getValue(), 0, 0
-        );
-
-        testMetricsLogRecords(
-                getMetricsLogRecords(stepId), OpType.CREATE, concurrency.getValue(),
-                runMode.getNodeCount(), itemSize.getValue(), 0, 0,
-                averagePeriod
-        );
-
-        testSingleMetricsStdout(
-                stdOutContent.replaceAll("[\r\n]+", " "),
-                OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
-                averagePeriod
-        );
-        testMetricsTableStdout(
-                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-                new HashMap<OpType, Integer>() {{
-                    put(OpType.CREATE, concurrency.getValue());
-                }}
-        );
-
-        testFinalMetricsTableRowStdout(
-                stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(), concurrency.getValue(),
-                0, 0, itemSize.getValue()
-        );
-
-        assertTrue(duration < timeoutInMillis);
-    }
+	@Test
+	public final void test()
+	throws Exception {
+		assertEquals("Container exit code should be 0", 0, containerExitCode);
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> ioTraceRecFunc;
+		if(storageType.equals(StorageType.FS)) {
+			ioTraceRecFunc = ioTraceRecord -> {
+				File nextDstFile;
+				final String nextItemPath = ioTraceRecord.get("ItemPath");
+				final String nextItemId = nextItemPath.substring(nextItemPath.lastIndexOf('/') + 1);
+				nextDstFile = Paths.get(hostItemOutputPath, nextItemId).toFile();
+				assertTrue("File \"" + nextDstFile + "\" doesn't exist", nextDstFile.exists());
+				assertEquals(
+					"File (" + nextItemPath + ") size (" + nextDstFile.length() + " is not equal to the configured: " +
+						itemSize.getValue(), itemSize.getValue().get(), nextDstFile.length());
+				ioTraceRecCount.increment();
+			};
+		} else {
+			final String nodeAddr = storageMocks.keySet().iterator().next();
+			ioTraceRecFunc = ioTraceRec -> {
+				testIoTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), itemSize.getValue());
+				HttpStorageMockUtil.assertItemExists(nodeAddr, ioTraceRec.get("ItemPath"),
+					Long.parseLong(ioTraceRec.get("TransferSize"))
+				);
+				ioTraceRecCount.increment();
+			};
+		}
+		testIoTraceLogRecords(stepId, ioTraceRecFunc);
+		//        System.out.println(expectedCount + "\n" + ioTraceRecCount.sum() + "\n" + requiredAccuracy * expectedCount);
+		assertEquals(expectedCount, ioTraceRecCount.sum(), requiredAccuracy * expectedCount);
+		final List<CSVRecord> items = new ArrayList<>();
+		try(final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
+			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
+			for(final CSVRecord csvRecord : csvParser) {
+				items.add(csvRecord);
+			}
+		}
+		assertEquals(expectedCount, items.size(), expectedCount * requiredAccuracy);
+		final Frequency freq = new Frequency();
+		String itemPath, itemId;
+		long itemOffset;
+		long size;
+		String modLayerAndMask;
+		for(final CSVRecord itemRec : items) {
+			itemPath = itemRec.get(0);
+			itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
+			itemOffset = Long.parseLong(itemRec.get(1), 0x10);
+			assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
+			freq.addValue(itemOffset);
+			size = Long.parseLong(itemRec.get(2));
+			assertEquals(itemSize.getValue().get(), size);
+			modLayerAndMask = itemRec.get(3);
+			assertEquals("0/0", modLayerAndMask);
+		}
+		assertEquals(items.size(), freq.getUniqueCount());
+		testTotalMetricsLogRecord(getMetricsTotalLogRecords(stepId).get(0), OpType.CREATE, concurrency.getValue(),
+			runMode.getNodeCount(), itemSize.getValue(), 0, 0
+		);
+		testMetricsLogRecords(getMetricsLogRecords(stepId), OpType.CREATE, concurrency.getValue(),
+			runMode.getNodeCount(), itemSize.getValue(), 0, 0, averagePeriod
+		);
+		testSingleMetricsStdout(stdOutContent.replaceAll("[\r\n]+", " "), OpType.CREATE, concurrency.getValue(),
+			runMode.getNodeCount(), itemSize.getValue(), averagePeriod
+		);
+		testMetricsTableStdout(stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
+			new HashMap<OpType, Integer>() {{
+				put(OpType.CREATE, concurrency.getValue());
+			}}
+		);
+		testFinalMetricsTableRowStdout(stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(),
+			concurrency.getValue(), 0, 0, itemSize.getValue()
+		);
+		assertTrue(duration < timeoutInMillis);
+	}
 }
