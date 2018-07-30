@@ -26,11 +26,9 @@ PreconditionLoad
 ReadLoad
     .config({
       "load" : {
-        "type" : "read",
         "op" : {
-          "recycle" : {
-            "enabled" : true
-          }
+        	"type" : "read",
+            "recycle" : true
         },
         "step" : {
           "limit" : {
