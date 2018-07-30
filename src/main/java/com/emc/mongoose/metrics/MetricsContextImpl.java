@@ -111,8 +111,8 @@ public class MetricsContextImpl
 		throughputSuccess.mark();
 		reqBytes.mark(size);
 		if(latency > 0 && duration > latency) {
+			timingLock.lock();
 			try {
-				timingLock.lock();
 				reqDuration.update(duration);
 				respLatency.update(latency);
 			} finally {
@@ -131,8 +131,8 @@ public class MetricsContextImpl
 	public final void markPartSucc(final long size, final long duration, final long latency) {
 		reqBytes.mark(size);
 		if(latency > 0 && duration > latency) {
+			timingLock.lock();
 			try {
-				timingLock.lock();
 				reqDuration.update(duration);
 				respLatency.update(latency);
 			} finally {
@@ -159,9 +159,14 @@ public class MetricsContextImpl
 			duration = durationValues[i];
 			latency = latencyValues[i];
 			if(latency > 0 && duration > latency) {
-				reqDuration.update(duration);
+				timingLock.lock();
+				try {
+					reqDuration.update(duration);
+					respLatency.update(latency);
+				} finally {
+					timingLock.unlock();
+				}
 				reqDurationSum.add(duration);
-				respLatency.update(latency);
 				respLatencySum.add(latency);
 			}
 		}
@@ -182,9 +187,14 @@ public class MetricsContextImpl
 			duration = durationValues[i];
 			latency = latencyValues[i];
 			if(latency > 0 && duration > latency) {
-				reqDuration.update(duration);
+				timingLock.lock();
+				try {
+					reqDuration.update(duration);
+					respLatency.update(latency);
+				} finally {
+					timingLock.unlock();
+				}
 				reqDurationSum.add(duration);
-				respLatency.update(latency);
 				respLatencySum.add(latency);
 			}
 		}

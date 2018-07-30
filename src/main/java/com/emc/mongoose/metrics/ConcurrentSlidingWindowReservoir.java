@@ -21,11 +21,10 @@ public class ConcurrentSlidingWindowReservoir
 	}
 
 	public ConcurrentSlidingWindowReservoir() {
-		this.measurements = new long[DEFAULT_SIZE];
-		this.offset = new AtomicLong();
+		this(DEFAULT_SIZE);
 	}
-	
-	public int offset(){
+
+	public int offset() {
 		return offset.intValue();
 	}
 
