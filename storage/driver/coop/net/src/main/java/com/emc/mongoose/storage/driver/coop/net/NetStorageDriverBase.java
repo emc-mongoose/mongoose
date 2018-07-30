@@ -54,7 +54,9 @@ import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.BitSet;
+import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -193,8 +195,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	protected NonBlockingConnPool createConnectionPool() {
 		return new MultiNodeConnPoolImpl(
-			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort,
-			connAttemptsLimit, socketTimeout, TimeUnit.MILLISECONDS
+			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort, connAttemptsLimit, socketTimeout,
+			TimeUnit.MILLISECONDS
 		);
 	}
 	
@@ -321,9 +323,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				conn.attr(ATTR_KEY_OPERATION).set(op);
 				op.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
 				op.startRequest();
-				sendRequest(
-					conn, conn.newPromise().addListener(new RequestSentCallback(op)), op
-				);
+				sendRequest(conn, conn.newPromise().addListener(new RequestSentCallback(op)), op);
 			}
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.WARN, e, "Submit the load operation in the invalid state");
@@ -607,6 +607,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(Level.WARN, e, "Graceful I/O workers shutdown was interrupted");
+				throw new CancellationException();
 			}
 		}
 	}

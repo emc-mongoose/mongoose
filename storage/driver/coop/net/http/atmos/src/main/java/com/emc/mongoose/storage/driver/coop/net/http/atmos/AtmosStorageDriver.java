@@ -53,6 +53,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -130,7 +131,7 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			getSubtenantResp = executeHttpRequest(getSubtenantReq);
 		} catch(final InterruptedException e) {
-			return null;
+			throw new CancellationException();
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;

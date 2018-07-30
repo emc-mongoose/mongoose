@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.step.client;
 
+import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.config.AliasingUtil;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.data.DataInput;
@@ -15,7 +16,6 @@ import com.emc.mongoose.load.step.client.metrics.MetricsAggregatorImpl;
 import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.load.step.LoadStepBase;
 import com.emc.mongoose.metrics.AggregatingMetricsContext;
-import com.emc.mongoose.logging.LogContextThreadFactory;
 import com.emc.mongoose.load.step.LoadStep;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -23,21 +23,18 @@ import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.storage.driver.StorageDriver;
+import static com.emc.mongoose.config.ConfigUtil.flatten;
 
-import com.github.akurilov.commons.collection.TreeUtil;
+import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
-import static com.emc.mongoose.config.ConfigUtil.flatten;
-import static com.github.akurilov.commons.collection.TreeUtil.reduceForest;
+import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 
 import com.github.akurilov.confuse.Config;
-import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
-import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
 import com.github.akurilov.confuse.impl.BasicConfig;
-import static com.github.akurilov.confuse.Config.deepToMap;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
@@ -52,8 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -351,18 +347,49 @@ implements LoadStepClient {
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws IllegalStateException, InterruptedException {
+
 		if(stepSlices == null || stepSlices.size() == 0) {
 			throw new IllegalStateException("No step slices are available");
 		}
-		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
-			stepSlices.size(), new LogContextThreadFactory("stepSliceAwaitWorker", true)
-		);
-		stepSlices
+
+		final CountDownLatch awaitCountDown = new CountDownLatch(stepSlices.size());
+		final List<AsyncRunnableBase> awaitTasks = stepSlices
 			.stream()
-			.map(stepSlice -> (Runnable) (() -> LoadStepSliceUtil.await(stepSlice, timeout, timeUnit)))
-			.forEach(awaitExecutor::submit);
-		awaitExecutor.shutdown();
-		return awaitExecutor.awaitTermination(timeout, TimeUnit.SECONDS);
+			.map(
+				stepSlice -> new ExclusiveFiberBase(ServiceTaskExecutor.INSTANCE) {
+					@Override
+					protected final void invokeTimedExclusively(final long startTimeNanos) {
+						try {
+							if(stepSlice.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+								awaitCountDown.countDown();
+							}
+						} catch(final RemoteException e) {
+							LogUtil.exception(
+								Level.WARN, e, "Failed to invoke the remote await method on the step slice \"{}\"",
+								stepSlice
+							);
+						} catch(final InterruptedException e) {
+							throw new CancellationException();
+						}
+					}
+				}
+			)
+			.peek(AsyncRunnableBase::start)
+			.collect(Collectors.toList());
+
+		try {
+			return awaitCountDown.await(timeout, timeUnit);
+		} finally {
+			awaitTasks
+				.forEach(
+					awaitTask -> {
+						try {
+							awaitTask.close();
+						} catch(final Exception ignored) {
+						}
+					}
+				);
+		}
 	}
 
 	@Override

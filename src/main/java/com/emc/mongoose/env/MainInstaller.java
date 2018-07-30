@@ -42,18 +42,19 @@ public final class MainInstaller
                     "example/scenario/groovy/rampup.groovy",
 
                     // javascript scenario examples including the default one
-                    "example/scenario/js/types/additional/copy_load_using_env_vars.js",
+					"example/scenario/js/backward_compatibility.js",
+					"example/scenario/js/infinite_loop.js",
+					"example/scenario/js/types/additional/copy_load_using_env_vars.js",
                     "example/scenario/js/types/additional/load_type.js",
                     "example/scenario/js/types/additional/update_and_read_variants.js",
                     "example/scenario/js/types/pipeline.js",
                     "example/scenario/js/types/pipeline_with_delay_using_env_vars.js",
                     "example/scenario/js/types/parallel_shell_commands.js",
                     "example/scenario/js/types/weighted.js",
+					"example/scenario/js/rampup.js",
 
-                    // the default scenario which is invoked if no scenario is specified
+					// the default scenario which is invoked if no scenario is specified
                     "example/scenario/js/default.js",
-
-                    "example/scenario/js/rampup.js",
 
                     // system tests scenario files
                     "example/scenario/js/systest/circular_append_test.js",

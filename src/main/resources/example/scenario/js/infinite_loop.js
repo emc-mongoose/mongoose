@@ -5,11 +5,14 @@ while(true) {
 				"load": {
 					"step": {
 						"limit": {
-							"count" : 1000
+							"time": 10
 						}
 					}
 				}
 			}
 		)
 		.run();
+
+	print("Sleep 10s...");
+	java.lang.Thread.sleep(10000);
 }

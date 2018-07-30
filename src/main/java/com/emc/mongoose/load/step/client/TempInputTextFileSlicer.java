@@ -111,12 +111,12 @@ implements AutoCloseable {
 		final List<AsyncRunnable> tasks = new ArrayList<>(sliceCount + 1);
 		tasks.add(new ReadTask(inputFinishFlag, lineQueues, srcFileName, sliceCount));
 
-		final CountDownLatch writeFinishCoundDown = new CountDownLatch(sliceCount);
+		final CountDownLatch writeFinishCountDown = new CountDownLatch(sliceCount);
 		for(int i = 0; i < sliceCount; i ++) {
 			final BlockingQueue<String> lineQueue = lineQueues.get(i);
 			final FileManager fileMgr = fileMgrs.get(i);
 			final String dstFileName = fileSlices.get(fileMgr);
-			tasks.add(new WriteTask(inputFinishFlag, writeFinishCoundDown, lineQueue, fileMgr, dstFileName, batchSize));
+			tasks.add(new WriteTask(inputFinishFlag, writeFinishCountDown, lineQueue, fileMgr, dstFileName, batchSize));
 		}
 
 		tasks
@@ -130,7 +130,7 @@ implements AutoCloseable {
 			);
 
 		try {
-			writeFinishCoundDown.await();
+			writeFinishCountDown.await();
 		} catch(final InterruptedException e) {
 			throw new CancellationException();
 		} finally {

@@ -29,11 +29,11 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.message.ThreadDumpMessage;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -309,9 +309,7 @@ implements NioStorageDriver<I, O> {
 					Loggers.ERR.debug(new ThreadDumpMessage("Failed to obtain the load operations buff lock in time"));
 				}
 			} catch(final InterruptedException e) {
-				LogUtil.exception(
-					Level.WARN, e, "Unexpected failure, load operations buff remains uncleared"
-				);
+				throw new CancellationException();
 			}
 			opBuffs[i] = null;
 		}
