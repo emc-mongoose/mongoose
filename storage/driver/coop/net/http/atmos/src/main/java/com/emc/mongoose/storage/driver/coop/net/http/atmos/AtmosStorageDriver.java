@@ -26,7 +26,7 @@ import com.emc.mongoose.storage.driver.coop.net.http.HttpStorageDriverBase;
 import com.github.akurilov.confuse.Config;
 
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.Channel;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
@@ -140,9 +140,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
 			subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
 		} else {
-			Loggers.ERR.warn(
-				"Creating the subtenant: got response {}", getSubtenantResp.status().toString()
-			);
+			Loggers.ERR.warn("Creating the subtenant: got response {}", getSubtenantResp.status().toString());
 			return null;
 		}
 		getSubtenantResp.release();
@@ -159,9 +157,9 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	protected final void appendHandlers(final ChannelPipeline pipeline) {
-		super.appendHandlers(pipeline);
-		pipeline.addLast(new AtmosResponseHandler<>(this, verifyFlag, fsAccess));
+	protected final void appendHandlers(final Channel channel) {
+		super.appendHandlers(channel);
+		channel.pipeline().addLast(new AtmosResponseHandler<>(this, verifyFlag, fsAccess));
 	}
 
 	@Override

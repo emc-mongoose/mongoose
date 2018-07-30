@@ -1,5 +1,5 @@
 new java.lang.ProcessBuilder()
-	.command("/bin/sh", "-c", "rm -f " + ITEM_LIST_FILE_0 + " " + ITEM_LIST_FILE_1)
+	.command("sh", "-c", "rm -f " + ITEM_LIST_FILE_0 + " " + ITEM_LIST_FILE_1)
 	.start()
 	.waitFor();
 
@@ -42,11 +42,9 @@ Load
 				}
 			},
 			"load": {
-				"type": "update",
 				"op": {
-					"recycle": {
-						"enabled": true
-					}
+					"recycle": true,
+					"type": "update"
 				},
 				"step": {
 					"limit": {

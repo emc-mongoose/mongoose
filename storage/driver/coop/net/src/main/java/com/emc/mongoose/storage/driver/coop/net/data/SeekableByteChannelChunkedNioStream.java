@@ -20,9 +20,7 @@ extends ChunkedNioStream {
 		this(sbc, sbc.size());
 	}
 
-	private SeekableByteChannelChunkedNioStream(
-		final SeekableByteChannel sbc, final long sizeToTransfer
-	) {
+	private SeekableByteChannelChunkedNioStream(final SeekableByteChannel sbc, final long sizeToTransfer) {
 		super(sbc, sizeToTransfer > BUFF_SIZE_MAX ? BUFF_SIZE_MAX : (int) sizeToTransfer);
 		this.sizeToTransfer = sizeToTransfer;
 	}

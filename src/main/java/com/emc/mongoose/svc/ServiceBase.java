@@ -1,9 +1,13 @@
 package com.emc.mongoose.svc;
 
+import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
+import org.apache.logging.log4j.Level;
 
 import java.net.MalformedURLException;
+import java.net.SocketException;
+import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 
 public abstract class ServiceBase
@@ -23,8 +27,12 @@ implements Service {
 
 	@Override
 	protected void doStart() {
-		ServiceUtil.create(this, port);
 		try {
+			try {
+				ServiceUtil.create(this, port);
+			} catch(final RemoteException | URISyntaxException | MalformedURLException | SocketException e) {
+				LogUtil.exception(Level.ERROR, e, "Failed to start the service \"{}\" @ port #{}", name(), port);
+			}
 			Loggers.MSG.info("Service \"{}\" started @ port #{}", name(), port);
 		} catch(final RemoteException ignored) {
 		}

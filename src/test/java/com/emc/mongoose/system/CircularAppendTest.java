@@ -81,10 +81,10 @@ public final class CircularAppendTest {
         this.itemSize = itemSize;
 
         final List<String> env = System.getenv()
-                .entrySet()
-                .stream()
-                .map(e -> e.getKey() + "=" + e.getValue())
-                .collect(Collectors.toList());
+			.entrySet()
+			.stream()
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.toList());
         env.add("BASE_ITEMS_COUNT=" + EXPECTED_COUNT);
         env.add("APPEND_COUNT=" + EXPECTED_APPEND_COUNT);
         env.add("ITEM_LIST_FILE_0=" + itemListFile0);
@@ -127,13 +127,13 @@ public final class CircularAppendTest {
 
         final String containerScenarioPath = containerScenarioPath(getClass());
         testContainer = new MongooseContainer(
-                stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args
+			stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args
         );
     }
 
     @Before
     public final void setUp()
-            throws Exception {
+	throws Exception {
         storageMocks.values().forEach(AsyncRunnableBase::start);
         slaveNodes.values().forEach(AsyncRunnableBase::start);
         testContainer.start();
@@ -142,7 +142,7 @@ public final class CircularAppendTest {
 
     @After
     public final void tearDown()
-            throws Exception {
+	throws Exception {
 
         testContainer.close();
 
@@ -168,7 +168,7 @@ public final class CircularAppendTest {
 
     @Test
     public final void test()
-            throws Exception {
+	throws Exception {
 
         try {
             final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);

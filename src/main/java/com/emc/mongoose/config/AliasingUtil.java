@@ -13,9 +13,8 @@ public interface AliasingUtil {
 	String DEPRECATED = "deprecated";
 	String ARG_VAL_SEP = "=";
 
-	static Map<String, String> apply(
-		final Map<String, String> args, final List<Map<String, Object>> aliasingConfig
-	) {
+	static Map<String, String> apply(final Map<String, String> args, final List<Map<String, Object>> aliasingConfig)
+	throws IllegalArgumentException {
 
 		String aliasName;
 		String aliasTarget;
@@ -34,16 +33,13 @@ public interface AliasingUtil {
 			for(final Map<String, Object> aliasingEntry : aliasingConfig) {
 				aliasName = (String) aliasingEntry.get(NAME);
 				aliasTarget = (String) aliasingEntry.get(TARGET);
-				deprecationFlag = aliasingEntry.containsKey(DEPRECATED)
-					&& (boolean) aliasingEntry.get(DEPRECATED);
+				deprecationFlag = aliasingEntry.containsKey(DEPRECATED) && (boolean) aliasingEntry.get(DEPRECATED);
 				if(argName.equals(aliasName)) {
 					if(aliasTarget == null) {
-						Loggers.ERR.error("The argument \"{}\" is deprecated", aliasName);
-						break;
+						throw new IllegalArgumentException("The argument \"" + aliasName + "\" is deprecated");
 					} else if(deprecationFlag) {
 						Loggers.ERR.warn(
-							"The argument \"" + aliasName + "\" is deprecated, use \""
-								+ aliasTarget + "\" instead"
+							"The argument \"" + aliasName + "\" is deprecated, use \"" + aliasTarget + "\" instead"
 						);
 					}
 					aliasArgValPair = aliasTarget.split(ARG_VAL_SEP, 2);
@@ -60,4 +56,6 @@ public interface AliasingUtil {
 
 		return newArgs;
 	}
+
+
 }

@@ -24,15 +24,15 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class IoTraceLogFileAggregator
+public class OpTraceLogFileAggregator
 implements Closeable {
 
 	private final String loadStepId;
-	private final Map<FileManager, String> ioTraceLogFileSlices;
+	private final Map<FileManager, String> opTraceLogFileSlices;
 
-	public IoTraceLogFileAggregator(final String loadStepId, final List<FileManager> fileMgrs) {
+	public OpTraceLogFileAggregator(final String loadStepId, final List<FileManager> fileMgrs) {
 		this.loadStepId = loadStepId;
-		this.ioTraceLogFileSlices = fileMgrs
+		this.opTraceLogFileSlices = fileMgrs
 			.stream()
 			// exclude local I/O trace log file
 			.filter(fileMgr -> fileMgr instanceof FileManagerService)
@@ -78,7 +78,7 @@ implements Closeable {
 		progressOutputThread.start();
 
 		try {
-			ioTraceLogFileSlices
+			opTraceLogFileSlices
 				.entrySet()
 				.parallelStream()
 				// don't transfer the local file data
@@ -101,7 +101,7 @@ implements Closeable {
 		} finally {
 			progressOutputThread.interrupt();
 			Loggers.MSG.info(
-				"\"{}\": transferred {} of the I/O trace data", loadStepId,
+				"\"{}\": transferred {} of the operation traces data", loadStepId,
 				SizeInBytes.formatFixedSize(byteCounter.longValue())
 			);
 		}
@@ -111,7 +111,7 @@ implements Closeable {
 		final FileManager fileMgr, final String remoteIoTraceLogFileName, final LongAdder byteCounter
 	) {
 		long transferredByteCount = 0;
-		try(final Instance logCtx = put(KEY_CLASS_NAME, IoTraceLogFileAggregator.class.getSimpleName())) {
+		try(final Instance logCtx = put(KEY_CLASS_NAME, OpTraceLogFileAggregator.class.getSimpleName())) {
 			byte[] data;
 			while(true) {
 				data = fileMgr.readFromFile(remoteIoTraceLogFileName, transferredByteCount);
@@ -126,7 +126,7 @@ implements Closeable {
 			LogUtil.exception(Level.ERROR, e, "Unexpected I/O exception");
 		} finally {
 			Loggers.MSG.debug(
-				"Transferred {} of the remote I/O traces data from the remote file \"{}\" @ \"{}\"",
+				"Transferred {} of the remote operation traces data from the remote file \"{}\" @ \"{}\"",
 				SizeInBytes.formatFixedSize(transferredByteCount), remoteIoTraceLogFileName, fileMgr
 			);
 		}
@@ -135,6 +135,6 @@ implements Closeable {
 	@Override
 	public final void close() {
 		collectToLocal();
-		ioTraceLogFileSlices.clear();
+		opTraceLogFileSlices.clear();
 	}
 }

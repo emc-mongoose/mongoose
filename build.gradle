@@ -24,9 +24,10 @@ ext {
 		slf4j: "1.7.25",
 		log4j: "2.8.2",
 		metrics: "4.0.3",
-		nagaina: "3.6.10",
+		nagaina: "3.6.11",
 		netty: "4.1.26.Final",
-		nettyConnectionPool: "1.0.3",
+		nettyConnectionPool: "1.0.4",
+		nettyTcNative: "2.0.12.Final",
 	]
 
 	leafProjects = subprojects.findAll {
@@ -249,6 +250,7 @@ dependencies {
 
 	testCompile(
 		"junit:junit:${depVersion.junit}",
+		"org.scala-lang:scala-compiler:${depVersion.scala}",
 		"org.scala-lang:scala-library:${depVersion.scala}",
 		"com.github.docker-java:docker-java:3+",
 		"org.apache.commons:commons-csv:1.1",

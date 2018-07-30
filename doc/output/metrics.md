@@ -95,7 +95,7 @@ ConcurrencyMean | The mean summary concurrency level for the last *period* (10s 
 CountSucc       | Total successful operations count
 CountFail       | Total failed operations count
 Size            | Total transferred byte count
-JobDuration[s]  | Total step duration
+StepDuration[s] | Total step duration
 DurationSum[s]  | Total sum of the operations durations
 TPAvg[op/s]     | Total average throughput
 TPLast[op/s]    | Last final moving average throughput

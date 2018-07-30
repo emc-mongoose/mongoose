@@ -23,8 +23,10 @@ import com.github.akurilov.confuse.io.json.ConfigJsonSerializer;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public interface ConfigUtil {
 
@@ -81,5 +83,25 @@ public interface ConfigUtil {
 			.reduce(TreeUtil::addBranches)
 			.orElseGet(Collections::emptyMap);
 		return new BasicConfig(pathSep, schema, configTree);
+	}
+
+	static void flatten(
+		final Map<String, Object> configMap, final Map<String, String> argValPairs, final String sep,
+		final String prefix
+	) {
+		for(final String k : configMap.keySet()) {
+			final Object v = configMap.get(k);
+			if(v instanceof Map) {
+				flatten((Map<String, Object>) v, argValPairs, sep, prefix == null ? k : (prefix + sep + k));
+			} else if(v instanceof List) {
+				final String s = (String) ((List) v)
+					.stream()
+					.map(e -> e == null ? ":" : e.toString())
+					.collect(Collectors.joining(","));
+				argValPairs.put(prefix == null ? k : (prefix + sep + k), s);
+			} else {
+				argValPairs.put(prefix == null ? k : (prefix + sep + k), v == null ? null : v.toString());
+			}
+		}
 	}
 }

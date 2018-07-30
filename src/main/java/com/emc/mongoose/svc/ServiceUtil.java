@@ -148,26 +148,23 @@ public abstract class ServiceUtil {
 	}
 
 
-	public static String create(final Service svc, final int port) {
+	public static String create(final Service svc, final int port)
+	throws URISyntaxException, MalformedURLException, SocketException, RemoteException {
 		String svcUri = null;
-		try {
-			synchronized(SVC_MAP) {
-				//ensureRmiUseFixedPort(port);
-				ensureRmiRegistryIsAvailableAt(port);
-				UnicastRemoteObject.exportObject(svc, port);
-				final String svcName = svc.name();
-				svcUri = getLocalSvcUri(svcName, port).toString();
-				if(!SVC_MAP.containsKey(svcName + ":" + port)) {
-					Naming.rebind(svcUri, svc);
-					SVC_MAP.put(svcName + ":" + port, svc);
-				} else {
-					throw new AssertionError("Service already registered");
-				}
+		synchronized(SVC_MAP) {
+			//ensureRmiUseFixedPort(port);
+			ensureRmiRegistryIsAvailableAt(port);
+			UnicastRemoteObject.exportObject(svc, port);
+			final String svcName = svc.name();
+			svcUri = getLocalSvcUri(svcName, port).toString();
+			if(!SVC_MAP.containsKey(svcName + ":" + port)) {
+				Naming.rebind(svcUri, svc);
+				SVC_MAP.put(svcName + ":" + port, svc);
+			} else {
+				throw new AssertionError("Service already registered");
 			}
-		} catch(final IOException | URISyntaxException e) {
-			e.printStackTrace(System.err);
 		}
-	return svcUri;
+		return svcUri;
 	}
 
 	@SuppressWarnings("unchecked")

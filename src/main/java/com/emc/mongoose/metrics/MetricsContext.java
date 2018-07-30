@@ -17,22 +17,22 @@ extends Closeable, Comparable<MetricsContext> {
 
 	// these are useful as labels/tags
 	String stepId();
+
 	OpType ioType();
+
 	int nodeCount();
+
 	int concurrencyLimit();
+
 	SizeInBytes itemDataSize();
 
+	// metrics accounting methods
 
-	void start();
-	boolean isStarted();
+	void markSucc(final long bytes, final long duration, final long latency);
 
-	void markSucc(final long size, final long duration, final long latency);
+	void markPartSucc(final long bytes, final long duration, final long latency);
 
-	void markPartSucc(final long size, final long duration, final long latency);
-
-	void markSucc(
-		final long count, final long bytes, final long durationValues[], final long latencyValues[]
-	);
+	void markSucc(final long count, final long bytes, final long durationValues[], final long latencyValues[]);
 
 	void markPartSucc(final long bytes, final long durationValues[], final long latencyValues[]);
 
@@ -41,23 +41,24 @@ extends Closeable, Comparable<MetricsContext> {
 	void markFail(final long count);
 
 	void markElapsedTime(final long millis);
-	
-	int concurrencyThreshold();
-	int actualConcurrency();
 
-	boolean stdOutColorEnabled();
-	boolean avgPersistEnabled();
-	boolean sumPersistEnabled();
-	boolean perfDbResultsFileEnabled();
-	long outputPeriodMillis();
-	long lastOutputTs();
-	void lastOutputTs(final long ts);
-	
+	// state control methods below
+
+	void start();
+
+	boolean isStarted();
+
 	void refreshLastSnapshot();
 
 	MetricsSnapshot lastSnapshot();
 
 	void metricsListener(final MetricsListener metricsListener);
+
+	long transferSizeSum();
+
+	// threshold-related accounting methods below
+
+	int concurrencyThreshold();
 
 	boolean thresholdStateEntered();
 	
@@ -70,4 +71,20 @@ extends Closeable, Comparable<MetricsContext> {
 
 	void exitThresholdState()
 	throws IllegalStateException;
+
+	// output configuration methods below
+
+	boolean stdOutColorEnabled();
+
+	boolean avgPersistEnabled();
+
+	boolean sumPersistEnabled();
+
+	boolean perfDbResultsFileEnabled();
+
+	long outputPeriodMillis();
+
+	long lastOutputTs();
+
+	void lastOutputTs(final long ts);
 }

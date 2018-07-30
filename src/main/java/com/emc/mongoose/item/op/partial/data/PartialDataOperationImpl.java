@@ -6,10 +6,6 @@ import com.emc.mongoose.item.op.data.DataOperationImpl;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.storage.Credential;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 /**
  Created by andrey on 23.11.16.
  */
@@ -60,21 +56,5 @@ implements PartialDataOperation<I> {
 	public final void finishResponse() {
 		super.finishResponse();
 		parent.markSubTaskCompleted();
-	}
-
-	@Override
-	public void writeExternal(final ObjectOutput out)
-	throws IOException {
-		super.writeExternal(out);
-		out.writeInt(partNumber);
-		out.writeObject(parent);
-	}
-
-	@Override @SuppressWarnings("unchecked")
-	public void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		this.partNumber = in.readInt();
-		this.parent = (CompositeDataOperation<I>) in.readObject();
 	}
 }

@@ -21,7 +21,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
@@ -561,9 +560,9 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected final void appendHandlers(final ChannelPipeline pipeline) {
-		super.appendHandlers(pipeline);
-		pipeline.addLast(new AmzS3ResponseHandler<>(this, verifyFlag));
+	protected final void appendHandlers(final Channel channel) {
+		super.appendHandlers(channel);
+		channel.pipeline().addLast(new AmzS3ResponseHandler<>(this, verifyFlag));
 	}
 
 	@Override

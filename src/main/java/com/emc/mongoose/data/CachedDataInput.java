@@ -2,15 +2,13 @@ package com.emc.mongoose.data;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import static com.github.akurilov.commons.math.MathUtil.xorShift;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
 import static com.emc.mongoose.data.DataInput.generateData;
-import static com.github.akurilov.commons.math.MathUtil.xorShift;
 
 /**
  Created by andrey on 24.07.17.
@@ -98,20 +96,6 @@ extends DataInputBase {
 			layersCache.clear();
 			thrLocLayersCache.set(null);
 		}
-	}
-
-	@Override
-	public void writeExternal(final ObjectOutput out)
-	throws IOException {
-		super.writeExternal(out);
-		out.writeInt(layersCacheCountLimit);
-	}
-
-	@Override
-	public void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		layersCacheCountLimit = in.readInt();
 	}
 
 	@Override

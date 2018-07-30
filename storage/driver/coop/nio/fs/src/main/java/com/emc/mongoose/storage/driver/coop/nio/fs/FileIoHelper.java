@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.driver.coop.nio.fs;
 
-
 import com.emc.mongoose.data.DataCorruptionException;
 import com.emc.mongoose.data.DataSizeException;
 import com.emc.mongoose.item.DataItem;
@@ -86,9 +85,7 @@ public interface FileIoHelper {
 					throw new AssertionError("Null data range");
 				}
 			} else {
-				final ByteBuffer inBuff = DirectMemUtil.getThreadLocalReusableBuff(
-					contentSize - countBytesDone
-				);
+				final ByteBuffer inBuff = DirectMemUtil.getThreadLocalReusableBuff(contentSize - countBytesDone);
 				final int n = srcChannel.read(inBuff);
 				if(n < 0) {
 					throw new DataSizeException(contentSize, countBytesDone);
@@ -125,8 +122,7 @@ public interface FileIoHelper {
 							Loggers.MSG.trace(
 								"Load operation: {}, Range index: {}, size: {}, internal position: {}, " +
 									"Done byte count: {}",
-								op.toString(), currRangeIdx, range2read.size(),
-								range2read.position(), countBytesDone
+								op.toString(), currRangeIdx, range2read.size(), range2read.position(), countBytesDone
 							);
 						}
 						break;
@@ -161,8 +157,8 @@ public interface FileIoHelper {
 
 			if(Loggers.MSG.isTraceEnabled()) {
 				Loggers.MSG.trace(
-					"Load operation: {}, Done bytes count: {}, Curr range size: {}",
-					op.toString(), countBytesDone, range2read.size()
+					"Load operation: {}, Done bytes count: {}, Curr range size: {}", op.toString(), countBytesDone,
+					range2read.size()
 				);
 			}
 
@@ -277,9 +273,7 @@ public interface FileIoHelper {
 		final long contentSize = fileItem.size();
 		int n;
 		if(countBytesDone < contentSize) {
-			n = srcChannel.read(
-				DirectMemUtil.getThreadLocalReusableBuff(contentSize - countBytesDone)
-			);
+			n = srcChannel.read(DirectMemUtil.getThreadLocalReusableBuff(contentSize - countBytesDone));
 			if(n < 0) {
 				op.countBytesDone(countBytesDone);
 				fileItem.size(countBytesDone);
@@ -374,8 +368,7 @@ public interface FileIoHelper {
 					rangeSize = rangeEnd - rangeBeg + 1;
 				}
 				n = srcChannel.read(
-					DirectMemUtil.getThreadLocalReusableBuff(rangeSize - countBytesDone),
-					rangeBeg + countBytesDone
+					DirectMemUtil.getThreadLocalReusableBuff(rangeSize - countBytesDone), rangeBeg + countBytesDone
 				);
 				if(n < 0) {
 					op.countBytesDone(countBytesDone);
@@ -426,18 +419,13 @@ public interface FileIoHelper {
 			final long updatingRangeSize = updatingRange.size();
 			if(Loggers.MSG.isTraceEnabled()) {
 				Loggers.MSG.trace(
-					"{}: set the file position = {} + {}", fileItem.getName(),
-					rangeOffset(currRangeIdx), countBytesDone
+					"{}: set the file position = {} + {}", fileItem.getName(), rangeOffset(currRangeIdx), countBytesDone
 				);
 			}
 			dstChannel.position(rangeOffset(currRangeIdx) + countBytesDone);
-			countBytesDone += updatingRange.writeToFileChannel(
-				dstChannel, updatingRangeSize - countBytesDone
-			);
+			countBytesDone += updatingRange.writeToFileChannel(dstChannel, updatingRangeSize - countBytesDone);
 			if(Loggers.MSG.isTraceEnabled()) {
-				Loggers.MSG.trace(
-					"{}: {} bytes written totally", fileItem.getName(), countBytesDone
-				);
+				Loggers.MSG.trace("{}: {} bytes written totally", fileItem.getName(), countBytesDone);
 			}
 			if(countBytesDone == updatingRangeSize) {
 				op.currRangeIdx(currRangeIdx + 1);

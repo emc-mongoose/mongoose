@@ -4,7 +4,6 @@ import com.github.akurilov.commons.math.MathUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.io.Closeable;
-import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,7 +20,7 @@ import static java.nio.file.StandardOpenOption.READ;
  A finite data input for data generation purposes.
  */
 public interface DataInput
-extends Closeable, Externalizable {
+extends Closeable {
 
 	enum Type {
 		FILE, SEED
