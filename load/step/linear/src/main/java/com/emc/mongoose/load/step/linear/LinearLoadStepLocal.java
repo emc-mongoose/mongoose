@@ -59,7 +59,7 @@ extends LoadStepLocalBase {
 		final Config stepConfig = loadConfig.configVal("step");
 		final OpType opType = OpType.valueOf(opConfig.stringVal("type").toUpperCase());
 		final Config storageConfig = config.configVal("storage");
-		final int concurrency = storageConfig.intVal("driver-limit-concurrency");
+		final int concurrencyLimit = storageConfig.intVal("driver-limit-concurrency");
 		final Config outputConfig = config.configVal("output");
 		final Config metricsConfig = outputConfig.configVal("metrics");
 		final SizeInBytes itemDataSize;
@@ -71,7 +71,7 @@ extends LoadStepLocalBase {
 		}
 		final int originIndex = 0;
 		final boolean outputColorFlag = outputConfig.boolVal("color");
-		initMetrics(originIndex, opType, concurrency, metricsConfig, itemDataSize, outputColorFlag);
+		initMetrics(originIndex, opType, concurrencyLimit, metricsConfig, itemDataSize, outputColorFlag);
 
 		final Config itemConfig = config.configVal("item");
 		final Config dataConfig = itemConfig.configVal("data");

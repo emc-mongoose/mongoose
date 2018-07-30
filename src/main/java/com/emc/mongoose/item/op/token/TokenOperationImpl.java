@@ -5,10 +5,6 @@ import com.emc.mongoose.item.op.OperationImpl;
 import com.emc.mongoose.item.TokenItem;
 import com.emc.mongoose.storage.Credential;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import static java.lang.System.nanoTime;
 
 /**
@@ -40,23 +36,7 @@ implements TokenOperation<I> {
 	public TokenOperationImpl<I> result() {
 		return new TokenOperationImpl<>(this);
 	}
-	
-	@Override
-	public void writeExternal(final ObjectOutput out)
-	throws IOException {
-		super.writeExternal(out);
-		out.writeLong(countBytesDone);
-		out.writeLong(respDataTimeStart);
-	}
-	
-	@Override
-	public void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		countBytesDone = in.readLong();
-		respDataTimeStart = in.readLong();
-	}
-	
+
 	@Override
 	public long countBytesDone() {
 		return countBytesDone;

@@ -25,7 +25,7 @@ public interface LogPatterns {
 		"n=\\((?<countSucc>\\d+)/\\\u001B*\\[*\\d*m*(?<countFail>\\d+)\\\u001B*\\[*\\d*m*\\)"
 	);
 	Pattern STD_OUT_METRICS_TIME = Pattern.compile(
-		"t\\[s\\]=\\((?<jobDur>[0-9.]+[eE]?[0-9]{0,2})/(?<sumDur>[0-9.]+[eE]?[0-9]{0,2})\\)"
+		"t\\[s\\]=\\((?<stepDur>[0-9.]+[eE]?[0-9]{0,2})/(?<sumDur>[0-9.]+[eE]?[0-9]{0,2})\\)"
 	);
 	Pattern STD_OUT_METRICS_SIZE = Pattern.compile(
 		"size=\\((?<size>[\\d.]+[KMGTPE]?B?)\\)"

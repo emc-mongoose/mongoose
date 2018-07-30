@@ -3,16 +3,13 @@ package com.emc.mongoose.item.op;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.storage.Credential;
 
-import java.io.Externalizable;
-
 import static java.lang.System.currentTimeMillis;
 import static java.lang.System.nanoTime;
 
 /**
  Created by kurila on 11.07.16.
  */
-public interface Operation<I extends Item>
-extends Externalizable {
+public interface Operation<I extends Item> {
 
 	long START_OFFSET_MICROS = currentTimeMillis() * 1000 - nanoTime() / 1000;
 

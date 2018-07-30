@@ -6,16 +6,15 @@ import com.emc.mongoose.item.op.OperationImpl;
 import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.storage.Credential;
+
 import com.github.akurilov.commons.collection.Range;
+import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
 import static java.lang.System.nanoTime;
 
 /**
@@ -329,77 +328,5 @@ implements DataOperation<T> {
 	@Override
 	public final long dataLatency() {
 		return respDataTimeStart - reqTimeDone;
-	}
-
-	@Override
-	public void writeExternal(final ObjectOutput out)
-	throws IOException {
-		super.writeExternal(out);
-		out.writeLong(contentSize);
-		int n;
-		if(fixedRanges == null) {
-			out.writeInt(0);
-		} else {
-			n = fixedRanges.size();
-			out.writeInt(n);
-			if(n > 0) {
-				Range nextRange;
-				for(int i = 0; i < n; i ++) {
-					nextRange = fixedRanges.get(i);
-					out.writeLong(nextRange.getBeg());
-					out.writeLong(nextRange.getEnd());
-					out.writeLong(nextRange.getSize());
-				}
-			}
-		}
-		out.writeInt(randomRangesCount);
-		out.writeLong(
-			markedRangesMaskPair[0].isEmpty() ? 0 : markedRangesMaskPair[0].toLongArray()[0]
-		);
-		out.writeLong(
-			markedRangesMaskPair[1].isEmpty() ? 0 : markedRangesMaskPair[1].toLongArray()[0]
-		);
-		out.writeLong(countBytesDone);
-		out.writeLong(respDataTimeStart);
-		if(srcItemsToConcat == null) {
-			out.writeInt(0);
-		} else {
-			n = srcItemsToConcat.size();
-			out.writeInt(n);
-			if(n > 0) {
-				for(int i = 0; i < n; i ++) {
-					out.writeObject(srcItemsToConcat.get(i));
-				}
-			}
-		}
-	}
-
-	@Override @SuppressWarnings("unchecked")
-	public void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		dataInput = item.dataInput();
-		contentSize = in.readLong();
-		int n = in.readInt();
-		if(n == 0) {
-			fixedRanges = null;
-		} else {
-			fixedRanges = new ArrayList<>(n);
-			for(int i = 0; i < n; i ++) {
-				fixedRanges.add(new Range(in.readLong(), in.readLong(), in.readLong()));
-			}
-		}
-		randomRangesCount = in.readInt();
-		markedRangesMaskPair[0].or(BitSet.valueOf(new long[] {in.readLong()}));
-		markedRangesMaskPair[1].or(BitSet.valueOf(new long[] {in.readLong()}));
-		countBytesDone = in.readLong();
-		respDataTimeStart = in.readLong();
-		n = in.readInt();
-		if(n > 0) {
-			srcItemsToConcat = new ArrayList<>(n);
-			for(int i = 0; i < n; i ++) {
-				srcItemsToConcat.add((T) in.readObject());
-			}
-		}
 	}
 }

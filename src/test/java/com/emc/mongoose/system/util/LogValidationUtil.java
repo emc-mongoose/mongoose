@@ -188,7 +188,7 @@ public interface LogValidationUtil {
 		long prevCountSucc = Long.MIN_VALUE, countSucc;
 		long countFail;
 		long avgItemSize;
-		double jobDuration;
+		double stepDuration;
 		double prevDurationSum = Double.NaN, durationSum;
 		double tpAvg, tpLast;
 		double bwAvg, bwLast;
@@ -248,10 +248,10 @@ public interface LogValidationUtil {
 					);
 				}
 			}
-			jobDuration = Double.parseDouble(nextRecord.get("JobDuration[s]"));
+			stepDuration = Double.parseDouble(nextRecord.get("StepDuration[s]"));
 			if(expectedLoadJobTime > 0) {
-				assertTrue("Step duration limit (" + expectedLoadJobTime + ") is broken: " + jobDuration,
-					jobDuration <= expectedLoadJobTime + 1
+				assertTrue("Step duration limit (" + expectedLoadJobTime + ") is broken: " + stepDuration,
+					stepDuration <= expectedLoadJobTime + 1
 				);
 			}
 			durationSum = Double.parseDouble(nextRecord.get("DurationSum[s]"));
@@ -259,8 +259,8 @@ public interface LogValidationUtil {
 				assertTrue(durationSum >= 0);
 			} else {
 				assertTrue(durationSum >= prevDurationSum);
-				if(expectedConcurrency > 0 && jobDuration > 1) {
-					final double effEstimate = durationSum / (nodeCount * expectedConcurrency * jobDuration);
+				if(expectedConcurrency > 0 && stepDuration > 1) {
+					final double effEstimate = durationSum / (nodeCount * expectedConcurrency * stepDuration);
 					assertTrue("Efficiency estimate: " + effEstimate, effEstimate <= 1 && effEstimate >= 0);
 				}
 			}
@@ -299,25 +299,24 @@ public interface LogValidationUtil {
 	}
 
 	static void testTotalMetricsLogRecord(
-		final CSVRecord metrics, final OpType expectedOpType, final int expectedConcurrency,
+		final CSVRecord metrics, final OpType expectedOpType, final int concurrencyLimit,
 		final int expectedNodeCount, final SizeInBytes expectedItemDataSize, final long expectedMaxCount,
 		final int expectedLoadJobTime
-	)
-	throws Exception {
+	) throws Exception {
 		try {
 			FMT_DATE_ISO8601.parse(metrics.get("DateTimeISO8601"));
 		} catch(final ParseException e) {
 			fail(e.toString());
 		}
-		final String OpTypeStr = metrics.get("OpType").toUpperCase();
-		assertEquals(OpTypeStr, expectedOpType.name(), OpTypeStr);
-		final int concurrencyLevel = Integer.parseInt(metrics.get("Concurrency"));
-		assertEquals(Integer.toString(concurrencyLevel), expectedNodeCount * expectedConcurrency, concurrencyLevel);
+		final String opTypeStr = metrics.get("OpType").toUpperCase();
+		assertEquals(opTypeStr, expectedOpType.name(), opTypeStr);
+		final int actualConcurrencyLimit = Integer.parseInt(metrics.get("Concurrency"));
+		assertEquals(expectedNodeCount * concurrencyLimit, actualConcurrencyLimit);
 		final int nodeCount = Integer.parseInt(metrics.get("NodeCount"));
 		assertEquals(Integer.toString(nodeCount), expectedNodeCount, nodeCount);
 		final double concurrencyLastMean = Double.parseDouble(metrics.get("ConcurrencyMean"));
-		if(expectedConcurrency > 0) {
-			assertTrue(concurrencyLastMean <= nodeCount * expectedConcurrency);
+		if(concurrencyLimit > 0) {
+			assertTrue(concurrencyLastMean <= nodeCount * concurrencyLimit);
 		} else {
 			assertTrue(concurrencyLastMean >= 0);
 		}
@@ -353,19 +352,19 @@ public interface LogValidationUtil {
 				);
 			}
 		}
-		final double jobDuration = Double.parseDouble(metrics.get("JobDuration[s]"));
+		final double stepDuration = Double.parseDouble(metrics.get("StepDuration[s]"));
 		if(expectedLoadJobTime > 0) {
 			assertTrue(
-				"Step duration was " + jobDuration + ", but expected not more than" + expectedLoadJobTime + 5,
-				jobDuration <= expectedLoadJobTime + 5
+				"Step duration was " + stepDuration + ", but expected not more than" + expectedLoadJobTime + 5,
+				stepDuration <= expectedLoadJobTime + 5
 			);
 		}
 		final double durationSum = Double.parseDouble(metrics.get("DurationSum[s]"));
-		final double effEstimate = durationSum / (expectedConcurrency * expectedNodeCount * jobDuration);
-		if(countSucc > 0 && expectedConcurrency > 0 && jobDuration > 1) {
+		final double effEstimate = durationSum / (concurrencyLimit * expectedNodeCount * stepDuration);
+		if(countSucc > 0 && concurrencyLimit > 0 && stepDuration > 1) {
 			assertTrue("Invalid efficiency estimate: " + effEstimate + ", summary duration: " + durationSum +
-				", concurrency limit: " + expectedConcurrency + ", driver count: " + nodeCount + ", job duration: " +
-				jobDuration, effEstimate <= 1 && effEstimate >= 0);
+				", concurrency limit: " + concurrencyLimit + ", driver count: " + nodeCount + ", job duration: " +
+				stepDuration, effEstimate <= 1 && effEstimate >= 0);
 		}
 		final double tpAvg = Double.parseDouble(metrics.get("TPAvg[op/s]"));
 		final double tpLast = Double.parseDouble(metrics.get("TPLast[op/s]"));
@@ -456,7 +455,7 @@ public interface LogValidationUtil {
 		long prevCountSucc = Long.MIN_VALUE, countSucc;
 		long countFail;
 		long avgItemSize;
-		double prevJobDuration = Double.NaN, jobDuration;
+		double prevStepDuration = Double.NaN, stepDuration;
 		double prevDurationSum = Double.NaN, durationSum;
 		double tpAvg, tpLast;
 		double bwAvg, bwLast;
@@ -507,20 +506,20 @@ public interface LogValidationUtil {
 					expectedItemDataSize.getAvg() / 100
 				);
 			}
-			jobDuration = Double.parseDouble(m.group("jobDur"));
-			if(Double.isNaN(prevJobDuration)) {
-				assertEquals(Double.toString(jobDuration), 0, jobDuration, 1);
+			stepDuration = Double.parseDouble(m.group("stepDur"));
+			if(Double.isNaN(prevStepDuration)) {
+				assertEquals(Double.toString(stepDuration), 0, stepDuration, 1);
 			} else {
-				assertEquals(Double.toString(jobDuration), prevJobDuration + metricsPeriodSec, jobDuration, 1);
+				assertEquals(Double.toString(stepDuration), prevStepDuration + metricsPeriodSec, stepDuration, 1);
 			}
-			prevJobDuration = jobDuration;
+			prevStepDuration = stepDuration;
 			durationSum = Double.parseDouble(m.group("sumDur"));
 			if(Double.isNaN(prevDurationSum)) {
 				assertTrue(durationSum >= 0);
 			} else {
 				assertTrue(durationSum >= prevDurationSum);
 			}
-			final double effEstimate = durationSum / (concurrencyLevel * nodeCount * jobDuration);
+			final double effEstimate = durationSum / (concurrencyLevel * nodeCount * stepDuration);
 			assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate >= 0);
 			prevDurationSum = durationSum;
 			tpAvg = Double.parseDouble(m.group("tpMean"));
