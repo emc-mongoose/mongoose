@@ -26,7 +26,7 @@ ext {
 		metrics: "4.0.3",
 		nagaina: "3.6.11",
 		netty: "4.1.26.Final",
-		nettyConnectionPool: "1.0.6",
+		nettyConnectionPool: "1.0.7",
 		nettyTcNative: "2.0.12.Final",
 	]
 
@@ -39,8 +39,7 @@ ext {
 	}
 
 	log4j2PluginsDatPath = Paths.get(
-		"META-INF", "org", "apache", "logging", "log4j", "core", "config", "plugins",
-		"Log4j2Plugins.dat",
+		"META-INF", "org", "apache", "logging", "log4j", "core", "config", "plugins", "Log4j2Plugins.dat",
 	)
 }
 

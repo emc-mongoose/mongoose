@@ -99,9 +99,7 @@ implements LoadStepContext<I, O> {
 		} else {
 			latestIoResultByItem = null;
 		}
-		resultsTransferTask = new TransferFiber<>(
-			ServiceTaskExecutor.INSTANCE, driver, this, batchSize
-		);
+		resultsTransferTask = new TransferFiber<>(ServiceTaskExecutor.INSTANCE, driver, this, batchSize);
 		final long configCountLimit = limitConfig.longVal("count");
 		this.countLimit = configCountLimit > 0 ? configCountLimit : Long.MAX_VALUE;
 		final SizeInBytes configSizeLimit;
@@ -486,11 +484,6 @@ implements LoadStepContext<I, O> {
 		}
 		Loggers.MSG.debug("{}: next storage driver {} stopped", id, driver.toString());
 		
-		try {
-			resultsTransferTask.stop();
-		} catch(final RemoteException ignored) {
-		}
-
 		try(
 			final Instance ctx = CloseableThreadContext.put(KEY_STEP_ID, id)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
