@@ -1,9 +1,6 @@
 package com.emc.mongoose.data;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
 /**
@@ -40,33 +37,5 @@ implements DataInput {
 	public void close()
 	throws IOException {
 		inputBuff = null;
-	}
-
-	@Override
-	public void writeExternal(final ObjectOutput out)
-	throws IOException {
-		// write buffer capacity and data
-		final byte[] buff = new byte[inputBuff.capacity()];
-		inputBuff.clear(); // reset the position
-		inputBuff.get(buff);
-		out.writeInt(buff.length);
-		out.write(buff);
-	}
-
-	@Override
-	public void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		// read buffer data and wrap with ByteBuffer
-		final int size = in.readInt();
-		final byte[] buff = new byte[size];
-		for(int i, j = 0; j < size;) {
-			i = in.read(buff, j, size - j);
-			if(i == -1) {
-				break;
-			} else {
-				j += i;
-			}
-		}
-		inputBuff = (MappedByteBuffer) ByteBuffer.allocateDirect(size).put(buff);
 	}
 }

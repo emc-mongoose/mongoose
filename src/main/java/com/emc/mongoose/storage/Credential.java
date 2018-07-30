@@ -1,12 +1,9 @@
 package com.emc.mongoose.storage;
 
-import java.io.Serializable;
-
 /**
  Created by andrey on 14.03.17.
  */
-public interface Credential
-extends Serializable {
+public interface Credential {
 	
 	String getUid();
 

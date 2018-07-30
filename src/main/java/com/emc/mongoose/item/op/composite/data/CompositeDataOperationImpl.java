@@ -6,11 +6,9 @@ import com.emc.mongoose.item.op.partial.data.PartialDataOperationImpl;
 import com.emc.mongoose.item.op.partial.data.PartialDataOperation;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.storage.Credential;
+
 import com.github.akurilov.commons.collection.Range;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -108,21 +106,5 @@ implements CompositeDataOperation<I> {
 	public final CompositeDataOperationImpl<I> result() {
 		buildItemPath(item, dstPath == null ? srcPath : dstPath);
 		return new CompositeDataOperationImpl<>(this);
-	}
-
-	@Override
-	public void writeExternal(final ObjectOutput out)
-	throws IOException {
-		super.writeExternal(out);
-		out.writeLong(sizeThreshold);
-		out.writeInt(pendingSubTasksCount.get());
-	}
-
-	@Override
-	public void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		sizeThreshold = in.readLong();
-		pendingSubTasksCount.set(in.readInt());
 	}
 }

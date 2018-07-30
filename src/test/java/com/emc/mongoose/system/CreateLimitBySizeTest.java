@@ -10,21 +10,31 @@ import com.emc.mongoose.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
+import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
+import static com.emc.mongoose.system.util.LogValidationUtil.*;
+import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
+
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.stat.Frequency;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -40,14 +50,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.*;
-import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class) public class CreateLimitBySizeTest {
 
@@ -70,10 +72,8 @@ import static org.junit.Assert.assertTrue;
 	private final Config config;
 	private final String containerItemOutputPath;
 	private final String hostItemOutputPath;
-	private final String containerItemOutputFile =
-		CONTAINER_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
-	private final String hostItemOutputFile =
-		HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
+	private final String containerItemOutputFile;
+	private final String hostItemOutputFile;
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private final SizeInBytes sizeLimit;
 	private final long expectedCount;
@@ -96,7 +96,11 @@ import static org.junit.Assert.assertTrue;
 			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
+		containerItemOutputFile = CONTAINER_SHARE_PATH + '/' + CreateLimitBySizeTest.class.getSimpleName() + '_'
+			+ stepId + ".csv";
 		containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
+		hostItemOutputFile = HOST_SHARE_PATH + File.separator + CreateLimitBySizeTest.class.getSimpleName() + '_'
+			+ stepId + ".csv";
 		hostItemOutputPath = MongooseContainer.getHostItemOutputPath(stepId);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
@@ -129,8 +133,12 @@ import static org.junit.Assert.assertTrue;
 			Files.delete(Paths.get(hostItemOutputFile));
 		} catch(final Exception ignored) {
 		}
-		final List<String> env =
-			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
+		final List<String> env = System
+			.getenv()
+			.entrySet()
+			.stream()
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.toList());
 		final List<String> args = new ArrayList<>();
 		args.add("--item-output-file=" + containerItemOutputFile);
 		args.add("--load-step-limit-size=" + sizeLimit);
