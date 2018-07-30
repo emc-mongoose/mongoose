@@ -53,6 +53,7 @@ import static org.junit.Assert.assertTrue;
 		return EnvParams.PARAMS;
 	}
 
+	private final String SCENARIO_PATH = containerScenarioPath(getClass());
 	private final int timeoutInMillis = 1000_000;
 	private final int timeLimitInSec = 65; //1m + up to 5s for the precondition job
 	private final String ITEM_OUTPUT_FILE = CONTAINER_SHARE_PATH + "/CircularReadLimitByTime.csv";
@@ -67,7 +68,7 @@ import static org.junit.Assert.assertTrue;
 	private final Config config;
 	private final String containerItemOutputPath;
 	private final String hostItemOutputFile =
-		HOST_SHARE_PATH + File.separator + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
+		HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private final int averagePeriod;
 	private boolean finishedInTime;
@@ -139,11 +140,8 @@ import static org.junit.Assert.assertTrue;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		final String containerScenarioPath = containerScenarioPath(getClass());
 		testContainer =
-			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env,
-				args
-			);
+			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
 	}
 
 	@Before
@@ -183,7 +181,6 @@ import static org.junit.Assert.assertTrue;
 	public final void test()
 	throws Exception {
 		final LongAdder ioTraceRecCount = new LongAdder();
-
 		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
 			testIoTraceRecord(ioTraceRec, OpType.READ.ordinal(), itemSize.getValue());
 			ioTraceRecCount.increment();
@@ -198,7 +195,6 @@ import static org.junit.Assert.assertTrue;
 			}
 		}
 		assertEquals(1, items.size());
-
 		String itemPath, itemId;
 		long itemOffset;
 		long size;
@@ -212,28 +208,22 @@ import static org.junit.Assert.assertTrue;
 		assertEquals(itemSize.getValue().get(), size);
 		modLayerAndMask = itemRec.get(3);
 		assertEquals("0/0", modLayerAndMask);
-
 		testSingleMetricsStdout(stdOutContent.replaceAll("[\r\n]+", " "), OpType.CREATE, concurrency.getValue(),
 			runMode.getNodeCount(), itemSize.getValue(), averagePeriod
 		);
 		testFinalMetricsTableRowStdout(stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(),
 			concurrency.getValue(), 0, 60, itemSize.getValue()
 		);
-
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
 		assertEquals("There should be 1 total metrics records in the log file", 1, totalMetrcisLogRecords.size());
-
 		testTotalMetricsLogRecord(totalMetrcisLogRecords.get(0), OpType.READ, concurrency.getValue(),
 			runMode.getNodeCount(), itemSize.getValue(), 0, 60
 		);
-
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
 		assertTrue("There should be more than 2 metrics records in the log file", metricsLogRecords.size() > 1);
-
 		testMetricsLogRecords(metricsLogRecords, OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
 			itemSize.getValue(), 0, 60, averagePeriod
 		);
-
 		assertTrue("Scenario didn't finished in time", finishedInTime);
 	}
 }
