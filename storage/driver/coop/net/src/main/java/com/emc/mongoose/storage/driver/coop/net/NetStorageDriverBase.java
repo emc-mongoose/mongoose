@@ -1,23 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.net;
 
-import com.emc.mongoose.storage.driver.coop.net.data.DataItemFileRegion;
-import com.emc.mongoose.storage.driver.coop.net.data.SeekableByteChannelChunkedNioStream;
-
-import com.github.akurilov.commons.collection.Range;
-import com.github.akurilov.commons.system.SizeInBytes;
-import com.github.akurilov.commons.concurrent.ThreadUtil;
-
-import static com.github.akurilov.fiber4j.Fiber.TIMEOUT_NANOS;
-
-import com.github.akurilov.confuse.Config;
-
-import com.github.akurilov.netty.connection.pool.BasicMultiNodeConnPool;
-import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;
-import static com.github.akurilov.netty.connection.pool.NonBlockingConnPool.ATTR_KEY_NODE;
-
-import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
-
 import com.emc.mongoose.exception.OmgShootMyFootException;
+import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.item.op.composite.data.CompositeDataOperation;
 import com.emc.mongoose.item.op.data.DataOperation;
@@ -32,13 +16,27 @@ import static com.emc.mongoose.item.DataItem.rangeCount;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.logging.LogContextThreadFactory;
+import com.emc.mongoose.storage.driver.coop.net.data.DataItemFileRegion;
+import com.emc.mongoose.storage.driver.coop.net.data.SeekableByteChannelChunkedNioStream;
+
+import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.system.SizeInBytes;
+import com.github.akurilov.commons.concurrent.ThreadUtil;
+
+import com.github.akurilov.confuse.Config;
+
+import com.github.akurilov.netty.connection.pool.MultiNodeConnPoolImpl;
+import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;
+import static com.github.akurilov.netty.connection.pool.NonBlockingConnPool.ATTR_KEY_NODE;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
+import io.netty.channel.ConnectTimeoutException;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.kqueue.KQueue;
@@ -50,7 +48,6 @@ import org.apache.logging.log4j.CloseableThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.message.ThreadDumpMessage;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -61,8 +58,6 @@ import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  Created by kurila on 30.09.16.
@@ -73,10 +68,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	private static final String CLS_NAME = NetStorageDriverBase.class.getSimpleName();
 
-	private static final Lock IO_EXECUTOR_LOCK = new ReentrantLock();
-	private static EventLoopGroup IO_EXECUTOR = null;
-	private static int IO_EXECUTOR_REF_COUNT = 0;
-
+	private final EventLoopGroup ioExecutor;
 	protected final String storageNodeAddrs[];
 	protected final Bootstrap bootstrap;
 	protected final int storageNodePort;
@@ -138,44 +130,26 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			transportKey = Transport.valueOf(transportConfig.toUpperCase());
 		}
 
-		if(IO_EXECUTOR_LOCK.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+		try {
+
+			final String ioExecutorClsName = IO_EXECUTOR_IMPLS.get(transportKey);
+			final Class<EventLoopGroup> transportCls = (Class<EventLoopGroup>) Class
+				.forName(ioExecutorClsName);
+			ioExecutor = transportCls
+				.getConstructor(Integer.TYPE, ThreadFactory.class)
+				.newInstance(workerCount, new LogContextThreadFactory("ioWorker", true));
+			Loggers.MSG.info("{}: use {} I/O workers", toString(), workerCount);
+
+			final int ioRatio = netConfig.intVal("ioRatio");
 			try {
-				if(IO_EXECUTOR == null) {
-					Loggers.MSG.info("{}: I/O executor doesn't exist yet", toString());
-					if(IO_EXECUTOR_REF_COUNT != 0) {
-						throw new AssertionError("I/O executor reference count should be 0");
-					}
-					try {
-
-						final String ioExecutorClsName = IO_EXECUTOR_IMPLS.get(transportKey);
-						final Class<EventLoopGroup> transportCls = (Class<EventLoopGroup>) Class
-							.forName(ioExecutorClsName);
-						IO_EXECUTOR = transportCls
-							.getConstructor(Integer.TYPE, ThreadFactory.class)
-							.newInstance(workerCount, new LogContextThreadFactory("ioWorker", true));
-						Loggers.MSG.info("{}: use {} I/O workers", toString(), workerCount);
-
-						final int ioRatio = netConfig.intVal("ioRatio");
-						try {
-							final Method setIoRatioMethod = transportCls.getMethod("setIoRatio", Integer.TYPE);
-							setIoRatioMethod.invoke(IO_EXECUTOR, ioRatio);
-						} catch(final ReflectiveOperationException e) {
-							LogUtil.exception(Level.ERROR, e, "Failed to set the I/O ratio");
-						}
-
-					} catch(final ReflectiveOperationException e) {
-						throw new AssertionError(e);
-					}
-				}
-				IO_EXECUTOR_REF_COUNT ++;
-				Loggers.MSG.debug(
-					"{}: increased the I/O executor ref count to {}", toString(), IO_EXECUTOR_REF_COUNT
-				);
-			} finally {
-				IO_EXECUTOR_LOCK.unlock();
+				final Method setIoRatioMethod = transportCls.getMethod("setIoRatio", Integer.TYPE);
+				setIoRatioMethod.invoke(ioExecutor, ioRatio);
+			} catch(final ReflectiveOperationException e) {
+				LogUtil.exception(Level.ERROR, e, "Failed to set the I/O ratio");
 			}
-		} else {
-			Loggers.ERR.error(new ThreadDumpMessage("Failed to obtain the I/O executor lock in time"));
+
+		} catch(final ReflectiveOperationException e) {
+			throw new AssertionError(e);
 		}
 
 		final String socketChannelClsName = SOCKET_CHANNEL_IMPLS.get(transportKey);
@@ -186,7 +160,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 
 		bootstrap = new Bootstrap()
-			.group(IO_EXECUTOR)
+			.group(ioExecutor)
 			.channel(socketChannelCls);
 		//bootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator)
 		//bootstrap.option(ChannelOption.ALLOW_HALF_CLOSURE)
@@ -218,9 +192,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	}
 
 	protected NonBlockingConnPool createConnectionPool() {
-		return new BasicMultiNodeConnPool(
+		return new MultiNodeConnPoolImpl(
 			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort,
-			connAttemptsLimit
+			connAttemptsLimit, socketTimeout, TimeUnit.MILLISECONDS
 		);
 	}
 	
@@ -256,42 +230,51 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 	}
 
-	protected Channel getUnpooledConnection()
+	protected Channel getUnpooledConnection(final String storageNodeAddr, final int storageNodePort)
 	throws ConnectException, InterruptedException {
 
-		final String na = storageNodeAddrs[0];
-		final InetSocketAddress nodeAddr;
-		if(na.contains(":")) {
-			final String addrParts[] = na.split(":");
-			nodeAddr = new InetSocketAddress(addrParts[0], Integer.parseInt(addrParts[1]));
+		final InetSocketAddress socketAddr;
+		if(storageNodeAddr.contains(":")) {
+			final String addrParts[] = storageNodeAddr.split(":");
+			socketAddr = new InetSocketAddress(addrParts[0], Integer.parseInt(addrParts[1]));
 		} else {
-			nodeAddr = new InetSocketAddress(na, storageNodePort);
+			socketAddr = new InetSocketAddress(storageNodeAddr, storageNodePort);
 		}
 
 		final Bootstrap bootstrap = new Bootstrap()
-			.group(IO_EXECUTOR)
+			.group(ioExecutor)
 			.channel(socketChannelCls)
 			.handler(
 				new ChannelInitializer<SocketChannel>() {
 					@Override
-					protected final void initChannel(final SocketChannel channel)
+					protected final void initChannel(final SocketChannel conn)
 					throws Exception {
 						try(
 							final Instance logCtx = CloseableThreadContext
 								.put(KEY_STEP_ID, stepId)
 								.put(KEY_CLASS_NAME, CLS_NAME)
 						) {
-							appendHandlers(channel);
+							appendHandlers(conn);
 							Loggers.MSG.debug(
-								"{}: new unpooled channel {}, pipeline: {}", stepId, channel.hashCode(),
-								channel.pipeline()
+								"{}: new unpooled connection {}, pipeline: {}", stepId, conn.hashCode(), conn.pipeline()
 							);
 						}
 					}
 				}
 			);
 
-		return bootstrap.connect(nodeAddr).sync().channel();
+		final Channel conn;
+		final ChannelFuture connFuture = bootstrap.connect(socketAddr);
+		if(socketTimeout > 0) {
+			if(connFuture.await(socketTimeout, TimeUnit.MILLISECONDS)) {
+				conn = connFuture.channel();
+			} else {
+				throw new ConnectTimeoutException();
+			}
+		} else {
+			conn = connFuture.sync().channel();
+		}
+		return conn;
 	}
 
 	@Override
@@ -300,7 +283,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		super.doStart();
 		if(concurrencyLimit > 0) {
 			try {
-				connPool.preCreateConnections(concurrencyLimit);
+				connPool.preConnect(concurrencyLimit);
 			} catch(final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to pre-create the connections");
 			}
@@ -612,30 +595,15 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			try {
-				if(IO_EXECUTOR_LOCK.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
-					try {
-						IO_EXECUTOR_REF_COUNT --;
-						Loggers.MSG.debug(
-							"{}: decreased the I/O executor ref count to {}", toString(), IO_EXECUTOR_REF_COUNT
-						);
-						if(IO_EXECUTOR_REF_COUNT == 0) {
-							Loggers.MSG.info("{}: shutdown the I/O executor", toString());
-							if(
-								IO_EXECUTOR
-									.shutdownGracefully(0, 1, TimeUnit.MILLISECONDS)
-									.await(10)
-							) {
-								Loggers.MSG.debug("{}: I/O workers stopped in time", toString());
-							} else {
-								Loggers.ERR.debug("{}: I/O workers stopping timeout", toString());
-							}
-							IO_EXECUTOR = null;
-						}
-					} finally {
-						IO_EXECUTOR_LOCK.unlock();
-					}
+				Loggers.MSG.info("{}: shutdown the I/O executor", toString());
+				if(
+					ioExecutor
+						.shutdownGracefully(0, 1, TimeUnit.MILLISECONDS)
+						.await(10)
+				) {
+					Loggers.MSG.debug("{}: I/O workers stopped in time", toString());
 				} else {
-					Loggers.ERR.error(new ThreadDumpMessage("Failed to obtain the I/O executor lock in time"));
+					Loggers.ERR.debug("{}: I/O workers stopping timeout", toString());
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(Level.WARN, e, "Graceful I/O workers shutdown was interrupted");

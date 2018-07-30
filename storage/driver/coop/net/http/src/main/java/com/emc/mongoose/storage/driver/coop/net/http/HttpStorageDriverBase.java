@@ -131,7 +131,8 @@ implements HttpStorageDriver<I, O> {
 		ThreadContext.put(KEY_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
-		final Channel channel = getUnpooledConnection();
+		final FullHttpResponse resp;
+		final Channel channel = getUnpooledConnection(storageNodeAddrs[0], storageNodePort);
 		try {
 			final ChannelPipeline pipeline = channel.pipeline();
 			Loggers.MSG.debug(
@@ -154,10 +155,12 @@ implements HttpStorageDriver<I, O> {
 				}
 			);
 			channel.writeAndFlush(request).sync();
-			return fullRespSync.take();
+			resp = fullRespSync.take();
 		} finally {
 			channel.close();
 		}
+
+		return resp;
 	}
 
 	@Override

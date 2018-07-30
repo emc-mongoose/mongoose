@@ -140,9 +140,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
 			subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
 		} else {
-			Loggers.ERR.warn(
-				"Creating the subtenant: got response {}", getSubtenantResp.status().toString()
-			);
+			Loggers.ERR.warn("Creating the subtenant: got response {}", getSubtenantResp.status().toString());
 			return null;
 		}
 		getSubtenantResp.release();
