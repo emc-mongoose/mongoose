@@ -4,37 +4,31 @@ import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.svc.ServiceUtil;
-import com.emc.mongoose.system.base.params.*;
+import com.emc.mongoose.system.base.params.Concurrency;
+import com.emc.mongoose.system.base.params.EnvParams;
+import com.emc.mongoose.system.base.params.ItemSize;
+import com.emc.mongoose.system.base.params.RunMode;
+import com.emc.mongoose.system.base.params.StorageType;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
-import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.*;
-import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
-
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.stat.Frequency;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -50,6 +44,24 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
+import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsTableRowStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
+import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class) public class CreateLimitBySizeTest {
 
@@ -96,11 +108,11 @@ import java.util.stream.Collectors;
 			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-		containerItemOutputFile = CONTAINER_SHARE_PATH + '/' + CreateLimitBySizeTest.class.getSimpleName() + '_'
-			+ stepId + ".csv";
+		containerItemOutputFile =
+			CONTAINER_SHARE_PATH + '/' + CreateLimitBySizeTest.class.getSimpleName() + '_' + stepId + ".csv";
 		containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
-		hostItemOutputFile = HOST_SHARE_PATH + File.separator + CreateLimitBySizeTest.class.getSimpleName() + '_'
-			+ stepId + ".csv";
+		hostItemOutputFile =
+			HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName() + '_' + stepId + ".csv";
 		hostItemOutputPath = MongooseContainer.getHostItemOutputPath(stepId);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
@@ -133,12 +145,8 @@ import java.util.stream.Collectors;
 			Files.delete(Paths.get(hostItemOutputFile));
 		} catch(final Exception ignored) {
 		}
-		final List<String> env = System
-			.getenv()
-			.entrySet()
-			.stream()
-			.map(e -> e.getKey() + "=" + e.getValue())
-			.collect(Collectors.toList());
+		final List<String> env =
+			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
 		final List<String> args = new ArrayList<>();
 		args.add("--item-output-file=" + containerItemOutputFile);
 		args.add("--load-step-limit-size=" + sizeLimit);

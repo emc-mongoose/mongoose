@@ -3,7 +3,11 @@ package com.emc.mongoose.system;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.svc.ServiceUtil;
-import com.emc.mongoose.system.base.params.*;
+import com.emc.mongoose.system.base.params.Concurrency;
+import com.emc.mongoose.system.base.params.EnvParams;
+import com.emc.mongoose.system.base.params.ItemSize;
+import com.emc.mongoose.system.base.params.RunMode;
+import com.emc.mongoose.system.base.params.StorageType;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
@@ -35,12 +39,20 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static com.emc.mongoose.system.util.LogValidationUtil.*;
+import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class) public final class CircularAppendTest {
 

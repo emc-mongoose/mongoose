@@ -41,7 +41,7 @@ import static org.junit.Assert.assertTrue;
 	}
 
 
-	private final String SCENARIO_PATH = containerScenarioPath(getClass());
+	private final String SCENARIO_PATH = null; //default
 	private final String containerItemOutputPath;
 	private final int timeoutInMillis = 60_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();

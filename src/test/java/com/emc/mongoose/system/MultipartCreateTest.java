@@ -5,7 +5,11 @@ import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.svc.ServiceUtil;
-import com.emc.mongoose.system.base.params.*;
+import com.emc.mongoose.system.base.params.Concurrency;
+import com.emc.mongoose.system.base.params.EnvParams;
+import com.emc.mongoose.system.base.params.ItemSize;
+import com.emc.mongoose.system.base.params.RunMode;
+import com.emc.mongoose.system.base.params.StorageType;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
@@ -23,7 +27,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -41,7 +44,9 @@ import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.*;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
 
 @RunWith(Parameterized.class) public class MultipartCreateTest {
 
