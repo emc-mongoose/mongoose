@@ -311,9 +311,12 @@ public class MetricsContextImpl
 		if(currentTimeMillis - lastOutputTs > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
 			if(lastDurationSum != reqDurationSum.sum() || lastLatencySum != respLatencySum.sum()) {
 				if(timingLock.tryLock()) {
-					reqDurSnapshot = reqDuration.getSnapshot();
-					respLatSnapshot = respLatency.getSnapshot();
-					timingLock.unlock();
+					try {
+						reqDurSnapshot = reqDuration.getSnapshot();
+						respLatSnapshot = respLatency.getSnapshot();
+					} finally {
+						timingLock.unlock();
+					}
 				}
 				lastLatencySum = respLatencySum.sum();
 				lastDurationSum = reqDurationSum.sum();

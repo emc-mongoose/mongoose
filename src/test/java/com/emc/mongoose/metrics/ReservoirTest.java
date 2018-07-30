@@ -37,7 +37,7 @@ public class ReservoirTest {
 
 	private void testReservoir(final Reservoir reservoir) {
 		try {
-			final FutureTask<Long> task = new FutureTask(new ThreadAdder(reservoir));
+			final FutureTask<Long> task = new FutureTask(new CallableAdder(reservoir));
 			final Thread adder = new Thread(task);
 			final Thread getter = new ThreadGetter(reservoir);
 			adder.start();
@@ -53,13 +53,13 @@ public class ReservoirTest {
 	}
 }
 
-class ThreadAdder
+class CallableAdder
 	implements Callable {
 
 	private final Reservoir reservoir;
 	private final LongAdder counter;
 
-	public ThreadAdder(final Reservoir r) {
+	public CallableAdder(final Reservoir r) {
 		reservoir = r;
 		counter = new LongAdder();
 	}
