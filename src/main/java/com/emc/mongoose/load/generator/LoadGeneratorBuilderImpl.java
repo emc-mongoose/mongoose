@@ -269,7 +269,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 			) {
 				itemInput = newItemInput();
 			} else {
-				itemInput = ItemInputFactory.createItemInput(itemConfig, storageDriver, batchSize);
+				itemInput = ItemInputFactory.createItemInput(itemConfig, batchSize, storageDriver);
 			}
 			if(itemInput == null) {
 				throw new OmgShootMyFootException("No item input available");

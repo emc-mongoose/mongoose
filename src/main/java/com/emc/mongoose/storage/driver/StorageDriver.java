@@ -103,14 +103,11 @@ extends AsyncRunnable, Input<O>, Output<O> {
 				.findFirst()
 				.orElseThrow(
 					() -> new OmgShootMyFootException(
-						"Failed to create the storage driver for the type \"" + driverType +
-							"\", available types: " +
+						"Failed to create the storage driver for the type \"" + driverType + "\", available types: " +
 							Arrays.toString(factories.stream().map(StorageDriverFactory::id).toArray())
 					)
 				);
-			Loggers.MSG.info(
-				"{}: creating the storage driver instance for the type \"{}\"", stepId, driverType
-			);
+			Loggers.MSG.info("{}: creating the storage driver instance for the type \"{}\"", stepId, driverType);
 
 			return selectedFactory.create(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 		}

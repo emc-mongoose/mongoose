@@ -22,7 +22,7 @@ import java.nio.file.Paths;
 public interface ItemInputFactory {
 
 	static <I extends Item, O extends Operation<I>> Input<I> createItemInput(
-		final Config itemConfig, final StorageDriver<I, O> storageDriver, final int batchSize
+		final Config itemConfig, final int batchSize, final StorageDriver<I, O> storageDriver
 	) {
 		Input<I> itemInput = null;
 
@@ -37,7 +37,7 @@ public interface ItemInputFactory {
 		} else {
 			final String itemInputPath = itemInputConfig.stringVal("path");
 			if(itemInputPath != null && !itemInputPath.isEmpty()) {
-				itemInput = createPathItemInput(itemConfig, storageDriver, batchSize, itemFactory, itemInputPath);
+				itemInput = createPathItemInput(itemConfig, batchSize, itemFactory, itemInputPath, storageDriver);
 				Loggers.MSG.debug("Using the storage path \"{}\" as items input", itemInputPath);
 			}
 		}
@@ -68,8 +68,8 @@ public interface ItemInputFactory {
 	}
 
 	static <I extends Item, O extends Operation<I>> Input<I> createPathItemInput(
-		final Config itemConfig, final StorageDriver<I, O> storageDriver, final int batchSize,
-		final ItemFactory<I> itemFactory, final String itemInputPath
+		final Config itemConfig, final int batchSize, final ItemFactory<I> itemFactory, final String itemInputPath,
+		final StorageDriver<I, O> storageDriver
 	) {
 		Input<I> itemInput = null;
 		try {

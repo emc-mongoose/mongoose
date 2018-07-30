@@ -169,8 +169,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				}
 				IO_EXECUTOR_REF_COUNT ++;
 				Loggers.MSG.debug(
-					"{}: increased the I/O executor ref count to {}", toString(),
-					IO_EXECUTOR_REF_COUNT
+					"{}: increased the I/O executor ref count to {}", toString(), IO_EXECUTOR_REF_COUNT
 				);
 			} finally {
 				IO_EXECUTOR_LOCK.unlock();
@@ -617,8 +616,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 					try {
 						IO_EXECUTOR_REF_COUNT --;
 						Loggers.MSG.debug(
-							"{}: decreased the I/O executor ref count to {}", toString(),
-							IO_EXECUTOR_REF_COUNT
+							"{}: decreased the I/O executor ref count to {}", toString(), IO_EXECUTOR_REF_COUNT
 						);
 						if(IO_EXECUTOR_REF_COUNT == 0) {
 							Loggers.MSG.info("{}: shutdown the I/O executor", toString());

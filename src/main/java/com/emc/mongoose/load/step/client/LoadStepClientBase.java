@@ -163,7 +163,7 @@ implements LoadStepClient {
 			final StorageDriver<Item, Operation<Item>> storageDriver = StorageDriver.instance(
 				extensions, storageConfig, dataInput, verifyFlag, batchSize, id()
 			);
-			final Input<Item> itemInput = ItemInputFactory.createItemInput(itemConfig, storageDriver, batchSize)
+			final Input<Item> itemInput = ItemInputFactory.createItemInput(itemConfig, batchSize, storageDriver)
 		) {
 			if(null != itemInput) {
 				itemInputFileSlicers.add(new ItemInputFileSlicer(id(), fileMgrs, configSlices, itemInput, batchSize));
