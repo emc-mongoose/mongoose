@@ -24,26 +24,33 @@ implements Daemon {
 
 	protected DaemonBase() {
 		daemonRef = new WeakReference<>(this);
-		REGISTRY.add(daemonRef);
+		synchronized(REGISTRY) {
+			REGISTRY.add(daemonRef);
+		}
 	}
 
 	@Override
 	public final void close()
 	throws IOException {
 		super.close();
-		REGISTRY.remove(daemonRef);
+		synchronized(REGISTRY) {
+			REGISTRY.remove(daemonRef);
+		}
 	}
 
 	public static void closeAll() {
-		while(!REGISTRY.isEmpty()) {
-			final Closeable daemon = REGISTRY.peek().get();
-			if(daemon != null) {
-				try {
-					daemon.close();
-				} catch(final Throwable cause) {
-					LOG.log(Level.WARNING, "Failed to close the daemon instance", cause);
+		synchronized(REGISTRY) {
+			for(final WeakReference<Daemon> daemonRef: REGISTRY) {
+				final Closeable daemon = daemonRef.get();
+				if(daemon != null) {
+					try {
+						daemon.close();
+					} catch(final Throwable cause) {
+						LOG.log(Level.WARNING, "Failed to close the daemon instance", cause);
+					}
 				}
 			}
+			REGISTRY.clear();
 		}
 	}
 }
