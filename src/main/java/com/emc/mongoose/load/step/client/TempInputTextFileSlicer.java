@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.step.client;
 
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -32,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -45,7 +45,7 @@ implements AutoCloseable {
 	public TempInputTextFileSlicer(
 		final String loadStepId, final String srcFileName, final List<FileManager> fileMgrs, final String configPath,
 		final List<Config> configSlices, final int batchSize
-	) {
+	) throws InterruptRunException {
 		this.loadStepId = loadStepId;
 		final int sliceCount = configSlices.size();
 		fileSlices = new HashMap<>(sliceCount);
@@ -68,6 +68,8 @@ implements AutoCloseable {
 			Loggers.MSG.info("{}: scatter the lines from the input text file \"{}\"...", loadStepId, srcFileName);
 			scatterLines(srcFileName, sliceCount, fileMgrs, fileSlices, batchSize);
 			Loggers.MSG.info("{}: scatter the lines from the input text file \"{}\" finished", loadStepId, srcFileName);
+		} catch(final InterruptRunException e) {
+			throw e;
 		} catch(final Throwable cause) {
 			LogUtil.exception(
 				Level.ERROR, cause, "{}: failed to scatter the lines from the file \"{}\"", loadStepId, srcFileName
@@ -100,7 +102,7 @@ implements AutoCloseable {
 	static void scatterLines(
 		final String srcFileName, final int sliceCount, final List<FileManager> fileMgrs,
 		final Map<FileManager, String> fileSlices, final int batchSize
-	) throws IOException {
+	) throws InterruptRunException, IOException {
 
 		final AtomicBoolean inputFinishFlag = new AtomicBoolean(false);
 		final List<BlockingQueue<String>> lineQueues = new ArrayList<>(sliceCount);
@@ -132,7 +134,7 @@ implements AutoCloseable {
 		try {
 			writeFinishCountDown.await();
 		} catch(final InterruptedException e) {
-			throw new CancellationException();
+			throw new InterruptRunException(e);
 		} finally {
 			tasks
 				.forEach(
@@ -205,7 +207,7 @@ implements AutoCloseable {
 				stop();
 			} catch(final InterruptedException e) {
 				stop();
-				throw new CancellationException();
+				throw new InterruptRunException(e);
 			}
 		}
 

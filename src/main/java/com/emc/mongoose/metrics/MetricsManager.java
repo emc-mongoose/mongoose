@@ -1,6 +1,6 @@
 package com.emc.mongoose.metrics;
 
-import com.emc.mongoose.concurrent.DaemonBase;
+import com.emc.mongoose.concurrent.AutoCloseOnShutdownBase;
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.logging.ExtResultsXmlLogMessage;
 import com.emc.mongoose.logging.LogUtil;
@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
  Created by kurila on 18.05.17.
  */
 public final class MetricsManager
-	extends DaemonBase {
+	extends AutoCloseOnShutdownBase {
 
 	private static final String CLS_NAME = MetricsManager.class.getSimpleName();
 	private static final MetricsManager INSTANCE;
@@ -62,20 +62,12 @@ public final class MetricsManager
 			ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
 			try {
-				for(final String id : allMetrics.keySet()) {
-					for(final MetricsContext metricsCtx : allMetrics.get(id).keySet()) {
-						metricsCtx.refreshLastSnapshot();
-					}
-				}
-			} catch(final ConcurrentModificationException ignored) {
-			}
-
-			try {
 				int actualConcurrency;
 				int nextConcurrencyThreshold;
 				for(final String id : allMetrics.keySet()) {
 					for(final MetricsContext metricsCtx : allMetrics.get(id).keySet()) {
 						ThreadContext.put(KEY_STEP_ID, metricsCtx.stepId());
+						metricsCtx.refreshLastSnapshot();
 						actualConcurrency = metricsCtx.lastSnapshot().actualConcurrencyLast();
 						//metricsCtx.refreshLastSnapshot();
 						// threshold load state checks
@@ -89,7 +81,7 @@ public final class MetricsManager
 								);
 								metricsCtx.enterThresholdState();
 							}
-						} else if(metricsCtx.thresholdStateEntered() && ! metricsCtx.thresholdStateExited()) {
+						} else if(metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
 							exitMetricsThresholdState(metricsCtx);
 						}
 						// periodic output
@@ -106,10 +98,11 @@ public final class MetricsManager
 					}
 				}
 				// periodic console output
-				if(! selectedMetrics.isEmpty()) {
+				if(!selectedMetrics.isEmpty()) {
 					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
 					selectedMetrics.clear();
 				}
+			} catch(final ConcurrentModificationException ignored) {
 			} catch(final Throwable cause) {
 				LogUtil.exception(Level.DEBUG, cause, "Metrics manager failure");
 			}

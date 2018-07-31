@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.net;
 
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import com.emc.mongoose.data.DataInput;
@@ -54,9 +55,7 @@ import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.BitSet;
-import java.util.ConcurrentModificationException;
 import java.util.List;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -294,7 +293,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	@Override
 	protected boolean submit(final O op)
-	throws IllegalStateException {
+	throws InterruptRunException, IllegalStateException {
 
 		ThreadContext.put(KEY_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
@@ -338,7 +337,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	@Override @SuppressWarnings("unchecked")
 	protected int submit(final List<O> ops, final int from, final int to)
-	throws IllegalStateException {
+	throws InterruptRunException, IllegalStateException {
 
 		ThreadContext.put(KEY_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
@@ -390,7 +389,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	@Override
 	protected final int submit(final List<O> ops)
-	throws IllegalStateException {
+	throws InterruptRunException, IllegalStateException {
 		return submit(ops, 0, ops.size());
 	}
 	
@@ -588,7 +587,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	@Override
 	protected final void doStop()
-	throws IllegalStateException {
+	throws InterruptRunException, IllegalStateException {
 		try(
 			final Instance ctx = CloseableThreadContext
 				.put(KEY_STEP_ID, stepId)
@@ -607,7 +606,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(Level.WARN, e, "Graceful I/O workers shutdown was interrupted");
-				throw new CancellationException();
+				throw new InterruptRunException(e);
 			}
 		}
 	}

@@ -2,6 +2,8 @@ package com.emc.mongoose.load.step.client;
 
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.load.step.client.LoadStepClient.OUTPUT_PROGRESS_PERIOD_MILLIS;
+
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.load.step.service.file.FileManagerService;
 import com.emc.mongoose.logging.LogUtil;
@@ -70,7 +72,8 @@ implements Closeable {
 							SizeInBytes.formatFixedSize(byteCounter.longValue())
 						);
 					}
-				} catch(final InterruptedException ok) {
+				} catch(final InterruptedException e) {
+					throw new InterruptRunException(e);
 				}
 			}
 		);

@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.mock;
 
-import com.emc.mongoose.concurrent.DaemonBase;
+import com.emc.mongoose.concurrent.AutoCloseOnShutdownBase;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.LongAdder;
  Created by andrey on 11.05.17.
  */
 public final class DummyStorageDriverMock<I extends Item, O extends Operation<I>>
-extends DaemonBase
+extends AutoCloseOnShutdownBase
 implements StorageDriver<I, O> {
 
 	private final int concurrencyLimit;

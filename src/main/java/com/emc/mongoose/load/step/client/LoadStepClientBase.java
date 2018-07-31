@@ -5,6 +5,7 @@ import com.emc.mongoose.config.AliasingUtil;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.env.Extension;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.io.ItemInputFactory;
@@ -48,7 +49,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -72,7 +72,7 @@ implements LoadStepClient {
 
 	@Override
 	protected final void doStartWrapped()
-	throws IllegalArgumentException {
+	throws InterruptRunException, IllegalArgumentException {
 		try(
 			final Instance logCtx = put(KEY_STEP_ID, id())
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
@@ -135,7 +135,8 @@ implements LoadStepClient {
 			.forEachOrdered(fileMgrsDst::add);
 	}
 
-	private void addFileClients(final Config config, final List<Config> configSlices) {
+	private void addFileClients(final Config config, final List<Config> configSlices)
+	throws InterruptRunException {
 		final Config loadConfig = config.configVal("load");
 		final int batchSize = loadConfig.intVal("batch-size");
 		final Config storageConfig = config.configVal("storage");
@@ -170,7 +171,7 @@ implements LoadStepClient {
 		} catch(final OmgShootMyFootException e) {
 			LogUtil.exception(Level.ERROR, e, "{}: failed to init the storage driver");
 		} catch(final InterruptedException e) {
-			throw new CancellationException();
+			throw new InterruptRunException(e);
 		}
 
 		final String itemOutputFile = config.stringVal("item-output-file");
@@ -206,7 +207,7 @@ implements LoadStepClient {
 
 	private void initAndStartStepSlices(
 		final List<String> nodeAddrs, final List<Config> configSlices, final List<List<Config>> ctxConfigsSlices
-	) {
+	) throws InterruptRunException {
 
 		final String stepTypeName;
 		try {
@@ -235,6 +236,8 @@ implements LoadStepClient {
 			if(stepSlice != null) {
 				try {
 					stepSlice.start();
+				} catch(final InterruptRunException e) {
+					throw e;
 				} catch(final Exception e) {
 					LogUtil.exception(Level.ERROR, e, "{}: failed to start the step slice \"{}\"", id(), stepSlice);
 				}
@@ -346,7 +349,7 @@ implements LoadStepClient {
 
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
-	throws IllegalStateException, InterruptedException {
+	throws InterruptRunException, IllegalStateException, InterruptedException {
 
 		if(stepSlices == null || stepSlices.size() == 0) {
 			throw new IllegalStateException("No step slices are available");
@@ -369,7 +372,7 @@ implements LoadStepClient {
 								stepSlice
 							);
 						} catch(final InterruptedException e) {
-							throw new CancellationException();
+							throw new InterruptRunException(e);
 						}
 					}
 				}
@@ -385,6 +388,8 @@ implements LoadStepClient {
 					awaitTask -> {
 						try {
 							awaitTask.close();
+						} catch(final InterruptRunException e) {
+							throw e;
 						} catch(final Exception ignored) {
 						}
 					}
@@ -393,7 +398,8 @@ implements LoadStepClient {
 	}
 
 	@Override
-	protected final void doStop() {
+	protected final void doStop()
+	throws InterruptRunException {
 		stepSlices
 			.parallelStream()
 			.forEach(
@@ -403,6 +409,8 @@ implements LoadStepClient {
 							.put(KEY_CLASS_NAME, getClass().getSimpleName())
 					) {
 						stepSlice.stop();
+					} catch(final InterruptRunException e) {
+						throw e;
 					} catch(final Exception e) {
 						LogUtil.exception(Level.WARN, e, "{}: failed to stop the step slice \"{}\"", id(), stepSlice);
 					}
@@ -413,7 +421,7 @@ implements LoadStepClient {
 
 	@Override
 	protected final void doClose()
-	throws IOException {
+	throws InterruptRunException, IOException {
 
 		super.doClose();
 
@@ -428,6 +436,8 @@ implements LoadStepClient {
 					try {
 						stepSlice.close();
 						Loggers.MSG.debug("{}: step slice \"{}\" closed", id(), stepSlice);
+					} catch(final InterruptRunException e) {
+						throw e;
 					} catch(final Exception e) {
 						LogUtil.exception(
 							Level.WARN, e, "{}: failed to close the step service \"{}\"", id(), stepSlice
@@ -448,6 +458,8 @@ implements LoadStepClient {
 				itemInputFileSlicer -> {
 					try {
 						itemInputFileSlicer.close();
+					} catch(final InterruptRunException e) {
+						throw e;
 					} catch(final Exception e) {
 						LogUtil.exception(
 							Level.WARN, e, "{}: failed to close the item input file slicer \"{}\"", id(),
@@ -464,6 +476,8 @@ implements LoadStepClient {
 				itemOutputFileAggregator -> {
 					try {
 						itemOutputFileAggregator.close();
+					} catch(final InterruptRunException e) {
+						throw e;
 					} catch(final Exception e) {
 						LogUtil.exception(
 							Level.WARN, e, "{}: failed to close the item output file aggregator \"{}\"", id(),
@@ -479,6 +493,8 @@ implements LoadStepClient {
 				opTraceLogFileAggregator -> {
 					try {
 						opTraceLogFileAggregator.close();
+					} catch(final InterruptRunException e) {
+						throw e;
 					} catch(final Exception e) {
 						LogUtil.exception(
 							Level.WARN, e, "{}: failed to close the operation traces log file aggregator \"{}\"", id(),
@@ -493,6 +509,8 @@ implements LoadStepClient {
 				storageAuthFileSlicer -> {
 					try {
 						storageAuthFileSlicer.close();
+					} catch(final InterruptRunException e) {
+						throw e;
 					} catch(final Exception e) {
 						LogUtil.exception(
 							Level.WARN, e, "{}: failed to close the storage auth file slicer \"{}\"", id(),
@@ -505,7 +523,8 @@ implements LoadStepClient {
 	}
 
 	@Override
-	public final <T extends LoadStepClient> T config(final Map<String, Object> configMap) {
+	public final <T extends LoadStepClient> T config(final Map<String, Object> configMap)
+	throws InterruptRunException {
 
 		if(ctxConfigs != null) {
 			throw new IllegalStateException("config(...) should be invoked before any append(...) call");
@@ -525,14 +544,15 @@ implements LoadStepClient {
 			aliasedArgs.forEach(configCopy::val); // merge
 		} catch(final Exception e) {
 			LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
-			throw new CancellationException();
+			throw new InterruptRunException(e);
 		}
 
 		return copyInstance(configCopy, null);
 	}
 
 	@Override
-	public final <T extends LoadStepClient> T append(final Map<String, Object> context) {
+	public final <T extends LoadStepClient> T append(final Map<String, Object> context)
+	throws InterruptRunException {
 
 		final List<Config> ctxConfigsCopy;
 		if(ctxConfigs == null) {
@@ -553,7 +573,7 @@ implements LoadStepClient {
 			aliasedArgs.forEach(ctxConfig::val); // merge
 		} catch(final Exception e) {
 			LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
-			throw new CancellationException();
+			throw new InterruptRunException(e);
 		}
 
 		ctxConfigsCopy.add(ctxConfig);

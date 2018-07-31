@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.nio;
 
 import com.emc.mongoose.data.DataInput;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.op.Operation;
@@ -33,7 +34,6 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -284,7 +284,7 @@ implements NioStorageDriver<I, O> {
 	
 	@Override
 	protected void doClose()
-	throws IOException {
+	throws IOException, InterruptRunException {
 
 		ioFibers.forEach(
 			fiber -> {
@@ -309,7 +309,7 @@ implements NioStorageDriver<I, O> {
 					Loggers.ERR.debug(new ThreadDumpMessage("Failed to obtain the load operations buff lock in time"));
 				}
 			} catch(final InterruptedException e) {
-				throw new CancellationException();
+				throw new InterruptRunException(e);
 			}
 			opBuffs[i] = null;
 		}

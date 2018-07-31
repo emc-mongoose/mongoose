@@ -1,7 +1,8 @@
 package com.emc.mongoose.storage.driver;
 
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.logging.Loggers;
-import com.emc.mongoose.concurrent.DaemonBase;
+import com.emc.mongoose.concurrent.AutoCloseOnShutdownBase;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.op.Operation;
@@ -30,7 +31,7 @@ import java.util.function.Function;
  Created by kurila on 11.07.16.
  */
 public abstract class StorageDriverBase<I extends Item, O extends Operation<I>>
-extends DaemonBase
+extends AutoCloseOnShutdownBase
 implements StorageDriver<I,O> {
 
 	private final DataInput itemDataInput;
@@ -44,11 +45,9 @@ implements StorageDriver<I,O> {
 	protected final ConcurrentMap<String, Credential> pathToCredMap = new ConcurrentHashMap<>(1);
 
 	private final ConcurrentMap<String, String> pathMap = new ConcurrentHashMap<>(1);
-	protected abstract String requestNewPath(final String path);
 	protected Function<String, String> requestNewPathFunc = this::requestNewPath;
 
 	protected final ConcurrentMap<Credential, String> authTokens = new ConcurrentHashMap<>(1);
-	protected abstract String requestNewAuthToken(final Credential credential);
 	protected Function<Credential, String> requestAuthTokenFunc = this::requestNewAuthToken;
 
 	protected StorageDriverBase(
@@ -86,7 +85,14 @@ implements StorageDriver<I,O> {
 		}
 	}
 
-	protected void prepareOperation(final O op) {
+	protected abstract String requestNewPath(final String path)
+	throws InterruptRunException;
+
+	protected abstract String requestNewAuthToken(final Credential credential)
+	throws InterruptRunException;
+
+	protected void prepareOperation(final O op)
+	throws InterruptRunException {
 		op.reset();
 		if(op instanceof DataOperation) {
 			((DataOperation) op).item().dataInput(itemDataInput);
@@ -154,7 +160,7 @@ implements StorageDriver<I,O> {
 
 	@Override
 	protected void doClose()
-	throws IOException, IllegalStateException {
+	throws InterruptRunException, IOException, IllegalStateException {
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_STEP_ID, stepId)

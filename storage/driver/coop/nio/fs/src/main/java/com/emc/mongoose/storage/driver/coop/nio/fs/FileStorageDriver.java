@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.driver.coop.nio.fs;
 import com.emc.mongoose.data.DataCorruptionException;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.data.DataSizeException;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;

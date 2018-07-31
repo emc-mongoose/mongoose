@@ -1,8 +1,9 @@
 package com.emc.mongoose.load.step.local.context;
 
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.generator.LoadGenerator;
 import com.emc.mongoose.metrics.MetricsSnapshot;
-import com.emc.mongoose.concurrent.DaemonBase;
+import com.emc.mongoose.concurrent.AutoCloseOnShutdownBase;
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.logging.OperationTraceCsvLogMessage;
 import com.emc.mongoose.item.op.Operation.Status;
@@ -40,7 +41,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.LongAdder;
  Created by kurila on 12.07.16.
  */
 public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
-extends DaemonBase
+extends AutoCloseOnShutdownBase
 implements LoadStepContext<I, O> {
 	
 	private final String id;
@@ -476,12 +476,9 @@ implements LoadStepContext<I, O> {
 
 	@Override
 	protected final void doStop()
-	throws IllegalStateException {
+	throws InterruptRunException, IllegalStateException {
 
-		try {
-			driver.stop();
-		} catch(final RemoteException ignored) {
-		}
+		driver.stop();
 		Loggers.MSG.debug("{}: next storage driver {} stopped", id, driver.toString());
 		
 		try(
@@ -531,7 +528,7 @@ implements LoadStepContext<I, O> {
 					}
 				}
 			} catch(final InterruptedException e) {
-				throw new CancellationException(e.getMessage());
+				throw new InterruptRunException(e);
 			} finally {
 				Loggers.MSG.info("{}: I/O results output done", id);
 			}
@@ -556,7 +553,8 @@ implements LoadStepContext<I, O> {
 	}
 
 	@Override
-	protected final void doClose() {
+	protected final void doClose()
+	throws InterruptRunException {
 
 		try {
 			generator.close();

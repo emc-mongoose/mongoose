@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.net.http;
 
+import com.emc.mongoose.exception.InterruptRunException;
 import com.github.akurilov.commons.collection.Range;
 
 import com.emc.mongoose.exception.OmgDoesNotPerformException;

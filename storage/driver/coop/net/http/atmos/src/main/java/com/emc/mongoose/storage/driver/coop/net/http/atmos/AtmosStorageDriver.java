@@ -13,6 +13,7 @@ import static com.emc.mongoose.storage.driver.coop.net.http.EmcConstants.KEY_X_E
 import static com.emc.mongoose.storage.driver.coop.net.http.EmcConstants.KEY_X_EMC_UID;
 import static com.emc.mongoose.storage.driver.coop.net.http.EmcConstants.PREFIX_KEY_X_EMC;
 import com.emc.mongoose.data.DataInput;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
@@ -53,7 +54,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -107,7 +107,8 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	protected final String requestNewAuthToken(final Credential credential) {
+	protected final String requestNewAuthToken(final Credential credential)
+	throws InterruptRunException {
 		
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
@@ -131,7 +132,7 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			getSubtenantResp = executeHttpRequest(getSubtenantReq);
 		} catch(final InterruptedException e) {
-			throw new CancellationException();
+			throw new InterruptRunException(e);
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;

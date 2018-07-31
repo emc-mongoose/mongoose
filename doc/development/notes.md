@@ -16,6 +16,29 @@ The branching rules in the Mongoose project are simple:
   * Default concrete implementation should be names as `FooImpl`
 * Any field/local variable should be *final* if possible
 
+## Exception Handling
+
+The threads are not used in the usual way (*fibers* are used instead for multitasking purposes). Therefore, having an
+`InterruptedException` thrown means that the run was interrupted externally. To stop the run, it's necessary to pass
+the specific exception to the uppermost level of the call stack. However, the `InterruptedException` is a checked
+exception and usually couldn't be passed outward. The specific unchecked `InterruptRunException` is used for this
+purpose. This imposes the restrictions on the exceptions handling:
+
+* If the `InterruptedException` is caught the `InterruptRunException` should be thrown:
+    ```java
+    try {
+        foo(); // may throw an InterruptedException
+    } catch(final InterruptedException e) {
+        throw new InterruptRunException(e);
+    }
+    ```
+
+* The following exceptions catching should be avoided as far as special `InterruptRunException` may be swallowed
+occasionally:
+    1. `Throwable`
+    2. `Exception`
+    3. `RuntimeException`
+
 ## Performance
 Take care about the performance in the critical places:
 * Avoid *frequent* objects instantiation

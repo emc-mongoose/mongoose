@@ -22,6 +22,7 @@ import com.github.akurilov.confuse.io.json.ConfigJsonDeserializer;
 import com.github.akurilov.confuse.io.json.ConfigJsonSerializer;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +32,7 @@ import java.util.stream.Collectors;
 public interface ConfigUtil {
 
 	static ObjectMapper readConfigMapper(final Map<String, Object> schema)
-	throws Exception {
+	throws NoSuchMethodException {
 		final JsonDeserializer<BasicConfig>
 			deserializer = new ConfigJsonDeserializer<>(BasicConfig.class, "-", schema);
 		final Module module = new SimpleModule().addDeserializer(BasicConfig.class, deserializer);
@@ -67,7 +68,7 @@ public interface ConfigUtil {
 	}
 
 	static Config loadConfig(final File file, final Map<String, Object> schema)
-	throws Exception {
+	throws NoSuchMethodException, IOException {
 		return readConfigMapper(schema).readValue(file, BasicConfig.class);
 	}
 

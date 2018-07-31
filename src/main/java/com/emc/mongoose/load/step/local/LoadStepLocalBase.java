@@ -3,6 +3,7 @@ package com.emc.mongoose.load.step.local;
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.env.Extension;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.load.step.LoadStepBase;
@@ -30,7 +31,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -101,7 +101,7 @@ extends LoadStepBase {
 
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
-	throws IllegalStateException, InterruptedException {
+	throws InterruptRunException, IllegalStateException, InterruptedException {
 
 		final CountDownLatch awaitCountDown = new CountDownLatch(stepContexts.size());
 		final List<AutoCloseable> awaitTasks = stepContexts
@@ -115,7 +115,7 @@ extends LoadStepBase {
 								awaitCountDown.countDown();
 							}
 						} catch(final InterruptedException e) {
-							throw new CancellationException();
+							throw new InterruptRunException(e);
 						} catch(final Exception e) {
 							LogUtil.exception(Level.WARN, e, "Await call failure on the step context \"{}\"", stepCtx);
 						}
@@ -141,20 +141,14 @@ extends LoadStepBase {
 	}
 
 	@Override
-	protected final void doStop() {
-		stepContexts.forEach(
-			stepCtx -> {
-				try {
-					stepCtx.stop();
-				} catch(final RemoteException ignored) {
-				}
-			}
-		);
+	protected final void doStop()
+	throws InterruptRunException {
+		stepContexts.forEach(LoadStepContext::stop);
 		super.doStop();
 	}
 
 	protected final void doClose()
-	throws IOException {
+	throws InterruptRunException, IOException {
 
 		super.doClose();
 
