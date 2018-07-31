@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.driver;
 
+import com.emc.mongoose.concurrent.DaemonBase;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.logging.Loggers;
-import com.emc.mongoose.concurrent.AutoCloseOnShutdownBase;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.op.Operation;
@@ -31,7 +31,7 @@ import java.util.function.Function;
  Created by kurila on 11.07.16.
  */
 public abstract class StorageDriverBase<I extends Item, O extends Operation<I>>
-extends AutoCloseOnShutdownBase
+extends DaemonBase
 implements StorageDriver<I,O> {
 
 	private final DataInput itemDataInput;

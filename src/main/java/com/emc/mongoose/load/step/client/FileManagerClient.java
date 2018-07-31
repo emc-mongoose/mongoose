@@ -1,6 +1,5 @@
 package com.emc.mongoose.load.step.client;
 
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.step.service.file.FileManagerService;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.svc.ServiceUtil;

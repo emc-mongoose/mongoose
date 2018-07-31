@@ -101,7 +101,7 @@ extends LoadStepBase {
 
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptRunException, IllegalStateException, InterruptedException {
+	throws InterruptRunException, IllegalStateException {
 
 		final CountDownLatch awaitCountDown = new CountDownLatch(stepContexts.size());
 		final List<AutoCloseable> awaitTasks = stepContexts
@@ -127,6 +127,8 @@ extends LoadStepBase {
 
 		try {
 			return awaitCountDown.await(timeout, timeUnit);
+		} catch(final InterruptedException e) {
+			throw new InterruptRunException(e);
 		} finally {
 			awaitTasks
 				.forEach(
@@ -161,8 +163,7 @@ extends LoadStepBase {
 						stepCtx.close();
 					} catch(final IOException e) {
 						LogUtil.exception(
-							Level.ERROR, e, "Failed to close the load step context \"{}\"",
-							stepCtx.toString()
+							Level.ERROR, e, "Failed to close the load step context \"{}\"", stepCtx.toString()
 						);
 					}
 				}

@@ -1,10 +1,10 @@
 package com.emc.mongoose.logging;
 
-import com.emc.mongoose.concurrent.AutoCloseOnShutdownBase;
 import static com.emc.mongoose.Constants.KEY_HOME_DIR;
 import static com.emc.mongoose.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.env.DateUtil.TZ_UTC;
 
+import com.emc.mongoose.concurrent.DaemonBase;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -75,6 +75,7 @@ public interface LogUtil {
 
 	static void shutdown() {
 		try {
+			DaemonBase.closeAll();
 			LogManager.shutdown();
 		} catch(final Throwable cause) {
 			cause.printStackTrace(System.err);

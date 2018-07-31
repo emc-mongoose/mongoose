@@ -63,7 +63,7 @@ implements AutoCloseable {
 
 		try(
 			final Instance logCtx = put(KEY_STEP_ID, loadStepId)
-				.put(KEY_CLASS_NAME, getClass().getSimpleName());
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			Loggers.MSG.info("{}: scatter the lines from the input text file \"{}\"...", loadStepId, srcFileName);
 			scatterLines(srcFileName, sliceCount, fileMgrs, fileSlices, batchSize);

@@ -4,7 +4,6 @@ import com.emc.mongoose.config.BundledDefaultsProvider;
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.USER_HOME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import com.emc.mongoose.exception.InterruptRunException;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
@@ -19,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class MainInstaller
-	extends JarResourcesInstaller {
+extends JarResourcesInstaller {
 
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(Arrays.asList(
 		// initial configuration/defaults file

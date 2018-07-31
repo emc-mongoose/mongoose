@@ -1,6 +1,5 @@
 package com.emc.mongoose.env;
 
-import com.emc.mongoose.exception.InterruptRunException;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 

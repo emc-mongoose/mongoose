@@ -1,6 +1,6 @@
 package com.emc.mongoose.metrics;
 
-import com.emc.mongoose.concurrent.AutoCloseOnShutdownBase;
+import com.emc.mongoose.concurrent.DaemonBase;
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.logging.ExtResultsXmlLogMessage;
 import com.emc.mongoose.logging.LogUtil;
@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
  Created by kurila on 18.05.17.
  */
 public final class MetricsManager
-	extends AutoCloseOnShutdownBase {
+extends DaemonBase {
 
 	private static final String CLS_NAME = MetricsManager.class.getSimpleName();
 	private static final MetricsManager INSTANCE;

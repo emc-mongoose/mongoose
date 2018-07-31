@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver;
 
+import com.emc.mongoose.concurrent.Daemon;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
@@ -31,7 +32,7 @@ import java.util.stream.Collectors;
  Created on 11.07.16.
  */
 public interface StorageDriver<I extends Item, O extends Operation<I>>
-extends AsyncRunnable, Input<O>, Output<O> {
+extends Daemon, Input<O>, Output<O> {
 	
 	int BUFF_SIZE_MIN = 0x1_000;
 	int BUFF_SIZE_MAX = 0x1_000_000;
@@ -43,15 +44,15 @@ extends AsyncRunnable, Input<O>, Output<O> {
 
 	@Override
 	boolean put(final O op)
-	throws InterruptRunException, EOFException;
+	throws InterruptRunException, EOFException, IOException;
 
 	@Override
 	int put(final List<O> ops, final int from, final int to)
-	throws InterruptRunException, EOFException;
+	throws InterruptRunException, EOFException, IOException;
 
 	@Override
 	int put(final List<O> ops)
-	throws InterruptRunException, EOFException;
+	throws InterruptRunException, EOFException, IOException;
 	
 	@Override
 	default void reset() {

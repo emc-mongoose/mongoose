@@ -2,10 +2,8 @@ package com.emc.mongoose.env;
 
 import com.emc.mongoose.config.ConfigUtil;
 import static com.emc.mongoose.Constants.DIR_CONFIG;
-
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.logging.LogUtil;
-import com.emc.mongoose.logging.Loggers;
+
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 

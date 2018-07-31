@@ -18,8 +18,8 @@ implements Metric {
 	private final EWMA rateAvg;
 	private final LongAdder count = new LongAdder();
 	private final Clock clock;
+	private final AtomicLong lastTick = new AtomicLong();
 	private long startTime;
-	private AtomicLong lastTick = new AtomicLong();
 	//
 	public CustomMeter(final Clock clock, final int periodSec) {
 		final double ps = periodSec > 0 ? periodSec : 10;

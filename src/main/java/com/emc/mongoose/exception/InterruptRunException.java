@@ -6,19 +6,6 @@ package com.emc.mongoose.exception;
  */
 public class InterruptRunException
 extends RuntimeException {
-
-	public InterruptRunException() {
-		super();
-	}
-
-	public InterruptRunException(final String msg) {
-		super(msg);
-	}
-
-	public InterruptRunException(final String msg, final Throwable cause) {
-		super(msg, cause);
-	}
-
 	public InterruptRunException(final Throwable cause) {
 		super(cause);
 	}

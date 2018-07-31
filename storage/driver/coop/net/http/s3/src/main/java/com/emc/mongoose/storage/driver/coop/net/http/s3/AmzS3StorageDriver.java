@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.driver.coop.net.http.s3;
 
-
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;

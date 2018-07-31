@@ -18,8 +18,8 @@ The branching rules in the Mongoose project are simple:
 
 ## Exception Handling
 
-The threads are not used in the usual way (*fibers* are used instead for multitasking purposes). Therefore, having an
-`InterruptedException` thrown means that the run was interrupted externally. To stop the run, it's necessary to pass
+The threads are not used in the usual way (*fibers* are used instead for the multitasking purposes). Therefore, having
+an `InterruptedException` thrown means that the run was interrupted externally. To stop the run, it's necessary to pass
 the specific exception to the uppermost level of the call stack. However, the `InterruptedException` is a checked
 exception and usually couldn't be passed outward. The specific unchecked `InterruptRunException` is used for this
 purpose. This imposes the restrictions on the exceptions handling:
@@ -33,7 +33,7 @@ purpose. This imposes the restrictions on the exceptions handling:
     }
     ```
 
-* The following exceptions catching should be avoided as far as special `InterruptRunException` may be swallowed
+* The following exceptions catching should be avoided as far as the `InterruptRunException` may be swallowed
 occasionally:
     1. `Throwable`
     2. `Exception`

@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.step.local.context;
 
+import com.emc.mongoose.concurrent.Daemon;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.Item;
@@ -14,7 +15,7 @@ import java.io.IOException;
  Created on 11.07.16.
  */
 public interface LoadStepContext<I extends Item, O extends Operation<I>>
-extends AsyncRunnable, Output<O> {
+extends Daemon, Output<O> {
 	
 	void operationsResultsOutput(final Output<O> opsResultsOutput);
 

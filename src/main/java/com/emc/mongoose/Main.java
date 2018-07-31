@@ -70,8 +70,11 @@ public final class Main {
 			final Config mainDefaults =
 				ConfigUtil.loadConfig(Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile(), mainConfigSchema);
 			// extensions
-			final URLClassLoader extClsLoader = Extension.extClassLoader(Paths.get(appHomePath.toString(), DIR_EXT).toFile());
-			try {
+			try(
+				final URLClassLoader extClsLoader = Extension.extClassLoader(
+					Paths.get(appHomePath.toString(), DIR_EXT).toFile()
+				)
+			) {
 				final List<Extension> extensions = Extension.load(extClsLoader);
 				// install the extensions
 				final StringBuilder availExtMsg = new StringBuilder("Available/installed extensions:\n");
@@ -131,8 +134,6 @@ public final class Main {
 				} else {
 					runScenario(config, extensions, extClsLoader, appHomePath);
 				}
-			} finally {
-				extClsLoader.close();
 			}
 		} catch(final InterruptedException | InterruptRunException e) {
 			System.out.println("Boooo!!!");

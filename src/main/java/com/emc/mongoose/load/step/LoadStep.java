@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.step;
 
+import com.emc.mongoose.concurrent.Daemon;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public interface LoadStep
-extends AsyncRunnable {
+extends Daemon {
 
 	/**
 	 @return the step id

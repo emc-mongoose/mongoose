@@ -351,7 +351,7 @@ implements LoadStepClient {
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptRunException, IllegalStateException, InterruptedException {
 
-		if(stepSlices == null || stepSlices.size() == 0) {
+		if(stepSlices.size() == 0) {
 			throw new IllegalStateException("No step slices are available");
 		}
 

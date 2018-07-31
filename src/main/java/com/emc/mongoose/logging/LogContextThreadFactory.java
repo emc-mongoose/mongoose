@@ -1,6 +1,7 @@
 package com.emc.mongoose.logging;
 
 import com.emc.mongoose.exception.InterruptRunException;
+
 import com.github.akurilov.commons.concurrent.ContextAwareThreadFactory;
 
 import org.apache.logging.log4j.CloseableThreadContext;

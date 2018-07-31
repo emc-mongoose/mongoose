@@ -15,7 +15,6 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.net.http.HttpStorageDriverBase;
-
 import static com.emc.mongoose.item.op.OpType.CREATE;
 import static com.emc.mongoose.item.op.Operation.SLASH;
 import static com.emc.mongoose.storage.driver.coop.net.http.swift.SwiftApi.AUTH_URI;

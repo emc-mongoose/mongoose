@@ -2,13 +2,14 @@ package com.emc.mongoose.load.step;
 
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
+
+import com.emc.mongoose.concurrent.DaemonBase;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsSnapshot;
-import com.emc.mongoose.concurrent.AutoCloseOnShutdownBase;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public abstract class LoadStepBase
-extends AutoCloseOnShutdownBase
+extends DaemonBase
 implements LoadStep, Runnable {
 
 	protected final Config config;
@@ -146,18 +147,16 @@ implements LoadStep, Runnable {
 	protected void doStop()
 	throws InterruptRunException {
 
-		if(metricsContexts != null) {
-			metricsContexts
-				.forEach(
-					metricsCtx -> {
-						try {
-							MetricsManager.unregister(id(), metricsCtx);
-						} catch(final InterruptedException e) {
-							throw new InterruptRunException(e);
-						}
+		metricsContexts
+			.forEach(
+				metricsCtx -> {
+					try {
+						MetricsManager.unregister(id(), metricsCtx);
+					} catch(final InterruptedException e) {
+						throw new InterruptRunException(e);
 					}
-				);
-		}
+				}
+			);
 
 		final long t = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - startTimeSec;
 		if(t < 0) {

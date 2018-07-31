@@ -3,7 +3,6 @@ package com.emc.mongoose.storage.driver.coop.net.http.atmos;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.env.DateUtil;
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.item.DataItemImpl;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.op.OpType;

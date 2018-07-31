@@ -1,9 +1,9 @@
 package com.emc.mongoose.load.step.local.context;
 
+import com.emc.mongoose.concurrent.DaemonBase;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.generator.LoadGenerator;
 import com.emc.mongoose.metrics.MetricsSnapshot;
-import com.emc.mongoose.concurrent.AutoCloseOnShutdownBase;
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.logging.OperationTraceCsvLogMessage;
 import com.emc.mongoose.item.op.Operation.Status;
@@ -20,7 +20,7 @@ import com.emc.mongoose.item.Item;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.logging.Loggers;
-
+import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.io.Output;
@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.LongAdder;
  Created by kurila on 12.07.16.
  */
 public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
-extends AutoCloseOnShutdownBase
+extends DaemonBase
 implements LoadStepContext<I, O> {
 	
 	private final String id;
@@ -249,11 +249,9 @@ implements LoadStepContext<I, O> {
 		if(tracePersistFlag) {
 			Loggers.OP_TRACES.info(new OperationTraceCsvLogMessage<>(opResult));
 		}
-		
-		if( // account only completed composite ops
-			opResult instanceof CompositeOperation &&
-				!((CompositeOperation) opResult).allSubOperationsDone()
-		) {
+
+		// account the completed composite ops only
+		if(opResult instanceof CompositeOperation && !((CompositeOperation) opResult).allSubOperationsDone()) {
 			return true;
 		}
 
@@ -321,14 +319,12 @@ implements LoadStepContext<I, O> {
 		long countBytesDone = 0;
 
 		int i;
-		for(i = from; i < to; i++) {
+		for(i = from; i < to; i ++) {
 
 			opResult = opResults.get(i);
-			
-			if( // account only completed composite ops
-				opResult instanceof CompositeOperation &&
-					!((CompositeOperation) opResult).allSubOperationsDone()
-			) {
+
+			// account the completed composite ops only
+			if(opResult instanceof CompositeOperation && !((CompositeOperation) opResult).allSubOperationsDone()) {
 				continue;
 			}
 
@@ -506,17 +502,12 @@ implements LoadStepContext<I, O> {
 		if(latestIoResultByItem != null && opsResultsOutput != null) {
 			try {
 				final int ioResultCount = latestIoResultByItem.size();
-				Loggers.MSG.info(
-					"{}: please wait while performing {} I/O results output...", id, ioResultCount
-				);
+				Loggers.MSG.info("{}: please wait while performing {} I/O results output...", id, ioResultCount);
 				for(final O latestItemIoResult : latestIoResultByItem.values()) {
 					try {
-						if(! opsResultsOutput.put(latestItemIoResult)) {
-							Loggers.ERR.debug(
-								"{}: item info output fails to ingest, blocking the closing method",
-								id
-							);
-							while(! opsResultsOutput.put(latestItemIoResult)) {
+						if(!opsResultsOutput.put(latestItemIoResult)) {
+							Loggers.ERR.debug("{}: item info output fails to ingest, blocking the closing method", id);
+							while(!opsResultsOutput.put(latestItemIoResult)) {
 								Thread.sleep(1);
 							}
 							Loggers.MSG.debug("{}: closing method unblocked", id);
