@@ -1,9 +1,20 @@
 # Contents
 
-1. [Contributors](#1-contributors)
-2. [Roles](#2-roles)
-3. [Versions](#3-versions)
-3.1. [Backward Compatibility](#31-backward-compatibility)
+<ol>
+    <li>[Contributors](#1-contributors)</li>
+    <li>[Roles](#2-roles)</li>
+    <li></li>
+    <li></li>
+    <li></li>
+    <li>[Releasing](#6-releasing)</li>
+    <li></li>
+    <li>[Continuous Integration](#8-continuous-integration)</li>
+</ol>
+
+1. <br/>
+2. <br/>
+3. [Versions](#3-versions)<br/>
+3.1. [Backward Compatibility](#31-backward-compatibility)<br/>
 3.2. [Numbers](#32-numbers)
 4. [Issues](#4-issues)
 4.1. [States](#41-states)
@@ -14,13 +25,13 @@
 5.2. [Integration Tests](#52-integration-tests)
 5.3. [System Tests](#53-system-tests)
 5.3.1. [Containerized Tests](#531-containerized-tests)
-6. [Releasing](#6-releasing)
+6.
 7. [Code](#7-code)
 7.1. [Branching](#71-branching)
 7.2. [Style](#72-style)
 7.3. [Exception Handling](#73-exception-handling)
 7.4. [Performance](#74-performance)
-8. [Continuous Integration](#8-continuous-integration)
+8.
 
 # 1. Contributors
 
