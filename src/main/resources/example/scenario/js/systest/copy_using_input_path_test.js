@@ -40,6 +40,13 @@ Load
                 "output": {
                     "path": ITEM_DST_PATH
                 }
+            },
+            "load" : {
+            	"step" : {
+            		"limit" : {
+            			"time" : "60s"
+            		}
+            	}
             }
         }
     )

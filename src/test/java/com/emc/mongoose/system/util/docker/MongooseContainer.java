@@ -39,7 +39,7 @@ public final class MongooseContainer
 
 	public static final String APP_VERSION = BUNDLED_DEFAULTS.stringVal("run-version");
 	public static final String APP_HOME_DIR = Paths.get(USER_HOME, "." + APP_NAME, APP_VERSION).toString();
-	public static final String CONTAINER_HOME_PATH = "/root/.mongoose/" + APP_VERSION;
+	public static final String CONTAINER_HOME_PATH = APP_HOME_DIR;
 	private static final String IMAGE_NAME = "emcmongoose/mongoose";
 	private static final String ENTRYPOINT = "/opt/mongoose/entrypoint.sh";
 	private static final String ENTRYPOINT_DEBUG = "/opt/mongoose/entrypoint-debug.sh";
