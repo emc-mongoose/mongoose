@@ -108,7 +108,7 @@ implements LoadGenerator<I, O> {
 
 			if(n > 0) { // the tasks buffer has free space for the new tasks
 				if(itemInputFinishFlag) { // items input was exhausted
-					if(recycleFlag) { // never recycled -> recycling is not enabled
+					if(!recycleFlag) { // never recycled -> recycling is not enabled
 						opInputFinishFlag = true; // allow shutdown
 					} else { // recycle the tasks if any
 						n = recycleQueue.drainTo(opBuff, n);
