@@ -1,11 +1,11 @@
 # Contents
 
-<ol>
+<ol type="1">
     <li><a href="#1-contributors">Contributors</a></li>
     <li><a href="#2-roles">Roles</a></li>
     <li>
         <a href="#3-versions">Versions</a>
-        <ol>
+        <ol type="1">
             <li><a href="#31-backward-compatibility">Backward Compatibility</a></li>
             <li><a href="#32-numbers">Numbers</a></li>
         </ol>
