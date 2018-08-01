@@ -22,6 +22,7 @@ import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import com.emc.mongoose.metrics.MetricsContext;
+import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.storage.driver.StorageDriver;
 
 import com.github.akurilov.commons.collection.TreeUtil;
@@ -47,6 +48,7 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -322,12 +324,22 @@ implements LoadStepClient {
 
 		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
 		// further usage
-		final MetricsContext metricsCtx = new AggregatingMetricsContext(
-			id(), opType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
-			outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
-			() -> metricsAggregator.metricsSnapshotsByIndex(originIndex)
-		);
+		final MetricsContext metricsCtx;
+		try {
+			metricsCtx = new AggregatingMetricsContext(
+				id(), opType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
+				outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
+				() -> metricsSnapshotsByIndex(originIndex)
+			);
+		} catch(final Throwable t) {
+			throw new AssertionError(t);
+		}
 		metricsContexts.add(metricsCtx);
+	}
+
+	private List<MetricsSnapshot> metricsSnapshotsByIndex(final int originIndex) {
+		return metricsAggregator == null ?
+			Collections.emptyList() : metricsAggregator.metricsSnapshotsByIndex(originIndex);
 	}
 
 	@Override

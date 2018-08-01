@@ -99,9 +99,7 @@ implements LoadStepContext<I, O> {
 		} else {
 			latestIoResultByItem = null;
 		}
-		resultsTransferTask = new TransferFiber<>(
-			ServiceTaskExecutor.INSTANCE, driver, this, batchSize
-		);
+		resultsTransferTask = new TransferFiber<>(ServiceTaskExecutor.INSTANCE, driver, this, batchSize);
 		final long configCountLimit = limitConfig.longVal("count");
 		this.countLimit = configCountLimit > 0 ? configCountLimit : Long.MAX_VALUE;
 		final SizeInBytes configSizeLimit;
@@ -568,28 +566,19 @@ implements LoadStepContext<I, O> {
 		try {
 			generator.close();
 		} catch(final IOException e) {
-			LogUtil.exception(
-				Level.ERROR, e, "Failed to close the load generator \"{}\"",
-				generator.toString()
-			);
+			LogUtil.exception(Level.ERROR, e, "Failed to close the load generator \"{}\"", generator.toString());
 		}
 
 		try {
 			driver.close();
 		} catch(final IOException e) {
-			LogUtil.exception(
-				Level.ERROR, e, "Failed to close the storage driver \"{}\"",
-				driver.toString()
-			);
+			LogUtil.exception(Level.ERROR, e, "Failed to close the storage driver \"{}\"", driver.toString());
 		}
 
 		try {
 			resultsTransferTask.close();
 		} catch(final IOException e) {
-			LogUtil.exception(
-				Level.WARN, e, "{}: failed to stop the service coroutine {}",
-				resultsTransferTask
-			);
+			LogUtil.exception(Level.WARN, e, "{}: failed to stop the service coroutine {}", resultsTransferTask);
 		}
 
 		Loggers.MSG.debug("{}: closed the load step context", id);
