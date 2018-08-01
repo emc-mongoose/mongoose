@@ -113,8 +113,8 @@ import static org.junit.Assert.assertEquals;
 		} catch(final Exception e) {
 			throw new RuntimeException(e);
 		}
-		env.add("ZONE1_ADDRS=" + zone1Addr);
-		env.add("ZONE2_ADDRS=" + zone2Addr);
+		env.add("ZONE1_ADDRS=" + zone1Addr + ":" + HttpStorageMockContainer.DEFAULT_PORT);
+		env.add("ZONE2_ADDRS=" + zone2Addr + ":" + HttpStorageMockContainer.DEFAULT_PORT);
 		final List<String> args = new ArrayList<>();
 		args.add("--storage-net-http-namespace=ns1");
 		args.add("--load-step-limit-time=" + TIME_LIMIT);
