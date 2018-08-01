@@ -61,7 +61,7 @@ import static org.junit.Assert.assertTrue;
 
 	private final String SCENARIO_PATH = containerScenarioPath(getClass());
 	private static final int COUNT_LIMIT = 100_000;
-	private final int timeoutInMillis = 100_000;
+	private final int timeoutInMillis = 105_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
