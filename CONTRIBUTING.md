@@ -289,4 +289,3 @@ Take care about the performance in the ***critical*** places:
 
 https://travis-ci.org/emc-mongoose/mongoose
 
-https://hub.docker.com/r/emcmongoose/mongoose
