@@ -3,12 +3,18 @@
 <ol>
     <li><a href="#1-contributors">Contributors</a></li>
     <li><a href="#2-roles">Roles</a></li>
-    <li></li>
-    <li></li>
-    <li></li>
-    <li>[Releasing](#6-releasing)</li>
-    <li></li>
-    <li>[Continuous Integration](#8-continuous-integration)</li>
+    <li>
+        <a href="#3-versions">Versions</a>
+        <ol>
+            <li><a href="#31-backward-compatibility">Backward Compatibility</a></li>
+            <li><a href="#32-numbers">Numbers</a></li>
+        </ol>
+    </li>
+    <li><a href="#4-issues">Issues</a></li>
+    <li><a href="#5-testing">Testing</a></li>
+    <li><a href="#6-releasing">Releasing</a></li>
+    <li><a href="#7-code">Code</a></li>
+    <li><a href="#8-continuous-integration">Continuous Integration</a></li>
 </ol>
 
 1. <br/>
