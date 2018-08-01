@@ -1,26 +1,26 @@
 # Contents
 
 1. [Contributors](#1-contributors)<br/>
-2. [Roles](#2-roles)<br/>
-3. [Versions](#3-versions)<br/>
-3.1. [Backward Compatibility](#31-backward-compatibility)<br/>
-3.2. [Numbers](#32-numbers)<br/>
-4. [Issues](#4-issues)<br/>
-4.1. [States](#41-states)
-4.2. [Defects Priority](#42-defects-priority)<br/>
-4.3. [Specific Properties](#43-specific-properties)<br/>
-5. [Testing](#5-testing)<br/>
-5.1. [Unit Tests](#51-unit-tests)<br/>
-5.2. [Integration Tests](#52-integration-tests)<br/>
-5.3. [System Tests](#53-system-tests)<br/>
-5.3.1. [Containerized Tests](#531-containerized-tests)<br/>
-6. [Releasing](#6-releasing)<br/>
-7. [Code](#7-code)<br/>
-7.1. [Branching](#71-branching)<br/>
-7.2. [Style](#72-style)<br/>
-7.3. [Exception Handling](#73-exception-handling)<br/>
-7.4. [Performance](#74-performance)<br/>
-8. [Continuous Integration](#8-continuous-integration)<br/>
+1.2. [Roles](#12-roles)<br/>
+2. [Versions](#2-versions)<br/>
+2.1. [Backward Compatibility](#21-backward-compatibility)<br/>
+2.2. [Numbers](#22-numbers)<br/>
+3. [Issues](#3-issues)<br/>
+3.1. [States](#31-states)<br/>
+3.2. [Defects Priority](#32-defects-priority)<br/>
+3.3. [Specific Properties](#33-specific-properties)<br/>
+4. [Testing](#4-testing)<br/>
+4.1. [Unit Tests](#41-unit-tests)<br/>
+4.2. [Integration Tests](#42-integration-tests)<br/>
+4.3. [System Tests](#43-system-tests)<br/>
+4.3.1. [Containerized Tests](#431-containerized-tests)<br/>
+5. [Releasing](#5-releasing)<br/>
+6. [Code](#6-code)<br/>
+6.1. [Branching](#61-branching)<br/>
+6.2. [Style](#62-style)<br/>
+6.3. [Exception Handling](#63-exception-handling)<br/>
+6.4. [Performance](#64-performance)<br/>
+7. [Continuous Integration](#7-continuous-integration)<br/>
 
 # 1. Contributors
 
@@ -33,7 +33,7 @@
 * [Olga Zhavzharova](https://github.com/Zhavzharova)
 * [Veronika Kochugova](https://github.com/veronikaKochugova)
 
-# 2. Roles
+# 1.2. Roles
 
 | Name | Responsibilities | Current Assignees
 |------|------------------|------------------
@@ -42,16 +42,16 @@
 | Owner | <ul><li>The next version scope definition</li><li>Roadmap definition</li><li>User interaction</li></ul> | Andrey Kurilov
 | Manager | The explicit scopes approval | ********
 
-# 3. Versions
+# 2. Versions
 
-## 3.1. Backward Compatibility
+## 2.1. Backward Compatibility
 
 The following interfaces are mentioned as the subject of the backward compatibility:
 1. Input (item list files, scenario files, configuration options)
 2. Output files containing the metrics
 3. API
 
-## 3.2. Numbers
+## 2.2. Numbers
 
 Mongoose uses the [semantic versioning](http://semver.org/). This means that the ***X.Y.Z*** version notation is used:
 
@@ -63,7 +63,7 @@ Mongoose uses the [semantic versioning](http://semver.org/). This means that the
 * ***Z***<br/>
     Patch version number. Includes only the defect fixes.
 
-# 4. Issues
+# 3. Issues
 
 Types:
 * Defect
@@ -73,7 +73,7 @@ Types:
 
 Tracker link: https://mongoose-issues.atlassian.net/projects/BASE
 
-## 4.1. States
+## 3.1. States
 
 | State       | Description |
 |-------------|-------------|
@@ -92,7 +92,7 @@ Tracker link: https://mongoose-issues.atlassian.net/projects/BASE
 > scenario/use case. This approach is used due to the lack of the sufficient statistical information about the Mongoose
 > usage.
 
-## 4.2. Defects Priority
+## 3.2. Defects Priority
 
 | Priority     | Conditions | Target state as a result of the review
 |--------------|------------|---------------------------------------
@@ -100,7 +100,7 @@ Tracker link: https://mongoose-issues.atlassian.net/projects/BASE
 | Non-critical | Not *critical* **and** not *minor* | `ACCEPTED` (for the next minor/major version)
 | Minor        | Any of the following: <ul><li>Usability issue</li><li>Cosmetic</li></ul> | `OPEN` or `ACCEPTED`
 
-## 4.3. Specific properties
+## 3.3. Specific properties
 
 | Name                  | Applicable Issue Types | Who is responsible to specify  | Notes
 |-----------------------|------------------------|--------------------------------|-------|
@@ -120,21 +120,21 @@ Tracker link: https://mongoose-issues.atlassian.net/projects/BASE
 | Purpose               | Story                  | Reporter: user/developer/owner | Which particular problem should be solved with Mongoose? The links to the related documents and literature are encouraged.
 | Requirements          | Story                  | Reporter: user/developer/owner | Both functional and performance requirements are mandatory. Optionally the additional requirements/possible enhancements may be specified.
 
-# 5. Testing
+# 4. Testing
 
-## 5.1. Unit Tests
+## 4.1. Unit Tests
 
 ```bash
 ./gradlew clean test
 ```
 
-## 5.2. Integration Tests
+## 4.2. Integration Tests
 
 ```bash
 ./gradlew clean integrationTest
 ```
 
-## 5.3. System Tests
+## 4.3. System Tests
 
 The system tests use the [JUnit parameterization](https://github.com/junit-team/junit4/wiki/Parameterized-tests). The parameter values are taken from the environment. The list of the system tests parameters below:
 
@@ -159,7 +159,7 @@ export ITEM_SIZE=small
 
 Note that some system tests will not run for some parameter values. The acceptable parameter values are declared explicitly in the `.travis.yml` file.
 
-### 5.3.1. Containerized Tests
+### 4.3.1. Containerized Tests
 
 Since v4.0.0 all system tests are containerized. To run a system test locally it's necessary to
 prepare 3 testing Docker images manually:
@@ -202,7 +202,7 @@ export ITEM_SIZE=small
 ./gradlew clean systemTest --tests com.emc.mongoose.system.CreateNoLimitTest
 ```
 
-# 6. Releasing
+# 5. Releasing
 
 1. Ensure all tests are OK
 2. Ensure the new version documentation is ready
@@ -230,9 +230,9 @@ export ITEM_SIZE=small
       it.
 9. Update the projects depending on the Mongoose's API (storage drivers, at least)
 
-# 7. Code
+# 6. Code
 
-## 7.1. Branches
+## 6.1. Branches
 
 The branching rules in the Mongoose project are simple:
 ![branching](doc/images/branching.png)
@@ -240,7 +240,7 @@ The branching rules in the Mongoose project are simple:
 2. The integration branch is named "integration". All feature PRs should base on the integration branch.
 3. The PR/merge to the master branch is performed when the release decision is made (all tests are ok, documentation is added, etc).
 
-## 7.2. Style
+## 6.2. Style
 
 * Indent code with TAB having width of 4 characters
 * Code line width: 120 characters
@@ -249,7 +249,7 @@ The branching rules in the Mongoose project are simple:
   * Default concrete implementation should be names as `FooImpl`
 * Any field/local variable should be *final* if possible
 
-## 7.3. Exception Handling
+## 6.3. Exception Handling
 
 The threads are not used in the usual way (*fibers* are used instead for the multitasking purposes). Therefore, having
 an `InterruptedException` thrown means that the run was interrupted externally. To stop the run, it's necessary to pass
@@ -272,7 +272,7 @@ occasionally:
     2. `Exception`
     3. `RuntimeException`
 
-## 7.4. Performance
+## 6.4. Performance
 Take care about the performance in the ***critical*** places:
 * Avoid *frequent* objects instantiation
 * Avoid unnecessary *frequent* allocation
@@ -285,7 +285,7 @@ Take care about the performance in the ***critical*** places:
 * Use buffering, buffer everything
 * Use batch processing if possible
 
-# 8. Continuous Integration
+# 7. Continuous Integration
 
 https://travis-ci.org/emc-mongoose/mongoose
 
