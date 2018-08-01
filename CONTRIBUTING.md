@@ -16,6 +16,7 @@
     <li><a href="#7-code">Code</a></li>
     <li><a href="#8-continuous-integration">Continuous Integration</a></li>
 </ol>
+<hr/>
 
 1. <br/>
 2. <br/>
