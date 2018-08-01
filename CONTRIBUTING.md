@@ -1,8 +1,8 @@
 # Contents
 
 <ol>
-    <li>[Contributors](#1-contributors)</li>
-    <li>[Roles](#2-roles)</li>
+    <li><a href="#1-contributors">Contributors</a></li>
+    <li><a href="#2-roles">Roles</a></li>
     <li></li>
     <li></li>
     <li></li>
