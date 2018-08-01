@@ -550,28 +550,19 @@ implements LoadStepContext<I, O> {
 		try {
 			generator.close();
 		} catch(final IOException e) {
-			LogUtil.exception(
-				Level.ERROR, e, "Failed to close the load generator \"{}\"",
-				generator.toString()
-			);
+			LogUtil.exception(Level.ERROR, e, "Failed to close the load generator \"{}\"", generator.toString());
 		}
 
 		try {
 			driver.close();
 		} catch(final IOException e) {
-			LogUtil.exception(
-				Level.ERROR, e, "Failed to close the storage driver \"{}\"",
-				driver.toString()
-			);
+			LogUtil.exception(Level.ERROR, e, "Failed to close the storage driver \"{}\"", driver.toString());
 		}
 
 		try {
 			resultsTransferTask.close();
 		} catch(final IOException e) {
-			LogUtil.exception(
-				Level.WARN, e, "{}: failed to stop the service coroutine {}",
-				resultsTransferTask
-			);
+			LogUtil.exception(Level.WARN, e, "{}: failed to stop the service coroutine {}", resultsTransferTask);
 		}
 
 		Loggers.MSG.debug("{}: closed the load step context", id);

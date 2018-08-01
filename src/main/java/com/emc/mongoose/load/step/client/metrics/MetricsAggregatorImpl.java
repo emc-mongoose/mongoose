@@ -41,7 +41,9 @@ implements MetricsAggregator {
 			.stream()
 			.map(Supplier::get)
 			.filter(Objects::nonNull)
-			.map(metricsSnapshots -> metricsSnapshots.get(originIndex))
+			.map(
+				metricsSnapshots -> originIndex < metricsSnapshots.size() - 1 ? metricsSnapshots.get(originIndex) : null
+			)
 			.filter(Objects::nonNull)
 			.collect(Collectors.toList());
 	}
