@@ -134,8 +134,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		try {
 
 			final String ioExecutorClsName = IO_EXECUTOR_IMPLS.get(transportKey);
-			final Class<EventLoopGroup> transportCls = (Class<EventLoopGroup>) Class
-				.forName(ioExecutorClsName);
+			final Class<EventLoopGroup> transportCls = (Class<EventLoopGroup>) Class.forName(ioExecutorClsName);
 			ioExecutor = transportCls
 				.getConstructor(Integer.TYPE, ThreadFactory.class)
 				.newInstance(workerCount, new LogContextThreadFactory("ioWorker", true));

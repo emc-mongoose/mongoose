@@ -25,7 +25,7 @@ ext {
 		log4j: "2.8.2",
 		metrics: "4.0.3",
 		nagaina: "3.6.11",
-		netty: "4.1.26.Final",
+		netty: "4.1.25.Final",
 		nettyConnectionPool: "1.0.7",
 		nettyTcNative: "2.0.12.Final",
 	]
