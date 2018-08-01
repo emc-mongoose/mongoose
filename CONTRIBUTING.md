@@ -1,44 +1,26 @@
 # Contents
 
-<ol type="1">
-    <li><a href="#1-contributors">Contributors</a></li>
-    <li><a href="#2-roles">Roles</a></li>
-    <li>
-        <a href="#3-versions">Versions</a>
-        <ol type="1">
-            <li><a href="#31-backward-compatibility">Backward Compatibility</a></li>
-            <li><a href="#32-numbers">Numbers</a></li>
-        </ol>
-    </li>
-    <li><a href="#4-issues">Issues</a></li>
-    <li><a href="#5-testing">Testing</a></li>
-    <li><a href="#6-releasing">Releasing</a></li>
-    <li><a href="#7-code">Code</a></li>
-    <li><a href="#8-continuous-integration">Continuous Integration</a></li>
-</ol>
-<hr/>
-
-1. <br/>
-2. <br/>
+1. [Contributors](#1-contributors)<br/>
+2. [Roles](#2-roles)<br/>
 3. [Versions](#3-versions)<br/>
 3.1. [Backward Compatibility](#31-backward-compatibility)<br/>
-3.2. [Numbers](#32-numbers)
-4. [Issues](#4-issues)
+3.2. [Numbers](#32-numbers)<br/>
+4. [Issues](#4-issues)<br/>
 4.1. [States](#41-states)
-4.2. [Defects Priority](#42-defects-priority)
-4.3. [Specific Properties](#43-specific-properties)
-5. [Testing](#5-testing)
-5.1. [Unit Tests](#51-unit-tests)
-5.2. [Integration Tests](#52-integration-tests)
-5.3. [System Tests](#53-system-tests)
-5.3.1. [Containerized Tests](#531-containerized-tests)
-6.
-7. [Code](#7-code)
-7.1. [Branching](#71-branching)
-7.2. [Style](#72-style)
-7.3. [Exception Handling](#73-exception-handling)
-7.4. [Performance](#74-performance)
-8.
+4.2. [Defects Priority](#42-defects-priority)<br/>
+4.3. [Specific Properties](#43-specific-properties)<br/>
+5. [Testing](#5-testing)<br/>
+5.1. [Unit Tests](#51-unit-tests)<br/>
+5.2. [Integration Tests](#52-integration-tests)<br/>
+5.3. [System Tests](#53-system-tests)<br/>
+5.3.1. [Containerized Tests](#531-containerized-tests)<br/>
+6. [Releasing](#6-releasing)<br/>
+7. [Code](#7-code)<br/>
+7.1. [Branching](#71-branching)<br/>
+7.2. [Style](#72-style)<br/>
+7.3. [Exception Handling](#73-exception-handling)<br/>
+7.4. [Performance](#74-performance)<br/>
+8. [Continuous Integration](#8-continuous-integration)<br/>
 
 # 1. Contributors
 
