@@ -4,7 +4,7 @@ package com.emc.mongoose.exception;
  Created by kurila on 14.07.16.
  */
 public class OmgShootMyFootException
-extends Exception {
+extends Fireball {
 
 	public OmgShootMyFootException() {
 		super();

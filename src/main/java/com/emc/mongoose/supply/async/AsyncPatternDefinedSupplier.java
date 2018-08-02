@@ -23,8 +23,9 @@ implements PatternDefinedSupplier {
 		);
 	}
 	
-	private AsyncPatternDefinedSupplier(final FibersExecutor executor, final PatternDefinedSupplier wrappedSupplier)
-	throws OmgDoesNotPerformException {
+	private AsyncPatternDefinedSupplier(
+		final FibersExecutor executor, final PatternDefinedSupplier wrappedSupplier
+	) throws OmgDoesNotPerformException {
 		super(
 			executor,
 			null,

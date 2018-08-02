@@ -1,6 +1,7 @@
 package com.emc.mongoose.system.util.docker;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.emc.mongoose.system.util.docker.Docker.DEFAULT_IMAGE_VERSION;

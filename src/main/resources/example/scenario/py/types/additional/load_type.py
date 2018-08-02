@@ -7,7 +7,7 @@ CreateLoad \
                 }
             },
             "load": {
-                "step": {
+                "step" : {
                     "limit": {
                         "time": FIRST_STEP_DURATION_LIMIT
                     }

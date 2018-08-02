@@ -1,6 +1,5 @@
 package com.emc.mongoose.load.step.client;
 
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.step.LoadStep;
 import com.emc.mongoose.load.step.LoadStepManagerService;
 import com.emc.mongoose.load.step.service.LoadStepService;
@@ -18,6 +17,7 @@ import org.apache.logging.log4j.Level;
 
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 public interface LoadStepSliceUtil {
@@ -65,8 +65,7 @@ public interface LoadStepSliceUtil {
 		return stepSvc;
 	}
 
-	static boolean await(final LoadStep stepSlice, final long timeout, final TimeUnit timeUnit)
-	throws InterruptRunException {
+	static boolean await(final LoadStep stepSlice, final long timeout, final TimeUnit timeUnit) {
 		try(
 			final Instance logCtx = put(KEY_STEP_ID, stepSlice.id())
 				.put(KEY_CLASS_NAME, LoadStepClientBase.class.getSimpleName())
@@ -87,7 +86,7 @@ public interface LoadStepSliceUtil {
 				}
 			}
 		} catch(final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throw new CancellationException();
 		} catch(final RemoteException ignored) {
 			return false;
 		}

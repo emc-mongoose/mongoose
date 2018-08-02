@@ -1,7 +1,5 @@
 package com.emc.mongoose.logging;
 
-import com.emc.mongoose.exception.InterruptRunException;
-
 import com.github.akurilov.commons.concurrent.ContextAwareThreadFactory;
 
 import org.apache.logging.log4j.CloseableThreadContext;
@@ -42,8 +40,6 @@ extends ContextAwareThreadFactory {
 		public final void run() {
 			try(final Instance ctx = CloseableThreadContext.putAll(threadContext)) {
 				super.run();
-			} catch(final InterruptRunException e) {
-				throw e;
 			} catch(final Throwable cause) {
 				LOG.log(Level.SEVERE, "Unhandled thread failure", cause);
 			}

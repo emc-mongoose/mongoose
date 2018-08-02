@@ -24,7 +24,7 @@ import static org.apache.logging.log4j.CloseableThreadContext.put;
 public class FileManagerImpl
 implements FileManager {
 
-	static final String LOG_CONFIG_STEP_ID_PTRN = "${ctx:" + KEY_STEP_ID + "}";
+	static String LOG_CONFIG_STEP_ID_PTRN = "${ctx:" + KEY_STEP_ID + "}";
 
 	@Override
 	public final String logFileName(final String loggerName, final String testStepId) {

@@ -1,7 +1,6 @@
 package com.emc.mongoose.load.step.client;
 
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -33,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -45,7 +45,7 @@ implements AutoCloseable {
 	public TempInputTextFileSlicer(
 		final String loadStepId, final String srcFileName, final List<FileManager> fileMgrs, final String configPath,
 		final List<Config> configSlices, final int batchSize
-	) throws InterruptRunException {
+	) {
 		this.loadStepId = loadStepId;
 		final int sliceCount = configSlices.size();
 		fileSlices = new HashMap<>(sliceCount);
@@ -63,13 +63,11 @@ implements AutoCloseable {
 
 		try(
 			final Instance logCtx = put(KEY_STEP_ID, loadStepId)
-				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+				.put(KEY_CLASS_NAME, getClass().getSimpleName());
 		) {
 			Loggers.MSG.info("{}: scatter the lines from the input text file \"{}\"...", loadStepId, srcFileName);
 			scatterLines(srcFileName, sliceCount, fileMgrs, fileSlices, batchSize);
 			Loggers.MSG.info("{}: scatter the lines from the input text file \"{}\" finished", loadStepId, srcFileName);
-		} catch(final InterruptRunException e) {
-			throw e;
 		} catch(final Throwable cause) {
 			LogUtil.exception(
 				Level.ERROR, cause, "{}: failed to scatter the lines from the file \"{}\"", loadStepId, srcFileName
@@ -102,7 +100,7 @@ implements AutoCloseable {
 	static void scatterLines(
 		final String srcFileName, final int sliceCount, final List<FileManager> fileMgrs,
 		final Map<FileManager, String> fileSlices, final int batchSize
-	) throws InterruptRunException, IOException {
+	) throws IOException {
 
 		final AtomicBoolean inputFinishFlag = new AtomicBoolean(false);
 		final List<BlockingQueue<String>> lineQueues = new ArrayList<>(sliceCount);
@@ -113,12 +111,12 @@ implements AutoCloseable {
 		final List<AsyncRunnable> tasks = new ArrayList<>(sliceCount + 1);
 		tasks.add(new ReadTask(inputFinishFlag, lineQueues, srcFileName, sliceCount));
 
-		final CountDownLatch writeFinishCountDown = new CountDownLatch(sliceCount);
+		final CountDownLatch writeFinishCoundDown = new CountDownLatch(sliceCount);
 		for(int i = 0; i < sliceCount; i ++) {
 			final BlockingQueue<String> lineQueue = lineQueues.get(i);
 			final FileManager fileMgr = fileMgrs.get(i);
 			final String dstFileName = fileSlices.get(fileMgr);
-			tasks.add(new WriteTask(inputFinishFlag, writeFinishCountDown, lineQueue, fileMgr, dstFileName, batchSize));
+			tasks.add(new WriteTask(inputFinishFlag, writeFinishCoundDown, lineQueue, fileMgr, dstFileName, batchSize));
 		}
 
 		tasks
@@ -132,9 +130,9 @@ implements AutoCloseable {
 			);
 
 		try {
-			writeFinishCountDown.await();
+			writeFinishCoundDown.await();
 		} catch(final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throw new CancellationException();
 		} finally {
 			tasks
 				.forEach(
@@ -207,7 +205,7 @@ implements AutoCloseable {
 				stop();
 			} catch(final InterruptedException e) {
 				stop();
-				throw new InterruptRunException(e);
+				throw new CancellationException();
 			}
 		}
 
