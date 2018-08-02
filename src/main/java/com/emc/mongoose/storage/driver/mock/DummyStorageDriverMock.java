@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.driver.mock;
 
-import com.emc.mongoose.concurrent.DaemonBase;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
@@ -9,8 +8,11 @@ import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.op.data.DataOperation;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.driver.StorageDriver;
+
 import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.io.Input;
+
 import com.github.akurilov.confuse.Config;
 
 import java.io.EOFException;
@@ -27,7 +29,7 @@ import java.util.concurrent.atomic.LongAdder;
  Created by andrey on 11.05.17.
  */
 public final class DummyStorageDriverMock<I extends Item, O extends Operation<I>>
-extends DaemonBase
+extends AsyncRunnableBase
 implements StorageDriver<I, O> {
 
 	private final int concurrencyLimit;

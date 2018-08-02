@@ -14,8 +14,8 @@ public class TokenOperationImpl<I extends TokenItem>
 extends OperationImpl<I>
 implements TokenOperation<I> {
 	
-	protected transient volatile long countBytesDone;
-	protected transient volatile long respDataTimeStart;
+	protected volatile long countBytesDone;
+	protected volatile long respDataTimeStart;
 	
 	public TokenOperationImpl() {
 	}
