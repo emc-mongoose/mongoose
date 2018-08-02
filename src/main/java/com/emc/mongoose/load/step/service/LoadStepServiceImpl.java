@@ -1,7 +1,6 @@
 package com.emc.mongoose.load.step.service;
 
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.svc.ServiceBase;
 import com.emc.mongoose.load.step.LoadStep;
@@ -18,6 +17,7 @@ import static org.apache.logging.log4j.CloseableThreadContext.put;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public final class LoadStepServiceImpl
@@ -99,7 +99,7 @@ implements LoadStepService {
 
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptRunException, IllegalStateException, InterruptedException {
+	throws IllegalStateException, InterruptedException {
 		try(
 			final Instance logCtx = put(KEY_CLASS_NAME, getClass().getSimpleName()).put(KEY_STEP_ID, localLoadStep.id())
 		) {

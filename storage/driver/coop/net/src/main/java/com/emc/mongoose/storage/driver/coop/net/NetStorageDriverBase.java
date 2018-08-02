@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.driver.coop.net;
 
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import com.emc.mongoose.data.DataInput;
@@ -134,7 +133,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		try {
 
 			final String ioExecutorClsName = IO_EXECUTOR_IMPLS.get(transportKey);
-			final Class<EventLoopGroup> transportCls = (Class<EventLoopGroup>) Class.forName(ioExecutorClsName);
+			final Class<EventLoopGroup> transportCls = (Class<EventLoopGroup>) Class
+				.forName(ioExecutorClsName);
 			ioExecutor = transportCls
 				.getConstructor(Integer.TYPE, ThreadFactory.class)
 				.newInstance(workerCount, new LogContextThreadFactory("ioWorker", true));
@@ -193,8 +193,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	protected NonBlockingConnPool createConnectionPool() {
 		return new MultiNodeConnPoolImpl(
-			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort, connAttemptsLimit, socketTimeout,
-			TimeUnit.MILLISECONDS
+			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort,
+			connAttemptsLimit, socketTimeout, TimeUnit.MILLISECONDS
 		);
 	}
 	
@@ -292,7 +292,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	@Override
 	protected boolean submit(final O op)
-	throws InterruptRunException, IllegalStateException {
+	throws IllegalStateException {
 
 		ThreadContext.put(KEY_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
@@ -321,7 +321,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				conn.attr(ATTR_KEY_OPERATION).set(op);
 				op.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
 				op.startRequest();
-				sendRequest(conn, conn.newPromise().addListener(new RequestSentCallback(op)), op);
+				sendRequest(
+					conn, conn.newPromise().addListener(new RequestSentCallback(op)), op
+				);
 			}
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.WARN, e, "Submit the load operation in the invalid state");
@@ -336,7 +338,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	@Override @SuppressWarnings("unchecked")
 	protected int submit(final List<O> ops, final int from, final int to)
-	throws InterruptRunException, IllegalStateException {
+	throws IllegalStateException {
 
 		ThreadContext.put(KEY_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
@@ -388,7 +390,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	@Override
 	protected final int submit(final List<O> ops)
-	throws InterruptRunException, IllegalStateException {
+	throws IllegalStateException {
 		return submit(ops, 0, ops.size());
 	}
 	
@@ -586,7 +588,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	
 	@Override
 	protected final void doStop()
-	throws InterruptRunException, IllegalStateException {
+	throws IllegalStateException {
 		try(
 			final Instance ctx = CloseableThreadContext
 				.put(KEY_STEP_ID, stepId)
@@ -605,7 +607,6 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(Level.WARN, e, "Graceful I/O workers shutdown was interrupted");
-				throw new InterruptRunException(e);
 			}
 		}
 	}

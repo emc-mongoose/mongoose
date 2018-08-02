@@ -6,7 +6,6 @@ import java.util.regex.Pattern;
 
 import static com.emc.mongoose.supply.RangeDefinedSupplier.RANGE_DELIMITER;
 
-@FunctionalInterface
 public interface SupplierFactory<T, G extends BatchSupplier<T>> {
 
 	// pay attention to the matcher groups
@@ -31,6 +30,8 @@ public interface SupplierFactory<T, G extends BatchSupplier<T>> {
 		EMPTY, RANGE, FORMAT, FORMAT_RANGE
 	}
 	
-	G createSupplier(final char type, final String seedStr, final String formatStr, final String rangeStr)
-	throws OmgShootMyFootException;
+	G createSupplier(
+		final char type, final String seedStr, final String formatStr, final String rangeStr
+	) throws OmgShootMyFootException;
+
 }

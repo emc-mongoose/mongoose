@@ -110,6 +110,6 @@ implements Input<I> {
 	
 	@Override
 	public String toString() {
-		return "csvItemInput<" + itemsSrc + ">";
+		return "csvItemInput<" + itemsSrc.toString() + ">";
 	}
 }

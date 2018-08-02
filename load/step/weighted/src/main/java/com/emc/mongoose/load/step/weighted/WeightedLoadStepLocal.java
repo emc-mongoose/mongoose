@@ -1,7 +1,6 @@
 package com.emc.mongoose.load.step.weighted;
 
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.item.op.OpType;
@@ -43,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 public class WeightedLoadStepLocal
 extends LoadStepLocalBase {
@@ -59,8 +59,7 @@ extends LoadStepLocalBase {
 	}
 
 	@Override
-	protected void init()
-	throws InterruptRunException {
+	protected void init() {
 
 		final String autoStepId = "weighted_" + LogUtil.getDateTimeStamp();
 		final Config stepConfig = config.configVal("load-step");
@@ -81,7 +80,7 @@ extends LoadStepLocalBase {
 				subConfig = new BasicConfig(config.pathSep(), config.schema(), mergedConfigTree);
 			} catch(final InvalidValueTypeException | InvalidValuePathException e) {
 				LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
-				throw new InterruptRunException(e);
+				throw new CancellationException();
 			}
 			subConfigs.add(subConfig);
 			final int weight = subConfig.intVal("load-op-weight");
@@ -194,7 +193,7 @@ extends LoadStepLocalBase {
 				} catch(final OmgShootMyFootException e) {
 					throw new IllegalStateException("Failed to initialize the storage driver", e);
 				} catch(final InterruptedException e) {
-					throw new InterruptRunException(e);
+					throw new CancellationException();
 				}
 			} catch(final IOException e) {
 				throw new IllegalStateException("Failed to initialize the data input", e);

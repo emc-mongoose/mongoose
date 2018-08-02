@@ -36,7 +36,7 @@ extends ByteCountOutputStream {
 	/**
 	 @throws IOException does not throw actually
 	 */
-	@Override @SuppressWarnings("ArrayEquality")
+	@Override
 	public final void write(final byte buff[], final int offset, final int length)
 	throws DataCorruptionException, IOException {
 		if(buff != this.buff) {
@@ -51,7 +51,7 @@ extends ByteCountOutputStream {
 	/**
 	 @throws IOException does not throw actually
 	 */
-	@Override @SuppressWarnings("ArrayEquality")
+	@Override
 	public final void write(final byte buff[])
 	throws DataCorruptionException, IOException {
 		if(buff != this.buff) {
