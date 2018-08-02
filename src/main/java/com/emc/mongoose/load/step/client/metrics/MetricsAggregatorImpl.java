@@ -42,7 +42,7 @@ implements MetricsAggregator {
 			.map(Supplier::get)
 			.filter(Objects::nonNull)
 			.map(
-				metricsSnapshots -> originIndex < metricsSnapshots.size() - 1 ? metricsSnapshots.get(originIndex) : null
+				metricsSnapshots -> originIndex < metricsSnapshots.size() ? metricsSnapshots.get(originIndex) : null
 			)
 			.filter(Objects::nonNull)
 			.collect(Collectors.toList());
