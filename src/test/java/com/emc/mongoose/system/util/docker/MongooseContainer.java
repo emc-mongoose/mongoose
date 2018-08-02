@@ -5,13 +5,6 @@ import com.emc.mongoose.system.base.params.Concurrency;
 import com.emc.mongoose.system.base.params.ItemSize;
 import com.emc.mongoose.system.base.params.RunMode;
 import com.emc.mongoose.system.base.params.StorageType;
-
-import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
-import static com.emc.mongoose.Constants.USER_HOME;
-import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
-
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 
@@ -21,6 +14,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
+import static com.emc.mongoose.Constants.USER_HOME;
+import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
+import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
+
 public final class MongooseContainer
 	extends ContainerBase {
 
@@ -29,7 +28,8 @@ public final class MongooseContainer
 
 	static {
 		try {
-			BUNDLED_DEFAULTS = new BundledDefaultsProvider().config(ARG_PATH_SEP,
+			BUNDLED_DEFAULTS = new BundledDefaultsProvider().config(
+				ARG_PATH_SEP,
 				SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader())
 			);
 		} catch(final Exception e) {
@@ -39,7 +39,7 @@ public final class MongooseContainer
 
 	public static final String APP_VERSION = BUNDLED_DEFAULTS.stringVal("run-version");
 	public static final String APP_HOME_DIR = Paths.get(USER_HOME, "." + APP_NAME, APP_VERSION).toString();
-	public static final String CONTAINER_HOME_PATH = APP_HOME_DIR;
+	public static final String CONTAINER_HOME_PATH = Paths.get("root", "." + APP_NAME, APP_VERSION).toString();
 	private static final String IMAGE_NAME = "emcmongoose/mongoose";
 	private static final String ENTRYPOINT = "/opt/mongoose/entrypoint.sh";
 	private static final String ENTRYPOINT_DEBUG = "/opt/mongoose/entrypoint-debug.sh";
@@ -92,7 +92,8 @@ public final class MongooseContainer
 		final String version, final String stepId, final StorageType storageType, final RunMode runMode,
 		final Concurrency concurrency, final ItemSize itemSize, final String containerScenarioPath,
 		final List<String> env, final List<String> args
-	) throws InterruptedException {
+	)
+	throws InterruptedException {
 		super(version, env, VOLUME_BINDS, true, PORT_DEBUG, PORT_JMX);
 		this.args = args;
 		this.args.add("--load-step-id=" + stepId);

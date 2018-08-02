@@ -5,16 +5,8 @@ import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.load.step.service.file.FileManagerService;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.load.step.client.LoadStepClient.OUTPUT_PROGRESS_PERIOD_MILLIS;
-import static com.emc.mongoose.load.step.file.FileManager.APPEND_OPEN_OPTIONS;
-
 import com.github.akurilov.commons.system.SizeInBytes;
-
 import com.github.akurilov.confuse.Config;
-
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
 import org.apache.logging.log4j.Level;
 
 import java.io.EOFException;
@@ -29,6 +21,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.load.step.client.LoadStepClient.OUTPUT_PROGRESS_PERIOD_MILLIS;
+import static com.emc.mongoose.load.step.file.FileManager.APPEND_OPEN_OPTIONS;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 public final class ItemOutputFileAggregator
 implements AutoCloseable {
