@@ -102,7 +102,13 @@ extends PatternDefinedSupplierImpl {
 		getSuppliers()[index] = getSupplierFactory().createSupplier(type, seed, format, range);
 	}
 
-	private static final ThreadLocal<StringBuilder> STRING_BULDER = ThreadLocal.withInitial(StringBuilder::new);
+	private static final ThreadLocal<StringBuilder>
+		STRING_BULDER = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
 	/**
 	 * This method can be used for debug
 	 * @return a string with fields' content

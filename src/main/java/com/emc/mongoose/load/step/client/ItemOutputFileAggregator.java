@@ -1,6 +1,5 @@
 package com.emc.mongoose.load.step.client;
 
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.load.step.service.file.FileManagerService;
 import com.emc.mongoose.logging.LogUtil;
@@ -94,8 +93,7 @@ implements AutoCloseable {
 							SizeInBytes.formatFixedSize(byteCounter.longValue())
 						);
 					}
-				} catch(final InterruptedException e) {
-					throw new InterruptRunException(e);
+				} catch(final InterruptedException ok) {
 				}
 			}
 		);

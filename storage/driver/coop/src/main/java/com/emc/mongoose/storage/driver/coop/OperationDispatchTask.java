@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.driver.coop;
 
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.logging.LogUtil;
@@ -18,6 +17,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -114,8 +114,7 @@ extends ExclusiveFiberBase {
 	}
 
 	@Override
-	protected final void doClose()
-	throws InterruptRunException {
+	protected final void doClose() {
 		try {
 			if(buffLock.tryLock(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 				buff.clear();
@@ -123,7 +122,7 @@ extends ExclusiveFiberBase {
 				Loggers.ERR.warn("BufferLock timeout on close");
 			}
 		} catch(final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throw new CancellationException();
 		}
 	}
 }

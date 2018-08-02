@@ -5,7 +5,6 @@ import com.github.akurilov.commons.net.FixedPortRmiSocketFactory;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.lang.ref.WeakReference;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -29,22 +28,20 @@ import java.util.Map;
  */
 public abstract class ServiceUtil {
 
-	private static final Map<Integer, WeakReference<Registry>> REGISTRY_MAP = new HashMap<>();
+	private static Map<Integer, Registry> REGISTRY_MAP = new HashMap<>();
 	private static final String RMI_SCHEME = "rmi";
 	private static final String KEY_RMI_HOSTNAME = "java.rmi.server.hostname";
-	private static final Map<String, WeakReference<Service>> SVC_MAP = new HashMap<>();
+	private static final Map<String, Service> SVC_MAP = new HashMap<>();
 
 	public static final MBeanServer MBEAN_SERVER = ManagementFactory.getPlatformMBeanServer();
 
-	public static void ensureRmiRegistryIsAvailableAt(final int port)
+	public static synchronized void ensureRmiRegistryIsAvailableAt(final int port)
 	throws RemoteException {
-		synchronized(REGISTRY_MAP) {
-			if(!REGISTRY_MAP.containsKey(port)) {
-				try {
-					REGISTRY_MAP.put(port, new WeakReference<>(LocateRegistry.createRegistry(port)));
-				} catch(final RemoteException e) {
-					REGISTRY_MAP.put(port, new WeakReference<>(LocateRegistry.getRegistry(port)));
-				}
+		if(!REGISTRY_MAP.containsKey(port)) {
+			try {
+				REGISTRY_MAP.put(port, LocateRegistry.createRegistry(port));
+			} catch(final RemoteException e) {
+				REGISTRY_MAP.put(port, LocateRegistry.getRegistry(port));
 			}
 		}
 	}
@@ -162,7 +159,7 @@ public abstract class ServiceUtil {
 			svcUri = getLocalSvcUri(svcName, port).toString();
 			if(!SVC_MAP.containsKey(svcName + ":" + port)) {
 				Naming.rebind(svcUri, svc);
-				SVC_MAP.put(svcName + ":" + port, new WeakReference<>(svc));
+				SVC_MAP.put(svcName + ":" + port, svc);
 			} else {
 				throw new AssertionError("Service already registered");
 			}
@@ -213,21 +210,17 @@ public abstract class ServiceUtil {
 
 		synchronized(SVC_MAP) {
 			while(!SVC_MAP.isEmpty()) {
-				final Service svc = SVC_MAP.values().iterator().next().get();
-				if(svc != null) {
-					try {
-						System.out.println("Service closed: " + close(svc));
-					} catch(final RemoteException | MalformedURLException e) {
-						e.printStackTrace(System.err);
-					}
+				final Service svc = SVC_MAP.values().iterator().next();
+				try {
+					System.out.println("Service closed: " + close(svc));
+				} catch(final RemoteException | MalformedURLException e) {
+					e.printStackTrace(System.err);
 				}
 			}
 			SVC_MAP.clear();
 		}
 
-		synchronized(REGISTRY_MAP) {
-			REGISTRY_MAP.clear();
-		}
+		REGISTRY_MAP.clear();
 	}
 
 }

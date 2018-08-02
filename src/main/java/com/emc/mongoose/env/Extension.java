@@ -28,7 +28,7 @@ public interface Extension {
 		return extensions;
 	}
 
-	static URLClassLoader extClassLoader(final File dirExt) {
+	static ClassLoader extClassLoader(final File dirExt) {
 		final URLClassLoader extClsLoader;
 		if(!dirExt.exists() || !dirExt.isDirectory()) {
 			LOG.warning("No \"" + dirExt.getAbsolutePath() + "\" directory, loaded no extensions");

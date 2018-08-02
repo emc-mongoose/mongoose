@@ -5,7 +5,7 @@ while(true) {
 				"load": {
 					"step": {
 						"limit": {
-							"time": 1
+							"count" : 1000
 						}
 					}
 				}

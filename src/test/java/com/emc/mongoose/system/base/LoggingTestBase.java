@@ -81,7 +81,7 @@ extends ParameterizedSysTestBase {
 		.get(USER_HOME, "." + APP_NAME, APP_VERSION)
 		.toString();
 
-	protected static final int LOG_FILE_TIMEOUT_SEC = 15;
+	protected static int LOG_FILE_TIMEOUT_SEC = 15;
 	
 	protected String stepId;
 	protected BufferingOutputStream stdOutStream;

@@ -42,7 +42,9 @@ public class ConcurrentSlidingWindowReservoir
 	public Snapshot getSnapshot() {
 		final long[] values = new long[size()];
 		for(int i = 0; i < values.length; i++) {
-			values[i] = measurements[i];
+			synchronized(this) {
+				values[i] = measurements[i];
+			}
 		}
 		return new UniformSnapshot(values);
 	}
