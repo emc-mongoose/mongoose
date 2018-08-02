@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.net.http.s3;
 
-
 import com.emc.mongoose.data.DataInput;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
@@ -60,7 +60,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -99,7 +98,8 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	protected String requestNewPath(final String path) {
+	protected String requestNewPath(final String path)
+	throws InterruptRunException {
 
 		// check the destination bucket if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
@@ -120,7 +120,7 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			checkBucketResp = executeHttpRequest(checkBucketReq);
 		} catch(final InterruptedException e) {
-			throw new CancellationException();
+			throw new InterruptRunException(e);
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -154,7 +154,7 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putBucketResp = executeHttpRequest(putBucketReq);
 			} catch(final InterruptedException e) {
-				throw new CancellationException();
+				throw new InterruptRunException(e);
 			} catch(final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
@@ -184,7 +184,7 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			getBucketVersioningResp = executeHttpRequest(getBucketVersioningReq);
 		} catch(final InterruptedException e) {
-			throw new CancellationException();
+			throw new InterruptRunException(e);
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -222,7 +222,7 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
 			} catch(final InterruptedException e) {
-				throw new CancellationException();
+				throw new InterruptRunException(e);
 			} catch(final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
@@ -252,7 +252,7 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
 			} catch(final InterruptedException e) {
-				throw new CancellationException();
+				throw new InterruptRunException(e);
 			} catch(final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
@@ -280,7 +280,7 @@ extends HttpStorageDriverBase<I, O> {
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
-	) throws IOException {
+	) throws InterruptRunException, IOException {
 
 		final int countLimit = count < 1 || count > AmzS3Api.MAX_KEYS_LIMIT ? AmzS3Api.MAX_KEYS_LIMIT : count;
 
@@ -346,7 +346,7 @@ extends HttpStorageDriverBase<I, O> {
 				buff.add(null); // poison
 			}
 		} catch(final InterruptedException e) {
-			throw new CancellationException();
+			throw new InterruptRunException(e);
 		} catch(final SAXException | ParserConfigurationException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the XML response parser");
 		} catch(final ConnectException e) {

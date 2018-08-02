@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.step.weighted;
 
 import com.emc.mongoose.env.Extension;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.load.step.client.LoadStepClient;
 import com.emc.mongoose.load.step.client.LoadStepClientBase;
@@ -21,7 +22,6 @@ import org.apache.logging.log4j.Level;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
 
 public class WeightedLoadStepClient
 extends LoadStepClientBase {
@@ -44,7 +44,7 @@ extends LoadStepClientBase {
 
 	@Override
 	protected void init()
-	throws IllegalStateException {
+	throws InterruptRunException, IllegalStateException {
 
 		final String autoStepId = "weighted_" + LogUtil.getDateTimeStamp();
 		final Config stepConfig = config.configVal("load-step");
@@ -64,7 +64,7 @@ extends LoadStepClientBase {
 				subConfig = new BasicConfig(config.pathSep(), config.schema(), mergedConfigTree);
 			} catch(final InvalidValueTypeException | InvalidValuePathException e) {
 				LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
-				throw new CancellationException();
+				throw new InterruptRunException(e);
 			}
 
 			final OpType opType = OpType.valueOf(config.stringVal("op-type").toUpperCase());

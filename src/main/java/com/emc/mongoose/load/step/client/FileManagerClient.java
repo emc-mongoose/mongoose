@@ -6,9 +6,7 @@ import com.emc.mongoose.svc.ServiceUtil;
 
 import org.apache.logging.log4j.Level;
 
-
 public interface FileManagerClient {
-
 	static FileManagerService resolve(final String nodeAddrWithPort) {
 		try {
 			return (FileManagerService) ServiceUtil.resolve(nodeAddrWithPort, FileManagerService.SVC_NAME);

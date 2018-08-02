@@ -28,7 +28,7 @@ implements Output<T> {
 	
 	@Override
 	public final int put(final List<T> buffer) {
-		item = buffer.size() > 0 ? null : buffer.get(buffer.size() - 1);
+		item = buffer.size() > 0 ? buffer.get(buffer.size() - 1) : null;
 		return 1;
 	}
 	

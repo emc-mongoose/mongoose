@@ -23,10 +23,10 @@ extends DataOperationImpl<I>
 implements CompositeDataOperation<I> {
 
 	private long sizeThreshold;
-	private AtomicInteger pendingSubTasksCount = new AtomicInteger(-1);
+	private final AtomicInteger pendingSubTasksCount = new AtomicInteger(-1);
 
-	private transient final Map<String, String> contextData = new HashMap<>();
-	private transient final List<PartialDataOperation<I>> subTasks = new ArrayList<>();
+	private final Map<String, String> contextData = new HashMap<>();
+	private final List<PartialDataOperation<I>> subTasks = new ArrayList<>();
 
 	public CompositeDataOperationImpl() {
 		super();
