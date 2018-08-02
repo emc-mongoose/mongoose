@@ -1,7 +1,6 @@
 package com.emc.mongoose.load.step.pipeline;
 
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.load.step.client.LoadStepClient;
 import com.emc.mongoose.load.step.client.LoadStepClientBase;
@@ -22,6 +21,7 @@ import org.apache.logging.log4j.Level;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 public class PipelineLoadStepClient
 extends LoadStepClientBase  {
@@ -39,7 +39,7 @@ extends LoadStepClientBase  {
 
 	@Override
 	protected void init()
-	throws InterruptRunException, IllegalStateException {
+	throws IllegalStateException {
 
 		final String autoStepId = "pipeline_" + LogUtil.getDateTimeStamp();
 		final Config stepConfig = config.configVal("load-step");
@@ -58,7 +58,7 @@ extends LoadStepClientBase  {
 				subConfig = new BasicConfig(config.pathSep(), config.schema(), mergedConfigTree);
 			} catch(final InvalidValueTypeException | InvalidValuePathException e) {
 				LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
-				throw new InterruptRunException(e);
+				throw new CancellationException();
 			}
 			final OpType opType = OpType.valueOf(config.stringVal("load-op-type").toUpperCase());
 			final int concurrencyLimit = config.intVal("storage-driver-limit-concurrency");

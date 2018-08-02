@@ -22,7 +22,7 @@ import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
 public final class StepResultsMetricsLogMessage
 extends LogMessageBase {
 	
-	private final MetricsContext metricsCtx;
+	private MetricsContext metricsCtx;
 	
 	public StepResultsMetricsLogMessage(final MetricsContext metricsCtx) {
 		this.metricsCtx = metricsCtx;

@@ -1,7 +1,10 @@
 package com.emc.mongoose.logging;
 
+import com.emc.mongoose.Constants;
 import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.util.StringBuilderFormattable;
+
+import java.text.NumberFormat;
 
 import static java.lang.ThreadLocal.withInitial;
 

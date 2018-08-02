@@ -13,7 +13,7 @@ public class RangeDefinedDateFormattingSupplier
 extends RangeDefinedLongSupplier
 implements RangeDefinedSupplier<Date> {
 	
-	private final Format format;
+	private Format format;
 	
 	public RangeDefinedDateFormattingSupplier(
 		final long seed, final Date startDate, final Date endDate, final String formatStr
@@ -23,7 +23,7 @@ implements RangeDefinedSupplier<Date> {
 			null : FastDateFormat.getInstance(formatStr);
 	}
 	
-	private static final ThreadLocal<Date> DATE = ThreadLocal.withInitial(Date::new);
+	private static ThreadLocal<Date> DATE = ThreadLocal.withInitial(Date::new);
 	
 	@Override
 	public final String get() {

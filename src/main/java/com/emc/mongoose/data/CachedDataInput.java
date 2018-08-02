@@ -20,7 +20,8 @@ public class CachedDataInput
 extends DataInputBase {
 
 	private int layersCacheCountLimit;
-	private final ThreadLocal<Int2ObjectOpenHashMap<MappedByteBuffer>> thrLocLayersCache = new ThreadLocal<>();
+	private final transient ThreadLocal<Int2ObjectOpenHashMap<MappedByteBuffer>>
+		thrLocLayersCache = new ThreadLocal<>();
 
 	public CachedDataInput() {
 		super();

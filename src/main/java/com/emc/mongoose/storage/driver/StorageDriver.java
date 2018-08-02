@@ -1,9 +1,7 @@
 package com.emc.mongoose.storage.driver;
 
-import com.emc.mongoose.concurrent.Daemon;
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.item.op.Operation;
@@ -22,7 +20,6 @@ import com.github.akurilov.confuse.Config;
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.CloseableThreadContext.Instance;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +29,7 @@ import java.util.stream.Collectors;
  Created on 11.07.16.
  */
 public interface StorageDriver<I extends Item, O extends Operation<I>>
-extends Daemon, Input<O>, Output<O> {
+extends AsyncRunnable, Input<O>, Output<O> {
 	
 	int BUFF_SIZE_MIN = 0x1_000;
 	int BUFF_SIZE_MAX = 0x1_000_000;
@@ -40,19 +37,7 @@ extends Daemon, Input<O>, Output<O> {
 	List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
-	) throws InterruptRunException, IOException;
-
-	@Override
-	boolean put(final O op)
-	throws InterruptRunException, EOFException, IOException;
-
-	@Override
-	int put(final List<O> ops, final int from, final int to)
-	throws InterruptRunException, EOFException, IOException;
-
-	@Override
-	int put(final List<O> ops)
-	throws InterruptRunException, EOFException, IOException;
+	) throws IOException;
 	
 	@Override
 	default void reset() {
@@ -74,15 +59,8 @@ extends Daemon, Input<O>, Output<O> {
 
 	void adjustIoBuffers(final long avgTransferSize, final OpType opType);
 
-	@Override
-	AsyncRunnable stop()
-	throws InterruptRunException;
-
-	@Override
-	void close()
-	throws InterruptRunException, IOException;
-
 	/**
+
 	 @param extensions the resolved runtime extensions
 	 @param storageConfig storage sub-config (also specifies the particular storage driver type)
 	 @param dataInput the data input used to produce/reproduce the data

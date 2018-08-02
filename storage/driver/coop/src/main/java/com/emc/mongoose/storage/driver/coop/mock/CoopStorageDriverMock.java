@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.mock;
 
 import com.emc.mongoose.data.DataInput;
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
@@ -76,7 +75,7 @@ extends CoopStorageDriverBase<I, O> {
 
 	@Override
 	protected int submit(final List<O> ops, final int from, final int to)
-	throws InterruptRunException, IllegalStateException {
+	throws IllegalStateException {
 		for(int i = from; i < to; i ++) {
 			submit(ops.get(i));
 		}
@@ -85,7 +84,7 @@ extends CoopStorageDriverBase<I, O> {
 
 	@Override
 	protected int submit(final List<O> ops)
-	throws InterruptRunException, IllegalStateException {
+	throws IllegalStateException {
 		for(final O op: ops) {
 			submit(op);
 		}
