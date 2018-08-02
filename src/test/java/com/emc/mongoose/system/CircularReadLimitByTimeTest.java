@@ -69,7 +69,7 @@ import static org.junit.Assert.assertTrue;
 	private final String SCENARIO_PATH = containerScenarioPath(getClass());
 	private final int timeoutInMillis = 1000_000;
 	private final int timeLimitInSec = 65; //1m + up to 5s for the precondition job
-	private final String ITEM_OUTPUT_FILE = CONTAINER_SHARE_PATH + "/CircularReadLimitByTime.csv";
+	private final String ITEM_OUTPUT_FILE = "/CircularReadLimitByTime.csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -123,7 +123,7 @@ import static org.junit.Assert.assertTrue;
 		}
 		final List<String> env =
 			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
-		env.add("FILE_NAME=" + ITEM_OUTPUT_FILE);
+		env.add("FILE_NAME=" + CONTAINER_SHARE_PATH + ITEM_OUTPUT_FILE);
 		final List<String> args = new ArrayList<>();
 		switch(storageType) {
 			case ATMOS:
@@ -201,7 +201,7 @@ import static org.junit.Assert.assertTrue;
 		testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
 		assertTrue("There should be more than 1 record in the I/O trace log file", ioTraceRecCount.sum() > 1);
 		final List<CSVRecord> items = new ArrayList<>();
-		try(final BufferedReader br = new BufferedReader(new FileReader(ITEM_OUTPUT_FILE))) {
+		try(final BufferedReader br = new BufferedReader(new FileReader(HOST_SHARE_PATH + ITEM_OUTPUT_FILE))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
 			for(final CSVRecord csvRecord : csvParser) {
 				items.add(csvRecord);
