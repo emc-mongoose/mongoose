@@ -13,7 +13,6 @@ import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.rmi.RemoteException;
 import java.util.List;
-import java.util.Map;
 
 public final class LoadStepManagerServiceImpl
 extends ServiceBase

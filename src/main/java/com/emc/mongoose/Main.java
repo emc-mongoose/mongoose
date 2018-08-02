@@ -6,6 +6,7 @@ import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.env.MainInstaller;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import static com.emc.mongoose.Constants.DIR_EXT;
@@ -36,6 +37,7 @@ import static org.apache.logging.log4j.CloseableThreadContext.put;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.io.IOException;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,7 +45,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 
 public final class Main {
@@ -59,106 +60,91 @@ public final class Main {
 			final Instance logCtx = put(KEY_STEP_ID, initialStepId)
 				.put(KEY_CLASS_NAME, Main.class.getSimpleName())
 		) {
-
 			// invoke the main installer
 			mainInstaller.accept(appHomePath);
-
 			// resolve the initial config schema
-			final Map<String, Object> mainConfigSchema = SchemaProvider
-				.resolve(APP_NAME, Thread.currentThread().getContextClassLoader())
-				.stream()
-				.findFirst()
-				.orElseThrow(IllegalStateException::new);
-
+			final Map<String, Object> mainConfigSchema = SchemaProvider.resolve(APP_NAME,
+				Thread.currentThread().getContextClassLoader()
+			).stream().findFirst().orElseThrow(IllegalStateException::new);
 			// load the defaults
-			final Config mainDefaults = ConfigUtil.loadConfig(
-				Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile(), mainConfigSchema
-			);
-
+			final Config mainDefaults =
+				ConfigUtil.loadConfig(Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile(), mainConfigSchema);
 			// extensions
-			final ClassLoader extClsLoader = Extension.extClassLoader(
-				Paths.get(appHomePath.toString(), DIR_EXT).toFile()
-			);
-			final List<Extension> extensions = Extension.load(extClsLoader);
-			// install the extensions
-			final StringBuilder availExtMsg = new StringBuilder("Available/installed extensions:\n");
-			extensions
-				.forEach(
-					ext -> {
-						ext.install(appHomePath);
-						final String extId = ext.id();
-						final String extFqcn = ext.getClass().getCanonicalName();
-						availExtMsg
-							.append('\t')
-							.append(extId)
-							.append(' ')
-							.append(StringUtils.repeat("-", extId.length() < 30 ? 30 - extId.length() : 1))
-							.append("> ")
-							.append(extFqcn)
-							.append('\n');
-					}
-				);
-			Loggers.MSG.info(availExtMsg);
-			// apply the extensions defaults
-			final Config config;
-			try {
-				final List<Config> allDefaults = extensions
-					.stream()
-					.map(ext -> ext.defaults(appHomePath))
-					.filter(Objects::nonNull)
-					.collect(Collectors.toList());
-				allDefaults.add(mainDefaults);
-				config = ConfigUtil.merge(mainDefaults.pathSep(), allDefaults);
-			} catch(final Exception e) {
-				LogUtil.exception(Level.ERROR, e, "Failed to load the defaults");
-				return;
+			try(
+				final URLClassLoader extClsLoader = Extension.extClassLoader(
+					Paths.get(appHomePath.toString(), DIR_EXT).toFile()
+				)
+			) {
+				final List<Extension> extensions = Extension.load(extClsLoader);
+				// install the extensions
+				final StringBuilder availExtMsg = new StringBuilder("Available/installed extensions:\n");
+				extensions.forEach(ext -> {
+					ext.install(appHomePath);
+					final String extId = ext.id();
+					final String extFqcn = ext.getClass().getCanonicalName();
+					availExtMsg.append('\t').append(extId).append(' ').append(
+						StringUtils.repeat("-", extId.length() < 30 ? 30 - extId.length() : 1)).append("> ").append(
+						extFqcn).append('\n');
+				});
+				Loggers.MSG.info(availExtMsg);
+				// apply the extensions defaults
+				final Config config;
+				try {
+					final List<Config> allDefaults = extensions
+						.stream()
+						.map(ext -> ext.defaults(appHomePath))
+						.filter(Objects::nonNull)
+						.collect(Collectors.toList());
+					allDefaults.add(mainDefaults);
+					config = ConfigUtil.merge(mainDefaults.pathSep(), allDefaults);
+				} catch(final Exception e) {
+					LogUtil.exception(Level.ERROR, e, "Failed to load the defaults");
+					return;
+				}
+				// parse the CLI args and apply them to the config instance
+				try {
+					final Map<String, String> parsedArgs = CliArgUtil.parseArgs(args);
+					final List<Map<String, Object>> aliasingConfig = config.listVal("aliasing");
+					final Map<String, String> aliasedArgs = AliasingUtil.apply(parsedArgs, aliasingConfig);
+					aliasedArgs.forEach(config::val);
+				} catch(final IllegalArgumentNameException e) {
+					final String formattedAllCliArgs = allCliArgs(config.schema(), config.pathSep()).stream().collect(
+						Collectors.joining("\n", "\t", ""));
+					Loggers.ERR.fatal("Invalid argument: \"{}\"\nThe list of all possible args:\n{}", e.getMessage(),
+						formattedAllCliArgs
+					);
+					return;
+				} catch(final InvalidValuePathException e) {
+					Loggers.ERR.fatal("Invalid configuration option: \"{}\"", e.path());
+					return;
+				} catch(final InvalidValueTypeException e) {
+					Loggers.ERR.fatal(
+						"Invalid configuration value type for the option \"{}\", expected: {}, " + "actual: {}", e.path(), e.expectedType(), e.actualType()
+					);
+					return;
+				}
+				if(null == config.val("load-step-id")) {
+					config.val("load-step-id", initialStepId);
+					config.val("load-step-idAutoGenerated", true);
+				}
+				Arrays.stream(args).forEach(Loggers.CLI::info);
+				Loggers.CONFIG.info(ConfigUtil.toString(config));
+				if(config.boolVal("run-node")) {
+					runNode(config, extensions);
+				} else {
+					runScenario(config, extensions, extClsLoader, appHomePath);
+				}
 			}
-
-			// parse the CLI args and apply them to the config instance
-			try {
-				final Map<String, String> parsedArgs = CliArgUtil.parseArgs(args);
-				final List<Map<String, Object>> aliasingConfig = config.listVal("aliasing");
-				final Map<String, String> aliasedArgs = AliasingUtil.apply(parsedArgs, aliasingConfig);
-				aliasedArgs.forEach(config::val);
-			} catch(final IllegalArgumentNameException e) {
-				final String formattedAllCliArgs = allCliArgs(config.schema(), config.pathSep())
-					.stream()
-					.collect(Collectors.joining("\n", "\t", ""));
-				Loggers.ERR.fatal(
-					"Invalid argument: \"{}\"\nThe list of all possible args:\n{}", e.getMessage(), formattedAllCliArgs
-				);
-				return;
-			} catch(final InvalidValuePathException e) {
-				Loggers.ERR.fatal("Invalid configuration option: \"{}\"", e.path());
-				return;
-			} catch(final InvalidValueTypeException e) {
-				Loggers.ERR.fatal(
-					"Invalid configuration value type for the option \"{}\", expected: {}, " +
-						"actual: {}", e.path(), e.expectedType(), e.actualType()
-				);
-				return;
-			}
-
-			if(null == config.val("load-step-id")) {
-				config.val("load-step-id", initialStepId);
-				config.val("load-step-idAutoGenerated", true);
-			}
-
-			Arrays.stream(args).forEach(Loggers.CLI::info);
-			Loggers.CONFIG.info(ConfigUtil.toString(config));
-			if(config.boolVal("run-node")) {
-				runNode(config, extensions);
-			} else {
-				runScenario(config, extensions, extClsLoader, appHomePath);
-			}
-		} catch(final CancellationException e) {
+		} catch(final InterruptedException | InterruptRunException e) {
+			System.out.println("Boooo!!!");
 		} catch(final Exception e) {
 			LogUtil.exception(Level.FATAL, e, "Unexpected failure");
 			e.printStackTrace();
 		}
 	}
 
-	private static void runNode(final Config config, final List<Extension> extensions) {
+	private static void runNode(final Config config, final List<Extension> extensions)
+	throws InterruptRunException, InterruptedException {
 		final int listenPort = config.intVal("load-step-node-port");
 		try(
 			final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
@@ -167,6 +153,8 @@ public final class Main {
 			fileMgrSvc.start();
 			scenarioStepSvc.start();
 			scenarioStepSvc.await();
+		} catch(final InterruptedException | InterruptRunException e) {
+			throw e;
 		} catch(final Throwable cause) {
 			cause.printStackTrace(System.err);
 		}

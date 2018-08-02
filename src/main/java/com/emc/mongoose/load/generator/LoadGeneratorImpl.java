@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.op.OperationsBuilder;
@@ -97,7 +98,8 @@ implements LoadGenerator<I, O> {
 	}
 
 	@Override
-	protected final void invokeTimed(final long startTimeNanos) {
+	protected final void invokeTimed(final long startTimeNanos)
+	throws InterruptRunException {
 
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 		final CircularBuffer<O> opBuff = threadLocalOpBuff.get();
@@ -105,7 +107,6 @@ implements LoadGenerator<I, O> {
 		int n = batchSize - pendingOpCount;
 
 		try {
-
 			if(n > 0) { // the tasks buffer has free space for the new tasks
 				if(itemInputFinishFlag) { // items input was exhausted
 					if(!recycleFlag) { // never recycled -> recycling is not enabled
@@ -142,11 +143,10 @@ implements LoadGenerator<I, O> {
 					}
 				}
 			}
-
 			if(pendingOpCount > 0) {
 				n = pendingOpCount;
 				// acquire the permit for all the throttles
-				for(int i = 0; i < throttles.length; i ++) {
+				for(int i = 0; i < throttles.length; i++) {
 					final Object throttle = throttles[i];
 					if(throttle instanceof Throttle) {
 						n = ((Throttle) throttle).tryAcquire(n);
@@ -201,11 +201,12 @@ implements LoadGenerator<I, O> {
 				}
 			}
 
+		} catch(final EOFException ok) {
+		} catch(final InterruptRunException e) {
+			throw e;
 		} catch(final Throwable t) {
-			if(!(t instanceof EOFException)) {
-				LogUtil.exception(Level.ERROR, t, "{}: unexpected failure", name);
-				t.printStackTrace(System.err);
-			}
+			LogUtil.exception(Level.ERROR, t, "{}: unexpected failure", name);
+			t.printStackTrace(System.err);
 		} finally {
 			if(isFinished()) {
 				try {
@@ -217,7 +218,7 @@ implements LoadGenerator<I, O> {
 	}
 
 	private static <I extends Item> List<I> getItems(final Input<I> itemInput, final int n)
-	throws IOException {
+	throws InterruptRunException, IOException {
 		// prepare the items buffer
 		final List<I> items = new ArrayList<>(n);
 		try {
@@ -290,7 +291,7 @@ implements LoadGenerator<I, O> {
 
 	@Override
 	protected final void doClose()
-	throws IOException {
+	throws InterruptRunException, IOException {
 		recycleQueue.clear();
 		// the item input may be instantiated by the load generator builder which has no reference to it so the load
 		// generator builder should close it
@@ -298,6 +299,8 @@ implements LoadGenerator<I, O> {
 			try {
 				inputLock.tryLock(Fiber.TIMEOUT_NANOS, TimeUnit.NANOSECONDS);
 				itemInput.close();
+			} catch(final InterruptedException e) {
+				throw new InterruptRunException(e);
 			} catch(final Exception e) {
 				LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", toString());
 			}

@@ -1,5 +1,6 @@
 package com.emc.mongoose.item.io;
 
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.item.DataItemFactory;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
@@ -39,7 +40,7 @@ extends BufferingInputBase<I> {
 
 	@Override
 	protected final int loadMoreItems(final I lastItem)
-	throws IOException {
+	throws InterruptRunException, IOException {
 		if(poisonedFlag) {
 			return 0;
 		}
