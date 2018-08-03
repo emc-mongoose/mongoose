@@ -9,18 +9,18 @@
 3.1. [States](#31-states)<br/>
 3.2. [Defects Priority](#32-defects-priority)<br/>
 3.3. [Specific Properties](#33-specific-properties)<br/>
-4. [Testing](#4-testing)<br/>
-4.1. [Unit Tests](#41-unit-tests)<br/>
-4.2. [Integration Tests](#42-integration-tests)<br/>
-4.3. [System Tests](#43-system-tests)<br/>
-4.3.1. [Containerized Tests](#431-containerized-tests)<br/>
-5. [Releasing](#5-releasing)<br/>
-6. [Code](#6-code)<br/>
-6.1. [Branching](#61-branching)<br/>
-6.2. [Style](#62-style)<br/>
-6.3. [Exception Handling](#63-exception-handling)<br/>
-6.4. [Performance](#64-performance)<br/>
-7. [Continuous Integration](#7-continuous-integration)<br/>
+4. [Continuous Integration](#7-continuous-integration)<br/>
+4.1 [Testing](#4-testing)<br/>
+4.1.1. [Unit Tests](#411-unit-tests)<br/>
+4.1.2. [Integration Tests](#412-integration-tests)<br/>
+4.1.3. [System Tests](#413-system-tests)<br/>
+4.1.3.1. [Containerized Tests](#4131-containerized-tests)<br/>
+4.2. [Releasing](#42-releasing)<br/>
+5. [Code](#6-code)<br/>
+5.1. [Branching](#61-branching)<br/>
+5.2. [Style](#62-style)<br/>
+5.3. [Exception Handling](#63-exception-handling)<br/>
+5.4. [Performance](#64-performance)<br/>
 
 # 1. Contributors
 
@@ -71,6 +71,13 @@ Types:
 * Task
 * Sub-task
 
+| Type     | Description |
+|----------|-------------|
+| Defect   | The defect/bug which **affects the released version** (the type "Task" should be used if a defect/bug affects the version which is not released yet) |
+| Story    | High-level use case or a long-term activity aspect (testing, performance, etc) |
+| Task     | A task which couldn't be included into any defect/story |
+| Sub-task | A task which could be included into a defect/story |
+
 Tracker link: https://mongoose-issues.atlassian.net/projects/BASE
 
 ## 3.1. States
@@ -120,21 +127,25 @@ Tracker link: https://mongoose-issues.atlassian.net/projects/BASE
 | Purpose               | Story                  | Reporter: user/developer/owner | Which particular problem should be solved with Mongoose? The links to the related documents and literature are encouraged.
 | Requirements          | Story                  | Reporter: user/developer/owner | Both functional and performance requirements are mandatory. Optionally the additional requirements/possible enhancements may be specified.
 
-# 4. Testing
+# 4. Continuous Integration
 
-## 4.1. Unit Tests
+https://travis-ci.org/emc-mongoose/mongoose
+
+## 4.1. Testing
+
+### 4.1.1. Unit Tests
 
 ```bash
 ./gradlew clean test
 ```
 
-## 4.2. Integration Tests
+### 4.1.2. Integration Tests
 
 ```bash
 ./gradlew clean integrationTest
 ```
 
-## 4.3. System Tests
+### 4.1.3. System Tests
 
 The system tests use the [JUnit parameterization](https://github.com/junit-team/junit4/wiki/Parameterized-tests). The parameter values are taken from the environment. The list of the system tests parameters below:
 
@@ -159,7 +170,7 @@ export ITEM_SIZE=small
 
 Note that some system tests will not run for some parameter values. The acceptable parameter values are declared explicitly in the `.travis.yml` file.
 
-### 4.3.1. Containerized Tests
+#### 4.1.3.1. Containerized Tests
 
 Since v4.0.0 all system tests are containerized. To run a system test locally it's necessary to
 prepare 3 testing Docker images manually:
@@ -202,7 +213,7 @@ export ITEM_SIZE=small
 ./gradlew clean systemTest --tests com.emc.mongoose.system.CreateNoLimitTest
 ```
 
-# 5. Releasing
+## 4.2. Releasing
 
 1. Ensure all tests are OK
 2. Ensure the new version documentation is ready
@@ -230,9 +241,9 @@ export ITEM_SIZE=small
       it.
 9. Update the projects depending on the Mongoose's API (storage drivers, at least)
 
-# 6. Code
+# 5. Code
 
-## 6.1. Branches
+## 5.1. Branches
 
 The branching rules in the Mongoose project are simple:
 ![branching](doc/images/branching.png)
@@ -240,7 +251,7 @@ The branching rules in the Mongoose project are simple:
 2. The integration branch is named "integration". All feature PRs should base on the integration branch.
 3. The PR/merge to the master branch is performed when the release decision is made (all tests are ok, documentation is added, etc).
 
-## 6.2. Style
+## 5.2. Style
 
 * Indent code with TAB having width of 4 characters
 * Code line width: 120 characters
@@ -249,7 +260,7 @@ The branching rules in the Mongoose project are simple:
   * Default concrete implementation should be names as `FooImpl`
 * Any field/local variable should be *final* if possible
 
-## 6.3. Exception Handling
+## 5.3. Exception Handling
 
 The threads are not used in the usual way (*fibers* are used instead for the multitasking purposes). Therefore, having
 an `InterruptedException` thrown means that the run was interrupted externally. To stop the run, it's necessary to pass
@@ -272,7 +283,7 @@ occasionally:
     2. `Exception`
     3. `RuntimeException`
 
-## 6.4. Performance
+## 5.4. Performance
 Take care about the performance in the ***critical*** places:
 * Avoid *frequent* objects instantiation
 * Avoid unnecessary *frequent* allocation
@@ -284,8 +295,3 @@ Take care about the performance in the ***critical*** places:
 * Use thread locals (encryption, string builders)
 * Use buffering, buffer everything
 * Use batch processing if possible
-
-# 7. Continuous Integration
-
-https://travis-ci.org/emc-mongoose/mongoose
-

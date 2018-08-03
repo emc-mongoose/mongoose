@@ -8,8 +8,6 @@
 * [Overview](#overview)
 * [Features](#features)
 * [Documentation](#documentation)
-* [Contributors](#contributors)
-* [Links](#links)
 
 # Overview
 
