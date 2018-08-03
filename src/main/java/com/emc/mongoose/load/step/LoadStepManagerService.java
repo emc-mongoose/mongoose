@@ -6,7 +6,6 @@ import com.github.akurilov.confuse.Config;
 
 import java.rmi.RemoteException;
 import java.util.List;
-import java.util.Map;
 
 public interface LoadStepManagerService
 extends Service {

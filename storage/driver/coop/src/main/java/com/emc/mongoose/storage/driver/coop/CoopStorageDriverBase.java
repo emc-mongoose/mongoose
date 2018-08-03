@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.coop;
 
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.data.DataInput;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.op.Operation;
@@ -62,7 +63,7 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final boolean put(final O op)
-	throws EOFException {
+	throws InterruptRunException, EOFException {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
@@ -77,7 +78,7 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final int put(final List<O> ops, final int from, final int to)
-	throws EOFException {
+	throws InterruptRunException, EOFException {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
@@ -99,7 +100,7 @@ implements StorageDriver<I, O> {
 
 	@Override
 	public final int put(final List<O> ops)
-	throws EOFException {
+	throws InterruptRunException, EOFException {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
@@ -150,13 +151,13 @@ implements StorageDriver<I, O> {
 	}
 
 	protected abstract boolean submit(final O op)
-	throws IllegalStateException;
+	throws InterruptRunException, IllegalStateException;
 
 	protected abstract int submit(final List<O> ops, final int from, final int to)
-	throws IllegalStateException;
+	throws InterruptRunException, IllegalStateException;
 
 	protected abstract int submit(final List<O> ops)
-	throws IllegalStateException;
+	throws InterruptRunException, IllegalStateException;
 
 	@SuppressWarnings("unchecked")
 	protected final void opCompleted(final O op) {
@@ -202,7 +203,7 @@ implements StorageDriver<I, O> {
 
 	@Override
 	protected void doClose()
-	throws IOException, IllegalStateException {
+	throws InterruptRunException, IOException, IllegalStateException {
 		try(
 			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
 				.put(KEY_STEP_ID, stepId)

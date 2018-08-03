@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.coop.net.http.swift;
 
 import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.data.DataInput;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
@@ -14,7 +15,6 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.net.http.HttpStorageDriverBase;
-
 import static com.emc.mongoose.item.op.OpType.CREATE;
 import static com.emc.mongoose.item.op.Operation.SLASH;
 import static com.emc.mongoose.storage.driver.coop.net.http.swift.SwiftApi.AUTH_URI;
@@ -59,7 +59,6 @@ import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -86,7 +85,8 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	protected final String requestNewPath(final String path) {
+	protected final String requestNewPath(final String path)
+	throws InterruptRunException {
 
 		// check the destination container if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
@@ -107,7 +107,7 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			checkContainerResp = executeHttpRequest(checkContainerReq);
 		} catch(final InterruptedException e) {
-			throw new CancellationException();
+			throw new InterruptRunException(e);
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -156,7 +156,7 @@ extends HttpStorageDriverBase<I, O> {
 			try {
 				putContainerResp = executeHttpRequest(putContainerReq);
 			} catch(final InterruptedException e) {
-				throw new CancellationException();
+				throw new InterruptRunException(e);
 			} catch(final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
@@ -179,7 +179,8 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	protected final String requestNewAuthToken(final Credential credential) {
+	protected final String requestNewAuthToken(final Credential credential)
+	throws InterruptRunException {
 
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
@@ -206,7 +207,7 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			getAuthTokenResp = executeHttpRequest(getAuthTokenReq);
 		} catch(final InterruptedException e) {
-			throw new CancellationException();
+			throw new InterruptRunException(e);
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -222,7 +223,7 @@ extends HttpStorageDriverBase<I, O> {
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
-	) throws IOException {
+	) throws InterruptRunException, IOException {
 
 		final int countLimit = count < 1 || count > MAX_LIST_LIMIT ? MAX_LIST_LIMIT : count;
 		final String nodeAddr = storageNodeAddrs[0];
@@ -277,7 +278,7 @@ extends HttpStorageDriverBase<I, O> {
 				Loggers.ERR.warn("Failed to get the container listing, response: \"{}\"", respStatus);
 			}
 		} catch(final InterruptedException e) {
-			throw new CancellationException();
+			throw new InterruptRunException(e);
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}
@@ -287,7 +288,7 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override @SuppressWarnings("unchecked")
 	protected final boolean submit(final O op)
-	throws IllegalStateException {
+	throws InterruptRunException, IllegalStateException {
 		if(!isStarted()) {
 			throw new IllegalStateException();
 		}
@@ -311,7 +312,7 @@ extends HttpStorageDriverBase<I, O> {
 	
 	@Override @SuppressWarnings("unchecked")
 	protected final int submit(final List<O> ops, final int from, final int to)
-	throws IllegalStateException {
+	throws InterruptRunException, IllegalStateException {
 		if(!isStarted()) {
 			throw new IllegalStateException();
 		}
@@ -341,7 +342,7 @@ extends HttpStorageDriverBase<I, O> {
 							LogUtil.exception(
 								Level.DEBUG, e, "{}: interrupted while enqueueing the child sub-operations", toString()
 							);
-							throw new CancellationException();
+							throw new InterruptRunException(e);
 						}
 					} else {
 						throw new AssertionError("Composite load operation yields 0 sub-operations");

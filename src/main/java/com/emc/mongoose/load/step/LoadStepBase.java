@@ -2,12 +2,14 @@ package com.emc.mongoose.load.step;
 
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
+
+import com.emc.mongoose.concurrent.DaemonBase;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.env.Extension;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsSnapshot;
-import com.emc.mongoose.concurrent.DaemonBase;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -16,17 +18,15 @@ import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.impl.BasicConfig;
 
+import org.apache.logging.log4j.Level;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
-
-import com.github.akurilov.confuse.impl.BasicConfig;
-import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -62,25 +62,28 @@ implements LoadStep, Runnable {
 	}
 
 	@Override
-	public final void run() {
+	public final void run()
+	throws InterruptRunException {
 		try {
 			start();
 			try {
 				await(timeLimitSec, TimeUnit.SECONDS);
 			} catch(final IllegalStateException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to await \"{}\"", toString());
-			} catch(final InterruptedException e) {
-				throw new CancellationException();
 			}
-		} catch(final CancellationException e) {
-			throw e;
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.ERROR, e, "Failed to start \"{}\"", toString());
+		} catch(final InterruptedException e) {
+			throw new InterruptRunException(e);
+		} catch(final InterruptRunException e) {
+			throw e;
 		} catch(final Throwable cause) {
 			LogUtil.exception(Level.ERROR, cause, "Load step execution failure \"{}\"", toString());
 		} finally {
 			try {
 				close();
+			} catch(final InterruptRunException e) {
+				throw e;
 			} catch(final Exception e) {
 				LogUtil.exception(Level.WARN, e, "Failed to close \"{}\"", toString());
 				e.printStackTrace();
@@ -90,7 +93,7 @@ implements LoadStep, Runnable {
 
 	@Override
 	protected void doStart()
-	throws IllegalStateException {
+	throws InterruptRunException, IllegalStateException {
 
 		init();
 
@@ -107,6 +110,8 @@ implements LoadStep, Runnable {
 				timeLimitSec = t;
 			}
 			startTimeSec = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+		} catch(final InterruptRunException e) {
+			throw e;
 		} catch(final Throwable cause) {
 			LogUtil.exception(Level.WARN, cause, "{} step failed to start", id());
 		}
@@ -117,20 +122,21 @@ implements LoadStep, Runnable {
 				try {
 					MetricsManager.register(id(), metricsCtx);
 				} catch(final InterruptedException e) {
-					throw new CancellationException(e.getMessage());
+					throw new InterruptRunException(e);
 				}
 			}
 		);
 	}
 
-	protected abstract void doStartWrapped();
+	protected abstract void doStartWrapped()
+	throws InterruptRunException;
 
 	/**
 	 * Initializes the actual configuration and metrics contexts
 	 * @throws IllegalStateException if initialization fails
 	 */
 	protected abstract void init()
-	throws IllegalStateException;
+	throws InterruptRunException, IllegalStateException;
 
 	protected abstract void initMetrics(
 		final int originIndex, final OpType opType, final int concurrency, final Config metricsConfig,
@@ -138,20 +144,19 @@ implements LoadStep, Runnable {
 	);
 
 	@Override
-	protected void doStop() {
+	protected void doStop()
+	throws InterruptRunException {
 
-		if(metricsContexts != null) {
-			metricsContexts
-				.forEach(
-					metricsCtx -> {
-						try {
-							MetricsManager.unregister(id(), metricsCtx);
-						} catch(final InterruptedException e) {
-							throw new CancellationException(e.getMessage());
-						}
+		metricsContexts
+			.forEach(
+				metricsCtx -> {
+					try {
+						MetricsManager.unregister(id(), metricsCtx);
+					} catch(final InterruptedException e) {
+						throw new InterruptRunException(e);
 					}
-				);
-		}
+				}
+			);
 
 		final long t = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - startTimeSec;
 		if(t < 0) {
