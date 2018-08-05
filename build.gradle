@@ -55,7 +55,7 @@ ext {
             log4j              : "2.8.2",
             metrics            : "3.2.5",
             nagaina            : "3.6.10",
-            netty              : "4.1.17.Final",
+            netty              : "4.1.25.Final",
             nettyssl           : "2.0.12.Final",
             nettyConnectionPool: "1.0.3"
     ]
