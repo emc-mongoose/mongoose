@@ -177,8 +177,7 @@ implements AutoCloseable {
 								buff.reset();
 							} catch(final IOException e) {
 								LogUtil.exception(
-									Level.WARN, e,
-									"Failed to write the items input data to the {} file \"{}\"",
+									Level.WARN, e, "Failed to write the items input data to the {} file \"{}\"",
 									itemInputFileName, (fileMgr instanceof FileManagerService ? "remote" : "local")
 								);
 							}

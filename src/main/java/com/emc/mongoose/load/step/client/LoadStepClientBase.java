@@ -61,6 +61,8 @@ public abstract class LoadStepClientBase
 
 	private final List<LoadStep> stepSlices = new ArrayList<>();
 	private final List<FileManager> fileMgrs = new ArrayList<>();
+	// for the core configuration options which are using the files
+	private final List<AutoCloseable> itemDataInputFileSlicers = new ArrayList<>();
 	private final List<AutoCloseable> itemInputFileSlicers = new ArrayList<>();
 	private final List<AutoCloseable> itemOutputFileAggregators = new ArrayList<>();
 	private final List<AutoCloseable> opTraceLogFileAggregators = new ArrayList<>();
@@ -112,8 +114,11 @@ public abstract class LoadStepClientBase
 	private static List<String> remoteNodeAddrs(final Config config) {
 		final Config nodeConfig = config.configVal("load-step-node");
 		final int nodePort = nodeConfig.intVal("port");
-		return nodeConfig.<String>listVal("addrs").stream().map(
-			addr -> NetUtil.addPortIfMissing(addr, nodePort)).collect(Collectors.toList());
+		return nodeConfig
+			.<String>listVal("addrs")
+			.stream()
+			.map(addr -> NetUtil.addPortIfMissing(addr, nodePort))
+			.collect(Collectors.toList());
 	}
 
 	private static void initFileManagers(final List<String> nodeAddrs, final List<FileManager> fileMgrsDst) {
@@ -140,14 +145,24 @@ public abstract class LoadStepClientBase
 		} else {
 			itemDataLayerSize = new SizeInBytes(TypeUtil.typeConvert(itemDataInputLayerSizeRaw, int.class));
 		}
+		final String itemDataInputFile = itemDataInputConfig.stringVal("file");
+		final String itemDataInputSeed = itemDataInputConfig.stringVal("seed");
+		final int itemDataInputLayerCacheSize = itemDataInputLayerConfig.intVal("cache");
 		try(
-			final DataInput dataInput = DataInput.instance(itemDataInputConfig.stringVal("file"),
-				itemDataInputConfig.stringVal("seed"), itemDataLayerSize, itemDataInputLayerConfig.intVal("cache")
+			final DataInput dataInput = DataInput.instance(
+				itemDataInputFile, itemDataInputSeed, itemDataLayerSize, itemDataInputLayerCacheSize
 			);
-			final StorageDriver<Item, Operation<Item>> storageDriver = StorageDriver.instance(extensions, storageConfig,
-				dataInput, verifyFlag, batchSize, id()
-			); final Input<Item> itemInput = ItemInputFactory.createItemInput(itemConfig, batchSize, storageDriver)
+			final StorageDriver<Item, Operation<Item>> storageDriver = StorageDriver.instance(
+				extensions, storageConfig, dataInput, verifyFlag, batchSize, id()
+			);
+			final Input<Item> itemInput = ItemInputFactory.createItemInput(itemConfig, batchSize, storageDriver)
 		) {
+			if(null != itemDataInputFile && !itemDataInputFile.isEmpty()) {
+				itemDataInputFileSlicers.add(
+					new ItemDataInputFileSlicer(id(), fileMgrs, configSlices, itemDataInputFile, batchSize)
+				);
+				Loggers.MSG.debug("{}: item data input file slicer initialized", id());
+			}
 			if(null != itemInput) {
 				itemInputFileSlicers.add(new ItemInputFileSlicer(id(), fileMgrs, configSlices, itemInput, batchSize));
 				Loggers.MSG.debug("{}: item input file slicer initialized", id());
@@ -171,9 +186,10 @@ public abstract class LoadStepClientBase
 		final String storageAuthFile = storageConfig.stringVal("auth-file");
 		if(storageAuthFile != null && ! storageAuthFile.isEmpty()) {
 			storageAuthFileSlicers.add(
-				new TempInputTextFileSlicer(id(), storageAuthFile, fileMgrs, "storage-auth-file", configSlices,
-					batchSize
-				));
+				new TempInputTextFileSlicer(
+					id(), storageAuthFile, fileMgrs, "storage-auth-file", configSlices, batchSize
+				)
+			);
 			Loggers.MSG.debug("{}: storage auth file slicer initialized", id());
 		}
 	}
@@ -202,12 +218,13 @@ public abstract class LoadStepClientBase
 			final Config configSlice = configSlices.get(i);
 			final LoadStep stepSlice;
 			if(i == 0) {
-				stepSlice =
-					LoadStepFactory.createLocalLoadStep(configSlice, extensions, ctxConfigsSlices.get(i), stepTypeName);
+				stepSlice = LoadStepFactory.createLocalLoadStep(
+					configSlice, extensions, ctxConfigsSlices.get(i), stepTypeName
+				);
 			} else {
 				final String nodeAddrWithPort = nodeAddrs.get(i - 1);
-				stepSlice = LoadStepSliceUtil.resolveRemote(configSlice, ctxConfigsSlices.get(i), stepTypeName,
-					nodeAddrWithPort
+				stepSlice = LoadStepSliceUtil.resolveRemote(
+					configSlice, ctxConfigsSlices.get(i), stepTypeName, nodeAddrWithPort
 				);
 			}
 			stepSlices.add(stepSlice);
@@ -290,11 +307,11 @@ public abstract class LoadStepClientBase
 		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
 		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
 		// further usage
-		final MetricsContext metricsCtx =
-			new AggregatingMetricsContext(id(), opType, this::sliceCount, concurrencyLimit, concurrencyThreshold,
-				itemDataSize, metricsAvgPeriod, outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag,
-				metricsSumPerfDbOutputFlag, () -> metricsSnapshotsByIndex(originIndex)
-			);
+		final MetricsContext metricsCtx = new AggregatingMetricsContext(
+			id(), opType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
+			outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
+			() -> metricsSnapshotsByIndex(originIndex)
+		);
 		metricsContexts.add(metricsCtx);
 	}
 
@@ -306,9 +323,7 @@ public abstract class LoadStepClientBase
 	@Override
 	protected final void doShutdown() {
 		stepSlices.parallelStream().forEach(stepSlice -> {
-			try(
-				final Instance logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())
-			) {
+			try(final Instance logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 				stepSlice.shutdown();
 			} catch(final RemoteException e) {
 				LogUtil.exception(Level.WARN, e, "{}: failed to shutdown the step service {}", id(), stepSlice);
@@ -419,6 +434,23 @@ public abstract class LoadStepClientBase
 			metricsAggregator.close();
 			metricsAggregator = null;
 		}
+
+		itemDataInputFileSlicers
+			.forEach(
+				itemDataInputFileSlicer -> {
+					try {
+						itemDataInputFileSlicers.clear();
+					} catch(final InterruptRunException e) {
+						throw e;
+					} catch(final Exception e) {
+						LogUtil.exception(
+							Level.WARN, e, "{}: failed to close the item data input file slicer \"{}\"", id(),
+							itemDataInputFileSlicer
+						);
+					}
+				}
+			);
+		itemDataInputFileSlicers.clear();
 
 		itemInputFileSlicers
 			.forEach(
