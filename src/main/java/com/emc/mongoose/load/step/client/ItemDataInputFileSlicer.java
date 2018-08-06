@@ -23,7 +23,6 @@ implements AutoCloseable {
 
 	private final String loadStepId;
 	private final Map<FileManager, String> itemDataInputFileSlices;
-	private final List<FileManager> fileMgrs;
 
 	public ItemDataInputFileSlicer(
 		final String loadStepId, final List<FileManager> fileMgrs, final List<Config> configSlices,
@@ -32,7 +31,6 @@ implements AutoCloseable {
 		this.loadStepId = loadStepId;
 		final int sliceCount = configSlices.size();
 		itemDataInputFileSlices = new HashMap<>(sliceCount);
-		this.fileMgrs = fileMgrs;
 		for(int i = 0; i < sliceCount; i ++) {
 			try {
 				final FileManager fileMgr = fileMgrs.get(i);
@@ -84,6 +82,31 @@ implements AutoCloseable {
 
 	private void distributeData(final String itemDataInputFile, final int batchSize)
 	throws IOException {
-
+		final ByteBuffer bBuff = ByteBuffer.allocate(batchSize);
+		int n;
+		try(final SeekableByteChannel itemDataInput = Files.newByteChannel(Paths.get(itemDataInputFile))) {
+			while(0 < (n = itemDataInput.read(bBuff))) {
+			final byte[] buff = new byte[n];
+				bBuff.flip();
+				bBuff.get(buff);
+				itemDataInputFileSlices
+					.entrySet()
+					.parallelStream()
+					.forEach(
+						entry -> {
+							final FileManager fileMgr = entry.getKey();
+							final String itemDataInputFileName = entry.getValue();
+							try {
+								fileMgr.writeToFile(itemDataInputFileName, buff);
+							} catch(final IOException e) {
+								LogUtil.exception(
+									Level.ERROR, e, "Failed to write the data to the slice file \"{}\"",
+									itemDataInputFile
+								);
+							}
+						}
+					);
+			}
+		}
 	}
 }

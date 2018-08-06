@@ -21,7 +21,7 @@ import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
 
 public final class MongooseContainer
-	extends ContainerBase {
+extends ContainerBase {
 
 	public static final String IMAGE_VERSION = System.getenv("MONGOOSE_VERSION");
 	public static final Config BUNDLED_DEFAULTS;
