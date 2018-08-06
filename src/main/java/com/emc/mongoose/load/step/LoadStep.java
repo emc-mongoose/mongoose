@@ -28,7 +28,7 @@ extends Daemon {
 
 	@Override
 	AsyncRunnable start()
-	throws InterruptRunException;
+	throws InterruptRunException, RemoteException;
 
 	@Override
 	AsyncRunnable await()
@@ -40,7 +40,7 @@ extends Daemon {
 
 	@Override
 	AsyncRunnable stop()
-	throws InterruptRunException;
+	throws InterruptRunException, RemoteException;
 
 	void close()
 	throws InterruptRunException, IOException;
