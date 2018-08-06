@@ -446,9 +446,6 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(path == null || path.isEmpty()) {
 			path = LogUtil.getDateTimeStamp();
 		}
-		if(!path.startsWith("/")) {
-			path = "/" + path;
-		}
 		if(-1 == path.indexOf(PATTERN_CHAR)) {
 			pathSupplier = new ConstantStringSupplier(path);
 		} else {

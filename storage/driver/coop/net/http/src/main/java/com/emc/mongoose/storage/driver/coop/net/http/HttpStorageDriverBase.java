@@ -275,7 +275,11 @@ implements HttpStorageDriver<I, O> {
 				return srcPath + SLASH + itemName;
 			}
 		} else if(itemName.startsWith(dstPath)) {
-			return itemName;
+			if(itemName.startsWith(SLASH)) {
+				return itemName;
+			} else {
+				return SLASH + itemName;
+			}
 		} else {
 			return (dstPath.endsWith(SLASH) ? dstPath : (dstPath + SLASH)) + itemName;
 		}
