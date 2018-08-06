@@ -79,7 +79,7 @@ jobs:
 #      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew systemTest --tests com.emc.mongoose.system.CopyUsingInputPathTest
-    - env:
+      env:
       - TEST=CopyUsingInputPathTest
       - STORAGE_TYPE=fs
       - RUN_MODE=local

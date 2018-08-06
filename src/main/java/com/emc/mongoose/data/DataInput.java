@@ -31,8 +31,7 @@ extends Closeable {
 	MappedByteBuffer getLayer(final int layerIndex);
 
 	static DataInput instance(
-		final String inputFilePath, final String seed, final SizeInBytes layerSize,
-		final int layerCacheLimit
+		final String inputFilePath, final String seed, final SizeInBytes layerSize, final int layerCacheLimit
 	) throws IOException, IllegalStateException, IllegalArgumentException {
 		final DataInput instance;
 		final long layerSizeBytes = layerSize.get();
@@ -47,30 +46,21 @@ extends Closeable {
 				final long fileSize = f.length();
 				if(fileSize > 0) {
 					if(fileSize > Integer.MAX_VALUE) {
-						throw new AssertionError(
-							"Item data input file size should be less than 2GB"
-						);
+						throw new AssertionError("Item data input file size should be less than 2GB");
 					}
 					try(final ReadableByteChannel rbc = Files.newByteChannel(p, READ)) {
-						instance = new ExternalDataInput(
-							rbc, (int) layerSizeBytes, layerCacheLimit
-						);
+						instance = new ExternalDataInput(rbc, (int) layerSizeBytes, layerCacheLimit);
 					}
 				} else {
-					throw new AssertionError(
-						"Item data input file @" + p.toAbsolutePath() + " is empty"
-					);
+					throw new AssertionError("Item data input file @" + p.toAbsolutePath() + " is empty");
 				}
 			} else {
 				throw new AssertionError(
-					"Item data input file @" + p.toAbsolutePath() + " doesn't exist/" +
-						"not readable/is a directory"
+					"Item data input file @" + p.toAbsolutePath() + " doesn't exist/not readable/is a directory"
 				);
 			}
 		} else {
-			instance = new SeedDataInput(
-				Long.parseLong(seed, 0x10), (int) layerSizeBytes, layerCacheLimit
-			);
+			instance = new SeedDataInput(Long.parseLong(seed, 0x10), (int) layerSizeBytes, layerCacheLimit);
 		}
 		return instance;
 	}

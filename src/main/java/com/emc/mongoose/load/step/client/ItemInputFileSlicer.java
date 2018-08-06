@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 public final class ItemInputFileSlicer
 implements AutoCloseable {
 
+	private static final int APPROX_LINE_LENGTH = 0x40;
+
 	private final String loadStepId;
 	private final Map<FileManager, String> itemInputFileSlices;
 	private final List<FileManager> fileMgrs;
@@ -94,7 +96,11 @@ implements AutoCloseable {
 
 		final Map<FileManager, ByteArrayOutputStream> itemsOutByteBuffs = fileMgrs
 			.stream()
-			.collect(Collectors.toMap(Function.identity(), fileMgr -> new ByteArrayOutputStream(batchSize * 0x40)));
+			.collect(
+				Collectors.toMap(
+					Function.identity(), fileMgr -> new ByteArrayOutputStream(batchSize * APPROX_LINE_LENGTH)
+				)
+			);
 
 		final Map<FileManager, ObjectOutputStream> itemsOutputs = itemsOutByteBuffs
 			.entrySet()
@@ -177,8 +183,7 @@ implements AutoCloseable {
 								buff.reset();
 							} catch(final IOException e) {
 								LogUtil.exception(
-									Level.WARN, e,
-									"Failed to write the items input data to the {} file \"{}\"",
+									Level.WARN, e, "Failed to write the items input data to the {} file \"{}\"",
 									itemInputFileName, (fileMgr instanceof FileManagerService ? "remote" : "local")
 								);
 							}
