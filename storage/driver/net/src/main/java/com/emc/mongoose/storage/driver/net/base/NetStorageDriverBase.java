@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.driver.net.base;
 
 import com.github.akurilov.commons.collection.Range;
-import com.github.akurilov.commons.net.ssl.SslContext;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.ThreadUtil;
 
@@ -47,26 +46,19 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 
 import org.apache.logging.log4j.CloseableThreadContext;
-
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
-import javax.net.ssl.SSLEngine;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.BitSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -616,27 +608,7 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
     protected void appendHandlers(final ChannelPipeline pipeline) {
         if (sslFlag) {
             Loggers.MSG.debug("{}: SSL/TLS is enabled for the channel", stepId);
-            final SSLEngine sslEngine = SslContext.INSTANCE.createSSLEngine();
-            sslEngine.setEnabledProtocols(
-                    new String[]{"TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3"}
-            );
-            sslEngine.setUseClientMode(true);
-            sslEngine.setEnabledCipherSuites(
-                    SslContext.INSTANCE.getServerSocketFactory().getSupportedCipherSuites()
-            );
-            pipeline.addLast(new SslHandler(sslEngine));
-			/*try {
-				final SslContext sslCtx = SslContextBuilder
-					.forClient()
-					.trustManager(InsecureTrustManagerFactory.INSTANCE)
-					.build();
-				pipeline.addLast(sslCtx.newHandler(pipeline.channel().alloc()));
-			} catch(final SSLException e) {
-				LogUtil.exception(
-					Level.ERROR, e, "Failed to enable the SSL/TLS for the connection: {}",
-					pipeline.channel()
-				);
-			}*/
+			pipeline.addLast(SslUtil.CLIENT_SSL_CONTEXT.newHandler(pipeline.channel().alloc()));
         }
         if (socketTimeout > 0) {
             pipeline.addLast(
