@@ -83,9 +83,7 @@ extends HttpStorageDriverBase<I, O> {
 		} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
 			LogUtil.exception(Level.ERROR, e, "Failed to init MAC for the given secret key");
 		} catch(final IllegalArgumentException e) {
-			LogUtil.exception(
-				Level.ERROR, e, "Failed to perform the secret key Base-64 decoding"
-			);
+			LogUtil.exception(Level.ERROR, e, "Failed to perform the secret key Base-64 decoding");
 		}
 		return null;
 	};
@@ -124,8 +122,8 @@ extends HttpStorageDriverBase<I, O> {
 		applyAuthHeaders(reqHeaders, HttpMethod.PUT, SUBTENANT_URI_BASE, credential);
 		
 		final FullHttpRequest getSubtenantReq = new DefaultFullHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.PUT, SUBTENANT_URI_BASE, Unpooled.EMPTY_BUFFER,
-			reqHeaders, EmptyHttpHeaders.INSTANCE
+			HttpVersion.HTTP_1_1, HttpMethod.PUT, SUBTENANT_URI_BASE, Unpooled.EMPTY_BUFFER, reqHeaders,
+			EmptyHttpHeaders.INSTANCE
 		);
 		
 		final FullHttpResponse getSubtenantResp;
@@ -261,10 +259,7 @@ extends HttpStorageDriverBase<I, O> {
 		}
 		
 		if(uid != null && !uid.isEmpty()) {
-			if(
-				authToken != null && !authToken.isEmpty()
-					&& !dstUriPath.equals(SUBTENANT_URI_BASE)
-			) {
+			if(authToken != null && !authToken.isEmpty() && !dstUriPath.equals(SUBTENANT_URI_BASE)) {
 				httpHeaders.set(KEY_X_EMC_UID, authToken + '/' + uid);
 			} else {
 				httpHeaders.set(KEY_X_EMC_UID, uid);

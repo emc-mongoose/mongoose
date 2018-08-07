@@ -14,6 +14,7 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.net.http.HttpStorageDriverBase;
+import static com.emc.mongoose.item.op.Operation.SLASH;
 
 import com.github.akurilov.confuse.Config;
 
@@ -422,10 +423,10 @@ extends HttpStorageDriverBase<I, O> {
 		final I item, final String srcPath, final String dstPath, final OpType opType
 	) {
 		final String itemName = item.getName();
-		if(itemName.startsWith("/")) {
+		if(itemName.startsWith(SLASH)) {
 			return itemName;
 		} else {
-			return "/" + itemName;
+			return SLASH + itemName;
 		}
 	}
 
