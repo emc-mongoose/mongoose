@@ -2,6 +2,7 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
+import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.svc.ServiceUtil;
 import com.emc.mongoose.system.base.params.Concurrency;
 import com.emc.mongoose.system.base.params.EnvParams;
@@ -17,6 +18,7 @@ import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -32,15 +34,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
+import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class) public class ChainWithDelayTest {
 
@@ -189,51 +197,48 @@ import static org.junit.Assert.assertEquals;
 	public final void test()
 	throws Exception {
 		assertEquals("Container exit code should be 0", 0, containerExitCode);
-		//        testMetricsTableStdout(
-		//                stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-		//                new HashMap<OpType, Integer>() {{
-		//                    put(OpType.CREATE, concurrency.getValue());
-		//                    put(OpType.READ, concurrency.getValue());
-		//                }}
-		//        );
-		//
-		//        final Map<String, Long> timingMap = new HashMap<>();
-		//        final Consumer<CSVRecord> ioTraceRecTestFunc = new Consumer<CSVRecord>() {
-		//
-		//            String storageNode;
-		//            String itemPath;
-		//            OpType opType;
-		//            long reqTimeStart;
-		//            long duration;
-		//            Long prevOpFinishTime;
-		//
-		//            @Override
-		//            public final void accept(final CSVRecord ioTraceRec) {
-		//                storageNode = ioTraceRec.get("StorageNode");
-		//                itemPath = ioTraceRec.get("ItemPath");
-		//                opType = OpType.values()[Integer.parseInt(ioTraceRec.get("OpTypeCode"))];
-		//                reqTimeStart = Long.parseLong(ioTraceRec.get("ReqTimeStart[us]"));
-		//                duration = Long.parseLong(ioTraceRec.get("Duration[us]"));
-		//                switch (opType) {
-		//                    case CREATE:
-		//                        assertTrue(storageNode.startsWith(zone1Addr));
-		//                        timingMap.put(itemPath, reqTimeStart + duration);
-		//                        break;
-		//                    case READ:
-		//                        assertTrue(storageNode.startsWith(zone2Addr));
-		//                        prevOpFinishTime = timingMap.get(itemPath);
-		//                        if (prevOpFinishTime == null) {
-		//                            fail("No create I/O trace record for \"" + itemPath + "\"");
-		//                        } else {
-		//                            assertTrue((reqTimeStart - prevOpFinishTime) / M > DELAY_SECONDS);
-		//                        }
-		//                        break;
-		//                    default:
-		//                        fail("Unexpected I/O type: " + opType);
-		//                }
-		//            }
-		//        };
-		//        testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
-		//        assertTrue("Scenario didn't finished in time", finishedInTime);
+		testMetricsTableStdout(stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
+			new HashMap<OpType, Integer>() {{
+				put(OpType.CREATE, concurrency.getValue());
+				put(OpType.READ, concurrency.getValue());
+			}}
+		);
+		final Map<String, Long> timingMap = new HashMap<>();
+		final Consumer<CSVRecord> ioTraceRecTestFunc = new Consumer<CSVRecord>() {
+			String storageNode;
+			String itemPath;
+			OpType opType;
+			long reqTimeStart;
+			long duration;
+			Long prevOpFinishTime;
+
+			@Override
+			public final void accept(final CSVRecord ioTraceRec) {
+				storageNode = ioTraceRec.get("StorageNode");
+				itemPath = ioTraceRec.get("ItemPath");
+				opType = OpType.values()[Integer.parseInt(ioTraceRec.get("OpTypeCode"))];
+				reqTimeStart = Long.parseLong(ioTraceRec.get("ReqTimeStart[us]"));
+				duration = Long.parseLong(ioTraceRec.get("Duration[us]"));
+				switch(opType) {
+					case CREATE:
+						assertTrue(storageNode.startsWith(zone1Addr));
+						timingMap.put(itemPath, reqTimeStart + duration);
+						break;
+					case READ:
+						assertTrue(storageNode.startsWith(zone2Addr));
+						prevOpFinishTime = timingMap.get(itemPath);
+						if(prevOpFinishTime == null) {
+							fail("No create I/O trace record for \"" + itemPath + "\"");
+						} else {
+							assertTrue((reqTimeStart - prevOpFinishTime) / M > DELAY_SECONDS);
+						}
+						break;
+					default:
+						fail("Unexpected I/O type: " + opType);
+				}
+			}
+		};
+		testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
+		assertTrue("Scenario didn't finished in time", finishedInTime);
 	}
 }
