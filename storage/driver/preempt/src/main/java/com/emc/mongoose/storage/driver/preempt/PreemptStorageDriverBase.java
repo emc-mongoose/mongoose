@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.driver.preempt;
 
 import com.emc.mongoose.data.DataInput;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.op.Operation;
@@ -13,7 +14,6 @@ import com.github.akurilov.confuse.Config;
 import java.io.EOFException;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +44,7 @@ implements StorageDriver<I,O> {
 
 	@Override
 	public final boolean put(final O op)
-	throws EOFException {
+	throws InterruptRunException, EOFException {
 		try {
 			ioExecutor.execute(wrapBlockingOperation(op));
 			return true;
@@ -58,7 +58,7 @@ implements StorageDriver<I,O> {
 
 	@Override
 	public final int put(final List<O> ops, final int from, final int to)
-	throws EOFException {
+	throws InterruptRunException, EOFException {
 		if(!isStarted() || ioExecutor.isShutdown() || ioExecutor.isTerminated()) {
 			throw new EOFException();
 		}
@@ -75,11 +75,12 @@ implements StorageDriver<I,O> {
 
 	@Override
 	public final int put(final List<O> ops)
-	throws EOFException {
+	throws InterruptRunException, EOFException {
 		return put(ops, 0, ops.size());
 	}
 
-	private Runnable wrapBlockingOperation(final O op) {
+	private Runnable wrapBlockingOperation(final O op)
+	throws InterruptRunException {
 		prepareOperation(op);
 		return () -> {
 			execute(op);
@@ -125,7 +126,8 @@ implements StorageDriver<I,O> {
 	}
 
 	@Override
-	protected void doStop() {
+	protected void doStop()
+	throws InterruptRunException {
 		Loggers.MSG.debug("{}: interrupting...", toString());
 		try {
 			if(ioExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
@@ -136,7 +138,8 @@ implements StorageDriver<I,O> {
 				);
 			}
 		} catch(final InterruptedException e) {
-			throw new CancellationException(e.getMessage());
+			ioExecutor.shutdownNow();
+			throw new InterruptRunException(e);
 		} finally {
 			Loggers.MSG.debug("{}: interrupted", toString());
 		}

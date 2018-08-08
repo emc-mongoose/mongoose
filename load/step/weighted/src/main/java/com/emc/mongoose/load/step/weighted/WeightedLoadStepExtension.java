@@ -3,6 +3,7 @@ package com.emc.mongoose.load.step.weighted;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.env.ExtensionBase;
 import com.emc.mongoose.load.step.LoadStepFactory;
+import static com.emc.mongoose.Constants.APP_NAME;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
@@ -13,9 +14,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-
-import static com.emc.mongoose.Constants.APP_NAME;
 
 public final class WeightedLoadStepExtension<T extends WeightedLoadStepLocal, U extends WeightedLoadStepClient>
 extends ExtensionBase

@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.generator;
 
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.io.ItemInputFactory;
 import com.emc.mongoose.supply.BatchSupplier;
@@ -51,7 +52,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
@@ -124,13 +124,13 @@ implements LoadGeneratorBuilder<I, O, T> {
 	}
 	
 	@Override @SuppressWarnings("unchecked")
-	public LoadGeneratorBuilderImpl<I, O, T> itemInput(final Input<I> itemInput) {
+	public LoadGeneratorBuilderImpl<I, O, T> itemInput(final Input<I> itemInput)
+	throws InterruptRunException {
 		this.itemInput = itemInput;
 		// pipeline transfer buffer is not resettable
 		if(!(itemInput instanceof TransferConvertBuffer)) {
 			sizeEstimate = estimateTransferSize(
-				null, OpType.valueOf(loadConfig.stringVal("op-type").toUpperCase()),
-				(Input<DataItem>) itemInput
+				null, OpType.valueOf(loadConfig.stringVal("op-type").toUpperCase()), (Input<DataItem>) itemInput
 			);
 		}
 		return this;
@@ -156,7 +156,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 	@SuppressWarnings("unchecked")
 	public T build()
-	throws OmgShootMyFootException {
+	throws InterruptRunException, OmgShootMyFootException {
 
 		// prepare
 		final OperationsBuilder<I, O> opsBuilder;
@@ -360,7 +360,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	
 	private static long estimateTransferSize(
 		final DataOperationsBuilder dataOpBuilder, final OpType opType, final Input<DataItem> itemInput
-	) {
+	) throws InterruptRunException {
 		long sizeThreshold = 0;
 		int randomRangesCount = 0;
 		List<Range> fixedRanges = null;
@@ -446,9 +446,6 @@ implements LoadGeneratorBuilder<I, O, T> {
 		if(path == null || path.isEmpty()) {
 			path = LogUtil.getDateTimeStamp();
 		}
-		if(!path.startsWith("/")) {
-			path = "/" + path;
-		}
 		if(-1 == path.indexOf(PATTERN_CHAR)) {
 			pathSupplier = new ConstantStringSupplier(path);
 		} else {
@@ -519,7 +516,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 	private static <I extends Item> int loadSrcItems(
 		final Input<I> itemInput, final List<I> itemBuff, final int countLimit
-	) {
+	) throws InterruptRunException {
 		final LongAdder loadedCount = new LongAdder();
 		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(
 			2, new LogContextThreadFactory("loadSrcItemsWorker", true)
@@ -560,7 +557,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 			);
 			loadFinishSemaphore.acquire();
 		} catch(final InterruptedException e) {
-			throw new CancellationException(e.getMessage());
+			throw new InterruptRunException(e);
 		} finally {
 			executor.shutdownNow();
 		}

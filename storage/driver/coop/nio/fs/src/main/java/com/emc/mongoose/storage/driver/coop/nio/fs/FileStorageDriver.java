@@ -199,7 +199,7 @@ implements NioStorageDriver<I, O> {
 									FileIoHelper.invokeReadAndVerifyFixedRanges(item, op, srcChannel, fixedRangesToRead)
 								) {
 									finishOperation((O) op);
-								};
+								}
 							}
 						} catch(final DataSizeException e) {
 							op.status(Operation.Status.RESP_FAIL_CORRUPT);

@@ -8,8 +8,6 @@
 * [Overview](#overview)
 * [Features](#features)
 * [Documentation](#documentation)
-* [Contributors](#contributors)
-* [Links](#links)
 
 # Overview
 
@@ -75,23 +73,5 @@ See also the **[comparison with similiar tools](doc/comparison.md)**.
     * [Copy Mode](doc/design/copy_mode.md)
     * [Pipeline Load](doc/design/pipeline_load.md)
     * [Weighted Load](doc/design/weighted_load.md)
-* Development
-    * [Process](doc/development/process.md)
-    * [Notes](doc/development/notes.md)
-    * [Changelog](doc/development/changelog.md)
-
-# Contributors
-
-* [Andrey Kurilov](https://github.com/akurilov)
-* Gennady Eremeev
-* [Ilya Kisliakovsky](https://github.com/kisliakovsky)
-* [Kirill Gusakov](https://github.com/gusakk)
-* Mikhail Danilov
-* [Mikhail Malygin](https://github.com/aphreet)
-* [Olga Zhavzharova](https://github.com/Zhavzharova)
-* [Veronika Kochugova](https://github.com/veronikaKochugova)
-
-# Links
-* [Issue Tracker](https://mongoose-issues.atlassian.net/projects/BASE)
-* [Travis CI](https://travis-ci.org/emc-mongoose/mongoose)
-* [Docker Hub](https://hub.docker.com/r/emcmongoose/mongoose)
+* [Contributing](CONTRIBUTING.md)
+* [Changelog](doc/changelog.md)

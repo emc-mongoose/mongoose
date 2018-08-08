@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.step.client;
 
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.item.Item;
 import static com.emc.mongoose.load.step.client.LoadStepClient.OUTPUT_PROGRESS_PERIOD_MILLIS;
 import com.emc.mongoose.load.step.file.FileManager;
@@ -28,6 +29,8 @@ import java.util.stream.Collectors;
 public final class ItemInputFileSlicer
 implements AutoCloseable {
 
+	private static final int APPROX_LINE_LENGTH = 0x40;
+
 	private final String loadStepId;
 	private final Map<FileManager, String> itemInputFileSlices;
 	private final List<FileManager> fileMgrs;
@@ -35,7 +38,7 @@ implements AutoCloseable {
 	public <I extends Item> ItemInputFileSlicer(
 		final String loadStepId, final List<FileManager> fileMgrs, final List<Config> configSlices,
 		final Input<I> itemInput, final int batchSize
-	) {
+	) throws InterruptRunException {
 		this.loadStepId = loadStepId;
 		final int sliceCount = configSlices.size();
 		itemInputFileSlices = new HashMap<>(sliceCount);
@@ -57,6 +60,8 @@ implements AutoCloseable {
 			scatterItems(itemInput, batchSize);
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, "{}: failed to use the item input", loadStepId);
+		} catch(final InterruptRunException e) {
+			throw e;
 		} catch(final Throwable cause) {
 			LogUtil.exception(Level.ERROR, cause, "{}: unexpected failure", loadStepId);
 		}
@@ -85,13 +90,17 @@ implements AutoCloseable {
 	}
 
 	private <I extends Item> void scatterItems(final Input<I> itemInput, final int batchSize)
-	throws IOException {
+	throws InterruptRunException, IOException {
 
 		Loggers.MSG.info("{}: slice the item input \"{}\"...", loadStepId, itemInput);
 
 		final Map<FileManager, ByteArrayOutputStream> itemsOutByteBuffs = fileMgrs
 			.stream()
-			.collect(Collectors.toMap(Function.identity(), fileMgr -> new ByteArrayOutputStream(batchSize * 0x40)));
+			.collect(
+				Collectors.toMap(
+					Function.identity(), fileMgr -> new ByteArrayOutputStream(batchSize * APPROX_LINE_LENGTH)
+				)
+			);
 
 		final Map<FileManager, ObjectOutputStream> itemsOutputs = itemsOutByteBuffs
 			.entrySet()
@@ -128,7 +137,7 @@ implements AutoCloseable {
 	private <I extends Item> void transferData(
 		final Input<I> itemInput, final Map<FileManager, ByteArrayOutputStream> itemsOutByteBuffs,
 		final Map<FileManager, ObjectOutputStream> itemsOutputs, final int batchSize
-	) throws IOException {
+	) throws InterruptRunException, IOException {
 
 		final int sliceCount = itemsOutByteBuffs.size();
 		final List<I> itemsBuff = new ArrayList<>(batchSize);
@@ -174,8 +183,7 @@ implements AutoCloseable {
 								buff.reset();
 							} catch(final IOException e) {
 								LogUtil.exception(
-									Level.WARN, e,
-									"Failed to write the items input data to the {} file \"{}\"",
+									Level.WARN, e, "Failed to write the items input data to the {} file \"{}\"",
 									itemInputFileName, (fileMgr instanceof FileManagerService ? "remote" : "local")
 								);
 							}

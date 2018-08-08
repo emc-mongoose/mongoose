@@ -13,6 +13,7 @@ import static com.emc.mongoose.storage.driver.coop.net.http.EmcConstants.KEY_X_E
 import static com.emc.mongoose.storage.driver.coop.net.http.EmcConstants.KEY_X_EMC_UID;
 import static com.emc.mongoose.storage.driver.coop.net.http.EmcConstants.PREFIX_KEY_X_EMC;
 import com.emc.mongoose.data.DataInput;
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
@@ -82,9 +83,7 @@ extends HttpStorageDriverBase<I, O> {
 		} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
 			LogUtil.exception(Level.ERROR, e, "Failed to init MAC for the given secret key");
 		} catch(final IllegalArgumentException e) {
-			LogUtil.exception(
-				Level.ERROR, e, "Failed to perform the secret key Base-64 decoding"
-			);
+			LogUtil.exception(Level.ERROR, e, "Failed to perform the secret key Base-64 decoding");
 		}
 		return null;
 	};
@@ -106,7 +105,8 @@ extends HttpStorageDriverBase<I, O> {
 	}
 	
 	@Override
-	protected final String requestNewAuthToken(final Credential credential) {
+	protected final String requestNewAuthToken(final Credential credential)
+	throws InterruptRunException {
 		
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
@@ -122,15 +122,15 @@ extends HttpStorageDriverBase<I, O> {
 		applyAuthHeaders(reqHeaders, HttpMethod.PUT, SUBTENANT_URI_BASE, credential);
 		
 		final FullHttpRequest getSubtenantReq = new DefaultFullHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.PUT, SUBTENANT_URI_BASE, Unpooled.EMPTY_BUFFER,
-			reqHeaders, EmptyHttpHeaders.INSTANCE
+			HttpVersion.HTTP_1_1, HttpMethod.PUT, SUBTENANT_URI_BASE, Unpooled.EMPTY_BUFFER, reqHeaders,
+			EmptyHttpHeaders.INSTANCE
 		);
 		
 		final FullHttpResponse getSubtenantResp;
 		try {
 			getSubtenantResp = executeHttpRequest(getSubtenantReq);
 		} catch(final InterruptedException e) {
-			return null;
+			throw new InterruptRunException(e);
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -259,10 +259,7 @@ extends HttpStorageDriverBase<I, O> {
 		}
 		
 		if(uid != null && !uid.isEmpty()) {
-			if(
-				authToken != null && !authToken.isEmpty()
-					&& !dstUriPath.equals(SUBTENANT_URI_BASE)
-			) {
+			if(authToken != null && !authToken.isEmpty() && !dstUriPath.equals(SUBTENANT_URI_BASE)) {
 				httpHeaders.set(KEY_X_EMC_UID, authToken + '/' + uid);
 			} else {
 				httpHeaders.set(KEY_X_EMC_UID, uid);

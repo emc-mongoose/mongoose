@@ -1,10 +1,13 @@
 package com.emc.mongoose.load.generator;
 
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.op.OpType;
 
 import com.github.akurilov.fiber4j.Fiber;
+
+import java.io.IOException;
 
 /**
  Created on 11.07.16.
@@ -29,4 +32,8 @@ extends Fiber {
 	 @param op the task to recycle
 	 */
 	void recycle(final O op);
+
+	@Override
+	void close()
+	throws IOException, InterruptRunException;
 }

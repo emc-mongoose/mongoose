@@ -1,4 +1,4 @@
-# Similiar tools
+# Similar tools
 * [COSBench](https://github.com/intel-cloud/cosbench)
 * [LoadRunner](https://software.microfocus.com/en-us/products/loadrunner-load-testing/overview)
 * [Locust](https://locust.io/)

@@ -1,6 +1,5 @@
 package com.emc.mongoose.env;
 
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 

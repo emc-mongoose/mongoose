@@ -4,6 +4,7 @@ package com.emc.mongoose.metrics;
  Created by andrey on 06.07.17.
  The entity accepting the metrics updates
  */
+@FunctionalInterface
 public interface MetricsListener {
 
 	/**

@@ -21,9 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -33,7 +31,7 @@ public abstract class ContainerBase
 extends AsyncRunnableBase
 implements Docker.Container {
 
-	private static final Logger LOG = Logger.getLogger(HttpStorageMockContainer.class.getSimpleName());
+	private static final Logger LOG = Logger.getLogger(ContainerBase.class.getSimpleName());
 	//private static final AtomicLong CONTAINER_COUNTER = new AtomicLong();
 
 	private final String version;
