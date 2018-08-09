@@ -33,27 +33,27 @@ extends LogMessageBase {
 		final MetricsSnapshot snapshot = metricsCtx.lastSnapshot();
 		final long succCount = snapshot.succCount();
 		final long failCount = snapshot.failCount();
-		final OpType opType = metricsCtx.ioType();
+		final OpType opType = metricsCtx.opType();
 		final boolean stdOutColorFlag = metricsCtx.stdOutColorEnabled();
-		String ioTypeColorCode = WHITE;
+		String opTypeColorCode = WHITE;
 		switch(opType) {
 			case NOOP:
-				ioTypeColorCode = LogUtil.NOOP_COLOR;
+				opTypeColorCode = LogUtil.NOOP_COLOR;
 				break;
 			case CREATE:
-				ioTypeColorCode = LogUtil.CREATE_COLOR;
+				opTypeColorCode = LogUtil.CREATE_COLOR;
 				break;
 			case READ:
-				ioTypeColorCode = LogUtil.READ_COLOR;
+				opTypeColorCode = LogUtil.READ_COLOR;
 				break;
 			case UPDATE:
-				ioTypeColorCode = LogUtil.UPDATE_COLOR;
+				opTypeColorCode = LogUtil.UPDATE_COLOR;
 				break;
 			case DELETE:
-				ioTypeColorCode = LogUtil.DELETE_COLOR;
+				opTypeColorCode = LogUtil.DELETE_COLOR;
 				break;
 			case LIST:
-				ioTypeColorCode = LogUtil.LIST_COLOR;
+				opTypeColorCode = LogUtil.LIST_COLOR;
 				break;
 		}
 		buffer
@@ -63,9 +63,9 @@ extends LogMessageBase {
 			.append(metricsCtx.stepId())
 			.append("\" results:\n\t");
 		if(stdOutColorFlag) {
-			buffer.append(ioTypeColorCode);
+			buffer.append(opTypeColorCode);
 		}
-		buffer.append(metricsCtx.ioType().name());
+		buffer.append(metricsCtx.opType().name());
 		if(stdOutColorFlag) {
 			buffer.append(RESET);
 		}

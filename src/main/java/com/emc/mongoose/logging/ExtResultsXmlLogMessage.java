@@ -44,7 +44,7 @@ extends LogMessageBase {
 		final Date endDate = new Date(endTimeStamp);
 		buffer.append("EndDate=\"").append(FMT_DATE_RESULTS.format(endDate)).append("\" ");
 		buffer.append("EndTimestamp=\"").append(endTimeStamp).append("\" ");
-		final int ioTypeCode = metricsCtx.ioType().ordinal();
+		final int ioTypeCode = metricsCtx.opType().ordinal();
 		buffer.append("operation=\"").append(OpType.values()[ioTypeCode].name()).append("\" ");
 		final int concurrency = metricsCtx.concurrencyLimit();
 		final int nodeCount = metricsCtx.nodeCount();

@@ -103,7 +103,7 @@ implements MetricsContext {
 	}
 
 	@Override
-	public OpType ioType() {
+	public OpType opType() {
 		return opType;
 	}
 
@@ -178,6 +178,7 @@ implements MetricsContext {
 		int durValCount = 0;
 		long sumLat = 0;
 		int latValCount = 0;
+		int nodeCount = 0;
 		for(final MetricsSnapshot snapshot : snapshots) {
 			countSucc += snapshot.succCount();
 			succRateLast += snapshot.succRateLast();

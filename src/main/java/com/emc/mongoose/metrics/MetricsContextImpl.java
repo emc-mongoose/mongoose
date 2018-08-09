@@ -217,7 +217,7 @@ implements MetricsContext {
 	}
 
 	@Override
-	public final OpType ioType() {
+	public final OpType opType() {
 		return opType;
 	}
 

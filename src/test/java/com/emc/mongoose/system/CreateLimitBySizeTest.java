@@ -229,6 +229,8 @@ import static org.junit.Assert.assertTrue;
 				final String nextItemId = nextItemPath.substring(nextItemPath.lastIndexOf('/') + 1);
 				nextDstFile = Paths.get(hostItemOutputPath, nextItemId).toFile();
 				assertTrue("File \"" + nextDstFile + "\" doesn't exist", nextDstFile.exists());
+				System.out.println("itemSize.getValue().get() " + itemSize.getValue().get());
+				System.out.println("nextDstFile.length() " + nextDstFile.length());
 				assertEquals(
 					"File (" + nextItemPath + ") size (" + nextDstFile.length() + " is not equal to the configured: " +
 						itemSize.getValue(), itemSize.getValue().get(), nextDstFile.length());

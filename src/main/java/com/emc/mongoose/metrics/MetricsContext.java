@@ -18,7 +18,7 @@ extends Closeable, Comparable<MetricsContext> {
 	// these are useful as labels/tags
 	String stepId();
 
-	OpType ioType();
+	OpType opType();
 
 	int nodeCount();
 
