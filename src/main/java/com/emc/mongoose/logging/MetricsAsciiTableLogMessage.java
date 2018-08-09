@@ -39,7 +39,7 @@ extends LogMessageBase {
 	private final boolean summaryFlag;
 
 	private volatile String formattedMsg = null;
-	
+
 	public MetricsAsciiTableLogMessage(final Set<MetricsContext> metrics) {
 		this(metrics, false);
 	}
@@ -48,7 +48,7 @@ extends LogMessageBase {
 		this.metrics = metrics;
 		this.summaryFlag = summaryFlag;
 	}
-	
+
 	@Override
 	public final void formatTo(final StringBuilder buffer) {
 		if(formattedMsg == null) {
@@ -62,7 +62,7 @@ extends LogMessageBase {
 				snapshot = metricsCtx.lastSnapshot();
 				succCount = snapshot.succCount();
 				failCount = snapshot.failCount();
-				opType = metricsCtx.ioType();
+				opType = metricsCtx.opType();
 				stdOutColorFlag = metricsCtx.stdOutColorEnabled();
 				if(0 == ROW_OUTPUT_COUNTER % TABLE_HEADER_PERIOD) {
 					strb.append(TABLE_HEADER);
@@ -98,7 +98,7 @@ extends LogMessageBase {
 							break;
 					}
 				}
-				strb.appendFixedWidthPadRight(metricsCtx.ioType().name(), 6, ' ');
+				strb.appendFixedWidthPadRight(metricsCtx.opType().name(), 6, ' ');
 				if(stdOutColorFlag) {
 					strb.append(RESET);
 				}

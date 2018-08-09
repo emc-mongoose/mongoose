@@ -17,29 +17,20 @@ import com.emc.mongoose.load.step.LoadStepFactory;
 import com.emc.mongoose.load.step.client.metrics.MetricsAggregator;
 import com.emc.mongoose.load.step.client.metrics.MetricsAggregatorImpl;
 import com.emc.mongoose.load.step.file.FileManager;
-import com.emc.mongoose.metrics.AggregatingMetricsContext;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.metrics.DistributedMetricsContextImpl;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.storage.driver.StorageDriver;
-import static com.emc.mongoose.config.ConfigUtil.flatten;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
-
-import com.github.akurilov.fiber4j.ExclusiveFiberBase;
-
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
-
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
+import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -54,6 +45,12 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.config.ConfigUtil.flatten;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 public abstract class LoadStepClientBase
 	extends LoadStepBase
@@ -114,11 +111,8 @@ public abstract class LoadStepClientBase
 	private static List<String> remoteNodeAddrs(final Config config) {
 		final Config nodeConfig = config.configVal("load-step-node");
 		final int nodePort = nodeConfig.intVal("port");
-		return nodeConfig
-			.<String>listVal("addrs")
-			.stream()
-			.map(addr -> NetUtil.addPortIfMissing(addr, nodePort))
-			.collect(Collectors.toList());
+		return nodeConfig.<String>listVal("addrs").stream().map(
+			addr -> NetUtil.addPortIfMissing(addr, nodePort)).collect(Collectors.toList());
 	}
 
 	private static void initFileManagers(final List<String> nodeAddrs, final List<FileManager> fileMgrsDst) {
@@ -150,17 +144,14 @@ public abstract class LoadStepClientBase
 		final int itemDataInputLayerCacheSize = itemDataInputLayerConfig.intVal("cache");
 		try(
 			final DataInput dataInput = DataInput.instance(
-				itemDataInputFile, itemDataInputSeed, itemDataLayerSize, itemDataInputLayerCacheSize
-			);
-			final StorageDriver<Item, Operation<Item>> storageDriver = StorageDriver.instance(
-				extensions, storageConfig, dataInput, verifyFlag, batchSize, id()
-			);
-			final Input<Item> itemInput = ItemInputFactory.createItemInput(itemConfig, batchSize, storageDriver)
+				itemDataInputFile, itemDataInputSeed, itemDataLayerSize, itemDataInputLayerCacheSize);
+			final StorageDriver<Item, Operation<Item>> storageDriver = StorageDriver.instance(extensions, storageConfig,
+				dataInput, verifyFlag, batchSize, id()
+			); final Input<Item> itemInput = ItemInputFactory.createItemInput(itemConfig, batchSize, storageDriver)
 		) {
-			if(null != itemDataInputFile && !itemDataInputFile.isEmpty()) {
+			if(null != itemDataInputFile && ! itemDataInputFile.isEmpty()) {
 				itemDataInputFileSlicers.add(
-					new ItemDataInputFileSlicer(id(), fileMgrs, configSlices, itemDataInputFile, batchSize)
-				);
+					new ItemDataInputFileSlicer(id(), fileMgrs, configSlices, itemDataInputFile, batchSize));
 				Loggers.MSG.debug("{}: item data input file slicer initialized", id());
 			}
 			if(null != itemInput) {
@@ -186,10 +177,9 @@ public abstract class LoadStepClientBase
 		final String storageAuthFile = storageConfig.stringVal("auth-file");
 		if(storageAuthFile != null && ! storageAuthFile.isEmpty()) {
 			storageAuthFileSlicers.add(
-				new TempInputTextFileSlicer(
-					id(), storageAuthFile, fileMgrs, "storage-auth-file", configSlices, batchSize
-				)
-			);
+				new TempInputTextFileSlicer(id(), storageAuthFile, fileMgrs, "storage-auth-file", configSlices,
+					batchSize
+				));
 			Loggers.MSG.debug("{}: storage auth file slicer initialized", id());
 		}
 	}
@@ -205,8 +195,8 @@ public abstract class LoadStepClientBase
 
 	private void initAndStartStepSlices(
 		final List<String> nodeAddrs, final List<Config> configSlices, final List<List<Config>> ctxConfigsSlices
-	) throws InterruptRunException {
-
+	)
+	throws InterruptRunException {
 		final String stepTypeName;
 		try {
 			stepTypeName = getTypeName();
@@ -218,13 +208,12 @@ public abstract class LoadStepClientBase
 			final Config configSlice = configSlices.get(i);
 			final LoadStep stepSlice;
 			if(i == 0) {
-				stepSlice = LoadStepFactory.createLocalLoadStep(
-					configSlice, extensions, ctxConfigsSlices.get(i), stepTypeName
-				);
+				stepSlice =
+					LoadStepFactory.createLocalLoadStep(configSlice, extensions, ctxConfigsSlices.get(i), stepTypeName);
 			} else {
 				final String nodeAddrWithPort = nodeAddrs.get(i - 1);
-				stepSlice = LoadStepSliceUtil.resolveRemote(
-					configSlice, ctxConfigsSlices.get(i), stepTypeName, nodeAddrWithPort
+				stepSlice = LoadStepSliceUtil.resolveRemote(configSlice, ctxConfigsSlices.get(i), stepTypeName,
+					nodeAddrWithPort
 				);
 			}
 			stepSlices.add(stepSlice);
@@ -307,11 +296,11 @@ public abstract class LoadStepClientBase
 		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
 		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
 		// further usage
-		final MetricsContext metricsCtx = new AggregatingMetricsContext(
-			id(), opType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
-			outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
-			() -> metricsSnapshotsByIndex(originIndex)
-		);
+		final MetricsContext metricsCtx =
+			new DistributedMetricsContextImpl(id(), opType, this::sliceCount, concurrencyLimit, concurrencyThreshold,
+				itemDataSize, metricsAvgPeriod, outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag,
+				metricsSumPerfDbOutputFlag, () -> metricsSnapshotsByIndex(originIndex)
+			);
 		metricsContexts.add(metricsCtx);
 	}
 
@@ -334,190 +323,138 @@ public abstract class LoadStepClientBase
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptRunException, IllegalStateException, InterruptedException {
-
 		if(stepSlices.size() == 0) {
 			throw new IllegalStateException("No step slices are available");
 		}
-
 		final CountDownLatch awaitCountDown = new CountDownLatch(stepSlices.size());
-		final List<AsyncRunnableBase> awaitTasks = stepSlices
-			.stream()
-			.map(
-				stepSlice -> new ExclusiveFiberBase(ServiceTaskExecutor.INSTANCE) {
-					@Override
-					protected final void invokeTimedExclusively(final long startTimeNanos) {
-						try {
-							if(stepSlice.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
-								awaitCountDown.countDown();
-							}
-						} catch(final RemoteException e) {
-							LogUtil.exception(
-								Level.WARN, e, "Failed to invoke the remote await method on the step slice \"{}\"",
-								stepSlice
-							);
-						} catch(final InterruptedException e) {
-							throw new InterruptRunException(e);
+		final List<AsyncRunnableBase> awaitTasks =
+			stepSlices.stream().map(stepSlice -> new ExclusiveFiberBase(ServiceTaskExecutor.INSTANCE) {
+				@Override
+				protected final void invokeTimedExclusively(final long startTimeNanos) {
+					try {
+						if(stepSlice.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+							awaitCountDown.countDown();
 						}
+					} catch(final RemoteException e) {
+						LogUtil.exception(Level.WARN, e,
+							"Failed to invoke the remote await method on the step slice \"{}\"", stepSlice
+						);
+					} catch(final InterruptedException e) {
+						throw new InterruptRunException(e);
 					}
 				}
-			)
-			.peek(AsyncRunnableBase::start)
-			.collect(Collectors.toList());
-
+			}).peek(AsyncRunnableBase::start).collect(Collectors.toList());
 		try {
 			return awaitCountDown.await(timeout, timeUnit);
 		} finally {
-			awaitTasks
-				.forEach(
-					awaitTask -> {
-						try {
-							awaitTask.close();
-						} catch(final InterruptRunException e) {
-							throw e;
-						} catch(final Exception ignored) {
-						}
-					}
-				);
+			awaitTasks.forEach(awaitTask -> {
+				try {
+					awaitTask.close();
+				} catch(final InterruptRunException e) {
+					throw e;
+				} catch(final Exception ignored) {
+				}
+			});
 		}
 	}
 
 	@Override
 	protected final void doStop()
 	throws InterruptRunException {
-		stepSlices
-			.parallelStream()
-			.forEach(
-				stepSlice -> {
-					try(
-						final Instance logCtx = put(KEY_STEP_ID, stepSlice.id())
-							.put(KEY_CLASS_NAME, getClass().getSimpleName())
-					) {
-						stepSlice.stop();
-					} catch(final InterruptRunException e) {
-						throw e;
-					} catch(final Exception e) {
-						LogUtil.exception(Level.WARN, e, "{}: failed to stop the step slice \"{}\"", id(), stepSlice);
-					}
-				}
-			);
+		stepSlices.parallelStream().forEach(stepSlice -> {
+			try(
+				final Instance logCtx = put(KEY_STEP_ID, stepSlice.id()).put(KEY_CLASS_NAME, getClass().getSimpleName())
+			) {
+				stepSlice.stop();
+			} catch(final InterruptRunException e) {
+				throw e;
+			} catch(final Exception e) {
+				LogUtil.exception(Level.WARN, e, "{}: failed to stop the step slice \"{}\"", id(), stepSlice);
+			}
+		});
 		super.doStop();
 	}
 
 	@Override
 	protected final void doClose()
 	throws InterruptRunException, IOException {
-
 		super.doClose();
 		if(null != metricsAggregator) {
 			metricsAggregator.stop();
 		}
-
-		stepSlices
-			.parallelStream()
-			.forEach(
-				stepSlice -> {
-					try {
-						stepSlice.close();
-						Loggers.MSG.debug("{}: step slice \"{}\" closed", id(), stepSlice);
-					} catch(final InterruptRunException e) {
-						throw e;
-					} catch(final Exception e) {
-						LogUtil.exception(
-							Level.WARN, e, "{}: failed to close the step service \"{}\"", id(), stepSlice
-						);
-					}
-				}
-			);
+		stepSlices.parallelStream().forEach(stepSlice -> {
+			try {
+				stepSlice.close();
+				Loggers.MSG.debug("{}: step slice \"{}\" closed", id(), stepSlice);
+			} catch(final InterruptRunException e) {
+				throw e;
+			} catch(final Exception e) {
+				LogUtil.exception(Level.WARN, e, "{}: failed to close the step service \"{}\"", id(), stepSlice);
+			}
+		});
 		Loggers.MSG.debug("{}: closed all {} step slices", id(), stepSlices.size());
 		stepSlices.clear();
 		if(null != metricsAggregator) {
 			metricsAggregator.close();
 			metricsAggregator = null;
 		}
-
-		itemDataInputFileSlicers
-			.forEach(
-				itemDataInputFileSlicer -> {
-					try {
-						itemDataInputFileSlicers.clear();
-					} catch(final InterruptRunException e) {
-						throw e;
-					} catch(final Exception e) {
-						LogUtil.exception(
-							Level.WARN, e, "{}: failed to close the item data input file slicer \"{}\"", id(),
-							itemDataInputFileSlicer
-						);
-					}
-				}
-			);
+		itemDataInputFileSlicers.forEach(itemDataInputFileSlicer -> {
+			try {
+				itemDataInputFileSlicers.clear();
+			} catch(final InterruptRunException e) {
+				throw e;
+			} catch(final Exception e) {
+				LogUtil.exception(Level.WARN, e, "{}: failed to close the item data input file slicer \"{}\"", id(),
+					itemDataInputFileSlicer
+				);
+			}
+		});
 		itemDataInputFileSlicers.clear();
-
-		itemInputFileSlicers
-			.forEach(
-				itemInputFileSlicer -> {
-					try {
-						itemInputFileSlicer.close();
-					} catch(final InterruptRunException e) {
-						throw e;
-					} catch(final Exception e) {
-						LogUtil.exception(
-							Level.WARN, e, "{}: failed to close the item input file slicer \"{}\"", id(),
-							itemInputFileSlicer
-						);
-					}
-				}
-			);
+		itemInputFileSlicers.forEach(itemInputFileSlicer -> {
+			try {
+				itemInputFileSlicer.close();
+			} catch(final InterruptRunException e) {
+				throw e;
+			} catch(final Exception e) {
+				LogUtil.exception(Level.WARN, e, "{}: failed to close the item input file slicer \"{}\"", id(),
+					itemInputFileSlicer
+				);
+			}
+		});
 		itemInputFileSlicers.clear();
-
-		itemOutputFileAggregators
-			.parallelStream()
-			.forEach(
-				itemOutputFileAggregator -> {
-					try {
-						itemOutputFileAggregator.close();
-					} catch(final InterruptRunException e) {
-						throw e;
-					} catch(final Exception e) {
-						LogUtil.exception(
-							Level.WARN, e, "{}: failed to close the item output file aggregator \"{}\"", id(),
-							itemOutputFileAggregator
-						);
-					}
-				}
-			);
-
-		opTraceLogFileAggregators
-			.parallelStream()
-			.forEach(
-				opTraceLogFileAggregator -> {
-					try {
-						opTraceLogFileAggregator.close();
-					} catch(final InterruptRunException e) {
-						throw e;
-					} catch(final Exception e) {
-						LogUtil.exception(
-							Level.WARN, e, "{}: failed to close the operation traces log file aggregator \"{}\"", id(),
-							opTraceLogFileAggregator
-						);
-					}
-				}
-			);
-
-		storageAuthFileSlicers
-			.forEach(
-				storageAuthFileSlicer -> {
-					try {
-						storageAuthFileSlicer.close();
-					} catch(final InterruptRunException e) {
-						throw e;
-					} catch(final Exception e) {
-						LogUtil.exception(
-							Level.WARN, e, "{}: failed to close the storage auth file slicer \"{}\"", id(),
-							storageAuthFileSlicer
-						);
-					}
-				}
-			);
+		itemOutputFileAggregators.parallelStream().forEach(itemOutputFileAggregator -> {
+			try {
+				itemOutputFileAggregator.close();
+			} catch(final InterruptRunException e) {
+				throw e;
+			} catch(final Exception e) {
+				LogUtil.exception(Level.WARN, e, "{}: failed to close the item output file aggregator \"{}\"", id(),
+					itemOutputFileAggregator
+				);
+			}
+		});
+		opTraceLogFileAggregators.parallelStream().forEach(opTraceLogFileAggregator -> {
+			try {
+				opTraceLogFileAggregator.close();
+			} catch(final InterruptRunException e) {
+				throw e;
+			} catch(final Exception e) {
+				LogUtil.exception(Level.WARN, e, "{}: failed to close the operation traces log file aggregator \"{}\"",
+					id(), opTraceLogFileAggregator
+				);
+			}
+		});
+		storageAuthFileSlicers.forEach(storageAuthFileSlicer -> {
+			try {
+				storageAuthFileSlicer.close();
+			} catch(final InterruptRunException e) {
+				throw e;
+			} catch(final Exception e) {
+				LogUtil.exception(Level.WARN, e, "{}: failed to close the storage auth file slicer \"{}\"", id(),
+					storageAuthFileSlicer
+				);
+			}
+		});
 		storageAuthFileSlicers.clear();
 	}
 
@@ -549,7 +486,6 @@ public abstract class LoadStepClientBase
 	@Override
 	public final <T extends LoadStepClient> T append(final Map<String, Object> context)
 	throws InterruptRunException {
-
 		final List<Config> ctxConfigsCopy;
 		if(ctxConfigs == null) {
 			ctxConfigsCopy = new ArrayList<>(1);

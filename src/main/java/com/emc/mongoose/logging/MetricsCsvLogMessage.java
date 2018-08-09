@@ -1,5 +1,8 @@
 package com.emc.mongoose.logging;
 
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.metrics.DistributedMetricsContext;
+import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 
@@ -45,21 +48,24 @@ import java.util.Date;
 @AsynchronouslyFormattable
 public final class MetricsCsvLogMessage
 extends LogMessageBase {
-	
-	private final MetricsContext metricsCtx;
+
+	private final MetricsSnapshot snapshot;
+	private final OpType opType;
 	
 	public MetricsCsvLogMessage(final MetricsContext metricsCtx) {
-		this.metricsCtx = metricsCtx;
+		this.opType = metricsCtx.opType();
+		this.snapshot = metricsCtx.lastSnapshot();
 	}
 	
 	@Override
 	public final void formatTo(final StringBuilder strb) {
-		final MetricsSnapshot snapshot = metricsCtx.lastSnapshot();
 		strb
 			.append('"').append(FMT_DATE_ISO8601.format(new Date())).append('"').append(',')
-			.append(metricsCtx.ioType().name()).append(',')
-			.append(metricsCtx.concurrencyLimit()).append(',')
-			.append(metricsCtx.nodeCount()).append(',')
+			.append(opType.name()).append(',')
+			.append(snapshot.concurrencyLimit()).append(',')
+			.append(snapshot instanceof DistributedMetricsSnapshot
+					? ((DistributedMetricsSnapshot)snapshot).nodeCount()
+					: 1).append(',')
 			.append(snapshot.actualConcurrencyLast()).append(',')
 			.append(snapshot.actualConcurrencyMean()).append(',')
 			.append(snapshot.succCount()).append(',')

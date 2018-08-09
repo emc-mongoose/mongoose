@@ -14,7 +14,7 @@ import static com.emc.mongoose.svc.ServiceUtil.MBEAN_SERVER;
  Created by andrey on 05.07.17.
  */
 public final class Meter
-implements MeterMBean {
+	implements MeterMBean {
 
 	private final MetricsContext metricsCtx;
 	private final ObjectName objectName;
@@ -24,8 +24,13 @@ implements MeterMBean {
 		this.metricsCtx = metricsCtx;
 		final Hashtable<String, String> props = new Hashtable<>();
 		props.put(KEY_STEP_ID, metricsCtx.stepId());
-		props.put(KEY_OP_TYPE, metricsCtx.ioType().name());
-		props.put(KEY_NODE_COUNT, Integer.toString(metricsCtx.nodeCount()));
+		props.put(KEY_OP_TYPE, metricsCtx.opType().name());
+		if(metricsCtx instanceof DistributedMetricsContext) {
+			props.put(
+				KEY_NODE_COUNT, Integer.toString(((DistributedMetricsSnapshot) metricsCtx.lastSnapshot()).nodeCount()));
+		} else {
+			props.put(KEY_NODE_COUNT, "1");
+		}
 		props.put(KEY_CONCURRENCY_LIMIT, Integer.toString(metricsCtx.concurrencyLimit()));
 		props.put(KEY_ITEM_DATA_SIZE, metricsCtx.itemDataSize().toString());
 		objectName = new ObjectName(METRICS_DOMAIN, props);
@@ -33,13 +38,13 @@ implements MeterMBean {
 		try {
 			MBEAN_SERVER.registerMBean(this, objectName);
 		} catch(final InstanceAlreadyExistsException e) {
-			if(1 == metricsCtx.nodeCount()) {
+			if(! (metricsCtx instanceof DistributedMetricsContext)) {
 				MBEAN_SERVER.unregisterMBean(objectName);
 				MBEAN_SERVER.registerMBean(this, objectName);
 			} else {
-				LogUtil.exception(
-					Level.WARN, e, "Failed to expose the metrics context \"{}\" with name \"{}\" for JMX service",
-					metricsCtx, objectName
+				LogUtil.exception(Level.WARN, e,
+					"Failed to expose the metrics context \"{}\" with name \"{}\" for JMX service", metricsCtx,
+					objectName
 				);
 			}
 		}
@@ -65,6 +70,11 @@ implements MeterMBean {
 	@Override
 	public final long startTimeMillis() {
 		return lastSnapshot.startTimeMillis();
+	}
+
+	@Override
+	public int concurrencyLimit() {
+		return lastSnapshot.concurrencyLimit();
 	}
 
 	@Override

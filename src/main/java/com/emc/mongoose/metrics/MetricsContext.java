@@ -20,8 +20,6 @@ extends Closeable, Comparable<MetricsContext> {
 
 	OpType opType();
 
-	int nodeCount();
-
 	int concurrencyLimit();
 
 	SizeInBytes itemDataSize();

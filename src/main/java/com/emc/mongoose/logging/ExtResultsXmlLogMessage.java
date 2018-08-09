@@ -1,30 +1,29 @@
 package com.emc.mongoose.logging;
 
-import static com.emc.mongoose.Constants.MIB;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsSnapshot;
-import com.emc.mongoose.item.op.OpType;
+import org.apache.logging.log4j.message.AsynchronouslyFormattable;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-import org.apache.logging.log4j.message.AsynchronouslyFormattable;
+import static com.emc.mongoose.Constants.MIB;
 
 /**
  Created by andrey on 12.12.16.
  */
-@AsynchronouslyFormattable
-public final class ExtResultsXmlLogMessage
-extends LogMessageBase {
+@AsynchronouslyFormattable public final class ExtResultsXmlLogMessage
+	extends LogMessageBase {
 
 	private static final DateFormat FMT_DATE_RESULTS = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss") {
 		{
 			setTimeZone(TimeZone.getTimeZone("UTC"));
 		}
 	};
-
 	private final MetricsContext metricsCtx;
 
 	public ExtResultsXmlLogMessage(final MetricsContext metricsCtx) {
@@ -46,8 +45,9 @@ extends LogMessageBase {
 		buffer.append("EndTimestamp=\"").append(endTimeStamp).append("\" ");
 		final int ioTypeCode = metricsCtx.opType().ordinal();
 		buffer.append("operation=\"").append(OpType.values()[ioTypeCode].name()).append("\" ");
-		final int concurrency = metricsCtx.concurrencyLimit();
-		final int nodeCount = metricsCtx.nodeCount();
+		final int concurrency = snapshot.concurrencyLimit();
+		final int nodeCount =
+			(snapshot instanceof DistributedMetricsSnapshot) ? ((DistributedMetricsSnapshot) snapshot).nodeCount() : 1;
 		buffer.append("threads=\"").append(concurrency * nodeCount).append("\" ");
 		buffer.append("RequestThreads=\"").append(concurrency).append("\" ");
 		buffer.append("clients=\"").append(nodeCount).append("\" ");

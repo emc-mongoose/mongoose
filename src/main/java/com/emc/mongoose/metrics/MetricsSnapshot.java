@@ -5,6 +5,8 @@ import java.io.Serializable;
 public interface MetricsSnapshot
 extends Serializable {
 
+	int concurrencyLimit();
+
 	long succCount();
 
 	long failCount();

@@ -2,9 +2,7 @@ package com.emc.mongoose.metrics;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
-
 import com.emc.mongoose.item.op.OpType;
-
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.io.IOException;
@@ -19,7 +17,7 @@ import java.util.function.IntSupplier;
  Start timestamp and elapsed time is in milliseconds while other time values are in microseconds.
  */
 public class MetricsContextImpl
-implements MetricsContext {
+	implements MetricsContext {
 
 	private final Clock clock = new ResumableUserTimeClock();
 	private final Histogram reqDuration, respLatency, actualConcurrency;
@@ -222,11 +220,6 @@ implements MetricsContext {
 	}
 
 	@Override
-	public final int nodeCount() {
-		return 1;
-	}
-
-	@Override
 	public final int concurrencyLimit() {
 		return concurrencyLimit;
 	}
@@ -299,7 +292,8 @@ implements MetricsContext {
 		lastSnapshot = new MetricsSnapshotImpl(throughputSuccess.getCount(), throughputSuccess.
 			getLastRate(), throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
 			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyGauge.getAsInt(),
-			actualConcurrencySnapshot.getMean(), lastDurationSum, lastLatencySum, reqDurSnapshot, respLatSnapshot
+			actualConcurrencySnapshot.getMean(), concurrencyLimit, lastDurationSum, lastLatencySum, reqDurSnapshot,
+			respLatSnapshot
 		);
 		if(metricsListener != null) {
 			metricsListener.notify(lastSnapshot);
@@ -338,9 +332,10 @@ implements MetricsContext {
 		if(thresholdMetricsCtx != null) {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
-		thresholdMetricsCtx = new MetricsContextImpl(id, opType, actualConcurrencyGauge, concurrencyLimit, 0,
-			itemDataSize, (int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag
-		);
+		thresholdMetricsCtx =
+			new MetricsContextImpl(id, opType, actualConcurrencyGauge, concurrencyLimit, 0, itemDataSize,
+				(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag
+			);
 		thresholdMetricsCtx.start();
 	}
 
@@ -398,5 +393,4 @@ implements MetricsContext {
 	public final String toString() {
 		return "MetricsContext(" + opType.name() + '-' + concurrencyLimit + "x1@" + id + ")";
 	}
-
 }

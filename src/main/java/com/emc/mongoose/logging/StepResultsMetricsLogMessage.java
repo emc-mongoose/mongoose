@@ -1,18 +1,17 @@
 package com.emc.mongoose.logging;
 
-import com.emc.mongoose.metrics.AggregatingMetricsContext;
+import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsSnapshot;
-import com.emc.mongoose.item.op.OpType;
+import org.apache.logging.log4j.message.AsynchronouslyFormattable;
+
 import static com.emc.mongoose.Constants.K;
 import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.Constants.MIB;
 import static com.emc.mongoose.logging.LogUtil.RESET;
 import static com.emc.mongoose.logging.LogUtil.WHITE;
 import static com.emc.mongoose.logging.LogUtil.getFailureRatioAnsiColorCode;
-
-import org.apache.logging.log4j.message.AsynchronouslyFormattable;
-
 import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
 
 /**
@@ -20,21 +19,24 @@ import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
  */
 @AsynchronouslyFormattable
 public final class StepResultsMetricsLogMessage
-extends LogMessageBase {
-	
-	private final MetricsContext metricsCtx;
-	
+	extends LogMessageBase {
+
+	private final OpType opType;
+	private final boolean stdOutColorFlag;
+	private final String stepId;
+	private final MetricsSnapshot snapshot;
+
 	public StepResultsMetricsLogMessage(final MetricsContext metricsCtx) {
-		this.metricsCtx = metricsCtx;
+		this.opType = metricsCtx.opType();
+		this.stdOutColorFlag = metricsCtx.stdOutColorEnabled();
+		this.stepId = metricsCtx.stepId();
+		this.snapshot = metricsCtx.lastSnapshot();
 	}
-	
+
 	@Override
 	public final void formatTo(final StringBuilder buffer) {
-		final MetricsSnapshot snapshot = metricsCtx.lastSnapshot();
 		final long succCount = snapshot.succCount();
 		final long failCount = snapshot.failCount();
-		final OpType opType = metricsCtx.opType();
-		final boolean stdOutColorFlag = metricsCtx.stdOutColorEnabled();
 		String opTypeColorCode = WHITE;
 		switch(opType) {
 			case NOOP:
@@ -57,21 +59,23 @@ extends LogMessageBase {
 				break;
 		}
 		buffer
-			.append(metricsCtx instanceof AggregatingMetricsContext ? "Distributed" : "Local")
+			.append(snapshot instanceof DistributedMetricsSnapshot ? "Distributed" : "Local")
 			.append(" load step ")
-			.append(metricsCtx instanceof AggregatingMetricsContext ? "\"" : "slice \"")
-			.append(metricsCtx.stepId())
+			.append(snapshot instanceof DistributedMetricsSnapshot ? "\"" : "slice \"")
+			.append(stepId)
 			.append("\" results:\n\t");
 		if(stdOutColorFlag) {
 			buffer.append(opTypeColorCode);
 		}
-		buffer.append(metricsCtx.opType().name());
+		buffer.append(opType.name());
 		if(stdOutColorFlag) {
 			buffer.append(RESET);
 		}
 		buffer
-			.append('-').append(metricsCtx.concurrencyLimit())
-			.append('x').append(metricsCtx.nodeCount())
+			.append('-').append(snapshot.concurrencyLimit())
+			.append('x').append(snapshot instanceof DistributedMetricsSnapshot
+								? ((DistributedMetricsSnapshot) snapshot).nodeCount()
+								: 1)
 			.append(": c=(").append(formatFixedWidth(snapshot.actualConcurrencyMean(), 6))
 			.append("); n=(");
 		if(stdOutColorFlag) {

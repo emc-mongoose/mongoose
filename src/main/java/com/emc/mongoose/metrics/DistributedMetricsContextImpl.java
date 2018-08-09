@@ -2,9 +2,7 @@ package com.emc.mongoose.metrics;
 
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.UniformSnapshot;
-
 import com.emc.mongoose.item.op.OpType;
-
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.io.IOException;
@@ -13,8 +11,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
-public class AggregatingMetricsContext
-implements MetricsContext {
+public class DistributedMetricsContextImpl
+	implements DistributedMetricsContext {
 
 	private final long ts;
 	private final String stepId;
@@ -29,15 +27,14 @@ implements MetricsContext {
 	private final boolean perfDbResultsFileFlag;
 	private final long outputPeriodMillis;
 	private final Supplier<List<MetricsSnapshot>> snapshotsSupplier;
-
-	private volatile long tsStart = -1, prevElapsedTime = 0;
+	private volatile long tsStart = - 1, prevElapsedTime = 0;
 	private volatile long lastOutputTs = 0;
 	private volatile MetricsSnapshot lastSnapshot = null;
 	private volatile MetricsListener metricsListener = null;
 	private volatile MetricsContext thresholdMetricsCtx = null;
 	private volatile boolean thresholdStateExitedFlag = false;
 
-	public AggregatingMetricsContext(
+	public DistributedMetricsContextImpl(
 		final String stepId, final OpType opType, final IntSupplier nodeCountSupplier, final int concurrencyLimit,
 		final double concurrencyThreshold, final SizeInBytes itemDataSize, final int updateIntervalSec,
 		final boolean stdOutColorFlag, final boolean avgPersistFlag, final boolean sumPersistFlag,
@@ -51,7 +48,6 @@ implements MetricsContext {
 		this.concurrencyThreshold = concurrencyThreshold > 0 ? concurrencyThreshold : Long.MAX_VALUE;
 		this.itemDataSize = itemDataSize;
 		this.snapshotsSupplier = snapshotsSupplier;
-
 		this.stdOutColorFlag = stdOutColorFlag;
 		this.avgPersistFlag = avgPersistFlag;
 		this.sumPersistFlag = sumPersistFlag;
@@ -66,7 +62,7 @@ implements MetricsContext {
 
 	@Override
 	public boolean isStarted() {
-		return tsStart > -1;
+		return tsStart > - 1;
 	}
 
 	@Override
@@ -164,7 +160,6 @@ implements MetricsContext {
 
 	@Override
 	public void refreshLastSnapshot() {
-
 		final List<MetricsSnapshot> snapshots = snapshotsSupplier.get();
 		long countSucc = 0;
 		double succRateLast = 0;
@@ -178,7 +173,6 @@ implements MetricsContext {
 		int durValCount = 0;
 		long sumLat = 0;
 		int latValCount = 0;
-		int nodeCount = 0;
 		for(final MetricsSnapshot snapshot : snapshots) {
 			countSucc += snapshot.succCount();
 			succRateLast += snapshot.succRateLast();
@@ -200,24 +194,21 @@ implements MetricsContext {
 		for(final MetricsSnapshot snapshot : snapshots) {
 			for(final long dur : snapshot.durationValues()) {
 				allDurations[lastDurIdx] = dur;
-				lastDurIdx ++;
+				lastDurIdx++;
 			}
 			for(final long lat : snapshot.latencyValues()) {
 				allLatencies[lastLatIdx] = lat;
-				lastLatIdx ++;
+				lastLatIdx++;
 			}
 		}
 		final Snapshot durSnapshot = new UniformSnapshot(allDurations);
 		final Snapshot latSnapshot = new UniformSnapshot(allLatencies);
 		final long currentTimeMillis = System.currentTimeMillis();
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
-
-		lastSnapshot = new MetricsSnapshotImpl(
-			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast, tsStart,
-			prevElapsedTime + currElapsedTime, actualConcurrencyLast, actualConcurrencyMean, sumDur, sumLat,
-			durSnapshot, latSnapshot
+		lastSnapshot = new DistributedMetricsSnapshotImpl(countSucc, succRateLast, countFail, failRateLast, countByte,
+			byteRateLast, tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyLast, actualConcurrencyMean,
+			concurrencyLimit, sumDur, sumLat, nodeCountSupplier.getAsInt(), durSnapshot, latSnapshot
 		);
-
 		if(metricsListener != null) {
 			metricsListener.notify(lastSnapshot);
 		}
@@ -255,11 +246,11 @@ implements MetricsContext {
 		if(thresholdMetricsCtx != null) {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
-		thresholdMetricsCtx = new AggregatingMetricsContext(
-			stepId, opType, nodeCountSupplier, concurrencyLimit, 0, itemDataSize,
-			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag, avgPersistFlag, sumPersistFlag,
-			perfDbResultsFileFlag, snapshotsSupplier
-		);
+		thresholdMetricsCtx =
+			new DistributedMetricsContextImpl(stepId, opType, nodeCountSupplier, concurrencyLimit, 0, itemDataSize,
+				(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag, avgPersistFlag,
+				sumPersistFlag, perfDbResultsFileFlag, snapshotsSupplier
+			);
 		thresholdMetricsCtx.start();
 	}
 
@@ -315,7 +306,7 @@ implements MetricsContext {
 	@Override
 	public void close() {
 		prevElapsedTime = System.currentTimeMillis() - tsStart;
-		tsStart = -1;
+		tsStart = - 1;
 		lastSnapshot = null;
 	}
 }

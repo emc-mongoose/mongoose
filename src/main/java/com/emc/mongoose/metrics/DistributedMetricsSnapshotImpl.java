@@ -2,8 +2,8 @@ package com.emc.mongoose.metrics;
 
 import com.codahale.metrics.UniformSnapshot;
 
-public final class MetricsSnapshotImpl
-	implements MetricsSnapshot {
+public final class DistributedMetricsSnapshotImpl
+	implements DistributedMetricsSnapshot {
 
 	private final long countSucc;
 	private final double succRateLast;
@@ -22,12 +22,13 @@ public final class MetricsSnapshotImpl
 	private final int actualConcurrencyLast;
 	private final double actualConcurrencyMean;
 	private final int concurrencyLimit;
+	private final int nodeCount;
 
-	public MetricsSnapshotImpl(
+	public DistributedMetricsSnapshotImpl(
 		final long countSucc, final double succRateLast, final long countFail, final double failRateLast,
 		final long countByte, final double byteRateLast, final long startTimeMillis, final long elapsedTimeMillis,
 		final int actualConcurrencyLast, final double actualConcurrencyMean, final int concurrencyLimit,
-		final long sumDur, final long sumLat, final com.codahale.metrics.Snapshot durSnapshot,
+		final long sumDur, final long sumLat, final int nodeCount, final com.codahale.metrics.Snapshot durSnapshot,
 		final com.codahale.metrics.Snapshot latSnapshot
 	) {
 		this.countSucc = countSucc;
@@ -47,6 +48,7 @@ public final class MetricsSnapshotImpl
 		this.durValues = durSnapshot.getValues();
 		this.latSnapshot = latSnapshot;
 		this.latValues = latSnapshot.getValues();
+		this.nodeCount = nodeCount;
 	}
 
 	@Override
@@ -233,5 +235,10 @@ public final class MetricsSnapshotImpl
 	@Override
 	public final double actualConcurrencyMean() {
 		return actualConcurrencyMean;
+	}
+
+	@Override
+	public int nodeCount() {
+		return nodeCount;
 	}
 }
