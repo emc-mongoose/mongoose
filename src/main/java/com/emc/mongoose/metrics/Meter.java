@@ -35,17 +35,15 @@ public final class Meter
 		props.put(KEY_ITEM_DATA_SIZE, metricsCtx.itemDataSize().toString());
 		objectName = new ObjectName(METRICS_DOMAIN, props);
 		metricsCtx.metricsListener(this);
-		try {
-			MBEAN_SERVER.registerMBean(this, objectName);
-		} catch(final InstanceAlreadyExistsException e) {
-			if(! (metricsCtx instanceof DistributedMetricsContext)) {
-				MBEAN_SERVER.unregisterMBean(objectName);
+		if((metricsCtx instanceof DistributedMetricsContext)) {
+			try {
 				MBEAN_SERVER.registerMBean(this, objectName);
-			} else {
+			} catch(final InstanceAlreadyExistsException e) {
 				LogUtil.exception(Level.WARN, e,
-					"Failed to expose the metrics context \"{}\" with name \"{}\" for JMX service", metricsCtx,
-					objectName
-				);
+								  "Failed to expose the metrics context \"{}\" with name \"{}\" for JMX service",
+								  metricsCtx,
+								  objectName
+								 );
 			}
 		}
 	}
