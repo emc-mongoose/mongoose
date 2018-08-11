@@ -16,6 +16,7 @@ import com.emc.mongoose.item.TransferConvertBuffer;
 import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.load.generator.LoadGenerator;
 import com.emc.mongoose.load.step.local.LoadStepLocalBase;
+import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.load.step.local.context.LoadStepContextImpl;
 import com.emc.mongoose.load.generator.LoadGeneratorBuilderImpl;
@@ -50,9 +51,10 @@ public class PipelineLoadStepLocal
 extends LoadStepLocalBase {
 
 	public PipelineLoadStepLocal(
-		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs
+		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs,
+		final MetricsManager metricsManager
 	) {
-		super(baseConfig, extensions, contextConfigs);
+		super(baseConfig, extensions, contextConfigs, metricsManager);
 	}
 
 	@Override

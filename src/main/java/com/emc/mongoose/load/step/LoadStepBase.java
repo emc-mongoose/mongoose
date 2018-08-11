@@ -37,15 +37,20 @@ implements LoadStep, Runnable {
 	protected final Config config;
 	protected final List<Extension> extensions;
 	protected final List<Config> ctxConfigs;
+	protected final MetricsManager metricsMgr;
 	protected final List<MetricsContext> metricsContexts = new ArrayList<>();
 
 	private volatile long timeLimitSec = Long.MAX_VALUE;
 	private volatile long startTimeSec = -1;
 
-	protected LoadStepBase(final Config config, final List<Extension> extensions, final List<Config> ctxConfigs) {
+	protected LoadStepBase(
+		final Config config, final List<Extension> extensions, final List<Config> ctxConfigs,
+		final MetricsManager metricsMgr
+	) {
 		this.config = new BasicConfig(config);
 		this.extensions = extensions;
 		this.ctxConfigs = ctxConfigs;
+		this.metricsMgr = metricsMgr;
 	}
 
 	@Override
@@ -119,11 +124,7 @@ implements LoadStep, Runnable {
 		metricsContexts.forEach(
 			metricsCtx -> {
 				metricsCtx.start();
-				try {
-					MetricsManager.register(id(), metricsCtx);
-				} catch(final InterruptedException e) {
-					throw new InterruptRunException(e);
-				}
+				metricsMgr.register(id(), metricsCtx);
 			}
 		);
 	}
@@ -147,16 +148,7 @@ implements LoadStep, Runnable {
 	protected void doStop()
 	throws InterruptRunException {
 
-		metricsContexts
-			.forEach(
-				metricsCtx -> {
-					try {
-						MetricsManager.unregister(id(), metricsCtx);
-					} catch(final InterruptedException e) {
-						throw new InterruptRunException(e);
-					}
-				}
-			);
+		metricsContexts.forEach(metricsCtx -> metricsMgr.unregister(id(), metricsCtx));
 
 		final long t = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - startTimeSec;
 		if(t < 0) {

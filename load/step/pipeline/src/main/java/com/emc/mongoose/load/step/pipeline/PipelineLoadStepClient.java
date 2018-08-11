@@ -6,9 +6,11 @@ import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.load.step.client.LoadStepClient;
 import com.emc.mongoose.load.step.client.LoadStepClientBase;
 import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.metrics.MetricsManager;
 
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
+
 import static com.github.akurilov.commons.collection.TreeUtil.reduceForest;
 
 import com.github.akurilov.confuse.Config;
@@ -27,14 +29,15 @@ public class PipelineLoadStepClient
 extends LoadStepClientBase  {
 
 	public PipelineLoadStepClient(
-		final Config config, final List<Extension> extensions, final List<Config> ctxConfigs
+		final Config config, final List<Extension> extensions, final List<Config> ctxConfigs,
+		final MetricsManager metricsManager
 	) {
-		super(config, extensions, ctxConfigs);
+		super(config, extensions, ctxConfigs, metricsManager);
 	}
 
 	@Override @SuppressWarnings("unchecked")
 	protected <T extends LoadStepClient> T copyInstance(final Config config, final List<Config> ctxConfigs) {
-		return (T) new PipelineLoadStepClient(config, extensions, ctxConfigs);
+		return (T) new PipelineLoadStepClient(config, extensions, ctxConfigs, metricsMgr);
 	}
 
 	@Override

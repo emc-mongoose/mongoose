@@ -4,6 +4,7 @@ import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.metrics.MetricsManager;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
@@ -87,7 +88,7 @@ public interface ScriptEngineUtil {
 	 @param config the configuration
 	 */
 	static void registerStepTypes(
-		final ScriptEngine se, final List<Extension> extensions, final Config config
+		final ScriptEngine se, final List<Extension> extensions, final Config config, final MetricsManager metricsMgr
 	) {
 		final List<LoadStepFactory> loadStepFactories = extensions
 			.stream()
@@ -95,16 +96,16 @@ public interface ScriptEngineUtil {
 			.map(ext -> (LoadStepFactory) ext)
 			.collect(Collectors.toList());
 		loadStepFactories
-			.forEach(factory -> se.put(factory.id(), factory.createClient(config, extensions)));
+			.forEach(factory -> se.put(factory.id(), factory.createClient(config, extensions, metricsMgr)));
 		loadStepFactories
 			.stream()
 			.filter(factory -> "Load".equals(factory.id()))
 			.findFirst()
-			.ifPresent(factory -> registerAdditionalStepTypes(se, extensions, config, factory));
+			.ifPresent(factory -> registerAdditionalStepTypes(se, extensions, config, metricsMgr, factory));
 	}
 
 	static void registerAdditionalStepTypes(
-		final ScriptEngine se, final List<Extension> extensions, final Config config,
+		final ScriptEngine se, final List<Extension> extensions, final Config config, final MetricsManager metricsMgr,
 		final LoadStepFactory baseLoadStepFactory
 	) {
 
@@ -116,7 +117,7 @@ public interface ScriptEngineUtil {
 		specificConfig.val("output-metrics-summary-perfDbResultsFile", false);
 		specificConfig.val("output-metrics-summary-persist", false);
 		specificConfig.val("output-metrics-trace-persist", false);
-		se.put("PreconditionLoad", baseLoadStepFactory.createClient(specificConfig, extensions));
+		se.put("PreconditionLoad", baseLoadStepFactory.createClient(specificConfig, extensions, metricsMgr));
 
 		for(final OpType opType : OpType.values()) {
 			specificConfig = new BasicConfig(config);
@@ -124,30 +125,30 @@ public interface ScriptEngineUtil {
 			specificConfig.val("load-op-type", ioTypeName);
 			final String stepName = ioTypeName.substring(0, 1).toUpperCase()
 				+ ioTypeName.substring(1) + "Load";
-			se.put(stepName, baseLoadStepFactory.createClient(specificConfig, extensions));
+			se.put(stepName, baseLoadStepFactory.createClient(specificConfig, extensions, metricsMgr));
 		}
 
 		specificConfig = new BasicConfig(config);
 		specificConfig.val("load-op-type", OpType.READ.name().toLowerCase());
 		specificConfig.val("item-data-verify", true);
-		se.put("ReadVerifyLoad", baseLoadStepFactory.createClient(specificConfig, extensions));
+		se.put("ReadVerifyLoad", baseLoadStepFactory.createClient(specificConfig, extensions, metricsMgr));
 
 		specificConfig = new BasicConfig(config);
 		specificConfig.val("load-op-type", OpType.READ.name().toLowerCase());
 		specificConfig.val("item-data-ranges-random", 1);
-		se.put("ReadRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions));
+		se.put("ReadRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions, metricsMgr));
 
 		specificConfig = new BasicConfig(config);
 		specificConfig.val("load-op-type", OpType.READ.name().toLowerCase());
 		specificConfig.val("item-data-verify", true);
 		specificConfig.val("item-data-ranges-random", 1);
 		se.put(
-			"ReadVerifyRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions)
+			"ReadVerifyRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions, metricsMgr)
 		);
 
 		specificConfig = new BasicConfig(config);
 		specificConfig.val("load-op-type", OpType.UPDATE.name().toLowerCase());
 		specificConfig.val("item-data-ranges-random", 1);
-		se.put("UpdateRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions));
+		se.put("UpdateRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions, metricsMgr));
 	}
 }

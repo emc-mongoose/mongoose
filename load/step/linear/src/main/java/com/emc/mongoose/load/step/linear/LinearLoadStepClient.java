@@ -5,7 +5,7 @@ import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.load.step.client.LoadStepClient;
 import com.emc.mongoose.load.step.client.LoadStepClientBase;
 import com.emc.mongoose.logging.LogUtil;
-
+import com.emc.mongoose.metrics.MetricsManager;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
@@ -16,14 +16,15 @@ public class LinearLoadStepClient
 extends LoadStepClientBase {
 
 	public LinearLoadStepClient(
-		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs
+		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs,
+		final MetricsManager metricsManager
 	) {
-		super(baseConfig, extensions, contextConfigs);
+		super(baseConfig, extensions, contextConfigs, metricsManager);
 	}
 
 	@Override @SuppressWarnings("unchecked")
 	protected <T extends LoadStepClient> T copyInstance(final Config config, final List<Config> ctxConfigs) {
-		return (T) new LinearLoadStepClient(config, extensions, ctxConfigs);
+		return (T) new LinearLoadStepClient(config, extensions, ctxConfigs, metricsMgr);
 	}
 
 	@Override
