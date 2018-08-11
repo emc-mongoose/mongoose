@@ -162,7 +162,7 @@ public final class Main {
 				}
 			}
 		} catch(final InterruptedException | InterruptRunException e) {
-			System.out.println("Boooo!!!");
+			Loggers.MSG.debug("Interrupted", e);
 		} catch(final Exception e) {
 			LogUtil.exception(Level.FATAL, e, "Unexpected failure");
 			e.printStackTrace();
