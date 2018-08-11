@@ -5,6 +5,7 @@ import static com.emc.mongoose.load.step.client.LoadStepClient.OUTPUT_PROGRESS_P
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.load.step.service.file.FileManagerService;
+import com.emc.mongoose.logging.LogContextThreadFactory;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 
@@ -20,6 +21,9 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
@@ -60,48 +64,53 @@ implements Closeable {
 	public final void collectToLocal() {
 
 		final LongAdder byteCounter = new LongAdder();
-		final Thread progressOutputThread = new Thread(
+		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(
+			2, new LogContextThreadFactory("collectOpTraceLogFileWorker", true)
+		);
+		final CountDownLatch finishLatch = new CountDownLatch(1);
+
+		executor.submit(
 			() -> {
-				Loggers.MSG.info("\"{}\": start to transfer the I/O trace data to the local log file", loadStepId);
 				try {
-					while(true) {
-						TimeUnit.MILLISECONDS.sleep(OUTPUT_PROGRESS_PERIOD_MILLIS);
-						Loggers.MSG.info(
-							"\"{}\": transferred {} I/O trace data...", loadStepId,
-							SizeInBytes.formatFixedSize(byteCounter.longValue())
+					opTraceLogFileSlices
+						.entrySet()
+						.parallelStream()
+						// don't transfer the local file data
+						.filter(entry -> entry.getKey() instanceof FileManagerService)
+						.forEach(
+							entry -> {
+								final FileManager fileMgr = entry.getKey();
+								final String remoteIoTraceLogFileName = entry.getValue();
+								transferToLocal(fileMgr, remoteIoTraceLogFileName, byteCounter);
+								try {
+									fileMgr.deleteFile(remoteIoTraceLogFileName);
+								} catch(final Exception e) {
+									LogUtil.exception(
+										Level.WARN, e, "{}: failed to delete the file \"{}\" @ file manager \"{}\"",
+										loadStepId, remoteIoTraceLogFileName, fileMgr
+									);
+								}
+							}
 						);
-					}
-				} catch(final InterruptedException e) {
-					throw new InterruptRunException(e);
+				} finally {
+					finishLatch.countDown();
 				}
 			}
 		);
-		progressOutputThread.setDaemon(true);
-		progressOutputThread.start();
+		executor.scheduleAtFixedRate(
+			() -> Loggers.MSG.info(
+				"\"{}\": transferred {} I/O trace data...", loadStepId,
+				SizeInBytes.formatFixedSize(byteCounter.longValue())
+			),
+			0, OUTPUT_PROGRESS_PERIOD_MILLIS, TimeUnit.MILLISECONDS
+		);
 
 		try {
-			opTraceLogFileSlices
-				.entrySet()
-				.parallelStream()
-				// don't transfer the local file data
-				.filter(entry -> entry.getKey() instanceof FileManagerService)
-				.forEach(
-					entry -> {
-						final FileManager fileMgr = entry.getKey();
-						final String remoteIoTraceLogFileName = entry.getValue();
-						transferToLocal(fileMgr, remoteIoTraceLogFileName, byteCounter);
-						try {
-							fileMgr.deleteFile(remoteIoTraceLogFileName);
-						} catch(final Exception e) {
-							LogUtil.exception(
-								Level.WARN, e, "{}: failed to delete the file \"{}\" @ file manager \"{}\"", loadStepId,
-								remoteIoTraceLogFileName, fileMgr
-							);
-						}
-					}
-				);
+			finishLatch.await();
+		} catch(final InterruptedException e) {
+			throw new InterruptRunException(e);
 		} finally {
-			progressOutputThread.interrupt();
+			executor.shutdownNow();
 			Loggers.MSG.info(
 				"\"{}\": transferred {} of the operation traces data", loadStepId,
 				SizeInBytes.formatFixedSize(byteCounter.longValue())

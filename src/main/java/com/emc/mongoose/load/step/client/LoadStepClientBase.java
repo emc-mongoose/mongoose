@@ -328,22 +328,28 @@ public abstract class LoadStepClientBase
 		}
 		final CountDownLatch awaitCountDown = new CountDownLatch(stepSlices.size());
 		final List<AsyncRunnableBase> awaitTasks =
-			stepSlices.stream().map(stepSlice -> new ExclusiveFiberBase(ServiceTaskExecutor.INSTANCE) {
-				@Override
-				protected final void invokeTimedExclusively(final long startTimeNanos) {
-					try {
-						if(stepSlice.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
-							awaitCountDown.countDown();
+			stepSlices
+				.stream()
+				.map(
+					stepSlice -> new ExclusiveFiberBase(ServiceTaskExecutor.INSTANCE) {
+						@Override
+						protected final void invokeTimedExclusively(final long startTimeNanos) {
+							try {
+								if(stepSlice.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+									awaitCountDown.countDown();
+								}
+							} catch(final RemoteException e) {
+								LogUtil.exception(Level.WARN, e,
+									"Failed to invoke the remote await method on the step slice \"{}\"", stepSlice
+								);
+							} catch(final InterruptedException e) {
+								throw new InterruptRunException(e);
+							}
 						}
-					} catch(final RemoteException e) {
-						LogUtil.exception(Level.WARN, e,
-							"Failed to invoke the remote await method on the step slice \"{}\"", stepSlice
-						);
-					} catch(final InterruptedException e) {
-						throw new InterruptRunException(e);
 					}
-				}
-			}).peek(AsyncRunnableBase::start).collect(Collectors.toList());
+				)
+				.peek(AsyncRunnableBase::start)
+				.collect(Collectors.toList());
 		try {
 			return awaitCountDown.await(timeout, timeUnit);
 		} finally {

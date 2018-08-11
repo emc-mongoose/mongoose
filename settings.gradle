@@ -10,6 +10,5 @@ include "storage:driver:coop:net:http:swift"
 include "storage:driver:coop:nio"
 include "storage:driver:coop:nio:fs"
 include "storage:driver:preempt"
-//include "tests:system"
 
 rootProject.name = "mongoose"
