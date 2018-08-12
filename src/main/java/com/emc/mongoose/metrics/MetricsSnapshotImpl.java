@@ -2,8 +2,8 @@ package com.emc.mongoose.metrics;
 
 import com.codahale.metrics.UniformSnapshot;
 
-public final class MetricsSnapshotImpl
-	implements MetricsSnapshot {
+public class MetricsSnapshotImpl
+implements MetricsSnapshot {
 
 	private final long countSucc;
 	private final double succRateLast;
@@ -50,7 +50,7 @@ public final class MetricsSnapshotImpl
 	}
 
 	@Override
-	public int concurrencyLimit() {
+	public final int concurrencyLimit() {
 		return concurrencyLimit;
 	}
 
