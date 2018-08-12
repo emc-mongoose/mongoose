@@ -6,12 +6,6 @@ addons:
   ulimit:
     nofile: 1048576
 
-#services:
-#- docker
-#
-#jdk:
-#- oraclejdk8
-
 env:
   global:
   - TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH;fi`
