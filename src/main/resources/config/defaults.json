@@ -93,7 +93,7 @@
 			// The operation to process the items, may be "noop", "create", "update", "read" or "delete"
 			"type": "create"
 		},
-		// The count of the service threads. 0 means automatic value
+		// The global count of the service threads. 0 means automatic value
 		"service": {
 			"threads": 0
 		},

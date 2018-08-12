@@ -108,7 +108,8 @@ implements LoadStepClient {
 			initAndStartStepSlices(nodeAddrs, configSlices, ctxConfigsSlices, metricsMgr);
 			initAndStartMetricsAggregator();
 			Loggers.MSG.info(
-				"{}: load step client started, additional nodes: {}", id(), Arrays.toString(nodeAddrs.toArray()));
+				"{}: load step client started, additional nodes: {}", id(), Arrays.toString(nodeAddrs.toArray())
+			);
 		}
 	}
 

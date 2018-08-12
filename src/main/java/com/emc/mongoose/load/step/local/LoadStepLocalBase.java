@@ -56,10 +56,7 @@ extends LoadStepBase {
 					stepCtx.start();
 				} catch(final RemoteException ignored) {
 				} catch(final IllegalStateException e) {
-					LogUtil.exception(
-						Level.WARN, e, "{}: failed to start the load step context \"{}\"", id(),
-						stepCtx
-					);
+					LogUtil.exception(Level.WARN, e, "{}: failed to start the load step context \"{}\"", id(), stepCtx);
 				}
 			}
 		);
