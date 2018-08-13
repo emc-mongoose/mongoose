@@ -121,43 +121,43 @@ At the end of each load step the summary metrics are produced.
 ## 2.1. Console
 
 Console summary metrics output has YAML-like format for the better readability:
-```
----
-- Load Step Id:                 linear_20180812.194809.270
-    Operation Type:             READ
-    Node Count:                 1
-    Concurrency:
-      Limit Per Storage Driver: 1
-      Actual:
-        Last:                   0
-        Mean:                   0.12625250501002003
-    Operations Count:
-      Successful:               73
-      Failed:                   0
-    Transfer Size:              0B
-    Duration [s]:
-      Elapsed:                  25
-      Sum:                      0.010846
-    Throughput [op/s]:
-      Last:                     2.9869180105276976
-      Mean:                     2.919766418686505
-    Bandwidth [MB/s]:
-      Last:                     0.0
-      Mean:                     0.0
-    Operations Duration [us]:
-      Avg:                      151.14084507042253
-      Min:                      0
-      LoQ:                      112
-      Med:                      116
-      HiQ:                      132
-      Max:                      1032
-    Operations Latency [us]:
-      Avg:                      149.35211267605635
-      Min:                      0
-      LoQ:                      110
-      Med:                      114
-      HiQ:                      130
-      Max:                      1030
+```yaml
+--- # Results
+- Load Step Id:                linear_20180812.194809.270
+  Operation Type:              READ
+  Node Count:                  1
+  Concurrency:
+    Limit Per Storage Driver:  1
+    Actual:
+      Last:                    0
+      Mean:                    0.12625250501002003
+  Operations Count:
+    Successful:                73
+    Failed:                    0
+  Transfer Size:               0B
+  Duration [s]:
+    Elapsed:                   25
+    Sum:                       0.010846
+  Throughput [op/s]:
+    Last:                      2.9869180105276976
+    Mean:                      2.919766418686505
+  Bandwidth [MB/s]:
+    Last:                      0.0
+    Mean:                      0.0
+  Operations Duration [us]:
+    Avg:                       151.14084507042253
+    Min:                       0
+    LoQ:                       112
+    Med:                       116
+    HiQ:                       132
+    Max:                       1032
+  Operations Latency [us]:
+    Avg:                       149.35211267605635
+    Min:                       0
+    LoQ:                       110
+    Med:                       114
+    HiQ:                       130
+    Max:                       1030
 ---
 ```
 
