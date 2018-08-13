@@ -6,6 +6,7 @@ import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.load.step.client.LoadStepClient;
 import com.emc.mongoose.load.step.client.LoadStepClientBase;
 import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.metrics.MetricsManager;
 
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -27,9 +28,10 @@ public class WeightedLoadStepClient
 extends LoadStepClientBase {
 
 	public WeightedLoadStepClient(
-		final Config config, final List<Extension> extensions, final List<Config> ctxConfigs
+		final Config config, final List<Extension> extensions, final List<Config> ctxConfigs,
+		final MetricsManager metricsManager
 	) {
-		super(config, extensions, ctxConfigs);
+		super(config, extensions, ctxConfigs, metricsManager);
 	}
 
 	@Override
@@ -39,7 +41,7 @@ extends LoadStepClientBase {
 
 	@Override @SuppressWarnings("unchecked")
 	protected <T extends LoadStepClient> T copyInstance(final Config config, final List<Config> ctxConfigs) {
-		return (T) new WeightedLoadStepClient(config, extensions, ctxConfigs);
+		return (T) new WeightedLoadStepClient(config, extensions, ctxConfigs, metricsMgr);
 	}
 
 	@Override

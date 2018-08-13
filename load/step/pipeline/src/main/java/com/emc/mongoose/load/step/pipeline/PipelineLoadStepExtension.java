@@ -5,6 +5,7 @@ import com.emc.mongoose.env.ExtensionBase;
 import com.emc.mongoose.load.step.LoadStepFactory;
 import static com.emc.mongoose.Constants.APP_NAME;
 
+import com.emc.mongoose.metrics.MetricsManager;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 
@@ -62,13 +63,16 @@ implements LoadStepFactory<T, U> {
 
 	@Override @SuppressWarnings("unchecked")
 	public final T createLocal(
-		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs
+		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs,
+		final MetricsManager metricsManager
 	) {
-		return (T) new PipelineLoadStepLocal(baseConfig, extensions, contextConfigs);
+		return (T) new PipelineLoadStepLocal(baseConfig, extensions, contextConfigs, metricsManager);
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public final U createClient(final Config baseConfig, final List<Extension> extensions) {
-		return (U) new PipelineLoadStepClient(baseConfig, extensions, null);
+	public final U createClient(
+		final Config baseConfig, final List<Extension> extensions, final MetricsManager metricsManager
+	) {
+		return (U) new PipelineLoadStepClient(baseConfig, extensions, null, metricsManager);
 	}
 }

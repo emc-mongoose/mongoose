@@ -13,6 +13,7 @@ import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.load.generator.LoadGenerator;
 import com.emc.mongoose.load.generator.LoadGeneratorBuilder;
 import com.emc.mongoose.load.step.local.LoadStepLocalBase;
+import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.load.step.local.context.LoadStepContextImpl;
 import com.emc.mongoose.load.generator.LoadGeneratorBuilderImpl;
@@ -37,8 +38,11 @@ import java.util.List;
 public class LinearLoadStepLocal
 extends LoadStepLocalBase {
 
-	public LinearLoadStepLocal(final Config baseConfig, final List<Extension> extensions, final List<Config> contexts) {
-		super(baseConfig, extensions, contexts);
+	public LinearLoadStepLocal(
+		final Config baseConfig, final List<Extension> extensions, final List<Config> contexts,
+		final MetricsManager metricsManager
+	) {
+		super(baseConfig, extensions, contexts, metricsManager);
 	}
 
 	@Override

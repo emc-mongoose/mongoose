@@ -2,7 +2,7 @@ package com.emc.mongoose.load.step;
 
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.load.step.client.LoadStepClient;
-
+import com.emc.mongoose.metrics.MetricsManager;
 import com.github.akurilov.confuse.Config;
 
 import java.util.Arrays;
@@ -12,14 +12,17 @@ import java.util.stream.Collectors;
 public interface LoadStepFactory<T extends LoadStep, U extends LoadStepClient>
 extends Extension {
 
-	T createLocal(final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs);
+	T createLocal(
+		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs,
+		final MetricsManager metricsManager
+	);
 
-	U createClient(final Config baseConfig, final List<Extension> extensions);
+	U createClient(final Config baseConfig, final List<Extension> extensions, final MetricsManager metricsManager);
 
 	@SuppressWarnings("unchecked")
 	static <T extends LoadStep> T createLocalLoadStep(
 		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs,
-		final String stepType
+		final MetricsManager metricsManager, final String stepType
 	) {
 
 		final List<LoadStepFactory> loadStepFactories = extensions
@@ -39,6 +42,6 @@ extends Extension {
 				)
 			);
 
-		return (T) selectedFactory.createLocal(baseConfig, extensions, contextConfigs);
+		return (T) selectedFactory.createLocal(baseConfig, extensions, contextConfigs, metricsManager);
 	}
 }

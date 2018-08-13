@@ -52,6 +52,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
@@ -521,9 +522,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(
 			2, new LogContextThreadFactory("loadSrcItemsWorker", true)
 		);
-		final Semaphore loadFinishSemaphore = new Semaphore(1);
+		final CountDownLatch finishLatch = new CountDownLatch(1);
 		try {
-			loadFinishSemaphore.acquire();
 			executor.submit(
 				() -> {
 					int n = 0;
@@ -546,16 +546,14 @@ implements LoadGeneratorBuilder<I, O, T> {
 							Level.WARN, e, "Loaded {} items, I/O failure occurred", n
 						);
 					} finally {
-						loadFinishSemaphore.release();
+						finishLatch.countDown();
 					}
-
 				}
 			);
 			executor.scheduleAtFixedRate(
-				() -> Loggers.MSG.info("Loaded {} items from the input...", loadedCount.sum()),
-				0, 10, TimeUnit.SECONDS
+				() -> Loggers.MSG.info("Loaded {} items from the input...", loadedCount.sum()), 0, 10, TimeUnit.SECONDS
 			);
-			loadFinishSemaphore.acquire();
+			finishLatch.await();
 		} catch(final InterruptedException e) {
 			throw new InterruptRunException(e);
 		} finally {

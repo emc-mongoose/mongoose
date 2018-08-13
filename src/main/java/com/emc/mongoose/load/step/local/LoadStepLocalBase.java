@@ -14,6 +14,7 @@ import com.emc.mongoose.metrics.MetricsContextImpl;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
+import com.emc.mongoose.metrics.MetricsManager;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -41,9 +42,10 @@ extends LoadStepBase {
 	protected final List<LoadStepContext> stepContexts = new ArrayList<>();
 
 	protected LoadStepLocalBase(
-		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs
+		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs,
+		final MetricsManager metricsManager
 	) {
-		super(baseConfig, extensions, contextConfigs);
+		super(baseConfig, extensions, contextConfigs, metricsManager);
 	}
 
 	@Override
@@ -54,10 +56,7 @@ extends LoadStepBase {
 					stepCtx.start();
 				} catch(final RemoteException ignored) {
 				} catch(final IllegalStateException e) {
-					LogUtil.exception(
-						Level.WARN, e, "{}: failed to start the load step context \"{}\"", id(),
-						stepCtx
-					);
+					LogUtil.exception(Level.WARN, e, "{}: failed to start the load step context \"{}\"", id(), stepCtx);
 				}
 			}
 		);

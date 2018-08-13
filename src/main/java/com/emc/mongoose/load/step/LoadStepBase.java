@@ -4,6 +4,7 @@ import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import com.emc.mongoose.concurrent.DaemonBase;
+import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
@@ -13,7 +14,7 @@ import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
-
+import com.github.akurilov.commons.concurrent.ThreadUtil;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
@@ -37,15 +38,20 @@ implements LoadStep, Runnable {
 	protected final Config config;
 	protected final List<Extension> extensions;
 	protected final List<Config> ctxConfigs;
+	protected final MetricsManager metricsMgr;
 	protected final List<MetricsContext> metricsContexts = new ArrayList<>();
 
 	private volatile long timeLimitSec = Long.MAX_VALUE;
 	private volatile long startTimeSec = -1;
 
-	protected LoadStepBase(final Config config, final List<Extension> extensions, final List<Config> ctxConfigs) {
+	protected LoadStepBase(
+		final Config config, final List<Extension> extensions, final List<Config> ctxConfigs,
+		final MetricsManager metricsMgr
+	) {
 		this.config = new BasicConfig(config);
 		this.extensions = extensions;
 		this.ctxConfigs = ctxConfigs;
+		this.metricsMgr = metricsMgr;
 	}
 
 	@Override
@@ -98,7 +104,12 @@ implements LoadStep, Runnable {
 		init();
 
 		try(final Instance logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+
 			doStartWrapped();
+
+			final int svcThreadCount = config.intVal("load-service-threads");
+			ServiceTaskExecutor.INSTANCE.setThreadCount(svcThreadCount);
+
 			final long t;
 			final Object loadStepLimitTimeRaw = config.val("load-step-limit-time");
 			if(loadStepLimitTimeRaw instanceof String) {
@@ -110,6 +121,7 @@ implements LoadStep, Runnable {
 				timeLimitSec = t;
 			}
 			startTimeSec = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+
 		} catch(final InterruptRunException e) {
 			throw e;
 		} catch(final Throwable cause) {
@@ -119,11 +131,7 @@ implements LoadStep, Runnable {
 		metricsContexts.forEach(
 			metricsCtx -> {
 				metricsCtx.start();
-				try {
-					MetricsManager.register(id(), metricsCtx);
-				} catch(final InterruptedException e) {
-					throw new InterruptRunException(e);
-				}
+				metricsMgr.register(id(), metricsCtx);
 			}
 		);
 	}
@@ -147,16 +155,7 @@ implements LoadStep, Runnable {
 	protected void doStop()
 	throws InterruptRunException {
 
-		metricsContexts
-			.forEach(
-				metricsCtx -> {
-					try {
-						MetricsManager.unregister(id(), metricsCtx);
-					} catch(final InterruptedException e) {
-						throw new InterruptRunException(e);
-					}
-				}
-			);
+		metricsContexts.forEach(metricsCtx -> metricsMgr.unregister(id(), metricsCtx));
 
 		final long t = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - startTimeSec;
 		if(t < 0) {

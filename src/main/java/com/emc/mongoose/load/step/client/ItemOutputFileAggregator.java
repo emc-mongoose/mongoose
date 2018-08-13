@@ -3,11 +3,19 @@ package com.emc.mongoose.load.step.client;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.load.step.service.file.FileManagerService;
+import com.emc.mongoose.logging.LogContextThreadFactory;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.load.step.client.LoadStepClient.OUTPUT_PROGRESS_PERIOD_MILLIS;
+import static com.emc.mongoose.load.step.file.FileManager.APPEND_OPEN_OPTIONS;
+
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
+
 import org.apache.logging.log4j.Level;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -17,16 +25,13 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.load.step.client.LoadStepClient.OUTPUT_PROGRESS_PERIOD_MILLIS;
-import static com.emc.mongoose.load.step.file.FileManager.APPEND_OPEN_OPTIONS;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 public final class ItemOutputFileAggregator
 implements AutoCloseable {
@@ -81,60 +86,64 @@ implements AutoCloseable {
 
 	private void collectToLocal() {
 		final LongAdder byteCounter = new LongAdder();
-		final Thread progressOutputThread = new Thread(
+		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(
+			2, new LogContextThreadFactory("collectItemOutputFileWorker", true)
+		);
+		final CountDownLatch finishLatch = new CountDownLatch(1);
+		executor.submit(
 			() -> {
-				Loggers.MSG.info("\"{}\" <- start to transfer the output items data to the local file", itemOutputFile);
-				try {
-					while(true) {
-						TimeUnit.MILLISECONDS.sleep(OUTPUT_PROGRESS_PERIOD_MILLIS);
-						Loggers.MSG.info(
-							"\"{}\" <- transferred {} of the output items data...", itemOutputFile,
-							SizeInBytes.formatFixedSize(byteCounter.longValue())
+				try(
+					final OutputStream localItemOutput = Files.newOutputStream(
+						Paths.get(itemOutputFile), APPEND_OPEN_OPTIONS
+					)
+				) {
+					final Lock localItemOutputLock = new ReentrantLock();
+					itemOutputFileSlices
+						.entrySet()
+						.parallelStream()
+						// don't transfer & delete local item output file
+						.filter(entry -> entry.getKey() instanceof FileManagerService)
+						.forEach(
+							entry -> {
+								final FileManager fileMgr = entry.getKey();
+								final String remoteItemOutputFileName = entry.getValue();
+								transferToLocal(
+									fileMgr, remoteItemOutputFileName, localItemOutput, localItemOutputLock, byteCounter
+								);
+								try {
+									fileMgr.deleteFile(remoteItemOutputFileName);
+								} catch(final Exception e) {
+									LogUtil.exception(
+										Level.WARN, e, "{}: failed to delete the file \"{}\" @ file manager \"{}\"",
+										loadStepId, remoteItemOutputFileName, fileMgr
+									);
+								}
+							}
 						);
-					}
-				} catch(final InterruptedException e) {
-					throw new InterruptRunException(e);
+				} catch(final IOException e) {
+					LogUtil.exception(
+						Level.WARN, e, "{}: failed to open the local item output file \"{}\" for appending", loadStepId,
+						itemOutputFile
+					);
+				} finally {
+					finishLatch.countDown();
 				}
 			}
 		);
-		progressOutputThread.setDaemon(true);
-		progressOutputThread.start();
+		executor.scheduleAtFixedRate(
+			() -> Loggers.MSG.info(
+				"\"{}\" <- transferred {} of the output items data...", itemOutputFile,
+				SizeInBytes.formatFixedSize(byteCounter.longValue())
+			),
+			0, OUTPUT_PROGRESS_PERIOD_MILLIS, TimeUnit.MILLISECONDS
+		);
 
-		try(
-			final OutputStream localItemOutput = Files.newOutputStream(
-				Paths.get(itemOutputFile), APPEND_OPEN_OPTIONS
-			)
-		) {
-			final Lock localItemOutputLock = new ReentrantLock();
-			itemOutputFileSlices
-				.entrySet()
-				.parallelStream()
-				// don't transfer & delete local item output file
-				.filter(entry -> entry.getKey() instanceof FileManagerService)
-				.forEach(
-					entry -> {
-						final FileManager fileMgr = entry.getKey();
-						final String remoteItemOutputFileName = entry.getValue();
-						transferToLocal(
-							fileMgr, remoteItemOutputFileName, localItemOutput, localItemOutputLock, byteCounter
-						);
-						try {
-							fileMgr.deleteFile(remoteItemOutputFileName);
-						} catch(final Exception e) {
-							LogUtil.exception(
-								Level.WARN, e, "{}: failed to delete the file \"{}\" @ file manager \"{}\"", loadStepId,
-								remoteItemOutputFileName, fileMgr
-							);
-						}
-					}
-				);
-		} catch(final IOException e) {
-			LogUtil.exception(
-				Level.WARN, e, "{}: failed to open the local item output file \"{}\" for appending", loadStepId,
-				itemOutputFile
-			);
+		try {
+			finishLatch.await();
+		} catch(final InterruptedException e) {
+			throw new InterruptRunException(e);
 		} finally {
-			progressOutputThread.interrupt();
+			executor.shutdownNow();
 			Loggers.MSG.info(
 				"\"{}\" <- transferred {} of the output items data", itemOutputFile,
 				SizeInBytes.formatFixedSize(byteCounter.longValue())

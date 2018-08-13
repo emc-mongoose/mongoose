@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.step.service;
 
 import com.emc.mongoose.env.Extension;
+import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.svc.ServiceBase;
 import com.emc.mongoose.load.step.LoadStepManagerService;
 import com.emc.mongoose.logging.Loggers;
@@ -19,10 +20,14 @@ extends ServiceBase
 implements LoadStepManagerService {
 
 	private final List<Extension> extensions;
+	private final MetricsManager metricsMgr;
 
-	public LoadStepManagerServiceImpl(final int port, final List<Extension> extensions) {
+	public LoadStepManagerServiceImpl(
+		final int port, final List<Extension> extensions, final MetricsManager metricsMgr
+	) {
 		super(port);
 		this.extensions = extensions;
+		this.metricsMgr = metricsMgr;
 	}
 
 	@Override
@@ -45,7 +50,9 @@ implements LoadStepManagerService {
 	@Override
 	public final String getStepService(final String stepType, final Config config, final List<Config> ctxConfigs)
 	throws RemoteException {
-		final LoadStepService stepSvc = new LoadStepServiceImpl(port, extensions, stepType, config, ctxConfigs);
+		final LoadStepService stepSvc = new LoadStepServiceImpl(
+			port, extensions, stepType, config, ctxConfigs, metricsMgr
+		);
 		Loggers.MSG.info("New step service started @ port #{}: {}", port, stepSvc.name());
 		return stepSvc.name();
 	}
