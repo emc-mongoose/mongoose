@@ -4,10 +4,10 @@
 1.1. [Console](#11-console)<br/>
 1.1.1. [Table Fields Description](#111-table-fields-description)<br/>
 1.2. [File](#12-files)<br/>
-2. [Step Summary](#2-step-summary)<br/>
+2. [Load Step Summary](#2-load-step-summary)<br/>
 2.1. [Console](#21-console)<br/>
 2.2. [File](#22-files)<br/>
-3. [I/O Traces](#3-io-traces)<br/>
+3. [Operation Traces](#3-operation-traces)<br/>
 3.1. [Console](#31-console)<br/>
 3.2. [File](#32-files)<br/>
 4. [Threshold](#4-threshold)<br/>
@@ -88,7 +88,7 @@ Field Name      | Description
 ----------------|------------
 DateTimeISO8601 | Timestamp in the ISO8601 format
 OpType          | Load operation type (CREATE/READ/...)
-Concurrency     | The configured concurrency level (per storage driver)
+Concurrency     | The configured concurrency limit per storage driver
 NodeCount       | Count of the mongoose nodes used for the load (1 in case of the standalone mode, >1 in case of the distributed mode)
 ConcurrencyCurr | The current summary concurrency level (count of concurrently executed load operations)
 ConcurrencyMean | The mean summary concurrency level for the last *period* (10s by default)
@@ -114,32 +114,55 @@ LatencyMed[us]  | Median of the operations latency distribution
 LatencyHiQ[us]  | High quartile of the operations latency distribution
 LatencyMax[us]  | Maximum operation latency
 
-# 2. Step Summary
+# 2. Load Step Summary
 
 At the end of each load step the summary metrics are produced.
 
 ## 2.1. Console
 
-```
-2017-06-01T18:05:45,271 I LoadStep                       Test worker                    Distributed load step "ReadVerificationFailTest2" results:
-    READ-20x1: c=(19.87); n=(2/998); t[s]=(2.386/0.11893); size=(20KB); TP[op/s]=(0.83822/1.0); BW[MB/s]=(0.0081/0.0097); dur[us]=(59465/33086/85844); lat[us]=(21732/14089/29375)
+Console summary metrics output has YAML-like format for the better readability:
+```yaml
+--- # Results
+- Load Step Id:                linear_20180812.194809.270
+  Operation Type:              READ
+  Node Count:                  1
+  Concurrency:
+    Limit Per Storage Driver:  1
+    Actual:
+      Last:                    0
+      Mean:                    0.12625250501002003
+  Operations Count:
+    Successful:                73
+    Failed:                    0
+  Transfer Size:               0B
+  Duration [s]:
+    Elapsed:                   25
+    Sum:                       0.010846
+  Throughput [op/s]:
+    Last:                      2.9869180105276976
+    Mean:                      2.919766418686505
+  Bandwidth [MB/s]:
+    Last:                      0.0
+    Mean:                      0.0
+  Operations Duration [us]:
+    Avg:                       151.14084507042253
+    Min:                       0
+    LoQ:                       112
+    Med:                       116
+    HiQ:                       132
+    Max:                       1032
+  Operations Latency [us]:
+    Avg:                       149.35211267605635
+    Min:                       0
+    LoQ:                       110
+    Med:                       114
+    HiQ:                       130
+    Max:                       1030
+---
 ```
 
-The record pattern is:
-```
-<OP_TYPE>-<CONFIGURED_CONCURRENCY_LIMIT>x<DRIVER_COUNT>:
-    c=(<LAST_MEAN_SUMMARY_CONCURRENCY>);
-	n=(<COUNT_SUCCESS>/<COUNT_FAIL>);
-	t[s]=(<ELAPSED_TIME>/<OPERATIONS_DURATION_SUM>)
-	size=(<SIZE_TRANSFERRED>);
-	TP[op/s]=(<RATE_MEAN>/(RATE_LAST));
-	BW[MB/s]=(<BYTE_RATE_MEAN>/<BYTE_RATE_LAST>);
-	dur[us]=(<DURATION_AVG>/<DURATION_MIN>/<DURATION_MAX>);
-	lat[us]=(<LATENCY_AVG>/<LATENCY_MIN>/<LATENCY_MAX>);
-```
-
-* On the entry node the load step summary is displayed twice: once for the local load step slice and once for total/aggregated results
-* The equation (CONFIGURED_CURRENCY_LEVEL * DRIVER_COUNT * ELAPSED_TIME / OPERATIONS_DURATION_SUM) may be used as efficiency estimate
+* The console summary is displayed only on the entry node. It's not displayed on the additional nodes in the distributed mode.
+* The equation (CONFIGURED_CURRENCY_LEVEL * DRIVER_COUNT * ELAPSED_TIME / OPERATIONS_DURATION_SUM) may be used as efficiency estimate.
 * *Mean* rates are calculated as current total count of items/bytes divided by current elapsed time.
 * *Last* rates are calculated as [exponentially decaying moving average](https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average) where
 
@@ -154,7 +177,7 @@ The layout is the same as for average metrics file output. To disable the summar
 parameter `output-metrics-summary-persist` should be set to "false". Note that the file output for the metrics is always
 disabled for the load step slices (i.e. on the additional/remote nodes in the distributed mode).
 
-# 3. I/O Traces
+# 3. Operation Traces
 
 The metrics for each load operation (request either file operation).
 

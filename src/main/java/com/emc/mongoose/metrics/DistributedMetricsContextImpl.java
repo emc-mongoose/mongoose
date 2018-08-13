@@ -2,7 +2,9 @@ package com.emc.mongoose.metrics;
 
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.UniformSnapshot;
+
 import com.emc.mongoose.item.op.OpType;
+
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.io.IOException;
@@ -11,8 +13,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
-public class DistributedMetricsContextImpl
-	implements DistributedMetricsContext {
+public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotImpl>
+implements DistributedMetricsContext<S> {
 
 	private final long ts;
 	private final String stepId;
@@ -29,7 +31,7 @@ public class DistributedMetricsContextImpl
 	private final Supplier<List<MetricsSnapshot>> snapshotsSupplier;
 	private volatile long tsStart = - 1, prevElapsedTime = 0;
 	private volatile long lastOutputTs = 0;
-	private volatile MetricsSnapshot lastSnapshot = null;
+	private volatile S lastSnapshot = null;
 	private volatile MetricsListener metricsListener = null;
 	private volatile MetricsContext thresholdMetricsCtx = null;
 	private volatile boolean thresholdStateExitedFlag = false;
@@ -158,7 +160,7 @@ public class DistributedMetricsContextImpl
 		this.lastOutputTs = ts;
 	}
 
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public void refreshLastSnapshot() {
 		final List<MetricsSnapshot> snapshots = snapshotsSupplier.get();
 		long countSucc = 0;
@@ -205,7 +207,7 @@ public class DistributedMetricsContextImpl
 		final Snapshot latSnapshot = new UniformSnapshot(allLatencies);
 		final long currentTimeMillis = System.currentTimeMillis();
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
-		lastSnapshot = new DistributedMetricsSnapshotImpl(countSucc, succRateLast, countFail, failRateLast, countByte,
+		lastSnapshot = (S) new DistributedMetricsSnapshotImpl(countSucc, succRateLast, countFail, failRateLast, countByte,
 			byteRateLast, tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyLast, actualConcurrencyMean,
 			concurrencyLimit, sumDur, sumLat, nodeCountSupplier.getAsInt(), durSnapshot, latSnapshot
 		);
@@ -218,7 +220,7 @@ public class DistributedMetricsContextImpl
 	}
 
 	@Override
-	public MetricsSnapshot lastSnapshot() {
+	public S lastSnapshot() {
 		if(lastSnapshot == null) {
 			refreshLastSnapshot();
 		}
@@ -246,11 +248,11 @@ public class DistributedMetricsContextImpl
 		if(thresholdMetricsCtx != null) {
 			throw new IllegalStateException("Nested metrics context already exists");
 		}
-		thresholdMetricsCtx =
-			new DistributedMetricsContextImpl(stepId, opType, nodeCountSupplier, concurrencyLimit, 0, itemDataSize,
-				(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag, avgPersistFlag,
-				sumPersistFlag, perfDbResultsFileFlag, snapshotsSupplier
-			);
+		thresholdMetricsCtx = new DistributedMetricsContextImpl(
+			stepId, opType, nodeCountSupplier, concurrencyLimit, 0, itemDataSize,
+			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag, avgPersistFlag,
+			sumPersistFlag, perfDbResultsFileFlag, snapshotsSupplier
+		);
 		thresholdMetricsCtx.start();
 	}
 

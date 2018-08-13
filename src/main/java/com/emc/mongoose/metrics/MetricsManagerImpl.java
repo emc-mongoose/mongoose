@@ -64,8 +64,8 @@ implements MetricsManager {
 						if(!metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
 							Loggers.MSG.info(
 								"{}: the threshold of {} active load operations count is reached, " +
-									"starting the additional metrics accounting", metricsCtx.toString(),
-								metricsCtx.concurrencyThreshold()
+									"starting the additional metrics accounting",
+								metricsCtx.toString(), metricsCtx.concurrencyThreshold()
 							);
 							metricsCtx.enterThresholdState();
 						}
@@ -139,8 +139,12 @@ implements MetricsManager {
 					Loggers.METRICS_EXT_RESULTS_FILE.info(new ExtResultsXmlLogMessage(metricsCtx));
 				}
 				// console output
-				Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx), true));
-				Loggers.METRICS_STD_OUT.info(new StepResultsMetricsLogMessage(metricsCtx));
+				Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx)));
+				if(metricsCtx instanceof DistributedMetricsContext) {
+					Loggers.METRICS_STD_OUT.info(
+						new StepResultsMetricsLogMessage((DistributedMetricsContext) metricsCtx)
+					);
+				}
 				final AutoCloseable meterMBean = stepMetrics.remove(metricsCtx);
 				if(meterMBean != null) {
 					try {
