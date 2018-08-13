@@ -52,13 +52,8 @@ Table output example:
 1881901842|170824183701|CREATE|       550|545.41    |        1864|     0|150.035|14.85324|1485.32|    740029|   19060149
 1881901842|170824183711|CREATE|       569|551.75    |        2030|     0|160.035|15.74449|1574.44|    735227|   19254647
 1881901842|170824183721|CREATE|       582|568.95    |        2165|     0|170.035|13.86718|1386.71|    733804|   19512344
-************************************************************************************************************************
 1881901842|170824183731|CREATE|       585|577.05    |        2270|     0|180.039|11.65720|1165.72|    754406|   19747777
-************************************************************************************************************************
 ```
-
-**Note** the last row marked surrounded with asterisk symbols. This is
-the final metrics output for the given test step.
 
 ### 1.1.1. Table Fields Description
 
@@ -86,7 +81,7 @@ mode).
 
 Field Name      | Description
 ----------------|------------
-DateTimeISO8601 | Timestamp in the ISO8601 format
+DateTimeISO8601 | Start timestamp in the ISO8601 format
 OpType          | Load operation type (CREATE/READ/...)
 Concurrency     | The configured concurrency limit per storage driver
 NodeCount       | Count of the mongoose nodes used for the load (1 in case of the standalone mode, >1 in case of the distributed mode)

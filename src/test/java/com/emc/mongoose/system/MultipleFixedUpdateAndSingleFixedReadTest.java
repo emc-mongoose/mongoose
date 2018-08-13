@@ -38,7 +38,7 @@ import java.util.stream.LongStream;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
@@ -224,12 +224,11 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 		//                averagePeriod
 		//        );
 		//
-		final String stdOutput = stdOutContent.replaceAll("[\r\n]+", " ");
-		testSingleMetricsStdout(stdOutput, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
-			expectedUpdateSize, averagePeriod
+		testFinalMetricsStdout(
+			stdOutContent, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), expectedUpdateSize, stepId
 		);
-		testSingleMetricsStdout(stdOutput, OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
-			expectedReadSize, averagePeriod
+		testFinalMetricsStdout(
+			stdOutContent, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), expectedReadSize, stepId
 		);
 	}
 }

@@ -43,7 +43,7 @@ import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecord
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
@@ -190,16 +190,17 @@ import static org.junit.Assert.assertTrue;
 				put(CREATE, 0);
 			}}
 		);
-		testSingleMetricsStdout(stdOutContent, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), averagePeriod);
+		testFinalMetricsStdout(stdOutContent, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), stepId);
 		final List<CSVRecord> metricsLogRecs = getMetricsLogRecords(stepId);
-		testMetricsLogRecords(metricsLogRecs, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), COUNT_LIMIT,
-			TIME_LIMIT_SEC, averagePeriod
+		testMetricsLogRecords(
+			metricsLogRecs, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), COUNT_LIMIT, TIME_LIMIT_SEC,
+			averagePeriod
 		);
 		final List<CSVRecord> totalMetricsRecs = getMetricsTotalLogRecords(stepId);
 		assertEquals(totalMetricsRecs.size(), 1);
 		final CSVRecord totalMetricsRec = totalMetricsRecs.get(0);
-		testTotalMetricsLogRecord(totalMetricsRec, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), COUNT_LIMIT,
-			TIME_LIMIT_SEC
+		testTotalMetricsLogRecord(
+			totalMetricsRec, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), COUNT_LIMIT, TIME_LIMIT_SEC
 		);
 		final double rate = Double.parseDouble(totalMetricsRec.get("TPAvg[op/s]"));
 		assertTrue(rate < RATE_LIMIT + RATE_LIMIT / 2);
@@ -207,7 +208,8 @@ import static org.junit.Assert.assertTrue;
 		if(StorageType.FS.equals(storageType)) {
 			assertTrue(totalSize < SIZE_LIMIT.get() + SIZE_LIMIT.get() / 10);
 		}
-		assertTrue("Test time was " + duration + " while expected no more than " + TIME_LIMIT_SEC,
+		assertTrue(
+			"Test time was " + duration + " while expected no more than " + TIME_LIMIT_SEC,
 			TIME_LIMIT_SEC + 5 >= duration
 		);
 	}

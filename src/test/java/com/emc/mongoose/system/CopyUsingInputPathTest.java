@@ -42,7 +42,7 @@ import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsTab
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
@@ -254,8 +254,8 @@ import static org.junit.Assert.assertTrue;
 			);
 		}
 		final String stdOutContent = testContainer.stdOutContent();
-		testSingleMetricsStdout(stdOutContent.replaceAll("[\r\n]+", " "), OpType.CREATE, concurrency.getValue(),
-			runMode.getNodeCount(), itemSize.getValue(), outputMetricsAveragePeriod
+		testFinalMetricsStdout(
+			stdOutContent, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), stepId
 		);
 		testFinalMetricsTableRowStdout(stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(),
 			concurrency.getValue(), 0, 0, itemSize.getValue()

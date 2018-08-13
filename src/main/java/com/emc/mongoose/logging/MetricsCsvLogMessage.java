@@ -1,7 +1,6 @@
 package com.emc.mongoose.logging;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.DistributedMetricsContext;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsSnapshot;
@@ -16,34 +15,6 @@ import java.util.Date;
 
 /**
  Created by kurila on 18.05.17.
- 
- OpLoad,
- Concurrency,
- DriverCount,
- ConcurrencyCurr,
- ConcurrencyMean,
- CountSucc,
- CountFail,
- Size,
- StepDuration[s],
- DurationSum[s],
- ActualConcurrency,
- TPAvg[op/s],
- TPLast[op/s],
- BWAvg[MB/s],
- BWLast[MB/s],
- DurationAvg[us]
- DurationMin[us],
- DurationLoQ[us],
- DurationMed[us],
- DurationHiQ[us],
- DurationMax[us],
- LatencyAvg[us]
- LatencyMin[us],
- LatencyLoQ[us],
- LatencyMed[us],
- LatencyHiQ[us],
- LatencyMax[us]
  */
 @AsynchronouslyFormattable
 public final class MetricsCsvLogMessage
@@ -63,9 +34,10 @@ extends LogMessageBase {
 			.append('"').append(FMT_DATE_ISO8601.format(new Date())).append('"').append(',')
 			.append(opType.name()).append(',')
 			.append(snapshot.concurrencyLimit()).append(',')
-			.append(snapshot instanceof DistributedMetricsSnapshot
-					? ((DistributedMetricsSnapshot)snapshot).nodeCount()
-					: 1).append(',')
+			.append(
+				snapshot instanceof DistributedMetricsSnapshot ? ((DistributedMetricsSnapshot) snapshot).nodeCount() : 1
+			)
+			.append(',')
 			.append(snapshot.actualConcurrencyLast()).append(',')
 			.append(snapshot.actualConcurrencyMean()).append(',')
 			.append(snapshot.succCount()).append(',')

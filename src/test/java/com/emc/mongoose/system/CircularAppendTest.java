@@ -44,7 +44,7 @@ import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogR
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
@@ -185,15 +185,8 @@ import static org.junit.Assert.assertTrue;
 			runMode.getNodeCount(), itemSize.getValue(), 0, 0
 		);
 		final String stdOutContent = testContainer.stdOutContent();
-		final int outputMetricsAveragePeriod;
-		final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");
-		if(outputMetricsAveragePeriodRaw instanceof String) {
-			outputMetricsAveragePeriod = (int) TimeUtil.getTimeInSeconds((String) outputMetricsAveragePeriodRaw);
-		} else {
-			outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
-		}
-		testSingleMetricsStdout(stdOutContent.replaceAll("[\r\n]+", " "), OpType.UPDATE, concurrency.getValue(),
-			runMode.getNodeCount(), itemSize.getValue(), outputMetricsAveragePeriod
+		testFinalMetricsStdout(
+			stdOutContent, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), stepId
 		);
 		final LongAdder ioTraceRecCount = new LongAdder();
 		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
