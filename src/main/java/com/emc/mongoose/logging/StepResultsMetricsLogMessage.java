@@ -37,7 +37,7 @@ extends LogMessageBase {
 	public final void formatTo(final StringBuilder buff) {
 		final String lineSep = System.lineSeparator();
 		buff
-			.append("---").append(lineSep)
+			.append("--- # Results").append(lineSep)
 			.append("- Load Step Id:                ").append(stepId).append(lineSep)
 			.append("  Operation Type:              ").append(opType).append(lineSep)
 			.append("  Node Count:                  ").append(snapshot.nodeCount()).append(lineSep)
