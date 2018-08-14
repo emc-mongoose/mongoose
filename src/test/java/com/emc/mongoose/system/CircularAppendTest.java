@@ -208,10 +208,10 @@ import static org.junit.Assert.assertTrue;
 		String itemPath, itemId;
 		long itemOffset;
 		long size;
-		final SizeInBytes expectedFinalSize =
-			new SizeInBytes((EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() / 3,
-				3 * (EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get(), 1
-			);
+		final SizeInBytes expectedFinalSize = new SizeInBytes(
+			(EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() / 3,
+			3 * (EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get(), 1
+		);
 		final int n = items.size();
 		CSVRecord itemRec;
 		for(int i = 0; i < n; i++) {
@@ -229,7 +229,8 @@ import static org.junit.Assert.assertTrue;
 				freq.addValue(itemOffset);
 			}
 			size = Long.parseLong(itemRec.get(2));
-			assertTrue("Expected size: " + expectedFinalSize.toString() + ", actual: " + size,
+			assertTrue(
+				"Expected size: " + expectedFinalSize.toString() + ", actual: " + size,
 				expectedFinalSize.getMin() <= size && size <= expectedFinalSize.getMax()
 			);
 			assertEquals("0/0", itemRec.get(3));
