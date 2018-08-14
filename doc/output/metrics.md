@@ -117,43 +117,43 @@ At the end of each load step the summary metrics are produced.
 
 Console summary metrics output has YAML-like format for the better readability:
 ```yaml
---- # Results
-- Load Step Id:                linear_20180812.194809.270
-  Operation Type:              READ
+---
+# Results ##############################################################################################################
+- Load Step Id:                copy_using_input_path_test_FS_LOCALxMEDIUM_SMALL
+  Operation Type:              CREATE
   Node Count:                  1
   Concurrency:
-    Limit Per Storage Driver:  1
+    Limit Per Storage Driver:  100
     Actual:
       Last:                    0
-      Mean:                    0.12625250501002003
+      Mean:                    0.0
   Operations Count:
-    Successful:                73
+    Successful:                4096
     Failed:                    0
-  Transfer Size:               0B
+  Transfer Size:               40MB
   Duration [s]:
-    Elapsed:                   25
-    Sum:                       0.010846
+    Elapsed:                   6
+    Sum:                       2.471925
   Throughput [op/s]:
-    Last:                      2.9869180105276976
-    Mean:                      2.919766418686505
+    Last:                      554.2261935730298
+    Mean:                      601.8219218336761
   Bandwidth [MB/s]:
-    Last:                      0.0
-    Mean:                      0.0
+    Last:                      5.4123651716116195
+    Mean:                      5.877167205406994
   Operations Duration [us]:
-    Avg:                       151.14084507042253
+    Avg:                       4175.429054054054
     Min:                       0
-    LoQ:                       112
+    LoQ:                       60
     Med:                       116
-    HiQ:                       132
-    Max:                       1032
+    HiQ:                       2684
+    Max:                       216496
   Operations Latency [us]:
-    Avg:                       149.35211267605635
+    Avg:                       4174.403716216216
     Min:                       0
-    LoQ:                       110
-    Med:                       114
-    HiQ:                       130
-    Max:                       1030
----
+    LoQ:                       59
+    Med:                       115
+    HiQ:                       2683
+    Max:                       216495
 ```
 
 * The console summary is displayed only on the entry node. It's not displayed on the additional nodes in the distributed mode.
