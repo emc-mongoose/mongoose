@@ -49,6 +49,8 @@ import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLog
 import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -67,6 +69,10 @@ import static org.junit.Assert.assertTrue;
 	private final int timeoutInMillis = 1000_000;
 	private final String itemListFile0 = snakeCaseName(getClass()) + "_0.csv";
 	private final String itemListFile1 = snakeCaseName(getClass()) + "_1.csv";
+	private final String hostItemListFile0 = HOST_SHARE_PATH + "/" + itemListFile0;
+	private final String hostItemListFile1 = HOST_SHARE_PATH + "/" + itemListFile1;
+	private final String containerItemListFile0 = CONTAINER_SHARE_PATH + "/" + itemListFile0;
+	private final String containerItemListFile1 = CONTAINER_SHARE_PATH + "/" + itemListFile1;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -78,7 +84,7 @@ import static org.junit.Assert.assertTrue;
 
 	public CircularAppendTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
+							 )
 	throws Exception {
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
@@ -93,8 +99,8 @@ import static org.junit.Assert.assertTrue;
 			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
 		env.add("BASE_ITEMS_COUNT=" + EXPECTED_COUNT);
 		env.add("APPEND_COUNT=" + EXPECTED_APPEND_COUNT);
-		env.add("ITEM_LIST_FILE_0=" + itemListFile0);
-		env.add("ITEM_LIST_FILE_1=" + itemListFile1);
+		env.add("ITEM_LIST_FILE_0=" + containerItemListFile0);
+		env.add("ITEM_LIST_FILE_1=" + containerItemListFile1);
 		env.add("ITEM_DATA_SIZE=" + itemSize.getValue());
 		final List<String> args = new ArrayList<>();
 		switch(storageType) {
@@ -103,11 +109,11 @@ import static org.junit.Assert.assertTrue;
 			case SWIFT:
 				final HttpStorageMockContainer storageMock =
 					new HttpStorageMockContainer(HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-						Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
-						HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-						HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+												 Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
+												 HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+												 HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+												 HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
+												 HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
 					);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
@@ -164,26 +170,31 @@ import static org.junit.Assert.assertTrue;
 	throws Exception {
 		try {
 			final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
-			assertTrue("There should be more than 0 metrics records in the log file", metricsLogRecords.size() > 0);
+			assertTrue(
+				"There should be more than 0 metrics records in the log file",
+				metricsLogRecords.size() > 0
+					  );
 			final int outputMetricsAveragePeriod;
 			final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");
+			final long expectedMaxCount = (long) (1.1 * (EXPECTED_APPEND_COUNT * EXPECTED_COUNT));
 			if(outputMetricsAveragePeriodRaw instanceof String) {
 				outputMetricsAveragePeriod = (int) TimeUtil.getTimeInSeconds((String) outputMetricsAveragePeriodRaw);
 			} else {
 				outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
 			}
-			testMetricsLogRecords(metricsLogRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
-				itemSize.getValue(), (long) (1.1 * EXPECTED_APPEND_COUNT * EXPECTED_COUNT), 0,
+			testMetricsLogRecords(
+				metricsLogRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+				itemSize.getValue(), expectedMaxCount, 0,
 				outputMetricsAveragePeriod
-			);
+								 );
 		} catch(final FileNotFoundException ignored) {
-			// there may be no metrics file if append step duration is less than 10s
+			//there may be no metrics file if append step duration is less than 10s
 		}
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
 		assertEquals("There should be 1 total metrics records in the log file", 1, totalMetrcisLogRecords.size());
 		testTotalMetricsLogRecord(totalMetrcisLogRecords.get(0), OpType.UPDATE, concurrency.getValue(),
-			runMode.getNodeCount(), itemSize.getValue(), 0, 0
-		);
+								  runMode.getNodeCount(), itemSize.getValue(), 0, 0
+								 );
 		final String stdOutContent = testContainer.stdOutContent();
 		final int outputMetricsAveragePeriod;
 		final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");
@@ -192,19 +203,23 @@ import static org.junit.Assert.assertTrue;
 		} else {
 			outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
 		}
-		testSingleMetricsStdout(stdOutContent.replaceAll("[\r\n]+", " "), OpType.UPDATE, concurrency.getValue(),
+		testSingleMetricsStdout(
+			stdOutContent.replaceAll("[\r\n]+", " "), OpType.UPDATE, concurrency.getValue(),
 			runMode.getNodeCount(), itemSize.getValue(), outputMetricsAveragePeriod
-		);
+							   );
 		final LongAdder ioTraceRecCount = new LongAdder();
 		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
 			testIoTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), itemSize.getValue());
 			ioTraceRecCount.increment();
 		};
 		testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
-		assertTrue("There should be more than " + EXPECTED_COUNT + " records in the I/O trace log file, but got: " +
-			ioTraceRecCount.sum(), EXPECTED_COUNT < ioTraceRecCount.sum());
+		assertTrue(
+			"There should be more than " + EXPECTED_COUNT + " records in the I/O trace log file, but got: " +
+				ioTraceRecCount.sum(),
+			EXPECTED_COUNT < ioTraceRecCount.sum()
+				  );
 		final List<CSVRecord> items = new ArrayList<>();
-		try(final BufferedReader br = new BufferedReader(new FileReader(itemListFile1))) {
+		try(final BufferedReader br = new BufferedReader(new FileReader(hostItemListFile1))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
 			for(final CSVRecord csvRecord : csvParser) {
 				items.add(csvRecord);
@@ -216,8 +231,10 @@ import static org.junit.Assert.assertTrue;
 		long itemOffset;
 		long size;
 		final SizeInBytes expectedFinalSize =
-			new SizeInBytes((EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() / 3,
-				3 * (EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get(), 1
+			new SizeInBytes(
+				(EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() / 2,
+				4 * (EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get(),
+				1
 			);
 		final int n = items.size();
 		CSVRecord itemRec;
@@ -236,9 +253,10 @@ import static org.junit.Assert.assertTrue;
 				freq.addValue(itemOffset);
 			}
 			size = Long.parseLong(itemRec.get(2));
-			assertTrue("Expected size: " + expectedFinalSize.toString() + ", actual: " + size,
+			assertTrue(
+				"Expected size: " + expectedFinalSize.toString() + ", actual: " + size,
 				expectedFinalSize.getMin() <= size && size <= expectedFinalSize.getMax()
-			);
+					  );
 			assertEquals("0/0", itemRec.get(3));
 		}
 		if(! storageType.equals(StorageType.ATMOS)) {
