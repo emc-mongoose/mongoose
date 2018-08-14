@@ -57,7 +57,6 @@ implements MetricsManager {
 					ThreadContext.put(KEY_STEP_ID, metricsCtx.stepId());
 					metricsCtx.refreshLastSnapshot();
 					actualConcurrency = metricsCtx.lastSnapshot().actualConcurrencyLast();
-					//metricsCtx.refreshLastSnapshot();
 					// threshold load state checks
 					nextConcurrencyThreshold = metricsCtx.concurrencyThreshold();
 					if(nextConcurrencyThreshold > 0 && actualConcurrency >= nextConcurrencyThreshold) {

@@ -58,7 +58,7 @@ public interface LogPatterns {
 			"\\|\\s*(?<dur>[\\d]{1,11})"
 	);
 	Pattern STD_OUT_METRICS_SUMMARY = Pattern.compile(
-		"\\s*---\\s*#\\s*Results\n(?<content>[\\w\\s\\.:\\-\\[\\]/\n]+)---", Pattern.MULTILINE
+		"\\s*[\\-]{3}\\s#\\sResults\\s[#]{110}\n(?<content>[\\w\\s\\.:\\-\\[\\]/\n]+)[\\.]{3}", Pattern.MULTILINE
 	);
 
 	Pattern STD_OUT_LOAD_THRESHOLD_ENTRANCE = Pattern.compile(

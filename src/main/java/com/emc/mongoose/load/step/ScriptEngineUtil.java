@@ -112,7 +112,6 @@ public interface ScriptEngineUtil {
 		Config specificConfig;
 
 		specificConfig = new BasicConfig(config);
-		specificConfig.val("output-metrics-average-period", 0);
 		specificConfig.val("output-metrics-average-persist", false);
 		specificConfig.val("output-metrics-summary-perfDbResultsFile", false);
 		specificConfig.val("output-metrics-summary-persist", false);
@@ -142,9 +141,7 @@ public interface ScriptEngineUtil {
 		specificConfig.val("load-op-type", OpType.READ.name().toLowerCase());
 		specificConfig.val("item-data-verify", true);
 		specificConfig.val("item-data-ranges-random", 1);
-		se.put(
-			"ReadVerifyRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions, metricsMgr)
-		);
+		se.put("ReadVerifyRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions, metricsMgr));
 
 		specificConfig = new BasicConfig(config);
 		specificConfig.val("load-op-type", OpType.UPDATE.name().toLowerCase());

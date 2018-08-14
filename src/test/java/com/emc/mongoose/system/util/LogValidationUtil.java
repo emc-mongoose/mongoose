@@ -488,19 +488,15 @@ public interface LogValidationUtil {
 
 			found = true;
 
-			concurrencyLimit = Integer.parseInt(
-				(String) ((Map) parsedContent.get(LogPatterns.KEY_CONCURRENCY)).get(LogPatterns.KEY_CONCURRENCY_LIMIT)
-			);
+			concurrencyLimit = (int) (
+				(Map) parsedContent.get(LogPatterns.KEY_CONCURRENCY)
+			).get(LogPatterns.KEY_CONCURRENCY_LIMIT);
 			assertEquals(Integer.toString(concurrencyLimit), expectedConcurrency, concurrencyLimit);
-			nodeCount = Integer.parseInt((String) parsedContent.get(LogPatterns.KEY_NODE_COUNT));
+			nodeCount = (int) parsedContent.get(LogPatterns.KEY_NODE_COUNT);
 			assertEquals(Integer.toString(nodeCount), expectedNodeCount, nodeCount);
-			concurrencyMean = Double.parseDouble(
-				(String) (
-					(Map) (
-						(Map) parsedContent.get(LogPatterns.KEY_CONCURRENCY)
-					).get(LogPatterns.KEY_CONCURRENCY_ACTUAL)
-				).get(LogPatterns.KEY_MEAN)
-			);
+			concurrencyMean = (double)
+				((Map) ((Map) parsedContent.get(LogPatterns.KEY_CONCURRENCY)).get(LogPatterns.KEY_CONCURRENCY_ACTUAL))
+					.get(LogPatterns.KEY_MEAN);
 			if(expectedConcurrency > 0) {
 				assertTrue(concurrencyMean <= nodeCount * expectedConcurrency);
 			} else {
@@ -510,13 +506,9 @@ public interface LogValidationUtil {
 			if(expectedItemDataSize.get() > 0 && !expectedOpType.equals(OpType.DELETE)) {
 				assertTrue(Long.toString(totalBytes), totalBytes >= 0);
 			}
-			countSucc = Long.parseLong(
-				(String) ((Map) parsedContent.get(LogPatterns.KEY_OP_COUNT)).get(LogPatterns.KEY_SUCC)
-			);
+			countSucc = ((Number) ((Map) parsedContent.get(LogPatterns.KEY_OP_COUNT)).get(LogPatterns.KEY_SUCC)).longValue();
 			assertTrue(Long.toString(countSucc), countSucc >= 0);
-			countFail = Long.parseLong(
-				(String) ((Map) parsedContent.get(LogPatterns.KEY_OP_COUNT)).get(LogPatterns.KEY_FAIL)
-			);
+			countFail = ((Number) ((Map) parsedContent.get(LogPatterns.KEY_OP_COUNT)).get(LogPatterns.KEY_FAIL)).longValue();
 			assertTrue(Long.toString(countFail), countFail < 1);
 			if(countSucc > 0) {
 				avgItemSize = totalBytes / countSucc;
@@ -525,54 +517,50 @@ public interface LogValidationUtil {
 					expectedItemDataSize.getAvg() / 100
 				);
 			}
-			stepDuration = Double.parseDouble(
-				(String) ((Map) parsedContent.get(LogPatterns.KEY_DURATION)).get(LogPatterns.KEY_ELAPSED)
-			);
-			durationSum = Double.parseDouble(
-				(String) ((Map) parsedContent.get(LogPatterns.KEY_DURATION)).get(LogPatterns.KEY_SUM)
-			);
+			stepDuration = ((Number) ((Map) parsedContent.get(LogPatterns.KEY_DURATION)).get(LogPatterns.KEY_ELAPSED)).doubleValue();
+			durationSum = ((Number) ((Map) parsedContent.get(LogPatterns.KEY_DURATION)).get(LogPatterns.KEY_SUM)).doubleValue();
 			assertTrue(durationSum >= 0);
 			final double effEstimate = durationSum / (concurrencyLimit * nodeCount * stepDuration);
 			assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate >= 0);
 
-			final Map<String, String> parsedTp = (Map<String, String>) parsedContent.get(LogPatterns.KEY_TP);
-			tpAvg = Double.parseDouble(parsedTp.get(LogPatterns.KEY_MEAN));
-			tpLast = Double.parseDouble(parsedTp.get(LogPatterns.KEY_LAST));
+			final Map<String, Double> parsedTp = (Map<String, Double>) parsedContent.get(LogPatterns.KEY_TP);
+			tpAvg = parsedTp.get(LogPatterns.KEY_MEAN);
+			tpLast = parsedTp.get(LogPatterns.KEY_LAST);
 
-			final Map<String, String> parsedBw = (Map<String, String>) parsedContent.get(LogPatterns.KEY_BW);
-			bwAvg = Double.parseDouble(parsedBw.get(LogPatterns.KEY_MEAN));
-			bwLast = Double.parseDouble(parsedBw.get(LogPatterns.KEY_LAST));
+			final Map<String, Double> parsedBw = (Map<String, Double>) parsedContent.get(LogPatterns.KEY_BW);
+			bwAvg = parsedBw.get(LogPatterns.KEY_MEAN);
+			bwLast = parsedBw.get(LogPatterns.KEY_LAST);
 
 			assertEquals(bwAvg / tpAvg, bwAvg / tpAvg, expectedItemDataSize.getAvg() / 100);
 			assertEquals(bwLast / tpLast, bwLast / tpLast, expectedItemDataSize.getAvg() / 100);
 
-			final Map<String, String> parsedOpsDur = (Map<String, String>) parsedContent.get(LogPatterns.KEY_OP_DUR);
-			durAvg = Double.parseDouble(parsedOpsDur.get(LogPatterns.KEY_AVG));
+			final Map<String, Object> parsedOpsDur = (Map<String, Object>) parsedContent.get(LogPatterns.KEY_OP_DUR);
+			durAvg = (double) parsedOpsDur.get(LogPatterns.KEY_AVG);
 			assertTrue(durAvg >= 0);
-			durMin = Integer.parseInt(parsedOpsDur.get(LogPatterns.KEY_MIN));
+			durMin = (int) parsedOpsDur.get(LogPatterns.KEY_MIN);
 			assertTrue(durAvg >= durMin);
-			durLoQ = Integer.parseInt(parsedOpsDur.get(LogPatterns.KEY_LOQ));
+			durLoQ = (int) parsedOpsDur.get(LogPatterns.KEY_LOQ);
 			assertTrue(durLoQ >= durMin);
-			durMed = Integer.parseInt(parsedOpsDur.get(LogPatterns.KEY_MED));
+			durMed = (int) parsedOpsDur.get(LogPatterns.KEY_MED);
 			assertTrue(durMed >= durLoQ);
-			durHiQ = Integer.parseInt(parsedOpsDur.get(LogPatterns.KEY_HIQ));
+			durHiQ = (int) parsedOpsDur.get(LogPatterns.KEY_HIQ);
 			assertTrue(durHiQ >= durMed);
-			durMax = Integer.parseInt(parsedOpsDur.get(LogPatterns.KEY_MAX));
+			durMax = (int) parsedOpsDur.get(LogPatterns.KEY_MAX);
 			assertTrue(durMax >= durHiQ);
 			assertTrue(durMax >= durAvg);
 
-			final Map<String, String> parsedOpsLat = (Map<String, String>) parsedContent.get(LogPatterns.KEY_OP_LAT);
-			latAvg = Double.parseDouble(parsedOpsLat.get(LogPatterns.KEY_AVG));
+			final Map<String, Object> parsedOpsLat = (Map<String, Object>) parsedContent.get(LogPatterns.KEY_OP_LAT);
+			latAvg = (double) parsedOpsLat.get(LogPatterns.KEY_AVG);
 			assertTrue(latAvg >= 0);
-			latMin = Integer.parseInt(parsedOpsLat.get(LogPatterns.KEY_MIN));
+			latMin = (int) parsedOpsLat.get(LogPatterns.KEY_MIN);
 			assertTrue(latAvg >= latMin);
-			latLoQ = Integer.parseInt(parsedOpsLat.get(LogPatterns.KEY_LOQ));
+			latLoQ = (int) parsedOpsLat.get(LogPatterns.KEY_LOQ);
 			assertTrue(latLoQ >= latMin);
-			latMed = Integer.parseInt(parsedOpsLat.get(LogPatterns.KEY_MED));
+			latMed = (int) parsedOpsLat.get(LogPatterns.KEY_MED);
 			assertTrue(latMed >= latLoQ);
-			latHiQ = Integer.parseInt(parsedOpsLat.get(LogPatterns.KEY_HIQ));
+			latHiQ = (int) parsedOpsLat.get(LogPatterns.KEY_HIQ);
 			assertTrue(latHiQ >= latMed);
-			latMax = Integer.parseInt(parsedOpsLat.get(LogPatterns.KEY_MAX));
+			latMax = (int) parsedOpsLat.get(LogPatterns.KEY_MAX);
 			assertTrue(latMax >= latHiQ);
 			assertTrue(latMax >= latAvg);
 		}
@@ -650,7 +638,6 @@ public interface LogValidationUtil {
 	) throws Exception {
 		final Matcher m = LogPatterns.STD_OUT_METRICS_TABLE_ROW.matcher(stdOutContent);
 		boolean rowFoundFlag = false;
-		Date nextTimstamp = null;
 		int actualConcurrencyCurr = - 1;
 		float actualConcurrencyLastMean = - 1;
 		long succCount = - 1;
@@ -666,7 +653,6 @@ public interface LogValidationUtil {
 				final OpType actualOpType = OpType.valueOf(m.group("opType"));
 				if(actualOpType.equals(expectedOpType)) {
 					rowFoundFlag = true;
-					nextTimstamp = FMT_DATE_METRICS_TABLE.parse(m.group("timestamp"));
 					actualConcurrencyCurr = Integer.parseInt(m.group("concurrencyCurr"));
 					actualConcurrencyLastMean = Float.parseFloat(m.group("concurrencyLastMean"));
 					succCount = Long.parseLong(m.group("succCount"));
@@ -676,12 +662,13 @@ public interface LogValidationUtil {
 					bw = Float.parseFloat(m.group("bw"));
 					lat = Long.parseLong(m.group("lat"));
 					dur = Long.parseLong(m.group("dur"));
-					break;
 				}
 			}
 		}
-		assertTrue("Summary metrics row with step id ending with \"" + stepId + "\" and I/O type \"" + expectedOpType +
-			"\" was not found", rowFoundFlag);
+		assertTrue(
+			"Summary metrics row with step id ending with \"" + stepId + "\" and I/O type \"" + expectedOpType +
+			"\" was not found", rowFoundFlag
+		);
 		assertTrue(actualConcurrencyCurr >= 0);
 		assertTrue(nodeCount * expectedConcurrency >= actualConcurrencyCurr);
 		assertTrue(actualConcurrencyLastMean >= 0);
@@ -699,16 +686,19 @@ public interface LogValidationUtil {
 		if(expectedItemDataSize != null && tp > 0) {
 			final float avgItemSize = MIB * bw / tp;
 			if(expectedItemDataSize.getMin() == expectedItemDataSize.getMax()) {
-				assertEquals("Actual average items size (" + new SizeInBytes((long) avgItemSize) +
-						") should be approx equal the expected (" + expectedItemDataSize + ")", expectedItemDataSize.get(),
-					avgItemSize, expectedItemDataSize.get() / 10
+				assertEquals(
+					"Actual average items size (" + new SizeInBytes((long) avgItemSize) +
+						") should be approx equal the expected (" + expectedItemDataSize + ")",
+					expectedItemDataSize.get(), avgItemSize, expectedItemDataSize.get() / 10
 				);
 			} else {
-				assertTrue("Actual average items size (" + new SizeInBytes((long) avgItemSize) +
+				assertTrue(
+					"Actual average items size (" + new SizeInBytes((long) avgItemSize) +
 						") doesn't fit the expected (" + expectedItemDataSize + ")",
 					avgItemSize >= expectedItemDataSize.getMin()
 				);
-				assertTrue("Actual average items size (" + new SizeInBytes((long) avgItemSize) +
+				assertTrue(
+					"Actual average items size (" + new SizeInBytes((long) avgItemSize) +
 						") doesn't fit the expected (" + expectedItemDataSize + ")",
 					avgItemSize <= expectedItemDataSize.getMax()
 				);

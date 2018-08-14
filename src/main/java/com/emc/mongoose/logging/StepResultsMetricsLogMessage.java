@@ -3,14 +3,13 @@ package com.emc.mongoose.logging;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.DistributedMetricsContext;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
+import static com.emc.mongoose.Constants.K;
 import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.Constants.MIB;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import org.apache.logging.log4j.message.AsynchronouslyFormattable;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  Created by kurila on 18.05.17.
@@ -37,7 +36,8 @@ extends LogMessageBase {
 	public final void formatTo(final StringBuilder buff) {
 		final String lineSep = System.lineSeparator();
 		buff
-			.append("--- # Results").append(lineSep)
+			.append("---").append(lineSep)
+			.append("# Results ##############################################################################################################").append(lineSep)
 			.append("- Load Step Id:                ").append(stepId).append(lineSep)
 			.append("  Operation Type:              ").append(opType).append(lineSep)
 			.append("  Node Count:                  ").append(snapshot.nodeCount()).append(lineSep)
@@ -51,7 +51,7 @@ extends LogMessageBase {
 			.append("    Failed:                    ").append(snapshot.failCount()).append(lineSep)
 			.append("  Transfer Size:               ").append(SizeInBytes.formatFixedSize(snapshot.byteCount())).append(lineSep)
 			.append("  Duration [s]:                ").append(lineSep)
-			.append("    Elapsed:                   ").append(TimeUnit.MILLISECONDS.toSeconds(snapshot.elapsedTimeMillis())).append(lineSep)
+			.append("    Elapsed:                   ").append(snapshot.elapsedTimeMillis() / K).append(lineSep)
 			.append("    Sum:                       ").append(snapshot.durationSum() / M).append(lineSep)
 			.append("  Throughput [op/s]:           ").append(lineSep)
 			.append("    Last:                      ").append(snapshot.succRateLast()).append(lineSep)
@@ -73,6 +73,6 @@ extends LogMessageBase {
 			.append("    Med:                       ").append(snapshot.latencyMed()).append(lineSep)
 			.append("    HiQ:                       ").append(snapshot.latencyHiQ()).append(lineSep)
 			.append("    Max:                       ").append(snapshot.latencyMax()).append(lineSep)
-			.append("---").append(lineSep);
+			.append("...").append(lineSep);
 	}
 }
