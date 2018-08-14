@@ -82,7 +82,7 @@ import static org.junit.Assert.fail;
 
 	public ChainWithDelayTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
+							 )
 	throws Exception {
 		final Map<String, Object> schema =
 			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
@@ -132,11 +132,11 @@ import static org.junit.Assert.fail;
 			case SWIFT:
 				final HttpStorageMockContainer storageMock =
 					new HttpStorageMockContainer(HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-						Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
-						HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-						HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+												 Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
+												 HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+												 HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+												 HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
+												 HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
 					);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
@@ -197,12 +197,13 @@ import static org.junit.Assert.fail;
 	public final void test()
 	throws Exception {
 		assertEquals("Container exit code should be 0", 0, containerExitCode);
-		testMetricsTableStdout(stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
+		testMetricsTableStdout(
+			stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
 			new HashMap<OpType, Integer>() {{
 				put(OpType.CREATE, concurrency.getValue());
 				put(OpType.READ, concurrency.getValue());
 			}}
-		);
+							  );
 		final Map<String, Long> timingMap = new HashMap<>();
 		final Consumer<CSVRecord> ioTraceRecTestFunc = new Consumer<CSVRecord>() {
 			String storageNode;
