@@ -13,16 +13,34 @@ import com.emc.mongoose.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
+import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsTableRowStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
+import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
+
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
+
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,22 +53,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsTableRowStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
-import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
-import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class) public final class CopyUsingInputPathTest {
 
@@ -75,8 +77,7 @@ import static org.junit.Assert.assertTrue;
 
 	public CopyUsingInputPathTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
+	) throws Exception {
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
@@ -254,11 +255,12 @@ import static org.junit.Assert.assertTrue;
 			);
 		}
 		final String stdOutContent = testContainer.stdOutContent();
-		testSingleMetricsStdout(stdOutContent.replaceAll("[\r\n]+", " "), OpType.CREATE, concurrency.getValue(),
-			runMode.getNodeCount(), itemSize.getValue(), outputMetricsAveragePeriod
+		testFinalMetricsStdout(
+			stdOutContent, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), stepId
 		);
-		testFinalMetricsTableRowStdout(stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(),
-			concurrency.getValue(), 0, 0, itemSize.getValue()
+		testFinalMetricsTableRowStdout(
+			stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(), concurrency.getValue(), 0, 0,
+			itemSize.getValue()
 		);
 	}
 }

@@ -45,7 +45,7 @@ import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogR
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
@@ -195,15 +195,18 @@ import static org.junit.Assert.assertEquals;
 			ioTraceRecCount.increment();
 		};
 		testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
-		assertEquals("There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file", 2 * EXPECTED_COUNT,
+		assertEquals(
+			"There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file", 2 * EXPECTED_COUNT,
 			ioTraceRecCount.sum()
 		);
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
-		testTotalMetricsLogRecord(totalMetrcisLogRecords.get(0), OpType.UPDATE, concurrency.getValue(),
-			runMode.getNodeCount(), expectedUpdateSize, EXPECTED_COUNT, 0
+		testTotalMetricsLogRecord(
+			totalMetrcisLogRecords.get(0), OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+			expectedUpdateSize, EXPECTED_COUNT, 0
 		);
-		testTotalMetricsLogRecord(totalMetrcisLogRecords.get(1), OpType.READ, concurrency.getValue(),
-			runMode.getNodeCount(), expectedReadSize, EXPECTED_COUNT, 0
+		testTotalMetricsLogRecord(
+			totalMetrcisLogRecords.get(1), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
+			expectedReadSize, EXPECTED_COUNT, 0
 		);
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
 		final List<CSVRecord> updateMetricsRecords = new ArrayList<>();
@@ -215,18 +218,19 @@ import static org.junit.Assert.assertEquals;
 				readMetricsRecords.add(metricsLogRec);
 			}
 		}
-		testMetricsLogRecords(updateMetricsRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
-			expectedUpdateSize, EXPECTED_COUNT, 0, averagePeriod
+		testMetricsLogRecords(
+			updateMetricsRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), expectedUpdateSize,
+			EXPECTED_COUNT, 0, averagePeriod
 		);
-		testMetricsLogRecords(readMetricsRecords, OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
-			expectedReadSize, EXPECTED_COUNT, 0, averagePeriod
+		testMetricsLogRecords(
+			readMetricsRecords, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), expectedReadSize,
+			EXPECTED_COUNT, 0, averagePeriod
 		);
-		final String stdOutput = this.stdOutContent.replaceAll("[\r\n]+", " ");
-		testSingleMetricsStdout(stdOutput, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
-			expectedUpdateSize, averagePeriod
+		testFinalMetricsStdout(
+			stdOutContent, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), expectedUpdateSize, stepId
 		);
-		testSingleMetricsStdout(stdOutput, OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
-			expectedReadSize, averagePeriod
+		testFinalMetricsStdout(
+			stdOutContent, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), expectedReadSize, stepId
 		);
 	}
 }

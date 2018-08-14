@@ -248,6 +248,7 @@ dependencies {
 	)
 
 	testCompile(
+		"com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${depVersion.jackson}",
 		"junit:junit:${depVersion.junit}",
 		"org.scala-lang:scala-compiler:${depVersion.scala}",
 		"org.scala-lang:scala-library:${depVersion.scala}",

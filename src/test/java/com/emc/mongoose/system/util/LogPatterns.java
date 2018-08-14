@@ -6,6 +6,32 @@ import java.util.regex.Pattern;
  Created by kurila on 26.01.17.
  */
 public interface LogPatterns {
+
+	String KEY_STEP_ID = "Load Step Id";
+	String KEY_OP_TYPE = "Operation Type";
+	String KEY_NODE_COUNT = "Node Count";
+	String KEY_CONCURRENCY = "Concurrency";
+	String KEY_CONCURRENCY_LIMIT = "Limit Per Storage Driver";
+	String KEY_CONCURRENCY_ACTUAL = "Actual";
+	String KEY_LAST = "Last";
+	String KEY_MEAN = "Mean";
+	String KEY_OP_COUNT = "Operations Count";
+	String KEY_SUCC = "Successful";
+	String KEY_FAIL = "Failed";
+	String KEY_SIZE = "Transfer Size";
+	String KEY_DURATION = "Duration [s]";
+	String KEY_ELAPSED = "Elapsed";
+	String KEY_SUM = "Sum";
+	String KEY_TP = "Throughput [op/s]";
+	String KEY_BW = "Bandwidth [MB/s]";
+	String KEY_OP_DUR = "Operations Duration [us]";
+	String KEY_OP_LAT = "Operations Latency [us]";
+	String KEY_AVG = "Avg";
+	String KEY_MIN = "Min";
+	String KEY_LOQ = "LoQ";
+	String KEY_MED = "Med";
+	String KEY_HIQ = "HiQ";
+	String KEY_MAX = "Max";
 	
 	// common
 	Pattern ASCII_COLOR = Pattern.compile("\\u001B\\[?m?[\\u001B\\[0-9m;]*");
@@ -19,39 +45,6 @@ public interface LogPatterns {
 	
 	// metrics
 	Pattern OP_TYPE = Pattern.compile(ASCII_COLOR.pattern() + "(?<opType>[CREATDLUPNO]{4,6})" + ASCII_COLOR.pattern());
-	Pattern STD_OUT_CONCURRENCY = Pattern.compile("(?<concurrency>[0-9]{1,7})x(?<driverCount>[0-9]{1,7})");
-	Pattern STD_OUT_CONCURRENCY_ACTUAL = Pattern.compile("c=\\((?<concurrencyLastMean>[0-9.]+)\\)");
-	Pattern STD_OUT_ITEM_COUNTS = Pattern.compile(
-		"n=\\((?<countSucc>\\d+)/\\\u001B*\\[*\\d*m*(?<countFail>\\d+)\\\u001B*\\[*\\d*m*\\)"
-	);
-	Pattern STD_OUT_METRICS_TIME = Pattern.compile(
-		"t\\[s\\]=\\((?<stepDur>[0-9.]+[eE]?[0-9]{0,2})/(?<sumDur>[0-9.]+[eE]?[0-9]{0,2})\\)"
-	);
-	Pattern STD_OUT_METRICS_SIZE = Pattern.compile(
-		"size=\\((?<size>[\\d.]+[KMGTPE]?B?)\\)"
-	);
-	Pattern STD_OUT_METRICS_TP = Pattern.compile(
-		"TP\\[op/s\\]=\\((?<tpMean>[0-9.]+)/(?<tpLast>[0-9.]+)\\)"
-	);
-	Pattern STD_OUT_METRICS_BW = Pattern.compile(
-		"BW\\[MB/s\\]=\\((?<bwMean>[0-9.]+)/(?<bwLast>[0-9.]+)\\)"
-	);
-	Pattern STD_OUT_METRICS_DUR = Pattern.compile(
-		"dur\\[us\\]=\\((?<durAvg>[0-9]+)/(?<durMin>[0-9]+)/(?<durMax>[0-9]+)\\)"
-	);
-	Pattern STD_OUT_METRICS_LAT = Pattern.compile(
-		"lat\\[us\\]=\\((?<latAvg>[0-9]+)/(?<latMin>[0-9]+)/(?<latMax>[0-9]+)\\)"
-	);
-	Pattern STD_OUT_METRICS_SINGLE = Pattern.compile(
-		ASCII_COLOR.pattern() + DATE_TIME_ISO8601.pattern() + "\\s+" + STD_OUT_LOG_LEVEL.pattern() +
-			"\\s+" + STD_OUT_CLASS_NAME.pattern() + "\\s" + STD_OUT_THREAD_NAME.pattern() + "\\s+" +
-			OP_TYPE.pattern() + "-" + STD_OUT_CONCURRENCY.pattern() + ":\\s+" +
-			STD_OUT_CONCURRENCY_ACTUAL.pattern() + ";\\s+" +
-			STD_OUT_ITEM_COUNTS.pattern() + ";\\s+" + STD_OUT_METRICS_TIME.pattern() + ";\\s+" +
-			STD_OUT_METRICS_SIZE.pattern() + ";\\s+" + STD_OUT_METRICS_TP.pattern() + ";\\s+" +
-			STD_OUT_METRICS_BW.pattern() + ";\\s+" + STD_OUT_METRICS_DUR.pattern() + ";\\s+" +
-			STD_OUT_METRICS_LAT.pattern()
-	);
 	Pattern STD_OUT_METRICS_TABLE_ROW = Pattern.compile(
 		"\\s*(?<stepName>[\\w\\-_.,;:~=+@]{1,10})\\|(?<timestamp>[\\d]{12})" +
 			"\\|" + OP_TYPE.pattern() +
@@ -64,10 +57,10 @@ public interface LogPatterns {
 			"\\|\\s*(?<lat>[\\d]{1,10})" +
 			"\\|\\s*(?<dur>[\\d]{1,11})"
 	);
-	Pattern STD_OUT_METRICS_TABLE_ROW_FINAL = Pattern.compile(
-		"\\*{120}\\R" + STD_OUT_METRICS_TABLE_ROW.pattern() + "\\R\\*{120}"
+	Pattern STD_OUT_METRICS_SUMMARY = Pattern.compile(
+		"\\s*[\\-]{3}\\s#\\sResults\\s[#]{110}\n(?<content>[\\w\\s\\.:\\-\\[\\]/\n]+)[\\.]{3}", Pattern.MULTILINE
 	);
-	
+
 	Pattern STD_OUT_LOAD_THRESHOLD_ENTRANCE = Pattern.compile(
 		ASCII_COLOR.pattern() + DATE_TIME_ISO8601.pattern() + "\\s+" + STD_OUT_LOG_LEVEL.pattern() +
 			"\\s+" + STD_OUT_CLASS_NAME.pattern() + "\\s+" + STD_OUT_THREAD_NAME.pattern() +

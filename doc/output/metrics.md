@@ -4,10 +4,10 @@
 1.1. [Console](#11-console)<br/>
 1.1.1. [Table Fields Description](#111-table-fields-description)<br/>
 1.2. [File](#12-files)<br/>
-2. [Step Summary](#2-step-summary)<br/>
+2. [Load Step Summary](#2-load-step-summary)<br/>
 2.1. [Console](#21-console)<br/>
 2.2. [File](#22-files)<br/>
-3. [I/O Traces](#3-io-traces)<br/>
+3. [Operation Traces](#3-operation-traces)<br/>
 3.1. [Console](#31-console)<br/>
 3.2. [File](#32-files)<br/>
 4. [Threshold](#4-threshold)<br/>
@@ -52,13 +52,8 @@ Table output example:
 1881901842|170824183701|CREATE|       550|545.41    |        1864|     0|150.035|14.85324|1485.32|    740029|   19060149
 1881901842|170824183711|CREATE|       569|551.75    |        2030|     0|160.035|15.74449|1574.44|    735227|   19254647
 1881901842|170824183721|CREATE|       582|568.95    |        2165|     0|170.035|13.86718|1386.71|    733804|   19512344
-************************************************************************************************************************
 1881901842|170824183731|CREATE|       585|577.05    |        2270|     0|180.039|11.65720|1165.72|    754406|   19747777
-************************************************************************************************************************
 ```
-
-**Note** the last row marked surrounded with asterisk symbols. This is
-the final metrics output for the given test step.
 
 ### 1.1.1. Table Fields Description
 
@@ -86,9 +81,9 @@ mode).
 
 Field Name      | Description
 ----------------|------------
-DateTimeISO8601 | Timestamp in the ISO8601 format
+DateTimeISO8601 | Start timestamp in the ISO8601 format
 OpType          | Load operation type (CREATE/READ/...)
-Concurrency     | The configured concurrency level (per storage driver)
+Concurrency     | The configured concurrency limit per storage driver
 NodeCount       | Count of the mongoose nodes used for the load (1 in case of the standalone mode, >1 in case of the distributed mode)
 ConcurrencyCurr | The current summary concurrency level (count of concurrently executed load operations)
 ConcurrencyMean | The mean summary concurrency level for the last *period* (10s by default)
@@ -114,32 +109,55 @@ LatencyMed[us]  | Median of the operations latency distribution
 LatencyHiQ[us]  | High quartile of the operations latency distribution
 LatencyMax[us]  | Maximum operation latency
 
-# 2. Step Summary
+# 2. Load Step Summary
 
 At the end of each load step the summary metrics are produced.
 
 ## 2.1. Console
 
-```
-2017-06-01T18:05:45,271 I LoadStep                       Test worker                    Distributed load step "ReadVerificationFailTest2" results:
-    READ-20x1: c=(19.87); n=(2/998); t[s]=(2.386/0.11893); size=(20KB); TP[op/s]=(0.83822/1.0); BW[MB/s]=(0.0081/0.0097); dur[us]=(59465/33086/85844); lat[us]=(21732/14089/29375)
+Console summary metrics output has YAML-like format for the better readability:
+```yaml
+---
+# Results ##############################################################################################################
+- Load Step Id:                copy_using_input_path_test_FS_LOCALxMEDIUM_SMALL
+  Operation Type:              CREATE
+  Node Count:                  1
+  Concurrency:
+    Limit Per Storage Driver:  100
+    Actual:
+      Last:                    0
+      Mean:                    0.0
+  Operations Count:
+    Successful:                4096
+    Failed:                    0
+  Transfer Size:               40MB
+  Duration [s]:
+    Elapsed:                   6
+    Sum:                       2.471925
+  Throughput [op/s]:
+    Last:                      554.2261935730298
+    Mean:                      601.8219218336761
+  Bandwidth [MB/s]:
+    Last:                      5.4123651716116195
+    Mean:                      5.877167205406994
+  Operations Duration [us]:
+    Avg:                       4175.429054054054
+    Min:                       0
+    LoQ:                       60
+    Med:                       116
+    HiQ:                       2684
+    Max:                       216496
+  Operations Latency [us]:
+    Avg:                       4174.403716216216
+    Min:                       0
+    LoQ:                       59
+    Med:                       115
+    HiQ:                       2683
+    Max:                       216495
 ```
 
-The record pattern is:
-```
-<OP_TYPE>-<CONFIGURED_CONCURRENCY_LIMIT>x<DRIVER_COUNT>:
-    c=(<LAST_MEAN_SUMMARY_CONCURRENCY>);
-	n=(<COUNT_SUCCESS>/<COUNT_FAIL>);
-	t[s]=(<ELAPSED_TIME>/<OPERATIONS_DURATION_SUM>)
-	size=(<SIZE_TRANSFERRED>);
-	TP[op/s]=(<RATE_MEAN>/(RATE_LAST));
-	BW[MB/s]=(<BYTE_RATE_MEAN>/<BYTE_RATE_LAST>);
-	dur[us]=(<DURATION_AVG>/<DURATION_MIN>/<DURATION_MAX>);
-	lat[us]=(<LATENCY_AVG>/<LATENCY_MIN>/<LATENCY_MAX>);
-```
-
-* On the entry node the load step summary is displayed twice: once for the local load step slice and once for total/aggregated results
-* The equation (CONFIGURED_CURRENCY_LEVEL * DRIVER_COUNT * ELAPSED_TIME / OPERATIONS_DURATION_SUM) may be used as efficiency estimate
+* The console summary is displayed only on the entry node. It's not displayed on the additional nodes in the distributed mode.
+* The equation (CONFIGURED_CURRENCY_LEVEL * DRIVER_COUNT * ELAPSED_TIME / OPERATIONS_DURATION_SUM) may be used as efficiency estimate.
 * *Mean* rates are calculated as current total count of items/bytes divided by current elapsed time.
 * *Last* rates are calculated as [exponentially decaying moving average](https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average) where
 
@@ -154,7 +172,7 @@ The layout is the same as for average metrics file output. To disable the summar
 parameter `output-metrics-summary-persist` should be set to "false". Note that the file output for the metrics is always
 disabled for the load step slices (i.e. on the additional/remote nodes in the distributed mode).
 
-# 3. I/O Traces
+# 3. Operation Traces
 
 The metrics for each load operation (request either file operation).
 

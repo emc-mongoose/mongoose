@@ -1,7 +1,7 @@
 package com.emc.mongoose.metrics;
 
-public interface DistributedMetricsContext
-	extends MetricsContext {
+public interface DistributedMetricsContext<S extends DistributedMetricsSnapshot>
+extends MetricsContext<S> {
 
 	int nodeCount();
 }

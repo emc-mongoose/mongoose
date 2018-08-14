@@ -42,7 +42,7 @@ import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsTab
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
@@ -193,18 +193,21 @@ import static org.junit.Assert.assertTrue;
 		} else {
 			outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
 		}
-		testMetricsLogRecords(getMetricsLogRecords(stepId), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
+		testMetricsLogRecords(
+			getMetricsLogRecords(stepId), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
 			itemSize.getValue(), EXPECTED_COUNT, 0, outputMetricsAveragePeriod
 		);
-		testTotalMetricsLogRecord(getMetricsTotalLogRecords(stepId).get(0), OpType.READ, concurrency.getValue(),
-			runMode.getNodeCount(), itemSize.getValue(), EXPECTED_COUNT, 0
+		testTotalMetricsLogRecord(
+			getMetricsTotalLogRecords(stepId).get(0), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
+			itemSize.getValue(), EXPECTED_COUNT, 0
 		);
 		final String stdOutContent = testContainer.stdOutContent();
-		testSingleMetricsStdout(stdOutContent.replaceAll("[\r\n]+", " "), OpType.READ, concurrency.getValue(),
-			runMode.getNodeCount(), itemSize.getValue(), outputMetricsAveragePeriod
+		testFinalMetricsStdout(
+			stdOutContent, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), stepId
 		);
-		testFinalMetricsTableRowStdout(stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(),
-			concurrency.getValue(), EXPECTED_COUNT, 0, itemSize.getValue()
+		testFinalMetricsTableRowStdout(
+			stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(), concurrency.getValue(), EXPECTED_COUNT, 0,
+			itemSize.getValue()
 		);
 	}
 }

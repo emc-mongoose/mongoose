@@ -16,8 +16,8 @@ import java.util.function.IntSupplier;
  Created by kurila on 15.09.15.
  Start timestamp and elapsed time is in milliseconds while other time values are in microseconds.
  */
-public class MetricsContextImpl
-	implements MetricsContext {
+public class MetricsContextImpl<S extends MetricsSnapshotImpl>
+implements MetricsContext<S> {
 
 	private final Clock clock = new ResumableUserTimeClock();
 	private final Histogram reqDuration, respLatency, actualConcurrency;
@@ -36,7 +36,7 @@ public class MetricsContextImpl
 	private final boolean stdOutColorFlag;
 	private final long outputPeriodMillis;
 	private volatile long lastOutputTs = 0;
-	private volatile MetricsSnapshot lastSnapshot = null;
+	private volatile S lastSnapshot = null;
 	private volatile MetricsListener metricsListener = null;
 	private volatile MetricsContext thresholdMetricsCtx = null;
 	private volatile boolean thresholdStateExitedFlag = false;
@@ -70,7 +70,7 @@ public class MetricsContextImpl
 	}
 
 	@Override
-	public void start() {
+	public final void start() {
 		tsStart = System.currentTimeMillis();
 		throughputSuccess.resetStartTime();
 		throughputFail.resetStartTime();
@@ -269,8 +269,8 @@ public class MetricsContextImpl
 		lastOutputTs = ts;
 	}
 
-	@Override
-	public final void refreshLastSnapshot() {
+	@Override @SuppressWarnings("unchecked")
+	public void refreshLastSnapshot() {
 		final long currentTimeMillis = System.currentTimeMillis();
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
 		if(currentTimeMillis - lastOutputTs > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
@@ -289,7 +289,7 @@ public class MetricsContextImpl
 			actualConcurrency.update(actualConcurrencyGauge.getAsInt());
 			actualConcurrencySnapshot = actualConcurrency.getSnapshot();
 		}
-		lastSnapshot = new MetricsSnapshotImpl(throughputSuccess.getCount(), throughputSuccess.
+		lastSnapshot = (S) new MetricsSnapshotImpl(throughputSuccess.getCount(), throughputSuccess.
 			getLastRate(), throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
 			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyGauge.getAsInt(),
 			actualConcurrencySnapshot.getMean(), concurrencyLimit, lastDurationSum, lastLatencySum, reqDurSnapshot,
@@ -304,7 +304,7 @@ public class MetricsContextImpl
 	}
 
 	@Override
-	public final MetricsSnapshot lastSnapshot() {
+	public final S lastSnapshot() {
 		if(lastSnapshot == null) {
 			refreshLastSnapshot();
 		}
@@ -373,17 +373,17 @@ public class MetricsContextImpl
 	}
 
 	@Override
-	public final int compareTo(final MetricsContext other) {
+	public final int compareTo(final MetricsContext<S> other) {
 		return Long.compare(hashCode(), other.hashCode());
 	}
 
-	@Override
-	public final boolean equals(final Object other) {
+	@Override @SuppressWarnings("unchecked")
+	public boolean equals(final Object other) {
 		if(null == other) {
 			return false;
 		}
-		if(other instanceof MetricsContext) {
-			return 0 == compareTo((MetricsContext) other);
+		if(other instanceof MetricsContextImpl) {
+			return 0 == compareTo((MetricsContextImpl<S>) other);
 		} else {
 			return false;
 		}
