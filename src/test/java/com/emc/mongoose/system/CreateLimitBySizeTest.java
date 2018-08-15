@@ -71,7 +71,8 @@ import static org.junit.Assert.assertTrue;
 	}
 
 	private final String SCENARIO_PATH = null; //default
-	private final double requiredAccuracy = 1; //100% because #issue-1252 "The Size limit is violated" isn't resolved -> Mongoose doesn't stop in time
+	private final double requiredAccuracy = 1;
+		//100% because #issue-1252 "The Size limit is violated" isn't resolved -> Mongoose doesn't stop in time
 	private final int timeoutInMillis = 1000_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();

@@ -116,7 +116,8 @@ import static org.junit.Assert.assertTrue;
 			case S3:
 			case SWIFT:
 				final HttpStorageMockContainer storageMock =
-					new HttpStorageMockContainer(HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
+					new HttpStorageMockContainer(
+						HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
 						Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
 						HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
 						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
@@ -193,9 +194,13 @@ import static org.junit.Assert.assertTrue;
 				if(! nextDstFile.exists()) {
 					lostItemsCount.increment();
 				} else {
-					assertEquals("Source file (" + nextItemPath + ") size (" + nextSrcFile.length() +
-						" is not equal to the destination file (" + nextDstFile.getAbsolutePath() + ") size (" +
-						nextDstFile.length(), nextSrcFile.length(), nextDstFile.length());
+					assertEquals(
+						"Source file (" + nextItemPath + ") size (" + nextSrcFile.length() +
+						" is not equal to the destination file (" + nextDstFile.getAbsolutePath() +
+						") size (" +
+						nextDstFile.length(),
+						nextSrcFile.length(),
+						nextDstFile.length());
 				}
 				testIoTraceRecord(ioTraceRecord, OpType.CREATE.ordinal(), new SizeInBytes(nextSrcFile.length()));
 				ioTraceRecCount.increment();
@@ -225,7 +230,8 @@ import static org.junit.Assert.assertTrue;
 		if(storageType.equals(StorageType.FS)) {
 			// some files may remain not written fully
 			testTotalMetricsLogRecord(totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(),
-				runMode.getNodeCount(), new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0,
+				runMode.getNodeCount(),
+				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0,
 				0
 			);
 		} else {
@@ -244,9 +250,11 @@ import static org.junit.Assert.assertTrue;
 		}
 		if(storageType.equals(StorageType.FS)) {
 			// some files may remain not written fully
-			testMetricsLogRecords(metricsLogRecords, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
-				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0, 0,
-				outputMetricsAveragePeriod
+			testMetricsLogRecords(
+				metricsLogRecords, OpType.CREATE,
+				concurrency.getValue(), runMode.getNodeCount(),
+				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1),
+				0, 0, outputMetricsAveragePeriod
 			);
 		} else {
 			testMetricsLogRecords(metricsLogRecords, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),

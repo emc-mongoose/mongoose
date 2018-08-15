@@ -84,7 +84,7 @@ import static org.junit.Assert.assertTrue;
 
 	public CircularAppendTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-							 )
+	)
 	throws Exception {
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
@@ -109,11 +109,11 @@ import static org.junit.Assert.assertTrue;
 			case SWIFT:
 				final HttpStorageMockContainer storageMock =
 					new HttpStorageMockContainer(HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-												 Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
-												 HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
-												 HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
-												 HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-												 HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+						Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
+						HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+						HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
+						HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
 					);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
@@ -173,7 +173,7 @@ import static org.junit.Assert.assertTrue;
 			assertTrue(
 				"There should be more than 0 metrics records in the log file",
 				metricsLogRecords.size() > 0
-					  );
+			);
 			final int outputMetricsAveragePeriod;
 			final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");
 			final long expectedMaxCount = (long) (1.1 * (EXPECTED_APPEND_COUNT * EXPECTED_COUNT));
@@ -186,15 +186,15 @@ import static org.junit.Assert.assertTrue;
 				metricsLogRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
 				itemSize.getValue(), expectedMaxCount, 0,
 				outputMetricsAveragePeriod
-								 );
+			);
 		} catch(final FileNotFoundException ignored) {
 			//there may be no metrics file if append step duration is less than 10s
 		}
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
 		assertEquals("There should be 1 total metrics records in the log file", 1, totalMetrcisLogRecords.size());
 		testTotalMetricsLogRecord(totalMetrcisLogRecords.get(0), OpType.UPDATE, concurrency.getValue(),
-								  runMode.getNodeCount(), itemSize.getValue(), 0, 0
-								 );
+			runMode.getNodeCount(), itemSize.getValue(), 0, 0
+		);
 		final String stdOutContent = testContainer.stdOutContent();
 		final int outputMetricsAveragePeriod;
 		final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");
@@ -206,7 +206,7 @@ import static org.junit.Assert.assertTrue;
 		testSingleMetricsStdout(
 			stdOutContent.replaceAll("[\r\n]+", " "), OpType.UPDATE, concurrency.getValue(),
 			runMode.getNodeCount(), itemSize.getValue(), outputMetricsAveragePeriod
-							   );
+		);
 		final LongAdder ioTraceRecCount = new LongAdder();
 		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
 			testIoTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), itemSize.getValue());
@@ -217,7 +217,7 @@ import static org.junit.Assert.assertTrue;
 			"There should be more than " + EXPECTED_COUNT + " records in the I/O trace log file, but got: " +
 				ioTraceRecCount.sum(),
 			EXPECTED_COUNT < ioTraceRecCount.sum()
-				  );
+		);
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(hostItemListFile1))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
@@ -256,7 +256,7 @@ import static org.junit.Assert.assertTrue;
 			assertTrue(
 				"Expected size: " + expectedFinalSize.toString() + ", actual: " + size,
 				expectedFinalSize.getMin() <= size && size <= expectedFinalSize.getMax()
-					  );
+			);
 			assertEquals("0/0", itemRec.get(3));
 		}
 		if(! storageType.equals(StorageType.ATMOS)) {
