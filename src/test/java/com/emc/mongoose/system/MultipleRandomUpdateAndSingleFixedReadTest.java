@@ -46,7 +46,7 @@ import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogR
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
@@ -218,18 +218,19 @@ import static org.junit.Assert.assertEquals;
 				readMetricsRecords.add(metricsLogRec);
 			}
 		}
-		testMetricsLogRecords(updateMetricsRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
-			expectedUpdateSize, EXPECTED_COUNT, 0, averagePeriod
+		testMetricsLogRecords(
+			updateMetricsRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), expectedUpdateSize,
+			EXPECTED_COUNT, 0, averagePeriod
 		);
-		testMetricsLogRecords(readMetricsRecords, OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
-			expectedReadSize, EXPECTED_COUNT, 0, averagePeriod
+		testMetricsLogRecords(
+			readMetricsRecords, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), expectedReadSize,
+			EXPECTED_COUNT, 0, averagePeriod
 		);
-		final String stdOutput = this.stdOutContent.replaceAll("[\r\n]+", " ");
-		testSingleMetricsStdout(stdOutput, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
-			expectedUpdateSize, averagePeriod
+		testFinalMetricsStdout(
+			stdOutContent, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), expectedUpdateSize, stepId
 		);
-		testSingleMetricsStdout(stdOutput, OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
-			expectedReadSize, averagePeriod
+		testFinalMetricsStdout(
+			stdOutContent, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), expectedReadSize, stepId
 		);
 	}
 }

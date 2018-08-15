@@ -54,7 +54,7 @@ import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecor
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
@@ -281,8 +281,8 @@ import static org.junit.Assert.assertTrue;
 		testMetricsLogRecords(getMetricsLogRecords(stepId), OpType.CREATE, concurrency.getValue(),
 			runMode.getNodeCount(), itemSize.getValue(), 0, 0, averagePeriod
 		);
-		testSingleMetricsStdout(stdOutContent.replaceAll("[\r\n]+", " "), OpType.CREATE, concurrency.getValue(),
-			runMode.getNodeCount(), itemSize.getValue(), averagePeriod
+		testFinalMetricsStdout(
+			stdOutContent, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), stepId
 		);
 		testMetricsTableStdout(stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
 			new HashMap<OpType, Integer>() {{

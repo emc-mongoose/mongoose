@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
-import static com.emc.mongoose.system.util.LogValidationUtil.testSingleMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
@@ -256,8 +256,8 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 		//                runMode.getNodeCount(), fullItemSize, 0, 0
 		//        );
 		//
-		testSingleMetricsStdout(stdOutContent.replaceAll("[\r\n]+", " "), OpType.CREATE, concurrency.getValue(),
-			runMode.getNodeCount(), fullItemSize, averagePeriod
+		testFinalMetricsStdout(
+			stdOutContent, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(), fullItemSize, stepId
 		);
 	}
 }
