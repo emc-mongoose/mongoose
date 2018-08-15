@@ -63,7 +63,7 @@ extends LoadStepClientBase  {
 				LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
 				throw new InterruptRunException(e);
 			}
-			final OpType opType = OpType.valueOf(config.stringVal("load-op-type").toUpperCase());
+			final  OpType opType = OpType.valueOf(subConfig.stringVal("load-op-type").toUpperCase());
 			final int concurrencyLimit = config.intVal("storage-driver-limit-concurrency");
 			final Config outputConfig = subConfig.configVal("output");
 			final Config metricsConfig = outputConfig.configVal("metrics");
