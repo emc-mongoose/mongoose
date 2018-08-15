@@ -208,9 +208,10 @@ import static org.junit.Assert.assertTrue;
 		if(StorageType.FS.equals(storageType)) {
 			assertTrue(totalSize < SIZE_LIMIT.get() + SIZE_LIMIT.get() / 10);
 		}
+		final long durationInSec = TimeUnit.MILLISECONDS.toSeconds(duration);
 		assertTrue(
-			"Test time was " + duration + " while expected no more than " + TIME_LIMIT_SEC,
-			TIME_LIMIT_SEC + 5 >= duration
+			"Test time was " + durationInSec + " while expected no more than " + TIME_LIMIT_SEC,
+			TIME_LIMIT_SEC + 5 >= durationInSec
 		);
 	}
 }
