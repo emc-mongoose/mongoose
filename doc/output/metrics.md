@@ -115,7 +115,7 @@ At the end of each load step the summary metrics are produced.
 
 ## 2.1. Console
 
-Console summary metrics output has YAML-like format for the better readability:
+Console summary metrics output has YAML format for the better readability:
 ```yaml
 ---
 # Results ##############################################################################################################
