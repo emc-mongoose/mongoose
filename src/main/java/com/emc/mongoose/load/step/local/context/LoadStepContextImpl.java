@@ -266,7 +266,7 @@ implements LoadStepContext<I, O> {
 			} else {
 				countBytesDone = 0;
 			}
-			
+
 			if(opResult instanceof PartialOperation) {
 				metricsCtx.markPartSucc(countBytesDone, reqDuration, respLatency);
 			} else {
