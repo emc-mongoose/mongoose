@@ -197,7 +197,8 @@ import static org.junit.Assert.fail;
 	public final void test()
 	throws Exception {
 		assertEquals("Container exit code should be 0", 0, containerExitCode);
-		testMetricsTableStdout(stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
+		testMetricsTableStdout(
+			stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
 			new HashMap<OpType, Integer>() {{
 				put(OpType.CREATE, concurrency.getValue());
 				put(OpType.READ, concurrency.getValue());

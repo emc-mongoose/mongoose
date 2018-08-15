@@ -74,9 +74,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 	protected final Bootstrap bootstrap;
 	protected final int storageNodePort;
 	protected final int connAttemptsLimit;
+	protected final int netTimeoutMilliSec;
 	private final Class<SocketChannel> socketChannelCls;
 	private final NonBlockingConnPool connPool;
-	private final int socketTimeout;
 	private final boolean sslFlag;
 
 	@SuppressWarnings("unchecked")
@@ -94,9 +94,9 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		}
 		final int sto = netConfig.intVal("timeoutMilliSec");
 		if(sto > 0) {
-			this.socketTimeout = sto;
+			this.netTimeoutMilliSec = sto;
 		} else {
-			this.socketTimeout = 0;
+			this.netTimeoutMilliSec = 0;
 		}
 		final Config nodeConfig = netConfig.configVal("node");
 		storageNodePort = nodeConfig.intVal("port");
@@ -193,7 +193,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	protected NonBlockingConnPool createConnectionPool() {
 		return new MultiNodeConnPoolImpl(
-			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort, connAttemptsLimit, socketTimeout,
+			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort, connAttemptsLimit, netTimeoutMilliSec,
 			TimeUnit.MILLISECONDS
 		);
 	}
@@ -265,8 +265,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 		final Channel conn;
 		final ChannelFuture connFuture = bootstrap.connect(socketAddr);
-		if(socketTimeout > 0) {
-			if(connFuture.await(socketTimeout, TimeUnit.MILLISECONDS)) {
+		if(netTimeoutMilliSec > 0) {
+			if(connFuture.await(netTimeoutMilliSec, TimeUnit.MILLISECONDS)) {
 				conn = connFuture.channel();
 			} else {
 				throw new ConnectTimeoutException();
@@ -579,8 +579,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 			Loggers.MSG.debug("{}: SSL/TLS is enabled for the channel", stepId);
 			pipeline.addLast(SslUtil.CLIENT_SSL_CONTEXT.newHandler(channel.alloc()));
 		}
-		if(socketTimeout > 0) {
-			pipeline.addLast(new IdleStateHandler(socketTimeout, socketTimeout, socketTimeout, TimeUnit.MILLISECONDS));
+		if(netTimeoutMilliSec > 0) {
+			pipeline.addLast(new IdleStateHandler(netTimeoutMilliSec, netTimeoutMilliSec, netTimeoutMilliSec, TimeUnit.MILLISECONDS));
 		}
 	}
 	
