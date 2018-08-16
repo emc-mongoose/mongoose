@@ -131,7 +131,11 @@ import static org.junit.Assert.fail;
 			case S3:
 			case SWIFT:
 				final HttpStorageMockContainer storageMock =
-					new HttpStorageMockContainer(HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
+					new HttpStorageMockContainer(
+						HttpStorageMockContainer.DEFAULT_PORT,
+						false,
+						null,
+						null,
 						Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
 						HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
 						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
@@ -160,8 +164,7 @@ import static org.junit.Assert.fail;
 	}
 
 	@Before
-	public final void setUp()
-	throws Exception {
+	public final void setUp() {
 		storageMocks.values().forEach(AsyncRunnableBase::start);
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		long duration = System.currentTimeMillis();

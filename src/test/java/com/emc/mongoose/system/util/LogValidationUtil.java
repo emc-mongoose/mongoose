@@ -256,7 +256,10 @@ public interface LogValidationUtil {
 					assertTrue(expectedItemDataSize.getMin() <= avgItemSize);
 					assertTrue(expectedItemDataSize.getMax() >= avgItemSize);
 				} else {
-					assertEquals("Actual average item size: " + avgItemSize, expectedItemDataSize.getAvg(), avgItemSize,
+					assertEquals(
+						"Actual average item size: " + avgItemSize,
+						expectedItemDataSize.getAvg(),
+						avgItemSize,
 						expectedItemDataSize.get() / 100
 					);
 				}
@@ -275,7 +278,10 @@ public interface LogValidationUtil {
 				assertTrue(durationSum >= prevDurationSum);
 				if(expectedConcurrency > 0 && stepDuration > 1) {
 					final double effEstimate = durationSum / (nodeCount * expectedConcurrency * stepDuration);
-					assertTrue("Efficiency estimate: " + effEstimate, effEstimate <= 1 && effEstimate >= 0);
+					assertTrue(
+						"Efficiency estimate: " + effEstimate,
+						effEstimate <= 1 && effEstimate >= 0
+					);
 				}
 			}
 			prevDurationSum = durationSum;
@@ -316,8 +322,7 @@ public interface LogValidationUtil {
 		final CSVRecord metrics, final OpType expectedOpType, final int concurrencyLimit,
 		final int expectedNodeCount, final SizeInBytes expectedItemDataSize, final long expectedMaxCount,
 		final int expectedLoadJobTime
-	)
-	throws Exception {
+	) {
 		try {
 			FMT_DATE_ISO8601.parse(metrics.get("DateTimeISO8601"));
 		} catch(final ParseException e) {
@@ -444,14 +449,14 @@ public interface LogValidationUtil {
 				sizeExpected.getMin() <= size && size <= sizeExpected.getMax()
 			);
 		} else {
-			assertEquals("Expected the size " + sizeExpected.toString() + " but got " + size, sizeExpected.get(), size,
+			assertEquals("Expected the size " + sizeExpected.toString() + " but got " + size,
+				sizeExpected.get(), size,
 				sizeExpected.get() / 100
 			);
 		}
 	}
 
-	static void testPartsUploadRecord(final List<CSVRecord> recs)
-	throws Exception {
+	static void testPartsUploadRecord(final List<CSVRecord> recs) {
 		String itemPath, uploadId;
 		long respLatency;
 		for(final CSVRecord rec : recs) {
@@ -650,8 +655,7 @@ public interface LogValidationUtil {
 		final String stdOutContent, final String stepId, final OpType expectedOpType, final int nodeCount,
 		final int expectedConcurrency, final long countLimit, final long timeLimit,
 		final SizeInBytes expectedItemDataSize
-	)
-	throws Exception {
+	) {
 		final Matcher m = LogPatterns.STD_OUT_METRICS_TABLE_ROW.matcher(stdOutContent);
 		boolean rowFoundFlag = false;
 		int actualConcurrencyCurr = - 1;
@@ -720,6 +724,9 @@ public interface LogValidationUtil {
 				);
 			}
 		}
-		assertTrue("Mean latency (" + lat + ") should not be more than mean duration (" + dur + ")", lat <= dur);
+		assertTrue(
+			"Mean latency (" + lat + ") should not be more than mean duration (" + dur + ")",
+			lat <= dur
+		);
 	}
 }

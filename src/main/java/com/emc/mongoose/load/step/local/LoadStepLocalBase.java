@@ -73,7 +73,7 @@ public abstract class LoadStepLocalBase
 		}
 		final int index = metricsContexts.size();
 		final MetricsContext metricsCtx = new MetricsContextImpl(
-			id(), opType, () -> stepContexts.stream().collect(Collectors.toList()).get(index).activeOpCount(),
+			id(), opType, () -> stepContexts.get(index).activeOpCount(),
 			concurrency, (int) (concurrency * metricsConfig.doubleVal("threshold")), itemDataSize, metricsAvgPeriod,
 			outputColorFlag
 		);
