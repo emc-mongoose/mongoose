@@ -5,26 +5,18 @@ import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.load.step.LoadStepBase;
+import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsContextImpl;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-
 import com.emc.mongoose.metrics.MetricsManager;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
-
 import com.github.akurilov.confuse.Config;
-
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
-
-import static org.apache.logging.log4j.CloseableThreadContext.put;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -36,8 +28,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
+
 public abstract class LoadStepLocalBase
-extends LoadStepBase {
+	extends LoadStepBase {
 
 	protected final List<LoadStepContext> stepContexts = new ArrayList<>();
 
@@ -74,8 +71,9 @@ extends LoadStepBase {
 		} else {
 			metricsAvgPeriod = TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
 		}
+		final int index = metricsContexts.size();
 		final MetricsContext metricsCtx = new MetricsContextImpl(
-			id(), opType, () -> stepContexts.stream().mapToInt(LoadStepContext::activeOpCount).sum(),
+			id(), opType, () -> stepContexts.stream().collect(Collectors.toList()).get(index).activeOpCount(),
 			concurrency, (int) (concurrency * metricsConfig.doubleVal("threshold")), itemDataSize, metricsAvgPeriod,
 			outputColorFlag
 		);
@@ -101,7 +99,6 @@ extends LoadStepBase {
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptRunException, IllegalStateException {
-
 		final CountDownLatch awaitCountDown = new CountDownLatch(stepContexts.size());
 		final List<AutoCloseable> awaitTasks = stepContexts
 			.stream()
@@ -123,7 +120,6 @@ extends LoadStepBase {
 			)
 			.peek(AsyncRunnableBase::start)
 			.collect(Collectors.toList());
-
 		try {
 			return awaitCountDown.await(timeout, timeUnit);
 		} catch(final InterruptedException e) {
@@ -150,9 +146,7 @@ extends LoadStepBase {
 
 	protected final void doClose()
 	throws InterruptRunException, IOException {
-
 		super.doClose();
-
 		stepContexts
 			.parallelStream()
 			.filter(Objects::nonNull)
