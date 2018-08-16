@@ -109,9 +109,7 @@ implements StorageDriver<I,O> {
 			// NOTE: in the distributed mode null dstPath becomes empty one
 			if(dstPath != null && !dstPath.isEmpty()) {
 				if(null == pathMap.computeIfAbsent(dstPath, requestNewPathFunc)) {
-					Loggers.ERR.debug(
-						"Failed to compute the destination path for the operation: {}", op
-					);
+					Loggers.ERR.debug("Failed to compute the destination path for the operation: {}", op);
 					op.status(Operation.Status.FAIL_UNKNOWN);
 				}
 			}

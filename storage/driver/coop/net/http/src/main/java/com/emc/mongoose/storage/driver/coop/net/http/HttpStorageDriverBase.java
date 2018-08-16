@@ -17,8 +17,16 @@ import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.net.NetStorageDriverBase;
 import com.emc.mongoose.supply.BatchSupplier;
 import com.emc.mongoose.supply.async.AsyncPatternDefinedSupplier;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.item.DataItem.rangeCount;
+import static com.emc.mongoose.item.DataItem.rangeOffset;
+import static com.emc.mongoose.item.op.Operation.SLASH;
+import static com.emc.mongoose.supply.PatternDefinedSupplier.PATTERN_CHAR;
+
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.confuse.Config;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
@@ -37,6 +45,8 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
@@ -52,21 +62,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static com.emc.mongoose.item.DataItem.rangeCount;
-import static com.emc.mongoose.item.DataItem.rangeOffset;
-import static com.emc.mongoose.item.op.Operation.SLASH;
-import static com.emc.mongoose.supply.PatternDefinedSupplier.PATTERN_CHAR;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-
 /**
  Created by kurila on 29.07.16.
  Netty-based concurrent HTTP client executing the submitted load operations.
  */
 public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<I>>
-	extends NetStorageDriverBase<I, O>
-	implements HttpStorageDriver<I, O> {
+extends NetStorageDriverBase<I, O>
+implements HttpStorageDriver<I, O> {
 
 	public static final AsyncCurrentDateSupplier DATE_SUPPLIER;
 
@@ -81,8 +83,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 	private final static String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
 	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
 	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
-	private static final Function<String, BatchSupplier<String>>
-		ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
+	private static final Function<String, BatchSupplier<String>> ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
 		try {
 			return new AsyncPatternDefinedSupplier(ServiceTaskExecutor.INSTANCE, pattern);
 		} catch(final OmgShootMyFootException e) {
@@ -99,8 +100,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 	protected HttpStorageDriverBase(
 		final String testStepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag,
 		final int batchSize
-								   )
-	throws OmgShootMyFootException, InterruptedException {
+	) throws OmgShootMyFootException, InterruptedException {
 		super(testStepId, itemDataInput, storageConfig, verifyFlag, batchSize);
 		final Config httpConfig = storageConfig.configVal("net-http");
 		namespace = httpConfig.stringVal("namespace");
@@ -127,18 +127,16 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 		try {
 			final ChannelPipeline pipeline = channel.pipeline();
 			Loggers.MSG.debug(
-				"{}: execute the HTTP request using the channel {} w/ pipeline: {}", stepId,
-				channel.hashCode(), pipeline
-							 );
+				"{}: execute the HTTP request using the channel {} w/ pipeline: {}", stepId, channel.hashCode(),
+				pipeline
+			);
 			pipeline.removeLast(); // remove the API specific handler
 			final SynchronousQueue<FullHttpResponse> fullRespSync = new SynchronousQueue<>();
 			pipeline.addLast(new HttpObjectAggregator(Integer.MAX_VALUE));
 			pipeline.addLast(
 				new SimpleChannelInboundHandler<HttpObject>() {
 					@Override
-					protected final void channelRead0(
-						final ChannelHandlerContext ctx, final HttpObject msg
-													 )
+					protected final void channelRead0(final ChannelHandlerContext ctx, final HttpObject msg)
 					throws Exception {
 						if(msg instanceof FullHttpResponse) {
 							fullRespSync.put(((FullHttpResponse) msg).retain());
@@ -189,9 +187,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
 		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
-		final HttpRequest httpRequest = new DefaultHttpRequest(
-			HTTP_1_1, httpMethod, uriPath, httpHeaders
-		);
+		final HttpRequest httpRequest = new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
 		switch(opType) {
 			case CREATE:
 				if(srcPath == null || srcPath.isEmpty()) {
@@ -247,38 +243,39 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 
 	protected abstract HttpMethod pathHttpMethod(final OpType opType);
 
+	private static final ThreadLocal<StringBuilder> THR_LOC_DATA_URI_PATH_BUILDER = ThreadLocal.withInitial(
+		StringBuilder::new
+	);
+
 	protected String dataUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
-		final String itemName = item.getName();
-		if(dstPath == null) {
-			if(srcPath == null) {
-				if(itemName.startsWith(SLASH)) {
-					return itemName;
-				} else {
-					return SLASH + itemName;
-				}
-			} else if(srcPath.endsWith(SLASH)) {
-				return srcPath + itemName;
-			} else {
-				return srcPath + SLASH + itemName;
+		final StringBuilder dataUriPathBuff = THR_LOC_DATA_URI_PATH_BUILDER.get();
+		dataUriPathBuff.setLength(0);
+		if(dstPath != null) {
+			if(!dstPath.startsWith(SLASH)) {
+				dataUriPathBuff.append(SLASH);
 			}
-		} else if(itemName.startsWith(dstPath)) {
-			if(itemName.startsWith(SLASH)) {
-				return itemName;
-			} else {
-				return SLASH + itemName;
+			dataUriPathBuff.append(dstPath);
+		} else if(srcPath != null) {
+			if(!srcPath.startsWith(SLASH)) {
+				dataUriPathBuff.append(SLASH);
 			}
-		} else {
-			return (dstPath.endsWith(SLASH) ? dstPath : (dstPath + SLASH)) + itemName;
+			dataUriPathBuff.append(srcPath);
 		}
+		final String itemName = item.getName();
+		if(!itemName.startsWith(SLASH)) {
+			dataUriPathBuff.append(SLASH);
+		}
+		dataUriPathBuff.append(itemName);
+		return dataUriPathBuff.toString();
 	}
 
 	protected abstract String tokenUriPath(
 		final I item, final String srcPath, final String dstPath, final OpType opType
-										  );
+	);
 
 	protected abstract String pathUriPath(
 		final I item, final String srcPath, final String dstPath, final OpType opType
-										 );
+	);
 
 	private final static ThreadLocal<StringBuilder>
 		THR_LOC_RANGES_BUILDER = ThreadLocal.withInitial(StringBuilder::new);
@@ -361,9 +358,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 		for(final Map.Entry<String, String> nextHeader : dynamicHeaders) {
 			headerName = nextHeader.getKey();
 			// header name is a generator pattern
-			headerNameSupplier = headerNameInputs.computeIfAbsent(
-				headerName, ASYNC_PATTERN_SUPPLIER_FUNC
-																 );
+			headerNameSupplier = headerNameInputs.computeIfAbsent(headerName, ASYNC_PATTERN_SUPPLIER_FUNC);
 			if(headerNameSupplier == null) {
 				continue;
 			}
@@ -373,10 +368,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 			}
 			headerValue = nextHeader.getValue();
 			// header value is a generator pattern
-			headerValueSupplier = headerValueInputs.computeIfAbsent(
-				headerValue,
-				ASYNC_PATTERN_SUPPLIER_FUNC
-																   );
+			headerValueSupplier = headerValueInputs.computeIfAbsent(headerValue, ASYNC_PATTERN_SUPPLIER_FUNC);
 			if(headerValueSupplier == null) {
 				continue;
 			}
@@ -412,7 +404,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 					Loggers.MSG.trace("{} >>>> {} {}", op.hashCode(), httpRequest.method(), httpRequest.uri());
 				}
 			}
-			if(! (httpRequest instanceof FullHttpRequest)) {
+			if(!(httpRequest instanceof FullHttpRequest)) {
 				sendRequestData(channel, op);
 			}
 		} catch(final IOException e) {
@@ -420,7 +412,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 		} catch(final URISyntaxException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to build the request URI");
 		} catch(final Exception e) {
-			if(! isStopped() && ! isClosed()) {
+			if(!isStopped() && !isClosed()) {
 				LogUtil.exception(Level.WARN, e, "Send HTTP request failure");
 			}
 		} catch(final Throwable e) {
