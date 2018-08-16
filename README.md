@@ -134,12 +134,15 @@ page for the details.
 
     It's possible to implement a [custom storage driver](https://github.com/emc-mongoose/mongoose-base/wiki/v3.5-Custom-Storage-Driver) to extend the storages support.
 
-## Authors
+# Contributing
+
+Become one of the contributors! We thrive to build a welcoming and open community for anyone who wants to use Mongoose or contribute to it. [Here](https://github.com/thecodeteam/codedellemc.github.io/wiki/How-to-contribute-to-%7Bcode%7D-and-add-your-project) we describe how to contribute to any of the {code} projects.
+
+Please, note that all contributors shall follow the Contributor Agreement guidelines [provided here](https://github.com/thecodeteam/codedellemc.github.io/wiki/Contributor-Agreement).
+
+## Contributors
 
 * [Andrey Kurilov](https://github.com/akurilov)
-
-## Acknowledgements
-
 * Gennady Eremeev
 * [Ilya Kisliakovsky](https://github.com/kisliakovsky)
 * [Kirill Gusakov](https://github.com/gusakk)
