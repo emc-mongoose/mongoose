@@ -63,7 +63,7 @@ public interface ListingHelper {
 
 			for(final Path nextPath : dirStream) {
 				nextFile = new File(nextPath.toString());
-				nextFileName = nextFile.getName();
+				nextFileName = nextFile.getAbsolutePath();
 				if(lastPrevItemNameFound) {
 					try {
 						final long offset;
