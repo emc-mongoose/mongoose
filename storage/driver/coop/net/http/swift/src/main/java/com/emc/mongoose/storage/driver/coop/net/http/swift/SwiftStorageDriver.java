@@ -95,7 +95,7 @@ extends HttpStorageDriverBase<I, O> {
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		applySharedHeaders(reqHeaders);
-		final String containerUri = namespacePath + path;
+		final String containerUri = namespacePath + SLASH + path;
 
 		final Credential credential = pathToCredMap.getOrDefault(path, this.credential);
 		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, containerUri, credential);
