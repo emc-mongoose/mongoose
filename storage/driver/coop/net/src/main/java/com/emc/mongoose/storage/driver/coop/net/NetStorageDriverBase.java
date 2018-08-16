@@ -96,7 +96,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 		if(sto > 0) {
 			this.netTimeoutMilliSec = sto;
 		} else {
-			this.netTimeoutMilliSec = 0;
+			this.netTimeoutMilliSec = Integer.MAX_VALUE;
 		}
 		final Config nodeConfig = netConfig.configVal("node");
 		storageNodePort = nodeConfig.intVal("port");
@@ -193,8 +193,8 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 
 	protected NonBlockingConnPool createConnectionPool() {
 		return new MultiNodeConnPoolImpl(
-			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort, connAttemptsLimit, netTimeoutMilliSec,
-			TimeUnit.MILLISECONDS
+			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort, connAttemptsLimit,
+			netTimeoutMilliSec, TimeUnit.MILLISECONDS
 		);
 	}
 	
