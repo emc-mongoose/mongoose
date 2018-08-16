@@ -23,7 +23,7 @@ import static com.github.akurilov.commons.collection.TreeUtil.reduceForest;
 import static com.github.akurilov.confuse.Config.deepToMap;
 
 public class PipelineLoadStepClient
-	extends LoadStepClientBase {
+extends LoadStepClientBase {
 
 	public PipelineLoadStepClient(
 		final Config config, final List<Extension> extensions, final List<Config> ctxConfigs,

@@ -72,9 +72,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 	private static final ThreadLocal<StringBuilder>
 		BUFF_CANONICAL = ThreadLocal.withInitial(StringBuilder::new),
 		BUCKET_LIST_QUERY = ThreadLocal.withInitial(StringBuilder::new);
-	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(
-		HashMap::new
-																							  );
+	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(HashMap::new);
 	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
 		final SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(UTF_8), AmzS3Api.SIGN_METHOD);
 		try {
@@ -96,7 +94,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 	}
 
 	@Override
-	protected String requestNewPath(final String path)
+	protected String requestNewPath(final String bucket)
 	throws InterruptRunException {
 		// check the destination bucket if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
@@ -106,10 +104,10 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		final Credential credential = pathToCredMap.getOrDefault(path, this.credential);
-		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, path, credential);
+		final Credential credential = pathToCredMap.getOrDefault(bucket, this.credential);
+		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, bucket, credential);
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, Unpooled.EMPTY_BUFFER, reqHeaders,
+			HttpVersion.HTTP_1_1, HttpMethod.HEAD, SLASH + bucket, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
 		);
 		final FullHttpResponse checkBucketResp;
@@ -139,9 +137,9 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 			applyMetaDataHeaders(reqHeaders);
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, path, credential);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, SLASH + bucket, credential);
 			final FullHttpRequest putBucketReq = new DefaultFullHttpRequest(
-				HttpVersion.HTTP_1_1, HttpMethod.PUT, path, Unpooled.EMPTY_BUFFER, reqHeaders,
+				HttpVersion.HTTP_1_1, HttpMethod.PUT, SLASH + bucket, Unpooled.EMPTY_BUFFER, reqHeaders,
 				EmptyHttpHeaders.INSTANCE
 			);
 			final FullHttpResponse putBucketResp;
@@ -162,7 +160,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			putBucketResp.release();
 		}
 		// check the bucket versioning state
-		final String bucketVersioningReqUri = path + "?" + AmzS3Api.URL_ARG_VERSIONING;
+		final String bucketVersioningReqUri = SLASH + bucket + "?" + AmzS3Api.URL_ARG_VERSIONING;
 		reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
@@ -188,9 +186,8 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		final boolean versioningEnabled;
 		if(! HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
 			Loggers.ERR.warn(
-				"The bucket versioning checking response is: {}",
-				getBucketVersioningResp.status().toString()
-							);
+				"The bucket versioning checking response is: {}", getBucketVersioningResp.status().toString()
+			);
 			return null;
 		} else {
 			final String content = getBucketVersioningResp
@@ -261,7 +258,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			}
 			putBucketVersioningResp.release();
 		}
-		return path;
+		return bucket;
 	}
 
 	@Override

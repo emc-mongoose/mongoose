@@ -14,7 +14,7 @@ import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
-import com.github.akurilov.commons.concurrent.ThreadUtil;
+
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 
@@ -39,7 +39,7 @@ implements LoadStep, Runnable {
 	protected final List<Extension> extensions;
 	protected final List<Config> ctxConfigs;
 	protected final MetricsManager metricsMgr;
-	protected final List<MetricsContext> metricsContexts = new ArrayList<>();
+	protected final List<MetricsContext<MetricsSnapshot>> metricsContexts = new ArrayList<>();
 
 	private volatile long timeLimitSec = Long.MAX_VALUE;
 	private volatile long startTimeSec = -1;
