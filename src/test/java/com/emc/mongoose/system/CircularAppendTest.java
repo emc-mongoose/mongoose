@@ -41,10 +41,10 @@ import java.util.stream.Collectors;
 
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
@@ -223,10 +223,10 @@ import static org.junit.Assert.assertTrue;
 		long itemOffset;
 		long size;
 		final SizeInBytes expectedFinalSize = new SizeInBytes(
-				(EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() / 2,
-				4 * (EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get(),
-				1
-			);
+			(EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() / 2,
+			4 * (EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get(),
+			1
+		);
 		final int n = items.size();
 		CSVRecord itemRec;
 		for(int i = 0; i < n; i++) {

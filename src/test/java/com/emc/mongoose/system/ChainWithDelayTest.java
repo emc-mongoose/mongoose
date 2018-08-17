@@ -73,8 +73,8 @@ import static org.junit.Assert.fail;
 	private final Config config;
 	private final int averagePeriod;
 	private final String containerItemOutputPath;
-	private final String hostItemOutputFile =
-		HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
+	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName()
+		+ ".csv";
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private boolean finishedInTime;
 	private int containerExitCode;
@@ -82,10 +82,10 @@ import static org.junit.Assert.fail;
 
 	public ChainWithDelayTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
-		final Map<String, Object> schema =
-			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
+	) throws Exception {
+		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
+			APP_NAME, Thread.currentThread().getContextClassLoader()
+		);
 		config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
 		final Object avgPeriodRaw = config.val("output-metrics-average-period");
 		if(avgPeriodRaw instanceof String) {
@@ -130,14 +130,17 @@ import static org.junit.Assert.fail;
 			case ATMOS:
 			case S3:
 			case SWIFT:
-				final HttpStorageMockContainer storageMock =
-					new HttpStorageMockContainer(HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-						Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
-						HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-						HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
-					);
+				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
+					HttpStorageMockContainer.DEFAULT_PORT,
+					false,
+					null,
+					null,
+					Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
+					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+				);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
@@ -160,8 +163,7 @@ import static org.junit.Assert.fail;
 	}
 
 	@Before
-	public final void setUp()
-	throws Exception {
+	public final void setUp() {
 		storageMocks.values().forEach(AsyncRunnableBase::start);
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		long duration = System.currentTimeMillis();
@@ -169,7 +171,7 @@ import static org.junit.Assert.fail;
 		testContainer.await(TIME_LIMIT + 10, TimeUnit.SECONDS);
 		stdOutContent = testContainer.stdOutContent();
 		duration = System.currentTimeMillis() - duration;
-		finishedInTime = (TimeUnit.SECONDS.toMillis(duration) <= TIME_LIMIT + 15);
+		finishedInTime = (TimeUnit.MILLISECONDS.toSeconds(duration) <= TIME_LIMIT + 15);
 		containerExitCode = testContainer.exitStatusCode();
 	}
 

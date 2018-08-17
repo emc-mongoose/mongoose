@@ -63,15 +63,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
 extends HttpStorageDriverBase<I, O> {
 	
-	private static final ThreadLocal<StringBuilder>
-		BUFF_CANONICAL = ThreadLocal.withInitial(StringBuilder::new);
+	private static final ThreadLocal<StringBuilder> BUFF_CANONICAL = ThreadLocal.withInitial(StringBuilder::new);
 	
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 	
-	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(
-		HashMap::new
-	);
+	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(HashMap::new);
 	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
 		try {
 			final SecretKeySpec secretKey = new SecretKeySpec(

@@ -15,11 +15,11 @@ import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsTableRowStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
@@ -98,17 +98,23 @@ import java.util.stream.Collectors;
 		if(storageType.equals(StorageType.FS)) {
 			try {
 				DirWithManyFilesDeleter.deleteExternal(
-					itemSrcPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString()));
+					itemSrcPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
+				);
 			} catch(final Throwable ignored) {
 			}
 			try {
 				DirWithManyFilesDeleter.deleteExternal(
-					itemDstPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString()));
+					itemDstPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
+				);
 			} catch(final Throwable ignored) {
 			}
 		}
-		final List<String> env =
-			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
+		final List<String> env = System
+			.getenv()
+			.entrySet()
+			.stream()
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.toList());
 		env.add("ITEM_SRC_PATH=" + itemSrcPath);
 		env.add("ITEM_DST_PATH=" + itemDstPath);
 		final List<String> args = new ArrayList<>();
@@ -142,8 +148,9 @@ import java.util.stream.Collectors;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer =
-			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
+		testContainer = new MongooseContainer(
+			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+		);
 	}
 
 	@Before
@@ -197,11 +204,11 @@ import java.util.stream.Collectors;
 				} else {
 					assertEquals(
 						"Source file (" + nextItemPath + ") size (" + nextSrcFile.length() +
-						" is not equal to the destination file (" + nextDstFile.getAbsolutePath() +
-						") size (" +
-						nextDstFile.length(),
+							" is not equal to the destination file (" + nextDstFile.getAbsolutePath() +
+							") size (" + nextDstFile.length(),
 						nextSrcFile.length(),
-						nextDstFile.length());
+						nextDstFile.length()
+					);
 				}
 				testIoTraceRecord(ioTraceRecord, OpType.CREATE.ordinal(), new SizeInBytes(nextSrcFile.length()));
 				ioTraceRecCount.increment();
@@ -230,14 +237,15 @@ import java.util.stream.Collectors;
 		assertEquals("There should be 1 total metrics records in the log file", 1, totalMetricsLogRecords.size());
 		if(storageType.equals(StorageType.FS)) {
 			// some files may remain not written fully
-			testTotalMetricsLogRecord(totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(),
-				runMode.getNodeCount(),
+			testTotalMetricsLogRecord(
+				totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
 				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0,
 				0
 			);
 		} else {
-			testTotalMetricsLogRecord(totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(),
-				runMode.getNodeCount(), itemSize.getValue(), 0, 0
+			testTotalMetricsLogRecord(
+				totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
+				itemSize.getValue(), 0, 0
 			);
 		}
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
@@ -252,8 +260,7 @@ import java.util.stream.Collectors;
 		if(storageType.equals(StorageType.FS)) {
 			// some files may remain not written fully
 			testMetricsLogRecords(
-				metricsLogRecords, OpType.CREATE,
-				concurrency.getValue(), runMode.getNodeCount(),
+				metricsLogRecords, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
 				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1),
 				0, 0, outputMetricsAveragePeriod
 			);

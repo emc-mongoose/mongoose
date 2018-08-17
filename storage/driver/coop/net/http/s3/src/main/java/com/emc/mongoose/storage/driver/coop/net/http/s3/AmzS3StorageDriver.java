@@ -95,8 +95,9 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected String requestNewPath(final String bucket)
+	protected String requestNewPath(final String path)
 	throws InterruptRunException {
+		final String bucketUri = path.startsWith(SLASH) ? path : SLASH + path;
 		// check the destination bucket if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
 		HttpHeaders reqHeaders = new DefaultHttpHeaders();
@@ -105,10 +106,10 @@ extends HttpStorageDriverBase<I, O> {
 		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		final Credential credential = pathToCredMap.getOrDefault(bucket, this.credential);
-		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, bucket, credential);
+		final Credential credential = pathToCredMap.getOrDefault(bucketUri, this.credential);
+		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, bucketUri, credential);
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.HEAD, SLASH + bucket, Unpooled.EMPTY_BUFFER, reqHeaders,
+			HttpVersion.HTTP_1_1, HttpMethod.HEAD, bucketUri, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
 		);
 		final FullHttpResponse checkBucketResp;
@@ -136,9 +137,9 @@ extends HttpStorageDriverBase<I, O> {
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 			applyMetaDataHeaders(reqHeaders);
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, SLASH + bucket, credential);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketUri, credential);
 			final FullHttpRequest putBucketReq = new DefaultFullHttpRequest(
-				HttpVersion.HTTP_1_1, HttpMethod.PUT, SLASH + bucket, Unpooled.EMPTY_BUFFER, reqHeaders,
+				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketUri, Unpooled.EMPTY_BUFFER, reqHeaders,
 				EmptyHttpHeaders.INSTANCE
 			);
 			final FullHttpResponse putBucketResp;
@@ -157,7 +158,7 @@ extends HttpStorageDriverBase<I, O> {
 			putBucketResp.release();
 		}
 		// check the bucket versioning state
-		final String bucketVersioningReqUri = SLASH + bucket + "?" + AmzS3Api.URL_ARG_VERSIONING;
+		final String bucketVersioningReqUri = bucketUri + "?" + AmzS3Api.URL_ARG_VERSIONING;
 		reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
@@ -253,7 +254,7 @@ extends HttpStorageDriverBase<I, O> {
 			}
 			putBucketVersioningResp.release();
 		}
-		return bucket;
+		return path;
 	}
 
 	@Override
