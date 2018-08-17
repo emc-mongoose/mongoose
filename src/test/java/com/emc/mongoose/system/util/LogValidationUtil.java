@@ -222,8 +222,12 @@ public interface LogValidationUtil {
 			concurrencyCurr = Integer.parseInt(nextRecord.get("ConcurrencyCurr"));
 			concurrencyMean = Double.parseDouble(nextRecord.get("ConcurrencyMean"));
 			if(expectedConcurrency > 0) {
-				assertTrue(concurrencyCurr <= expectedConcurrency);
-				assertTrue(concurrencyMean <= expectedConcurrency);
+				assertTrue(
+					"Current concurrency " + concurrencyCurr + " should not be more than the limit "
+						+ expectedConcurrency + " x " + nodeCount,
+					concurrencyCurr <= expectedConcurrency * nodeCount
+				);
+				assertTrue(concurrencyMean <= expectedConcurrency * nodeCount);
 			} else {
 				assertTrue(concurrencyCurr >= 0);
 				assertTrue(concurrencyMean >= 0);
@@ -328,7 +332,7 @@ public interface LogValidationUtil {
 		assertEquals(Integer.toString(nodeCount), expectedNodeCount, nodeCount);
 		final double concurrencyLastMean = Double.parseDouble(metrics.get("ConcurrencyMean"));
 		if(concurrencyLimit > 0) {
-			assertTrue(concurrencyLastMean <= concurrencyLimit);
+			assertTrue(concurrencyLastMean <= concurrencyLimit * nodeCount);
 		} else {
 			assertTrue(concurrencyLastMean >= 0);
 		}
@@ -354,7 +358,7 @@ public interface LogValidationUtil {
 		final long countFail = Long.parseLong(metrics.get("CountFail"));
 		//assertTrue("Failures count: " + Long.toString(countFail), countFail < 1);
 		//use delta = 5%, because sometimes default storage-mock return error (1 missing response)
-		assertEquals(Long.toString(countFail), countFail, 0, countSucc * 0.05);
+		assertEquals(Long.toString(countFail), 0, countFail, countSucc * 0.05);
 		if(countSucc > 0) {
 			final long avgItemSize = totalBytes / countSucc;
 			if(expectedItemDataSize.getMin() < expectedItemDataSize.getMax()) {
@@ -525,7 +529,7 @@ public interface LogValidationUtil {
 			assertTrue(Long.toString(countSucc), countSucc >= 0);
 			countFail = ((Number) ((Map) parsedContent.get(LogPatterns.KEY_OP_COUNT)).get(
 				LogPatterns.KEY_FAIL)).longValue();
-			assertTrue(Long.toString(countFail), countFail < 1);
+			assertTrue("Failed operations count: " + countFail, countFail < 1);
 			if(countSucc > 0) {
 				avgItemSize = totalBytes / countSucc;
 				assertEquals(

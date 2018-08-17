@@ -62,7 +62,7 @@ public abstract class ResponseContentUtil {
 				try {
 					Loggers.MSG.debug(
 						"{}: invalid size, expected: {}, actual: {} ",
-						dataItem.getName(), dataItem.size(), e.getOffset()
+						dataItem.name(), dataItem.size(), e.getOffset()
 					);
 				} catch(final IOException ignored) {
 				}
@@ -70,7 +70,7 @@ public abstract class ResponseContentUtil {
 				final DataCorruptionException ee = (DataCorruptionException) e;
 				Loggers.MSG.debug(
 					"{}: content mismatch @ offset {}, expected: {}, actual: {} ",
-					dataItem.getName(), ee.getOffset(),
+					dataItem.name(), ee.getOffset(),
 					String.format("\"0x%X\"", (int) (ee.expected & 0xFF)),
 					String.format("\"0x%X\"", (int) (ee.actual & 0xFF))
 				);

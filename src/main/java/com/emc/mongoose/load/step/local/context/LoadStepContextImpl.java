@@ -59,7 +59,7 @@ implements LoadStepContext<I, O> {
 	private final long sizeLimit;
 	private final long failCountLimit;
 	private final boolean failRateLimitFlag;
-	private final ConcurrentMap<I, O> latestIoResultByItem;
+	private final ConcurrentMap<I, O> latestSuccOpResultByItem;
 	private final boolean recycleFlag;
 	private final boolean retryFlag;
 	private final Fiber resultsTransferTask;
@@ -94,9 +94,9 @@ implements LoadStepContext<I, O> {
 		this.recycleFlag = recycleFlag;
 		this.retryFlag = retryFlag;
 		if(recycleFlag || retryFlag) {
-			latestIoResultByItem = new ConcurrentHashMap<>(recycleLimit);
+			latestSuccOpResultByItem = new ConcurrentHashMap<>(recycleLimit);
 		} else {
-			latestIoResultByItem = null;
+			latestSuccOpResultByItem = null;
 		}
 		resultsTransferTask = new TransferFiber<>(ServiceTaskExecutor.INSTANCE, driver, this, batchSize);
 		final long configCountLimit = limitConfig.longVal("count");
@@ -161,20 +161,12 @@ implements LoadStepContext<I, O> {
 	}
 
 	// issue SLTM-938 fix
-	private boolean nothingToRecycle() {
-		try {
-			if(generator.isStarted()) {
-				return false;
-			}
-		} catch(final RemoteException ignored) {
-		}
-		// load generator has done its work
-		final long generatedOpCount = generator.generatedOpCount();
-		return recycleFlag &&
-				// all generated ops executed at least once
-				counterResults.sum() >= generatedOpCount &&
-				// no successful op results
-				latestIoResultByItem.size() == 0;
+	private boolean isNothingToRecycle() {
+		return recycleFlag && generator.isNothingToRecycle() && generator.isNothingToRecycle() &&
+			// all generated ops executed at least once
+			counterResults.sum() >= generator.generatedOpCount() &&
+			// no successful op results
+			latestSuccOpResultByItem.size() == 0;
 	}
 
 	private boolean isDone() {
@@ -200,15 +192,16 @@ implements LoadStepContext<I, O> {
 		final double succRateLast = metricsSnapshot.succRateLast();
 		if(failCountSum > failCountLimit) {
 			Loggers.ERR.warn(
-				"{}: failure count ({}) is more than the configured limit ({}), stopping the step",
-				id, failCountSum, failCountLimit
+				"{}: failure count ({}) is more than the configured limit ({}), stopping the step", id, failCountSum,
+				failCountLimit
 			);
 			return true;
 		}
 		if(failRateLimitFlag && failRateLast > succRateLast) {
 			Loggers.ERR.warn(
 				"{}: failures rate ({} failures/sec) is more than success rate ({} op/sec), " +
-					"stopping the step", id, failRateLast, succRateLast
+					"stopping the step",
+				id, failRateLast, succRateLast
 			);
 			return true;
 		}
@@ -271,7 +264,7 @@ implements LoadStepContext<I, O> {
 				metricsCtx.markPartSucc(countBytesDone, reqDuration, respLatency);
 			} else {
 				if(recycleFlag) {
-					latestIoResultByItem.put(opResult.item(), opResult);
+					latestSuccOpResultByItem.put(opResult.item(), opResult);
 					generator.recycle(opResult);
 				} else if(opsResultsOutput != null) {
 					try {
@@ -287,14 +280,18 @@ implements LoadStepContext<I, O> {
 				metricsCtx.markSucc(countBytesDone, reqDuration, respLatency);
 				counterResults.increment();
 			}
-		} else if(!Status.INTERRUPTED.equals(status)) {
-			if(retryFlag) {
-				latestIoResultByItem.put(opResult.item(), opResult);
-				generator.recycle(opResult);
-			} else {
-				Loggers.ERR.debug("{}: {}", opResult.toString(), status.toString());
-				metricsCtx.markFail();
-				counterResults.increment();
+		} else {
+			if(recycleFlag) {
+				latestSuccOpResultByItem.remove(opResult.item());
+			}
+			if(!Status.INTERRUPTED.equals(status)) {
+				if(retryFlag) {
+					generator.recycle(opResult);
+				} else {
+					Loggers.ERR.debug("{}: {}", opResult.toString(), status.toString());
+					metricsCtx.markFail();
+					counterResults.increment();
+				}
 			}
 		}
 
@@ -341,7 +338,7 @@ implements LoadStepContext<I, O> {
 					metricsCtx.markPartSucc(countBytesDone, reqDuration, respLatency);
 				} else {
 					if(recycleFlag) {
-						latestIoResultByItem.put(opResult.item(), opResult);
+						latestSuccOpResultByItem.put(opResult.item(), opResult);
 						generator.recycle(opResult);
 					} else if(opsResultsOutput != null) {
 						try {
@@ -360,14 +357,18 @@ implements LoadStepContext<I, O> {
 					metricsCtx.markSucc(countBytesDone, reqDuration, respLatency);
 					counterResults.increment();
 				}
-			} else if(!Status.INTERRUPTED.equals(status)) {
-				if(retryFlag) {
-					latestIoResultByItem.put(opResult.item(), opResult);
-					generator.recycle(opResult);
-				} else {
-					Loggers.ERR.debug("{}: {}", opResult.toString(), status.toString());
-					metricsCtx.markFail();
-					counterResults.increment();
+			} else {
+				if(recycleFlag) {
+					latestSuccOpResultByItem.remove(opResult.item());
+				}
+				if(!Status.INTERRUPTED.equals(status)) {
+					if(retryFlag) {
+						generator.recycle(opResult);
+					} else {
+						Loggers.ERR.debug("{}: {}", opResult.toString(), status.toString());
+						metricsCtx.markFail();
+						counterResults.increment();
+					}
 				}
 			}
 		}
@@ -409,14 +410,10 @@ implements LoadStepContext<I, O> {
 	throws InterruptedException {
 		final long timeOutMilliSec = timeUnit.toMillis(timeout);
 		Loggers.MSG.debug(
-			"{}: await for the done condition at most for {}[s]", id,
-			TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec)
+			"{}: await for the done condition at most for {}[s]", id, TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec)
 		);
 		final long t = System.currentTimeMillis();
-		while(System.currentTimeMillis() - t < timeOutMilliSec) {
-			if(super.await(100, TimeUnit.MILLISECONDS)) {
-				return true;
-			}
+		do {
 			if(isStopped()) {
 				Loggers.MSG.debug("{}: await exit due to \"interrupted\" state", id);
 				return true;
@@ -438,11 +435,14 @@ implements LoadStepContext<I, O> {
 				return true;
 			}
 			// issue SLTM-938 fix
-			if(nothingToRecycle()) {
+			if(isNothingToRecycle()) {
 				Loggers.ERR.debug("{}: exit because there's no load operations to recycle (all failed)", id);
 				return true;
 			}
-		}
+			if(super.await(10, TimeUnit.MILLISECONDS)) {
+				return true;
+			}
+		} while(System.currentTimeMillis() - t < timeOutMilliSec);
 		Loggers.MSG.debug("{}: await exit due to timeout", id);
 		return false;
 	}
@@ -455,7 +455,7 @@ implements LoadStepContext<I, O> {
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			generator.shutdown();
-			Loggers.MSG.debug("{}: load generator \"{}\" interrupted", id, generator.toString());
+			Loggers.MSG.debug("{}: load generator \"{}\" shutdown", id, generator.toString());
 		} catch(final RemoteException ignored) {
 		}
 
@@ -464,7 +464,7 @@ implements LoadStepContext<I, O> {
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			driver.shutdown();
-			Loggers.MSG.debug("{}: next storage driver {} shutdown", id, driver.toString());
+			Loggers.MSG.debug("{}: storage driver {} shutdown", id, driver.toString());
 		} catch(final RemoteException ignored) {
 		}
 	}
@@ -474,7 +474,7 @@ implements LoadStepContext<I, O> {
 	throws InterruptRunException, IllegalStateException {
 
 		driver.stop();
-		Loggers.MSG.debug("{}: next storage driver {} stopped", id, driver.toString());
+		Loggers.MSG.debug("{}: storage driver {} stopped", id, driver.toString());
 		
 		try(
 			final Instance ctx = CloseableThreadContext.put(KEY_STEP_ID, id)
@@ -498,11 +498,11 @@ implements LoadStepContext<I, O> {
 			}
 		}
 
-		if(latestIoResultByItem != null && opsResultsOutput != null) {
+		if(latestSuccOpResultByItem != null && opsResultsOutput != null) {
 			try {
-				final int ioResultCount = latestIoResultByItem.size();
+				final int ioResultCount = latestSuccOpResultByItem.size();
 				Loggers.MSG.info("{}: please wait while performing {} I/O results output...", id, ioResultCount);
-				for(final O latestItemIoResult : latestIoResultByItem.values()) {
+				for(final O latestItemIoResult : latestSuccOpResultByItem.values()) {
 					try {
 						if(!opsResultsOutput.put(latestItemIoResult)) {
 							Loggers.ERR.debug("{}: item info output fails to ingest, blocking the closing method", id);
@@ -512,9 +512,7 @@ implements LoadStepContext<I, O> {
 							Loggers.MSG.debug("{}: closing method unblocked", id);
 						}
 					} catch (final IOException e) {
-						LogUtil.exception(
-							Level.WARN, e, "{}: failed to output the latest results", id
-						);
+						LogUtil.exception(Level.WARN, e, "{}: failed to output the latest results", id);
 					}
 				}
 			} catch(final InterruptedException e) {
@@ -522,21 +520,25 @@ implements LoadStepContext<I, O> {
 			} finally {
 				Loggers.MSG.info("{}: I/O results output done", id);
 			}
-			latestIoResultByItem.clear();
+			latestSuccOpResultByItem.clear();
 		}
 		if(opsResultsOutput != null) {
 			try {
 				opsResultsOutput.put((O) null);
 				Loggers.MSG.debug("{}: poisoned the items output", id);
 			} catch(final IOException e) {
-				LogUtil.exception(
-					Level.WARN, e, "{}: failed to poison the results output", id
-				);
+				LogUtil.exception(Level.WARN, e, "{}: failed to poison the results output", id);
 			} catch(final NullPointerException e) {
 				LogUtil.exception(
 					Level.ERROR, e, "{}: results output \"{}\" failed to eat the poison", id, opsResultsOutput
 				);
 			}
+		}
+
+		resultsTransferTask.invoke(); // ensure all results are transferred
+		try {
+			resultsTransferTask.stop();
+		} catch(final RemoteException ignored) {
 		}
 
 		Loggers.MSG.debug("{}: interrupted the load step context", id);

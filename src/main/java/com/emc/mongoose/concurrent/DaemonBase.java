@@ -18,29 +18,25 @@ extends AsyncRunnableBase
 implements Daemon {
 
 	private static final Logger LOG = Logger.getLogger(DaemonBase.class.getSimpleName());
-	private static final Queue<WeakReference<Daemon>> REGISTRY = new ConcurrentLinkedQueue<>();
+	private static final Queue<WeakReference<Closeable>> REGISTRY = new ConcurrentLinkedQueue<>();
 
-	private final WeakReference<Daemon> daemonRef;
+	private final WeakReference<Closeable> daemonRef;
 
 	protected DaemonBase() {
 		daemonRef = new WeakReference<>(this);
-		synchronized(REGISTRY) {
-			REGISTRY.add(daemonRef);
-		}
+		REGISTRY.add(daemonRef);
 	}
 
 	@Override
 	public final void close()
 	throws IOException {
 		super.close();
-		synchronized(REGISTRY) {
-			REGISTRY.remove(daemonRef);
-		}
+		REGISTRY.remove(daemonRef);
 	}
 
 	public static void closeAll() {
 		synchronized(REGISTRY) {
-			for(final WeakReference<Daemon> daemonRef: REGISTRY) {
+			for(final WeakReference<Closeable> daemonRef: REGISTRY) {
 				final Closeable daemon = daemonRef.get();
 				if(daemon != null) {
 					try {

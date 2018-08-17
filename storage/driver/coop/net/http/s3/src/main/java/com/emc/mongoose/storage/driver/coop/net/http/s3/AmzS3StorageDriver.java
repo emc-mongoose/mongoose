@@ -285,7 +285,7 @@ extends HttpStorageDriverBase<I, O> {
 			if('?' != queryBuilder.charAt(queryBuilder.length() - 1)) {
 				queryBuilder.append('&');
 			}
-			String lastItemName = lastPrevItem.getName();
+			String lastItemName = lastPrevItem.name();
 			if(lastItemName.contains("/")) {
 				lastItemName = lastItemName.substring(lastItemName.lastIndexOf('/') + 1);
 			}
@@ -392,7 +392,7 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final String pathUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
-		final String itemName = item.getName();
+		final String itemName = item.name();
 		if(itemName.startsWith(SLASH)) {
 			return itemName;
 		} else {
@@ -504,7 +504,7 @@ extends HttpStorageDriverBase<I, O> {
 			final CompositeDataOperation compositeOp = (CompositeDataOperation) op;
 			if(compositeOp.allSubOperationsDone()) {
 				Loggers.MULTIPART.info(
-					"{},{},{}", compositeOp.item().getName(),
+					"{},{},{}", compositeOp.item().name(),
 					compositeOp.get(AmzS3Api.KEY_UPLOAD_ID), compositeOp.latency()
 									  );
 			} else {

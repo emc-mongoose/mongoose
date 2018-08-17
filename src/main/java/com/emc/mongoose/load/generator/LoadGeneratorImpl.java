@@ -2,7 +2,6 @@ package com.emc.mongoose.load.generator;
 
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.exception.InterruptRunException;
-import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.op.OperationsBuilder;
 import com.emc.mongoose.item.Item;
@@ -76,9 +75,7 @@ implements LoadGenerator<I, O> {
 		final Output<O> opOutput, final int batchSize, final long countLimit, final int recycleQueueSize,
 		final boolean recycleFlag, final boolean shuffleFlag
 	) {
-
 		super(ServiceTaskExecutor.INSTANCE);
-
 		this.itemInput = itemInput;
 		this.opsBuilder = opsBuilder;
 		this.originIndex = opsBuilder.originIndex();
@@ -248,18 +245,13 @@ implements LoadGenerator<I, O> {
 	}
 
 	@Override
+	public final boolean isItemInputFinished() {
+		return itemInputFinishFlag;
+	}
+
+	@Override
 	public final long generatedOpCount() {
 		return builtTasksCounter.sum() + recycledOpCounter.sum();
-	}
-
-	@Override
-	public final OpType opType() {
-		return opsBuilder.opType();
-	}
-
-	@Override
-	public final boolean isRecycling() {
-		return recycleFlag;
 	}
 
 	@Override
@@ -273,9 +265,14 @@ implements LoadGenerator<I, O> {
 	}
 
 	@Override
+	public final boolean isNothingToRecycle() {
+		return recycleQueue.isEmpty();
+	}
+
+	@Override
 	public final boolean isFinished() {
-		return outputFinishFlag ||
-			itemInputFinishFlag && opInputFinishFlag && generatedOpCount() == outputOpCounter.sum();
+		return outputFinishFlag
+			|| itemInputFinishFlag && opInputFinishFlag && generatedOpCount() == outputOpCounter.sum();
 	}
 
 	@Override
@@ -284,8 +281,7 @@ implements LoadGenerator<I, O> {
 		stop();
 		Loggers.MSG.debug(
 			"{}: generated {}, recycled {}, output {} operations",
-			LoadGeneratorImpl.this.toString(), builtTasksCounter.sum(), recycledOpCounter.sum(),
-			outputOpCounter.sum()
+			LoadGeneratorImpl.this.toString(), builtTasksCounter.sum(), recycledOpCounter.sum(), outputOpCounter.sum()
 		);
 	}
 
@@ -305,7 +301,7 @@ implements LoadGenerator<I, O> {
 				LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", toString());
 			}
 		}
-		// Op builder is instantiated by the load generator builder which forgets it so the load generator should
+		// ops builder is instantiated by the load generator builder which forgets it so the load generator should
 		// close it
 		opsBuilder.close();
 	}

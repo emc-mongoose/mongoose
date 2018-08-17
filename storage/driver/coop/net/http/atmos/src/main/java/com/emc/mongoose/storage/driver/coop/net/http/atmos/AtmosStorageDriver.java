@@ -160,7 +160,7 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected final HttpMethod getDataHttpMethod(final OpType opType) {
+	protected final HttpMethod dataHttpMethod(final OpType opType) {
 		switch(opType) {
 			case NOOP:
 				return HttpMethod.HEAD;
@@ -218,7 +218,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(CREATE.equals(opType)) {
 			return SUBTENANT_URI_BASE;
 		} else {
-			return SUBTENANT_URI_BASE + '/' + item.getName();
+			return SUBTENANT_URI_BASE + '/' + item.name();
 		}
 	}
 

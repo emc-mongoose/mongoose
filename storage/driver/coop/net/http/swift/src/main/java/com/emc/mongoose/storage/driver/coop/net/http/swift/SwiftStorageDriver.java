@@ -242,7 +242,7 @@ extends HttpStorageDriverBase<I, O> {
 			queryBuilder.append("&prefix=").append(prefix);
 		}
 		if(lastPrevItem != null) {
-			String lastItemName = lastPrevItem.getName();
+			String lastItemName = lastPrevItem.name();
 			if(lastItemName.contains("/")) {
 				lastItemName = lastItemName.substring(lastItemName.lastIndexOf('/') + 1);
 			}
@@ -479,7 +479,7 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final String pathUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
-		final String itemName = item.getName();
+		final String itemName = item.name();
 		if(itemName.startsWith(SLASH)) {
 			return namespacePath + itemName;
 		} else {

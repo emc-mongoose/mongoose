@@ -198,8 +198,11 @@ implements LoadStepClient {
 	}
 
 	private void initAndStartMetricsAggregator() {
-		metricsAggregator = new MetricsAggregatorImpl(id(), stepSlices);
-		try {
+		try(
+			final Instance logCtx = put(KEY_STEP_ID, id())
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+		) {
+			metricsAggregator = new MetricsAggregatorImpl(id(), stepSlices);
 			metricsAggregator.start();
 		} catch(final Exception e) {
 			LogUtil.exception(Level.ERROR, e, "{}: failed to start the metrics aggregator", id());
@@ -409,6 +412,12 @@ implements LoadStepClient {
 					}
 				}
 			);
+		if(null != metricsAggregator) {
+			try {
+				metricsAggregator.stop();
+			} catch(final RemoteException ignored) {
+			}
+		}
 		super.doStop();
 	}
 
@@ -416,9 +425,6 @@ implements LoadStepClient {
 	protected final void doClose()
 	throws InterruptRunException, IOException {
 		super.doClose();
-		if(null != metricsAggregator) {
-			metricsAggregator.stop();
-		}
 		stepSlices
 			.parallelStream()
 			.forEach(

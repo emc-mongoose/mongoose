@@ -82,16 +82,16 @@ public interface Operation<I extends Item> {
 	long latency();
 
 	default void buildItemPath(final I item, final String itemPath) {
-		String itemName = item.getName();
+		String itemName = item.name();
 		if(itemPath == null || itemPath.isEmpty()) {
 			if(!itemName.startsWith("/")) {
-				item.setName("/" + itemName);
+				item.name("/" + itemName);
 			}
 		} else if(!itemName.startsWith(itemPath)){
 			if(itemPath.endsWith("/")) {
-				item.setName(itemPath + itemName);
+				item.name(itemPath + itemName);
 			} else {
-				item.setName(itemPath + "/" + itemName);
+				item.name(itemPath + "/" + itemName);
 			}
 		}
 	}

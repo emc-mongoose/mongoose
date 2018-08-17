@@ -138,8 +138,8 @@ implements MetricsManager {
 					Loggers.METRICS_EXT_RESULTS_FILE.info(new ExtResultsXmlLogMessage(metricsCtx));
 				}
 				// console output
-				Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx)));
 				if(metricsCtx instanceof DistributedMetricsContext) {
+					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx)));
 					Loggers.METRICS_STD_OUT.info(
 						new StepResultsMetricsLogMessage((DistributedMetricsContext) metricsCtx)
 					);

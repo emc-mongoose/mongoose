@@ -68,10 +68,10 @@ jobs:
     # failures:
     # https://travis-ci.org/emc-mongoose/mongoose/jobs/312915008
     # https://travis-ci.org/emc-mongoose/mongoose/jobs/315447295
-    # STORAGE_TYPE=atmos,fs,swift RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.CircularAppendTest
+    # STORAGE_TYPE=atmos,fs,s3 RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.CircularAppendTest
       env:
       - TEST=CircularAppendTest
-      - STORAGE_TYPE=atmos,fs
+      - STORAGE_TYPE=atmos,fs,s3
       - RUN_MODE=local,distributed
       - CONCURRENCY=low,medium
       - ITEM_SIZE=small,medium
