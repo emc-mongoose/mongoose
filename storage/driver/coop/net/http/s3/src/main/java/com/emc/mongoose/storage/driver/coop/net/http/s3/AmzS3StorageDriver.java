@@ -65,7 +65,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  Created by kurila on 01.08.16.
  */
 public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
-	extends HttpStorageDriverBase<I, O> {
+extends HttpStorageDriverBase<I, O> {
 
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	private static final ThreadLocal<SAXParser> THREAD_LOCAL_XML_PARSER = new ThreadLocal<>();
@@ -94,8 +94,9 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 	}
 
 	@Override
-	protected String requestNewPath(final String bucket)
+	protected String requestNewPath(final String path)
 	throws InterruptRunException {
+		final String bucketUri = path.startsWith(SLASH) ? path : SLASH + path;
 		// check the destination bucket if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
 		HttpHeaders reqHeaders = new DefaultHttpHeaders();
@@ -104,10 +105,10 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		final Credential credential = pathToCredMap.getOrDefault(bucket, this.credential);
-		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, bucket, credential);
+		final Credential credential = pathToCredMap.getOrDefault(bucketUri, this.credential);
+		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, bucketUri, credential);
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.HEAD, SLASH + bucket, Unpooled.EMPTY_BUFFER, reqHeaders,
+			HttpVersion.HTTP_1_1, HttpMethod.HEAD, bucketUri, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
 		);
 		final FullHttpResponse checkBucketResp;
@@ -137,9 +138,9 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 			applyMetaDataHeaders(reqHeaders);
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, SLASH + bucket, credential);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketUri, credential);
 			final FullHttpRequest putBucketReq = new DefaultFullHttpRequest(
-				HttpVersion.HTTP_1_1, HttpMethod.PUT, SLASH + bucket, Unpooled.EMPTY_BUFFER, reqHeaders,
+				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketUri, Unpooled.EMPTY_BUFFER, reqHeaders,
 				EmptyHttpHeaders.INSTANCE
 			);
 			final FullHttpResponse putBucketResp;
@@ -160,7 +161,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			putBucketResp.release();
 		}
 		// check the bucket versioning state
-		final String bucketVersioningReqUri = SLASH + bucket + "?" + AmzS3Api.URL_ARG_VERSIONING;
+		final String bucketVersioningReqUri = bucketUri + "?" + AmzS3Api.URL_ARG_VERSIONING;
 		reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
@@ -258,7 +259,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			}
 			putBucketVersioningResp.release();
 		}
-		return bucket;
+		return path;
 	}
 
 	@Override
@@ -270,8 +271,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
-							 )
-	throws InterruptRunException, IOException {
+	) throws InterruptRunException, IOException {
 		final int countLimit = count < 1 || count > AmzS3Api.MAX_KEYS_LIMIT ? AmzS3Api.MAX_KEYS_LIMIT : count;
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
