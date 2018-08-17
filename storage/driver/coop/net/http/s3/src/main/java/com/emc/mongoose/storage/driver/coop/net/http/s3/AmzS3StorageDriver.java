@@ -14,7 +14,10 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.net.http.HttpStorageDriverBase;
+import static com.emc.mongoose.item.op.Operation.SLASH;
+
 import com.github.akurilov.confuse.Config;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
@@ -33,9 +36,11 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
-import org.apache.logging.log4j.Level;
-import org.xml.sax.SAXException;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import org.apache.logging.log4j.Level;
+
+import org.xml.sax.SAXException;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.parsers.ParserConfigurationException;
@@ -56,9 +61,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
-
-import static com.emc.mongoose.item.op.Operation.SLASH;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -87,8 +89,7 @@ extends HttpStorageDriverBase<I, O> {
 	public AmzS3StorageDriver(
 		final String stepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag,
 		final int batchSize
-							 )
-	throws OmgShootMyFootException, InterruptedException {
+	) throws OmgShootMyFootException, InterruptedException {
 		super(stepId, itemDataInput, storageConfig, verifyFlag, batchSize);
 		requestAuthTokenFunc = null; // do not use
 	}
@@ -124,15 +125,13 @@ extends HttpStorageDriverBase<I, O> {
 		if(checkBucketResp != null) {
 			if(HttpResponseStatus.NOT_FOUND.equals(checkBucketResp.status())) {
 				bucketExistedBefore = false;
-			} else if(! HttpStatusClass.SUCCESS.equals(checkBucketResp.status().codeClass())) {
-				Loggers.ERR.warn(
-					"The bucket checking response is: {}", checkBucketResp.status().toString()
-								);
+			} else if(!HttpStatusClass.SUCCESS.equals(checkBucketResp.status().codeClass())) {
+				Loggers.ERR.warn("The bucket checking response is: {}", checkBucketResp.status().toString());
 			}
 			checkBucketResp.release();
 		}
 		// create the destination bucket if it doesn't exists
-		if(! bucketExistedBefore) {
+		if(!bucketExistedBefore) {
 			reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
@@ -152,10 +151,8 @@ extends HttpStorageDriverBase<I, O> {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
 			}
-			if(! HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
-				Loggers.ERR.warn(
-					"The bucket creating response is: {}", putBucketResp.status().toString()
-								);
+			if(!HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
+				Loggers.ERR.warn("The bucket creating response is: {}", putBucketResp.status().toString());
 				return null;
 			}
 			putBucketResp.release();
@@ -168,8 +165,8 @@ extends HttpStorageDriverBase<I, O> {
 		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
 		applyAuthHeaders(reqHeaders, HttpMethod.GET, bucketVersioningReqUri, credential);
 		final FullHttpRequest getBucketVersioningReq = new DefaultFullHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, Unpooled.EMPTY_BUFFER,
-			reqHeaders, EmptyHttpHeaders.INSTANCE
+			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, Unpooled.EMPTY_BUFFER, reqHeaders,
+			EmptyHttpHeaders.INSTANCE
 		);
 		final FullHttpResponse getBucketVersioningResp;
 		try {
@@ -221,9 +218,8 @@ extends HttpStorageDriverBase<I, O> {
 			}
 			if(! HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
 				Loggers.ERR.warn(
-					"The bucket versioning setting response is: {}",
-					putBucketVersioningResp.status().toString()
-								);
+					"The bucket versioning setting response is: {}", putBucketVersioningResp.status().toString()
+				);
 				putBucketVersioningResp.release();
 				return null;
 			}
@@ -251,9 +247,8 @@ extends HttpStorageDriverBase<I, O> {
 			}
 			if(! HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
 				Loggers.ERR.warn(
-					"The bucket versioning setting response is: {}",
-					putBucketVersioningResp.status().toString()
-								);
+					"The bucket versioning setting response is: {}", putBucketVersioningResp.status().toString()
+				);
 				putBucketVersioningResp.release();
 				return null;
 			}
@@ -357,17 +352,13 @@ extends HttpStorageDriverBase<I, O> {
 					httpRequest = getInitMpuRequest(op, nodeAddr);
 				}
 			} else {
-				throw new AssertionError(
-					"Non-create multipart operations are not implemented yet"
-				);
+				throw new AssertionError("Non-create multipart operations are not implemented yet");
 			}
 		} else if(op instanceof PartialDataOperation) {
 			if(OpType.CREATE.equals(opType)) {
 				httpRequest = getUploadPartRequest((PartialDataOperation) op, nodeAddr);
 			} else {
-				throw new AssertionError(
-					"Non-create multipart operations are not implemented yet"
-				);
+				throw new AssertionError("Non-create multipart operations are not implemented yet");
 			}
 		} else {
 			httpRequest = super.httpRequest(op, nodeAddr);
@@ -384,7 +375,7 @@ extends HttpStorageDriverBase<I, O> {
 	protected final HttpMethod pathHttpMethod(final OpType opType) {
 		switch(opType) {
 			case UPDATE:
-				throw new AssertionError("Not implemnted yet");
+				throw new AssertionError("Not implemented yet");
 			case READ:
 				return HttpMethod.GET;
 			case DELETE:
@@ -395,16 +386,12 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected final String tokenUriPath(
-		final I item, final String srcPath, final String dstPath, final OpType opType
-									   ) {
+	protected final String tokenUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
 		throw new AssertionError("Not implemented");
 	}
 
 	@Override
-	protected final String pathUriPath(
-		final I item, final String srcPath, final String dstPath, final OpType opType
-									  ) {
+	protected final String pathUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
 		final String itemName = item.getName();
 		if(itemName.startsWith(SLASH)) {
 			return itemName;
@@ -443,9 +430,7 @@ extends HttpStorageDriverBase<I, O> {
 		return httpRequest;
 	}
 
-	private HttpRequest getUploadPartRequest(
-		final PartialDataOperation partialDataOp, final String nodeAddr
-											) {
+	private HttpRequest getUploadPartRequest(final PartialDataOperation partialDataOp, final String nodeAddr) {
 		final I item = (I) partialDataOp.item();
 		final String srcPath = partialDataOp.srcPath();
 		final String uriPath = dataUriPath(item, srcPath, partialDataOp.dstPath(), OpType.CREATE)
@@ -473,9 +458,7 @@ extends HttpStorageDriverBase<I, O> {
 
 	private final static ThreadLocal<StringBuilder> THREAD_LOCAL_STRB = ThreadLocal.withInitial(StringBuilder::new);
 
-	private FullHttpRequest getCompleteMpuRequest(
-		final CompositeDataOperation mpuTask, final String nodeAddr
-												 ) {
+	private FullHttpRequest getCompleteMpuRequest(final CompositeDataOperation mpuTask, final String nodeAddr) {
 		final StringBuilder content = THREAD_LOCAL_STRB.get();
 		content.setLength(0);
 		content.append(AmzS3Api.COMPLETE_MPU_HEADER);
@@ -551,9 +534,8 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final void applyAuthHeaders(
-		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
-		final Credential credential
-										 ) {
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath, final Credential credential
+	) {
 		final String uid;
 		final String secret;
 		if(credential != null) {
@@ -572,14 +554,11 @@ extends HttpStorageDriverBase<I, O> {
 		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
 		final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
 		httpHeaders.set(
-			HttpHeaderNames.AUTHORIZATION,
-			AmzS3Api.AUTH_PREFIX + uid + ':' + BASE64_ENCODER.encodeToString(sigData)
-					   );
+			HttpHeaderNames.AUTHORIZATION, AmzS3Api.AUTH_PREFIX + uid + ':' + BASE64_ENCODER.encodeToString(sigData)
+		);
 	}
 
-	protected String getCanonical(
-		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath
-								 ) {
+	protected String getCanonical(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath) {
 		final StringBuilder buffCanonical = BUFF_CANONICAL.get();
 		buffCanonical.setLength(0); // reset/clear
 		buffCanonical.append(httpMethod.name());
