@@ -424,39 +424,41 @@ public interface FileIoHelper {
 			Range byteRange;
 			DataItem updatingRange;
 			int currRangeIdx = op.currRangeIdx();
-			long rangeBeg;
-			long rangeEnd;
-			long rangeSize;
-			byteRange = byteRanges.get(currRangeIdx);
-			rangeBeg = byteRange.getBeg();
-			rangeEnd = byteRange.getEnd();
-			rangeSize = byteRange.getSize();
-			if(rangeSize == - 1) {
-				if(rangeBeg == - 1) {
-					// last "rangeEnd" bytes
-					rangeBeg = baseItemSize - rangeEnd;
-					rangeSize = rangeEnd;
-				} else if(rangeEnd == - 1) {
-					// start @ offset equal to "rangeBeg"
-					rangeSize = baseItemSize - rangeBeg;
+			if(currRangeIdx < byteRanges.size()) {
+				long rangeBeg;
+				long rangeEnd;
+				long rangeSize;
+				byteRange = byteRanges.get(currRangeIdx);
+				rangeBeg = byteRange.getBeg();
+				rangeEnd = byteRange.getEnd();
+				rangeSize = byteRange.getSize();
+				if(rangeSize == - 1) {
+					if(rangeBeg == - 1) {
+						// last "rangeEnd" bytes
+						rangeBeg = baseItemSize - rangeEnd;
+						rangeSize = rangeEnd;
+					} else if(rangeEnd == - 1) {
+						// start @ offset equal to "rangeBeg"
+						rangeSize = baseItemSize - rangeBeg;
+					} else {
+						rangeSize = rangeEnd - rangeBeg + 1;
+					}
 				} else {
-					rangeSize = rangeEnd - rangeBeg + 1;
+					// append
+					rangeBeg = baseItemSize;
+					// note down the new size
+					fileItem.size(baseItemSize + updatingRangesSize);
 				}
-			} else {
-				// append
-				rangeBeg = baseItemSize;
-				// note down the new size
-				fileItem.size(baseItemSize + updatingRangesSize);
-			}
-			updatingRange = fileItem.slice(rangeBeg, rangeSize);
-			updatingRange.position(countBytesDone);
-			dstChannel.position(rangeBeg + countBytesDone);
-			countBytesDone += updatingRange.writeToFileChannel(dstChannel, rangeSize - countBytesDone);
-			if(countBytesDone == rangeSize) {
-				op.currRangeIdx(currRangeIdx + 1);
-				op.countBytesDone(0);
-			} else {
-				op.countBytesDone(countBytesDone);
+				updatingRange = fileItem.slice(rangeBeg, rangeSize);
+				updatingRange.position(countBytesDone);
+				dstChannel.position(rangeBeg + countBytesDone);
+				countBytesDone += updatingRange.writeToFileChannel(dstChannel, rangeSize - countBytesDone);
+				if(countBytesDone == rangeSize) {
+					op.currRangeIdx(currRangeIdx + 1);
+					op.countBytesDone(0);
+				} else {
+					op.countBytesDone(countBytesDone);
+				}
 			}
 		}
 		if(updatingRangesSize <= 0 || updatingRangesSize <= countBytesDone) {

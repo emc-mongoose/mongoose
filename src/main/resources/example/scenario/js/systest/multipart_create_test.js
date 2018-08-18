@@ -20,7 +20,8 @@ Load
         "net" : {
           "http" : {
             "namespace" : "ns1"
-          }
+          },
+          "timeoutMilliSec" : "1000"
         }
       },
       "load" : {
