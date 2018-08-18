@@ -424,100 +424,122 @@ implements LoadStepClient {
 	@Override
 	protected final void doClose()
 	throws InterruptRunException, IOException {
-		super.doClose();
-		stepSlices
-			.parallelStream()
-			.forEach(
-				stepSlice -> {
-					try {
-						stepSlice.close();
-						Loggers.MSG.debug("{}: step slice \"{}\" closed", id(), stepSlice);
-					} catch(final InterruptRunException e) {
-						throw e;
-					} catch(final Exception e) {
-						LogUtil.exception(Level.WARN, e, "{}: failed to close the step service \"{}\"", id(), stepSlice);
+
+		try(
+			final Instance logCtx = put(KEY_STEP_ID, id())
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+		) {
+
+			super.doClose();
+
+			stepSlices
+				.parallelStream()
+				.forEach(
+					stepSlice -> {
+						try {
+							stepSlice.close();
+							Loggers.MSG.debug("{}: step slice \"{}\" closed", id(), stepSlice);
+						} catch(final InterruptRunException e) {
+							throw e;
+						} catch(final Exception e) {
+							LogUtil.exception(
+								Level.WARN, e, "{}: failed to close the step service \"{}\"", id(), stepSlice
+							);
+						}
 					}
-				}
-			);
-		Loggers.MSG.debug("{}: closed all {} step slices", id(), stepSlices.size());
-		stepSlices.clear();
-		if(null != metricsAggregator) {
-			metricsAggregator.close();
-			metricsAggregator = null;
-		}
-		itemDataInputFileSlicers.forEach(itemDataInputFileSlicer -> {
-			try {
-				itemDataInputFileSlicers.clear();
-			} catch(final InterruptRunException e) {
-				throw e;
-			} catch(final Exception e) {
-				LogUtil.exception(Level.WARN, e, "{}: failed to close the item data input file slicer \"{}\"", id(),
-					itemDataInputFileSlicer
 				);
+			Loggers.MSG.debug("{}: closed all {} step slices", id(), stepSlices.size());
+			stepSlices.clear();
+
+			if(null != metricsAggregator) {
+				metricsAggregator.close();
+				metricsAggregator = null;
 			}
-		});
-		itemDataInputFileSlicers.clear();
-		itemInputFileSlicers.forEach(
-			itemInputFileSlicer -> {
-				try {
-					itemInputFileSlicer.close();
-				} catch(final InterruptRunException e) {
-					throw e;
-				} catch(final Exception e) {
-					LogUtil.exception(Level.WARN, e, "{}: failed to close the item input file slicer \"{}\"", id(),
-						itemInputFileSlicer
-					);
-				}
-			}
-		);
-		itemInputFileSlicers.clear();
-		itemOutputFileAggregators
-			.parallelStream()
-			.forEach(
-				itemOutputFileAggregator -> {
+
+			itemDataInputFileSlicers.forEach(
+				itemDataInputFileSlicer -> {
 					try {
-						itemOutputFileAggregator.close();
+						itemDataInputFileSlicers.clear();
 					} catch(final InterruptRunException e) {
 						throw e;
 					} catch(final Exception e) {
 						LogUtil.exception(
-							Level.WARN, e, "{}: failed to close the item output file aggregator \"{}\"", id(),
-							itemOutputFileAggregator
+							Level.WARN, e, "{}: failed to close the item data input file slicer \"{}\"", id(),
+							itemDataInputFileSlicer
 						);
 					}
 				}
 			);
-		opTraceLogFileAggregators
-			.parallelStream()
-			.forEach(
-				opTraceLogFileAggregator -> {
+			itemDataInputFileSlicers.clear();
+
+			itemInputFileSlicers.forEach(
+				itemInputFileSlicer -> {
 					try {
-						opTraceLogFileAggregator.close();
+						itemInputFileSlicer.close();
 					} catch(final InterruptRunException e) {
 						throw e;
 					} catch(final Exception e) {
 						LogUtil.exception(
-							Level.WARN, e, "{}: failed to close the operation traces log file aggregator \"{}\"",
-							id(), opTraceLogFileAggregator
+							Level.WARN, e, "{}: failed to close the item input file slicer \"{}\"", id(),
+							itemInputFileSlicer
 						);
 					}
 				}
 			);
-		storageAuthFileSlicers.forEach(
-			storageAuthFileSlicer -> {
-				try {
-					storageAuthFileSlicer.close();
-				} catch(final InterruptRunException e) {
-					throw e;
-				} catch(final Exception e) {
-					LogUtil.exception(
-						Level.WARN, e, "{}: failed to close the storage auth file slicer \"{}\"", id(),
-						storageAuthFileSlicer
-					);
+			itemInputFileSlicers.clear();
+
+			itemOutputFileAggregators
+				.parallelStream()
+				.forEach(
+					itemOutputFileAggregator -> {
+						try {
+							itemOutputFileAggregator.close();
+						} catch(final InterruptRunException e) {
+							throw e;
+						} catch(final Exception e) {
+							LogUtil.exception(
+								Level.WARN, e, "{}: failed to close the item output file aggregator \"{}\"", id(),
+								itemOutputFileAggregator
+							);
+						}
+					}
+				);
+			itemOutputFileAggregators.clear();
+
+			opTraceLogFileAggregators
+				.parallelStream()
+				.forEach(
+					opTraceLogFileAggregator -> {
+						try {
+							opTraceLogFileAggregator.close();
+						} catch(final InterruptRunException e) {
+							throw e;
+						} catch(final Exception e) {
+							LogUtil.exception(
+								Level.WARN, e, "{}: failed to close the operation traces log file aggregator \"{}\"",
+								id(), opTraceLogFileAggregator
+							);
+						}
+					}
+				);
+			opTraceLogFileAggregators.clear();
+
+			storageAuthFileSlicers.forEach(
+				storageAuthFileSlicer -> {
+					try {
+						storageAuthFileSlicer.close();
+					} catch(final InterruptRunException e) {
+						throw e;
+					} catch(final Exception e) {
+						LogUtil.exception(
+							Level.WARN, e, "{}: failed to close the storage auth file slicer \"{}\"", id(),
+							storageAuthFileSlicer
+						);
+					}
 				}
-			}
-		);
-		storageAuthFileSlicers.clear();
+			);
+			storageAuthFileSlicers.clear();
+		}
 	}
 
 	@Override

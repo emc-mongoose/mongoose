@@ -158,12 +158,12 @@ implements MetricsManager {
 			if(stepMetrics != null && stepMetrics.size() == 0) {
 				allMetrics.remove(id);
 			}
+			Loggers.MSG.debug("Metrics context \"{}\" unregistered", metricsCtx);
 		} finally {
 			if(allMetrics.size() == 0) {
 				stop();
 				Loggers.MSG.debug("Stopped the metrics manager fiber");
 			}
-			Loggers.MSG.debug("Metrics context \"{}\" unregistered", metricsCtx);
 		}
 	}
 

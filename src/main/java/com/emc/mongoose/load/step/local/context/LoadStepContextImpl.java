@@ -548,24 +548,30 @@ implements LoadStepContext<I, O> {
 	protected final void doClose()
 	throws InterruptRunException {
 
-		try {
-			generator.close();
-		} catch(final IOException e) {
-			LogUtil.exception(Level.ERROR, e, "Failed to close the load generator \"{}\"", generator.toString());
-		}
+		try(
+			final Instance logCtx = CloseableThreadContext.put(KEY_STEP_ID, id)
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+		) {
 
-		try {
-			driver.close();
-		} catch(final IOException e) {
-			LogUtil.exception(Level.ERROR, e, "Failed to close the storage driver \"{}\"", driver.toString());
-		}
+			try {
+				generator.close();
+			} catch(final IOException e) {
+				LogUtil.exception(Level.ERROR, e, "Failed to close the load generator \"{}\"", generator.toString());
+			}
 
-		try {
-			resultsTransferTask.close();
-		} catch(final IOException e) {
-			LogUtil.exception(Level.WARN, e, "{}: failed to stop the service coroutine {}", resultsTransferTask);
-		}
+			try {
+				driver.close();
+			} catch(final IOException e) {
+				LogUtil.exception(Level.ERROR, e, "Failed to close the storage driver \"{}\"", driver.toString());
+			}
 
-		Loggers.MSG.debug("{}: closed the load step context", id);
+			try {
+				resultsTransferTask.close();
+			} catch(final IOException e) {
+				LogUtil.exception(Level.WARN, e, "{}: failed to stop the service coroutine {}", resultsTransferTask);
+			}
+
+			Loggers.MSG.debug("{}: closed the load step context", id);
+		}
 	}
 }
