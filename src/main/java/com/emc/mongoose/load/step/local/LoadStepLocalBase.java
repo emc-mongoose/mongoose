@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -107,7 +108,9 @@ extends LoadStepBase {
 					@Override
 					protected final void invokeTimedExclusively(final long startTimeNanos) {
 						try {
-							if(stepCtx.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+							if(stepCtx.isDone()) {
+								awaitCountDown.countDown();
+							} else if(stepCtx.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 								awaitCountDown.countDown();
 							}
 						} catch(final InterruptedException e) {

@@ -83,7 +83,7 @@ implements LoadGenerator<I, O> {
 		this.opOutput = opOutput;
 		this.batchSize = batchSize;
 		this.countLimit = countLimit > 0 ? countLimit : Long.MAX_VALUE;
-		this.recycleQueue = new ArrayBlockingQueue<>(recycleQueueSize);
+		this.recycleQueue = new ArrayBlockingQueue<>(recycleQueueSize, true);
 		this.recycleFlag = recycleFlag;
 		this.shuffleFlag = shuffleFlag;
 		this.rnd = shuffleFlag ? new Random() : null;

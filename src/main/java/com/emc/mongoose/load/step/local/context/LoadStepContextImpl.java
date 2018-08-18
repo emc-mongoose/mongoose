@@ -20,9 +20,12 @@ import com.emc.mongoose.item.Item;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.logging.Loggers;
+
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.io.Output;
+import static com.github.akurilov.commons.concurrent.AsyncRunnable.State.SHUTDOWN;
+import static com.github.akurilov.commons.concurrent.AsyncRunnable.State.STARTED;
 
 import com.github.akurilov.confuse.Config;
 
@@ -42,7 +45,6 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
@@ -115,6 +117,36 @@ implements LoadStepContext<I, O> {
 		this.failRateLimitFlag = failConfig.boolVal("rate");
 	}
 
+	@Override
+	public boolean isDone() {
+		if(!STARTED.equals(state()) && !SHUTDOWN.equals(state())) {
+			Loggers.MSG.debug("{}: done due to {} state", state());
+			return true;
+		}
+		if(isDoneCountLimit()) {
+			Loggers.MSG.debug("{}: done due to max count done state", id);
+			return true;
+		}
+		if(isDoneSizeLimit()) {
+			Loggers.MSG.debug("{}: done due to max size done state", id);
+			return true;
+		}
+		if(isFailThresholdReached()) {
+			Loggers.MSG.debug("{}: done due to \"BAD\" state", id);
+			return true;
+		}
+		if(!recycleFlag && allOperationsCompleted()) {
+			Loggers.MSG.debug("{}: done due to all load operations have been completed", id);
+			return true;
+		}
+		// issue SLTM-938 fix
+		if(isNothingToRecycle()) {
+			Loggers.ERR.debug("{}: done due to recycling load operations absence (all failed)", id);
+			return true;
+		}
+		return false;
+	}
+
 	private boolean isDoneCountLimit() {
 		if(countLimit > 0) {
 			if(counterResults.sum() >= countLimit) {
@@ -167,18 +199,6 @@ implements LoadStepContext<I, O> {
 			counterResults.sum() >= generator.generatedOpCount() &&
 			// no successful op results
 			latestSuccOpResultByItem.size() == 0;
-	}
-
-	private boolean isDone() {
-		if(isDoneCountLimit()) {
-			Loggers.MSG.debug("{}: done due to max count done state", id);
-			return true;
-		}
-		if(isDoneSizeLimit()) {
-			Loggers.MSG.debug("{}: done due to max size done state", id);
-			return true;
-		}
-		return false;
 	}
 
 	/**
@@ -403,48 +423,6 @@ implements LoadStepContext<I, O> {
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.WARN, e, "{}: failed to start the load generator \"{}\"", id, generator);
 		}
-	}
-
-	@Override
-	public final boolean await(final long timeout, final TimeUnit timeUnit)
-	throws InterruptedException {
-		final long timeOutMilliSec = timeUnit.toMillis(timeout);
-		Loggers.MSG.debug(
-			"{}: await for the done condition at most for {}[s]", id, TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec)
-		);
-		final long t = System.currentTimeMillis();
-		do {
-			if(isStopped()) {
-				Loggers.MSG.debug("{}: await exit due to \"interrupted\" state", id);
-				return true;
-			}
-			if(isClosed()) {
-				Loggers.MSG.debug("{}: await exit due to \"closed\" state", id);
-				return true;
-			}
-			if(isDone()) {
-				Loggers.MSG.debug("{}: await exit due to \"done\" state", id);
-				return true;
-			}
-			if(isFailThresholdReached()) {
-				Loggers.MSG.debug("{}: await exit due to \"BAD\" state", id);
-				return true;
-			}
-			if(!recycleFlag && allOperationsCompleted()) {
-				Loggers.MSG.debug("{}: await exit because all load operations have been completed", id);
-				return true;
-			}
-			// issue SLTM-938 fix
-			if(isNothingToRecycle()) {
-				Loggers.ERR.debug("{}: exit because there's no load operations to recycle (all failed)", id);
-				return true;
-			}
-			if(super.await(10, TimeUnit.MILLISECONDS)) {
-				return true;
-			}
-		} while(System.currentTimeMillis() - t < timeOutMilliSec);
-		Loggers.MSG.debug("{}: await exit due to timeout", id);
-		return false;
 	}
 
 	@Override

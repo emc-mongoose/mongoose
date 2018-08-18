@@ -291,7 +291,6 @@ extends HttpStorageDriverBase<I, O> {
 		if(!isStarted()) {
 			throw new IllegalStateException();
 		}
-		op.reset();
 		if(op instanceof CompositeDataOperation) {
 			final CompositeDataOperation compositeOp = (CompositeDataOperation) op;
 			if(compositeOp.allSubOperationsDone()) {
@@ -318,7 +317,6 @@ extends HttpStorageDriverBase<I, O> {
 		O nextOp;
 		for(int i = from; i < to; i ++) {
 			nextOp = ops.get(i);
-			nextOp.reset();
 			if(nextOp instanceof CompositeDataOperation) {
 				final CompositeDataOperation compositeOp = (CompositeDataOperation) nextOp;
 				if(compositeOp.allSubOperationsDone()) {

@@ -66,9 +66,9 @@ import java.util.stream.Collectors;
 	}
 
 	private final String SCENARIO_PATH = containerScenarioPath(getClass());
-	private final int EXPECTED_APPEND_COUNT = 100;
-	private final long EXPECTED_COUNT = 100;
-	private final int timeoutInMillis = 1000_000;
+	private final int EXPECTED_APPEND_COUNT = 50;
+	private final long EXPECTED_COUNT = 200;
+	private final int timeoutInMillis = 1_000_000;
 	private final String itemListFile0 = snakeCaseName(getClass()) + "_0.csv";
 	private final String itemListFile1 = snakeCaseName(getClass()) + "_1.csv";
 	private final String hostItemListFile0 = HOST_SHARE_PATH + "/" + itemListFile0;
@@ -223,8 +223,8 @@ import java.util.stream.Collectors;
 		long itemOffset;
 		long size;
 		final SizeInBytes expectedFinalSize = new SizeInBytes(
-			(EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() / 5,
-			(EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() * 5,
+			(EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() / 3,
+			(EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() * 3,
 			1
 		);
 		final int n = items.size();
