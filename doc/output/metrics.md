@@ -184,21 +184,26 @@ The console output is absent.
 
 The file output is disabled by default.
 To enable the file output, set the `output-metrics-trace-persist` configuration parameter to "true".
+
+**Note**:
+> Since v4.0.0 the file header (containing the field names) line is not printed for easier aggregation in case of the
+> distributed mode.
+
 **Output file**: `op.trace.csv` with *dynamic path*.
 
 **Available fields**
 
-| Field Name    | Description
-| ------------- | -----------------------------------------------------------------
-| StorageNode   | The target storage node address/hostname
-| ItemPath      | The resulting item path
-| OpTypeCode    | The load operation type code
-| StatusCode    | The load operation resulting status code
-| ReqTimeStart  | The load operation start timestamp in microseconds
-| Duration      | The load operation total duration in microseconds
-| RespLatency   | The load operation response latency in microseconds
-| DataLatency   | The load operation response data latency ("1st byte" of the response content) in microseconds
-| TransferSize  | The count of the bytes transferred within the load operation
+| Field Name       | Description
+| ---------------- | -----------------------------------------------------------------
+| StorageNode      | The target storage node address/hostname
+| ItemPath         | The resulting item path
+| OpTypeCode       | The load operation type code
+| StatusCode       | The load operation resulting status code
+| ReqTimeStart[us] | The load operation start timestamp in microseconds
+| Duration[us]     | The load operation total duration in microseconds
+| RespLatency[us]  | The load operation response latency in microseconds
+| DataLatency[us]  | The load operation response data latency ("1st byte" of the response content) in microseconds
+| TransferSize     | The count of the bytes transferred within the load operation
 
 **OpTypeCode**
 
