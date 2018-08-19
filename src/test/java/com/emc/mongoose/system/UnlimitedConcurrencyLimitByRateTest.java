@@ -74,9 +74,11 @@ import static org.junit.Assert.assertTrue;
 	private final ItemSize itemSize;
 	private final int averagePeriod;
 	private final Config config;
-	private final String containerItemOutputPath;
-	private final String hostItemOutputFile =
-		HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
+	private final String containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(
+		getClass().getSimpleName()
+	);
+	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
+	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private long duration;
 	private String stdOutContent = null;
 
@@ -94,7 +96,6 @@ import static org.junit.Assert.assertTrue;
 			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-		containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
@@ -103,13 +104,6 @@ import static org.junit.Assert.assertTrue;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
-		if(storageType.equals(StorageType.FS)) {
-			try {
-				DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
-			} catch(final Exception e) {
-				e.printStackTrace(System.err);
-			}
-		}
 		try {
 			Files.delete(Paths.get(hostItemOutputFile));
 		} catch(final Exception ignored) {
@@ -132,6 +126,14 @@ import static org.junit.Assert.assertTrue;
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
+				break;
+			case FS:
+				args.add("--item-output-path=" + containerItemOutputPath);
+				try {
+					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+				} catch(final Exception e) {
+					e.printStackTrace(System.err);
+				}
 				break;
 		}
 		switch(runMode) {

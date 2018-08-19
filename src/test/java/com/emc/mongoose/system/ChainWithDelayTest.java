@@ -135,11 +135,13 @@ import static org.junit.Assert.fail;
 					false,
 					null,
 					null,
-					Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
+					Character.MAX_RADIX,
+					HttpStorageMockContainer.DEFAULT_CAPACITY,
 					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
 					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
 					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY,
+					0
 				);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);

@@ -80,8 +80,9 @@ import static org.junit.Assert.assertTrue;
 	private final ItemSize itemSize;
 	private final Config config;
 	private final String containerItemOutputPath;
-	private final String hostItemOutputFile =
-		HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
+	private final String hostItemOutputPath;
+	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName()
+		+ ".csv";
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private final int averagePeriod;
 	private boolean finishedInTime;
@@ -89,8 +90,7 @@ import static org.junit.Assert.assertTrue;
 
 	public CircularReadLimitByTimeTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
+	) throws Exception {
 		final Map<String, Object> schema =
 			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
 		config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
@@ -101,7 +101,8 @@ import static org.junit.Assert.assertTrue;
 			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-		containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
+		containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
+		hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
@@ -111,11 +112,7 @@ import static org.junit.Assert.assertTrue;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
 		if(storageType.equals(StorageType.FS)) {
-			try {
-				DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
-			} catch(final Exception e) {
-				e.printStackTrace(System.err);
-			}
+
 		}
 		try {
 			Files.delete(Paths.get(hostItemOutputFile));
@@ -139,6 +136,14 @@ import static org.junit.Assert.assertTrue;
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
+				break;
+			case FS:
+				args.add("--item-output-path=" + containerItemOutputPath);
+				try {
+					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+				} catch(final Exception e) {
+					e.printStackTrace(System.err);
+				}
 				break;
 		}
 		switch(runMode) {

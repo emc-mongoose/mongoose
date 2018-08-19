@@ -42,7 +42,10 @@ import static org.junit.Assert.assertTrue;
 
 
 	private final String SCENARIO_PATH = null; //default
-	private final String containerItemOutputPath;
+	private final String containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(
+		getClass().getSimpleName()
+	);
+	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 	private final int timeoutInMillis = 60_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
@@ -58,7 +61,6 @@ import static org.junit.Assert.assertTrue;
 	)
 	throws Exception {
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-		containerItemOutputPath = Paths.get(CONTAINER_SHARE_PATH, stepId).toString();
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
@@ -67,13 +69,6 @@ import static org.junit.Assert.assertTrue;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
-		if(storageType.equals(StorageType.FS)) {
-			try {
-				DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
-			} catch(final Exception e) {
-				e.printStackTrace(System.err);
-			}
-		}
 		final List<String> env =
 			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
 		final List<String> args = new ArrayList<>();
@@ -92,6 +87,14 @@ import static org.junit.Assert.assertTrue;
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
+				break;
+			case FS:
+				args.add("--item-output-path=" + containerItemOutputPath);
+				try {
+					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+				} catch(final Exception e) {
+					e.printStackTrace(System.err);
+				}
 				break;
 		}
 		switch(runMode) {

@@ -95,20 +95,6 @@ import java.util.stream.Collectors;
 		}
 		itemDstPath = itemPathPrefix + "-Dst";
 		itemSrcPath = itemPathPrefix + "-Src";
-		if(storageType.equals(StorageType.FS)) {
-			try {
-				DirWithManyFilesDeleter.deleteExternal(
-					itemSrcPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
-				);
-			} catch(final Throwable ignored) {
-			}
-			try {
-				DirWithManyFilesDeleter.deleteExternal(
-					itemDstPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
-				);
-			} catch(final Throwable ignored) {
-			}
-		}
 		final List<String> env = System
 			.getenv()
 			.entrySet()
@@ -134,6 +120,20 @@ import java.util.stream.Collectors;
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
+				break;
+			case FS:
+				try {
+					DirWithManyFilesDeleter.deleteExternal(
+						itemSrcPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
+					);
+				} catch(final Throwable ignored) {
+				}
+				try {
+					DirWithManyFilesDeleter.deleteExternal(
+						itemDstPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
+					);
+				} catch(final Throwable ignored) {
+				}
 				break;
 		}
 		switch(runMode) {

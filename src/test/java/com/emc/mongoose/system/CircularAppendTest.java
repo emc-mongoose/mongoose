@@ -8,6 +8,7 @@ import com.emc.mongoose.system.base.params.EnvParams;
 import com.emc.mongoose.system.base.params.ItemSize;
 import com.emc.mongoose.system.base.params.RunMode;
 import com.emc.mongoose.system.base.params.StorageType;
+import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
@@ -36,6 +37,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.stat.Frequency;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -69,6 +71,10 @@ import java.util.stream.Collectors;
 	private final int EXPECTED_APPEND_COUNT = 50;
 	private final long EXPECTED_COUNT = 200;
 	private final int timeoutInMillis = 1_000_000;
+	private final String containerItemOutputDir = MongooseContainer.getContainerItemOutputPath(
+		getClass().getSimpleName()
+	);
+	private final String hostItemOutputDir = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 	private final String itemListFile0 = snakeCaseName(getClass()) + "_0.csv";
 	private final String itemListFile1 = snakeCaseName(getClass()) + "_1.csv";
 	private final String hostItemListFile0 = HOST_SHARE_PATH + "/" + itemListFile0;
@@ -120,6 +126,14 @@ import java.util.stream.Collectors;
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
+				break;
+			case FS:
+				try {
+					DirWithManyFilesDeleter.deleteExternal(hostItemOutputDir);
+				} catch(final Throwable t) {
+					Assert.fail(t.toString());
+				}
+				args.add("--item-output-path=" + containerItemOutputDir);
 				break;
 		}
 		switch(runMode) {
