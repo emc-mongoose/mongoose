@@ -103,7 +103,7 @@ extends HttpStorageDriverBase<I, O> {
 		HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
 		final Credential credential = pathToCredMap.getOrDefault(bucketUri, this.credential);
@@ -135,7 +135,7 @@ extends HttpStorageDriverBase<I, O> {
 			reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+			reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 			applyMetaDataHeaders(reqHeaders);
 			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketUri, credential);
 			final FullHttpRequest putBucketReq = new DefaultFullHttpRequest(
@@ -162,7 +162,7 @@ extends HttpStorageDriverBase<I, O> {
 		reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		applyAuthHeaders(reqHeaders, HttpMethod.GET, bucketVersioningReqUri, credential);
 		final FullHttpRequest getBucketVersioningReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, Unpooled.EMPTY_BUFFER, reqHeaders,
@@ -199,7 +199,7 @@ extends HttpStorageDriverBase<I, O> {
 			// disable bucket versioning
 			reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+			reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, AmzS3Api.VERSIONING_DISABLE_CONTENT.length);
 			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
@@ -228,7 +228,7 @@ extends HttpStorageDriverBase<I, O> {
 			// enable bucket versioning
 			reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+			reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, AmzS3Api.VERSIONING_ENABLE_CONTENT.length);
 			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
@@ -272,7 +272,7 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
 		final StringBuilder queryBuilder = BUCKET_LIST_QUERY.get();
@@ -417,7 +417,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		final HttpMethod httpMethod = HttpMethod.POST;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
@@ -440,7 +440,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		final HttpMethod httpMethod = HttpMethod.PUT;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders
@@ -483,7 +483,7 @@ extends HttpStorageDriverBase<I, O> {
 			"?uploadId=" + uploadId;
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		final HttpMethod httpMethod = HttpMethod.POST;
 		final String contentStr = content.toString();
 		final FullHttpRequest httpRequest = new DefaultFullHttpRequest(

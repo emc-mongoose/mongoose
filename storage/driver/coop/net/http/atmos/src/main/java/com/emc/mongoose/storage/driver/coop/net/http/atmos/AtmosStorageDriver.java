@@ -109,7 +109,7 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		//reqHeaders.set(KEY_X_EMC_DATE, reqHeaders.get(HttpHeaderNames.DATE));
 		if(fsAccess) {
 			reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess));

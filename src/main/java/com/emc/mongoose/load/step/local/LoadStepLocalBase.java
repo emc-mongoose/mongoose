@@ -108,10 +108,9 @@ extends LoadStepBase {
 					@Override
 					protected final void invokeTimedExclusively(final long startTimeNanos) {
 						try {
-							if(stepCtx.isDone()) {
+							if(stepCtx.isDone() || stepCtx.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 								awaitCountDown.countDown();
-							} else if(stepCtx.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
-								awaitCountDown.countDown();
+								stop();
 							}
 						} catch(final InterruptedException e) {
 							throw new InterruptRunException(e);
@@ -126,6 +125,7 @@ extends LoadStepBase {
 		try {
 			return awaitCountDown.await(timeout, timeUnit);
 		} catch(final InterruptedException e) {
+			LogUtil.exception(Level.ERROR, e, "");
 			throw new InterruptRunException(e);
 		} finally {
 			awaitTasks.forEach(

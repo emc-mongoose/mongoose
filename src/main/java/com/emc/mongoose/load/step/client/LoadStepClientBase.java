@@ -33,6 +33,7 @@ import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.message.ThreadDumpMessage;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -349,20 +350,30 @@ implements LoadStepClient {
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptRunException, IllegalStateException, InterruptedException {
-		if(stepSlices.size() == 0) {
-			throw new IllegalStateException("No step slices are available");
-		}
-		final CountDownLatch awaitCountDown = new CountDownLatch(stepSlices.size());
-		final List<AsyncRunnableBase> awaitTasks =
-			stepSlices
+		final int stepSliceCount = stepSlices.size();
+		try(
+			final Instance logCtx = put(KEY_STEP_ID, id())
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+		) {
+			if(0 == stepSliceCount) {
+				throw new IllegalStateException("No step slices are available");
+			}
+			Loggers.MSG.debug(
+				"{}: await for {} step slices for at most {} {}...", id(), stepSliceCount, timeout,
+				timeUnit.name().toLowerCase()
+			);
+			final CountDownLatch awaitCountDown = new CountDownLatch(stepSlices.size());
+			final List<AsyncRunnableBase> awaitTasks = stepSlices
 				.stream()
 				.map(
 					stepSlice -> new ExclusiveFiberBase(ServiceTaskExecutor.INSTANCE) {
 						@Override
 						protected final void invokeTimedExclusively(final long startTimeNanos) {
+							Loggers.MSG.debug("{}: await for the step slice \"{}\" started", id(), stepSlice);
 							try {
 								if(stepSlice.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 									awaitCountDown.countDown();
+									stop();
 								}
 							} catch(final RemoteException e) {
 								LogUtil.exception(
@@ -370,6 +381,7 @@ implements LoadStepClient {
 									stepSlice
 								);
 							} catch(final InterruptedException e) {
+								e.printStackTrace(System.err);
 								throw new InterruptRunException(e);
 							}
 						}
@@ -377,19 +389,23 @@ implements LoadStepClient {
 				)
 				.peek(AsyncRunnableBase::start)
 				.collect(Collectors.toList());
-		try {
-			return awaitCountDown.await(timeout, timeUnit);
-		} finally {
-			awaitTasks.forEach(
-				awaitTask -> {
-					try {
-						awaitTask.close();
-					} catch(final InterruptRunException e) {
-						throw e;
-					} catch(final Exception ignored) {
+			try {
+				return awaitCountDown.await(timeout, timeUnit);
+			} finally {
+				awaitTasks.forEach(
+					awaitTask -> {
+						try {
+							awaitTask.close();
+						} catch(final InterruptRunException e) {
+							throw e;
+						} catch(final Exception e) {
+							LogUtil.exception(Level.DEBUG, e, "{}: await task closing failure", id());
+						}
 					}
-				}
-			);
+				);
+			}
+		} finally {
+			Loggers.MSG.debug("{}: await for {} step slices done", id(), stepSliceCount);
 		}
 	}
 

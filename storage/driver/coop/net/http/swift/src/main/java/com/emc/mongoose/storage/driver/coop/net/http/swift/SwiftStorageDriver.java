@@ -92,7 +92,7 @@ extends HttpStorageDriverBase<I, O> {
 		HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		applySharedHeaders(reqHeaders);
 		final String containerUri = namespacePath + (path.startsWith(SLASH) ? path : SLASH + path);
 
@@ -141,7 +141,7 @@ extends HttpStorageDriverBase<I, O> {
 			reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+			reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 			applySharedHeaders(reqHeaders);
 			if(versioning) {
 				reqHeaders.set(KEY_X_VERSIONS_LOCATION, DEFAULT_VERSIONS_LOCATION);
@@ -185,7 +185,7 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		
 		final String uid = credential == null ? this.credential.getUid() : credential.getUid();
 		if(uid != null && ! uid.isEmpty()) {
@@ -230,7 +230,7 @@ extends HttpStorageDriverBase<I, O> {
 
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
@@ -417,7 +417,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		final String objManifestPath = super.dataUriPath(item, srcPath, compositeDataOp.dstPath(), CREATE);
 		httpHeaders.set(
@@ -443,7 +443,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		final HttpMethod httpMethod = HttpMethod.PUT;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders

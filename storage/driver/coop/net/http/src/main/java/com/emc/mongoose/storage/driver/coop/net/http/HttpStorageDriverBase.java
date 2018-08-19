@@ -70,19 +70,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 extends NetStorageDriverBase<I, O>
 implements HttpStorageDriver<I, O> {
 
-	public static final AsyncCurrentDateSupplier DATE_SUPPLIER;
-
-	static {
-		try {
-			DATE_SUPPLIER = new AsyncCurrentDateSupplier(ServiceTaskExecutor.INSTANCE);
-		} catch(final OmgDoesNotPerformException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	private final static String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
-	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
-	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
 	private static final Function<String, BatchSupplier<String>> ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
 		try {
 			return new AsyncPatternDefinedSupplier(ServiceTaskExecutor.INSTANCE, pattern);
@@ -91,6 +79,10 @@ implements HttpStorageDriver<I, O> {
 			return null;
 		}
 	};
+
+	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
+	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
+	protected final AsyncCurrentDateSupplier dateSupplier = new AsyncCurrentDateSupplier(ServiceTaskExecutor.INSTANCE);
 	protected final String namespace;
 	protected final boolean fsAccess;
 	protected final boolean versioning;
@@ -186,7 +178,7 @@ implements HttpStorageDriver<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		final HttpRequest httpRequest = new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
 		switch(opType) {
 			case CREATE:
@@ -412,6 +404,7 @@ implements HttpStorageDriver<I, O> {
 	protected void doClose()
 	throws IOException {
 		super.doClose();
+		dateSupplier.close();
 		sharedHeaders.clear();
 		dynamicHeaders.clear();
 		headerNameInputs.clear();
