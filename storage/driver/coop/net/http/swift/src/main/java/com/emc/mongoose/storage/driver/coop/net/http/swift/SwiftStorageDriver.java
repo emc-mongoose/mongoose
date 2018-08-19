@@ -87,15 +87,14 @@ extends HttpStorageDriverBase<I, O> {
 	@Override
 	protected final String requestNewPath(final String path)
 	throws InterruptRunException {
-
 		// check the destination container if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
 		HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		applySharedHeaders(reqHeaders);
-		final String containerUri = namespacePath + path;
+		final String containerUri = namespacePath + (path.startsWith(SLASH) ? path : SLASH + path);
 
 		final Credential credential = pathToCredMap.getOrDefault(path, this.credential);
 		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, containerUri, credential);
@@ -142,7 +141,7 @@ extends HttpStorageDriverBase<I, O> {
 			reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+			reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 			applySharedHeaders(reqHeaders);
 			if(versioning) {
 				reqHeaders.set(KEY_X_VERSIONS_LOCATION, DEFAULT_VERSIONS_LOCATION);
@@ -186,7 +185,7 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		
 		final String uid = credential == null ? this.credential.getUid() : credential.getUid();
 		if(uid != null && ! uid.isEmpty()) {
@@ -231,7 +230,7 @@ extends HttpStorageDriverBase<I, O> {
 
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
@@ -243,7 +242,7 @@ extends HttpStorageDriverBase<I, O> {
 			queryBuilder.append("&prefix=").append(prefix);
 		}
 		if(lastPrevItem != null) {
-			String lastItemName = lastPrevItem.getName();
+			String lastItemName = lastPrevItem.name();
 			if(lastItemName.contains("/")) {
 				lastItemName = lastItemName.substring(lastItemName.lastIndexOf('/') + 1);
 			}
@@ -292,7 +291,6 @@ extends HttpStorageDriverBase<I, O> {
 		if(!isStarted()) {
 			throw new IllegalStateException();
 		}
-		op.reset();
 		if(op instanceof CompositeDataOperation) {
 			final CompositeDataOperation compositeOp = (CompositeDataOperation) op;
 			if(compositeOp.allSubOperationsDone()) {
@@ -319,7 +317,6 @@ extends HttpStorageDriverBase<I, O> {
 		O nextOp;
 		for(int i = from; i < to; i ++) {
 			nextOp = ops.get(i);
-			nextOp.reset();
 			if(nextOp instanceof CompositeDataOperation) {
 				final CompositeDataOperation compositeOp = (CompositeDataOperation) nextOp;
 				if(compositeOp.allSubOperationsDone()) {
@@ -420,7 +417,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		final String objManifestPath = super.dataUriPath(item, srcPath, compositeDataOp.dstPath(), CREATE);
 		httpHeaders.set(
@@ -446,7 +443,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		final HttpMethod httpMethod = HttpMethod.PUT;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders
@@ -480,7 +477,7 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final String pathUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
-		final String itemName = item.getName();
+		final String itemName = item.name();
 		if(itemName.startsWith(SLASH)) {
 			return namespacePath + itemName;
 		} else {

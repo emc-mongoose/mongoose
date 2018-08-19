@@ -8,22 +8,43 @@ import com.emc.mongoose.system.base.params.EnvParams;
 import com.emc.mongoose.system.base.params.ItemSize;
 import com.emc.mongoose.system.base.params.RunMode;
 import com.emc.mongoose.system.base.params.StorageType;
+import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
+import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
+import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
+import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
+
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.stat.Frequency;
+
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -39,23 +60,6 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
-import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
-import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
-import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 @RunWith(Parameterized.class) public final class CircularAppendTest {
 
 	@Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
@@ -64,9 +68,13 @@ import static org.junit.Assert.assertTrue;
 	}
 
 	private final String SCENARIO_PATH = containerScenarioPath(getClass());
-	private final int EXPECTED_APPEND_COUNT = 100;
-	private final long EXPECTED_COUNT = 100;
-	private final int timeoutInMillis = 1000_000;
+	private final int EXPECTED_APPEND_COUNT = 50;
+	private final long EXPECTED_COUNT = 200;
+	private final int timeoutInMillis = 1_000_000;
+	private final String containerItemOutputDir = MongooseContainer.getContainerItemOutputPath(
+		getClass().getSimpleName()
+	);
+	private final String hostItemOutputDir = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 	private final String itemListFile0 = snakeCaseName(getClass()) + "_0.csv";
 	private final String itemListFile1 = snakeCaseName(getClass()) + "_1.csv";
 	private final String hostItemListFile0 = HOST_SHARE_PATH + "/" + itemListFile0;
@@ -107,17 +115,25 @@ import static org.junit.Assert.assertTrue;
 			case ATMOS:
 			case S3:
 			case SWIFT:
-				final HttpStorageMockContainer storageMock =
-					new HttpStorageMockContainer(HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-						Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
-						HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-						HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
-					);
+				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
+					HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
+					Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
+					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+				);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
+				break;
+			case FS:
+				try {
+					DirWithManyFilesDeleter.deleteExternal(hostItemOutputDir);
+				} catch(final Throwable t) {
+					Assert.fail(t.toString());
+				}
+				args.add("--item-output-path=" + containerItemOutputDir);
 				break;
 		}
 		switch(runMode) {
@@ -132,8 +148,9 @@ import static org.junit.Assert.assertTrue;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer =
-			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
+		testContainer = new MongooseContainer(
+			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+		);
 	}
 
 	@Before
@@ -170,10 +187,7 @@ import static org.junit.Assert.assertTrue;
 	throws Exception {
 		try {
 			final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
-			assertTrue(
-				"There should be more than 0 metrics records in the log file",
-				metricsLogRecords.size() > 0
-			);
+			assertTrue("There should be more than 0 metrics records in the log file", metricsLogRecords.size() > 0);
 			final int outputMetricsAveragePeriod;
 			final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");
 			final long expectedMaxCount = (long) (1.1 * (EXPECTED_APPEND_COUNT * EXPECTED_COUNT));
@@ -183,17 +197,17 @@ import static org.junit.Assert.assertTrue;
 				outputMetricsAveragePeriod = TypeUtil.typeConvert(outputMetricsAveragePeriodRaw, int.class);
 			}
 			testMetricsLogRecords(
-				metricsLogRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
-				itemSize.getValue(), expectedMaxCount, 0,
-				outputMetricsAveragePeriod
+				metricsLogRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+				expectedMaxCount, 0, outputMetricsAveragePeriod
 			);
 		} catch(final FileNotFoundException ignored) {
 			//there may be no metrics file if append step duration is less than 10s
 		}
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
 		assertEquals("There should be 1 total metrics records in the log file", 1, totalMetrcisLogRecords.size());
-		testTotalMetricsLogRecord(totalMetrcisLogRecords.get(0), OpType.UPDATE, concurrency.getValue(),
-			runMode.getNodeCount(), itemSize.getValue(), 0, 0
+		testTotalMetricsLogRecord(
+			totalMetrcisLogRecords.get(0), OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+			itemSize.getValue(), 0, 0
 		);
 		final String stdOutContent = testContainer.stdOutContent();
 		testFinalMetricsStdout(
@@ -223,8 +237,8 @@ import static org.junit.Assert.assertTrue;
 		long itemOffset;
 		long size;
 		final SizeInBytes expectedFinalSize = new SizeInBytes(
-			(EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() / 2,
-			4 * (EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get(),
+			(EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() / 3,
+			(EXPECTED_APPEND_COUNT + 1) * itemSize.getValue().get() * 3,
 			1
 		);
 		final int n = items.size();
@@ -238,7 +252,7 @@ import static org.junit.Assert.assertTrue;
 				}
 			}
 			itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
-			if(! storageType.equals(StorageType.ATMOS)) {
+			if(!storageType.equals(StorageType.ATMOS)) {
 				itemOffset = Long.parseLong(itemRec.get(1), 0x10);
 				assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
 				freq.addValue(itemOffset);
@@ -250,8 +264,8 @@ import static org.junit.Assert.assertTrue;
 			);
 			assertEquals("0/0", itemRec.get(3));
 		}
-		if(! storageType.equals(StorageType.ATMOS)) {
-			assertEquals(EXPECTED_COUNT, freq.getUniqueCount(), EXPECTED_COUNT / 20);
+		if(!storageType.equals(StorageType.ATMOS)) {
+			assertEquals(EXPECTED_COUNT, freq.getUniqueCount(), EXPECTED_COUNT / 10);
 		}
 	}
 }

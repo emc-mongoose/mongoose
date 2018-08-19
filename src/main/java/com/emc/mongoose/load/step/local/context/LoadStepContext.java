@@ -21,6 +21,8 @@ extends Daemon, Output<O> {
 
 	int activeOpCount();
 
+	boolean isDone();
+
 	default Input<O> getInput() {
 		throw new AssertionError("Shouldn't be invoked");
 	}

@@ -14,7 +14,10 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.net.http.HttpStorageDriverBase;
+import static com.emc.mongoose.item.op.Operation.SLASH;
+
 import com.github.akurilov.confuse.Config;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
@@ -33,9 +36,11 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
-import org.apache.logging.log4j.Level;
-import org.xml.sax.SAXException;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import org.apache.logging.log4j.Level;
+
+import org.xml.sax.SAXException;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.parsers.ParserConfigurationException;
@@ -56,25 +61,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
-
-import static com.emc.mongoose.item.op.Operation.SLASH;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  Created by kurila on 01.08.16.
  */
 public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
-	extends HttpStorageDriverBase<I, O> {
+extends HttpStorageDriverBase<I, O> {
 
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	private static final ThreadLocal<SAXParser> THREAD_LOCAL_XML_PARSER = new ThreadLocal<>();
 	private static final ThreadLocal<StringBuilder>
 		BUFF_CANONICAL = ThreadLocal.withInitial(StringBuilder::new),
 		BUCKET_LIST_QUERY = ThreadLocal.withInitial(StringBuilder::new);
-	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(
-		HashMap::new
-																							  );
+	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(HashMap::new);
 	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
 		final SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(UTF_8), AmzS3Api.SIGN_METHOD);
 		try {
@@ -89,8 +89,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 	public AmzS3StorageDriver(
 		final String stepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag,
 		final int batchSize
-							 )
-	throws OmgShootMyFootException, InterruptedException {
+	) throws OmgShootMyFootException, InterruptedException {
 		super(stepId, itemDataInput, storageConfig, verifyFlag, batchSize);
 		requestAuthTokenFunc = null; // do not use
 	}
@@ -98,18 +97,19 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 	@Override
 	protected String requestNewPath(final String path)
 	throws InterruptRunException {
+		final String bucketUri = path.startsWith(SLASH) ? path : SLASH + path;
 		// check the destination bucket if it exists w/ HEAD request
 		final String nodeAddr = storageNodeAddrs[0];
 		HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		final Credential credential = pathToCredMap.getOrDefault(path, this.credential);
-		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, path, credential);
+		final Credential credential = pathToCredMap.getOrDefault(bucketUri, this.credential);
+		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, bucketUri, credential);
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.HEAD, path, Unpooled.EMPTY_BUFFER, reqHeaders,
+			HttpVersion.HTTP_1_1, HttpMethod.HEAD, bucketUri, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
 		);
 		final FullHttpResponse checkBucketResp;
@@ -125,23 +125,21 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		if(checkBucketResp != null) {
 			if(HttpResponseStatus.NOT_FOUND.equals(checkBucketResp.status())) {
 				bucketExistedBefore = false;
-			} else if(! HttpStatusClass.SUCCESS.equals(checkBucketResp.status().codeClass())) {
-				Loggers.ERR.warn(
-					"The bucket checking response is: {}", checkBucketResp.status().toString()
-								);
+			} else if(!HttpStatusClass.SUCCESS.equals(checkBucketResp.status().codeClass())) {
+				Loggers.ERR.warn("The bucket checking response is: {}", checkBucketResp.status().toString());
 			}
 			checkBucketResp.release();
 		}
 		// create the destination bucket if it doesn't exists
-		if(! bucketExistedBefore) {
+		if(!bucketExistedBefore) {
 			reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+			reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 			applyMetaDataHeaders(reqHeaders);
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, path, credential);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketUri, credential);
 			final FullHttpRequest putBucketReq = new DefaultFullHttpRequest(
-				HttpVersion.HTTP_1_1, HttpMethod.PUT, path, Unpooled.EMPTY_BUFFER, reqHeaders,
+				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketUri, Unpooled.EMPTY_BUFFER, reqHeaders,
 				EmptyHttpHeaders.INSTANCE
 			);
 			final FullHttpResponse putBucketResp;
@@ -153,24 +151,22 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
 			}
-			if(! HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
-				Loggers.ERR.warn(
-					"The bucket creating response is: {}", putBucketResp.status().toString()
-								);
+			if(!HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
+				Loggers.ERR.warn("The bucket creating response is: {}", putBucketResp.status().toString());
 				return null;
 			}
 			putBucketResp.release();
 		}
 		// check the bucket versioning state
-		final String bucketVersioningReqUri = path + "?" + AmzS3Api.URL_ARG_VERSIONING;
+		final String bucketVersioningReqUri = bucketUri + "?" + AmzS3Api.URL_ARG_VERSIONING;
 		reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		applyAuthHeaders(reqHeaders, HttpMethod.GET, bucketVersioningReqUri, credential);
 		final FullHttpRequest getBucketVersioningReq = new DefaultFullHttpRequest(
-			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, Unpooled.EMPTY_BUFFER,
-			reqHeaders, EmptyHttpHeaders.INSTANCE
+			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, Unpooled.EMPTY_BUFFER, reqHeaders,
+			EmptyHttpHeaders.INSTANCE
 		);
 		final FullHttpResponse getBucketVersioningResp;
 		try {
@@ -188,9 +184,8 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		final boolean versioningEnabled;
 		if(! HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
 			Loggers.ERR.warn(
-				"The bucket versioning checking response is: {}",
-				getBucketVersioningResp.status().toString()
-							);
+				"The bucket versioning checking response is: {}", getBucketVersioningResp.status().toString()
+			);
 			return null;
 		} else {
 			final String content = getBucketVersioningResp
@@ -204,7 +199,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			// disable bucket versioning
 			reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+			reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, AmzS3Api.VERSIONING_DISABLE_CONTENT.length);
 			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
@@ -223,9 +218,8 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			}
 			if(! HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
 				Loggers.ERR.warn(
-					"The bucket versioning setting response is: {}",
-					putBucketVersioningResp.status().toString()
-								);
+					"The bucket versioning setting response is: {}", putBucketVersioningResp.status().toString()
+				);
 				putBucketVersioningResp.release();
 				return null;
 			}
@@ -234,7 +228,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			// enable bucket versioning
 			reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-			reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+			reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, AmzS3Api.VERSIONING_ENABLE_CONTENT.length);
 			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
 			putBucketVersioningReq = new DefaultFullHttpRequest(
@@ -253,9 +247,8 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			}
 			if(! HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
 				Loggers.ERR.warn(
-					"The bucket versioning setting response is: {}",
-					putBucketVersioningResp.status().toString()
-								);
+					"The bucket versioning setting response is: {}", putBucketVersioningResp.status().toString()
+				);
 				putBucketVersioningResp.release();
 				return null;
 			}
@@ -273,14 +266,13 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
-							 )
-	throws InterruptRunException, IOException {
+	) throws InterruptRunException, IOException {
 		final int countLimit = count < 1 || count > AmzS3Api.MAX_KEYS_LIMIT ? AmzS3Api.MAX_KEYS_LIMIT : count;
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
 		final StringBuilder queryBuilder = BUCKET_LIST_QUERY.get();
@@ -293,7 +285,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			if('?' != queryBuilder.charAt(queryBuilder.length() - 1)) {
 				queryBuilder.append('&');
 			}
-			String lastItemName = lastPrevItem.getName();
+			String lastItemName = lastPrevItem.name();
 			if(lastItemName.contains("/")) {
 				lastItemName = lastItemName.substring(lastItemName.lastIndexOf('/') + 1);
 			}
@@ -360,17 +352,13 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 					httpRequest = getInitMpuRequest(op, nodeAddr);
 				}
 			} else {
-				throw new AssertionError(
-					"Non-create multipart operations are not implemented yet"
-				);
+				throw new AssertionError("Non-create multipart operations are not implemented yet");
 			}
 		} else if(op instanceof PartialDataOperation) {
 			if(OpType.CREATE.equals(opType)) {
 				httpRequest = getUploadPartRequest((PartialDataOperation) op, nodeAddr);
 			} else {
-				throw new AssertionError(
-					"Non-create multipart operations are not implemented yet"
-				);
+				throw new AssertionError("Non-create multipart operations are not implemented yet");
 			}
 		} else {
 			httpRequest = super.httpRequest(op, nodeAddr);
@@ -387,7 +375,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 	protected final HttpMethod pathHttpMethod(final OpType opType) {
 		switch(opType) {
 			case UPDATE:
-				throw new AssertionError("Not implemnted yet");
+				throw new AssertionError("Not implemented yet");
 			case READ:
 				return HttpMethod.GET;
 			case DELETE:
@@ -398,17 +386,13 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 	}
 
 	@Override
-	protected final String tokenUriPath(
-		final I item, final String srcPath, final String dstPath, final OpType opType
-									   ) {
+	protected final String tokenUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
 		throw new AssertionError("Not implemented");
 	}
 
 	@Override
-	protected final String pathUriPath(
-		final I item, final String srcPath, final String dstPath, final OpType opType
-									  ) {
-		final String itemName = item.getName();
+	protected final String pathUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
+		final String itemName = item.name();
 		if(itemName.startsWith(SLASH)) {
 			return itemName;
 		} else {
@@ -433,7 +417,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		final HttpMethod httpMethod = HttpMethod.POST;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
@@ -446,9 +430,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		return httpRequest;
 	}
 
-	private HttpRequest getUploadPartRequest(
-		final PartialDataOperation partialDataOp, final String nodeAddr
-											) {
+	private HttpRequest getUploadPartRequest(final PartialDataOperation partialDataOp, final String nodeAddr) {
 		final I item = (I) partialDataOp.item();
 		final String srcPath = partialDataOp.srcPath();
 		final String uriPath = dataUriPath(item, srcPath, partialDataOp.dstPath(), OpType.CREATE)
@@ -458,7 +440,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		final HttpMethod httpMethod = HttpMethod.PUT;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders
@@ -476,9 +458,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 
 	private final static ThreadLocal<StringBuilder> THREAD_LOCAL_STRB = ThreadLocal.withInitial(StringBuilder::new);
 
-	private FullHttpRequest getCompleteMpuRequest(
-		final CompositeDataOperation mpuTask, final String nodeAddr
-												 ) {
+	private FullHttpRequest getCompleteMpuRequest(final CompositeDataOperation mpuTask, final String nodeAddr) {
 		final StringBuilder content = THREAD_LOCAL_STRB.get();
 		content.setLength(0);
 		content.append(AmzS3Api.COMPLETE_MPU_HEADER);
@@ -503,7 +483,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			"?uploadId=" + uploadId;
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		final HttpMethod httpMethod = HttpMethod.POST;
 		final String contentStr = content.toString();
 		final FullHttpRequest httpRequest = new DefaultFullHttpRequest(
@@ -524,7 +504,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			final CompositeDataOperation compositeOp = (CompositeDataOperation) op;
 			if(compositeOp.allSubOperationsDone()) {
 				Loggers.MULTIPART.info(
-					"{},{},{}", compositeOp.item().getName(),
+					"{},{},{}", compositeOp.item().name(),
 					compositeOp.get(AmzS3Api.KEY_UPLOAD_ID), compositeOp.latency()
 									  );
 			} else {
@@ -554,9 +534,8 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 
 	@Override
 	protected final void applyAuthHeaders(
-		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
-		final Credential credential
-										 ) {
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath, final Credential credential
+	) {
 		final String uid;
 		final String secret;
 		if(credential != null) {
@@ -575,14 +554,11 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
 		final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
 		httpHeaders.set(
-			HttpHeaderNames.AUTHORIZATION,
-			AmzS3Api.AUTH_PREFIX + uid + ':' + BASE64_ENCODER.encodeToString(sigData)
-					   );
+			HttpHeaderNames.AUTHORIZATION, AmzS3Api.AUTH_PREFIX + uid + ':' + BASE64_ENCODER.encodeToString(sigData)
+		);
 	}
 
-	protected String getCanonical(
-		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath
-								 ) {
+	protected String getCanonical(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath) {
 		final StringBuilder buffCanonical = BUFF_CANONICAL.get();
 		buffCanonical.setLength(0); // reset/clear
 		buffCanonical.append(httpMethod.name());

@@ -393,13 +393,13 @@ public interface FileIoHelper {
 			final long updatingRangeSize = updatingRange.size();
 			if(Loggers.MSG.isTraceEnabled()) {
 				Loggers.MSG.trace(
-					"{}: set the file position = {} + {}", fileItem.getName(), rangeOffset(currRangeIdx), countBytesDone
+					"{}: set the file position = {} + {}", fileItem.name(), rangeOffset(currRangeIdx), countBytesDone
 								 );
 			}
 			dstChannel.position(rangeOffset(currRangeIdx) + countBytesDone);
 			countBytesDone += updatingRange.writeToFileChannel(dstChannel, updatingRangeSize - countBytesDone);
 			if(Loggers.MSG.isTraceEnabled()) {
-				Loggers.MSG.trace("{}: {} bytes written totally", fileItem.getName(), countBytesDone);
+				Loggers.MSG.trace("{}: {} bytes written totally", fileItem.name(), countBytesDone);
 			}
 			if(countBytesDone == updatingRangeSize) {
 				op.currRangeIdx(currRangeIdx + 1);
@@ -490,7 +490,7 @@ public interface FileIoHelper {
 		if(srcPath == null || srcPath.isEmpty()) {
 			return null;
 		}
-		final String fileItemName = op.item().getName();
+		final String fileItemName = op.item().name();
 		final Path srcFilePath = fileItemName.startsWith(srcPath) ?
 								 FS.getPath(fileItemName) : FS.getPath(srcPath, fileItemName);
 		try {

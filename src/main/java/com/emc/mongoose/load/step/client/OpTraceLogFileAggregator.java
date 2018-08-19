@@ -1,6 +1,7 @@
 package com.emc.mongoose.load.step.client;
 
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.load.step.client.LoadStepClient.OUTPUT_PROGRESS_PERIOD_MILLIS;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.step.file.FileManager;
@@ -13,6 +14,7 @@ import com.github.akurilov.commons.system.SizeInBytes;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
+
 import org.apache.logging.log4j.Level;
 
 import java.io.Closeable;
@@ -145,7 +147,12 @@ implements Closeable {
 
 	@Override
 	public final void close() {
-		collectToLocal();
+		try(
+			final Instance logCtx = put(KEY_STEP_ID, loadStepId)
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+		) {
+			collectToLocal();
+		}
 		opTraceLogFileSlices.clear();
 	}
 }

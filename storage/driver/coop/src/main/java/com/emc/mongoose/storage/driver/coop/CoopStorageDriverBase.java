@@ -11,7 +11,11 @@ import com.emc.mongoose.item.op.partial.PartialOperation;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.emc.mongoose.storage.driver.StorageDriverBase;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+
 import com.github.akurilov.confuse.Config;
+
 import org.apache.logging.log4j.CloseableThreadContext;
 
 import java.io.EOFException;
@@ -22,9 +26,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<I>>
 extends StorageDriverBase<I, O>
@@ -45,11 +46,7 @@ implements StorageDriver<I, O> {
 		final int inQueueLimit = storageConfig.intVal("driver-limit-queue-input");
 		this.childOpQueue = new ArrayBlockingQueue<>(inQueueLimit);
 		this.inOpQueue = new ArrayBlockingQueue<>(inQueueLimit);
-		if(concurrencyLimit > 0) {
-			this.concurrencyThrottle = new Semaphore(concurrencyLimit, true);
-		} else {
-			this.concurrencyThrottle = new Semaphore(Integer.MAX_VALUE, false);
-		}
+		this.concurrencyThrottle = new Semaphore(concurrencyLimit > 0 ? concurrencyLimit : Integer.MAX_VALUE, true);
 		this.opDispatchTask = new OperationDispatchTask<>(
 			ServiceTaskExecutor.INSTANCE, this, inOpQueue, childOpQueue, stepId, batchSize
 		);
@@ -161,6 +158,7 @@ implements StorageDriver<I, O> {
 
 	@SuppressWarnings("unchecked")
 	protected final void opCompleted(final O op) {
+
 		super.opCompleted(op);
 
 		completedOpCount.increment();

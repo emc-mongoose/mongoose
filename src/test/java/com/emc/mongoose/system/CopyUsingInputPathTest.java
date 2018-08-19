@@ -13,29 +13,6 @@ import com.emc.mongoose.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
-import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
-import com.github.akurilov.commons.reflection.TypeUtil;
-import com.github.akurilov.commons.system.SizeInBytes;
-import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
@@ -49,8 +26,33 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFA
 import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
+
+import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
+import com.github.akurilov.commons.reflection.TypeUtil;
+import com.github.akurilov.commons.system.SizeInBytes;
+
+import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.FileUtils;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class) public final class CopyUsingInputPathTest {
 
@@ -75,8 +77,7 @@ import static org.junit.Assert.assertTrue;
 
 	public CopyUsingInputPathTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
+	) throws Exception {
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
@@ -94,20 +95,12 @@ import static org.junit.Assert.assertTrue;
 		}
 		itemDstPath = itemPathPrefix + "-Dst";
 		itemSrcPath = itemPathPrefix + "-Src";
-		if(storageType.equals(StorageType.FS)) {
-			try {
-				DirWithManyFilesDeleter.deleteExternal(
-					itemSrcPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString()));
-			} catch(final Throwable ignored) {
-			}
-			try {
-				DirWithManyFilesDeleter.deleteExternal(
-					itemDstPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString()));
-			} catch(final Throwable ignored) {
-			}
-		}
-		final List<String> env =
-			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
+		final List<String> env = System
+			.getenv()
+			.entrySet()
+			.stream()
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.toList());
 		env.add("ITEM_SRC_PATH=" + itemSrcPath);
 		env.add("ITEM_DST_PATH=" + itemDstPath);
 		final List<String> args = new ArrayList<>();
@@ -128,6 +121,20 @@ import static org.junit.Assert.assertTrue;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
+			case FS:
+				try {
+					DirWithManyFilesDeleter.deleteExternal(
+						itemSrcPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
+					);
+				} catch(final Throwable ignored) {
+				}
+				try {
+					DirWithManyFilesDeleter.deleteExternal(
+						itemDstPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
+					);
+				} catch(final Throwable ignored) {
+				}
+				break;
 		}
 		switch(runMode) {
 			case DISTRIBUTED:
@@ -141,8 +148,9 @@ import static org.junit.Assert.assertTrue;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer =
-			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
+		testContainer = new MongooseContainer(
+			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+		);
 	}
 
 	@Before
@@ -229,14 +237,15 @@ import static org.junit.Assert.assertTrue;
 		assertEquals("There should be 1 total metrics records in the log file", 1, totalMetricsLogRecords.size());
 		if(storageType.equals(StorageType.FS)) {
 			// some files may remain not written fully
-			testTotalMetricsLogRecord(totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(),
-				runMode.getNodeCount(),
+			testTotalMetricsLogRecord(
+				totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
 				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0,
 				0
 			);
 		} else {
-			testTotalMetricsLogRecord(totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(),
-				runMode.getNodeCount(), itemSize.getValue(), 0, 0
+			testTotalMetricsLogRecord(
+				totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
+				itemSize.getValue(), 0, 0
 			);
 		}
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
@@ -251,8 +260,7 @@ import static org.junit.Assert.assertTrue;
 		if(storageType.equals(StorageType.FS)) {
 			// some files may remain not written fully
 			testMetricsLogRecords(
-				metricsLogRecords, OpType.CREATE,
-				concurrency.getValue(), runMode.getNodeCount(),
+				metricsLogRecords, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
 				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1),
 				0, 0, outputMetricsAveragePeriod
 			);

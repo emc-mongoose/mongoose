@@ -29,27 +29,24 @@ implements Operation<I> {
 	}
 	
 	public OperationImpl(
-		final int originIndex, final OpType opType, final I item, final String srcPath,
-		final String dstPath, final Credential credential
+		final int originIndex, final OpType opType, final I item, final String srcPath, final String dstPath,
+		final Credential credential
 	) {
 		this.originIndex = originIndex;
 		this.opType = opType;
 		this.item = item;
 
-		final String itemName = item.getName();
+		final String itemName = item.name();
 		final int lastSlashIndex = itemName.lastIndexOf(SLASH);
 		if(lastSlashIndex > 0 && lastSlashIndex < itemName.length()) {
 			this.srcPath = itemName.substring(0, lastSlashIndex);
-			item.setName(itemName.substring(lastSlashIndex + 1));
+			item.name(itemName.substring(lastSlashIndex + 1));
 		} else {
 			this.srcPath = srcPath;
 		}
 
 		if(dstPath == null) {
-			if(
-				OpType.READ.equals(opType) || OpType.UPDATE.equals(opType) ||
-				OpType.DELETE.equals(opType)
-			) {
+			if(OpType.READ.equals(opType) || OpType.UPDATE.equals(opType) || OpType.DELETE.equals(opType)) {
 				this.dstPath = this.srcPath;
 			}
 		} else {
@@ -164,8 +161,7 @@ implements Operation<I> {
 		reqTimeDone = START_OFFSET_MICROS + nanoTime() / 1000;
 		if(respTimeStart > 0) {
 			throw new IllegalStateException(
-				"Request is finished (" + reqTimeDone + ") after the response is started (" +
-				respTimeStart + ")"
+				"Request is finished (" + reqTimeDone + ") after the response is started (" + respTimeStart + ")"
 			);
 		}
 	}
@@ -175,8 +171,7 @@ implements Operation<I> {
 		respTimeStart = START_OFFSET_MICROS + nanoTime() / 1000;
 		if(reqTimeDone > respTimeStart) {
 			throw new IllegalStateException(
-				"Response is started (" + respTimeStart + ") before the request is finished (" +
-				reqTimeDone + ")"
+				"Response is started (" + respTimeStart + ") before the request is finished (" + reqTimeDone + ")"
 			);
 		}
 	}

@@ -3,8 +3,9 @@ package com.emc.mongoose.logging;
 import static com.emc.mongoose.Constants.KEY_HOME_DIR;
 import static com.emc.mongoose.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.env.DateUtil.TZ_UTC;
-
 import com.emc.mongoose.concurrent.DaemonBase;
+import com.emc.mongoose.exception.InterruptRunException;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,7 +59,7 @@ public interface LogUtil {
 				}
 			);
 		} catch(final Exception e) {
-			e.printStackTrace(System.err);
+			throw new AssertionError(e);
 		}
 	}
 
@@ -73,12 +74,16 @@ public interface LogUtil {
 		}
 	}
 
-	static void shutdown() {
+	static void shutdown()
+	throws InterruptRunException {
 		try {
 			DaemonBase.closeAll();
-			LogManager.shutdown();
+		} catch(final InterruptRunException e) {
+			throw e;
 		} catch(final Throwable cause) {
 			cause.printStackTrace(System.err);
+		} finally {
+			LogManager.shutdown();
 		}
 	}
 

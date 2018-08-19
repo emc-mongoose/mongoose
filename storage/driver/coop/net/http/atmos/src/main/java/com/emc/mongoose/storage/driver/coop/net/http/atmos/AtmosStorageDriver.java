@@ -63,15 +63,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
 extends HttpStorageDriverBase<I, O> {
 	
-	private static final ThreadLocal<StringBuilder>
-		BUFF_CANONICAL = ThreadLocal.withInitial(StringBuilder::new);
+	private static final ThreadLocal<StringBuilder> BUFF_CANONICAL = ThreadLocal.withInitial(StringBuilder::new);
 	
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 	
-	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(
-		HashMap::new
-	);
+	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(HashMap::new);
 	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
 		try {
 			final SecretKeySpec secretKey = new SecretKeySpec(
@@ -112,7 +109,7 @@ extends HttpStorageDriverBase<I, O> {
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		//reqHeaders.set(KEY_X_EMC_DATE, reqHeaders.get(HttpHeaderNames.DATE));
 		if(fsAccess) {
 			reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess));
@@ -163,7 +160,7 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	@Override
-	protected final HttpMethod getDataHttpMethod(final OpType opType) {
+	protected final HttpMethod dataHttpMethod(final OpType opType) {
 		switch(opType) {
 			case NOOP:
 				return HttpMethod.HEAD;
@@ -221,7 +218,7 @@ extends HttpStorageDriverBase<I, O> {
 		if(CREATE.equals(opType)) {
 			return SUBTENANT_URI_BASE;
 		} else {
-			return SUBTENANT_URI_BASE + '/' + item.getName();
+			return SUBTENANT_URI_BASE + '/' + item.name();
 		}
 	}
 

@@ -44,6 +44,7 @@ import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
+import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
@@ -59,10 +60,18 @@ import static org.junit.Assert.assertTrue;
 		return EnvParams.PARAMS;
 	}
 
-	private final String SCENARIO_PATH = containerScenarioPath(getClass());
-	private final String ITEM_LIST_FILE = CONTAINER_SHARE_PATH + "/" + "read_using_variable_path_items.csv";
-	private final int EXPECTED_COUNT = 10000;
-	private final int timeoutInMillis = 1000_000;
+	private static final String SCENARIO_PATH = containerScenarioPath(ReadUsingVariablePathTest.class);
+	private static final String ITEM_LIST_FILE = CONTAINER_SHARE_PATH + "/"
+		+ snakeCaseName(ReadUsingVariablePathTest.class);
+	private static final int EXPECTED_COUNT = 10_000;
+	private static final int TIMEOUT_MILLIS = 1_000_000;
+	private static final String CONTAINER_ITEM_OUTPUT_PATH = MongooseContainer.getContainerItemOutputPath(
+		ReadUsingVariablePathTest.class.getSimpleName()
+	);
+	private static final String HOST_ITEM_OUTPUT_PATH = MongooseContainer.getHostItemOutputPath(
+		ReadUsingVariablePathTest.class.getSimpleName()
+	);
+
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -71,7 +80,6 @@ import static org.junit.Assert.assertTrue;
 	private final RunMode runMode;
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
-	private final String containerFileOutputPath;
 
 	public ReadUsingVariablePathTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
@@ -86,37 +94,35 @@ import static org.junit.Assert.assertTrue;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
-		containerFileOutputPath = CONTAINER_SHARE_PATH + '/' + stepId;
-		if(storageType.equals(StorageType.FS)) {
-			try {
-				DirWithManyFilesDeleter.deleteExternal(
-					containerFileOutputPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString()));
-			} catch(final Throwable ignored) {
-			}
-		}
 		new File(ITEM_LIST_FILE.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())).delete();
 		final List<String> env =
 			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
 		env.add("ITEM_DATA_SIZE=" + itemSize.getValue());
 		env.add("ITEM_LIST_FILE=" + ITEM_LIST_FILE);
-		env.add("ITEM_OUTPUT_PATH=" + containerFileOutputPath);
+		env.add("ITEM_OUTPUT_PATH=" + CONTAINER_ITEM_OUTPUT_PATH);
 		env.add("STEP_LIMIT_COUNT=" + EXPECTED_COUNT);
 		final List<String> args = new ArrayList<>();
 		switch(storageType) {
 			case ATMOS:
 			case S3:
 			case SWIFT:
-				final HttpStorageMockContainer storageMock =
-					new HttpStorageMockContainer(HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-						Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
-						HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-						HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
-					);
+				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
+					HttpStorageMockContainer.DEFAULT_PORT, false, null, null, Character.MAX_RADIX,
+					HttpStorageMockContainer.DEFAULT_CAPACITY, HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
+					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+				);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
+				break;
+			case FS:
+				try {
+					DirWithManyFilesDeleter.deleteExternal(HOST_ITEM_OUTPUT_PATH);
+				} catch(final Exception e) {
+					e.printStackTrace(System.err);
+				}
 				break;
 		}
 		switch(runMode) {
@@ -131,8 +137,9 @@ import static org.junit.Assert.assertTrue;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer =
-			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
+		testContainer = new MongooseContainer(
+			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+		);
 	}
 
 	@Before
@@ -141,7 +148,7 @@ import static org.junit.Assert.assertTrue;
 		storageMocks.values().forEach(AsyncRunnableBase::start);
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		testContainer.start();
-		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+		testContainer.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
 	@After
@@ -168,7 +175,7 @@ import static org.junit.Assert.assertTrue;
 	public final void test()
 	throws Exception {
 		final LongAdder ioTraceRecCount = new LongAdder();
-		final int baseOutputPathLen = containerFileOutputPath.length();
+		final int baseOutputPathLen = CONTAINER_ITEM_OUTPUT_PATH.length();
 		// Item path should look like:
 		// ${FILE_OUTPUT_PATH}/1/b/0123456789abcdef
 		// ${FILE_OUTPUT_PATH}/b/fedcba9876543210
@@ -176,7 +183,7 @@ import static org.junit.Assert.assertTrue;
 		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
 			testIoTraceRecord(ioTraceRec, OpType.READ.ordinal(), itemSize.getValue());
 			String nextFilePath = ioTraceRec.get("ItemPath");
-			assertTrue(nextFilePath.startsWith(containerFileOutputPath));
+			assertTrue(nextFilePath.startsWith(CONTAINER_ITEM_OUTPUT_PATH));
 			nextFilePath = nextFilePath.substring(baseOutputPathLen);
 			final Matcher m = subPathPtrn.matcher(nextFilePath);
 			assertTrue(m.matches());

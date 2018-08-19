@@ -17,8 +17,7 @@ extends AsyncValueUpdatingSupplier<String> {
 	public AsyncCurrentDateSupplier(final FibersExecutor executor)
 	throws OmgDoesNotPerformException {
 		super(
-			executor,
-			DateUtil.FMT_DATE_RFC1123.format(new Date(System.currentTimeMillis())),
+			executor, DateUtil.FMT_DATE_RFC1123.format(new Date(System.currentTimeMillis())),
 			new CurrentDateInitCallable()
 		);
 	}
