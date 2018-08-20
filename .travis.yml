@@ -30,11 +30,11 @@ before_install:
 jobs:
   include:
 
-    #- stage: "Unit tests"
-    #  script: "./gradlew test"
+    - stage: "Unit tests"
+      script: "./gradlew test"
 
-    #- stage: "Integration tests"
-    #  script: "./gradlew integrationTest"
+    - stage: "Integration tests"
+      script: "./gradlew integrationTest"
 
     - stage: "Docker images"
       script:
