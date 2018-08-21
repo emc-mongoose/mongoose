@@ -489,14 +489,15 @@ public interface LogValidationUtil {
 		final JavaType parsedType = mapper.getTypeFactory().constructArrayType(Map.class);
 		boolean found = false;
 		while(matcher.find()) {
-			final Map<String, Object> parsedContent = ((Map<String, Object>[])
-				mapper.readValue(matcher.group("content"), parsedType))[0];
+			final Map<String, Object> parsedContent = ((Map<String, Object>[]) mapper
+				.readValue(matcher.group("content"), parsedType))
+				[0];
 			stepId = (String) parsedContent.get(LogPatterns.KEY_STEP_ID);
-			if(! expectedStepId.equals(stepId)) {
+			if(!expectedStepId.equals(stepId)) {
 				continue;
 			}
 			opTypeStr = (String) parsedContent.get(LogPatterns.KEY_OP_TYPE);
-			if(! expectedOpType.name().equals(opTypeStr)) {
+			if(!expectedOpType.name().equals(opTypeStr)) {
 				continue;
 			}
 			found = true;
@@ -506,9 +507,11 @@ public interface LogValidationUtil {
 			assertEquals(Integer.toString(concurrencyLimit), expectedConcurrency, concurrencyLimit);
 			nodeCount = (int) parsedContent.get(LogPatterns.KEY_NODE_COUNT);
 			assertEquals(Integer.toString(nodeCount), expectedNodeCount, nodeCount);
-			concurrencyMean = (double)
-				((Map) ((Map) parsedContent.get(LogPatterns.KEY_CONCURRENCY)).get(LogPatterns.KEY_CONCURRENCY_ACTUAL))
-					.get(LogPatterns.KEY_MEAN);
+			concurrencyMean = (double) (
+				(Map) (
+					(Map) parsedContent.get(LogPatterns.KEY_CONCURRENCY)
+				).get(LogPatterns.KEY_CONCURRENCY_ACTUAL)
+			).get(LogPatterns.KEY_MEAN);
 			if(expectedConcurrency > 0) {
 				assertTrue(concurrencyMean <= nodeCount * expectedConcurrency);
 			} else {

@@ -171,7 +171,7 @@ import static org.junit.Assert.assertTrue;
 		testContainer.start();
 		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
 		duration = System.currentTimeMillis() - duration;
-		finishedInTime = (TimeUnit.MILLISECONDS.toSeconds(duration) <= timeLimitInSec + 5);
+		finishedInTime = (TimeUnit.MILLISECONDS.toSeconds(duration) <= timeLimitInSec + 10);
 		stdOutContent = testContainer.stdOutContent();
 	}
 
@@ -227,10 +227,10 @@ import static org.junit.Assert.assertTrue;
 		modLayerAndMask = itemRec.get(3);
 		assertEquals("0/0", modLayerAndMask);
 		testFinalMetricsStdout(
-			stdOutContent, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), stepId
+			stdOutContent, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), stepId
 		);
 		testFinalMetricsTableRowStdout(
-			stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(), concurrency.getValue(), 0, 60,
+			stdOutContent, stepId, OpType.READ, runMode.getNodeCount(), concurrency.getValue(), 0, 60,
 			itemSize.getValue()
 		);
 		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
