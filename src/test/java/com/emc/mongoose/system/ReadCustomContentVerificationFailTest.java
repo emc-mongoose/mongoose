@@ -175,13 +175,12 @@ import static org.junit.Assert.assertTrue;
 		final LongAdder ioTraceRecCount = new LongAdder();
 		final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
 			assertEquals(
-				"Record #" + ioTraceRecCount.sum() + ": unexpected operation type " + ioTraceRec.get("OpTypeCode"),
-				OpType.READ, OpType.values()[Integer.parseInt(ioTraceRec.get("OpTypeCode"))]
+				"Record #" + ioTraceRecCount.sum() + ": unexpected operation type " + ioTraceRec.get(2),
+				OpType.READ, OpType.values()[Integer.parseInt(ioTraceRec.get(2))]
 			);
 			assertEquals(
-				"Record #" + ioTraceRecCount.sum() + ": unexpected status code " + ioTraceRec.get("StatusCode"),
-				Operation.Status.RESP_FAIL_CORRUPT,
-				Operation.Status.values()[Integer.parseInt(ioTraceRec.get("StatusCode"))]
+				"Record #" + ioTraceRecCount.sum() + ": unexpected status code " + ioTraceRec.get(3),
+				Operation.Status.RESP_FAIL_CORRUPT, Operation.Status.values()[Integer.parseInt(ioTraceRec.get(3))]
 			);
 			ioTraceRecCount.increment();
 		};

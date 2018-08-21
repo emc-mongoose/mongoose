@@ -183,12 +183,12 @@ import static org.junit.Assert.assertEquals;
 		final LongAdder ioTraceRecCount = new LongAdder();
 		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
 			assertEquals(
-				"Record #" + ioTraceRecCount.sum() + ": unexpected operation type " + ioTraceRec.get("OpTypeCode"),
-				OpType.READ, OpType.values()[Integer.parseInt(ioTraceRec.get("OpTypeCode"))]
+				"Record #" + ioTraceRecCount.sum() + ": unexpected operation type " + ioTraceRec.get(2),
+				OpType.READ, OpType.values()[Integer.parseInt(ioTraceRec.get(2))]
 			);
 			assertEquals(
-				"Record #" + ioTraceRecCount.sum() + ": unexpected status code " + ioTraceRec.get("StatusCode"),
-				Operation.Status.SUCC, Operation.Status.values()[Integer.parseInt(ioTraceRec.get("StatusCode"))]
+				"Record #" + ioTraceRecCount.sum() + ": unexpected status code " + ioTraceRec.get(3),
+				Operation.Status.SUCC, Operation.Status.values()[Integer.parseInt(ioTraceRec.get(3))]
 			);
 		};
 		testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
@@ -203,7 +203,8 @@ import static org.junit.Assert.assertEquals;
 		testFinalMetricsStdout(
 			stdOutContent, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), stepId
 		);
-		testMetricsTableStdout(stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
+		testMetricsTableStdout(
+			stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
 			new HashMap<OpType, Integer>() {{
 				put(OpType.CREATE, concurrency.getValue());
 				put(OpType.UPDATE, concurrency.getValue());

@@ -30,11 +30,11 @@ before_install:
 jobs:
   include:
 
-    - stage: "Unit tests"
-      script: "./gradlew test"
-
-    - stage: "Integration tests"
-      script: "./gradlew integrationTest"
+#    - stage: "Unit tests"
+#      script: "./gradlew test"
+#
+#    - stage: "Integration tests"
+#      script: "./gradlew integrationTest"
 
     - stage: "Docker images"
       script:
@@ -65,7 +65,7 @@ jobs:
 
     - stage: "System tests"
 
-    # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew systemTest --tests com.emc.mongoose.system.ChainWithDelayTest systemTest
+    # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew systemTest --tests com.emc.mongoose.system.ChainWithDelayTest
       env:
       - TEST=ChainWithDelayTest
       - STORAGE_TYPE=atmos,s3
@@ -84,7 +84,7 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew systemTest --tests com.emc.mongoose.system.CircularReadLimitByTimeTest systemTest
+    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew systemTest --tests com.emc.mongoose.system.CircularReadLimitByTimeTest
     - env:
       - TEST=CircularReadLimitByTimeTest
       - STORAGE_TYPE=fs,s3

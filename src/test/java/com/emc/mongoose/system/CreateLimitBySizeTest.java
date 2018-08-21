@@ -221,11 +221,11 @@ import static org.junit.Assert.assertTrue;
 		if(storageType.equals(StorageType.FS)) {
 			ioTraceRecFunc = ioTraceRecord -> {
 				File nextDstFile;
-				final String nextItemPath = ioTraceRecord.get("ItemPath");
+				final String nextItemPath = ioTraceRecord.get(1);
 				final String nextItemId = nextItemPath.substring(nextItemPath.lastIndexOf('/') + 1);
 				nextDstFile = Paths.get(hostItemOutputPath, nextItemId).toFile();
-				//next line is commented because #issue-1252 "The Size limit is violated" isn't resolved -> Mongoose doesn't stop in time
-				//assertTrue("File \"" + nextDstFile + "\" doesn't exist", nextDstFile.exists());
+				// FIXME: next line is commented because issue #1252 isn't resolved
+				// assertTrue("File \"" + nextDstFile + "\" doesn't exist", nextDstFile.exists());
 				assertTrue(
 					"File (" + nextItemPath + ") size (" + nextDstFile.length() + " is not equal to the configured: " +
 						itemSize.getValue(), itemSize.getValue().get() >= nextDstFile.length());

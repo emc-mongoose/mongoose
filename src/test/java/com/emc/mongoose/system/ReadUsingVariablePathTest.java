@@ -190,8 +190,8 @@ import static org.junit.Assert.assertTrue;
 			ioTraceRecCount.increment();
 		};
 		testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
-		assertEquals("There should be more than 1 record in the I/O trace log file", EXPECTED_COUNT,
-			ioTraceRecCount.sum()
+		assertEquals(
+			"There should be more than 1 record in the I/O trace log file", EXPECTED_COUNT, ioTraceRecCount.sum()
 		);
 		final int outputMetricsAveragePeriod;
 		final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");

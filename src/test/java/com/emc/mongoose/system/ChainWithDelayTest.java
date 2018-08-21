@@ -218,11 +218,11 @@ import static org.junit.Assert.fail;
 
 			@Override
 			public final void accept(final CSVRecord ioTraceRec) {
-				storageNode = ioTraceRec.get("StorageNode");
-				itemPath = ioTraceRec.get("ItemPath");
-				opType = OpType.values()[Integer.parseInt(ioTraceRec.get("OpTypeCode"))];
-				reqTimeStart = Long.parseLong(ioTraceRec.get("ReqTimeStart[us]"));
-				duration = Long.parseLong(ioTraceRec.get("Duration[us]"));
+				storageNode = ioTraceRec.get(0);
+				itemPath = ioTraceRec.get(1);
+				opType = OpType.values()[Integer.parseInt(ioTraceRec.get(2))];
+				reqTimeStart = Long.parseLong(ioTraceRec.get(4));
+				duration = Long.parseLong(ioTraceRec.get(5));
 				switch(opType) {
 					case CREATE:
 						assertTrue(storageNode.startsWith(zone1Addr));

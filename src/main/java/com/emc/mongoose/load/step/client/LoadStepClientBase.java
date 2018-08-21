@@ -381,8 +381,9 @@ implements LoadStepClient {
 									stepSlice
 								);
 							} catch(final InterruptedException e) {
-								e.printStackTrace(System.err);
 								throw new InterruptRunException(e);
+							} catch(final IllegalStateException e) {
+								LogUtil.exception(Level.DEBUG, e, "{}: failure in the await method", id());
 							}
 						}
 					}
