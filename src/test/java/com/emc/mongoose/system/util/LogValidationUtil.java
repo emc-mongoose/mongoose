@@ -149,9 +149,8 @@ public interface LogValidationUtil {
 		}
 	}
 
-	static void testIoTraceLogFile(
-		final File logFile, final Consumer<CSVRecord> csvRecordTestFunc
-	) throws IOException {
+	static void testOpTraceLogFile(final File logFile, final Consumer<CSVRecord> csvRecordTestFunc)
+	throws IOException {
 		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
 			try(final CSVParser csvParser = CSVFormat.RFC4180.parse(br)) {
 				csvParser.forEach(csvRecordTestFunc);
@@ -164,7 +163,7 @@ public interface LogValidationUtil {
 	) throws IOException {
 		final File logFile = getLogFile(stepId, "op.trace.csv");
 		waitLogFile(logFile);
-		testIoTraceLogFile(logFile, csvRecordTestFunc);
+		testOpTraceLogFile(logFile, csvRecordTestFunc);
 	}
 
 	static List<CSVRecord> getPartsUploadRecords(final String stepId)
@@ -182,7 +181,7 @@ public interface LogValidationUtil {
 			assertTrue(expectedLoadJobTime + metricsPeriodSec >= countRecords * metricsPeriodSec);
 		}
 		Date lastTimeStamp = null, nextDateTimeStamp;
-		String OpTypeStr;
+		String opTypeStr;
 		int concurrencyLevel;
 		int nodeCount;
 		int concurrencyCurr;
@@ -208,8 +207,8 @@ public interface LogValidationUtil {
 				);
 			}
 			lastTimeStamp = nextDateTimeStamp;
-			OpTypeStr = nextRecord.get("OpType").toUpperCase();
-			assertEquals(expectedOpType.name(), OpTypeStr);
+			opTypeStr = nextRecord.get("OpType").toUpperCase();
+			assertEquals(expectedOpType.name(), opTypeStr);
 			concurrencyLevel = Integer.parseInt(nextRecord.get("Concurrency"));
 			assertEquals("Expected concurrency level: " + expectedConcurrency, expectedConcurrency, concurrencyLevel);
 			nodeCount = Integer.parseInt(nextRecord.get("NodeCount"));

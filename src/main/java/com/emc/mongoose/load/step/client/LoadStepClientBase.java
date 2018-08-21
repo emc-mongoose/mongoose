@@ -118,11 +118,13 @@ implements LoadStepClient {
 	private static List<String> remoteNodeAddrs(final Config config) {
 		final Config nodeConfig = config.configVal("load-step-node");
 		final int nodePort = nodeConfig.intVal("port");
-		return nodeConfig
-			.<String>listVal("addrs")
-			.stream()
-			.map(addr -> NetUtil.addPortIfMissing(addr, nodePort))
-			.collect(Collectors.toList());
+		final List<String> nodeAddrs = nodeConfig.listVal("addrs");
+		return nodeAddrs == null || nodeAddrs.isEmpty() ?
+			Collections.EMPTY_LIST :
+			nodeAddrs
+				.stream()
+				.map(addr -> NetUtil.addPortIfMissing(addr, nodePort))
+				.collect(Collectors.toList());
 	}
 
 	private static void initFileManagers(final List<String> nodeAddrs, final List<FileManager> fileMgrsDst) {
@@ -262,10 +264,34 @@ implements LoadStepClient {
 			final long countLimit = config.longVal("load-step-limit-count");
 			if(countLimit > 0) {
 				ConfigSliceUtil.sliceLongValue(countLimit, configSlices, "load-step-limit-count");
+				configSlices
+					.stream()
+					.mapToLong(configSlice -> configSlice.longVal("load-step-limit-count"))
+					.filter(countLimitSlice -> countLimitSlice == 0)
+					.findAny()
+					.ifPresent(
+						countLimitSlice -> Loggers.MSG.fatal(
+							"{}: the count limit ({}) is too small to be sliced among the {} nodes, the load step "
+								+ "won't work correctly",
+							id(), countLimit, sliceCount
+						)
+					);
 			}
 			final long countFailLimit = config.longVal("load-step-limit-fail-count");
 			if(countFailLimit > 0) {
 				ConfigSliceUtil.sliceLongValue(countFailLimit, configSlices, "load-step-limit-fail-count");
+				configSlices
+					.stream()
+					.mapToLong(configSlice -> configSlice.longVal("load-step-limit-fail-count"))
+					.filter(failCountLimitSlice -> failCountLimitSlice == 0)
+					.findAny()
+					.ifPresent(
+						failCountLimitSlice -> Loggers.MSG.error(
+							"{}: the failures count limit ({}) is too small to be sliced among the {} nodes, the load "
+								+ "step may not work correctly",
+							id(), countLimit, sliceCount
+						)
+					);
 			}
 			final double rateLimit = config.doubleVal("load-op-limit-rate");
 			if(rateLimit > 0) {

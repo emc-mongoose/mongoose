@@ -229,13 +229,13 @@ import static org.junit.Assert.assertTrue;
 	public final void test()
 	throws Exception {
 		assertEquals("Container exit code should be 0", 0, containerExitCode);
-		final LongAdder ioTraceRecCount = new LongAdder();
-		final Consumer<CSVRecord> ioTraceRecFunc;
+		final LongAdder opTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> opTraceRecFunc;
 		final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(stepId);
 		if(storageType.equals(StorageType.FS)) {
-			ioTraceRecFunc = ioTraceRecord -> {
+			opTraceRecFunc = opTraceRecord -> {
 				File nextDstFile;
-				final String nextItemPath = ioTraceRecord.get(1);
+				final String nextItemPath = opTraceRecord.get(1);
 				final String nextItemId = nextItemPath.substring(nextItemPath.lastIndexOf('/') + 1);
 				nextDstFile = Paths.get(hostItemOutputPath, nextItemId).toFile();
 				// FIXME: next line is commented because issue #1252 isn't resolved
@@ -243,21 +243,21 @@ import static org.junit.Assert.assertTrue;
 				assertTrue(
 					"File (" + nextItemPath + ") size (" + nextDstFile.length() + " is not equal to the configured: " +
 						itemSize.getValue(), itemSize.getValue().get() >= nextDstFile.length());
-				ioTraceRecCount.increment();
+				opTraceRecCount.increment();
 			};
 		} else {
 			final String nodeAddr = storageMocks.keySet().iterator().next();
-			ioTraceRecFunc = ioTraceRec -> {
-				testOpTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), itemSize.getValue());
-				HttpStorageMockUtil.assertItemExists(nodeAddr, ioTraceRec.get("ItemPath"),
-					Long.parseLong(ioTraceRec.get("TransferSize"))
+			opTraceRecFunc = opTraceRec -> {
+				testOpTraceRecord(opTraceRec, OpType.CREATE.ordinal(), itemSize.getValue());
+				HttpStorageMockUtil.assertItemExists(nodeAddr, opTraceRec.get(1),
+					Long.parseLong(opTraceRec.get(8))
 				);
-				ioTraceRecCount.increment();
+				opTraceRecCount.increment();
 			};
 		}
-		testOpTraceLogRecords(stepId, ioTraceRecFunc);
+		testOpTraceLogRecords(stepId, opTraceRecFunc);
 		//100% because #issue-1252 "The Size limit is violated" isn't resolved -> Mongoose doesn't stop in time
-		assertEquals(expectedCount, ioTraceRecCount.sum(), requiredAccuracy * expectedCount);
+		assertEquals(expectedCount, opTraceRecCount.sum(), requiredAccuracy * expectedCount);
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);

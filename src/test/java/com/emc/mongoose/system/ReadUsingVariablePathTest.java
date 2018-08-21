@@ -174,24 +174,24 @@ import static org.junit.Assert.assertTrue;
 	@Test
 	public final void test()
 	throws Exception {
-		final LongAdder ioTraceRecCount = new LongAdder();
+		final LongAdder opTraceRecCount = new LongAdder();
 		final int baseOutputPathLen = CONTAINER_ITEM_OUTPUT_PATH.length();
 		// Item path should look like:
 		// ${FILE_OUTPUT_PATH}/1/b/0123456789abcdef
 		// ${FILE_OUTPUT_PATH}/b/fedcba9876543210
 		final Pattern subPathPtrn = Pattern.compile("(/[0-9a-f]){1,2}/[0-9a-f]{16}");
-		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
-			testOpTraceRecord(ioTraceRec, OpType.READ.ordinal(), itemSize.getValue());
-			String nextFilePath = ioTraceRec.get("ItemPath");
+		final Consumer<CSVRecord> opTraceReqTestFunc = opTraceRec -> {
+			testOpTraceRecord(opTraceRec, OpType.READ.ordinal(), itemSize.getValue());
+			String nextFilePath = opTraceRec.get(1);
 			assertTrue(nextFilePath.startsWith(CONTAINER_ITEM_OUTPUT_PATH));
 			nextFilePath = nextFilePath.substring(baseOutputPathLen);
 			final Matcher m = subPathPtrn.matcher(nextFilePath);
 			assertTrue(m.matches());
-			ioTraceRecCount.increment();
+			opTraceRecCount.increment();
 		};
-		testOpTraceLogRecords(stepId, ioTraceReqTestFunc);
+		testOpTraceLogRecords(stepId, opTraceReqTestFunc);
 		assertEquals(
-			"There should be more than 1 record in the I/O trace log file", EXPECTED_COUNT, ioTraceRecCount.sum()
+			"There should be more than 1 record in the I/O trace log file", EXPECTED_COUNT, opTraceRecCount.sum()
 		);
 		final int outputMetricsAveragePeriod;
 		final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");

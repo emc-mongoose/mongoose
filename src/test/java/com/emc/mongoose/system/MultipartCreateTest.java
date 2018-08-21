@@ -70,8 +70,7 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 	private final SizeInBytes sizeLimit;
 	private final Config config;
 	private final String containerItemOutputPath;
-	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName()
-		+ ".csv";
+	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private final int averagePeriod;
 	private String stdOutContent = null;
