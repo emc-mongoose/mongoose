@@ -30,11 +30,11 @@ before_install:
 jobs:
   include:
 
-#    - stage: "Unit tests"
-#      script: "./gradlew test"
-#
-#    - stage: "Integration tests"
-#      script: "./gradlew integrationTest"
+    - stage: "Unit tests"
+      script: "./gradlew test"
+
+    - stage: "Integration tests"
+      script: "./gradlew integrationTest"
 
     - stage: "Docker images"
       script:
@@ -47,21 +47,21 @@ jobs:
       - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
       - docker push $REPO:$TAG
 
-#    - script:
-#      - export REPO=emcmongoose/mongoose-scripting-groovy
-#      - docker login -u $DOCKER_USER -p $DOCKER_PASS
-#      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-groovy -t $REPO:$COMMIT .
-#      - docker tag $REPO:$COMMIT $REPO:$TAG
-#      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-#      - docker push emcmongoose/mongoose-scripting-groovy:$TAG
-#
-#    - script:
-#      - export REPO=emcmongoose/mongoose-scripting-jython
-#      - docker login -u $DOCKER_USER -p $DOCKER_PASS
-#      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-jython -t $REPO:$COMMIT .
-#      - docker tag $REPO:$COMMIT $REPO:$TAG
-#      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-#      - docker push emcmongoose/mongoose-scripting-jython:$TAG
+    - script:
+      - export REPO=emcmongoose/mongoose-scripting-groovy
+      - docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-groovy -t $REPO:$COMMIT .
+      - docker tag $REPO:$COMMIT $REPO:$TAG
+      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+      - docker push emcmongoose/mongoose-scripting-groovy:$TAG
+
+    - script:
+      - export REPO=emcmongoose/mongoose-scripting-jython
+      - docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-jython -t $REPO:$COMMIT .
+      - docker tag $REPO:$COMMIT $REPO:$TAG
+      - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+      - docker push emcmongoose/mongoose-scripting-jython:$TAG
 
     - stage: "System tests"
 
