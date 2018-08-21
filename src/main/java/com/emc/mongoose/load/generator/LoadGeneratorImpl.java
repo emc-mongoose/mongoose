@@ -104,6 +104,7 @@ implements LoadGenerator<I, O> {
 		int n = batchSize - pendingOpCount;
 
 		try {
+
 			if(n > 0) { // the tasks buffer has free space for the new tasks
 				if(itemInputFinishFlag) { // items input was exhausted
 					if(!recycleFlag) { // never recycled -> recycling is not enabled
@@ -140,62 +141,71 @@ implements LoadGenerator<I, O> {
 					}
 				}
 			}
-			if(pendingOpCount > 0) {
-				n = pendingOpCount;
-				// acquire the permit for all the throttles
-				for(int i = 0; i < throttles.length; i++) {
-					final Object throttle = throttles[i];
-					if(throttle instanceof Throttle) {
-						n = ((Throttle) throttle).tryAcquire(n);
-					} else if(throttle instanceof IndexThrottle) {
-						n = ((IndexThrottle) throttle).tryAcquire(originIndex, n);
-					} else {
-						throw new AssertionError("Unexpected throttle type: " + throttle.getClass());
-					}
-				}
-				// try to output
-				if(n > 0) {
-					if(n == 1) { // single mode branch
-						try {
-							final O op = opBuff.get(0);
-							if(opOutput.put(op)) {
-								outputOpCounter.increment();
-								if(pendingOpCount == 1) {
-									opBuff.clear();
-								} else {
-									opBuff.remove(0);
-								}
-							}
-						} catch(final EOFException e) {
-							Loggers.MSG.debug("{}: finish due to output's EOF", name);
-							outputFinishFlag = true;
-						} catch(final IOException e) {
-							LogUtil.exception(Level.ERROR, e, "{}: operation output failure", name);
+
+			if(outputOpCounter.sum() < countLimit) {
+
+				if(pendingOpCount > 0) {
+
+					n = pendingOpCount;
+
+					// acquire the permit for all the throttles
+					for(int i = 0; i < throttles.length; i++) {
+						final Object throttle = throttles[i];
+						if(throttle instanceof Throttle) {
+							n = ((Throttle) throttle).tryAcquire(n);
+						} else if(throttle instanceof IndexThrottle) {
+							n = ((IndexThrottle) throttle).tryAcquire(originIndex, n);
+						} else {
+							throw new AssertionError("Unexpected throttle type: " + throttle.getClass());
 						}
-					} else { // batch mode branch
-						try {
-							n = opOutput.put(opBuff, 0, n);
-							outputOpCounter.add(n);
-							if(n < pendingOpCount) {
-								opBuff.removeFirst(n);
-							} else {
-								opBuff.clear();
-							}
-						} catch(final EOFException e) {
-							Loggers.MSG.debug("{}: finish due to output's EOF", name);
-							outputFinishFlag = true;
-						} catch(final RemoteException e) {
-							final Throwable cause = e.getCause();
-							if(cause instanceof EOFException) {
+					}
+
+					// try to output
+					if(n > 0) {
+						if(n == 1) { // single mode branch
+							try {
+								final O op = opBuff.get(0);
+								if(opOutput.put(op)) {
+									outputOpCounter.increment();
+									if(pendingOpCount == 1) {
+										opBuff.clear();
+									} else {
+										opBuff.remove(0);
+									}
+								}
+							} catch(final EOFException e) {
 								Loggers.MSG.debug("{}: finish due to output's EOF", name);
 								outputFinishFlag = true;
-							} else {
-								LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
-								e.printStackTrace(System.err);
+							} catch(final IOException e) {
+								LogUtil.exception(Level.ERROR, e, "{}: operation output failure", name);
+							}
+						} else { // batch mode branch
+							try {
+								n = opOutput.put(opBuff, 0, n);
+								outputOpCounter.add(n);
+								if(n < pendingOpCount) {
+									opBuff.removeFirst(n);
+								} else {
+									opBuff.clear();
+								}
+							} catch(final EOFException e) {
+								Loggers.MSG.debug("{}: finish due to output's EOF", name);
+								outputFinishFlag = true;
+							} catch(final RemoteException e) {
+								final Throwable cause = e.getCause();
+								if(cause instanceof EOFException) {
+									Loggers.MSG.debug("{}: finish due to output's EOF", name);
+									outputFinishFlag = true;
+								} else {
+									LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
+									e.printStackTrace(System.err);
+								}
 							}
 						}
 					}
 				}
+			} else { // operations count limit is reached
+				outputFinishFlag = true;
 			}
 
 		} catch(final EOFException ok) {

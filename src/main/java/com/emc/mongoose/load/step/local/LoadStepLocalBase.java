@@ -116,6 +116,7 @@ extends LoadStepBase {
 							throw new InterruptRunException(e);
 						} catch(final Exception e) {
 							LogUtil.exception(Level.WARN, e, "Await call failure on the step context \"{}\"", stepCtx);
+							e.printStackTrace();
 						}
 					}
 				}

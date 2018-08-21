@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
 	private final int EXPECTED_APPEND_COUNT = 50;
 	private final long EXPECTED_COUNT = 200;
 	private final int timeoutInMillis = 1_000_000;
-	private final String containerItemOutputDir = MongooseContainer.getContainerItemOutputPath(
+	private final String containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(
 		getClass().getSimpleName()
 	);
 	private final String hostItemOutputDir = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
@@ -128,12 +128,12 @@ import java.util.stream.Collectors;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
+				args.add("--item-output-path=" + containerItemOutputPath);
 				try {
 					DirWithManyFilesDeleter.deleteExternal(hostItemOutputDir);
 				} catch(final Throwable t) {
 					Assert.fail(t.toString());
 				}
-				args.add("--item-output-path=" + containerItemOutputDir);
 				break;
 		}
 		switch(runMode) {
@@ -190,7 +190,7 @@ import java.util.stream.Collectors;
 			assertTrue("There should be more than 0 metrics records in the log file", metricsLogRecords.size() > 0);
 			final int outputMetricsAveragePeriod;
 			final Object outputMetricsAveragePeriodRaw = BUNDLED_DEFAULTS.val("output-metrics-average-period");
-			final long expectedMaxCount = (long) (1.1 * (EXPECTED_APPEND_COUNT * EXPECTED_COUNT));
+			final long expectedMaxCount = (long) (1.2 * (EXPECTED_APPEND_COUNT * EXPECTED_COUNT));
 			if(outputMetricsAveragePeriodRaw instanceof String) {
 				outputMetricsAveragePeriod = (int) TimeUtil.getTimeInSeconds((String) outputMetricsAveragePeriodRaw);
 			} else {
