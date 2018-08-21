@@ -62,9 +62,6 @@ import static org.junit.Assert.assertTrue;
 	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private long duration;
 	private String stdOutContent = null;
-	private final String containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(
-		getClass().getSimpleName()
-	);
 	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 
 	public WeightedLoadTest(
@@ -109,7 +106,6 @@ import static org.junit.Assert.assertTrue;
 				env.add("ITEM_OUTPUT_PATH=" + stepId);
 				break;
 			case FS:
-				env.add("ITEM_OUTPUT_PATH=" + containerItemOutputPath);
 				try {
 					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
 				} catch(final Exception e) {

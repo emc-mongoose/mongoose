@@ -79,7 +79,6 @@ import static org.junit.Assert.assertTrue;
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
 	private final Config config;
-	private final String containerItemOutputPath;
 	private final String hostItemOutputPath;
 	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName()
 		+ ".csv";
@@ -101,7 +100,6 @@ import static org.junit.Assert.assertTrue;
 			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-		containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
 		hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
@@ -138,7 +136,6 @@ import static org.junit.Assert.assertTrue;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + containerItemOutputPath);
 				try {
 					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
 				} catch(final Exception e) {

@@ -74,9 +74,6 @@ import static org.junit.Assert.assertTrue;
 	private final ItemSize itemSize;
 	private final int averagePeriod;
 	private final Config config;
-	private final String containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(
-		getClass().getSimpleName()
-	);
 	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private long duration;
@@ -128,7 +125,6 @@ import static org.junit.Assert.assertTrue;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + containerItemOutputPath);
 				try {
 					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
 				} catch(final Exception e) {

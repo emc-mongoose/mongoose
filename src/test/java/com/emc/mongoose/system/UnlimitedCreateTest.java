@@ -42,9 +42,6 @@ import static org.junit.Assert.assertTrue;
 
 
 	private final String SCENARIO_PATH = null; //default
-	private final String containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(
-		getClass().getSimpleName()
-	);
 	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 	private final int timeoutInMillis = 60_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
@@ -89,7 +86,6 @@ import static org.junit.Assert.assertTrue;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + containerItemOutputPath);
 				try {
 					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
 				} catch(final Exception e) {
@@ -154,7 +150,9 @@ import static org.junit.Assert.assertTrue;
 		final int expectedConcurrency = runMode.getNodeCount() * concurrency.getValue();
 		if(storageType.equals(StorageType.FS)) {
 			//because of the following line the test is valid only in 'run_mode = local'
-			final int actualConcurrency = OpenFilesCounter.getOpenFilesCount(containerItemOutputPath);
+			final int actualConcurrency = OpenFilesCounter.getOpenFilesCount(
+				MongooseContainer.getHostItemOutputPath(stepId)
+			);
 			assertTrue("Expected concurrency <= " + actualConcurrency + ", actual: " + actualConcurrency,
 				actualConcurrency <= expectedConcurrency
 			);

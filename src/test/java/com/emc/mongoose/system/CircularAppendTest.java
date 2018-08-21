@@ -71,9 +71,6 @@ import java.util.stream.Collectors;
 	private final int EXPECTED_APPEND_COUNT = 50;
 	private final long EXPECTED_COUNT = 200;
 	private final int timeoutInMillis = 1_000_000;
-	private final String containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(
-		getClass().getSimpleName()
-	);
 	private final String hostItemOutputDir = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 	private final String itemListFile0 = snakeCaseName(getClass()) + "_0.csv";
 	private final String itemListFile1 = snakeCaseName(getClass()) + "_1.csv";
@@ -103,8 +100,12 @@ import java.util.stream.Collectors;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
-		final List<String> env =
-			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
+		final List<String> env = System
+			.getenv()
+			.entrySet()
+			.stream()
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.toList());
 		env.add("BASE_ITEMS_COUNT=" + EXPECTED_COUNT);
 		env.add("APPEND_COUNT=" + EXPECTED_APPEND_COUNT);
 		env.add("ITEM_LIST_FILE_0=" + containerItemListFile0);
@@ -128,7 +129,6 @@ import java.util.stream.Collectors;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + containerItemOutputPath);
 				try {
 					DirWithManyFilesDeleter.deleteExternal(hostItemOutputDir);
 				} catch(final Throwable t) {

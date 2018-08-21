@@ -46,6 +46,7 @@ import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.getHostItemOutputPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -72,7 +73,6 @@ import static org.junit.Assert.fail;
 	private final ItemSize itemSize;
 	private final Config config;
 	private final int averagePeriod;
-	private final String containerItemOutputPath;
 	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName()
 		+ ".csv";
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
@@ -94,7 +94,6 @@ import static org.junit.Assert.fail;
 			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-		containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
@@ -105,7 +104,7 @@ import static org.junit.Assert.fail;
 		this.itemSize = itemSize;
 		if(storageType.equals(StorageType.FS)) {
 			try {
-				DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
+				DirWithManyFilesDeleter.deleteExternal(getHostItemOutputPath(stepId));
 			} catch(final Exception e) {
 				e.printStackTrace(System.err);
 			}

@@ -6,6 +6,7 @@ import com.emc.mongoose.system.base.params.EnvParams;
 import com.emc.mongoose.system.base.params.ItemSize;
 import com.emc.mongoose.system.base.params.RunMode;
 import com.emc.mongoose.system.base.params.StorageType;
+import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
 import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
@@ -88,6 +89,13 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
+				break;
+			case FS:
+				try {
+					DirWithManyFilesDeleter.deleteExternal(MongooseContainer.getHostItemOutputPath(stepId));
+				} catch(final Exception e) {
+					e.printStackTrace(System.err);
+				}
 				break;
 		}
 		switch(runMode) {

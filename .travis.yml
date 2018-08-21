@@ -65,7 +65,7 @@ jobs:
 
     - stage: "System tests"
 
-    # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew -Dtest.single=ChainWithDelayTest systemTest
+    # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew systemTest --tests com.emc.mongoose.system.ChainWithDelayTest systemTest
       env:
       - TEST=ChainWithDelayTest
       - STORAGE_TYPE=atmos,s3
@@ -84,7 +84,7 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew -Dtest.single=CircularReadLimitByTimeTest systemTest
+    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew systemTest --tests com.emc.mongoose.system.CircularReadLimitByTimeTest systemTest
     - env:
       - TEST=CircularReadLimitByTimeTest
       - STORAGE_TYPE=fs,s3
@@ -113,7 +113,7 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=s3,swift RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=large
+    # STORAGE_TYPE=s3,swift RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=large ./gradlew systemTest --tests com.emc.mongoose.system.MultipartCreateTest
     - env:
       - TEST=MultipartCreateTest
       - STORAGE_TYPE=s3,swift
@@ -122,7 +122,7 @@ jobs:
       - ITEM_SIZE=large
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MultipleFixedUpdateAndSingleFixedReadTest systemTest
+    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.MultipleFixedUpdateAndSingleFixedReadTest
     - env:
       - TEST=MultipleFixedUpdateAndSingleFixedReadTest
       - STORAGE_TYPE=fs,s3
@@ -131,7 +131,7 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=MultipleRandomUpdateAndMultipleFixedReadTest systemTest
+    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.MultipleRandomUpdateAndMultipleFixedReadTest
     - env:
       - TEST=MultipleRandomUpdateAndMultipleFixedReadTest
       - STORAGE_TYPE=fs,s3
@@ -140,7 +140,7 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=ReadCustomContentVerificationFailTest systemTest
+    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.ReadCustomContentVerificationFailTest
     - env:
       - TEST=ReadCustomContentVerificationFailTest
       - STORAGE_TYPE=fs,s3,swift
@@ -159,7 +159,7 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew -Dtest.single=ReadVerificationAfterCircularUpdateTest systemTest
+    # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew systemTest --tests com.emc.mongoose.system.ReadVerificationAfterCircularUpdateTest
     - env:
       - TEST=ReadVerificationAfterCircularUpdateTest
       - STORAGE_TYPE=fs
@@ -168,7 +168,7 @@ jobs:
       - ITEM_SIZE=small
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew -Dtest.single=SingleFixedUpdateAndSingleRandomReadTest systemTest
+    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.SingleFixedUpdateAndSingleRandomReadTest
     - env:
       - TEST=SingleFixedUpdateAndSingleRandomReadTest
       - STORAGE_TYPE=fs,s3,swift
@@ -177,7 +177,7 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew -Dtest.single=SingleRandomUpdateAndMultipleRandomReadTest systemTest
+    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.SingleRandomUpdateAndMultipleRandomReadTest
     - env:
       - TEST=SingleRandomUpdateAndMultipleRandomReadTest
       - STORAGE_TYPE=fs,s3,swift
@@ -186,7 +186,7 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=atmos,fs,swift RUN_MODE=local,distributed CONCURRENCY=unlimited ITEM_SIZE=small,medium,large ./gradlew -Dtest.single=UnlimitedConcurrencyLimitByRateTest systemTest
+    # STORAGE_TYPE=atmos,fs,swift RUN_MODE=local,distributed CONCURRENCY=unlimited ITEM_SIZE=small,medium,large ./gradlew systemTest --tests com.emc.mongoose.system.UnlimitedConcurrencyLimitByRateTest
     - env:
       - TEST=UnlimitedConcurrencyLimitByRateTest
       - STORAGE_TYPE=atmos,fs,swift
@@ -205,7 +205,7 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs,s3,swift RUN_MODE=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew -Dtest.single=WeightedLoadTest systemTest
+    # STORAGE_TYPE=fs,s3,swift RUN_MODE=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew systemTest --tests com.emc.mongoose.system.WeightedLoadTest
     - env:
       - TEST=WeightedLoadTest
       - STORAGE_TYPE=fs,s3,swift
