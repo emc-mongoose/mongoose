@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
@@ -159,8 +159,9 @@ import static org.junit.Assert.fail;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer =
-			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
+		testContainer = new MongooseContainer(
+			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+		);
 	}
 
 	@Before
@@ -169,7 +170,10 @@ import static org.junit.Assert.fail;
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		long duration = System.currentTimeMillis();
 		testContainer.start();
-		testContainer.await(TIME_LIMIT + 10, TimeUnit.SECONDS);
+		System.out.println(
+			"Test container await(" + (TIME_LIMIT + 30) + "[s]) returned: "
+				+ testContainer.await(TIME_LIMIT + 30, TimeUnit.SECONDS)
+		);
 		stdOutContent = testContainer.stdOutContent();
 		duration = System.currentTimeMillis() - duration;
 		finishedInTime = (TimeUnit.MILLISECONDS.toSeconds(duration) <= TIME_LIMIT + 15);
@@ -242,7 +246,7 @@ import static org.junit.Assert.fail;
 				}
 			}
 		};
-		testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
+		testOpTraceLogRecords(stepId, ioTraceRecTestFunc);
 		assertTrue("Scenario didn't finished in time", finishedInTime);
 	}
 }

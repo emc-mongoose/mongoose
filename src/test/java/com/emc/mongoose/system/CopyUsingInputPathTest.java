@@ -17,8 +17,8 @@ import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecord
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsTableRowStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
@@ -35,6 +35,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -166,20 +167,42 @@ import java.util.stream.Collectors;
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
-		storageMocks.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
+		slaveNodes
+			.values()
+			.parallelStream()
+			.forEach(
+				storageMock -> {
+					try {
+						storageMock.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+			);
+		storageMocks
+			.values()
+			.parallelStream()
+			.forEach(
+				storageMock -> {
+					try {
+						storageMock.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+			);
+		try {
+			DirWithManyFilesDeleter.deleteExternal(
+				itemSrcPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
+			);
+		} catch(final Throwable ignored) {
+		}
+		try {
+			DirWithManyFilesDeleter.deleteExternal(
+				itemDstPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
+			);
+		} catch(final Throwable ignored) {
+		}
 	}
 
 	@Test
@@ -210,13 +233,13 @@ import java.util.stream.Collectors;
 						nextDstFile.length()
 					);
 				}
-				testIoTraceRecord(ioTraceRecord, OpType.CREATE.ordinal(), new SizeInBytes(nextSrcFile.length()));
+				testOpTraceRecord(ioTraceRecord, OpType.CREATE.ordinal(), new SizeInBytes(nextSrcFile.length()));
 				ioTraceRecCount.increment();
 			};
 		} else {
 			final String node = storageMocks.keySet().iterator().next();
 			ioTraceRecTestFunc = ioTraceRecord -> {
-				testIoTraceRecord(ioTraceRecord, OpType.CREATE.ordinal(), itemSize.getValue());
+				testOpTraceRecord(ioTraceRecord, OpType.CREATE.ordinal(), itemSize.getValue());
 				final String nextItemPath = ioTraceRecord.get("ItemPath");
 				if(HttpStorageMockUtil.getContentLength(node, nextItemPath) < 0) {
 					// not found
@@ -227,7 +250,7 @@ import java.util.stream.Collectors;
 				ioTraceRecCount.increment();
 			};
 		}
-		testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
+		testOpTraceLogRecords(stepId, ioTraceRecTestFunc);
 		assertTrue(
 			"There should be " + COUNT_LIMIT + " records in the I/O trace log file but got " + ioTraceRecCount.sum(),
 			ioTraceRecCount.sum() <= COUNT_LIMIT

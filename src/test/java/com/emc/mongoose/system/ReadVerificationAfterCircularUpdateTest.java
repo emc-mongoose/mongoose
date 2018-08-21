@@ -42,7 +42,7 @@ import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
@@ -191,7 +191,7 @@ import static org.junit.Assert.assertEquals;
 				Operation.Status.SUCC, Operation.Status.values()[Integer.parseInt(ioTraceRec.get(3))]
 			);
 		};
-		testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
+		testOpTraceLogRecords(stepId, ioTraceReqTestFunc);
 		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords(stepId).get(0), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
 			itemSize.getValue(), 0, 0

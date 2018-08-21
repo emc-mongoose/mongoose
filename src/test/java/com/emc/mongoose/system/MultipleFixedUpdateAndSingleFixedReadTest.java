@@ -183,13 +183,13 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 		//        final LongAdder ioTraceRecCount = new LongAdder();
 		//        final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
 		//            if (ioTraceRecCount.sum() < EXPECTED_COUNT) {
-		//                testIoTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), expectedUpdateSize);
+		//                testOpTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), expectedUpdateSize);
 		//            } else {
-		//                testIoTraceRecord(ioTraceRec, OpType.READ.ordinal(), expectedReadSize);
+		//                testOpTraceRecord(ioTraceRec, OpType.READ.ordinal(), expectedReadSize);
 		//            }
 		//            ioTraceRecCount.increment();
 		//        };
-		//        testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
+		//        testOpTraceLogRecords(stepId, ioTraceRecTestFunc);
 		//        assertEquals(
 		//                "There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
 		//                2 * EXPECTED_COUNT, ioTraceRecCount.sum()

@@ -46,8 +46,8 @@ import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsTableRowStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
@@ -197,10 +197,10 @@ import static org.junit.Assert.assertTrue;
 	throws Exception {
 		final LongAdder ioTraceRecCount = new LongAdder();
 		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
-			testIoTraceRecord(ioTraceRec, OpType.READ.ordinal(), itemSize.getValue());
+			testOpTraceRecord(ioTraceRec, OpType.READ.ordinal(), itemSize.getValue());
 			ioTraceRecCount.increment();
 		};
-		testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
+		testOpTraceLogRecords(stepId, ioTraceReqTestFunc);
 		assertTrue("There should be more than 1 record in the I/O trace log file", ioTraceRecCount.sum() > 1);
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(HOST_SHARE_PATH + ITEM_OUTPUT_FILE))) {

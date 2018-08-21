@@ -15,8 +15,8 @@ import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
@@ -71,7 +71,6 @@ import java.util.stream.Collectors;
 	private final int EXPECTED_APPEND_COUNT = 50;
 	private final long EXPECTED_COUNT = 200;
 	private final int timeoutInMillis = 1_000_000;
-	private final String hostItemOutputDir = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 	private final String itemListFile0 = snakeCaseName(getClass()) + "_0.csv";
 	private final String itemListFile1 = snakeCaseName(getClass()) + "_1.csv";
 	private final String hostItemListFile0 = HOST_SHARE_PATH + "/" + itemListFile0;
@@ -130,7 +129,7 @@ import java.util.stream.Collectors;
 				break;
 			case FS:
 				try {
-					DirWithManyFilesDeleter.deleteExternal(hostItemOutputDir);
+					DirWithManyFilesDeleter.deleteExternal(MongooseContainer.getHostItemOutputPath(stepId));
 				} catch(final Throwable t) {
 					Assert.fail(t.toString());
 				}
@@ -166,20 +165,35 @@ import java.util.stream.Collectors;
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
-		storageMocks.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
+		slaveNodes
+			.values()
+			.parallelStream()
+			.forEach(
+				storageMock -> {
+					try {
+						storageMock.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+			);
+		storageMocks
+			.values()
+			.parallelStream()
+			.forEach(
+				storageMock -> {
+					try {
+						storageMock.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+		);
+		try {
+			DirWithManyFilesDeleter.deleteExternal(MongooseContainer.getHostItemOutputPath(stepId));
+		} catch(final Throwable t) {
+			Assert.fail(t.toString());
+		}
 	}
 
 	@Test
@@ -213,16 +227,16 @@ import java.util.stream.Collectors;
 		testFinalMetricsStdout(
 			stdOutContent, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), stepId
 		);
-		final LongAdder ioTraceRecCount = new LongAdder();
-		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
-			testIoTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), itemSize.getValue());
-			ioTraceRecCount.increment();
+		final LongAdder opTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> opTraceRecTestFunc = ioTraceRec -> {
+			testOpTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), itemSize.getValue());
+			opTraceRecCount.increment();
 		};
-		testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
+		testOpTraceLogRecords(stepId, opTraceRecTestFunc);
 		assertTrue(
 			"There should be more than " + EXPECTED_COUNT + " records in the I/O trace log file, but got: " +
-				ioTraceRecCount.sum(),
-			EXPECTED_COUNT < ioTraceRecCount.sum()
+				opTraceRecCount.sum(),
+			EXPECTED_COUNT < opTraceRecCount.sum()
 		);
 		final List<CSVRecord> items = new ArrayList<>();
 		try(final BufferedReader br = new BufferedReader(new FileReader(hostItemListFile1))) {

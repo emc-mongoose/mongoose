@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
@@ -197,17 +197,17 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 		final SizeInBytes TAIL_PART_SIZE = new SizeInBytes(1, partSize.get(), 1);
 		final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
 			try {
-				testIoTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), ZERO_SIZE);
+				testOpTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), ZERO_SIZE);
 			} catch(final AssertionError e) {
 				try {
-					testIoTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), partSize);
+					testOpTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), partSize);
 				} catch(final AssertionError ee) {
-					testIoTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), TAIL_PART_SIZE);
+					testOpTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), TAIL_PART_SIZE);
 				}
 			}
 			ioTraceRecCount.increment();
 		};
-		//        testIoTraceLogRecords(stepId, ioTraceRecFunc);
+		//        testOpTraceLogRecords(stepId, ioTraceRecFunc);
 		//
 		//        final List<CSVRecord> itemRecs = new ArrayList<>();
 		//        try (final BufferedReader br = new BufferedReader(new FileReader(itemOutputFile))) {

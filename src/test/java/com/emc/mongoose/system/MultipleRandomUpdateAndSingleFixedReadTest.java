@@ -43,8 +43,8 @@ import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
@@ -191,13 +191,13 @@ import static org.junit.Assert.assertEquals;
 		final LongAdder ioTraceRecCount = new LongAdder();
 		final Consumer<CSVRecord> ioTraceRecFunc = ioTraceRec -> {
 			if(ioTraceRecCount.sum() < EXPECTED_COUNT) {
-				testIoTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), expectedUpdateSize);
+				testOpTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), expectedUpdateSize);
 			} else {
-				testIoTraceRecord(ioTraceRec, OpType.READ.ordinal(), expectedReadSize);
+				testOpTraceRecord(ioTraceRec, OpType.READ.ordinal(), expectedReadSize);
 			}
 			ioTraceRecCount.increment();
 		};
-		testIoTraceLogRecords(stepId, ioTraceRecFunc);
+		testOpTraceLogRecords(stepId, ioTraceRecFunc);
 		assertEquals("There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file", 2 * EXPECTED_COUNT,
 			ioTraceRecCount.sum()
 		);

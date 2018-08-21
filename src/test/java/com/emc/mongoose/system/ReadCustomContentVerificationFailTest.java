@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
@@ -184,7 +184,7 @@ import static org.junit.Assert.assertTrue;
 			);
 			ioTraceRecCount.increment();
 		};
-		testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
+		testOpTraceLogRecords(stepId, ioTraceRecTestFunc);
 		assertTrue("The count of the I/O trace records should be > 0", ioTraceRecCount.sum() > 0);
 	}
 }

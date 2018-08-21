@@ -39,8 +39,8 @@ import java.util.stream.Collectors;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsTableRowStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
@@ -181,7 +181,7 @@ import static org.junit.Assert.assertTrue;
 		// ${FILE_OUTPUT_PATH}/b/fedcba9876543210
 		final Pattern subPathPtrn = Pattern.compile("(/[0-9a-f]){1,2}/[0-9a-f]{16}");
 		final Consumer<CSVRecord> ioTraceReqTestFunc = ioTraceRec -> {
-			testIoTraceRecord(ioTraceRec, OpType.READ.ordinal(), itemSize.getValue());
+			testOpTraceRecord(ioTraceRec, OpType.READ.ordinal(), itemSize.getValue());
 			String nextFilePath = ioTraceRec.get("ItemPath");
 			assertTrue(nextFilePath.startsWith(CONTAINER_ITEM_OUTPUT_PATH));
 			nextFilePath = nextFilePath.substring(baseOutputPathLen);
@@ -189,7 +189,7 @@ import static org.junit.Assert.assertTrue;
 			assertTrue(m.matches());
 			ioTraceRecCount.increment();
 		};
-		testIoTraceLogRecords(stepId, ioTraceReqTestFunc);
+		testOpTraceLogRecords(stepId, ioTraceReqTestFunc);
 		assertEquals(
 			"There should be more than 1 record in the I/O trace log file", EXPECTED_COUNT, ioTraceRecCount.sum()
 		);

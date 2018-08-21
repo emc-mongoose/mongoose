@@ -25,6 +25,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.stat.Frequency;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,7 +35,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,8 +50,8 @@ import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsTableRowStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
@@ -83,7 +83,6 @@ import static org.junit.Assert.assertTrue;
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
 	private final Config config;
-	private final String hostItemOutputPath;
 	private final String containerItemOutputFile;
 	private final String hostItemOutputFile;
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
@@ -111,7 +110,6 @@ import static org.junit.Assert.assertTrue;
 		containerItemOutputFile = CONTAINER_SHARE_PATH + '/' + getClass().getSimpleName() + '_'
 			+ stepId + ".csv";
 		hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + '_' + stepId + ".csv";
-		hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
@@ -156,9 +154,9 @@ import static org.junit.Assert.assertTrue;
 				break;
 			case FS:
 				try {
-					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
-				} catch(final Exception e) {
-					e.printStackTrace(System.err);
+					DirWithManyFilesDeleter.deleteExternal(MongooseContainer.getHostItemOutputPath(stepId));
+				} catch(final Throwable t) {
+					Assert.fail(t.toString());
 				}
 				break;
 		}
@@ -175,8 +173,9 @@ import static org.junit.Assert.assertTrue;
 				break;
 		}
 		//use default scenario
-		testContainer =
-			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
+		testContainer = new MongooseContainer(
+			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+		);
 	}
 
 	@Before
@@ -196,20 +195,35 @@ import static org.junit.Assert.assertTrue;
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
-		storageMocks.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
+		slaveNodes
+			.values()
+			.parallelStream()
+			.forEach(
+				storageMock -> {
+					try {
+						storageMock.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+			);
+		storageMocks
+			.values()
+			.parallelStream()
+			.forEach(
+				storageMock -> {
+					try {
+						storageMock.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+			);
+		try {
+			DirWithManyFilesDeleter.deleteExternal(MongooseContainer.getHostItemOutputPath(stepId));
+		} catch(final Throwable t) {
+			Assert.fail(t.toString());
+		}
 	}
 
 	@Test
@@ -218,6 +232,7 @@ import static org.junit.Assert.assertTrue;
 		assertEquals("Container exit code should be 0", 0, containerExitCode);
 		final LongAdder ioTraceRecCount = new LongAdder();
 		final Consumer<CSVRecord> ioTraceRecFunc;
+		final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(stepId);
 		if(storageType.equals(StorageType.FS)) {
 			ioTraceRecFunc = ioTraceRecord -> {
 				File nextDstFile;
@@ -234,14 +249,14 @@ import static org.junit.Assert.assertTrue;
 		} else {
 			final String nodeAddr = storageMocks.keySet().iterator().next();
 			ioTraceRecFunc = ioTraceRec -> {
-				testIoTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), itemSize.getValue());
+				testOpTraceRecord(ioTraceRec, OpType.CREATE.ordinal(), itemSize.getValue());
 				HttpStorageMockUtil.assertItemExists(nodeAddr, ioTraceRec.get("ItemPath"),
 					Long.parseLong(ioTraceRec.get("TransferSize"))
 				);
 				ioTraceRecCount.increment();
 			};
 		}
-		testIoTraceLogRecords(stepId, ioTraceRecFunc);
+		testOpTraceLogRecords(stepId, ioTraceRecFunc);
 		//100% because #issue-1252 "The Size limit is violated" isn't resolved -> Mongoose doesn't stop in time
 		assertEquals(expectedCount, ioTraceRecCount.sum(), requiredAccuracy * expectedCount);
 		final List<CSVRecord> items = new ArrayList<>();

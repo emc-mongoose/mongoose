@@ -159,7 +159,7 @@ public interface LogValidationUtil {
 		}
 	}
 
-	static void testIoTraceLogRecords(
+	static void testOpTraceLogRecords(
 		final String stepId, final Consumer<CSVRecord> csvRecordTestFunc
 	) throws IOException {
 		final File logFile = getLogFile(stepId, "op.trace.csv");
@@ -414,11 +414,11 @@ public interface LogValidationUtil {
 		assertTrue(latMax >= latHiQ);
 	}
 
-	static void testIoTraceRecord(
-		final CSVRecord ioTraceRecord, final int OpTypeCodeExpected, final SizeInBytes sizeExpected
+	static void testOpTraceRecord(
+		final CSVRecord opTraceRecord, final int opTypeCodeExpected, final SizeInBytes sizeExpected
 	) {
-		assertEquals(OpTypeCodeExpected, Integer.parseInt(ioTraceRecord.get(2)));
-		final int actualStatusCode = Integer.parseInt(ioTraceRecord.get(3));
+		assertEquals(opTypeCodeExpected, Integer.parseInt(opTraceRecord.get(2)));
+		final int actualStatusCode = Integer.parseInt(opTraceRecord.get(3));
 		//All FAIL_<...> statuses have .ordinal() more then FAIL_IO
 		if(actualStatusCode >= FAIL_IO.ordinal()) {
 			//"return" because sometimes default storage-mock return error (1 missing response) and Status = FAIL_<...>
@@ -430,12 +430,12 @@ public interface LogValidationUtil {
 		assertEquals(
 			"Actual status code is " + Operation.Status.values()[actualStatusCode], SUCC.ordinal(), actualStatusCode
 		);
-		final long duration = Long.parseLong(ioTraceRecord.get(5));
-		final String latencyStr = ioTraceRecord.get(6);
+		final long duration = Long.parseLong(opTraceRecord.get(5));
+		final String latencyStr = opTraceRecord.get(6);
 		if(latencyStr != null && ! latencyStr.isEmpty()) {
 			assertTrue(duration >= Long.parseLong(latencyStr));
 		}
-		final long size = Long.parseLong(ioTraceRecord.get(8));
+		final long size = Long.parseLong(opTraceRecord.get(8));
 		if(sizeExpected.getMin() < sizeExpected.getMax()) {
 			assertTrue(
 				"Expected the size " + sizeExpected.toString() + ", but got " + size,
