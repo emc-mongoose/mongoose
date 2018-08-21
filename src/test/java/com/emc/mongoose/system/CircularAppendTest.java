@@ -137,11 +137,10 @@ import java.util.stream.Collectors;
 		}
 		switch(runMode) {
 			case DISTRIBUTED:
-				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
 					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
 					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
-					final String addr = localExternalAddr + ":" + port;
+					final String addr = "127.0.0.1:" + port;
 					additionalNodes.put(addr, nodeSvc);
 				}
 				args.add(
@@ -171,9 +170,9 @@ import java.util.stream.Collectors;
 			.values()
 			.parallelStream()
 			.forEach(
-				storageMock -> {
+				node -> {
 					try {
-						storageMock.close();
+						node.close();
 					} catch(final Throwable t) {
 						t.printStackTrace(System.err);
 					}

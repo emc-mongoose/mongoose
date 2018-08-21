@@ -23,6 +23,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  Created on 28.09.16.
@@ -95,10 +97,11 @@ public abstract class ServiceUtil {
 		return Collections
 			.list(NetworkInterface.getNetworkInterfaces())
 			.stream()
+			.filter(Objects::nonNull)
 			.filter(
 				netIface -> {
 					try {
-						return ! netIface.isLoopback() && netIface.isUp();
+						return !netIface.isLoopback() && netIface.isUp();
 					} catch(final SocketException e) {
 						return false;
 					}
@@ -112,8 +115,9 @@ public abstract class ServiceUtil {
 					.filter(inetAddr -> inetAddr instanceof Inet4Address)
 					.map(InetAddress::getHostAddress)
 					.findFirst()
-					.orElse(null)
 			)
+			.filter(Optional::isPresent)
+			.map(Optional::get)
 			.findFirst()
 			.orElse(InetAddress.getLoopbackAddress().getHostAddress());
 	}

@@ -135,11 +135,10 @@ import static org.junit.Assert.assertTrue;
 		}
 		switch(runMode) {
 			case DISTRIBUTED:
-				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
 					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
 					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
-					final String addr = localExternalAddr + ":" + port;
+					final String addr = "127.0.0.1:" + port;
 					slaveNodes.put(addr, nodeSvc);
 				}
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));

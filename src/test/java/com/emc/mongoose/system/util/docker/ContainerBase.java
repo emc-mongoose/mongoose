@@ -107,10 +107,10 @@ implements Docker.Container {
 		final String imageNameWithVer = imageName() + ":" + this.version;
 		final List<String> args = containerArgs();
 		LOG.info("Docker container args: " + Arrays.toString(args.toArray(new String[]{})));
-		final ExposedPort[] exposedPorts = Arrays.stream(ports)
-			.mapToObj(ExposedPort::tcp)
-			.collect(Collectors.toList())
-			.toArray(new ExposedPort[]{});
+		final List<ExposedPort> exposedPorts = Arrays
+			.stream(ports)
+			.mapToObj(ExposedPort::new)
+			.collect(Collectors.toList());
 		final CreateContainerCmd createContainerCmd = Docker.CLIENT
 			.createContainerCmd(imageNameWithVer)
 			.withName(imageName().replace('/', '_') + '_' + this.hashCode())
