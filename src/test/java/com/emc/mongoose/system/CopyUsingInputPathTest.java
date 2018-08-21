@@ -12,7 +12,7 @@ import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
+import com.emc.mongoose.system.util.docker.MongooseAdditionalNodeContainer;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
@@ -35,7 +35,6 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,7 +65,7 @@ import java.util.stream.Collectors;
 	private static final int COUNT_LIMIT = 100_000;
 	private final int timeoutInMillis = 105_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
-	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
+	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
@@ -141,8 +140,8 @@ import java.util.stream.Collectors;
 			case DISTRIBUTED:
 				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
-					final int port = MongooseSlaveNodeContainer.DEFAULT_PORT + i;
-					final MongooseSlaveNodeContainer nodeSvc = new MongooseSlaveNodeContainer(port);
+					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
+					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
 					final String addr = localExternalAddr + ":" + port;
 					slaveNodes.put(addr, nodeSvc);
 				}

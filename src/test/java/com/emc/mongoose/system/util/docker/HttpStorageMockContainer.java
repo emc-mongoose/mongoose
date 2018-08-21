@@ -74,7 +74,7 @@ extends ContainerBase {
 		cmd.add("--storage-mock-container-countLimit=" + containerCountLimit);
 		cmd.add("--storage-mock-fail-connections=" + failConnectEvery);
 		cmd.add("--storage-mock-fail-responses=" + failResponsesEvery);
-		cmd.add("--storage-net-node-port=" + exposedTcpPorts[0]);
+		cmd.add("--storage-net-node-port=" + ports[0]);
 		cmd.add("--storage-net-ssl=" + sslFlag);
 		cmd.add("--test-step-limit-rate=" + rateLimit);
 		return cmd;

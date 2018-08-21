@@ -11,7 +11,7 @@ import com.emc.mongoose.system.base.params.StorageType;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
+import com.emc.mongoose.system.util.docker.MongooseAdditionalNodeContainer;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
@@ -78,7 +78,7 @@ import java.util.stream.Collectors;
 	private final String containerItemListFile0 = CONTAINER_SHARE_PATH + "/" + itemListFile0;
 	private final String containerItemListFile1 = CONTAINER_SHARE_PATH + "/" + itemListFile1;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
-	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
+	private final Map<String, MongooseAdditionalNodeContainer> additionalNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
@@ -139,12 +139,14 @@ import java.util.stream.Collectors;
 			case DISTRIBUTED:
 				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
-					final int port = MongooseSlaveNodeContainer.DEFAULT_PORT + i;
-					final MongooseSlaveNodeContainer nodeSvc = new MongooseSlaveNodeContainer(port);
+					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
+					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
 					final String addr = localExternalAddr + ":" + port;
-					slaveNodes.put(addr, nodeSvc);
+					additionalNodes.put(addr, nodeSvc);
 				}
-				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
+				args.add(
+					"--load-step-node-addrs=" + additionalNodes.keySet().stream().collect(Collectors.joining(","))
+				);
 				break;
 		}
 		testContainer = new MongooseContainer(
@@ -156,7 +158,7 @@ import java.util.stream.Collectors;
 	public final void setUp()
 	throws Exception {
 		storageMocks.values().forEach(AsyncRunnableBase::start);
-		slaveNodes.values().forEach(AsyncRunnableBase::start);
+		additionalNodes.values().forEach(AsyncRunnableBase::start);
 		testContainer.start();
 		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
 	}
@@ -165,7 +167,7 @@ import java.util.stream.Collectors;
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes
+		additionalNodes
 			.values()
 			.parallelStream()
 			.forEach(

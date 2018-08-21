@@ -13,7 +13,7 @@ import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
+import com.emc.mongoose.system.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -75,7 +75,7 @@ import static org.junit.Assert.assertTrue;
 		//100% because #issue-1252 "The Size limit is violated" isn't resolved -> Mongoose doesn't stop in time
 	private final int timeoutInMillis = 1000_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
-	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
+	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
@@ -164,8 +164,8 @@ import static org.junit.Assert.assertTrue;
 			case DISTRIBUTED:
 				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
-					final int port = MongooseSlaveNodeContainer.DEFAULT_PORT + i;
-					final MongooseSlaveNodeContainer nodeSvc = new MongooseSlaveNodeContainer(port);
+					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
+					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
 					final String addr = localExternalAddr + ":" + port;
 					slaveNodes.put(addr, nodeSvc);
 				}

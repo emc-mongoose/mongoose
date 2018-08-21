@@ -8,7 +8,7 @@ import com.emc.mongoose.system.util.OpenFilesCounter;
 import com.emc.mongoose.system.util.PortTools;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
+import com.emc.mongoose.system.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -28,8 +28,6 @@ import java.util.stream.Collectors;
 
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -45,7 +43,7 @@ import static org.junit.Assert.assertTrue;
 	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 	private final int timeoutInMillis = 60_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
-	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
+	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
@@ -86,6 +84,7 @@ import static org.junit.Assert.assertTrue;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
+				args.add("--item-output-path=" + hostItemOutputPath);
 				try {
 					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
 				} catch(final Exception e) {
@@ -97,8 +96,8 @@ import static org.junit.Assert.assertTrue;
 			case DISTRIBUTED:
 				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
-					final int port = MongooseSlaveNodeContainer.DEFAULT_PORT + i;
-					final MongooseSlaveNodeContainer nodeSvc = new MongooseSlaveNodeContainer(port);
+					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
+					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
 					final String addr = localExternalAddr + ":" + port;
 					slaveNodes.put(addr, nodeSvc);
 				}
@@ -142,7 +141,8 @@ import static org.junit.Assert.assertTrue;
 	public final void test()
 	throws Exception {
 		final String stdOutContent = testContainer.stdOutContent();
-		testMetricsTableStdout(stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
+		testMetricsTableStdout(
+			stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
 			new HashMap<OpType, Integer>() {{
 				put(OpType.CREATE, concurrency.getValue());
 			}}
@@ -153,7 +153,8 @@ import static org.junit.Assert.assertTrue;
 			final int actualConcurrency = OpenFilesCounter.getOpenFilesCount(
 				MongooseContainer.getHostItemOutputPath(stepId)
 			);
-			assertTrue("Expected concurrency <= " + actualConcurrency + ", actual: " + actualConcurrency,
+			assertTrue(
+				"Expected concurrency <= " + actualConcurrency + ", actual: " + actualConcurrency,
 				actualConcurrency <= expectedConcurrency
 			);
 		} else {
@@ -162,8 +163,9 @@ import static org.junit.Assert.assertTrue;
 			for(int j = 0; j < runMode.getNodeCount(); ++ j) {
 				actualConcurrency += PortTools.getConnectionCount("127.0.0.1:" + (startPort + j));
 			}
-			assertEquals("Expected concurrency: " + actualConcurrency + ", actual: " + actualConcurrency,
-				expectedConcurrency, actualConcurrency, expectedConcurrency / 100
+			assertEquals(
+				"Expected concurrency: " + actualConcurrency + ", actual: " + actualConcurrency, expectedConcurrency,
+				actualConcurrency, expectedConcurrency / 100
 			);
 		}
 	}

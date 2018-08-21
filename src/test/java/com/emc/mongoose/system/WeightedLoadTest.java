@@ -11,7 +11,7 @@ import com.emc.mongoose.system.base.params.StorageType;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
+import com.emc.mongoose.system.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
@@ -51,7 +51,7 @@ import static org.junit.Assert.assertTrue;
 	private final long DURATION_LIMIT = 120_000;
 	private final int timeoutInMillis = 120_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
-	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
+	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
@@ -106,6 +106,7 @@ import static org.junit.Assert.assertTrue;
 				env.add("ITEM_OUTPUT_PATH=" + stepId);
 				break;
 			case FS:
+				args.add("--item-output-path=" + hostItemOutputPath);
 				try {
 					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
 				} catch(final Exception e) {
@@ -117,16 +118,17 @@ import static org.junit.Assert.assertTrue;
 			case DISTRIBUTED:
 				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
-					final int port = MongooseSlaveNodeContainer.DEFAULT_PORT + i;
-					final MongooseSlaveNodeContainer nodeSvc = new MongooseSlaveNodeContainer(port);
+					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
+					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
 					final String addr = localExternalAddr + ":" + port;
 					slaveNodes.put(addr, nodeSvc);
 				}
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer =
-			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
+		testContainer = new MongooseContainer(
+			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+		);
 	}
 
 	@Before
@@ -145,20 +147,30 @@ import static org.junit.Assert.assertTrue;
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
-		storageMocks.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
+		slaveNodes
+			.values()
+			.parallelStream()
+			.forEach(
+				storageMock -> {
+					try {
+						storageMock.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+			);
+		storageMocks
+			.values()
+			.parallelStream()
+			.forEach(
+				storageMock -> {
+					try {
+						storageMock.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+			);
 	}
 
 	@Test

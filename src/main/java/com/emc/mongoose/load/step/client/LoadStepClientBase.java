@@ -369,7 +369,7 @@ implements LoadStepClient {
 					stepSlice -> new ExclusiveFiberBase(ServiceTaskExecutor.INSTANCE) {
 						@Override
 						protected final void invokeTimedExclusively(final long startTimeNanos) {
-							Loggers.MSG.debug("{}: await for the step slice \"{}\" started", id(), stepSlice);
+							Loggers.MSG.trace("{}: await for the step slice \"{}\" started", id(), stepSlice);
 							try {
 								if(stepSlice.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 									awaitCountDown.countDown();
