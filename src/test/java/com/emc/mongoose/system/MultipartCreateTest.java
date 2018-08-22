@@ -19,6 +19,7 @@ import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecor
 import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
+import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
@@ -65,8 +66,8 @@ import java.util.stream.Collectors;
 	}
 
 	private final String SCENARIO_PATH = containerScenarioPath(getClass());
-	private final int timeoutInMillis = 1000_000;
-	private final String itemOutputFile = MultipartCreateTest.class.getSimpleName() + "Items.csv";
+	private final int timeoutInMillis = 1_000_000;
+	private final String itemOutputFile = snakeCaseName(getClass()) + "_items.csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -89,17 +90,22 @@ import java.util.stream.Collectors;
 
 	public MultipartCreateTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
+	) throws Exception {
 		partSize = itemSize.getValue();
 		fullItemSize = new SizeInBytes(partSize.get(), 100 * partSize.get(), 3);
 		Loggers.MSG.info("Item size: {}, part size: {}", fullItemSize, partSize);
-		sizeLimit = new SizeInBytes((runMode.getNodeCount() + 1) * concurrency.getValue() * fullItemSize.getAvg());
+		sizeLimit = new SizeInBytes(
+			Math.min(
+				SizeInBytes.toFixedSize("100GB"),
+				(runMode.getNodeCount() + 1) * concurrency.getValue() * fullItemSize.getAvg()
+			)
+		);
 		Loggers.MSG.info("Use the size limit: {}", sizeLimit);
 		expectedCountMin = sizeLimit.get() / fullItemSize.getMax();
 		expectedCountMax = sizeLimit.get() / fullItemSize.getMin();
-		final Map<String, Object> schema =
-			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
+		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
+			APP_NAME, Thread.currentThread().getContextClassLoader()
+		);
 		config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
 		final Object avgPeriodRaw = config.val("output-metrics-average-period");
 		if(avgPeriodRaw instanceof String) {

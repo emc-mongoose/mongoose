@@ -44,7 +44,8 @@ public interface LogPatterns {
 	Pattern STD_OUT_THREAD_NAME = Pattern.compile("(?<nameThread>\\w[\\w\\s#.\\-<>]+\\w)");
 	
 	// metrics
-	Pattern OP_TYPE = Pattern.compile(ASCII_COLOR.pattern() + "(?<opType>[CREATDLUPNO]{4,6})" + ASCII_COLOR.pattern());
+	Pattern OP_TYPE = Pattern.compile(ASCII_COLOR.pattern() + "(?<opType>[CREATDLUPNO]{4,6})\\s{0,2}"
+		+ ASCII_COLOR.pattern());
 	Pattern STD_OUT_METRICS_TABLE_ROW = Pattern.compile(
 		"\\s*(?<stepName>[\\w\\-_.,;:~=+@]{1,10})\\|(?<timestamp>[\\d]{12})" +
 			"\\|" + OP_TYPE.pattern() +

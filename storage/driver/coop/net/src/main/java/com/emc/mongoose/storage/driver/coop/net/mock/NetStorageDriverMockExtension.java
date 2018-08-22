@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.coop.nio.mock;
+package com.emc.mongoose.storage.driver.coop.net.mock;
 
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.env.ExtensionBase;
@@ -14,9 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public final class NioStorageDriverMockFactory<
-	I extends Item, O extends Operation<I>, T extends NioStorageDriverMock<I, O>
->
+public class NetStorageDriverMockExtension<I extends Item, O extends Operation<I>, T extends NetStorageDriverMock<I, O>>
 extends ExtensionBase
 implements StorageDriverFactory<I, O, T> {
 
@@ -26,30 +24,30 @@ implements StorageDriverFactory<I, O, T> {
 	);
 
 	@Override
-	public final String id() {
-		return "nio-mock";
-	}
-
-	@Override @SuppressWarnings("unchecked")
 	public T create(
 		final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
 		final int batchSize
 	) throws OmgShootMyFootException, InterruptedException {
-		return (T) new NioStorageDriverMock<I, O>(stepId, dataInput, storageConfig, verifyFlag, batchSize);
+		return (T) new NetStorageDriverMock<I, O>(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 	}
 
 	@Override
-	public final SchemaProvider schemaProvider() {
+	public final String id() {
+		return "net-mock";
+	}
+
+	@Override
+	public SchemaProvider schemaProvider() {
 		return null;
 	}
 
 	@Override
-	protected final String defaultsFileName() {
+	protected String defaultsFileName() {
 		return null;
 	}
 
 	@Override
-	protected final List<String> resourceFilesToInstall() {
+	protected List<String> resourceFilesToInstall() {
 		return RES_INSTALL_FILES;
 	}
 }

@@ -1,5 +1,5 @@
 var cmd = new java.lang.ProcessBuilder()
-    .command("/bin/sh", "-c", "rm -f ${ITEM_OUTPUT_FILE}")
+    .command("sh", "-c", "rm -f ${ITEM_OUTPUT_FILE}")
     .inheritIO()
     .start();
 cmd.waitFor();
@@ -20,8 +20,7 @@ Load
         "net" : {
           "http" : {
             "namespace" : "ns1"
-          },
-          "timeoutMilliSec" : "1000"
+          }
         }
       },
       "load" : {
