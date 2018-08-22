@@ -73,8 +73,7 @@ import static org.junit.Assert.fail;
 	private final ItemSize itemSize;
 	private final Config config;
 	private final int averagePeriod;
-	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName()
-		+ ".csv";
+	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private boolean finishedInTime;
 	private int containerExitCode;
