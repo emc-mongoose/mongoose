@@ -1,0 +1,13 @@
+image: java:8
+
+before_script:
+  - chmod +x gradlew
+
+
+unit_tests:
+  script: "./gradlew :tests:unit:test"
+
+perf_tests:
+  script: "./gradlew :tests:perf:test"
+  
+  
