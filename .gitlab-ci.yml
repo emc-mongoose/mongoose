@@ -5,9 +5,7 @@ before_script:
 
 
 unit_tests:
-  script: "./gradlew :tests:unit:test"
+  script: "./gradlew test"
 
-perf_tests:
-  script: "./gradlew :tests:perf:test"
-  
-  
+integration_tests:
+  script: "./gradlew integrationTest"
