@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -107,13 +108,15 @@ extends LoadStepBase {
 					@Override
 					protected final void invokeTimedExclusively(final long startTimeNanos) {
 						try {
-							if(stepCtx.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+							if(stepCtx.isDone() || stepCtx.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 								awaitCountDown.countDown();
+								stop();
 							}
 						} catch(final InterruptedException e) {
 							throw new InterruptRunException(e);
 						} catch(final Exception e) {
 							LogUtil.exception(Level.WARN, e, "Await call failure on the step context \"{}\"", stepCtx);
+							e.printStackTrace();
 						}
 					}
 				}
@@ -123,6 +126,7 @@ extends LoadStepBase {
 		try {
 			return awaitCountDown.await(timeout, timeUnit);
 		} catch(final InterruptedException e) {
+			LogUtil.exception(Level.ERROR, e, "");
 			throw new InterruptRunException(e);
 		} finally {
 			awaitTasks.forEach(

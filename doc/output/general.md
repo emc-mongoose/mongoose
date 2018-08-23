@@ -4,9 +4,15 @@ Mongoose uses the [Apache Log4J2](http://logging.apache.org/log4j/2.x/) library 
 overwhelming majority of its output due to
 [high performance capabilities](http://logging.apache.org/log4j/2.x/performance.html).
 
-The Log4J2 configuration is bundled into the `mongoose-ui.jar` resources as `log4j2.json` file and
+The Log4J2 configuration is bundled into the `mongoose.jar` resources as `log4j2.json` file and
 is not designated to be changed by user since v3.5. Also the `log4j2.component.properties` file
 bundled into that jar to specify the additional options tuning the logging subsystem performance.
+
+## Load Step Id
+
+The load step id is used to differentiate the log messages. If step id is not set, it's generated automatically using
+the following pattern: `<STEP_TYPE>-<yyyyMMdd.HHmmss.SSS>` There's also the special prefix "none-" which used instead of
+a step type if the message is logged out of any load step context.
 
 ## Console
 

@@ -12,7 +12,7 @@ import com.emc.mongoose.system.base.params.StorageType;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
+import com.emc.mongoose.system.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -65,7 +65,7 @@ import static org.junit.Assert.assertTrue;
 	private static final int RATE_LIMIT = 1_000;
 	private final int timeoutInMillis = 1000_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
-	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
+	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
@@ -74,9 +74,8 @@ import static org.junit.Assert.assertTrue;
 	private final ItemSize itemSize;
 	private final int averagePeriod;
 	private final Config config;
-	private final String containerItemOutputPath;
-	private final String hostItemOutputFile =
-		HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
+	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
+	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private long duration;
 	private String stdOutContent = null;
 
@@ -94,7 +93,6 @@ import static org.junit.Assert.assertTrue;
 			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-		containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
@@ -103,13 +101,6 @@ import static org.junit.Assert.assertTrue;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
-		if(storageType.equals(StorageType.FS)) {
-			try {
-				DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
-			} catch(final Exception e) {
-				e.printStackTrace(System.err);
-			}
-		}
 		try {
 			Files.delete(Paths.get(hostItemOutputFile));
 		} catch(final Exception ignored) {
@@ -133,21 +124,29 @@ import static org.junit.Assert.assertTrue;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
+			case FS:
+				args.add("--item-output-path=" + hostItemOutputPath);
+				try {
+					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+				} catch(final Exception e) {
+					e.printStackTrace(System.err);
+				}
+				break;
 		}
 		switch(runMode) {
 			case DISTRIBUTED:
-				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
-					final int port = MongooseSlaveNodeContainer.DEFAULT_PORT + i;
-					final MongooseSlaveNodeContainer nodeSvc = new MongooseSlaveNodeContainer(port);
-					final String addr = localExternalAddr + ":" + port;
+					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
+					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
+					final String addr = "127.0.0.1:" + port;
 					slaveNodes.put(addr, nodeSvc);
 				}
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer =
-			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
+		testContainer = new MongooseContainer(
+			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+		);
 	}
 
 	@Before
@@ -185,7 +184,8 @@ import static org.junit.Assert.assertTrue;
 	@Test
 	public final void test()
 	throws Exception {
-		testMetricsTableStdout(stdOutContent, stepId, storageType, runMode.getNodeCount(), COUNT_LIMIT,
+		testMetricsTableStdout(
+			stdOutContent, stepId, storageType, runMode.getNodeCount(), COUNT_LIMIT,
 			new HashMap<OpType, Integer>() {{
 				put(CREATE, 0);
 			}}

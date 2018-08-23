@@ -34,11 +34,11 @@ extends HttpResponseHandlerBase<I, O> {
 			final String location = respHeaders.get(HttpHeaderNames.LOCATION);
 			if(location != null && !location.isEmpty()) {
 				if(location.startsWith(NS_URI_BASE)) {
-					op.item().setName(location.substring(NS_URI_BASE.length()));
+					op.item().name(location.substring(NS_URI_BASE.length()));
 				} else if(location.startsWith(OBJ_URI_BASE)) {
-					op.item().setName(location.substring(OBJ_URI_BASE.length()));
+					op.item().name(location.substring(OBJ_URI_BASE.length()));
 				} else {
-					op.item().setName(location);
+					op.item().name(location);
 					Loggers.ERR.warn("Unexpected location value: \"{}\"", location);
 				}
 				// set the paths to null to avoid the path calculation in the opCompleted call

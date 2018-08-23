@@ -12,13 +12,13 @@ import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.system.util.HttpStorageMockUtil;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
+import com.emc.mongoose.system.util.docker.MongooseAdditionalNodeContainer;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsTableRowStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceRecord;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
@@ -65,7 +65,7 @@ import java.util.stream.Collectors;
 	private static final int COUNT_LIMIT = 100_000;
 	private final int timeoutInMillis = 105_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
-	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
+	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
@@ -95,20 +95,6 @@ import java.util.stream.Collectors;
 		}
 		itemDstPath = itemPathPrefix + "-Dst";
 		itemSrcPath = itemPathPrefix + "-Src";
-		if(storageType.equals(StorageType.FS)) {
-			try {
-				DirWithManyFilesDeleter.deleteExternal(
-					itemSrcPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
-				);
-			} catch(final Throwable ignored) {
-			}
-			try {
-				DirWithManyFilesDeleter.deleteExternal(
-					itemDstPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
-				);
-			} catch(final Throwable ignored) {
-			}
-		}
 		final List<String> env = System
 			.getenv()
 			.entrySet()
@@ -122,27 +108,39 @@ import java.util.stream.Collectors;
 			case ATMOS:
 			case S3:
 			case SWIFT:
-				final HttpStorageMockContainer storageMock =
-					new HttpStorageMockContainer(
-						HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-						Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
-						HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-						HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
-					);
+				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
+					HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
+					Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
+					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+				);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
+			case FS:
+				try {
+					DirWithManyFilesDeleter.deleteExternal(
+						itemSrcPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
+					);
+				} catch(final Throwable ignored) {
+				}
+				try {
+					DirWithManyFilesDeleter.deleteExternal(
+						itemDstPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
+					);
+				} catch(final Throwable ignored) {
+				}
+				break;
 		}
 		switch(runMode) {
 			case DISTRIBUTED:
-				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
-					final int port = MongooseSlaveNodeContainer.DEFAULT_PORT + i;
-					final MongooseSlaveNodeContainer nodeSvc = new MongooseSlaveNodeContainer(port);
-					final String addr = localExternalAddr + ":" + port;
+					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
+					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
+					final String addr = "127.0.0.1:" + port;
 					slaveNodes.put(addr, nodeSvc);
 				}
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
@@ -166,35 +164,57 @@ import java.util.stream.Collectors;
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
-		storageMocks.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
+		slaveNodes
+			.values()
+			.parallelStream()
+			.forEach(
+				storageMock -> {
+					try {
+						storageMock.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+			);
+		storageMocks
+			.values()
+			.parallelStream()
+			.forEach(
+				storageMock -> {
+					try {
+						storageMock.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+			);
+		try {
+			DirWithManyFilesDeleter.deleteExternal(
+				itemSrcPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
+			);
+		} catch(final Throwable ignored) {
+		}
+		try {
+			DirWithManyFilesDeleter.deleteExternal(
+				itemDstPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString())
+			);
+		} catch(final Throwable ignored) {
+		}
 	}
 
 	@Test
 	public final void test()
 	throws Exception {
-		final LongAdder ioTraceRecCount = new LongAdder();
+		final LongAdder opTraceRecCount = new LongAdder();
 		final LongAdder lostItemsCount = new LongAdder();
-		final Consumer<CSVRecord> ioTraceRecTestFunc;
+		final Consumer<CSVRecord> opTraceRecTestFunc;
 		if(storageType.equals(StorageType.FS)) {
 			final String hostItemSrcPath = itemSrcPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString());
 			final String hostItemDstPath = itemDstPath.replace(CONTAINER_SHARE_PATH, HOST_SHARE_PATH.toString());
-			ioTraceRecTestFunc = ioTraceRecord -> {
+			opTraceRecTestFunc = opTraceRecord -> {
 				File nextSrcFile;
 				File nextDstFile;
-				final String nextItemPath = ioTraceRecord.get("ItemPath");
+				final String nextItemPath = opTraceRecord.get(1);
 				final String nextItemId = nextItemPath.substring(nextItemPath.lastIndexOf('/') + 1);
 				nextSrcFile = Paths.get(hostItemSrcPath, nextItemId).toFile();
 				nextDstFile = Paths.get(hostItemDstPath, nextItemId).toFile();
@@ -210,27 +230,27 @@ import java.util.stream.Collectors;
 						nextDstFile.length()
 					);
 				}
-				testIoTraceRecord(ioTraceRecord, OpType.CREATE.ordinal(), new SizeInBytes(nextSrcFile.length()));
-				ioTraceRecCount.increment();
+				testOpTraceRecord(opTraceRecord, OpType.CREATE.ordinal(), new SizeInBytes(nextSrcFile.length()));
+				opTraceRecCount.increment();
 			};
 		} else {
 			final String node = storageMocks.keySet().iterator().next();
-			ioTraceRecTestFunc = ioTraceRecord -> {
-				testIoTraceRecord(ioTraceRecord, OpType.CREATE.ordinal(), itemSize.getValue());
-				final String nextItemPath = ioTraceRecord.get("ItemPath");
+			opTraceRecTestFunc = opTraceRecord -> {
+				testOpTraceRecord(opTraceRecord, OpType.CREATE.ordinal(), itemSize.getValue());
+				final String nextItemPath = opTraceRecord.get(1);
 				if(HttpStorageMockUtil.getContentLength(node, nextItemPath) < 0) {
 					// not found
 					lostItemsCount.increment();
 				}
 				final String nextItemId = nextItemPath.substring(nextItemPath.lastIndexOf('/') + 1);
 				HttpStorageMockUtil.assertItemExists(node, itemSrcPath + '/' + nextItemId, itemSize.getValue().get());
-				ioTraceRecCount.increment();
+				opTraceRecCount.increment();
 			};
 		}
-		testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
+		testOpTraceLogRecords(stepId, opTraceRecTestFunc);
 		assertTrue(
-			"There should be " + COUNT_LIMIT + " records in the I/O trace log file but got " + ioTraceRecCount.sum(),
-			ioTraceRecCount.sum() <= COUNT_LIMIT
+			"There should be " + COUNT_LIMIT + " records in the I/O trace log file but got " + opTraceRecCount.sum(),
+			opTraceRecCount.sum() <= COUNT_LIMIT
 		);
 		assertEquals(0, lostItemsCount.sum(), COUNT_LIMIT / 10_000);
 		final List<CSVRecord> totalMetricsLogRecords = getMetricsTotalLogRecords(stepId);
@@ -239,8 +259,7 @@ import java.util.stream.Collectors;
 			// some files may remain not written fully
 			testTotalMetricsLogRecord(
 				totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
-				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0,
-				0
+				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0, 0
 			);
 		} else {
 			testTotalMetricsLogRecord(
@@ -265,8 +284,9 @@ import java.util.stream.Collectors;
 				0, 0, outputMetricsAveragePeriod
 			);
 		} else {
-			testMetricsLogRecords(metricsLogRecords, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
-				itemSize.getValue(), 0, 0, outputMetricsAveragePeriod
+			testMetricsLogRecords(
+				metricsLogRecords, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(),
+				0, 0, outputMetricsAveragePeriod
 			);
 		}
 		final String stdOutContent = testContainer.stdOutContent();

@@ -39,7 +39,7 @@ implements Docker.Container {
 	private final List<String> env;
 	private final Map<String, Path> volumeBinds;
 	private final boolean attachOutputFlag;
-	protected final int[] exposedTcpPorts;
+	protected final int[] ports;
 	private final StringBuilder stdOutBuff = new StringBuilder();
 	private final StringBuilder stdErrBuff = new StringBuilder();
 	private final ResultCallback<Frame> streamsCallback = new ContainerOutputCallback(
@@ -50,13 +50,13 @@ implements Docker.Container {
 
 	protected ContainerBase(
 		final String version, final List<String> env, final Map<String, Path> volumeBinds,
-		final boolean attachOutputFlag, final int... exposedTcpPorts
+		final boolean attachOutputFlag, final int... ports
 	) throws InterruptedException{
 		this.version = (version == null || version.isEmpty()) ? DEFAULT_IMAGE_VERSION : version;
 		this.env = env;
 		this.volumeBinds = volumeBinds;
 		this.attachOutputFlag = attachOutputFlag;
-		this.exposedTcpPorts = exposedTcpPorts;
+		this.ports = ports;
 		final String imageNameWithVer = imageName() + ":" + this.version;
 		try {
 			Docker.CLIENT.inspectImageCmd(imageNameWithVer).exec();
@@ -107,10 +107,10 @@ implements Docker.Container {
 		final String imageNameWithVer = imageName() + ":" + this.version;
 		final List<String> args = containerArgs();
 		LOG.info("Docker container args: " + Arrays.toString(args.toArray(new String[]{})));
-		final ExposedPort[] exposedPorts = Arrays.stream(exposedTcpPorts)
-			.mapToObj(ExposedPort::tcp)
-			.collect(Collectors.toList())
-			.toArray(new ExposedPort[]{});
+		final List<ExposedPort> exposedPorts = Arrays
+			.stream(ports)
+			.mapToObj(ExposedPort::new)
+			.collect(Collectors.toList());
 		final CreateContainerCmd createContainerCmd = Docker.CLIENT
 			.createContainerCmd(imageNameWithVer)
 			.withName(imageName().replace('/', '_') + '_' + this.hashCode())

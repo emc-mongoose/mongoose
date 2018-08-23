@@ -250,7 +250,7 @@ public class LoadGeneratorImplTest {
 		DataItemImpl item;
 		for(int i = 0; i < BATCH_SIZE; i ++) {
 			item = new DataItemImpl();
-			item.setName(Long.toString(System.nanoTime(), Character.MAX_RADIX));
+			item.name(Long.toString(System.nanoTime(), Character.MAX_RADIX));
 			items.add(item);
 		}
 		final Input itemInput = new CircularListInput(items);
@@ -283,7 +283,7 @@ public class LoadGeneratorImplTest {
 		DataItemImpl item;
 		for(int i = 0; i < BATCH_SIZE; i ++) {
 			item = new DataItemImpl();
-			item.setName(Long.toString(System.nanoTime(), Character.MAX_RADIX));
+			item.name(Long.toString(System.nanoTime(), Character.MAX_RADIX));
 			items.add(item);
 		}
 		final Input itemInput = new CircularListInput(items);
@@ -316,7 +316,7 @@ public class LoadGeneratorImplTest {
 		DataItemImpl item;
 		for(int i = 0; i < BATCH_SIZE; i ++) {
 			item = new DataItemImpl();
-			item.setName(Long.toString(System.nanoTime(), Character.MAX_RADIX));
+			item.name(Long.toString(System.nanoTime(), Character.MAX_RADIX));
 			items.add(item);
 		}
 		final Input itemInput = new ListInput(items);

@@ -8,9 +8,9 @@ import java.io.Externalizable;
 public interface Item
 extends Externalizable {
 
-	String getName();
+	String name();
 
-	void setName(final String name);
+	void name(final String name);
 
 	void reset();
 

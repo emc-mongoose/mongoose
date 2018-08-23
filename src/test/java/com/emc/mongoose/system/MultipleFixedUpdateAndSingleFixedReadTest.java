@@ -12,7 +12,7 @@ import com.emc.mongoose.system.base.params.StorageType;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
+import com.emc.mongoose.system.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -57,7 +57,7 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 	private final SizeInBytes expectedUpdateSize;
 	private final SizeInBytes expectedReadSize;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
-	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
+	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
@@ -65,9 +65,8 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
 	private final Config config;
-	private final String containerItemOutputPath;
-	private final String hostItemOutputFile =
-		HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName() + ".csv";
+	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
+	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private int averagePeriod;
 	private String stdOutContent = null;
@@ -86,7 +85,6 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-		containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
@@ -98,50 +96,55 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 		this.expectedUpdateSize =
 			new SizeInBytes(- LongStream.of(2 - 5, 10 - 20, 50 - 100, 200 - 500, 1000 - 2000).sum());
 		this.expectedReadSize = new SizeInBytes(itemSize.getValue().get() - 256);
-		if(storageType.equals(StorageType.FS)) {
-			try {
-				DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
-			} catch(final Exception e) {
-				e.printStackTrace(System.err);
-			}
-		}
 		try {
 			Files.delete(Paths.get(hostItemOutputFile));
 		} catch(final Exception ignored) {
 		}
-		final List<String> env =
-			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
+		final List<String> env = System
+			.getenv()
+			.entrySet()
+			.stream()
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.toList());
 		final List<String> args = new ArrayList<>();
 		switch(storageType) {
 			case ATMOS:
 			case S3:
 			case SWIFT:
-				final HttpStorageMockContainer storageMock =
-					new HttpStorageMockContainer(HttpStorageMockContainer.DEFAULT_PORT, false, null, null, itemIdRadix,
-						HttpStorageMockContainer.DEFAULT_CAPACITY, HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
-						HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-						HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
-					);
+				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
+					HttpStorageMockContainer.DEFAULT_PORT, false, null, null, itemIdRadix,
+					HttpStorageMockContainer.DEFAULT_CAPACITY, HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
+					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+				);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
+			case FS:
+				args.add("--item-output-path=" + hostItemOutputPath);
+				try {
+					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+				} catch(final Exception e) {
+					e.printStackTrace(System.err);
+				}
+				break;
 		}
 		switch(runMode) {
 			case DISTRIBUTED:
-				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
-					final int port = MongooseSlaveNodeContainer.DEFAULT_PORT + i;
-					final MongooseSlaveNodeContainer nodeSvc = new MongooseSlaveNodeContainer(port);
-					final String addr = localExternalAddr + ":" + port;
+					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
+					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
+					final String addr = "127.0.0.1:" + port;
 					slaveNodes.put(addr, nodeSvc);
 				}
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer =
-			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
+		testContainer = new MongooseContainer(
+			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+		);
 	}
 
 	@Before
@@ -158,9 +161,9 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(storageMock -> {
+		slaveNodes.values().parallelStream().forEach(nod -> {
 			try {
-				storageMock.close();
+				nod.close();
 			} catch(final Throwable t) {
 				t.printStackTrace(System.err);
 			}
@@ -181,13 +184,13 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 		//        final LongAdder ioTraceRecCount = new LongAdder();
 		//        final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
 		//            if (ioTraceRecCount.sum() < EXPECTED_COUNT) {
-		//                testIoTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), expectedUpdateSize);
+		//                testOpTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), expectedUpdateSize);
 		//            } else {
-		//                testIoTraceRecord(ioTraceRec, OpType.READ.ordinal(), expectedReadSize);
+		//                testOpTraceRecord(ioTraceRec, OpType.READ.ordinal(), expectedReadSize);
 		//            }
 		//            ioTraceRecCount.increment();
 		//        };
-		//        testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
+		//        testOpTraceLogRecords(stepId, ioTraceRecTestFunc);
 		//        assertEquals(
 		//                "There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
 		//                2 * EXPECTED_COUNT, ioTraceRecCount.sum()

@@ -70,19 +70,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 extends NetStorageDriverBase<I, O>
 implements HttpStorageDriver<I, O> {
 
-	public static final AsyncCurrentDateSupplier DATE_SUPPLIER;
-
-	static {
-		try {
-			DATE_SUPPLIER = new AsyncCurrentDateSupplier(ServiceTaskExecutor.INSTANCE);
-		} catch(final OmgDoesNotPerformException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	private final static String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
-	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
-	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
 	private static final Function<String, BatchSupplier<String>> ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
 		try {
 			return new AsyncPatternDefinedSupplier(ServiceTaskExecutor.INSTANCE, pattern);
@@ -91,6 +79,10 @@ implements HttpStorageDriver<I, O> {
 			return null;
 		}
 	};
+
+	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
+	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
+	protected final AsyncCurrentDateSupplier dateSupplier = new AsyncCurrentDateSupplier(ServiceTaskExecutor.INSTANCE);
 	protected final String namespace;
 	protected final boolean fsAccess;
 	protected final boolean versioning;
@@ -171,7 +163,7 @@ implements HttpStorageDriver<I, O> {
 		final HttpMethod httpMethod;
 		final String uriPath;
 		if(item instanceof DataItem) {
-			httpMethod = getDataHttpMethod(opType);
+			httpMethod = dataHttpMethod(opType);
 			uriPath = dataUriPath(item, srcPath, op.dstPath(), opType);
 		} else if(item instanceof TokenItem) {
 			httpMethod = tokenHttpMethod(opType);
@@ -186,16 +178,14 @@ implements HttpStorageDriver<I, O> {
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, DATE_SUPPLIER.get());
+		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		final HttpRequest httpRequest = new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
 		switch(opType) {
 			case CREATE:
 				if(srcPath == null || srcPath.isEmpty()) {
 					if(item instanceof DataItem) {
 						try {
-							httpHeaders.set(
-								HttpHeaderNames.CONTENT_LENGTH, ((DataItem) item).size()
-										   );
+							httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, ((DataItem) item).size());
 						} catch(final IOException ignored) {
 						}
 					} else {
@@ -228,7 +218,7 @@ implements HttpStorageDriver<I, O> {
 		return httpRequest;
 	}
 
-	protected HttpMethod getDataHttpMethod(final OpType opType) {
+	protected HttpMethod dataHttpMethod(final OpType opType) {
 		switch(opType) {
 			case READ:
 				return HttpMethod.GET;
@@ -243,30 +233,18 @@ implements HttpStorageDriver<I, O> {
 
 	protected abstract HttpMethod pathHttpMethod(final OpType opType);
 
-	private static final ThreadLocal<StringBuilder> THR_LOC_DATA_URI_PATH_BUILDER = ThreadLocal.withInitial(
-		StringBuilder::new
-	);
-
 	protected String dataUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
-		final StringBuilder dataUriPathBuff = THR_LOC_DATA_URI_PATH_BUILDER.get();
-		dataUriPathBuff.setLength(0);
+		final String itemPath;
 		if(dstPath != null) {
-			if(!dstPath.startsWith(SLASH)) {
-				dataUriPathBuff.append(SLASH);
-			}
-			dataUriPathBuff.append(dstPath);
+			itemPath = dstPath.startsWith(SLASH) ? dstPath : SLASH + dstPath;
 		} else if(srcPath != null) {
-			if(!srcPath.startsWith(SLASH)) {
-				dataUriPathBuff.append(SLASH);
-			}
-			dataUriPathBuff.append(srcPath);
+			itemPath = srcPath.startsWith(SLASH) ? srcPath : SLASH + srcPath;
+		} else {
+			itemPath = null;
 		}
-		final String itemName = item.getName();
-		if(!itemName.startsWith(SLASH)) {
-			dataUriPathBuff.append(SLASH);
-		}
-		dataUriPathBuff.append(itemName);
-		return dataUriPathBuff.toString();
+		final String itemNameRaw = item.name();
+		final String itemName = itemNameRaw.startsWith(SLASH) ? itemNameRaw : SLASH + itemNameRaw;
+		return (itemPath == null || itemName.startsWith(itemPath)) ? itemName : itemPath + itemName;
 	}
 
 	protected abstract String tokenUriPath(
@@ -426,6 +404,7 @@ implements HttpStorageDriver<I, O> {
 	protected void doClose()
 	throws IOException {
 		super.doClose();
+		dateSupplier.close();
 		sharedHeaders.clear();
 		dynamicHeaders.clear();
 		headerNameInputs.clear();

@@ -33,6 +33,7 @@ import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.message.ThreadDumpMessage;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -117,11 +118,13 @@ implements LoadStepClient {
 	private static List<String> remoteNodeAddrs(final Config config) {
 		final Config nodeConfig = config.configVal("load-step-node");
 		final int nodePort = nodeConfig.intVal("port");
-		return nodeConfig
-			.<String>listVal("addrs")
-			.stream()
-			.map(addr -> NetUtil.addPortIfMissing(addr, nodePort))
-			.collect(Collectors.toList());
+		final List<String> nodeAddrs = nodeConfig.listVal("addrs");
+		return nodeAddrs == null || nodeAddrs.isEmpty() ?
+			Collections.EMPTY_LIST :
+			nodeAddrs
+				.stream()
+				.map(addr -> NetUtil.addPortIfMissing(addr, nodePort))
+				.collect(Collectors.toList());
 	}
 
 	private static void initFileManagers(final List<String> nodeAddrs, final List<FileManager> fileMgrsDst) {
@@ -198,8 +201,11 @@ implements LoadStepClient {
 	}
 
 	private void initAndStartMetricsAggregator() {
-		metricsAggregator = new MetricsAggregatorImpl(id(), stepSlices);
-		try {
+		try(
+			final Instance logCtx = put(KEY_STEP_ID, id())
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+		) {
+			metricsAggregator = new MetricsAggregatorImpl(id(), stepSlices);
 			metricsAggregator.start();
 		} catch(final Exception e) {
 			LogUtil.exception(Level.ERROR, e, "{}: failed to start the metrics aggregator", id());
@@ -258,10 +264,34 @@ implements LoadStepClient {
 			final long countLimit = config.longVal("load-step-limit-count");
 			if(countLimit > 0) {
 				ConfigSliceUtil.sliceLongValue(countLimit, configSlices, "load-step-limit-count");
+				configSlices
+					.stream()
+					.mapToLong(configSlice -> configSlice.longVal("load-step-limit-count"))
+					.filter(countLimitSlice -> countLimitSlice == 0)
+					.findAny()
+					.ifPresent(
+						countLimitSlice -> Loggers.MSG.fatal(
+							"{}: the count limit ({}) is too small to be sliced among the {} nodes, the load step "
+								+ "won't work correctly",
+							id(), countLimit, sliceCount
+						)
+					);
 			}
 			final long countFailLimit = config.longVal("load-step-limit-fail-count");
 			if(countFailLimit > 0) {
 				ConfigSliceUtil.sliceLongValue(countFailLimit, configSlices, "load-step-limit-fail-count");
+				configSlices
+					.stream()
+					.mapToLong(configSlice -> configSlice.longVal("load-step-limit-fail-count"))
+					.filter(failCountLimitSlice -> failCountLimitSlice == 0)
+					.findAny()
+					.ifPresent(
+						failCountLimitSlice -> Loggers.MSG.error(
+							"{}: the failures count limit ({}) is too small to be sliced among the {} nodes, the load "
+								+ "step may not work correctly",
+							id(), countLimit, sliceCount
+						)
+					);
 			}
 			final double rateLimit = config.doubleVal("load-op-limit-rate");
 			if(rateLimit > 0) {
@@ -346,20 +376,30 @@ implements LoadStepClient {
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptRunException, IllegalStateException, InterruptedException {
-		if(stepSlices.size() == 0) {
-			throw new IllegalStateException("No step slices are available");
-		}
-		final CountDownLatch awaitCountDown = new CountDownLatch(stepSlices.size());
-		final List<AsyncRunnableBase> awaitTasks =
-			stepSlices
+		final int stepSliceCount = stepSlices.size();
+		try(
+			final Instance logCtx = put(KEY_STEP_ID, id())
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+		) {
+			if(0 == stepSliceCount) {
+				throw new IllegalStateException("No step slices are available");
+			}
+			Loggers.MSG.debug(
+				"{}: await for {} step slices for at most {} {}...", id(), stepSliceCount, timeout,
+				timeUnit.name().toLowerCase()
+			);
+			final CountDownLatch awaitCountDown = new CountDownLatch(stepSlices.size());
+			final List<AsyncRunnableBase> awaitTasks = stepSlices
 				.stream()
 				.map(
 					stepSlice -> new ExclusiveFiberBase(ServiceTaskExecutor.INSTANCE) {
 						@Override
 						protected final void invokeTimedExclusively(final long startTimeNanos) {
+							Loggers.MSG.trace("{}: await for the step slice \"{}\" started", id(), stepSlice);
 							try {
 								if(stepSlice.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
 									awaitCountDown.countDown();
+									stop();
 								}
 							} catch(final RemoteException e) {
 								LogUtil.exception(
@@ -368,25 +408,31 @@ implements LoadStepClient {
 								);
 							} catch(final InterruptedException e) {
 								throw new InterruptRunException(e);
+							} catch(final IllegalStateException e) {
+								LogUtil.exception(Level.DEBUG, e, "{}: failure in the await method", id());
 							}
 						}
 					}
 				)
 				.peek(AsyncRunnableBase::start)
 				.collect(Collectors.toList());
-		try {
-			return awaitCountDown.await(timeout, timeUnit);
-		} finally {
-			awaitTasks.forEach(
-				awaitTask -> {
-					try {
-						awaitTask.close();
-					} catch(final InterruptRunException e) {
-						throw e;
-					} catch(final Exception ignored) {
+			try {
+				return awaitCountDown.await(timeout, timeUnit);
+			} finally {
+				awaitTasks.forEach(
+					awaitTask -> {
+						try {
+							awaitTask.close();
+						} catch(final InterruptRunException e) {
+							throw e;
+						} catch(final Exception e) {
+							LogUtil.exception(Level.DEBUG, e, "{}: await task closing failure", id());
+						}
 					}
-				}
-			);
+				);
+			}
+		} finally {
+			Loggers.MSG.debug("{}: await for {} step slices done", id(), stepSliceCount);
 		}
 	}
 
@@ -409,109 +455,134 @@ implements LoadStepClient {
 					}
 				}
 			);
+		if(null != metricsAggregator) {
+			try {
+				metricsAggregator.stop();
+			} catch(final RemoteException ignored) {
+			}
+		}
 		super.doStop();
 	}
 
 	@Override
 	protected final void doClose()
 	throws InterruptRunException, IOException {
-		super.doClose();
-		if(null != metricsAggregator) {
-			metricsAggregator.stop();
-		}
-		stepSlices
-			.parallelStream()
-			.forEach(
-				stepSlice -> {
-					try {
-						stepSlice.close();
-						Loggers.MSG.debug("{}: step slice \"{}\" closed", id(), stepSlice);
-					} catch(final InterruptRunException e) {
-						throw e;
-					} catch(final Exception e) {
-						LogUtil.exception(Level.WARN, e, "{}: failed to close the step service \"{}\"", id(), stepSlice);
+
+		try(
+			final Instance logCtx = put(KEY_STEP_ID, id())
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
+		) {
+
+			super.doClose();
+
+			stepSlices
+				.parallelStream()
+				.forEach(
+					stepSlice -> {
+						try {
+							stepSlice.close();
+							Loggers.MSG.debug("{}: step slice \"{}\" closed", id(), stepSlice);
+						} catch(final InterruptRunException e) {
+							throw e;
+						} catch(final Exception e) {
+							LogUtil.exception(
+								Level.WARN, e, "{}: failed to close the step service \"{}\"", id(), stepSlice
+							);
+						}
 					}
-				}
-			);
-		Loggers.MSG.debug("{}: closed all {} step slices", id(), stepSlices.size());
-		stepSlices.clear();
-		if(null != metricsAggregator) {
-			metricsAggregator.close();
-			metricsAggregator = null;
-		}
-		itemDataInputFileSlicers.forEach(itemDataInputFileSlicer -> {
-			try {
-				itemDataInputFileSlicers.clear();
-			} catch(final InterruptRunException e) {
-				throw e;
-			} catch(final Exception e) {
-				LogUtil.exception(Level.WARN, e, "{}: failed to close the item data input file slicer \"{}\"", id(),
-					itemDataInputFileSlicer
 				);
+			Loggers.MSG.debug("{}: closed all {} step slices", id(), stepSlices.size());
+			stepSlices.clear();
+
+			if(null != metricsAggregator) {
+				metricsAggregator.close();
+				metricsAggregator = null;
 			}
-		});
-		itemDataInputFileSlicers.clear();
-		itemInputFileSlicers.forEach(
-			itemInputFileSlicer -> {
-				try {
-					itemInputFileSlicer.close();
-				} catch(final InterruptRunException e) {
-					throw e;
-				} catch(final Exception e) {
-					LogUtil.exception(Level.WARN, e, "{}: failed to close the item input file slicer \"{}\"", id(),
-						itemInputFileSlicer
-					);
-				}
-			}
-		);
-		itemInputFileSlicers.clear();
-		itemOutputFileAggregators
-			.parallelStream()
-			.forEach(
-				itemOutputFileAggregator -> {
+
+			itemDataInputFileSlicers.forEach(
+				itemDataInputFileSlicer -> {
 					try {
-						itemOutputFileAggregator.close();
+						itemDataInputFileSlicers.clear();
 					} catch(final InterruptRunException e) {
 						throw e;
 					} catch(final Exception e) {
 						LogUtil.exception(
-							Level.WARN, e, "{}: failed to close the item output file aggregator \"{}\"", id(),
-							itemOutputFileAggregator
+							Level.WARN, e, "{}: failed to close the item data input file slicer \"{}\"", id(),
+							itemDataInputFileSlicer
 						);
 					}
 				}
 			);
-		opTraceLogFileAggregators
-			.parallelStream()
-			.forEach(
-				opTraceLogFileAggregator -> {
+			itemDataInputFileSlicers.clear();
+
+			itemInputFileSlicers.forEach(
+				itemInputFileSlicer -> {
 					try {
-						opTraceLogFileAggregator.close();
+						itemInputFileSlicer.close();
 					} catch(final InterruptRunException e) {
 						throw e;
 					} catch(final Exception e) {
 						LogUtil.exception(
-							Level.WARN, e, "{}: failed to close the operation traces log file aggregator \"{}\"",
-							id(), opTraceLogFileAggregator
+							Level.WARN, e, "{}: failed to close the item input file slicer \"{}\"", id(),
+							itemInputFileSlicer
 						);
 					}
 				}
 			);
-		storageAuthFileSlicers.forEach(
-			storageAuthFileSlicer -> {
-				try {
-					storageAuthFileSlicer.close();
-				} catch(final InterruptRunException e) {
-					throw e;
-				} catch(final Exception e) {
-					LogUtil.exception(
-						Level.WARN, e, "{}: failed to close the storage auth file slicer \"{}\"", id(),
-						storageAuthFileSlicer
-					);
+			itemInputFileSlicers.clear();
+
+			itemOutputFileAggregators
+				.parallelStream()
+				.forEach(
+					itemOutputFileAggregator -> {
+						try {
+							itemOutputFileAggregator.close();
+						} catch(final InterruptRunException e) {
+							throw e;
+						} catch(final Exception e) {
+							LogUtil.exception(
+								Level.WARN, e, "{}: failed to close the item output file aggregator \"{}\"", id(),
+								itemOutputFileAggregator
+							);
+						}
+					}
+				);
+			itemOutputFileAggregators.clear();
+
+			opTraceLogFileAggregators
+				.parallelStream()
+				.forEach(
+					opTraceLogFileAggregator -> {
+						try {
+							opTraceLogFileAggregator.close();
+						} catch(final InterruptRunException e) {
+							throw e;
+						} catch(final Exception e) {
+							LogUtil.exception(
+								Level.WARN, e, "{}: failed to close the operation traces log file aggregator \"{}\"",
+								id(), opTraceLogFileAggregator
+							);
+						}
+					}
+				);
+			opTraceLogFileAggregators.clear();
+
+			storageAuthFileSlicers.forEach(
+				storageAuthFileSlicer -> {
+					try {
+						storageAuthFileSlicer.close();
+					} catch(final InterruptRunException e) {
+						throw e;
+					} catch(final Exception e) {
+						LogUtil.exception(
+							Level.WARN, e, "{}: failed to close the storage auth file slicer \"{}\"", id(),
+							storageAuthFileSlicer
+						);
+					}
 				}
-			}
-		);
-		storageAuthFileSlicers.clear();
+			);
+			storageAuthFileSlicers.clear();
+		}
 	}
 
 	@Override

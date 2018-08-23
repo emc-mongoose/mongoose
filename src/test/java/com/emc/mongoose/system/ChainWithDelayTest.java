@@ -12,7 +12,7 @@ import com.emc.mongoose.system.base.params.StorageType;
 import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseSlaveNodeContainer;
+import com.emc.mongoose.system.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.reflection.TypeUtil;
@@ -40,12 +40,13 @@ import java.util.stream.Collectors;
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.testIoTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.getHostItemOutputPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -63,7 +64,7 @@ import static org.junit.Assert.fail;
 	private final String zone1Addr = "127.0.0.1";
 	private final String zone2Addr;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
-	private final Map<String, MongooseSlaveNodeContainer> slaveNodes = new HashMap<>();
+	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
@@ -72,9 +73,7 @@ import static org.junit.Assert.fail;
 	private final ItemSize itemSize;
 	private final Config config;
 	private final int averagePeriod;
-	private final String containerItemOutputPath;
-	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + CreateLimitBySizeTest.class.getSimpleName()
-		+ ".csv";
+	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private boolean finishedInTime;
 	private int containerExitCode;
@@ -94,7 +93,6 @@ import static org.junit.Assert.fail;
 			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-		containerItemOutputPath = MongooseContainer.getContainerItemOutputPath(stepId);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
@@ -105,7 +103,7 @@ import static org.junit.Assert.fail;
 		this.itemSize = itemSize;
 		if(storageType.equals(StorageType.FS)) {
 			try {
-				DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
+				DirWithManyFilesDeleter.deleteExternal(getHostItemOutputPath(stepId));
 			} catch(final Exception e) {
 				e.printStackTrace(System.err);
 			}
@@ -135,11 +133,13 @@ import static org.junit.Assert.fail;
 					false,
 					null,
 					null,
-					Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
+					Character.MAX_RADIX,
+					HttpStorageMockContainer.DEFAULT_CAPACITY,
 					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
 					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
 					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY,
+					0
 				);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
@@ -148,18 +148,18 @@ import static org.junit.Assert.fail;
 		}
 		switch(runMode) {
 			case DISTRIBUTED:
-				final String localExternalAddr = ServiceUtil.getAnyExternalHostAddress();
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
-					final int port = MongooseSlaveNodeContainer.DEFAULT_PORT + i;
-					final MongooseSlaveNodeContainer nodeSvc = new MongooseSlaveNodeContainer(port);
-					final String addr = localExternalAddr + ":" + port;
+					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
+					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
+					final String addr = "127.0.0.1:" + port;
 					slaveNodes.put(addr, nodeSvc);
 				}
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer =
-			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
+		testContainer = new MongooseContainer(
+			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+		);
 	}
 
 	@Before
@@ -168,7 +168,10 @@ import static org.junit.Assert.fail;
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		long duration = System.currentTimeMillis();
 		testContainer.start();
-		testContainer.await(TIME_LIMIT + 10, TimeUnit.SECONDS);
+		System.out.println(
+			"Test container await(" + (TIME_LIMIT + 30) + "[s]) returned: "
+				+ testContainer.await(TIME_LIMIT + 30, TimeUnit.SECONDS)
+		);
 		stdOutContent = testContainer.stdOutContent();
 		duration = System.currentTimeMillis() - duration;
 		finishedInTime = (TimeUnit.MILLISECONDS.toSeconds(duration) <= TIME_LIMIT + 15);
@@ -217,11 +220,11 @@ import static org.junit.Assert.fail;
 
 			@Override
 			public final void accept(final CSVRecord ioTraceRec) {
-				storageNode = ioTraceRec.get("StorageNode");
-				itemPath = ioTraceRec.get("ItemPath");
-				opType = OpType.values()[Integer.parseInt(ioTraceRec.get("OpTypeCode"))];
-				reqTimeStart = Long.parseLong(ioTraceRec.get("ReqTimeStart[us]"));
-				duration = Long.parseLong(ioTraceRec.get("Duration[us]"));
+				storageNode = ioTraceRec.get(0);
+				itemPath = ioTraceRec.get(1);
+				opType = OpType.values()[Integer.parseInt(ioTraceRec.get(2))];
+				reqTimeStart = Long.parseLong(ioTraceRec.get(4));
+				duration = Long.parseLong(ioTraceRec.get(5));
 				switch(opType) {
 					case CREATE:
 						assertTrue(storageNode.startsWith(zone1Addr));
@@ -241,7 +244,7 @@ import static org.junit.Assert.fail;
 				}
 			}
 		};
-		testIoTraceLogRecords(stepId, ioTraceRecTestFunc);
+		testOpTraceLogRecords(stepId, ioTraceRecTestFunc);
 		assertTrue("Scenario didn't finished in time", finishedInTime);
 	}
 }

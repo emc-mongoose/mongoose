@@ -29,8 +29,7 @@ extends ContainerBase {
 	static {
 		try {
 			BUNDLED_DEFAULTS = new BundledDefaultsProvider().config(
-				ARG_PATH_SEP,
-				SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader())
+				ARG_PATH_SEP, SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader())
 			);
 		} catch(final Exception e) {
 			throw new AssertionError(e);
@@ -83,8 +82,7 @@ extends ContainerBase {
 	public MongooseContainer(
 		final String stepId, final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
 		final ItemSize itemSize, final String containerScenarioPath, final List<String> env, final List<String> args
-	)
-	throws InterruptedException {
+	) throws InterruptedException {
 		this(IMAGE_VERSION, stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args);
 	}
 
@@ -92,8 +90,7 @@ extends ContainerBase {
 		final String version, final String stepId, final StorageType storageType, final RunMode runMode,
 		final Concurrency concurrency, final ItemSize itemSize, final String containerScenarioPath,
 		final List<String> env, final List<String> args
-	)
-	throws InterruptedException {
+	) throws InterruptedException {
 		super(version, env, VOLUME_BINDS, true, PORT_DEBUG, PORT_JMX);
 		this.args = args;
 		this.args.add("--load-step-id=" + stepId);
@@ -112,7 +109,9 @@ extends ContainerBase {
 			case FS:
 				containerItemOutputPath = getContainerItemOutputPath(stepId);
 				hostItemOutputPath = getHostItemOutputPath(stepId);
-				args.add("--item-output-path=" + containerItemOutputPath);
+				if(args.stream().noneMatch(arg -> arg.startsWith("--item-output-path="))) {
+					args.add("--item-output-path=" + containerItemOutputPath);
+				}
 				break;
 			case SWIFT:
 				args.add("--storage-net-http-namespace=ns1");

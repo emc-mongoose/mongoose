@@ -36,12 +36,12 @@ implements Item {
 	}
 
 	@Override
-	public final String getName() {
+	public final String name() {
 		return name;
 	}
 	
 	@Override
-	public final void setName(final String name) {
+	public final void name(final String name) {
 		this.name = name;
 	}
 	

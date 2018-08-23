@@ -36,11 +36,11 @@ implements Operation<I> {
 		this.opType = opType;
 		this.item = item;
 
-		final String itemName = item.getName();
+		final String itemName = item.name();
 		final int lastSlashIndex = itemName.lastIndexOf(SLASH);
 		if(lastSlashIndex > 0 && lastSlashIndex < itemName.length()) {
 			this.srcPath = itemName.substring(0, lastSlashIndex);
-			item.setName(itemName.substring(lastSlashIndex + 1));
+			item.name(itemName.substring(lastSlashIndex + 1));
 		} else {
 			this.srcPath = srcPath;
 		}

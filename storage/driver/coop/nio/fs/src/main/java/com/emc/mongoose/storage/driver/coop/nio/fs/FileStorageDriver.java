@@ -57,7 +57,7 @@ implements NioStorageDriver<I, O> {
 	}
 
 	private <F extends DataItem, D extends DataOperation<F>> FileChannel openDstFile(final D dataOp) {
-		final String fileItemName = dataOp.item().getName();
+		final String fileItemName = dataOp.item().name();
 		final OpType opType = dataOp.type();
 		final String dstPath = dataOp.dstPath();
 		final Path itemPath;
@@ -206,7 +206,7 @@ implements NioStorageDriver<I, O> {
 							final long countBytesDone = op.countBytesDone() + e.getOffset();
 							op.countBytesDone(countBytesDone);
 							Loggers.MSG.debug(
-								"{}: content size mismatch, expected: {}, actual: {}", item.getName(), item.size(),
+								"{}: content size mismatch, expected: {}, actual: {}", item.name(), item.size(),
 								countBytesDone
 							);
 						} catch(final DataCorruptionException e) {
@@ -214,7 +214,7 @@ implements NioStorageDriver<I, O> {
 							final long countBytesDone = op.countBytesDone() + e.getOffset();
 							op.countBytesDone(countBytesDone);
 							Loggers.MSG.debug(
-								"{}: content mismatch @ offset {}, expected: {}, actual: {} ", item.getName(),
+								"{}: content mismatch @ offset {}, expected: {}, actual: {} ", item.name(),
 								countBytesDone, String.format("\"0x%X\"", (int) (e.expected & 0xFF)),
 								String.format("\"0x%X\"", (int) (e.actual & 0xFF))
 							);
@@ -331,7 +331,7 @@ implements NioStorageDriver<I, O> {
 		final String dstPath = op.dstPath();
 		final I fileItem = op.item();
 		FsConstants.FS_PROVIDER.delete(
-			dstPath == null ? Paths.get(fileItem.getName()) : Paths.get(dstPath, fileItem.getName())
+			dstPath == null ? Paths.get(fileItem.name()) : Paths.get(dstPath, fileItem.name())
 		);
 		return true;
 	}

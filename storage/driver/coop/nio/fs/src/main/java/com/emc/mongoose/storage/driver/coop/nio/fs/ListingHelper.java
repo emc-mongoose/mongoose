@@ -57,7 +57,7 @@ public interface ListingHelper {
 				lastPrevItemName = null;
 				lastPrevItemNameFound = true;
 			} else {
-				lastPrevItemName = lastPrevItem.getName();
+				lastPrevItemName = lastPrevItem.name();
 				lastPrevItemNameFound = false;
 			}
 

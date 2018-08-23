@@ -131,11 +131,6 @@ public interface LogValidationUtil {
 		return getLogFileCsvRecords(stepId, "metrics.total.csv");
 	}
 
-	static List<CSVRecord> getIoTraceLogRecords(final String stepId)
-	throws IOException {
-		return getLogFileCsvRecords(stepId, "op.trace.csv");
-	}
-
 	static void waitLogFile(final File logFile) {
 		long prevSize = 1, nextSize;
 		for(int t = 0; t < LOG_FILE_TIMEOUT_SEC; t++) {
@@ -154,22 +149,21 @@ public interface LogValidationUtil {
 		}
 	}
 
-	static void testIoTraceLogFile(
-		final File logFile, final Consumer<CSVRecord> csvRecordTestFunc
-	) throws IOException {
+	static void testOpTraceLogFile(final File logFile, final Consumer<CSVRecord> csvRecordTestFunc)
+	throws IOException {
 		try(final BufferedReader br = new BufferedReader(new FileReader(logFile))) {
-			try(final CSVParser csvParser = CSVFormat.RFC4180.withHeader().parse(br)) {
+			try(final CSVParser csvParser = CSVFormat.RFC4180.parse(br)) {
 				csvParser.forEach(csvRecordTestFunc);
 			}
 		}
 	}
 
-	static void testIoTraceLogRecords(
+	static void testOpTraceLogRecords(
 		final String stepId, final Consumer<CSVRecord> csvRecordTestFunc
 	) throws IOException {
 		final File logFile = getLogFile(stepId, "op.trace.csv");
 		waitLogFile(logFile);
-		testIoTraceLogFile(logFile, csvRecordTestFunc);
+		testOpTraceLogFile(logFile, csvRecordTestFunc);
 	}
 
 	static List<CSVRecord> getPartsUploadRecords(final String stepId)
@@ -187,7 +181,7 @@ public interface LogValidationUtil {
 			assertTrue(expectedLoadJobTime + metricsPeriodSec >= countRecords * metricsPeriodSec);
 		}
 		Date lastTimeStamp = null, nextDateTimeStamp;
-		String OpTypeStr;
+		String opTypeStr;
 		int concurrencyLevel;
 		int nodeCount;
 		int concurrencyCurr;
@@ -213,8 +207,8 @@ public interface LogValidationUtil {
 				);
 			}
 			lastTimeStamp = nextDateTimeStamp;
-			OpTypeStr = nextRecord.get("OpType").toUpperCase();
-			assertEquals(expectedOpType.name(), OpTypeStr);
+			opTypeStr = nextRecord.get("OpType").toUpperCase();
+			assertEquals(expectedOpType.name(), opTypeStr);
 			concurrencyLevel = Integer.parseInt(nextRecord.get("Concurrency"));
 			assertEquals("Expected concurrency level: " + expectedConcurrency, expectedConcurrency, concurrencyLevel);
 			nodeCount = Integer.parseInt(nextRecord.get("NodeCount"));
@@ -222,8 +216,12 @@ public interface LogValidationUtil {
 			concurrencyCurr = Integer.parseInt(nextRecord.get("ConcurrencyCurr"));
 			concurrencyMean = Double.parseDouble(nextRecord.get("ConcurrencyMean"));
 			if(expectedConcurrency > 0) {
-				assertTrue(concurrencyCurr <= expectedConcurrency);
-				assertTrue(concurrencyMean <= expectedConcurrency);
+				assertTrue(
+					"Current concurrency " + concurrencyCurr + " should not be more than the limit "
+						+ expectedConcurrency + " x " + nodeCount,
+					concurrencyCurr <= expectedConcurrency * nodeCount
+				);
+				assertTrue(concurrencyMean <= expectedConcurrency * nodeCount);
 			} else {
 				assertTrue(concurrencyCurr >= 0);
 				assertTrue(concurrencyMean >= 0);
@@ -328,7 +326,7 @@ public interface LogValidationUtil {
 		assertEquals(Integer.toString(nodeCount), expectedNodeCount, nodeCount);
 		final double concurrencyLastMean = Double.parseDouble(metrics.get("ConcurrencyMean"));
 		if(concurrencyLimit > 0) {
-			assertTrue(concurrencyLastMean <= concurrencyLimit);
+			assertTrue(concurrencyLastMean <= concurrencyLimit * nodeCount);
 		} else {
 			assertTrue(concurrencyLastMean >= 0);
 		}
@@ -354,7 +352,7 @@ public interface LogValidationUtil {
 		final long countFail = Long.parseLong(metrics.get("CountFail"));
 		//assertTrue("Failures count: " + Long.toString(countFail), countFail < 1);
 		//use delta = 5%, because sometimes default storage-mock return error (1 missing response)
-		assertEquals(Long.toString(countFail), countFail, 0, countSucc * 0.05);
+		assertEquals(Long.toString(countFail), 0, countFail, countSucc * 0.05);
 		if(countSucc > 0) {
 			final long avgItemSize = totalBytes / countSucc;
 			if(expectedItemDataSize.getMin() < expectedItemDataSize.getMax()) {
@@ -415,11 +413,11 @@ public interface LogValidationUtil {
 		assertTrue(latMax >= latHiQ);
 	}
 
-	static void testIoTraceRecord(
-		final CSVRecord ioTraceRecord, final int OpTypeCodeExpected, final SizeInBytes sizeExpected
+	static void testOpTraceRecord(
+		final CSVRecord opTraceRecord, final int opTypeCodeExpected, final SizeInBytes sizeExpected
 	) {
-		assertEquals(OpTypeCodeExpected, Integer.parseInt(ioTraceRecord.get("OpTypeCode")));
-		final int actualStatusCode = Integer.parseInt(ioTraceRecord.get("StatusCode"));
+		assertEquals(opTypeCodeExpected, Integer.parseInt(opTraceRecord.get(2)));
+		final int actualStatusCode = Integer.parseInt(opTraceRecord.get(3));
 		//All FAIL_<...> statuses have .ordinal() more then FAIL_IO
 		if(actualStatusCode >= FAIL_IO.ordinal()) {
 			//"return" because sometimes default storage-mock return error (1 missing response) and Status = FAIL_<...>
@@ -431,12 +429,12 @@ public interface LogValidationUtil {
 		assertEquals(
 			"Actual status code is " + Operation.Status.values()[actualStatusCode], SUCC.ordinal(), actualStatusCode
 		);
-		final long duration = Long.parseLong(ioTraceRecord.get("Duration[us]"));
-		final String latencyStr = ioTraceRecord.get("RespLatency[us]");
+		final long duration = Long.parseLong(opTraceRecord.get(5));
+		final String latencyStr = opTraceRecord.get(6);
 		if(latencyStr != null && ! latencyStr.isEmpty()) {
 			assertTrue(duration >= Long.parseLong(latencyStr));
 		}
-		final long size = Long.parseLong(ioTraceRecord.get("TransferSize"));
+		final long size = Long.parseLong(opTraceRecord.get(8));
 		if(sizeExpected.getMin() < sizeExpected.getMax()) {
 			assertTrue(
 				"Expected the size " + sizeExpected.toString() + ", but got " + size,
@@ -491,14 +489,15 @@ public interface LogValidationUtil {
 		final JavaType parsedType = mapper.getTypeFactory().constructArrayType(Map.class);
 		boolean found = false;
 		while(matcher.find()) {
-			final Map<String, Object> parsedContent = ((Map<String, Object>[])
-				mapper.readValue(matcher.group("content"), parsedType))[0];
+			final Map<String, Object> parsedContent = ((Map<String, Object>[]) mapper
+				.readValue(matcher.group("content"), parsedType))
+				[0];
 			stepId = (String) parsedContent.get(LogPatterns.KEY_STEP_ID);
-			if(! expectedStepId.equals(stepId)) {
+			if(!expectedStepId.equals(stepId)) {
 				continue;
 			}
 			opTypeStr = (String) parsedContent.get(LogPatterns.KEY_OP_TYPE);
-			if(! expectedOpType.name().equals(opTypeStr)) {
+			if(!expectedOpType.name().equals(opTypeStr)) {
 				continue;
 			}
 			found = true;
@@ -508,9 +507,11 @@ public interface LogValidationUtil {
 			assertEquals(Integer.toString(concurrencyLimit), expectedConcurrency, concurrencyLimit);
 			nodeCount = (int) parsedContent.get(LogPatterns.KEY_NODE_COUNT);
 			assertEquals(Integer.toString(nodeCount), expectedNodeCount, nodeCount);
-			concurrencyMean = (double)
-				((Map) ((Map) parsedContent.get(LogPatterns.KEY_CONCURRENCY)).get(LogPatterns.KEY_CONCURRENCY_ACTUAL))
-					.get(LogPatterns.KEY_MEAN);
+			concurrencyMean = (double) (
+				(Map) (
+					(Map) parsedContent.get(LogPatterns.KEY_CONCURRENCY)
+				).get(LogPatterns.KEY_CONCURRENCY_ACTUAL)
+			).get(LogPatterns.KEY_MEAN);
 			if(expectedConcurrency > 0) {
 				assertTrue(concurrencyMean <= nodeCount * expectedConcurrency);
 			} else {
@@ -525,7 +526,7 @@ public interface LogValidationUtil {
 			assertTrue(Long.toString(countSucc), countSucc >= 0);
 			countFail = ((Number) ((Map) parsedContent.get(LogPatterns.KEY_OP_COUNT)).get(
 				LogPatterns.KEY_FAIL)).longValue();
-			assertTrue(Long.toString(countFail), countFail < 1);
+			assertTrue("Failed operations count: " + countFail, countFail < 1);
 			if(countSucc > 0) {
 				avgItemSize = totalBytes / countSucc;
 				assertEquals(
