@@ -22,6 +22,7 @@ import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLog
 import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
 
@@ -45,6 +46,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -68,6 +70,8 @@ import java.util.stream.Collectors;
 	private final String SCENARIO_PATH = containerScenarioPath(getClass());
 	private final int timeoutInMillis = 1_000_000;
 	private final String itemOutputFile = snakeCaseName(getClass()) + "_items.csv";
+	private final String hostItemOutputFile = HOST_SHARE_PATH + File.separator + itemOutputFile;
+	private final String containerItemOutputFile = CONTAINER_SHARE_PATH + "/" + itemOutputFile;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -81,7 +85,6 @@ import java.util.stream.Collectors;
 	private final SizeInBytes sizeLimit;
 	private final Config config;
 	private final String containerItemOutputPath;
-	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private final int averagePeriod;
 	private String stdOutContent = null;
@@ -102,7 +105,7 @@ import java.util.stream.Collectors;
 		);
 		Loggers.MSG.info("Use the size limit: {}", sizeLimit);
 		expectedCountMin = sizeLimit.get() / fullItemSize.getMax();
-		expectedCountMax = sizeLimit.get() / fullItemSize.getMin();
+		expectedCountMax = (long) (1.1 * sizeLimit.get() / fullItemSize.getMin());
 		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
 			APP_NAME, Thread.currentThread().getContextClassLoader()
 		);
@@ -127,10 +130,14 @@ import java.util.stream.Collectors;
 			Files.delete(Paths.get(hostItemOutputFile));
 		} catch(final Exception ignored) {
 		}
-		final List<String> env =
-			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
+		final List<String> env = System
+			.getenv()
+			.entrySet()
+			.stream()
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.toList());
 		env.add("PART_SIZE=" + partSize.toString());
-		env.add("ITEM_OUTPUT_FILE=" + itemOutputFile);
+		env.add("ITEM_OUTPUT_FILE=" + containerItemOutputFile);
 		env.add("SIZE_LIMIT=" + sizeLimit.toString());
 		final List<String> args = new ArrayList<>();
 		//args.add("--item-data-size=" + fullItemSize);
@@ -161,8 +168,9 @@ import java.util.stream.Collectors;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer =
-			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
+		testContainer = new MongooseContainer(
+			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+		);
 	}
 
 	@Before
@@ -179,9 +187,9 @@ import java.util.stream.Collectors;
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(storageMock -> {
+		slaveNodes.values().parallelStream().forEach(node -> {
 			try {
-				storageMock.close();
+				node.close();
 			} catch(final Throwable t) {
 				t.printStackTrace(System.err);
 			}
@@ -216,7 +224,7 @@ import java.util.stream.Collectors;
 		testOpTraceLogRecords(stepId, opTraceRecFunc);
 
 		final List<CSVRecord> itemRecs = new ArrayList<>();
-		try(final BufferedReader br = new BufferedReader(new FileReader(itemOutputFile))) {
+		try(final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
 			try(final CSVParser csvParser = CSVFormat.RFC4180.parse(br)) {
 				for(final CSVRecord csvRecord : csvParser) {
 					itemRecs.add(csvRecord);

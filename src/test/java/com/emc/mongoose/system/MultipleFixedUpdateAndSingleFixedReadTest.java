@@ -18,6 +18,7 @@ import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -33,16 +34,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
+import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
 import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
+import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
+import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceRecord;
+import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
 import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class) public class MultipleFixedUpdateAndSingleFixedReadTest {
 
@@ -73,10 +83,10 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 
 	public MultipleFixedUpdateAndSingleFixedReadTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
-		final Map<String, Object> schema =
-			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
+	) throws Exception {
+		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
+			APP_NAME, Thread.currentThread().getContextClassLoader()
+		);
 		config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
 		final Object avgPeriodRaw = config.val("output-metrics-average-period");
 		if(avgPeriodRaw instanceof String) {
@@ -161,9 +171,9 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(nod -> {
+		slaveNodes.values().parallelStream().forEach(node -> {
 			try {
-				nod.close();
+				node.close();
 			} catch(final Throwable t) {
 				t.printStackTrace(System.err);
 			}
@@ -180,53 +190,50 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 	@Test
 	public final void test()
 	throws Exception {
-		// I/O traces
-		//        final LongAdder ioTraceRecCount = new LongAdder();
-		//        final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
-		//            if (ioTraceRecCount.sum() < EXPECTED_COUNT) {
-		//                testOpTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), expectedUpdateSize);
-		//            } else {
-		//                testOpTraceRecord(ioTraceRec, OpType.READ.ordinal(), expectedReadSize);
-		//            }
-		//            ioTraceRecCount.increment();
-		//        };
-		//        testOpTraceLogRecords(stepId, ioTraceRecTestFunc);
-		//        assertEquals(
-		//                "There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
-		//                2 * EXPECTED_COUNT, ioTraceRecCount.sum()
-		//        );
-		//
-		//        final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
-		//        testTotalMetricsLogRecord(
-		//                totalMetrcisLogRecords.get(0), OpType.UPDATE, concurrency.getValue(),
-		//                runMode.getNodeCount(), expectedUpdateSize, EXPECTED_COUNT, 0
-		//        );
-		//        testTotalMetricsLogRecord(
-		//                totalMetrcisLogRecords.get(1), OpType.READ, concurrency.getValue(),
-		//                runMode.getNodeCount(), expectedReadSize, EXPECTED_COUNT, 0
-		//        );
-		//
-		//        final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
-		//        final List<CSVRecord> updateMetricsRecords = new ArrayList<>();
-		//        final List<CSVRecord> readMetricsRecords = new ArrayList<>();
-		//        for (final CSVRecord metricsLogRec : metricsLogRecords) {
-		//            if (OpType.UPDATE.name().equalsIgnoreCase(metricsLogRec.get("OpType"))) {
-		//                updateMetricsRecords.add(metricsLogRec);
-		//            } else {
-		//                readMetricsRecords.add(metricsLogRec);
-		//            }
-		//        }
-		//        testMetricsLogRecords(
-		//                updateMetricsRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
-		//                expectedUpdateSize, EXPECTED_COUNT, 0,
-		//                averagePeriod
-		//        );
-		//        testMetricsLogRecords(
-		//                readMetricsRecords, OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
-		//                expectedReadSize, EXPECTED_COUNT, 0,
-		//                averagePeriod
-		//        );
-		//
+		final LongAdder ioTraceRecCount = new LongAdder();
+		final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
+			if (ioTraceRecCount.sum() < EXPECTED_COUNT) {
+				testOpTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), expectedUpdateSize);
+			} else {
+				testOpTraceRecord(ioTraceRec, OpType.READ.ordinal(), expectedReadSize);
+			}
+			ioTraceRecCount.increment();
+		};
+		testOpTraceLogRecords(stepId, ioTraceRecTestFunc);
+		assertEquals(
+			"There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
+			2 * EXPECTED_COUNT, ioTraceRecCount.sum()
+		);
+
+		final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
+		testTotalMetricsLogRecord(
+			totalMetrcisLogRecords.get(0), OpType.UPDATE, concurrency.getValue(),
+			runMode.getNodeCount(), expectedUpdateSize, EXPECTED_COUNT, 0
+		);
+		testTotalMetricsLogRecord(
+			totalMetrcisLogRecords.get(1), OpType.READ, concurrency.getValue(),
+			runMode.getNodeCount(), expectedReadSize, EXPECTED_COUNT, 0
+		);
+
+		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
+		final List<CSVRecord> updateMetricsRecords = new ArrayList<>();
+		final List<CSVRecord> readMetricsRecords = new ArrayList<>();
+		for (final CSVRecord metricsLogRec : metricsLogRecords) {
+			if (OpType.UPDATE.name().equalsIgnoreCase(metricsLogRec.get("OpType"))) {
+				updateMetricsRecords.add(metricsLogRec);
+			} else {
+				readMetricsRecords.add(metricsLogRec);
+			}
+		}
+		testMetricsLogRecords(
+			updateMetricsRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+			expectedUpdateSize, EXPECTED_COUNT, 0, averagePeriod
+		);
+		testMetricsLogRecords(
+			readMetricsRecords, OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
+			expectedReadSize, EXPECTED_COUNT, 0, averagePeriod
+		);
+
 		testFinalMetricsStdout(
 			stdOutContent, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), expectedUpdateSize, stepId
 		);

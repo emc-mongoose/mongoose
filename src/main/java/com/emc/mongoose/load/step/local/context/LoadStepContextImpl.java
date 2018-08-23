@@ -480,11 +480,11 @@ implements LoadStepContext<I, O> {
 			try {
 				final int ioResultCount = latestSuccOpResultByItem.size();
 				Loggers.MSG.info("{}: please wait while performing {} I/O results output...", id, ioResultCount);
-				for(final O latestItemIoResult : latestSuccOpResultByItem.values()) {
+				for(final O latestOpResult : latestSuccOpResultByItem.values()) {
 					try {
-						if(!opsResultsOutput.put(latestItemIoResult)) {
+						if(!opsResultsOutput.put(latestOpResult)) {
 							Loggers.ERR.debug("{}: item info output fails to ingest, blocking the closing method", id);
-							while(!opsResultsOutput.put(latestItemIoResult)) {
+							while(!opsResultsOutput.put(latestOpResult)) {
 								Thread.sleep(1);
 							}
 							Loggers.MSG.debug("{}: closing method unblocked", id);

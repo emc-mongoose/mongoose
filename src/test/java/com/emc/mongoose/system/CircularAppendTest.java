@@ -47,6 +47,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -73,8 +74,8 @@ import java.util.stream.Collectors;
 	private final int timeoutInMillis = 1_000_000;
 	private final String itemListFile0 = snakeCaseName(getClass()) + "_0.csv";
 	private final String itemListFile1 = snakeCaseName(getClass()) + "_1.csv";
-	private final String hostItemListFile0 = HOST_SHARE_PATH + "/" + itemListFile0;
-	private final String hostItemListFile1 = HOST_SHARE_PATH + "/" + itemListFile1;
+	private final String hostItemListFile0 = HOST_SHARE_PATH + File.separator + itemListFile0;
+	private final String hostItemListFile1 = HOST_SHARE_PATH + File.separator + itemListFile1;
 	private final String containerItemListFile0 = CONTAINER_SHARE_PATH + "/" + itemListFile0;
 	private final String containerItemListFile1 = CONTAINER_SHARE_PATH + "/" + itemListFile1;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
