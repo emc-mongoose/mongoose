@@ -12,7 +12,7 @@ unit_tests:
   script: "./gradlew test"
   artifacts:
     reports:
-      junit: *.xml
+      junit: "*.xml"
 
 
 integration_tests:
