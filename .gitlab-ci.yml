@@ -1,5 +1,13 @@
 image: java:8
 
+stages:
+  - unit_tests
+  - integration_tests
+  - docker_images
+  - system_tests
+  - deploy
+
+
 before_script:
   - ls -l | grep gradlew
   - chmod +x gradlew
@@ -9,6 +17,7 @@ variables:
   GIT_STRATEGY: fetch
 
 unit_tests:
+  stage: unit_tests
   script: "./gradlew test"
   artifacts:
     reports:
@@ -16,5 +25,6 @@ unit_tests:
 
 
 integration_tests:
+  stage: integration_tests
   script: "./gradlew integrationTest"
   
