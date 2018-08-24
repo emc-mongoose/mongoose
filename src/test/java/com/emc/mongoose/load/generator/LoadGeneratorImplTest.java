@@ -114,8 +114,6 @@ public class LoadGeneratorImplTest {
 		}
 	}
 	
-
-/*	
 	@Test
 	public final void testNewDataItems()
 	throws Exception {
@@ -149,7 +147,6 @@ public class LoadGeneratorImplTest {
 		}
 	}
 	
-
 	@Test
 	public final void testNewDataItemsWithAscNames()
 	throws Exception {
@@ -180,8 +177,7 @@ public class LoadGeneratorImplTest {
 			System.out.println(loadGenerator.toString() + " (w/ asc names) rate: " + counter.sum() / TIME_LIMIT);
 		}
 	}
-*/
-/* com		
+	
 	@Test
 	public final void testNewDataItemsWithCredentials()
 	throws Exception {
@@ -212,7 +208,7 @@ public class LoadGeneratorImplTest {
 			System.out.println(loadGenerator.toString() + "(w/ constant credentials) rate: " + counter.sum() / TIME_LIMIT);
 		}
 	}
-
+	
 	@Test
 	public final void testNewDataItemsWithDynamicPath()
 	throws Exception {
@@ -243,7 +239,6 @@ public class LoadGeneratorImplTest {
 			System.out.println(loadGenerator.toString() + " (w/ dynamic path) rate: " + counter.sum() / TIME_LIMIT);
 		}
 	}
-	
 	
 	@Test
 	public final void testDataItemsBuffer()
@@ -278,8 +273,6 @@ public class LoadGeneratorImplTest {
 		}
 	}
 	
-	
-
 	@Test
 	public final void testDataItemsBufferWithShuffle()
 	throws Exception {
@@ -312,8 +305,7 @@ public class LoadGeneratorImplTest {
 			System.out.println(loadGenerator.toString() + " (w/ shuffling) rate: " + counter.sum() / TIME_LIMIT);
 		}
 	}
-*/
-/* com
+
 	@Test
 	public final void testRecycleMode()
 	throws Exception {
@@ -349,5 +341,4 @@ public class LoadGeneratorImplTest {
 			}
 		}
 	}
-	*/
 }
