@@ -529,10 +529,21 @@ public interface LogValidationUtil {
 			assertTrue("Failed operations count: " + countFail, countFail < 1);
 			if(countSucc > 0) {
 				avgItemSize = totalBytes / countSucc;
-				assertEquals(
-					Long.toString(avgItemSize), expectedItemDataSize.getAvg(), avgItemSize,
-					expectedItemDataSize.getAvg() / 100
-				);
+				if(expectedItemDataSize.getMin() == expectedItemDataSize.getMax()) {
+					assertEquals(
+						Long.toString(avgItemSize), expectedItemDataSize.get(), avgItemSize,
+						expectedItemDataSize.get() / 100
+					);
+				} else {
+					assertTrue(
+						"Expected " + Long.toString(avgItemSize) + " >= " + expectedItemDataSize.getMin(),
+						avgItemSize >= expectedItemDataSize.getMin()
+					);
+					assertTrue(
+						"Expected " + Long.toString(avgItemSize) + " <= " + expectedItemDataSize.getMax(),
+						avgItemSize <= expectedItemDataSize.getMax()
+					);
+				}
 			}
 			stepDuration = ((Number) ((Map) parsedContent.get(LogPatterns.KEY_DURATION)).get(
 				LogPatterns.KEY_ELAPSED)).doubleValue();

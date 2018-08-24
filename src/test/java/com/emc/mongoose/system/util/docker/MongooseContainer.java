@@ -5,6 +5,7 @@ import com.emc.mongoose.system.base.params.Concurrency;
 import com.emc.mongoose.system.base.params.ItemSize;
 import com.emc.mongoose.system.base.params.RunMode;
 import com.emc.mongoose.system.base.params.StorageType;
+import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 
@@ -81,21 +82,21 @@ extends ContainerBase {
 
 	public MongooseContainer(
 		final String stepId, final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
-		final ItemSize itemSize, final String containerScenarioPath, final List<String> env, final List<String> args
+		final SizeInBytes itemSize, final String containerScenarioPath, final List<String> env, final List<String> args
 	) throws InterruptedException {
 		this(IMAGE_VERSION, stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args);
 	}
 
 	public MongooseContainer(
 		final String version, final String stepId, final StorageType storageType, final RunMode runMode,
-		final Concurrency concurrency, final ItemSize itemSize, final String containerScenarioPath,
+		final Concurrency concurrency, final SizeInBytes itemSize, final String containerScenarioPath,
 		final List<String> env, final List<String> args
 	) throws InterruptedException {
 		super(version, env, VOLUME_BINDS, true, PORT_DEBUG, PORT_JMX);
 		this.args = args;
 		this.args.add("--load-step-id=" + stepId);
 		this.args.add("--storage-driver-limit-concurrency=" + concurrency.getValue());
-		this.args.add("--item-data-size=" + itemSize.getValue());
+		this.args.add("--item-data-size=" + itemSize);
 		this.args.add("--output-metrics-trace-persist");
 		if(containerScenarioPath != null) {
 			this.args.add("--run-scenario=" + containerScenarioPath);

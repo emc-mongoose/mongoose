@@ -104,7 +104,9 @@ import static org.junit.Assert.assertTrue;
 				break;
 		}
 		//use default scenario
-		testContainer = new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
+		testContainer = new MongooseContainer(
+			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
+		);
 	}
 
 	@Before

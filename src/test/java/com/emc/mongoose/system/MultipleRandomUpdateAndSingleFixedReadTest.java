@@ -155,8 +155,9 @@ import static org.junit.Assert.assertEquals;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer =
-			new MongooseContainer(stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args);
+		testContainer = new MongooseContainer(
+			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
+		);
 	}
 
 	@Before

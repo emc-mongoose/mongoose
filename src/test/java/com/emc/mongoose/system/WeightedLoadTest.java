@@ -126,7 +126,7 @@ import static org.junit.Assert.assertTrue;
 				break;
 		}
 		testContainer = new MongooseContainer(
-			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
 		);
 	}
 

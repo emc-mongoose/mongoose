@@ -79,7 +79,6 @@ import java.util.stream.Collectors;
 	private final StorageType storageType;
 	private final RunMode runMode;
 	private final Concurrency concurrency;
-	private final ItemSize itemSize;
 	private final SizeInBytes partSize;
 	private final SizeInBytes fullItemSize;
 	private final SizeInBytes sizeLimit;
@@ -95,17 +94,14 @@ import java.util.stream.Collectors;
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
 	) throws Exception {
 		partSize = itemSize.getValue();
-		fullItemSize = new SizeInBytes(partSize.get(), 100 * partSize.get(), 3);
+		fullItemSize = new SizeInBytes(2 * partSize.get(), 100 * partSize.get(), 3);
 		Loggers.MSG.info("Item size: {}, part size: {}", fullItemSize, partSize);
 		sizeLimit = new SizeInBytes(
-			Math.min(
-				SizeInBytes.toFixedSize("100GB"),
-				(runMode.getNodeCount() + 1) * concurrency.getValue() * fullItemSize.getAvg()
-			)
+			Math.min(SizeInBytes.toFixedSize("100GB"), 5 * concurrency.getValue() * fullItemSize.getAvg())
 		);
 		Loggers.MSG.info("Use the size limit: {}", sizeLimit);
 		expectedCountMin = sizeLimit.get() / fullItemSize.getMax();
-		expectedCountMax = (long) (1.1 * sizeLimit.get() / fullItemSize.getMin());
+		expectedCountMax = sizeLimit.get() / fullItemSize.getMin();
 		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
 			APP_NAME, Thread.currentThread().getContextClassLoader()
 		);
@@ -125,7 +121,6 @@ import java.util.stream.Collectors;
 		this.storageType = storageType;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
-		this.itemSize = itemSize;
 		try {
 			Files.delete(Paths.get(hostItemOutputFile));
 		} catch(final Exception ignored) {
@@ -169,7 +164,7 @@ import java.util.stream.Collectors;
 				break;
 		}
 		testContainer = new MongooseContainer(
-			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+			stepId, storageType, runMode, concurrency, fullItemSize, SCENARIO_PATH, env, args
 		);
 	}
 
@@ -243,8 +238,7 @@ import java.util.stream.Collectors;
 			assertTrue(fullItemSize.getMax() >= nextItemSize);
 			sizeSum += nextItemSize;
 		}
-		final long delta = runMode.getNodeCount() * concurrency.getValue() * partSize.getMax();
-		System.out.println("Expected transfer size: " + sizeLimit.get() + "+" + delta + ", actual: " + sizeSum);
+		final long delta = 10 * runMode.getNodeCount() * concurrency.getValue() * partSize.getAvg();
 		assertTrue(
 			"Expected to transfer no more than " + sizeLimit + "+" + delta + ", but transferred actually: "
 				+ new SizeInBytes(sizeSum),
