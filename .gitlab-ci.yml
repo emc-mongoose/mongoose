@@ -1,6 +1,7 @@
 image: java:8
 
 before_script:
+  - ls -l | grep gradlew
   - chmod +x gradlew
 
 #temporary: fetch is faster than clone 
@@ -9,9 +10,11 @@ variables:
 
 unit_tests:
   script: "./gradlew test"
+  artifacts:
+    reports:
+      junit: *.xml
+
 
 integration_tests:
   script: "./gradlew integrationTest"
-  artifacts:
-    reports:
-      junit: int_rep.xml
+  
