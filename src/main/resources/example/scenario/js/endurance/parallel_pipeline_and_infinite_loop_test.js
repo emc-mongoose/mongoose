@@ -71,7 +71,7 @@ var infiniteLoopIterationLoadConfig = {
 var pipelineLoad = PipelineLoad
 	.config(pipelineSharedConfig)
 	.append(pipelineCreateCtx)
-	.append(pipelineUpdateCtx)
+	//.append(pipelineUpdateCtx)
 	.append(pipelineReadCtx)
 	.append(pipelineDeleteCtx)
 	.start();
