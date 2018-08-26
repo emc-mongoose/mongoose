@@ -1,4 +1,4 @@
-package com.emc.mongoose.system.util.docker;
+package com.emc.mongoose.util.docker;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
+import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
+import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
 import static java.util.Collections.emptyList;
 
 public final class MongooseAdditionalNodeContainer

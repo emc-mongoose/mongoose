@@ -1,4 +1,4 @@
-package com.emc.mongoose.system.util;
+package com.emc.mongoose.util;
 
 import java.lang.reflect.Field;
 import java.util.Collections;

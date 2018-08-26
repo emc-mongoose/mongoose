@@ -1,4 +1,4 @@
-package com.emc.mongoose.system.util;
+package com.emc.mongoose.util;
 
 import java.io.IOException;
 

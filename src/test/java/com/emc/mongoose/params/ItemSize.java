@@ -1,4 +1,4 @@
-package com.emc.mongoose.system.base.params;
+package com.emc.mongoose.params;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 

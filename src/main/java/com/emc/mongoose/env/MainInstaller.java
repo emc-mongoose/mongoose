@@ -43,14 +43,15 @@ extends JarResourcesInstaller {
 		"example/scenario/js/rampup.js",
 		// the default scenario which is invoked if no scenario is specified
 		"example/scenario/js/default.js",
-		// system tests scenario files
+		// tests scenario files
+		"example/scenario/js/endurance/parallel_pipeline_and_infinite_loop.js",
 		"example/scenario/js/systest/circular_append_test.js",
 		"example/scenario/js/systest/copy_using_input_path_test.js",
 		"example/scenario/js/systest/read_using_variable_path_test.js",
 		"example/scenario/js/systest/circular_read_limit_by_time_test.js",
 		"example/scenario/js/systest/chain_with_delay_test.js", "example/scenario/js/systest/multipart_create_test.js",
 		"example/scenario/js/systest/multiple_fixed_update_and_single_fixed_read_test.js",
-		"example/scenario/js/systest/multiple_random_update_and_single_fixed_read_test.js",
+		"example/scenario/js/systest/multiple_random_update_and_multiple_fixed_read_test.js",
 		"example/scenario/js/systest/read_custom_content_verification_fail_test.js",
 		"example/scenario/js/systest/read_verification_after_circular_update_test.js",
 		"example/scenario/js/systest/single_fixed_update_and_single_random_read_test.js",

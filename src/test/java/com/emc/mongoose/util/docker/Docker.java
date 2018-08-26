@@ -1,4 +1,4 @@
-package com.emc.mongoose.system.util.docker;
+package com.emc.mongoose.util.docker;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnable;
 import com.github.dockerjava.api.DockerClient;

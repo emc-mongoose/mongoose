@@ -1,4 +1,4 @@
-package com.emc.mongoose.system.base.params;
+package com.emc.mongoose.params;
 
 import java.util.ArrayList;
 import java.util.List;

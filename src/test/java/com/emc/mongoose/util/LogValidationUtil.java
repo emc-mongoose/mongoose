@@ -1,8 +1,8 @@
-package com.emc.mongoose.system.util;
+package com.emc.mongoose.util;
 
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.system.base.params.StorageType;
+import com.emc.mongoose.params.StorageType;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -35,7 +35,7 @@ import static com.emc.mongoose.item.op.Operation.Status.INTERRUPTED;
 import static com.emc.mongoose.item.op.Operation.Status.SUCC;
 import static com.emc.mongoose.logging.MetricsAsciiTableLogMessage.TABLE_HEADER;
 import static com.emc.mongoose.logging.MetricsAsciiTableLogMessage.TABLE_HEADER_PERIOD;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.APP_HOME_DIR;
+import static com.emc.mongoose.util.docker.MongooseContainer.APP_HOME_DIR;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;

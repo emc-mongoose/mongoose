@@ -17,7 +17,7 @@ ext {
 		disruptor: "3.4.2",
 		fiber4j: "1.0.1",
 		jackson: "2.9.6",
-		javaCommons: "2.1.5",
+		javaCommons: "2.1.6",
 		javassist: "3.23.1-GA",
 		junit: "4+",
 		scala: "2.12.6",
@@ -119,6 +119,18 @@ allprojects {
 
 		include "com/emc/mongoose/system/*"
 
+		jvmArgs "-XX:MaxDirectMemorySize=2g"
+		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
+		maxHeapSize "2g"
+		testLogging {
+			events "passed", "skipped", "failed", "standardOut"
+			showExceptions = true
+			showStandardStreams = true
+		}
+	}
+
+	task enduranceTest(type: Test) {
+		include "com/emc/mongoose/endurance/*"
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"

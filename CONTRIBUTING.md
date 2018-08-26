@@ -213,6 +213,17 @@ export ITEM_SIZE=small
 ./gradlew clean systemTest --tests com.emc.mongoose.system.CreateNoLimitTest
 ```
 
+### 4.1.4. Endurance Tests
+
+```bash
+export MONGOOSE_VERSION=testing
+export STORAGE_TYPE=swift
+export DRIVER_COUNT=distributed
+export CONCURRENCY=unlimited
+export ITEM_SIZE=large
+./gradlew clean systemTest --tests com.emc.mongoose.endurance.ParallelPipelineAndInfiniteLoopTest
+```
+
 ## 4.2. Releasing
 
 1. Ensure all tests are OK

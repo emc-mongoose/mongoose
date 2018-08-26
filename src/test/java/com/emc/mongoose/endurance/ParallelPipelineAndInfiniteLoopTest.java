@@ -1,20 +1,23 @@
-package com.emc.mongoose.system;
+package com.emc.mongoose.endurance;
 
-import com.emc.mongoose.svc.ServiceUtil;
-import com.emc.mongoose.system.base.params.Concurrency;
-import com.emc.mongoose.system.base.params.EnvParams;
-import com.emc.mongoose.system.base.params.ItemSize;
-import com.emc.mongoose.system.base.params.RunMode;
-import com.emc.mongoose.system.base.params.StorageType;
-import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseAdditionalNodeContainer;
+import com.emc.mongoose.params.Concurrency;
+import com.emc.mongoose.params.EnvParams;
+import com.emc.mongoose.params.ItemSize;
+import com.emc.mongoose.params.RunMode;
+import com.emc.mongoose.params.StorageType;
+import com.emc.mongoose.util.DirWithManyFilesDeleter;
+import com.emc.mongoose.util.docker.HttpStorageMockContainer;
+import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
+import com.emc.mongoose.util.docker.MongooseContainer;
+import static com.emc.mongoose.util.TestCaseUtil.stepId;
+import static com.emc.mongoose.util.docker.MongooseContainer.enduranceTestContainerScenarioPath;
+
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
+
 import org.apache.commons.io.FileUtils;
+
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -27,19 +30,16 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
-
-@RunWith(Parameterized.class) public class TemplateTest {
+@RunWith(Parameterized.class)
+public class ParallelPipelineAndInfiniteLoopTest {
 
 	@Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
 	public static List<Object[]> envParams() {
 		return EnvParams.PARAMS;
 	}
 
-	// TODO put the constants here
-	private final String SCENARIO_PATH = containerScenarioPath(getClass());
-	private final int timeoutInMillis = 1000_000;
+	private final String SCENARIO_PATH = enduranceTestContainerScenarioPath(getClass());
+	private final int timeoutInMillis = 1_000_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -48,12 +48,10 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 	private final RunMode runMode;
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
-	// TODO put the additional test params here
 
-	public TemplateTest(
+	public ParallelPipelineAndInfiniteLoopTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
+	) throws Exception {
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
@@ -63,29 +61,29 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 		this.runMode = runMode;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
-		// TODO initialize the additional test params
 		if(storageType.equals(StorageType.FS)) {
 			// TODO cleanup test files use DirWithManyFilesDeleter.deleteExternal(...) method to
 			// delete a big count of the test files
 		}
-		// TODO delete the shared item list files if any
-		final List<String> env =
-			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
-		// TODO set the specific environment arguments used by the scenario
+		final List<String> env = System
+			.getenv()
+			.entrySet()
+			.stream()
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.toList());
 		final List<String> args = new ArrayList<>();
-		// TODO set the specific test container arguments if needed
 		switch(storageType) {
 			case ATMOS:
 			case S3:
 			case SWIFT:
-				final HttpStorageMockContainer storageMock =
-					new HttpStorageMockContainer(HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-						Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
-						HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-						HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
-					);
+				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
+					HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
+					Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
+					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+				);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
@@ -127,25 +125,29 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
-		storageMocks.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
-	}
-
-	@Test
-	public final void test()
-	throws Exception {
-		// TODO test the results
+		slaveNodes
+			.values()
+			.parallelStream()
+			.forEach(
+				node -> {
+					try {
+						node.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+			);
+		storageMocks
+			.values()
+			.parallelStream()
+			.forEach(
+				storageMock -> {
+					try {
+						storageMock.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+			);
 	}
 }

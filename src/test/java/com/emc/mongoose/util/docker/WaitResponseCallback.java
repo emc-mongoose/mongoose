@@ -1,4 +1,4 @@
-package com.emc.mongoose.system.util.docker;
+package com.emc.mongoose.util.docker;
 
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.model.WaitResponse;

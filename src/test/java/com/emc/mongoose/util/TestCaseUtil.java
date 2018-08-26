@@ -1,9 +1,9 @@
-package com.emc.mongoose.system.util;
+package com.emc.mongoose.util;
 
-import com.emc.mongoose.system.base.params.Concurrency;
-import com.emc.mongoose.system.base.params.ItemSize;
-import com.emc.mongoose.system.base.params.RunMode;
-import com.emc.mongoose.system.base.params.StorageType;
+import com.emc.mongoose.params.Concurrency;
+import com.emc.mongoose.params.ItemSize;
+import com.emc.mongoose.params.RunMode;
+import com.emc.mongoose.params.StorageType;
 
 import com.google.common.base.CaseFormat;
 

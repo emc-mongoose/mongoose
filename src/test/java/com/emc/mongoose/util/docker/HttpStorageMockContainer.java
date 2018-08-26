@@ -1,9 +1,9 @@
-package com.emc.mongoose.system.util.docker;
+package com.emc.mongoose.util.docker;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.emc.mongoose.system.util.docker.Docker.DEFAULT_IMAGE_VERSION;
+import static com.emc.mongoose.util.docker.Docker.DEFAULT_IMAGE_VERSION;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 

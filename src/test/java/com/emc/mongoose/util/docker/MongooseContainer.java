@@ -1,10 +1,9 @@
-package com.emc.mongoose.system.util.docker;
+package com.emc.mongoose.util.docker;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
-import com.emc.mongoose.system.base.params.Concurrency;
-import com.emc.mongoose.system.base.params.ItemSize;
-import com.emc.mongoose.system.base.params.RunMode;
-import com.emc.mongoose.system.base.params.StorageType;
+import com.emc.mongoose.params.Concurrency;
+import com.emc.mongoose.params.RunMode;
+import com.emc.mongoose.params.StorageType;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
@@ -19,7 +18,7 @@ import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.Constants.USER_HOME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
+import static com.emc.mongoose.util.TestCaseUtil.snakeCaseName;
 
 public final class MongooseContainer
 extends ContainerBase {
@@ -64,8 +63,12 @@ extends ContainerBase {
 		put(CONTAINER_SHARE_PATH, HOST_SHARE_PATH);
 	}};
 
-	public static String containerScenarioPath(final Class testCaseCls) {
+	public static String systemTestContainerScenarioPath(final Class testCaseCls) {
 		return CONTAINER_HOME_PATH + "/" + DIR_EXAMPLE_SCENARIO + "/js/systest/" + snakeCaseName(testCaseCls) + ".js";
+	}
+
+	public static String enduranceTestContainerScenarioPath(final Class testCaseCls) {
+		return CONTAINER_HOME_PATH + "/" + DIR_EXAMPLE_SCENARIO + "/js/endurance/" + snakeCaseName(testCaseCls) + ".js";
 	}
 
 	private final List<String> args;

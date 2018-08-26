@@ -1,18 +1,13 @@
-package com.emc.mongoose.system;
+package com.emc.mongoose.util;
 
-import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.base.params.*;
 import com.emc.mongoose.params.Concurrency;
 import com.emc.mongoose.params.EnvParams;
 import com.emc.mongoose.params.ItemSize;
 import com.emc.mongoose.params.RunMode;
 import com.emc.mongoose.params.StorageType;
-import com.emc.mongoose.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.util.OpenFilesCounter;
-import com.emc.mongoose.util.PortTools;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.util.docker.MongooseContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
+import com.emc.mongoose.util.docker.MongooseContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -30,22 +25,19 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.emc.mongoose.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static com.emc.mongoose.util.docker.MongooseContainer.systemTestContainerScenarioPath;
 
-@RunWith(Parameterized.class) public class UnlimitedCreateTest {
+@RunWith(Parameterized.class) public class TemplateTest {
 
 	@Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
 	public static List<Object[]> envParams() {
 		return EnvParams.PARAMS;
 	}
 
-
-	private final String SCENARIO_PATH = null; //default
-	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
-	private final int timeoutInMillis = 60_000;
+	// TODO put the constants here
+	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass()); // right for sys tests only
+	private final int timeoutInMillis = 1000_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -54,11 +46,11 @@ import static org.junit.Assert.assertTrue;
 	private final RunMode runMode;
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
+	// TODO put the additional test params here
 
-	public UnlimitedCreateTest(
+	public TemplateTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
+	) throws Exception {
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
@@ -68,9 +60,17 @@ import static org.junit.Assert.assertTrue;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
+		// TODO initialize the additional test params
+		if(storageType.equals(StorageType.FS)) {
+			// TODO cleanup test files use DirWithManyFilesDeleter.deleteExternal(...) method to
+			// delete a big count of the test files
+		}
+		// TODO delete the shared item list files if any
 		final List<String> env =
 			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
+		// TODO set the specific environment arguments used by the scenario
 		final List<String> args = new ArrayList<>();
+		// TODO set the specific test container arguments if needed
 		switch(storageType) {
 			case ATMOS:
 			case S3:
@@ -88,9 +88,8 @@ import static org.junit.Assert.assertTrue;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + hostItemOutputPath);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+					DirWithManyFilesDeleter.deleteExternal(MongooseContainer.getHostItemOutputPath(stepId));
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -107,7 +106,6 @@ import static org.junit.Assert.assertTrue;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		//use default scenario
 		testContainer = new MongooseContainer(
 			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
 		);
@@ -126,52 +124,35 @@ import static org.junit.Assert.assertTrue;
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
-		storageMocks.values().parallelStream().forEach(storageMock -> {
-			try {
-				storageMock.close();
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-		});
+		slaveNodes
+			.values()
+			.parallelStream()
+			.forEach(
+				node -> {
+					try {
+						node.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+			);
+		storageMocks
+			.values()
+			.parallelStream()
+			.forEach(
+				storageMock -> {
+					try {
+						storageMock.close();
+					} catch(final Throwable t) {
+						t.printStackTrace(System.err);
+					}
+				}
+			);
 	}
 
 	@Test
 	public final void test()
 	throws Exception {
-		final String stdOutContent = testContainer.stdOutContent();
-		testMetricsTableStdout(
-			stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-			new HashMap<OpType, Integer>() {{
-				put(OpType.CREATE, concurrency.getValue());
-			}}
-		);
-		final int expectedConcurrency = runMode.getNodeCount() * concurrency.getValue();
-		if(storageType.equals(StorageType.FS)) {
-			//because of the following line the test is valid only in 'run_mode = local'
-			final int actualConcurrency = OpenFilesCounter.getOpenFilesCount(
-				MongooseContainer.getHostItemOutputPath(stepId)
-			);
-			assertTrue(
-				"Expected concurrency <= " + actualConcurrency + ", actual: " + actualConcurrency,
-				actualConcurrency <= expectedConcurrency
-			);
-		} else {
-			int actualConcurrency = 0;
-			final int startPort = HttpStorageMockContainer.DEFAULT_PORT;
-			for(int j = 0; j < runMode.getNodeCount(); ++ j) {
-				actualConcurrency += PortTools.getConnectionCount("127.0.0.1:" + (startPort + j));
-			}
-			assertEquals(
-				"Expected concurrency: " + actualConcurrency + ", actual: " + actualConcurrency, expectedConcurrency,
-				actualConcurrency, expectedConcurrency / 100
-			);
-		}
+		// TODO test the results
 	}
 }

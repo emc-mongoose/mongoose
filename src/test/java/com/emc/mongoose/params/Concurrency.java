@@ -1,4 +1,4 @@
-package com.emc.mongoose.system.base.params;
+package com.emc.mongoose.params;
 
 /**
  Created by andrey on 11.08.17.
