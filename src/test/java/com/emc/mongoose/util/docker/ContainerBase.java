@@ -122,6 +122,7 @@ implements Docker.Container {
 			.withName(imageName().replace('/', '_') + '_' + this.hashCode())
 			.withNetworkMode("host")
 			.withExposedPorts(exposedPorts)
+			.withMemory(DEFAULT_MEMORY_LIMIT)
 			.withCmd(args);
 		if(env != null && !env.isEmpty()) {
 			createContainerCmd.withEnv(env);
