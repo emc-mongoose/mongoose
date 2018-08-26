@@ -221,7 +221,7 @@ export STORAGE_TYPE=swift
 export DRIVER_COUNT=distributed
 export CONCURRENCY=unlimited
 export ITEM_SIZE=large
-./gradlew clean systemTest --tests com.emc.mongoose.endurance.ParallelPipelineAndInfiniteLoopTest
+./gradlew clean enduranceTest --tests com.emc.mongoose.endurance.ParallelPipelineAndInfiniteLoopTest
 ```
 
 ## 4.2. Releasing
