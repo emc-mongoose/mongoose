@@ -72,7 +72,7 @@ var infiniteLoopIterationLoadConfig = {
 	}
 }
 
-var pipelineLoad = Pipeline
+var pipelineLoad = PipelineLoad
 	.config(sharedConfig)
 	.config(pipelineSharedConfig)
 	.append(pipelineCreateCtx)
