@@ -64,7 +64,7 @@ extends ContainerBase {
 	}};
 
 	public static String systemTestContainerScenarioPath(final Class testCaseCls) {
-		return CONTAINER_HOME_PATH + "/" + DIR_EXAMPLE_SCENARIO + "/js/systest/" + snakeCaseName(testCaseCls) + ".js";
+		return CONTAINER_HOME_PATH + "/" + DIR_EXAMPLE_SCENARIO + "/js/system/" + snakeCaseName(testCaseCls) + ".js";
 	}
 
 	public static String enduranceTestContainerScenarioPath(final Class testCaseCls) {

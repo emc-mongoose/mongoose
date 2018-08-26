@@ -42,9 +42,7 @@ implements Docker.Container {
 	protected final int[] ports;
 	private final StringBuilder stdOutBuff = new StringBuilder();
 	private final StringBuilder stdErrBuff = new StringBuilder();
-	private final ResultCallback<Frame> streamsCallback = new ContainerOutputCallback(
-		stdOutBuff, stdErrBuff
-	);
+	private final ResultCallback<Frame> streamsCallback = new ContainerOutputCallback(stdOutBuff, stdErrBuff);
 	private String containerId;
 	private int containerExitCode = Integer.MIN_VALUE;
 

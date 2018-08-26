@@ -118,7 +118,6 @@ public class ParallelPipelineAndInfiniteLoopTest {
 		storageMocks.values().forEach(AsyncRunnableBase::start);
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		testContainer.start();
-		testContainer.await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 
 	@After
@@ -154,5 +153,8 @@ public class ParallelPipelineAndInfiniteLoopTest {
 	@Test
 	public final void test()
 	throws Exception {
+		while(!testContainer.await(10, TimeUnit.SECONDS)) {
+			// test container is still alive
+		}
 	}
 }
