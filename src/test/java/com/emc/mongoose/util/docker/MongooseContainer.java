@@ -87,20 +87,34 @@ extends ContainerBase {
 		final String stepId, final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
 		final SizeInBytes itemSize, final String containerScenarioPath, final List<String> env, final List<String> args
 	) throws InterruptedException {
-		this(IMAGE_VERSION, stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args);
+		this(stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args, true, true);
+	}
+
+	public MongooseContainer(
+		final String stepId, final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
+		final SizeInBytes itemSize, final String containerScenarioPath, final List<String> env, final List<String> args,
+		final boolean attachOutputFlag, final boolean outputMetricsTracePersistFlag
+	) throws InterruptedException {
+		this(
+			IMAGE_VERSION, stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args,
+			attachOutputFlag, outputMetricsTracePersistFlag
+		);
 	}
 
 	public MongooseContainer(
 		final String version, final String stepId, final StorageType storageType, final RunMode runMode,
 		final Concurrency concurrency, final SizeInBytes itemSize, final String containerScenarioPath,
-		final List<String> env, final List<String> args
+		final List<String> env, final List<String> args, final boolean attachOutputFlag,
+		final boolean outputMetricsTracePersistFlag
 	) throws InterruptedException {
-		super(version, env, VOLUME_BINDS, true, PORT_DEBUG, PORT_JMX);
+		super(version, env, VOLUME_BINDS, attachOutputFlag, PORT_DEBUG, PORT_JMX);
 		this.args = args;
 		this.args.add("--load-step-id=" + stepId);
 		this.args.add("--storage-driver-limit-concurrency=" + concurrency.getValue());
 		this.args.add("--item-data-size=" + itemSize);
-		this.args.add("--output-metrics-trace-persist");
+		if(outputMetricsTracePersistFlag) {
+			this.args.add("--output-metrics-trace-persist");
+		}
 		if(containerScenarioPath != null) {
 			this.args.add("--run-scenario=" + containerScenarioPath);
 		}

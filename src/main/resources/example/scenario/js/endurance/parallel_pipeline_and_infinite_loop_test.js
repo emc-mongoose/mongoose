@@ -1,17 +1,12 @@
-var sharedConfig = {
-	"storage": {
-		"net": {
-			"http": {
-				"namespace": "ns1"
-			}
-		}
-	}
-}
-
 var pipelineSharedConfig = {
 	"item": {
 		"output": {
 			"path": "endurance_0"
+		}
+	},
+	"load": {
+		"step": {
+			"id": "endurance_0"
 		}
 	}
 }
@@ -65,6 +60,9 @@ var infiniteLoopIterationLoadConfig = {
 	},
 	"load": {
 		"step": {
+			"id": {
+				"endurance_1"
+			},
 			"limit": {
 				"time": "5s"
 			}
@@ -73,7 +71,6 @@ var infiniteLoopIterationLoadConfig = {
 }
 
 var pipelineLoad = PipelineLoad
-	.config(sharedConfig)
 	.config(pipelineSharedConfig)
 	.append(pipelineCreateCtx)
 	.append(pipelineUpdateCtx)
@@ -83,7 +80,6 @@ var pipelineLoad = PipelineLoad
 
 while(true) {
 	Load
-		.config(sharedConfig)
 		.config(infiniteLoopIterationLoadConfig)
 		.run();
 }

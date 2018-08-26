@@ -79,9 +79,8 @@ public class ParallelPipelineAndInfiniteLoopTest {
 			case SWIFT:
 				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
 					HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-					Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
-					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
-					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+					Character.MAX_RADIX, 3 * HttpStorageMockContainer.DEFAULT_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY, 3,
 					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
 					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
 				);
@@ -109,7 +108,7 @@ public class ParallelPipelineAndInfiniteLoopTest {
 				break;
 		}
 		testContainer = new MongooseContainer(
-			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
+			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args, false, false
 		);
 	}
 
