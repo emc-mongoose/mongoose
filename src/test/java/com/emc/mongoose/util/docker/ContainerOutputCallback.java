@@ -34,10 +34,14 @@ implements ResultCallback<Frame> {
 		final String payload = new String(object.getPayload());
 		if(StreamType.STDOUT.equals(streamType)) {
 			System.out.print(payload);
-			stdOutBuff.append(payload);
+			if(stdOutBuff != null) {
+				stdOutBuff.append(payload);
+			}
 		} else if(StreamType.STDERR.equals(streamType)) {
 			System.err.print(payload);
-			stdErrBuff.append(payload);
+			if(stdErrBuff != null) {
+				stdErrBuff.append(payload);
+			}
 		} else {
 			System.err.println("Unexpected stream type: " + object.getStreamType());
 		}

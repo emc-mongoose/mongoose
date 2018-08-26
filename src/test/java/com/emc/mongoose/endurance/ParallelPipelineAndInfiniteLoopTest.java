@@ -108,7 +108,7 @@ public class ParallelPipelineAndInfiniteLoopTest {
 				break;
 		}
 		testContainer = new MongooseContainer(
-			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args, false, false
+			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args, true, false, false
 		);
 	}
 

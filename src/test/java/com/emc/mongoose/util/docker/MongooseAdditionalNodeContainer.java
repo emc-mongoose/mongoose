@@ -31,7 +31,7 @@ extends ContainerBase {
 
 	public MongooseAdditionalNodeContainer(final String version, final int svcPort)
 	throws InterruptedException {
-		super(version, emptyList(), VOLUME_BINDS, false, svcPort);
+		super(version, emptyList(), VOLUME_BINDS, false, false, svcPort);
 	}
 
 	@Override

@@ -40,20 +40,28 @@ implements Docker.Container {
 	private final Map<String, Path> volumeBinds;
 	private final boolean attachOutputFlag;
 	protected final int[] ports;
-	private final StringBuilder stdOutBuff = new StringBuilder();
-	private final StringBuilder stdErrBuff = new StringBuilder();
-	private final ResultCallback<Frame> streamsCallback = new ContainerOutputCallback(stdOutBuff, stdErrBuff);
+	private final StringBuilder stdOutBuff;
+	private final StringBuilder stdErrBuff;
+	private final ResultCallback<Frame> streamsCallback;
 	private String containerId;
 	private int containerExitCode = Integer.MIN_VALUE;
 
 	protected ContainerBase(
 		final String version, final List<String> env, final Map<String, Path> volumeBinds,
-		final boolean attachOutputFlag, final int... ports
+		final boolean attachOutputFlag, final boolean collectOutputFlag, final int... ports
 	) throws InterruptedException{
 		this.version = (version == null || version.isEmpty()) ? DEFAULT_IMAGE_VERSION : version;
 		this.env = env;
 		this.volumeBinds = volumeBinds;
 		this.attachOutputFlag = attachOutputFlag;
+		if(collectOutputFlag) {
+			stdOutBuff = new StringBuilder();
+			stdErrBuff = new StringBuilder();
+		} else {
+			stdOutBuff = null;
+			stdErrBuff = null;
+		}
+		streamsCallback = new ContainerOutputCallback(stdOutBuff, stdErrBuff);
 		this.ports = ports;
 		final String imageNameWithVer = imageName() + ":" + this.version;
 		try {
@@ -79,12 +87,12 @@ implements Docker.Container {
 
 	@Override
 	public final String stdOutContent() {
-		return stdOutBuff.toString();
+		return stdOutBuff == null ? null : stdOutBuff.toString();
 	}
 
 	@Override
 	public final String stdErrContent() {
-		return stdErrBuff.toString();
+		return stdErrBuff == null ? null : stdErrBuff.toString();
 	}
 
 	protected final void doStart() {

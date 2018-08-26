@@ -36,7 +36,7 @@ extends ContainerBase {
 		final int capacity, final int containerCountLimit, final int containerCapacity,
 		final int failConnectEvery, final int failResponsesEvery, final double rateLimit
 	) throws Exception {
-		super(DEFAULT_IMAGE_VERSION, emptyList(), emptyMap(), false, port);
+		super(DEFAULT_IMAGE_VERSION, emptyList(), emptyMap(), false, false, port);
 		this.itemInputFile = itemInputFile;
 		this.itemNamingPrefix = itemNamingPrefix;
 		this.itemNamingRadix = itemNamingRadix;
