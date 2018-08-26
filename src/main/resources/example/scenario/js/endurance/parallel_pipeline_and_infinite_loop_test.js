@@ -1,7 +1,7 @@
 var pipelineSharedConfig = {
 	"item": {
 		"output": {
-			"path": "endurance_0"
+			"path": "/endurance_0"
 		}
 	},
 	"load": {
@@ -55,7 +55,7 @@ var infiniteLoopIterationLoadConfig = {
 			"size": "1KB"
 		},
 		"output": {
-			"path": "endurance_1"
+			"path": "/endurance_1"
 		}
 	},
 	"load": {
