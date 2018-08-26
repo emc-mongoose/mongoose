@@ -33,7 +33,6 @@ extends AsyncRunnableBase
 implements Docker.Container {
 
 	private static final Logger LOG = Logger.getLogger(ContainerBase.class.getSimpleName());
-	//private static final AtomicLong CONTAINER_COUNTER = new AtomicLong();
 
 	private final String version;
 	private final List<String> env;
