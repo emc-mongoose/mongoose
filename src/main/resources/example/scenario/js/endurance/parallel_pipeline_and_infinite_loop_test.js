@@ -1,7 +1,7 @@
 var pipelineSharedConfig = {
 	"item": {
 		"output": {
-			"path": "/endurance_0"
+			"path": "endurance_0"
 		}
 	},
 	"load": {
@@ -11,7 +11,8 @@ var pipelineSharedConfig = {
 	}
 }
 
-var pipelineCreateCtx = {}
+var pipelineCreateCtx = {
+}
 
 var pipelineUpdateCtx = {
 	"item": {
@@ -55,7 +56,7 @@ var infiniteLoopIterationLoadConfig = {
 			"size": "1KB"
 		},
 		"output": {
-			"path": "/endurance_1"
+			"path": "endurance_1"
 		}
 	},
 	"load": {
@@ -71,7 +72,7 @@ var infiniteLoopIterationLoadConfig = {
 var pipelineLoad = PipelineLoad
 	.config(pipelineSharedConfig)
 	.append(pipelineCreateCtx)
-	//.append(pipelineUpdateCtx)
+	.append(pipelineUpdateCtx)
 	.append(pipelineReadCtx)
 	.append(pipelineDeleteCtx)
 	.start();
