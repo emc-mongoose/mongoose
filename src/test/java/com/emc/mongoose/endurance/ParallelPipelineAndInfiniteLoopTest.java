@@ -18,6 +18,7 @@ import org.apache.commons.io.FileUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -39,7 +40,6 @@ public class ParallelPipelineAndInfiniteLoopTest {
 	}
 
 	private final String SCENARIO_PATH = enduranceTestContainerScenarioPath(getClass());
-	private final int timeoutInMillis = 1_000_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -118,7 +118,7 @@ public class ParallelPipelineAndInfiniteLoopTest {
 		storageMocks.values().forEach(AsyncRunnableBase::start);
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		testContainer.start();
-		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+		testContainer.await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 
 	@After
@@ -149,5 +149,10 @@ public class ParallelPipelineAndInfiniteLoopTest {
 					}
 				}
 			);
+	}
+
+	@Test
+	public final void test()
+	throws Exception {
 	}
 }
