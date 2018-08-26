@@ -153,10 +153,10 @@ public class ParallelPipelineAndInfiniteLoopTest {
 	@Test
 	public final void test()
 	throws Exception {
-		TimeUnit.SECONDS.sleep(10);
-		while(!testContainer.await(1, TimeUnit.MINUTES)) {
-			// test container is still alive
+		while(true) {
+			if(testContainer.await(1, TimeUnit.MINUTES)) {
+				fail("Test container has exited with status code: " + testContainer.exitStatusCode());
+			}
 		}
-		fail();
 	}
 }
