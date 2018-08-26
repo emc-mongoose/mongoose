@@ -60,9 +60,7 @@ var infiniteLoopIterationLoadConfig = {
 			"size": "1KB"
 		},
 		"output": {
-			"path": {
-				"endurance_1"
-			}
+			"path": "endurance_1"
 		}
 	},
 	"load": {

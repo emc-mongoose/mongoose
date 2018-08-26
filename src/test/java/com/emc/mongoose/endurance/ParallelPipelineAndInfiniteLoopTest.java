@@ -11,6 +11,7 @@ import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
 import com.emc.mongoose.util.docker.MongooseContainer;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.util.docker.MongooseContainer.enduranceTestContainerScenarioPath;
+import static org.junit.Assert.fail;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 
@@ -156,5 +157,6 @@ public class ParallelPipelineAndInfiniteLoopTest {
 		while(!testContainer.await(10, TimeUnit.SECONDS)) {
 			// test container is still alive
 		}
+		fail();
 	}
 }
