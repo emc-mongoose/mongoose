@@ -60,9 +60,7 @@ var infiniteLoopIterationLoadConfig = {
 	},
 	"load": {
 		"step": {
-			"id": {
-				"endurance_1"
-			},
+			"id": "endurance_1",
 			"limit": {
 				"time": "5s"
 			}
