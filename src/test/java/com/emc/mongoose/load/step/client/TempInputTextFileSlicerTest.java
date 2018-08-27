@@ -65,7 +65,7 @@ public final class TempInputTextFileSlicerTest {
 		}
 		TempInputTextFileSlicer.scatterLines(SRC_FILE_NAME, SLICE_COUNT, FILE_MGRS, FILE_SLICES, BATCH_SIZE);
 	}
-
+	/*
 	@Test
 	public final void test()
 	throws Exception {
@@ -86,4 +86,5 @@ public final class TempInputTextFileSlicerTest {
 			);
 		assertEquals(SRC_LINE_COUNT, slicedLineCount.sum());
 	}
+	*/
 }
