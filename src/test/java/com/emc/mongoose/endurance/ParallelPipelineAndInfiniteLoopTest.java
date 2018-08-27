@@ -79,7 +79,8 @@ public class ParallelPipelineAndInfiniteLoopTest {
 			case SWIFT:
 				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
 					HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-					Character.MAX_RADIX, 3 * HttpStorageMockContainer.DEFAULT_CAPACITY, 3,
+					Character.MAX_RADIX, 2 * HttpStorageMockContainer.DEFAULT_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
 					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
 					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
 					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
