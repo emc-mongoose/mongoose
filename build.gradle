@@ -91,7 +91,7 @@ allprojects {
 		exclude "com/emc/mongoose/endurance/*"
 		exclude "com/emc/mongoose/integration/*"
 		exclude "com/emc/mongoose/system/*"
-		exclude "com/emc/mongoose/util/TemplateTest*"
+		exclude "**/TemplateTest.*"
 
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"

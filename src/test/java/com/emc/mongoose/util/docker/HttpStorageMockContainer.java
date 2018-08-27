@@ -57,9 +57,6 @@ extends ContainerBase {
 	@Override
 	protected List<String> containerArgs() {
 		final List<String> cmd = new ArrayList<>();
-		cmd.add("-Xms1g");
-		cmd.add("-Xmx1g");
-		cmd.add("-XX:MaxDirectMemorySize=1g");
 		cmd.add("-jar");
 		cmd.add("/opt/nagaina/nagaina.jar");
 		if(itemInputFile != null && !itemInputFile.isEmpty()) {
