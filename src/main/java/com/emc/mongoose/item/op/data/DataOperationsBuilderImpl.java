@@ -90,9 +90,7 @@ implements DataOperationsBuilder<I, O> {
 		final String uid;
 		if(dataItem.size() > sizeThreshold) {
 			if(randomRangesCount > 0 || (fixedRanges != null && fixedRanges.size() > 0)) {
-				throw new IllegalArgumentException(
-					"Not supported - both byte ranges configured and size threshold"
-				);
+				throw new IllegalArgumentException("Not supported - both byte ranges configured and size threshold");
 			}
 			return (O) new CompositeDataOperationImpl<>(
 				originIndex, opType, dataItem, inputPath, getNextOutputPath(),

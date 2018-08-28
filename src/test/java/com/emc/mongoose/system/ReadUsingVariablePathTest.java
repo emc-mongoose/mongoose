@@ -2,16 +2,15 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.svc.ServiceUtil;
-import com.emc.mongoose.system.base.params.Concurrency;
-import com.emc.mongoose.system.base.params.EnvParams;
-import com.emc.mongoose.system.base.params.ItemSize;
-import com.emc.mongoose.system.base.params.RunMode;
-import com.emc.mongoose.system.base.params.StorageType;
-import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseAdditionalNodeContainer;
+import com.emc.mongoose.params.Concurrency;
+import com.emc.mongoose.params.EnvParams;
+import com.emc.mongoose.params.ItemSize;
+import com.emc.mongoose.params.RunMode;
+import com.emc.mongoose.params.StorageType;
+import com.emc.mongoose.util.DirWithManyFilesDeleter;
+import com.emc.mongoose.util.docker.HttpStorageMockContainer;
+import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import org.apache.commons.csv.CSVRecord;
@@ -36,20 +35,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsTableRowStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceRecord;
-import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
-import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
-import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
+import static com.emc.mongoose.util.LogValidationUtil.getMetricsLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.getMetricsTotalLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.testFinalMetricsTableRowStdout;
+import static com.emc.mongoose.util.LogValidationUtil.testOpTraceLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.testOpTraceRecord;
+import static com.emc.mongoose.util.LogValidationUtil.testMetricsLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.testFinalMetricsStdout;
+import static com.emc.mongoose.util.LogValidationUtil.testTotalMetricsLogRecord;
+import static com.emc.mongoose.util.TestCaseUtil.snakeCaseName;
+import static com.emc.mongoose.util.TestCaseUtil.stepId;
+import static com.emc.mongoose.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
+import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
+import static com.emc.mongoose.util.docker.MongooseContainer.systemTestContainerScenarioPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -60,7 +59,7 @@ import static org.junit.Assert.assertTrue;
 		return EnvParams.PARAMS;
 	}
 
-	private static final String SCENARIO_PATH = containerScenarioPath(ReadUsingVariablePathTest.class);
+	private static final String SCENARIO_PATH = systemTestContainerScenarioPath(ReadUsingVariablePathTest.class);
 	private static final String ITEM_LIST_FILE = CONTAINER_SHARE_PATH + "/"
 		+ snakeCaseName(ReadUsingVariablePathTest.class);
 	private static final int EXPECTED_COUNT = 10_000;
@@ -138,7 +137,7 @@ import static org.junit.Assert.assertTrue;
 				break;
 		}
 		testContainer = new MongooseContainer(
-			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
 		);
 	}
 
