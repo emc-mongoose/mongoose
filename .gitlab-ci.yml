@@ -30,5 +30,12 @@ integration_tests:
   
 system_tests1:
   stage: system_tests
-  variables: {TEST: TESTVALUE}
-  script: "echo $TEST"
+  variables: 
+    TEST: 'ChainWithDelayTest'
+    STORAGE_TYPE: 'atmos,s3'
+    RUN_MODE: 'local,distributed'
+    CONCURRENCY: 'single,medium'
+    ITEM_SIZE: 'medium'
+  script:
+    - "echo $TEST"
+    - "./gradlew systemTest --tests com.emc.mongoose.system.$TEST"
