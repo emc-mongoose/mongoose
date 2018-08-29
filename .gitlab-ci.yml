@@ -29,5 +29,5 @@ integration_tests:
   script: "./gradlew integrationTest"
   
 system_tests1:
-  variables: {TEST=TESTVALUE}
+  variables: {TEST: TESTVALUE}
   script: "echo $TEST"
