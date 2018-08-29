@@ -1,10 +1,10 @@
 image: java:8
 
 stages:
+  - system_tests
   - unit_tests
   - integration_tests
   - docker_images
-  - system_tests
   - deploy
 
 
@@ -29,5 +29,6 @@ integration_tests:
   script: "./gradlew integrationTest"
   
 system_tests1:
+  stage: system_tests
   variables: {TEST: TESTVALUE}
   script: "echo $TEST"
