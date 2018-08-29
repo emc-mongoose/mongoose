@@ -28,3 +28,6 @@ integration_tests:
   stage: integration_tests
   script: "./gradlew integrationTest"
   
+system_tests1:
+  variables: {TEST=TESTVALUE}
+  script: "echo $TEST"
