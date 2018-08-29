@@ -38,4 +38,4 @@ system_tests1:
     ITEM_SIZE: 'medium'
   script:
     - "echo $TEST"
-    - "./gradlew systemTest --tests com.emc.mongoose.system.$TEST"
+    - "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace"
