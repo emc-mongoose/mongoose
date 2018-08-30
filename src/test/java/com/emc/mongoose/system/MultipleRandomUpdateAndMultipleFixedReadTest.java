@@ -203,6 +203,7 @@ import static org.junit.Assert.assertEquals;
 			ioTraceRecCount.increment();
 		};
 		testOpTraceLogRecords(stepId, ioTraceRecFunc);
+		//'2' -> UPDATE + READ
 		assertEquals("There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file", 2 * EXPECTED_COUNT,
 			ioTraceRecCount.sum()
 		);

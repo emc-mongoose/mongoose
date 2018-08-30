@@ -83,10 +83,17 @@ import static org.junit.Assert.assertTrue;
 			Files.delete(Paths.get(hostItemOutputFile));
 		} catch(final Exception ignored) {
 		}
-		final List<String> env =
-			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
+
+		final List<String> env = System
+			.getenv()
+			.entrySet()
+			.stream()
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.toList());
+		env.add("ITEM_OUTPUT_PATH=" + stepId);
+
 		final List<String> args = new ArrayList<>();
-		args.add("--storage-mock-capacity=10000000");
+		//args.add("--storage-mock-capacity=10000000");
 		switch(storageType) {
 			case ATMOS:
 			case S3:
@@ -102,7 +109,6 @@ import static org.junit.Assert.assertTrue;
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
-				env.add("ITEM_OUTPUT_PATH=" + stepId);
 				break;
 			case FS:
 				args.add("--item-output-path=" + hostItemOutputPath);

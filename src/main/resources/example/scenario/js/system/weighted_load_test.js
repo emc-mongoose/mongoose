@@ -10,8 +10,8 @@ PreconditionLoad
         "step" : {
           "limit" : {
             "count" : 10000,
-            "time" : 10,
-            "size" : "1GB"
+            "size" : "1GB",
+            "time" : 10
           }
         }
       },
@@ -41,16 +41,14 @@ WeightedLoad
       },
       "item" : {
         "output" : {
-          "path" : "" + ITEM_OUTPUT_PATH + ""
+          "path" : ITEM_OUTPUT_PATH
         }
       }
     })
     .append({
       "load" : {
         "op" : {
-          "recycle" : {
-            "enabled" : true
-          },
+          "recycle" : true,
           "type" : "read",
           "weight" : 80
         }
