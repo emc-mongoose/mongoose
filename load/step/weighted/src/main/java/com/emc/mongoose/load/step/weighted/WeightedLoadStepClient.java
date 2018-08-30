@@ -65,12 +65,7 @@ public class WeightedLoadStepClient
 				LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
 				throw new InterruptRunException(e);
 			}
-			OpType opType;
-			try {
-				opType = OpType.valueOf(subConfig.stringVal("load-op-type").toUpperCase());
-			} catch(final NoSuchElementException e) {
-				opType = OpType.CREATE;
-			}
+			final OpType opType = OpType.valueOf(subConfig.stringVal("load-op-type").toUpperCase());
 			final int concurrencyLimit = config.intVal("storage-driver-limit-concurrency");
 			final Config outputConfig = subConfig.configVal("output");
 			final Config metricsConfig = outputConfig.configVal("metrics");
