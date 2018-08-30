@@ -189,7 +189,9 @@ import static org.junit.Assert.assertTrue;
 				put(CREATE, 0);
 			}}
 		);
-		testFinalMetricsStdout(stdOutContent, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), stepId);
+		testFinalMetricsStdout(
+			stdOutContent, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), stepId
+		);
 		final List<CSVRecord> metricsLogRecs = getMetricsLogRecords(stepId);
 		testMetricsLogRecords(
 			metricsLogRecs, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), COUNT_LIMIT, TIME_LIMIT_SEC,

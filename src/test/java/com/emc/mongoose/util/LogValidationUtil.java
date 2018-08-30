@@ -550,8 +550,10 @@ public interface LogValidationUtil {
 			durationSum = ((Number) ((Map) parsedContent.get(LogPatterns.KEY_DURATION)).get(
 				LogPatterns.KEY_SUM)).doubleValue();
 			assertTrue(durationSum >= 0);
-			final double effEstimate = durationSum / (concurrencyLimit * nodeCount * stepDuration);
-			assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate >= 0);
+			if (concurrencyLimit > 0 && stepDuration > 0) {
+				final double effEstimate = durationSum / (concurrencyLimit * nodeCount * stepDuration);
+				assertTrue(Double.toString(effEstimate), effEstimate <= 1 && effEstimate >= 0);
+			}
 			final Map<String, Double> parsedTp = (Map<String, Double>) parsedContent.get(LogPatterns.KEY_TP);
 			tpAvg = parsedTp.get(LogPatterns.KEY_MEAN);
 			tpLast = parsedTp.get(LogPatterns.KEY_LAST);
