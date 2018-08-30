@@ -120,23 +120,23 @@ implements LoadStepContext<I, O> {
 	@Override
 	public boolean isDone() {
 		if(!STARTED.equals(state()) && !SHUTDOWN.equals(state())) {
-			Loggers.MSG.info("{}: done due to {} state", id, state());
+			Loggers.MSG.debug("{}: done due to {} state", id, state());
 			return true;
 		}
 		if(isDoneCountLimit()) {
-			Loggers.MSG.info("{}: done due to max count ({}) done state", id, countLimit);
+			Loggers.MSG.debug("{}: done due to max count ({}) done state", id, countLimit);
 			return true;
 		}
 		if(isDoneSizeLimit()) {
-			Loggers.MSG.info("{}: done due to max size done state", id);
+			Loggers.MSG.debug("{}: done due to max size done state", id);
 			return true;
 		}
 		if(isFailThresholdReached()) {
-			Loggers.MSG.info("{}: done due to \"BAD\" state", id);
+			Loggers.ERR.warn("{}: done due to \"BAD\" state", id);
 			return true;
 		}
 		if(!recycleFlag && allOperationsCompleted()) {
-			Loggers.MSG.info("{}: done due to all load operations have been completed", id);
+			Loggers.MSG.debug("{}: done due to all load operations have been completed", id);
 			return true;
 		}
 		// issue SLTM-938 fix
@@ -480,11 +480,11 @@ implements LoadStepContext<I, O> {
 			try {
 				final int ioResultCount = latestSuccOpResultByItem.size();
 				Loggers.MSG.info("{}: please wait while performing {} I/O results output...", id, ioResultCount);
-				for(final O latestItemIoResult : latestSuccOpResultByItem.values()) {
+				for(final O latestOpResult : latestSuccOpResultByItem.values()) {
 					try {
-						if(!opsResultsOutput.put(latestItemIoResult)) {
+						if(!opsResultsOutput.put(latestOpResult)) {
 							Loggers.ERR.debug("{}: item info output fails to ingest, blocking the closing method", id);
-							while(!opsResultsOutput.put(latestItemIoResult)) {
+							while(!opsResultsOutput.put(latestOpResult)) {
 								Thread.sleep(1);
 							}
 							Loggers.MSG.debug("{}: closing method unblocked", id);
