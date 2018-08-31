@@ -82,8 +82,7 @@ import static org.junit.Assert.assertEquals;
 
 	public SingleRandomUpdateAndMultipleRandomReadTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
+	) throws Exception {
 		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
 			APP_NAME, Thread.currentThread().getContextClassLoader()
 		);
