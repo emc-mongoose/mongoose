@@ -61,8 +61,8 @@ import static org.junit.Assert.assertEquals;
 	}
 
 	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
-	private final int timeoutInMillis = 1000_000;
-	private final long EXPECTED_COUNT = 2000;
+	private final int timeoutInMillis = 1_000_000;
+	private final long EXPECTED_COUNT = 2_000;
 	private final SizeInBytes expectedUpdateSize;
 	private final SizeInBytes expectedReadSize;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
