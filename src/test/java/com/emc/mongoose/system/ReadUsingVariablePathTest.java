@@ -117,9 +117,9 @@ import static org.junit.Assert.assertTrue;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + HOST_ITEM_OUTPUT_PATH);
+				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(HOST_ITEM_OUTPUT_PATH);
+					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}

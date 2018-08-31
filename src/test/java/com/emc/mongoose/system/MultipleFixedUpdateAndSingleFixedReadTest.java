@@ -61,21 +61,20 @@ import static org.junit.Assert.assertEquals;
 	}
 
 	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
-	private final int timeoutInMillis = 1_000_000;
+	private final int TIMEOUT_IN_MILLIS = 1_000_000;
 	private final long EXPECTED_COUNT = 2_000;
+	private final String CONTAINER_ITEM_OUTPUT_PATH =
+		MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
+	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final SizeInBytes expectedUpdateSize;
 	private final SizeInBytes expectedReadSize;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
-	private final StorageType storageType;
 	private final RunMode runMode;
 	private final Concurrency concurrency;
-	private final ItemSize itemSize;
 	private final Config config;
-	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
-	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private int averagePeriod;
 	private String stdOutContent = null;
@@ -98,15 +97,13 @@ import static org.junit.Assert.assertEquals;
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
-		this.storageType = storageType;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
-		this.itemSize = itemSize;
 		this.expectedUpdateSize =
 			new SizeInBytes(- LongStream.of(2 - 5, 10 - 20, 50 - 100, 200 - 500, 1000 - 2000).sum());
 		this.expectedReadSize = new SizeInBytes(itemSize.getValue().get() - 256);
 		try {
-			Files.delete(Paths.get(hostItemOutputFile));
+			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
 		} catch(final Exception ignored) {
 		}
 		final List<String> env = System
@@ -132,9 +129,9 @@ import static org.junit.Assert.assertEquals;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + hostItemOutputPath);
+				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -162,7 +159,7 @@ import static org.junit.Assert.assertEquals;
 		storageMocks.values().forEach(AsyncRunnableBase::start);
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		testContainer.start();
-		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+		testContainer.await(TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS);
 		stdOutContent = testContainer.stdOutContent();
 	}
 

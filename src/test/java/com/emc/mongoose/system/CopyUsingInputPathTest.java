@@ -62,7 +62,7 @@ import java.util.stream.Collectors;
 
 	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
 	private static final int COUNT_LIMIT = 100_000;
-	private final int timeoutInMillis = 105_000;
+	private final int TIMEOUT_IN_MILLIS = 105_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -156,7 +156,7 @@ import java.util.stream.Collectors;
 		storageMocks.values().forEach(AsyncRunnableBase::start);
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		testContainer.start();
-		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+		testContainer.await(TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
 	@After

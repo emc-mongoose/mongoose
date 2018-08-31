@@ -66,21 +66,20 @@ import static org.junit.Assert.assertTrue;
 	}
 
 	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
-	private final int timeoutInMillis = 1000_000;
+	private final int TIMEOUT_IN_MILLIS = 1000_000;
 	private final int timeLimitInSec = 65; //1m + up to 5s for the precondition job
 	private final String ITEM_OUTPUT_FILE = "/CircularReadLimitByTime.csv";
+	private final String HOST_ITEM_OUTPUT_PATH;
+	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
+	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
-	private final StorageType storageType;
 	private final RunMode runMode;
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
 	private final Config config;
-	private final String hostItemOutputPath;
-	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
-	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private final int averagePeriod;
 	private boolean finishedInTime;
 	private String stdOutContent = null;
@@ -98,12 +97,11 @@ import static org.junit.Assert.assertTrue;
 			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-		hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
+		HOST_ITEM_OUTPUT_PATH = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
-		this.storageType = storageType;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
@@ -111,7 +109,7 @@ import static org.junit.Assert.assertTrue;
 
 		}
 		try {
-			Files.delete(Paths.get(hostItemOutputFile));
+			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
 		} catch(final Exception ignored) {
 		}
 		final List<String> env = System
@@ -139,7 +137,7 @@ import static org.junit.Assert.assertTrue;
 				break;
 			case FS:
 				try {
-					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+					DirWithManyFilesDeleter.deleteExternal(HOST_ITEM_OUTPUT_PATH);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -168,7 +166,7 @@ import static org.junit.Assert.assertTrue;
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		long duration = System.currentTimeMillis();
 		testContainer.start();
-		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+		testContainer.await(TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS);
 		duration = System.currentTimeMillis() - duration;
 		finishedInTime = (TimeUnit.MILLISECONDS.toSeconds(duration) <= timeLimitInSec + 10);
 		stdOutContent = testContainer.stdOutContent();

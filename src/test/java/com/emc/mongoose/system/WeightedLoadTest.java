@@ -48,7 +48,10 @@ import static org.junit.Assert.assertTrue;
 
 	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
 	private final long DURATION_LIMIT = 120_000;
-	private final int timeoutInMillis = 120_000;
+	private final int TIMEOUT_IN_MILLIS = 120_000;
+	private final String CONTAINER_ITEM_OUTPUT_PATH =
+		MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
+	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -56,12 +59,8 @@ import static org.junit.Assert.assertTrue;
 	private final StorageType storageType;
 	private final RunMode runMode;
 	private final Concurrency concurrency;
-	private final ItemSize itemSize;
-	private final Config config;
-	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private long duration;
 	private String stdOutContent = null;
-	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
 
 	public WeightedLoadTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
@@ -69,7 +68,6 @@ import static org.junit.Assert.assertTrue;
 	throws Exception {
 		final Map<String, Object> schema =
 			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
-		config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
@@ -78,9 +76,8 @@ import static org.junit.Assert.assertTrue;
 		this.storageType = storageType;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
-		this.itemSize = itemSize;
 		try {
-			Files.delete(Paths.get(hostItemOutputFile));
+			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
 		} catch(final Exception ignored) {
 		}
 
@@ -111,9 +108,9 @@ import static org.junit.Assert.assertTrue;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + hostItemOutputPath);
+				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -142,7 +139,7 @@ import static org.junit.Assert.assertTrue;
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		duration = System.currentTimeMillis();
 		testContainer.start();
-		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+		testContainer.await(TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS);
 		duration = System.currentTimeMillis() - duration;
 		stdOutContent = testContainer.stdOutContent();
 	}

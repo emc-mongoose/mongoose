@@ -46,7 +46,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -70,13 +69,12 @@ import java.util.stream.Collectors;
 	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
 	private final int EXPECTED_APPEND_COUNT = 50;
 	private final long EXPECTED_COUNT = 200;
-	private final int timeoutInMillis = 1_000_000;
-	private final String itemListFile0 = snakeCaseName(getClass()) + "_0.csv";
-	private final String itemListFile1 = snakeCaseName(getClass()) + "_1.csv";
-	private final String hostItemListFile0 = HOST_SHARE_PATH + File.separator + itemListFile0;
-	private final String hostItemListFile1 = HOST_SHARE_PATH + File.separator + itemListFile1;
-	private final String containerItemListFile0 = CONTAINER_SHARE_PATH + "/" + itemListFile0;
-	private final String containerItemListFile1 = CONTAINER_SHARE_PATH + "/" + itemListFile1;
+	private final int TIMEOUT_IN_MILLIS = 1_000_000;
+	private final String ITEM_LIST_FILE_0 = snakeCaseName(getClass()) + "_0.csv";
+	private final String ITEM_LIST_FILE_1 = snakeCaseName(getClass()) + "_1.csv";
+	private final String HOST_ITEM_LIST_FILE_1 = HOST_SHARE_PATH + "/" + ITEM_LIST_FILE_1;
+	private final String CONTAINER_ITEM_LIST_FILE_0 = CONTAINER_SHARE_PATH + "/" + ITEM_LIST_FILE_0;
+	private final String CONTAINER_ITEM_LIST_FILE_1 = CONTAINER_SHARE_PATH + "/" + ITEM_LIST_FILE_1;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> additionalNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -107,8 +105,8 @@ import java.util.stream.Collectors;
 			.collect(Collectors.toList());
 		env.add("BASE_ITEMS_COUNT=" + EXPECTED_COUNT);
 		env.add("APPEND_COUNT=" + EXPECTED_APPEND_COUNT);
-		env.add("ITEM_LIST_FILE_0=" + containerItemListFile0);
-		env.add("ITEM_LIST_FILE_1=" + containerItemListFile1);
+		env.add("ITEM_LIST_FILE_0=" + CONTAINER_ITEM_LIST_FILE_0);
+		env.add("ITEM_LIST_FILE_1=" + CONTAINER_ITEM_LIST_FILE_1);
 		env.add("ITEM_DATA_SIZE=" + itemSize.getValue());
 		final List<String> args = new ArrayList<>();
 		switch(storageType) {
@@ -159,7 +157,7 @@ import java.util.stream.Collectors;
 		storageMocks.values().forEach(AsyncRunnableBase::start);
 		additionalNodes.values().forEach(AsyncRunnableBase::start);
 		testContainer.start();
-		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+		testContainer.await(TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
 	@After
@@ -240,7 +238,7 @@ import java.util.stream.Collectors;
 			EXPECTED_COUNT < opTraceRecCount.sum()
 		);
 		final List<CSVRecord> items = new ArrayList<>();
-		try(final BufferedReader br = new BufferedReader(new FileReader(hostItemListFile1))) {
+		try(final BufferedReader br = new BufferedReader(new FileReader(HOST_ITEM_LIST_FILE_1))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
 			for(final CSVRecord csvRecord : csvParser) {
 				items.add(csvRecord);

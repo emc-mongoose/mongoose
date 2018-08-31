@@ -62,19 +62,19 @@ import static org.junit.Assert.assertTrue;
 	private static final SizeInBytes SIZE_LIMIT = new SizeInBytes("10GB");
 	private static final int TIME_LIMIT_SEC = 60;
 	private static final int RATE_LIMIT = 1_000;
-	private final int timeoutInMillis = 1000_000;
+	private final int TIMEOUT_IN_MILLIS = 1000_000;
+	private final String CONTAINER_ITEM_OUTPUT_PATH =
+		MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
+	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
 	private final RunMode runMode;
-	private final Concurrency concurrency;
 	private final ItemSize itemSize;
 	private final int averagePeriod;
 	private final Config config;
-	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
-	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private long duration;
 	private String stdOutContent = null;
 
@@ -98,10 +98,9 @@ import static org.junit.Assert.assertTrue;
 		}
 		this.storageType = storageType;
 		this.runMode = runMode;
-		this.concurrency = concurrency;
 		this.itemSize = itemSize;
 		try {
-			Files.delete(Paths.get(hostItemOutputFile));
+			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
 		} catch(final Exception ignored) {
 		}
 		final List<String> env =
@@ -124,9 +123,9 @@ import static org.junit.Assert.assertTrue;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + hostItemOutputPath);
+				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -155,7 +154,7 @@ import static org.junit.Assert.assertTrue;
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		duration = System.currentTimeMillis();
 		testContainer.start();
-		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+		testContainer.await(TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS);
 		duration = System.currentTimeMillis() - duration;
 		stdOutContent = testContainer.stdOutContent();
 	}

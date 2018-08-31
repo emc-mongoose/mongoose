@@ -59,7 +59,10 @@ import static org.junit.Assert.assertEquals;
 	}
 
 	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
-	private final int timeoutInMillis = 1000_000;
+	private final int TIMEOUT_IN_MILLIS = 1000_000;
+	private final String CONTAINER_ITEM_OUTPUT_PATH =
+		MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
+	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -69,8 +72,6 @@ import static org.junit.Assert.assertEquals;
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
 	private final Config config;
-	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
-	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final int averagePeriod;
 	private String stdOutContent = null;
 
@@ -97,7 +98,7 @@ import static org.junit.Assert.assertEquals;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
 		try {
-			Files.delete(Paths.get(hostItemOutputFile));
+			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
 		} catch(final Exception ignored) {
 		}
 		final List<String> env = System
@@ -123,9 +124,9 @@ import static org.junit.Assert.assertEquals;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + hostItemOutputPath);
+				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -153,7 +154,7 @@ import static org.junit.Assert.assertEquals;
 		storageMocks.values().forEach(AsyncRunnableBase::start);
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		testContainer.start();
-		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+		testContainer.await(TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS);
 		stdOutContent = testContainer.stdOutContent();
 	}
 

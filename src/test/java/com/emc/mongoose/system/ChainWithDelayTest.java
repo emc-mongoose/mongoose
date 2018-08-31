@@ -60,6 +60,7 @@ import static org.junit.Assert.fail;
 	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
 	private final int DELAY_SECONDS = 20;
 	private final int TIME_LIMIT = 60;
+	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final String zone1Addr = "127.0.0.1";
 	private final String zone2Addr;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
@@ -69,11 +70,6 @@ import static org.junit.Assert.fail;
 	private final StorageType storageType;
 	private final RunMode runMode;
 	private final Concurrency concurrency;
-	private final ItemSize itemSize;
-	private final Config config;
-	private final int averagePeriod;
-	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
-	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private boolean finishedInTime;
 	private int containerExitCode;
 	private String stdOutContent = null;
@@ -84,13 +80,6 @@ import static org.junit.Assert.fail;
 		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
 			APP_NAME, Thread.currentThread().getContextClassLoader()
 		);
-		config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
-		final Object avgPeriodRaw = config.val("output-metrics-average-period");
-		if(avgPeriodRaw instanceof String) {
-			averagePeriod = (int) TimeUtil.getTimeInSeconds((String) avgPeriodRaw);
-		} else {
-			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
-		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
@@ -99,7 +88,6 @@ import static org.junit.Assert.fail;
 		this.storageType = storageType;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
-		this.itemSize = itemSize;
 		if(storageType.equals(StorageType.FS)) {
 			try {
 				DirWithManyFilesDeleter.deleteExternal(getHostItemOutputPath(stepId));
@@ -108,7 +96,7 @@ import static org.junit.Assert.fail;
 			}
 		}
 		try {
-			Files.delete(Paths.get(hostItemOutputFile));
+			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
 		} catch(final Exception ignored) {
 		}
 		final List<String> env =

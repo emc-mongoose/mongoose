@@ -47,6 +47,7 @@ import static com.emc.mongoose.util.LogValidationUtil.testOpTraceLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.testOpTraceRecord;
 import static com.emc.mongoose.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
+import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_HOME_PATH;
 import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
 import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
 import static com.emc.mongoose.util.docker.MongooseContainer.systemTestContainerScenarioPath;
@@ -62,22 +63,21 @@ import static org.junit.Assert.assertEquals;
 	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
 	private final long EXPECTED_COUNT = 1_000;
 	private static final int READ_RANDOM_RANGES_COUNT = 12;
-	private final String ITEM_LIST_FILE = CONTAINER_SHARE_PATH + "/example/content/textexample";
-	private final int timeoutInMillis = 1000_000;
+	private final String ITEM_DATA_INPUT_FILE = CONTAINER_HOME_PATH + "/example/content/textexample";
+	private final int TIMEOUT_IN_MILLIS = 1000_000;
+	private final String CONTAINER_ITEM_OUTPUT_PATH =
+		MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
+	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
-	private final StorageType storageType;
 	private final RunMode runMode;
 	private final Concurrency concurrency;
-	private final ItemSize itemSize;
 	private final SizeInBytes expectedUpdateSize;
 	private final SizeInBytes expectedReadSize;
 	private final int averagePeriod;
 	private final Config config;
-	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
-	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private String stdOutContent = null;
 
 	public SingleRandomUpdateAndMultipleRandomReadTest(
@@ -98,20 +98,18 @@ import static org.junit.Assert.assertEquals;
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
-		this.storageType = storageType;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
-		this.itemSize = itemSize;
 		this.expectedReadSize = new SizeInBytes(2 << (READ_RANDOM_RANGES_COUNT - 2), itemSize.getValue().get(), 1);
 		this.expectedUpdateSize = new SizeInBytes(1, itemSize.getValue().get(), 1);
 		try {
-			Files.delete(Paths.get(hostItemOutputFile));
+			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
 		} catch(final Exception ignored) {
 		}
 		final List<String> env =
 			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
 		final List<String> args = new ArrayList<>();
-		args.add("--item-data-input-file=" + ITEM_LIST_FILE);
+		args.add("--item-data-input-file=" + ITEM_DATA_INPUT_FILE);
 		switch(storageType) {
 			case ATMOS:
 			case S3:
@@ -129,9 +127,9 @@ import static org.junit.Assert.assertEquals;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + hostItemOutputPath);
+				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -159,7 +157,7 @@ import static org.junit.Assert.assertEquals;
 		storageMocks.values().forEach(AsyncRunnableBase::start);
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		testContainer.start();
-		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+		testContainer.await(TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS);
 		stdOutContent = testContainer.stdOutContent();
 	}
 

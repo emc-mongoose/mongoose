@@ -70,9 +70,11 @@ import static org.junit.Assert.assertTrue;
 	}
 
 	private final String SCENARIO_PATH = null; //default
-	private final double requiredAccuracy = 1;
+	private final double REQUIRED_ACCURACY = 1;
 		//100% because #issue-1252 "The Size limit is violated" isn't resolved -> Mongoose doesn't stop in time
-	private final int timeoutInMillis = 1000_000;
+	private final int TIMEOUT_IN_MILLIS = 1000_000;
+	private final String CONTAINER_ITEM_OUTPUT_FILE;
+	private final String HOST_ITEM_OUTPUT_FILE;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -82,8 +84,6 @@ import static org.junit.Assert.assertTrue;
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
 	private final Config config;
-	private final String containerItemOutputFile;
-	private final String hostItemOutputFile;
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private final SizeInBytes sizeLimit;
 	private final long expectedCount;
@@ -106,9 +106,9 @@ import static org.junit.Assert.assertTrue;
 			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
-		containerItemOutputFile = CONTAINER_SHARE_PATH + '/' + getClass().getSimpleName() + '_'
+		CONTAINER_ITEM_OUTPUT_FILE = CONTAINER_SHARE_PATH + '/' + getClass().getSimpleName() + '_'
 			+ stepId + ".csv";
-		hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + '_' + stepId + ".csv";
+		HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + '_' + stepId + ".csv";
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
@@ -134,7 +134,7 @@ import static org.junit.Assert.assertTrue;
 			.stream().map(e -> e.getKey() + "=" + e.getValue())
 			.collect(Collectors.toList());
 		final List<String> args = new ArrayList<>();
-		args.add("--item-output-file=" + containerItemOutputFile);
+		args.add("--item-output-file=" + CONTAINER_ITEM_OUTPUT_FILE);
 		args.add("--load-step-limit-size=" + sizeLimit);
 		switch(storageType) {
 			case ATMOS:
@@ -183,7 +183,7 @@ import static org.junit.Assert.assertTrue;
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		duration = System.currentTimeMillis();
 		testContainer.start();
-		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+		testContainer.await(TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS);
 		duration = System.currentTimeMillis() - duration;
 		containerExitCode = testContainer.exitStatusCode();
 		stdOutContent = testContainer.stdOutContent();
@@ -256,16 +256,16 @@ import static org.junit.Assert.assertTrue;
 		}
 		testOpTraceLogRecords(stepId, opTraceRecFunc);
 		//100% because #issue-1252 "The Size limit is violated" isn't resolved -> Mongoose doesn't stop in time
-		assertEquals(expectedCount, opTraceRecCount.sum(), requiredAccuracy * expectedCount);
+		assertEquals(expectedCount, opTraceRecCount.sum(), REQUIRED_ACCURACY * expectedCount);
 		final List<CSVRecord> items = new ArrayList<>();
-		try(final BufferedReader br = new BufferedReader(new FileReader(hostItemOutputFile))) {
+		try(final BufferedReader br = new BufferedReader(new FileReader(HOST_ITEM_OUTPUT_FILE))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
 			for(final CSVRecord csvRecord : csvParser) {
 				items.add(csvRecord);
 			}
 		}
 		//100% because #issue-1252 "The Size limit is violated" isn't resolved -> Mongoose doesn't stop in time
-		assertEquals(expectedCount, items.size(), expectedCount * requiredAccuracy);
+		assertEquals(expectedCount, items.size(), expectedCount * REQUIRED_ACCURACY);
 		final Frequency freq = new Frequency();
 		String itemPath, itemId;
 		long itemOffset;
@@ -300,6 +300,6 @@ import static org.junit.Assert.assertTrue;
 		testFinalMetricsTableRowStdout(stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(),
 			concurrency.getValue(), 0, 0, itemSize.getValue()
 		);
-		assertTrue(duration < timeoutInMillis);
+		assertTrue(duration < TIMEOUT_IN_MILLIS);
 	}
 }
