@@ -10,8 +10,8 @@ import com.emc.mongoose.params.RunMode;
 import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.util.docker.MongooseContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
+import com.emc.mongoose.util.docker.MongooseContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -41,10 +41,10 @@ import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.getMetricsTotalLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.testFinalMetricsStdout;
+import static com.emc.mongoose.util.LogValidationUtil.testMetricsLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.testOpTraceLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.testOpTraceRecord;
-import static com.emc.mongoose.util.LogValidationUtil.testMetricsLogRecords;
-import static com.emc.mongoose.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
@@ -62,7 +62,7 @@ import static org.junit.Assert.assertEquals;
 	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
 	private final long EXPECTED_COUNT = 1_000;
 	private static final int READ_RANDOM_RANGES_COUNT = 12;
-	private final String ITEM_LIST_FILE = CONTAINER_SHARE_PATH + "/" + "/example/content/textexample";
+	private final String ITEM_LIST_FILE = CONTAINER_SHARE_PATH + "/example/content/textexample";
 	private final int timeoutInMillis = 1000_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
@@ -82,7 +82,8 @@ import static org.junit.Assert.assertEquals;
 
 	public SingleRandomUpdateAndMultipleRandomReadTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	) throws Exception {
+	)
+	throws Exception {
 		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
 			APP_NAME, Thread.currentThread().getContextClassLoader()
 		);
