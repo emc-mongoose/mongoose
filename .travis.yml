@@ -65,7 +65,7 @@ jobs:
 
     - stage: "System tests"
     # STORAGE_TYPE=atmos,fs RUN_MODE=local CONCURRENCY=low ITEM_SIZE=empty,medium,huge ./gradlew systemTest --tests com.emc.mongoose.system.UnlimitedCreateTest
-     env:
+      env:
       - TEST=UnlimitedCreateTest
       - STORAGE_TYPE=atmos,fs
       - RUN_MODE=local
