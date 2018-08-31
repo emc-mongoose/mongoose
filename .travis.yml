@@ -64,8 +64,7 @@ jobs:
       - docker push emcmongoose/mongoose-scripting-jython:$TAG
 
     - stage: "System tests"
-
-  # STORAGE_TYPE=atmos,fs RUN_MODE=local CONCURRENCY=low ITEM_SIZE=empty,medium,huge ./gradlew systemTest --tests com.emc.mongoose.system.UnlimitedCreateTest
+    # STORAGE_TYPE=atmos,fs RUN_MODE=local CONCURRENCY=low ITEM_SIZE=empty,medium,huge ./gradlew systemTest --tests com.emc.mongoose.system.UnlimitedCreateTest
      env:
       - TEST=UnlimitedCreateTest
       - STORAGE_TYPE=atmos,fs
