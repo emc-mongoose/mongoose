@@ -44,6 +44,9 @@ UpdateLoad
     .config(parentConfig_1)
     .config({
       "load" : {
+      	"step" : {
+      	  "id" : STEP_ID_UPDATE
+      	},
         "op" : {
           "type" : "update"
         }
@@ -74,6 +77,9 @@ ReadLoad
     .config(parentConfig_1)
     .config({
       "load" : {
+      	"step" : {
+      	  "id" : STEP_ID_READ
+      	},
         "op" : {
           "type" : "read"
         }
