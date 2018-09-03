@@ -21,24 +21,24 @@ public class RollingAppenderTest {
 	@Test
 	public void test()
 	throws InterruptedException, IOException {
-		appender = new RollingFileAppender(new SimpleLayout(), fileName);
-		logger.addAppender(appender);
-		for(int counter = 0; counter < LIMIT; ++ counter) {
-			TimeUnit.SECONDS.sleep(1);
-			System.out.println(counter);
-			RollingAppenderTest.logger.info(counter);
-		}
-		new File(fileName).delete();
-		System.out.println("<File is deleted>");
-		//logger.removeAllAppenders();
-		//appender = new RollingFileAppender(new SimpleLayout(), fileName);
-		//logger.addAppender(appender);
-
-		for(int counter = LIMIT; counter < LIMIT * 2; ++ counter) {
-			TimeUnit.SECONDS.sleep(1);
-			System.out.println(counter);
-			RollingAppenderTest.logger.info(counter);
-		}
+//		appender = new RollingFileAppender(new SimpleLayout(), fileName);
+//		logger.addAppender(appender);
+//		for(int counter = 0; counter < LIMIT; ++ counter) {
+//			TimeUnit.SECONDS.sleep(1);
+//			System.out.println(counter);
+//			RollingAppenderTest.logger.info(counter);
+//		}
+//		new File(fileName).delete();
+//		System.out.println("<File is deleted>");
+//		//logger.removeAllAppenders();
+//		//appender = new RollingFileAppender(new SimpleLayout(), fileName);
+//		//logger.addAppender(appender);
+//
+//		for(int counter = LIMIT; counter < LIMIT * 2; ++ counter) {
+//			TimeUnit.SECONDS.sleep(1);
+//			System.out.println(counter);
+//			RollingAppenderTest.logger.info(counter);
+//		}
 	}
 }
 
