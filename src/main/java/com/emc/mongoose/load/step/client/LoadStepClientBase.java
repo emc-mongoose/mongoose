@@ -181,7 +181,7 @@ implements LoadStepClient {
 			throw new InterruptRunException(e);
 		}
 		final String itemOutputFile = config.stringVal("item-output-file");
-		if(itemOutputFile != null && ! itemOutputFile.isEmpty()) {
+		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
 			itemOutputFileAggregators.add(new ItemOutputFileAggregator(id(), fileMgrs, configSlices, itemOutputFile));
 			Loggers.MSG.debug("{}: item output file aggregator initialized", id());
 		}

@@ -54,7 +54,6 @@ implements AutoCloseable {
 				if(fileMgr instanceof FileManagerService) {
 					throw new AssertionError("File manager @ index #" + i + " shouldn't be a service");
 				}
-				itemOutputFileSlices.put(fileMgr, itemOutputFile);
 			} else {
 				if(fileMgr instanceof FileManagerService) {
 					try {

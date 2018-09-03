@@ -3,21 +3,21 @@ package com.emc.mongoose.system;
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.svc.ServiceUtil;
-import com.emc.mongoose.system.base.params.Concurrency;
-import com.emc.mongoose.system.base.params.EnvParams;
-import com.emc.mongoose.system.base.params.ItemSize;
-import com.emc.mongoose.system.base.params.RunMode;
-import com.emc.mongoose.system.base.params.StorageType;
-import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseAdditionalNodeContainer;
+import com.emc.mongoose.params.Concurrency;
+import com.emc.mongoose.params.EnvParams;
+import com.emc.mongoose.params.ItemSize;
+import com.emc.mongoose.params.RunMode;
+import com.emc.mongoose.params.StorageType;
+import com.emc.mongoose.util.DirWithManyFilesDeleter;
+import com.emc.mongoose.util.docker.HttpStorageMockContainer;
+import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -33,16 +33,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
-import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
-import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
+import static com.emc.mongoose.util.LogValidationUtil.getMetricsLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.getMetricsTotalLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.testFinalMetricsStdout;
+import static com.emc.mongoose.util.LogValidationUtil.testMetricsLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.testOpTraceLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.testOpTraceRecord;
+import static com.emc.mongoose.util.LogValidationUtil.testTotalMetricsLogRecord;
+import static com.emc.mongoose.util.TestCaseUtil.stepId;
+import static com.emc.mongoose.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
+import static com.emc.mongoose.util.docker.MongooseContainer.systemTestContainerScenarioPath;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class) public class MultipleFixedUpdateAndSingleFixedReadTest {
 
@@ -51,32 +60,33 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 		return EnvParams.PARAMS;
 	}
 
-	private final String SCENARIO_PATH = containerScenarioPath(getClass());
-	private final int timeoutInMillis = 1000_000;
-	private final long EXPECTED_COUNT = 2000;
+	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
+	private final int TIMEOUT_IN_MILLIS = 1_000_000;
+	private final long EXPECTED_COUNT = 2_000;
+	private final String CONTAINER_ITEM_OUTPUT_PATH =
+		MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
+	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final SizeInBytes expectedUpdateSize;
 	private final SizeInBytes expectedReadSize;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
 	private final String stepId;
-	private final StorageType storageType;
+	private final String stepIdUpdate;
+	private final String stepIdRead;
 	private final RunMode runMode;
 	private final Concurrency concurrency;
-	private final ItemSize itemSize;
 	private final Config config;
-	private final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(getClass().getSimpleName());
-	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private int averagePeriod;
 	private String stdOutContent = null;
 
 	public MultipleFixedUpdateAndSingleFixedReadTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
-		final Map<String, Object> schema =
-			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
+	) throws Exception {
+		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
+			APP_NAME, Thread.currentThread().getContextClassLoader()
+		);
 		config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
 		final Object avgPeriodRaw = config.val("output-metrics-average-period");
 		if(avgPeriodRaw instanceof String) {
@@ -85,19 +95,19 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
+		stepIdUpdate = stepId + "_UPDATE";
+		stepIdRead = stepId + "READ_";
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
-		this.storageType = storageType;
 		this.runMode = runMode;
 		this.concurrency = concurrency;
-		this.itemSize = itemSize;
 		this.expectedUpdateSize =
 			new SizeInBytes(- LongStream.of(2 - 5, 10 - 20, 50 - 100, 200 - 500, 1000 - 2000).sum());
 		this.expectedReadSize = new SizeInBytes(itemSize.getValue().get() - 256);
 		try {
-			Files.delete(Paths.get(hostItemOutputFile));
+			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
 		} catch(final Exception ignored) {
 		}
 		final List<String> env = System
@@ -106,6 +116,8 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 			.stream()
 			.map(e -> e.getKey() + "=" + e.getValue())
 			.collect(Collectors.toList());
+		env.add("STEP_ID_UPDATE=" + stepIdUpdate);
+		env.add("STEP_ID_READ=" + stepIdRead);
 		final List<String> args = new ArrayList<>();
 		switch(storageType) {
 			case ATMOS:
@@ -123,9 +135,9 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + hostItemOutputPath);
+				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
+					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -143,7 +155,7 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 				break;
 		}
 		testContainer = new MongooseContainer(
-			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
 		);
 	}
 
@@ -153,7 +165,7 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 		storageMocks.values().forEach(AsyncRunnableBase::start);
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		testContainer.start();
-		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+		testContainer.await(TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS);
 		stdOutContent = testContainer.stdOutContent();
 	}
 
@@ -161,9 +173,9 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(nod -> {
+		slaveNodes.values().parallelStream().forEach(node -> {
 			try {
-				nod.close();
+				node.close();
 			} catch(final Throwable t) {
 				t.printStackTrace(System.err);
 			}
@@ -180,58 +192,50 @@ import static com.emc.mongoose.system.util.docker.MongooseContainer.containerSce
 	@Test
 	public final void test()
 	throws Exception {
-		// I/O traces
-		//        final LongAdder ioTraceRecCount = new LongAdder();
-		//        final Consumer<CSVRecord> ioTraceRecTestFunc = ioTraceRec -> {
-		//            if (ioTraceRecCount.sum() < EXPECTED_COUNT) {
-		//                testOpTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), expectedUpdateSize);
-		//            } else {
-		//                testOpTraceRecord(ioTraceRec, OpType.READ.ordinal(), expectedReadSize);
-		//            }
-		//            ioTraceRecCount.increment();
-		//        };
-		//        testOpTraceLogRecords(stepId, ioTraceRecTestFunc);
-		//        assertEquals(
-		//                "There should be " + 2 * EXPECTED_COUNT + " records in the I/O trace log file",
-		//                2 * EXPECTED_COUNT, ioTraceRecCount.sum()
-		//        );
-		//
-		//        final List<CSVRecord> totalMetrcisLogRecords = getMetricsTotalLogRecords(stepId);
-		//        testTotalMetricsLogRecord(
-		//                totalMetrcisLogRecords.get(0), OpType.UPDATE, concurrency.getValue(),
-		//                runMode.getNodeCount(), expectedUpdateSize, EXPECTED_COUNT, 0
-		//        );
-		//        testTotalMetricsLogRecord(
-		//                totalMetrcisLogRecords.get(1), OpType.READ, concurrency.getValue(),
-		//                runMode.getNodeCount(), expectedReadSize, EXPECTED_COUNT, 0
-		//        );
-		//
-		//        final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
-		//        final List<CSVRecord> updateMetricsRecords = new ArrayList<>();
-		//        final List<CSVRecord> readMetricsRecords = new ArrayList<>();
-		//        for (final CSVRecord metricsLogRec : metricsLogRecords) {
-		//            if (OpType.UPDATE.name().equalsIgnoreCase(metricsLogRec.get("OpType"))) {
-		//                updateMetricsRecords.add(metricsLogRec);
-		//            } else {
-		//                readMetricsRecords.add(metricsLogRec);
-		//            }
-		//        }
-		//        testMetricsLogRecords(
-		//                updateMetricsRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
-		//                expectedUpdateSize, EXPECTED_COUNT, 0,
-		//                averagePeriod
-		//        );
-		//        testMetricsLogRecords(
-		//                readMetricsRecords, OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
-		//                expectedReadSize, EXPECTED_COUNT, 0,
-		//                averagePeriod
-		//        );
-		//
-		testFinalMetricsStdout(
-			stdOutContent, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), expectedUpdateSize, stepId
+		final LongAdder ioTraceRecCount = new LongAdder();
+		//UPDATE
+		final Consumer<CSVRecord> ioTraceRecFuncUpdate = ioTraceRec -> {
+			testOpTraceRecord(ioTraceRec, OpType.UPDATE.ordinal(), expectedUpdateSize);
+			ioTraceRecCount.increment();
+		};
+		testOpTraceLogRecords(stepIdUpdate, ioTraceRecFuncUpdate);
+		assertEquals("There should be " + EXPECTED_COUNT + " records in the I/O trace log file", EXPECTED_COUNT,
+			ioTraceRecCount.sum()
+		);
+		//READ
+		ioTraceRecCount.reset();
+		final Consumer<CSVRecord> ioTraceRecFuncRead = ioTraceRec -> {
+			testOpTraceRecord(ioTraceRec, OpType.READ.ordinal(), expectedReadSize);
+			ioTraceRecCount.increment();
+		};
+		testOpTraceLogRecords(stepIdRead, ioTraceRecFuncRead);
+		assertEquals("There should be " + EXPECTED_COUNT + " records in the I/O trace log file", EXPECTED_COUNT,
+			ioTraceRecCount.sum()
+		);
+		//TOTAL
+		final List<CSVRecord> totalMetrcisLogRecordsUpdate = getMetricsTotalLogRecords(stepIdUpdate);
+		testTotalMetricsLogRecord(totalMetrcisLogRecordsUpdate.get(0), OpType.UPDATE, concurrency.getValue(),
+			runMode.getNodeCount(), expectedUpdateSize, EXPECTED_COUNT, 0
+		);
+		final List<CSVRecord> totalMetrcisLogRecordsRead = getMetricsTotalLogRecords(stepIdRead);
+		testTotalMetricsLogRecord(totalMetrcisLogRecordsRead.get(0), OpType.READ, concurrency.getValue(),
+			runMode.getNodeCount(), expectedReadSize, EXPECTED_COUNT, 0
+		);
+		final List<CSVRecord> updateMetricsRecords = getMetricsLogRecords(stepIdUpdate);
+		final List<CSVRecord> readMetricsRecords = getMetricsLogRecords(stepIdRead);
+		testMetricsLogRecords(
+			updateMetricsRecords, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), expectedUpdateSize,
+			EXPECTED_COUNT, 0, averagePeriod
+		);
+		testMetricsLogRecords(
+			readMetricsRecords, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), expectedReadSize,
+			EXPECTED_COUNT, 0, averagePeriod
 		);
 		testFinalMetricsStdout(
-			stdOutContent, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), expectedReadSize, stepId
+			stdOutContent, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), expectedUpdateSize, stepIdUpdate
+		);
+		testFinalMetricsStdout(
+			stdOutContent, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), expectedReadSize, stepIdRead
 		);
 	}
 }

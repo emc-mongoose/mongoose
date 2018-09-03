@@ -593,7 +593,7 @@ implements NetStorageDriver<I, O>, ChannelPoolHandler {
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			try {
-				Loggers.MSG.info("{}: shutdown the I/O executor", toString());
+				Loggers.MSG.debug("{}: shutdown the I/O executor", toString());
 				if(
 					ioExecutor
 						.shutdownGracefully(0, 0, TimeUnit.NANOSECONDS)

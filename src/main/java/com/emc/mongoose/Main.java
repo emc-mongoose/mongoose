@@ -91,18 +91,20 @@ public final class Main {
 
 				// install the extensions
 				final StringBuilder availExtMsg = new StringBuilder("Available/installed extensions:\n");
-				extensions.forEach(ext -> {
-					ext.install(appHomePath);
-					final String extId = ext.id();
-					final String extFqcn = ext.getClass().getCanonicalName();
-					availExtMsg
-						.append('\t')
-						.append(extId)
-						.append(' ')
-						.append(StringUtils.repeat("-", extId.length() < 30 ? 30 - extId.length() : 1))
-						.append("> ")
-						.append(extFqcn).append('\n');
-				});
+				extensions.forEach(
+					ext -> {
+						ext.install(appHomePath);
+						final String extId = ext.id();
+						final String extFqcn = ext.getClass().getCanonicalName();
+						availExtMsg
+							.append('\t')
+							.append(extId)
+							.append(' ')
+							.append(StringUtils.repeat("-", extId.length() < 30 ? 30 - extId.length() : 1))
+							.append("> ")
+							.append(extFqcn).append('\n');
+					}
+				);
 				Loggers.MSG.info(availExtMsg);
 
 				// apply the extensions defaults

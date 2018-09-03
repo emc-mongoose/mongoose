@@ -2,29 +2,28 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.svc.ServiceUtil;
-import com.emc.mongoose.system.base.params.Concurrency;
-import com.emc.mongoose.system.base.params.EnvParams;
-import com.emc.mongoose.system.base.params.ItemSize;
-import com.emc.mongoose.system.base.params.RunMode;
-import com.emc.mongoose.system.base.params.StorageType;
-import com.emc.mongoose.system.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.system.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.system.util.docker.MongooseContainer;
-import com.emc.mongoose.system.util.docker.MongooseAdditionalNodeContainer;
-import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.getMetricsTotalLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testFinalMetricsStdout;
-import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testOpTraceRecord;
-import static com.emc.mongoose.system.util.LogValidationUtil.testMetricsLogRecords;
-import static com.emc.mongoose.system.util.LogValidationUtil.testTotalMetricsLogRecord;
-import static com.emc.mongoose.system.util.TestCaseUtil.snakeCaseName;
-import static com.emc.mongoose.system.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.system.util.docker.MongooseContainer.containerScenarioPath;
+import com.emc.mongoose.params.Concurrency;
+import com.emc.mongoose.params.EnvParams;
+import com.emc.mongoose.params.ItemSize;
+import com.emc.mongoose.params.RunMode;
+import com.emc.mongoose.params.StorageType;
+import com.emc.mongoose.util.DirWithManyFilesDeleter;
+import com.emc.mongoose.util.docker.HttpStorageMockContainer;
+import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
+import static com.emc.mongoose.util.LogValidationUtil.getMetricsLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.getMetricsTotalLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.testFinalMetricsStdout;
+import static com.emc.mongoose.util.LogValidationUtil.testOpTraceLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.testOpTraceRecord;
+import static com.emc.mongoose.util.LogValidationUtil.testMetricsLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.testTotalMetricsLogRecord;
+import static com.emc.mongoose.util.TestCaseUtil.snakeCaseName;
+import static com.emc.mongoose.util.TestCaseUtil.stepId;
+import static com.emc.mongoose.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
+import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
+import static com.emc.mongoose.util.docker.MongooseContainer.systemTestContainerScenarioPath;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
@@ -67,16 +66,15 @@ import java.util.stream.Collectors;
 		return EnvParams.PARAMS;
 	}
 
-	private final String SCENARIO_PATH = containerScenarioPath(getClass());
+	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
 	private final int EXPECTED_APPEND_COUNT = 50;
 	private final long EXPECTED_COUNT = 200;
-	private final int timeoutInMillis = 1_000_000;
-	private final String itemListFile0 = snakeCaseName(getClass()) + "_0.csv";
-	private final String itemListFile1 = snakeCaseName(getClass()) + "_1.csv";
-	private final String hostItemListFile0 = HOST_SHARE_PATH + "/" + itemListFile0;
-	private final String hostItemListFile1 = HOST_SHARE_PATH + "/" + itemListFile1;
-	private final String containerItemListFile0 = CONTAINER_SHARE_PATH + "/" + itemListFile0;
-	private final String containerItemListFile1 = CONTAINER_SHARE_PATH + "/" + itemListFile1;
+	private final int TIMEOUT_IN_MILLIS = 1_000_000;
+	private final String ITEM_LIST_FILE_0 = snakeCaseName(getClass()) + "_0.csv";
+	private final String ITEM_LIST_FILE_1 = snakeCaseName(getClass()) + "_1.csv";
+	private final String HOST_ITEM_LIST_FILE_1 = HOST_SHARE_PATH + "/" + ITEM_LIST_FILE_1;
+	private final String CONTAINER_ITEM_LIST_FILE_0 = CONTAINER_SHARE_PATH + "/" + ITEM_LIST_FILE_0;
+	private final String CONTAINER_ITEM_LIST_FILE_1 = CONTAINER_SHARE_PATH + "/" + ITEM_LIST_FILE_1;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> additionalNodes = new HashMap<>();
 	private final MongooseContainer testContainer;
@@ -107,8 +105,8 @@ import java.util.stream.Collectors;
 			.collect(Collectors.toList());
 		env.add("BASE_ITEMS_COUNT=" + EXPECTED_COUNT);
 		env.add("APPEND_COUNT=" + EXPECTED_APPEND_COUNT);
-		env.add("ITEM_LIST_FILE_0=" + containerItemListFile0);
-		env.add("ITEM_LIST_FILE_1=" + containerItemListFile1);
+		env.add("ITEM_LIST_FILE_0=" + CONTAINER_ITEM_LIST_FILE_0);
+		env.add("ITEM_LIST_FILE_1=" + CONTAINER_ITEM_LIST_FILE_1);
 		env.add("ITEM_DATA_SIZE=" + itemSize.getValue());
 		final List<String> args = new ArrayList<>();
 		switch(storageType) {
@@ -149,7 +147,7 @@ import java.util.stream.Collectors;
 				break;
 		}
 		testContainer = new MongooseContainer(
-			stepId, storageType, runMode, concurrency, itemSize, SCENARIO_PATH, env, args
+			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
 		);
 	}
 
@@ -159,7 +157,7 @@ import java.util.stream.Collectors;
 		storageMocks.values().forEach(AsyncRunnableBase::start);
 		additionalNodes.values().forEach(AsyncRunnableBase::start);
 		testContainer.start();
-		testContainer.await(timeoutInMillis, TimeUnit.MILLISECONDS);
+		testContainer.await(TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
 	@After
@@ -240,7 +238,7 @@ import java.util.stream.Collectors;
 			EXPECTED_COUNT < opTraceRecCount.sum()
 		);
 		final List<CSVRecord> items = new ArrayList<>();
-		try(final BufferedReader br = new BufferedReader(new FileReader(hostItemListFile1))) {
+		try(final BufferedReader br = new BufferedReader(new FileReader(HOST_ITEM_LIST_FILE_1))) {
 			final CSVParser csvParser = CSVFormat.RFC4180.parse(br);
 			for(final CSVRecord csvRecord : csvParser) {
 				items.add(csvRecord);

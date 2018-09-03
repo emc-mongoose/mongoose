@@ -17,7 +17,7 @@ ext {
 		disruptor: "3.4.2",
 		fiber4j: "1.0.1",
 		jackson: "2.9.6",
-		javaCommons: "2.1.5",
+		javaCommons: "2.1.6",
 		javassist: "3.23.1-GA",
 		junit: "4+",
 		scala: "2.12.6",
@@ -26,7 +26,7 @@ ext {
 		metrics: "4.0.3",
 		nagaina: "3.6.11",
 		netty: "4.1.25.Final",
-		nettyConnectionPool: "1.0.7",
+		nettyConnectionPool: "1.0.9",
 		nettyTcNative: "2.0.12.Final",
 	]
 
@@ -88,8 +88,10 @@ allprojects {
 
 	test {
 
+		exclude "com/emc/mongoose/endurance/*"
 		exclude "com/emc/mongoose/integration/*"
 		exclude "com/emc/mongoose/system/*"
+		exclude "**/TemplateTest.*"
 
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
@@ -119,9 +121,17 @@ allprojects {
 
 		include "com/emc/mongoose/system/*"
 
-		jvmArgs "-XX:MaxDirectMemorySize=2g"
-		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
-		maxHeapSize "2g"
+		maxHeapSize "1g"
+		testLogging {
+			events "passed", "skipped", "failed", "standardOut"
+			showExceptions = true
+			showStandardStreams = true
+		}
+	}
+
+	task enduranceTest(type: Test) {
+		include "com/emc/mongoose/endurance/*"
+		maxHeapSize "1g"
 		testLogging {
 			events "passed", "skipped", "failed", "standardOut"
 			showExceptions = true

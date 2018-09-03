@@ -9,6 +9,7 @@ import com.emc.mongoose.storage.Credential;
 
 import com.github.akurilov.commons.collection.Range;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
