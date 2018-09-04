@@ -502,7 +502,7 @@ implements LoadStepClient {
 			itemDataInputFileSlicers.forEach(
 				itemDataInputFileSlicer -> {
 					try {
-						itemDataInputFileSlicers.clear();
+						itemDataInputFileSlicer.close();
 					} catch(final InterruptRunException e) {
 						throw e;
 					} catch(final Exception e) {
