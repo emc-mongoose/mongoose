@@ -22,7 +22,7 @@ PreconditionLoad
       "load" : {
         "step" : {
           "limit" : {
-            "count" : 2000
+            "count" : COUNT_LIMIT
           }
         }
       },

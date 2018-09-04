@@ -99,6 +99,7 @@ import static org.junit.Assert.assertEquals;
 		stepIdUpdate = stepId + "_UPDATE";
 		stepIdRead = stepId + "_READ";
 		try {
+			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepIdUpdate).toFile());
 			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepIdRead).toFile());
 		} catch(final IOException ignored) {

@@ -364,44 +364,53 @@ public interface FileIoHelper {
 	) throws IOException {
 		long countBytesDone = op.countBytesDone();
 		final long updatingRangesSize = op.markedRangesSize();
-		if(updatingRangesSize > 0 && updatingRangesSize > countBytesDone) {
-			DataItem updatingRange;
-			int currRangeIdx;
-			while(true) {
-				currRangeIdx = op.currRangeIdx();
-				if(currRangeIdx < rangeCount(fileItem.size())) {
-					updatingRange = op.currRangeUpdate();
-					if(updatingRange == null) {
-						op.currRangeIdx(++ currRangeIdx);
+
+		if(updatingRangesSize > 0) {
+			if (updatingRangesSize > countBytesDone) {
+				DataItem updatingRange;
+				int currRangeIdx;
+				while(true) {
+					currRangeIdx = op.currRangeIdx();
+					if(currRangeIdx < rangeCount(fileItem.size())) {
+						updatingRange = op.currRangeUpdate();
+						if(updatingRange == null) {
+							op.currRangeIdx(++ currRangeIdx);
+						} else {
+							break;
+						}
 					} else {
-						break;
+						op.countBytesDone(updatingRangesSize);
+						return true;
 					}
-				} else {
-					op.countBytesDone(updatingRangesSize);
-					return true;
 				}
-			}
-			final long updatingRangeSize = updatingRange.size();
-			if(Loggers.MSG.isTraceEnabled()) {
-				Loggers.MSG.trace(
-					"{}: set the file position = {} + {}", fileItem.name(), rangeOffset(currRangeIdx), countBytesDone
-				);
-			}
-			dstChannel.position(rangeOffset(currRangeIdx) + countBytesDone);
-			countBytesDone += updatingRange.writeToFileChannel(dstChannel, updatingRangeSize - countBytesDone);
-			if(Loggers.MSG.isTraceEnabled()) {
-				Loggers.MSG.trace("{}: {} bytes written totally", fileItem.name(), countBytesDone);
-			}
-			if(countBytesDone == updatingRangeSize) {
-				op.currRangeIdx(currRangeIdx + 1);
-				op.countBytesDone(0);
+				final long updatingRangeSize = updatingRange.size();
+				if(Loggers.MSG.isTraceEnabled()) {
+					Loggers.MSG.trace(
+						"{}: set the file position = {} + {}", fileItem.name(), rangeOffset(currRangeIdx),
+						countBytesDone
+					);
+				}
+				dstChannel.position(rangeOffset(currRangeIdx) + countBytesDone);
+				countBytesDone += updatingRange.writeToFileChannel(dstChannel, updatingRangeSize - countBytesDone);
+				if(Loggers.MSG.isTraceEnabled()) {
+					Loggers.MSG.trace("{}: {} bytes written totally", fileItem.name(), countBytesDone);
+				}
+				if(countBytesDone == updatingRangeSize) {
+					op.currRangeIdx(currRangeIdx + 1);
+					op.countBytesDone(0);
+				} else {
+					op.countBytesDone(countBytesDone);
+				}
 			} else {
-				op.countBytesDone(countBytesDone);
+				fileItem.commitUpdatedRanges(op.markedRangesMaskPair());
+				return true;
 			}
 		} else {
 			fileItem.commitUpdatedRanges(op.markedRangesMaskPair());
+			return true;
 		}
-		return updatingRangesSize <= 0 || updatingRangesSize <= countBytesDone;
+		return false;
+		//return updatingRangesSize <= 0 || updatingRangesSize <= countBytesDone;
 	}
 
 	static <I extends DataItem, O extends DataOperation<I>> boolean invokeFixedRangesUpdate(
