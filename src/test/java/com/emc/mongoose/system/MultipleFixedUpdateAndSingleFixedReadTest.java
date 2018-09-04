@@ -118,6 +118,7 @@ import static org.junit.Assert.assertEquals;
 			.stream()
 			.map(e -> e.getKey() + "=" + e.getValue())
 			.collect(Collectors.toList());
+		env.add("COUNT_LIMIT=" + EXPECTED_COUNT);
 		env.add("STEP_ID_UPDATE=" + stepIdUpdate);
 		env.add("STEP_ID_READ=" + stepIdRead);
 		final List<String> args = new ArrayList<>();
