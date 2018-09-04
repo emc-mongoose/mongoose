@@ -28,7 +28,7 @@ integration_tests:
   stage: integration_tests
   script: "./gradlew integrationTest"
   
-system_tests1:
+ChainWithDelayTest:
   stage: system_tests
   variables: 
     TEST: 'ChainWithDelayTest'
@@ -40,7 +40,7 @@ system_tests1:
     - "echo $TEST"
     - "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace"
 
-system_tests2:
+CircularAppendTest:
   stage: system_tests
   variables:
     TEST: 'CircularAppendTest'
@@ -52,7 +52,7 @@ system_tests2:
     - "echo $TEST"
     - "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace"
 
-system_tests3:
+CircularReadLimitByTimeTest:
   stage: system_tests
   variables:
     TEST: 'CircularReadLimitByTimeTest'
@@ -64,15 +64,139 @@ system_tests3:
     - "echo $TEST"
     - "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace"    
 
+UnlimitedCreateTest:
+  stage: system_tests
+  variables:
+    TEST: 'UnlimitedCreateTest'
+    STORAGE_TYPE: 'atmos,fs'
+    RUN_MODE: 'local'
+    CONCURRENCY: 'low'
+    ITEM_SIZE: 'medium,huge'
+  script: "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace"
+
+CopyUsingInputPathTest: 
+  stage: system_tests
+  variables:
+    TEST: 'CopyUsingInputPathTest'
+    STORAGE_TYPE: 'fs'
+    RUN_MODE: 'local'
+    CONCURRENCY: 'medium'
+    ITEM_SIZE: 'empty,small'
+  script: "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace"
+
+CreateLimitBySizeTest:
+  stage: system_tests
+  variables:
+    TEST: 'CreateLimitBySizeTest'
+    STORAGE_TYPE: 'fs'
+    RUN_MODE: 'local'
+    CONCURRENCY: 'low,high'
+    ITEM_SIZE: 'small,medium'
+  script: "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace"
+
+MultipartCreateTest:
+  stage: system_tests
+  variables:
+    TEST: 'MultipartCreateTest'
+    STORAGE_TYPE: 's3,swift'
+    RUN_MODE: 'local,distributed'
+    CONCURRENCY: 'low,medium'
+    ITEM_SIZE: 'large'
+  script: "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace"
+
+MultipleFixedUpdateAndSingleFixedReadTest:
+  stage: system_tests
+  variables:
+    TEST: 'MultipleFixedUpdateAndSingleFixedReadTest'
+    STORAGE_TYPE: 'fs,s3'
+    RUN_MODE: 'local,distributed'
+    CONCURRENCY: 'low,medium'
+    ITEM_SIZE: 'small,medium'
+  script: "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace"
+
+
+MultipleRandomUpdateAndMultipleFixedReadTest:
+  stage: system_tests
+  variables:
+    TEST: 'MultipleFixedUpdateAndSingleFixedReadTest'
+    STORAGE_TYPE: 'fs,s3'
+    RUN_MODE: 'local,distributed'
+    CONCURRENCY: 'medium'
+    ITEM_SIZE: 'small,medium'
+  script: "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace"
+
+ReadCustomContentVerificationFailTest:
+  stage: system_tests
+  variables:
+    TEST: 'ReadCustomContentVerificationFailTest'
+    STORAGE_TYPE: 'fs,s3,swift'
+    RUN_MODE: 'local,distributed'
+    CONCURRENCY: 'low,medium'
+    ITEM_SIZE: 'small,medium'
+  script: "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace"
+
+ReadUsingVariablePathTest:
+  stage: system_tests
+  variables:
+    TEST: 'ReadUsingVariablePathTest'
+    STORAGE_TYPE: 'fs'
+    RUN_MODE: 'local,distributed'
+    CONCURRENCY: 'single,low,medium,high'
+    ITEM_SIZE: 'empty,small'
+  script: "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace" 
+  
+ReadVerificationAfterCircularUpdateTest:
+  stage: system_tests
+  variables:
+    TEST: 'ReadVerificationAfterCircularUpdateTest'
+    STORAGE_TYPE: 'fs'
+    RUN_MODE: 'local'
+    CONCURRENCY: 'low,medium'
+    ITEM_SIZE: 'small'
+  script: "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace" 
+
+SingleFixedUpdateAndSingleRandomReadTest:
+  stage: system_tests
+  variables:
+    TEST: 'SingleFixedUpdateAndSingleRandomReadTest'
+    STORAGE_TYPE: 'fs,s3,swift'
+    RUN_MODE: 'local,distributed'
+    CONCURRENCY: 'single,low,medium,high'
+    ITEM_SIZE: 'small,medium'
+  script: "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace" 
+
+SingleRandomUpdateAndMultipleRandomReadTest:
+  stage: system_tests
+  variables:
+    TEST: 'SingleRandomUpdateAndMultipleRandomReadTest'
+    STORAGE_TYPE: 'fs,s3,swift'
+    RUN_MODE: 'local,distributed'
+    CONCURRENCY: 'single,low,medium'
+    ITEM_SIZE: 'small,medium'
+  script: "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace" 
+
+UnlimitedConcurrencyLimitByRateTest:
+  stage: system_tests
+  variables:
+    TEST: 'UnlimitedConcurrencyLimitByRateTest'
+    STORAGE_TYPE: 'atmos,fs,swift'
+    RUN_MODE: 'local,distributed'
+    CONCURRENCY: 'unlimited'
+    ITEM_SIZE: 'small,medium,large'
+  script: "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace"
+
+WeightedLoadTest:
+  stage: system_tests
+  variables:
+    TEST: 'WeightedLoadTest'
+    STORAGE_TYPE: 'fs,s3,swift'
+    RUN_MODE: 'distributed'
+    CONCURRENCY: 'single,medium'
+    ITEM_SIZE: 'empty,small'
+  script: "./gradlew systemTest --tests com.emc.mongoose.system.$TEST --stacktrace"  
 
 
 
-
-
-
-
-
-
-
+ 
 
 
