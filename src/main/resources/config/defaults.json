@@ -167,7 +167,7 @@
 		// The scenario file to run, null means invoking the default.js scenario bundled into the distribution
 		"scenario": null,
 		// The Mongoose version
-		"version": "4.0.0-SNAPSHOT"
+		"version": "4.0.0-alpha6"
 	},
 	"storage": {
 		"auth": {
