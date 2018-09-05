@@ -19,7 +19,7 @@ ext {
 		jackson: "2.9.6",
 		javaCommons: "2.1.6",
 		javassist: "3.23.1-GA",
-		junit: "4+",
+		junit: "[4,)",
 		scala: "2.12.6",
 		slf4j: "1.7.25",
 		log4j: "2.8.2",
