@@ -152,7 +152,7 @@ jobs:
     # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.ReadCustomContentVerificationFailTest
     - env:
       - TEST=ReadCustomContentVerificationFailTest
-      - STORAGE_TYPE=fs,s3,swift
+      - STORAGE_TYPE=fs,swift
       - RUN_MODE=local,distributed
       - CONCURRENCY=low,medium
       - ITEM_SIZE=small,medium
@@ -180,7 +180,7 @@ jobs:
     # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.SingleFixedUpdateAndSingleRandomReadTest
     - env:
       - TEST=SingleFixedUpdateAndSingleRandomReadTest
-      - STORAGE_TYPE=fs,s3,swift
+      - STORAGE_TYPE=fs,s3
       - RUN_MODE=local,distributed
       - CONCURRENCY=single,low,medium,high
       - ITEM_SIZE=small,medium
@@ -189,7 +189,7 @@ jobs:
     # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.SingleRandomUpdateAndMultipleRandomReadTest
     - env:
       - TEST=SingleRandomUpdateAndMultipleRandomReadTest
-      - STORAGE_TYPE=fs,s3,swift
+      - STORAGE_TYPE=fs,swift
       - RUN_MODE=local,distributed
       - CONCURRENCY=single,low,medium
       - ITEM_SIZE=small,medium
