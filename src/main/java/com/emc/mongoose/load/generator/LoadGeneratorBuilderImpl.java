@@ -195,7 +195,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 					.collect(Collectors.toList());
 			}
 			final long sizeThreshold;
-			final Object sizeThresholdRaw = limitConfig.val("size");
+			final Object sizeThresholdRaw = rangesConfig.val("threshold");
 			if(sizeThresholdRaw instanceof String) {
 				sizeThreshold = SizeInBytes.toFixedSize((String) sizeThresholdRaw);
 			} else {

@@ -30,8 +30,7 @@ public interface FileIoHelper {
 
 	static <I extends DataItem, O extends DataOperation<I>> boolean invokeCreate(
 		final I fileItem, final O op, final FileChannel dstChannel
-																				)
-	throws IOException {
+	) throws IOException {
 		long countBytesDone = op.countBytesDone();
 		final long contentSize = fileItem.size();
 		if(countBytesDone < contentSize && Operation.Status.ACTIVE.equals(op.status())) {
@@ -43,8 +42,7 @@ public interface FileIoHelper {
 
 	static <I extends DataItem, O extends DataOperation<I>> boolean invokeCopy(
 		final I fileItem, final O op, final FileChannel srcChannel, final FileChannel dstChannel
-																			  )
-	throws IOException {
+	) throws IOException {
 		long countBytesDone = op.countBytesDone();
 		final long contentSize = fileItem.size();
 		if(countBytesDone < contentSize && Operation.Status.ACTIVE.equals(op.status())) {
@@ -58,8 +56,7 @@ public interface FileIoHelper {
 
 	static <I extends DataItem, O extends DataOperation<I>> boolean invokeReadAndVerify(
 		final I fileItem, final O op, final ReadableByteChannel srcChannel
-																					   )
-	throws DataSizeException, DataCorruptionException, IOException {
+	) throws DataSizeException, DataCorruptionException, IOException {
 		long countBytesDone = op.countBytesDone();
 		final long contentSize = fileItem.size();
 		if(countBytesDone < contentSize) {
@@ -70,7 +67,7 @@ public interface FileIoHelper {
 				if(currRange != null) {
 					final ByteBuffer inBuff = DirectMemUtil.getThreadLocalReusableBuff(
 						nextRangeOffset - countBytesDone
-																					  );
+					);
 					final int n = srcChannel.read(inBuff);
 					if(n < 0) {
 						throw new DataSizeException(contentSize, countBytesDone);
@@ -105,8 +102,7 @@ public interface FileIoHelper {
 
 	static <I extends DataItem, O extends DataOperation<I>> boolean invokeReadAndVerifyRandomRanges(
 		final I fileItem, final O op, final SeekableByteChannel srcChannel, final BitSet maskRangesPair[]
-																								   )
-	throws DataSizeException, DataCorruptionException, IOException {
+	) throws DataSizeException, DataCorruptionException, IOException {
 		long countBytesDone = op.countBytesDone();
 		final long rangesSizeSum = op.markedRangesSize();
 		if(rangesSizeSum > 0 && rangesSizeSum > countBytesDone) {
@@ -122,7 +118,7 @@ public interface FileIoHelper {
 								"Load operation: {}, Range index: {}, size: {}, internal position: {}, " +
 									"Done byte count: {}",
 								op.toString(), currRangeIdx, range2read.size(), range2read.position(), countBytesDone
-											 );
+							);
 						}
 						break;
 					} else {
@@ -156,7 +152,7 @@ public interface FileIoHelper {
 				Loggers.MSG.trace(
 					"Load operation: {}, Done bytes count: {}, Curr range size: {}", op.toString(), countBytesDone,
 					range2read.size()
-								 );
+				);
 			}
 			if(countBytesDone == currRangeSize) {
 				op.currRangeIdx(currRangeIdx + 1);
@@ -170,8 +166,7 @@ public interface FileIoHelper {
 
 	static <I extends DataItem, O extends DataOperation<I>> boolean invokeReadAndVerifyFixedRanges(
 		final I fileItem, final O op, final SeekableByteChannel srcChannel, final List<Range> fixedRanges
-																								  )
-	throws DataSizeException, DataCorruptionException, IOException {
+	) throws DataSizeException, DataCorruptionException, IOException {
 		final long baseItemSize = fileItem.size();
 		final long fixedRangesSizeSum = op.markedRangesSize();
 		long countBytesDone = op.countBytesDone();
@@ -254,8 +249,7 @@ public interface FileIoHelper {
 
 	static <I extends DataItem, O extends DataOperation<I>> boolean invokeRead(
 		final I fileItem, final O op, final ReadableByteChannel srcChannel
-																			  )
-	throws IOException {
+	) throws IOException {
 		long countBytesDone = op.countBytesDone();
 		final long contentSize = fileItem.size();
 		int n;
@@ -276,8 +270,7 @@ public interface FileIoHelper {
 	static <I extends DataItem, O extends DataOperation<I>> boolean invokeReadRandomRanges(
 		final I fileItem, final O op, final FileChannel srcChannel,
 		final BitSet maskRangesPair[]
-																						  )
-	throws IOException {
+	) throws IOException {
 		int n;
 		long countBytesDone = op.countBytesDone();
 		final long rangesSizeSum = op.markedRangesSize();
@@ -302,7 +295,7 @@ public interface FileIoHelper {
 			n = srcChannel.read(
 				DirectMemUtil.getThreadLocalReusableBuff(currRangeSize - countBytesDone),
 				rangeOffset(currRangeIdx) + countBytesDone
-							   );
+			);
 			if(n < 0) {
 				op.countBytesDone(countBytesDone);
 				return true;
@@ -320,8 +313,7 @@ public interface FileIoHelper {
 
 	static <I extends DataItem, O extends DataOperation<I>> boolean invokeReadFixedRanges(
 		final I fileItem, final O op, final FileChannel srcChannel, final List<Range> byteRanges
-																						 )
-	throws IOException {
+	) throws IOException {
 		int n;
 		long countBytesDone = op.countBytesDone();
 		final long baseItemSize = fileItem.size();
@@ -348,7 +340,7 @@ public interface FileIoHelper {
 				}
 				n = srcChannel.read(
 					DirectMemUtil.getThreadLocalReusableBuff(rangeSize - countBytesDone), rangeBeg + countBytesDone
-								   );
+				);
 				if(n < 0) {
 					op.countBytesDone(countBytesDone);
 					return true;
@@ -369,110 +361,123 @@ public interface FileIoHelper {
 
 	static <I extends DataItem, O extends DataOperation<I>> boolean invokeRandomRangesUpdate(
 		final I fileItem, final O op, final FileChannel dstChannel
-																							)
-	throws IOException {
+	) throws IOException {
 		long countBytesDone = op.countBytesDone();
 		final long updatingRangesSize = op.markedRangesSize();
-		if(updatingRangesSize > 0 && updatingRangesSize > countBytesDone) {
-			DataItem updatingRange;
-			int currRangeIdx;
-			while(true) {
-				currRangeIdx = op.currRangeIdx();
-				if(currRangeIdx < rangeCount(fileItem.size())) {
-					updatingRange = op.currRangeUpdate();
-					if(updatingRange == null) {
-						op.currRangeIdx(++ currRangeIdx);
-					} else {
-						break;
-					}
-				} else {
-					op.countBytesDone(updatingRangesSize);
-					return true;
-				}
-			}
-			final long updatingRangeSize = updatingRange.size();
-			if(Loggers.MSG.isTraceEnabled()) {
-				Loggers.MSG.trace(
-					"{}: set the file position = {} + {}", fileItem.name(), rangeOffset(currRangeIdx), countBytesDone
-								 );
-			}
-			dstChannel.position(rangeOffset(currRangeIdx) + countBytesDone);
-			countBytesDone += updatingRange.writeToFileChannel(dstChannel, updatingRangeSize - countBytesDone);
-			if(Loggers.MSG.isTraceEnabled()) {
-				Loggers.MSG.trace("{}: {} bytes written totally", fileItem.name(), countBytesDone);
-			}
-			if(countBytesDone == updatingRangeSize) {
-				op.currRangeIdx(currRangeIdx + 1);
-				op.countBytesDone(0);
-			} else {
-				op.countBytesDone(countBytesDone);
-			}
-		} else {
-			fileItem.commitUpdatedRanges(op.markedRangesMaskPair());
-		}
-		return updatingRangesSize <= 0 || updatingRangesSize <= countBytesDone;
-	}
 
-	static <I extends DataItem, O extends DataOperation<I>> boolean invokeFixedRangesUpdate(
-		final I fileItem, final O op, final FileChannel dstChannel, final List<Range> byteRanges
-																						   )
-	throws IOException {
-		long countBytesDone = op.countBytesDone();
-		final long baseItemSize = fileItem.size();
-		final long updatingRangesSize = op.markedRangesSize();
-		if(updatingRangesSize > 0 && updatingRangesSize > countBytesDone) {
-			Range byteRange;
-			DataItem updatingRange;
-			int currRangeIdx = op.currRangeIdx();
-			if(currRangeIdx < byteRanges.size()) {
-				long rangeBeg;
-				long rangeEnd;
-				long rangeSize;
-				byteRange = byteRanges.get(currRangeIdx);
-				rangeBeg = byteRange.getBeg();
-				rangeEnd = byteRange.getEnd();
-				rangeSize = byteRange.getSize();
-				if(rangeSize == - 1) {
-					if(rangeBeg == - 1) {
-						// last "rangeEnd" bytes
-						rangeBeg = baseItemSize - rangeEnd;
-						rangeSize = rangeEnd;
-					} else if(rangeEnd == - 1) {
-						// start @ offset equal to "rangeBeg"
-						rangeSize = baseItemSize - rangeBeg;
+		if(updatingRangesSize > 0) {
+			if (updatingRangesSize > countBytesDone) {
+				DataItem updatingRange;
+				int currRangeIdx;
+				while(true) {
+					currRangeIdx = op.currRangeIdx();
+					if(currRangeIdx < rangeCount(fileItem.size())) {
+						updatingRange = op.currRangeUpdate();
+						if(updatingRange == null) {
+							op.currRangeIdx(++ currRangeIdx);
+						} else {
+							break;
+						}
 					} else {
-						rangeSize = rangeEnd - rangeBeg + 1;
+						op.countBytesDone(updatingRangesSize);
+						return true;
 					}
-				} else {
-					// append
-					rangeBeg = baseItemSize;
-					// note down the new size
-					fileItem.size(baseItemSize + updatingRangesSize);
 				}
-				updatingRange = fileItem.slice(rangeBeg, rangeSize);
-				updatingRange.position(countBytesDone);
-				dstChannel.position(rangeBeg + countBytesDone);
-				countBytesDone += updatingRange.writeToFileChannel(dstChannel, rangeSize - countBytesDone);
-				if(countBytesDone == rangeSize) {
+				final long updatingRangeSize = updatingRange.size();
+				if(Loggers.MSG.isTraceEnabled()) {
+					Loggers.MSG.trace(
+						"{}: set the file position = {} + {}", fileItem.name(), rangeOffset(currRangeIdx),
+						countBytesDone
+					);
+				}
+				dstChannel.position(rangeOffset(currRangeIdx) + countBytesDone);
+				countBytesDone += updatingRange.writeToFileChannel(dstChannel, updatingRangeSize - countBytesDone);
+				if(Loggers.MSG.isTraceEnabled()) {
+					Loggers.MSG.trace("{}: {} bytes written totally", fileItem.name(), countBytesDone);
+				}
+				if(countBytesDone == updatingRangeSize) {
 					op.currRangeIdx(currRangeIdx + 1);
 					op.countBytesDone(0);
 				} else {
 					op.countBytesDone(countBytesDone);
 				}
+			} else {
+				fileItem.commitUpdatedRanges(op.markedRangesMaskPair());
+				return true;
 			}
-		}
-		if(updatingRangesSize <= 0 || updatingRangesSize <= countBytesDone) {
-			op.countBytesDone(updatingRangesSize);
-			return true;
 		} else {
-			return false;
+			fileItem.commitUpdatedRanges(op.markedRangesMaskPair());
+			return true;
 		}
+		return false;
+		//return updatingRangesSize <= 0 || updatingRangesSize <= countBytesDone;
+	}
+
+	static <I extends DataItem, O extends DataOperation<I>> boolean invokeFixedRangesUpdate(
+		final I fileItem, final O op, final FileChannel dstChannel, final List<Range> byteRanges
+	) throws IOException {
+
+		long countBytesDone = op.countBytesDone();
+		final long baseItemSize = fileItem.size();
+		final long updatingRangesSize = op.markedRangesSize();
+
+		if(updatingRangesSize > 0) {
+			if(updatingRangesSize > countBytesDone) {
+				Range byteRange;
+				DataItem updatingRange;
+				int currRangeIdx = op.currRangeIdx();
+				long rangeBeg;
+				long rangeEnd;
+				long rangeSize;
+				if(currRangeIdx < byteRanges.size()) {
+					byteRange = byteRanges.get(currRangeIdx);
+					rangeBeg = byteRange.getBeg();
+					rangeEnd = byteRange.getEnd();
+					rangeSize = byteRange.getSize();
+					if(rangeSize == -1) {
+						if(rangeBeg == -1) {
+							// last "rangeEnd" bytes
+							rangeBeg = baseItemSize - rangeEnd;
+							rangeSize = rangeEnd;
+						} else if(rangeEnd == -1) {
+							// start @ offset equal to "rangeBeg"
+							rangeSize = baseItemSize - rangeBeg;
+						} else {
+							rangeSize = rangeEnd - rangeBeg + 1;
+						}
+					} else {
+						// append
+						rangeBeg = baseItemSize;
+						// note down the new size
+						fileItem.size(baseItemSize + updatingRangesSize);
+					}
+					updatingRange = fileItem.slice(rangeBeg, rangeSize);
+					updatingRange.position(countBytesDone);
+					dstChannel.position(rangeBeg + countBytesDone);
+					countBytesDone += updatingRange.writeToFileChannel(dstChannel, rangeSize - countBytesDone);
+					if(countBytesDone == rangeSize) {
+						op.currRangeIdx(currRangeIdx + 1);
+						op.countBytesDone(0);
+					} else {
+						op.countBytesDone(countBytesDone);
+					}
+				} else {
+					op.countBytesDone(updatingRangesSize);
+					return true;
+				}
+			} else {
+				return true;
+			}
+		} else {
+			return true;
+		}
+
+		return false;
 	}
 
 	static <I extends DataItem, O extends DataOperation<I>> boolean invokeOverwrite(
 		final I fileItem, final O op, final FileChannel dstChannel
-																				   )
-	throws IOException {
+	) throws IOException {
 		long countBytesDone = op.countBytesDone();
 		if(countBytesDone == 0) {
 			dstChannel.position(countBytesDone);

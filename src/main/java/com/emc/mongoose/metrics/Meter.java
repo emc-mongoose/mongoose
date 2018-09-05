@@ -1,6 +1,7 @@
 package com.emc.mongoose.metrics;
 
 import com.emc.mongoose.logging.LogUtil;
+import com.github.akurilov.commons.system.SizeInBytes;
 import org.apache.logging.log4j.Level;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -27,23 +28,31 @@ public final class Meter
 		props.put(KEY_OP_TYPE, metricsCtx.opType().name());
 		if(metricsCtx instanceof DistributedMetricsContext) {
 			props.put(
-				KEY_NODE_COUNT, Integer.toString(((DistributedMetricsSnapshot) metricsCtx.lastSnapshot()).nodeCount()));
+				KEY_NODE_COUNT, Integer.toString(((DistributedMetricsSnapshot) metricsCtx.lastSnapshot()).nodeCount())
+			);
 		} else {
 			props.put(KEY_NODE_COUNT, "1");
 		}
 		props.put(KEY_CONCURRENCY_LIMIT, Integer.toString(metricsCtx.concurrencyLimit()));
-		props.put(KEY_ITEM_DATA_SIZE, metricsCtx.itemDataSize().toString());
+		final String itemDataSizeStr;
+		final SizeInBytes itemDataSize = metricsCtx.itemDataSize();
+		if(itemDataSize.getMin() == itemDataSize.getMax()) {
+			itemDataSizeStr = itemDataSize.toString();
+		} else {
+			itemDataSizeStr = SizeInBytes.formatFixedSize(itemDataSize.getMin()) + '-'
+				+ SizeInBytes.formatFixedSize(itemDataSize.getMax());
+		}
+		props.put(KEY_ITEM_DATA_SIZE, itemDataSizeStr);
 		objectName = new ObjectName(METRICS_DOMAIN, props);
 		metricsCtx.metricsListener(this);
 		if((metricsCtx instanceof DistributedMetricsContext)) {
 			try {
 				MBEAN_SERVER.registerMBean(this, objectName);
 			} catch(final InstanceAlreadyExistsException e) {
-				LogUtil.exception(Level.WARN, e,
-								  "Failed to expose the metrics context \"{}\" with name \"{}\" for JMX service",
-								  metricsCtx,
-								  objectName
-								 );
+				LogUtil.exception(
+					Level.WARN, e, "Failed to expose the metrics context \"{}\" with name \"{}\" for JMX service",
+					metricsCtx, objectName
+				);
 			}
 		}
 	}
