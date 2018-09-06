@@ -1,6 +1,5 @@
 package com.emc.mongoose.supply.async;
 
-import com.emc.mongoose.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.supply.BatchSupplier;
 import com.emc.mongoose.supply.RangeDefinedSupplier;
 
@@ -28,7 +27,7 @@ implements Initializable, RangeDefinedSupplier<T> {
 
 	protected AsyncRangeDefinedSupplierBase(
 		final FibersExecutor executor, final long seed, final T minValue, final T maxValue
-	) throws OmgDoesNotPerformException {
+	) throws NullPointerException {
 		this.rnd = new Random(seed);
 		this.minValue = minValue;
 		this.range = computeRange(minValue, maxValue);

@@ -1,6 +1,5 @@
 package com.emc.mongoose.supply.async;
 
-import com.emc.mongoose.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.supply.ValueUpdatingSupplier;
 
 import com.github.akurilov.commons.concurrent.InitCallable;
@@ -27,7 +26,7 @@ extends ValueUpdatingSupplier<T> {
 	
 	public AsyncValueUpdatingSupplier(
 		final FibersExecutor executor, final T initialValue, final InitCallable<T> updateAction
-	) throws OmgDoesNotPerformException {
+	) throws NullPointerException {
 
 		super(initialValue, null);
 		if(updateAction == null) {

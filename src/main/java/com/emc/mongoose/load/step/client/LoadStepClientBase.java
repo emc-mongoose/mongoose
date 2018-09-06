@@ -397,7 +397,7 @@ implements LoadStepClient {
 						protected final void invokeTimedExclusively(final long startTimeNanos) {
 							Loggers.MSG.trace("{}: await for the step slice \"{}\" started", id(), stepSlice);
 							try {
-								if(stepSlice.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+								if(stepSlice.await(1, TimeUnit.NANOSECONDS)) {
 									awaitCountDown.countDown();
 									stop();
 								}

@@ -108,14 +108,14 @@ extends LoadStepBase {
 					@Override
 					protected final void invokeTimedExclusively(final long startTimeNanos) {
 						try {
-							if(stepCtx.isDone() || stepCtx.await(TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+							if(stepCtx.isDone()) {
 								awaitCountDown.countDown();
 								stop();
 							}
-						} catch(final InterruptedException e) {
-							throw new InterruptRunException(e);
 						} catch(final Exception e) {
-							LogUtil.exception(Level.DEBUG, e, "Await call failure on the step context \"{}\"", stepCtx);
+							LogUtil.exception(
+								Level.DEBUG, e, "Check for the done state failure on the step context \"{}\"", stepCtx
+							);
 						}
 					}
 				}
