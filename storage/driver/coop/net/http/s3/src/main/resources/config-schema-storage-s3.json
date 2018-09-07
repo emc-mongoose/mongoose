@@ -1,0 +1,10 @@
+{
+	"storage": {
+		"net": {
+			"http": {
+				"fsAccess": "boolean",
+				"versioning": "boolean"
+			}
+		}
+	}
+}

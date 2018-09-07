@@ -86,11 +86,17 @@ extends HttpStorageDriverBase<I, O> {
 		}
 	};
 
+	protected final boolean fsAccess;
+	protected final boolean versioning;
+
 	public AmzS3StorageDriver(
 		final String stepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag,
 		final int batchSize
 	) throws OmgShootMyFootException, InterruptedException {
 		super(stepId, itemDataInput, storageConfig, verifyFlag, batchSize);
+		final Config httpConfig = storageConfig.configVal("net-http");
+		fsAccess = httpConfig.boolVal("fsAccess");
+		versioning = httpConfig.boolVal("versioning");
 		requestAuthTokenFunc = null; // do not use
 	}
 
@@ -194,44 +200,14 @@ extends HttpStorageDriverBase<I, O> {
 			versioningEnabled = content.contains("Enabled");
 		}
 		getBucketVersioningResp.release();
-		final FullHttpRequest putBucketVersioningReq;
-		if(! versioning && versioningEnabled) {
-			// disable bucket versioning
-			reqHeaders = new DefaultHttpHeaders();
-			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-			reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
-			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, AmzS3Api.VERSIONING_DISABLE_CONTENT.length);
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
-			putBucketVersioningReq = new DefaultFullHttpRequest(
-				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
-				Unpooled.wrappedBuffer(AmzS3Api.VERSIONING_DISABLE_CONTENT).retain(), reqHeaders,
-				EmptyHttpHeaders.INSTANCE
-			);
-			final FullHttpResponse putBucketVersioningResp;
-			try {
-				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
-			} catch(final InterruptedException e) {
-				throw new InterruptRunException(e);
-			} catch(final ConnectException e) {
-				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
-				return null;
-			}
-			if(! HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
-				Loggers.ERR.warn(
-					"The bucket versioning setting response is: {}", putBucketVersioningResp.status().toString()
-				);
-				putBucketVersioningResp.release();
-				return null;
-			}
-			putBucketVersioningResp.release();
-		} else if(versioning && ! versioningEnabled) {
+		if(versioning && !versioningEnabled) {
 			// enable bucket versioning
 			reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 			reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, AmzS3Api.VERSIONING_ENABLE_CONTENT.length);
 			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
-			putBucketVersioningReq = new DefaultFullHttpRequest(
+			final FullHttpRequest putBucketVersioningReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
 				Unpooled.wrappedBuffer(AmzS3Api.VERSIONING_ENABLE_CONTENT).retain(), reqHeaders,
 				EmptyHttpHeaders.INSTANCE
@@ -245,7 +221,7 @@ extends HttpStorageDriverBase<I, O> {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
 			}
-			if(! HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
+			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
 				Loggers.ERR.warn(
 					"The bucket versioning setting response is: {}", putBucketVersioningResp.status().toString()
 				);

@@ -83,9 +83,6 @@ implements HttpStorageDriver<I, O> {
 	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
 	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
 	protected final AsyncCurrentDateSupplier dateSupplier = new AsyncCurrentDateSupplier(ServiceTaskExecutor.INSTANCE);
-	protected final String namespace;
-	protected final boolean fsAccess;
-	protected final boolean versioning;
 	protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
 	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
 
@@ -93,11 +90,11 @@ implements HttpStorageDriver<I, O> {
 		final String testStepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag,
 		final int batchSize
 	) throws OmgShootMyFootException, InterruptedException {
+
 		super(testStepId, itemDataInput, storageConfig, verifyFlag, batchSize);
+
 		final Config httpConfig = storageConfig.configVal("net-http");
-		namespace = httpConfig.stringVal("namespace");
-		fsAccess = httpConfig.boolVal("fsAccess");
-		versioning = httpConfig.boolVal("versioning");
+
 		final Map<String, String> headersMap = httpConfig.mapVal("headers");
 		String headerValue;
 		for(final String headerName : headersMap.keySet()) {
@@ -108,6 +105,8 @@ implements HttpStorageDriver<I, O> {
 				sharedHeaders.add(headerName, headerValue);
 			}
 		}
+
+		final Map<String, String> uriArgs = httpConfig.mapVal("uri-args");
 	}
 
 	protected FullHttpResponse executeHttpRequest(final FullHttpRequest request)

@@ -71,6 +71,9 @@ extends HttpStorageDriverBase<I, O> {
 	private static final ThreadLocal<StringBuilder>
 		CONTAINER_LIST_QUERY = ThreadLocal.withInitial(StringBuilder::new);
 
+	protected final String namespace;
+	protected final boolean versioning;
+
 	private final String namespacePath;
 
 	public SwiftStorageDriver(
@@ -78,6 +81,9 @@ extends HttpStorageDriverBase<I, O> {
 		final int batchSize
 	) throws OmgShootMyFootException, InterruptedException {
 		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
+		final Config httpConfig = storageConfig.configVal("net-http");
+		namespace = httpConfig.stringVal("namespace");
+		versioning = httpConfig.boolVal("versioning");
 		if(namespace == null) {
 			throw new IllegalArgumentNameException("Namespace is not set");
 		}
@@ -134,10 +140,7 @@ extends HttpStorageDriverBase<I, O> {
 		checkContainerResp.release();
 
 		// create or update the destination container if it doesn't exists
-		if(
-			!containerExists || (versioningEnabled && !versioning) ||
-			(!versioningEnabled && versioning)
-		) {
+		if(!containerExists || (!versioningEnabled && versioning)) {
 			reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
