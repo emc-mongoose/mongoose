@@ -16,6 +16,7 @@ import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.net.http.HttpStorageDriverBase;
 import static com.emc.mongoose.item.op.OpType.CREATE;
+import static com.emc.mongoose.item.op.OpType.LIST;
 import static com.emc.mongoose.item.op.Operation.SLASH;
 import static com.emc.mongoose.storage.driver.coop.net.http.swift.SwiftApi.AUTH_URI;
 import static com.emc.mongoose.storage.driver.coop.net.http.swift.SwiftApi.DEFAULT_VERSIONS_LOCATION;
@@ -360,7 +361,6 @@ extends HttpStorageDriverBase<I, O> {
 	@Override
 	protected final HttpRequest httpRequest(final O op, final String nodeAddr)
 	throws URISyntaxException {
-		
 		final HttpRequest httpRequest;
 		final OpType opType = op.type();
 		if(op instanceof CompositeDataOperation) {

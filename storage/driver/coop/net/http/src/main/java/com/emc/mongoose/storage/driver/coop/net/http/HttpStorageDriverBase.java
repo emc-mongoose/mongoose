@@ -2,7 +2,6 @@ package com.emc.mongoose.storage.driver.coop.net.http;
 
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.data.DataInput;
-import com.emc.mongoose.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.DataItem;
 import com.emc.mongoose.item.Item;
@@ -16,6 +15,7 @@ import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.net.NetStorageDriverBase;
 import com.emc.mongoose.supply.BatchSupplier;
+import com.emc.mongoose.supply.ConstantStringSupplier;
 import com.emc.mongoose.supply.async.AsyncPatternDefinedSupplier;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
@@ -61,6 +61,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  Created by kurila on 29.07.16.
@@ -85,6 +86,7 @@ implements HttpStorageDriver<I, O> {
 	protected final AsyncCurrentDateSupplier dateSupplier = new AsyncCurrentDateSupplier(ServiceTaskExecutor.INSTANCE);
 	protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
 	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
+	private final BatchSupplier<String> uriQueryInput;
 
 	protected HttpStorageDriverBase(
 		final String testStepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag,
@@ -107,6 +109,16 @@ implements HttpStorageDriver<I, O> {
 		}
 
 		final Map<String, String> uriArgs = httpConfig.mapVal("uri-args");
+		final String uriQueryPattern = uriArgs
+			.entrySet()
+			.stream()
+			.map(entry -> entry.getKey() + '=' + entry.getValue())
+			.collect(Collectors.joining("&"));
+		if(uriQueryPattern.length() > 0) {
+			uriQueryInput = new ConstantStringSupplier("");
+		} else {
+			uriQueryInput = ASYNC_PATTERN_SUPPLIER_FUNC.apply("?" + uriQueryPattern);
+		}
 	}
 
 	protected FullHttpResponse executeHttpRequest(final FullHttpRequest request)
@@ -304,7 +316,7 @@ implements HttpStorageDriver<I, O> {
 
 	protected static void rangeListToStringBuff(
 		final List<Range> ranges, final long baseLength, final StringBuilder dstBuff
-											   ) {
+	) {
 		Range nextFixedRange;
 		long nextRangeSize;
 		for(int i = 0; i < ranges.size(); i++) {
@@ -358,12 +370,15 @@ implements HttpStorageDriver<I, O> {
 		}
 	}
 
+	protected String uriQuery() {
+		return uriQueryInput.get();
+	}
+
 	protected abstract void applyMetaDataHeaders(final HttpHeaders httpHeaders);
 
 	protected abstract void applyAuthHeaders(
-		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
-		final Credential credential
-											);
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath, final Credential credential
+	);
 
 	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 	throws URISyntaxException;
