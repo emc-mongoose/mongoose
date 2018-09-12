@@ -59,6 +59,15 @@ ext {
 
 apply plugin: "se.eugenekainara.docker"
 
+
+
+task dockerImage(type: Docker) {
+		applicationName = 'test app name'
+		tagVersion = '3.6.2'
+}
+
+
+
 allprojects {
 
 	buildscript {
@@ -121,10 +130,7 @@ allprojects {
 		}
 	}
 
-	task dockerImage(type: Docker) {
-		applicationName = 'test app name'
-		tagVersion = '3.6.2'
-	}
+	
 
 	task integrationTest(type: Test) {
 
