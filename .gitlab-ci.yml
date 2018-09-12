@@ -1,4 +1,4 @@
-image: "hub.docker.com/r/jamesdbloom/docker-java8-maven:latest"
+image: "https://hub.docker.com/r/jamesdbloom/docker-java8-maven:latest"
 
 stages:
   - docker_images
