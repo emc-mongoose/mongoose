@@ -53,12 +53,16 @@ allprojects {
 
 	repositories {
 		mavenCentral()
+		maven {
+			url "https://repository-cdn.liferay.com/nexus/content/groups/public"
+		}
 	}
 
 	apply plugin: "java"
 	apply plugin: "maven"
 	apply plugin: "scala"
 	apply plugin: "signing"
+	apply plugin: "com.liferay.app.docker"
 
 	group = "com.github.emc-mongoose"
 	version = defineVersion()
@@ -137,6 +141,11 @@ allprojects {
 			showExceptions = true
 			showStandardStreams = true
 		}
+	}
+
+	task buildDockerImage(type: DockerBuildImage) {
+		imageUser 'azat2012'
+		
 	}
 
 	// travis deploy stage runs "./gradlew check" again which is unnecessary
