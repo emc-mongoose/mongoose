@@ -18,7 +18,7 @@ variables:
 
 docker_images:
   stage: docker_images
-  script: "./gradlew buildDockerImage"
+  script: "./gradlew dockerImage"
 
 unit_tests:
   stage: unit_tests

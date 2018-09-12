@@ -47,14 +47,15 @@ allprojects {
 
 	buildscript {
 		repositories {
-			maven {
-			url "https://repository-cdn.liferay.com/nexus/content/groups/public"
-			}
 			mavenCentral()
+			maven {
+     		 url "https://plugins.gradle.org/m2/"
+    		}
 			
 		}
+
 		dependencies {
-    		classpath "gradle.plugin.com.liferay:gradle-plugins-app-docker:1.0.5"
+   			 classpath "gradle.plugin.se.eugenekainara.docker:gradle-docker:1.3.1"
   		}
 	}
 
@@ -63,16 +64,12 @@ allprojects {
 		
 	}
 
-	plugins {
-		id "com.liferay.app.docker" version "1.0.5"
-	}
-
 	apply plugin: "java"
 	apply plugin: "maven"
 	apply plugin: "scala"
 	apply plugin: "signing"
-	apply plugin: "com.liferay.app.docker"
-
+	apply plugin: "se.eugenekainara.docker"
+	
 	group = "com.github.emc-mongoose"
 	version = defineVersion()
 
@@ -116,6 +113,11 @@ allprojects {
 		}
 	}
 
+	task dockerImage(type: Docker) {
+		applicationName = 'test app name'
+		tagVersion = '3.6.2'
+	}
+
 	task integrationTest(type: Test) {
 
 		include "com/emc/mongoose/integration/*"
@@ -150,11 +152,6 @@ allprojects {
 			showExceptions = true
 			showStandardStreams = true
 		}
-	}
-
-	task buildDockerImage(type: DockerBuildImage) {
-		imageUser 'azat2012'
-		
 	}
 
 	// travis deploy stage runs "./gradlew check" again which is unnecessary
