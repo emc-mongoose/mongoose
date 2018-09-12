@@ -16,7 +16,7 @@ variables:
   GIT_STRATEGY: fetch
 
 docker_images:
-  image: docker:stable
+  image: docker:stable, java:8
   stage: docker_images
   script: "./gradlew dockerImage"
 
