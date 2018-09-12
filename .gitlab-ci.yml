@@ -1,4 +1,4 @@
-image: docker:stable
+image: "https://hub.docker.com/r/jamesdbloom/docker-java8-maven"
 
 stages:
   - docker_images
@@ -16,7 +16,6 @@ variables:
   GIT_STRATEGY: fetch
 
 docker_images:
-  image: java:8
   stage: docker_images
   script: "./gradlew dockerImage"
 
