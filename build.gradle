@@ -47,10 +47,11 @@ allprojects {
 
 	buildscript {
 		repositories {
-			mavenCentral()
 			maven {
 			url "https://repository-cdn.liferay.com/nexus/content/groups/public"
 			}
+			mavenCentral()
+			
 		}
 		dependencies {
     		classpath "gradle.plugin.com.liferay:gradle-plugins-app-docker:1.0.5"
