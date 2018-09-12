@@ -43,8 +43,6 @@ ext {
 	)
 }
 
-allprojects {
-
 	buildscript {
 		repositories {
 			mavenCentral()
@@ -59,18 +57,26 @@ allprojects {
   		}
 	}
 
+apply plugin: "se.eugenekainara.docker"
+
+allprojects {
+
+	buildscript {
+		repositories {
+			mavenCentral()	
+		}
+
+	}
+
 	repositories {
 		mavenCentral()
-		maven {
-     		 url "https://plugins.gradle.org/m2/"
-    		}
 	}
 
 	apply plugin: "java"
 	apply plugin: "maven"
 	apply plugin: "scala"
 	apply plugin: "signing"
-	apply plugin: "se.eugenekainara.docker"
+	
 	
 	group = "com.github.emc-mongoose"
 	version = defineVersion()
