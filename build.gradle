@@ -58,7 +58,8 @@ ext {
 	}
 
 apply plugin: "se.eugenekainara.docker"
-
+apply plugin: "docker"
+apply plugin: "application"
 
 
 task dockerImage(type: Docker) {
@@ -85,8 +86,7 @@ allprojects {
 	apply plugin: "maven"
 	apply plugin: "scala"
 	apply plugin: "signing"
-	apply plugin: "docker"
-	apply plugin: "application"
+
 	
 	group = "com.github.emc-mongoose"
 	version = defineVersion()
