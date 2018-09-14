@@ -1,4 +1,4 @@
-image: registry.hub.docker.com/u/jamesdbloom/docker-java8-maven:latest 
+image: jamesdbloom/docker-java8-maven:latest 
 
 stages:
   - docker_images
