@@ -44,11 +44,6 @@ ext {
 }
 
 
-
-
-
-allprojects {
-
 	buildscript {
 		repositories {
 			mavenCentral()	
@@ -56,8 +51,23 @@ allprojects {
 		}
 		dependencies {
     		classpath "gradle.plugin.cz.augi:gradle-docker-java:1.6.4"
-			classpath 'cz.augi:gradle-docker-java:1.6.4'
   		}
+
+	}
+
+	apply plugin: "cz.augi.docker-java"
+	
+	task dockerImage(type: Docker) {
+			applicationName = 'test app name'
+			tagVersion = '3.6.2'
+	}
+
+allprojects {
+
+	buildscript {
+		repositories {
+			mavenCentral()	
+		}
 
 	}
 
@@ -71,12 +81,9 @@ allprojects {
 	apply plugin: "scala"
 	apply plugin: "signing"
 	
-	apply plugin: "cz.augi.docker-java"
+	
 
-	task dockerImage(type: Docker) {
-			applicationName = 'test app name'
-			tagVersion = '3.6.2'
-	}
+
 	group = "com.github.emc-mongoose"
 	version = defineVersion()
 
