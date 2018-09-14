@@ -70,9 +70,6 @@ allprojects {
 	apply plugin: "maven"
 	apply plugin: "scala"
 	apply plugin: "signing"
-
-	apply plugin: "docker"
-	apply plugin: "application"
 	
 	apply plugin: "cz.augi.docker-java"
 
