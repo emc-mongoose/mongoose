@@ -53,6 +53,9 @@ allprojects {
 		repositories {
 			mavenCentral()	
 		}
+		dependencies {
+    		classpath "gradle.plugin.cz.augi:gradle-docker-java:1.6.4"
+  		}
 
 	}
 
@@ -60,19 +63,16 @@ allprojects {
 		mavenCentral()
 	}
 
+	
 	apply plugin: "java"
 	apply plugin: "maven"
 	apply plugin: "scala"
 	apply plugin: "signing"
 
-	plugins {
-		id 'cz.augi.docker-java' version 'putCurrentVersionHere'
-	}
-
-
 	apply plugin: "docker"
 	apply plugin: "application"
-
+	
+	apply plugin: "cz.augi.docker-java"
 
 	task dockerImage(type: Docker) {
 			applicationName = 'test app name'
