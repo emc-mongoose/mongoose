@@ -1,6 +1,5 @@
 package com.emc.mongoose.supply.async;
 
-import com.emc.mongoose.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.supply.PatternDefinedSupplier;
 import com.emc.mongoose.supply.RangePatternDefinedSupplier;
@@ -24,7 +23,7 @@ implements PatternDefinedSupplier {
 	}
 	
 	private AsyncPatternDefinedSupplier(final FibersExecutor executor, final PatternDefinedSupplier wrappedSupplier)
-	throws OmgDoesNotPerformException {
+	throws NullPointerException {
 		super(
 			executor,
 			null,

@@ -99,6 +99,7 @@ extends AtmosStorageDriver {
 			config.val("storage-net-http-fsAccess", true);
 			config.val("storage-net-http-versioning", true);
 			config.val("storage-net-http-headers", Collections.EMPTY_MAP);
+			config.val("storage-net-http-uri-args", Collections.EMPTY_MAP);
 			config.val("storage-auth-uid", CREDENTIAL.getUid());
 			config.val("storage-auth-token", AUTH_TOKEN);
 			config.val("storage-auth-secret", CREDENTIAL.getSecret());

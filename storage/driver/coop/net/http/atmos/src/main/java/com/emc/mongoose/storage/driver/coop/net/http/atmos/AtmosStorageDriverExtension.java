@@ -6,10 +6,13 @@ import com.emc.mongoose.exception.OmgShootMyFootException;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.storage.driver.StorageDriverFactory;
+import static com.emc.mongoose.Constants.APP_NAME;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
+import com.github.akurilov.confuse.io.json.JsonSchemaProviderBase;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -21,8 +24,10 @@ extends ExtensionBase
 implements StorageDriverFactory<I, O, T> {
 
 	private static final String NAME = "atmos";
+	private static final String DEFAULTS_FILE_NAME = "defaults-storage-atmos.json";
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
 		Arrays.asList(
+			"config/" + DEFAULTS_FILE_NAME
 		)
 	);
 
@@ -41,12 +46,22 @@ implements StorageDriverFactory<I, O, T> {
 
 	@Override
 	public final SchemaProvider schemaProvider() {
-		return null;
+		return new JsonSchemaProviderBase() {
+			@Override
+			protected final InputStream schemaInputStream() {
+				return getClass().getResourceAsStream("/config-schema-storage-atmos.json");
+			}
+
+			@Override
+			public final String id() {
+				return APP_NAME;
+			}
+		};
 	}
 
 	@Override
 	protected final String defaultsFileName() {
-		return null;
+		return DEFAULTS_FILE_NAME;
 	}
 
 	@Override

@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.net.http;
 
 import com.emc.mongoose.env.DateUtil;
-import com.emc.mongoose.exception.OmgDoesNotPerformException;
 import com.emc.mongoose.supply.async.AsyncValueUpdatingSupplier;
 
 import com.github.akurilov.fiber4j.FibersExecutor;
@@ -15,7 +14,7 @@ public final class AsyncCurrentDateSupplier
 extends AsyncValueUpdatingSupplier<String> {
 
 	public AsyncCurrentDateSupplier(final FibersExecutor executor)
-	throws OmgDoesNotPerformException {
+	throws NullPointerException {
 		super(
 			executor, DateUtil.FMT_DATE_RFC1123.format(new Date(System.currentTimeMillis())),
 			new CurrentDateInitCallable()

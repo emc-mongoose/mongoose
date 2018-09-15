@@ -4,7 +4,10 @@
 1.1. [Quick Reference Table](#11-quick-reference-table)<br/>
 1.1.1. [Base](#111-base)<br/>
 1.1.2. [Network Storages](#112-network-storages)<br/>
-1.1.3. [HTTP Network Storages](#113-http-network-storages)<br/>
+1.1.2.1. [HTTP Network Storages](#1121-http-network-storages)<br/>
+1.1.2.1.1. [Atmos Storage](#11211-atmos-storage)<br/>
+1.1.2.1.2. [S3 Storage](#11211-s3-storage)<br/>
+1.1.2.1.3. [Swift Storage](#11213-swift-storage)<br/>
 1.1.4. [Pipeline Load Step](#114-pipeline-load-step)<br/>
 1.1.5. [Weighted Load Step](#115-weighted-load-step)<br/>
 1.2. [Specific Types](#12-specific-types)<br/>
@@ -140,8 +143,27 @@ is mentioned as the corresponding JSON node:
 
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
-| storage-net-http-fsAccess                      | Flag | false | Specifies whether filesystem access is enabled or not in the case of S3 or Atmos API
-| storage-net-http-headers                       | Map | { "Connection" : "keep-alive", "User-Agent" : "mongoose/4.0.0" } | Custom HTTP headers section. An user may place here a key-value pair which will be used as HTTP header.
+| storage-net-uri-args                           | Map          | {}               | Custom URI query arguments according [RFC 2396](http://www.ietf.org/rfc/rfc2396.txt).The headers will be appended to every HTTP request issued.
+| storage-net-http-headers                       | Map | { "Connection" : "keep-alive", "User-Agent" : "mongoose/4.0.0" } | Custom HTTP headers section. An user may place here a key-value pair which will be used as HTTP header. The headers will be appended to every HTTP request issued.
+
+##### 1.1.2.1.1. Atmos Storage
+
+| Name                                           | Type         | Default Value    | Description                                      |
+|:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
+| storage-net-http-fsAccess                      | Flag | false | Specifies whether filesystem access is enabled or not
+| storage-net-http-namespace                     | String | null | The HTTP storage namespace.
+
+##### 1.1.2.1.2. S3 Storage
+
+| Name                                           | Type         | Default Value    | Description                                      |
+|:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
+| storage-net-http-fsAccess                      | Flag | false | Specifies whether filesystem access is enabled or not
+| storage-net-http-versioning                    | Flag | false | Specifies whether the versioning storage feature is used or not
+
+##### 1.1.2.1.3. Swift Storage
+
+| Name                                           | Type         | Default Value    | Description                                      |
+|:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
 | storage-net-http-namespace                     | String | null | The HTTP storage namespace. WARNING: the default value (null) will not work in the case of Swift API
 | storage-net-http-versioning                    | Flag | false | Specifies whether the versioning storage feature is used or not
 
