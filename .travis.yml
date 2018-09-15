@@ -137,7 +137,7 @@ jobs:
       - STORAGE_TYPE=fs,s3
       - RUN_MODE=local,distributed
       - CONCURRENCY=low,medium
-      - ITEM_SIZE=small,medium
+      - ITEM_SIZE=small
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.MultipleRandomUpdateAndMultipleFixedReadTest
