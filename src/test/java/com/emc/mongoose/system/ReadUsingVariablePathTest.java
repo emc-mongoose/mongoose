@@ -61,7 +61,7 @@ import static org.junit.Assert.assertTrue;
 
 	private static final String SCENARIO_PATH = systemTestContainerScenarioPath(ReadUsingVariablePathTest.class);
 	private static final String ITEM_LIST_FILE = CONTAINER_SHARE_PATH + "/"
-		+ snakeCaseName(ReadUsingVariablePathTest.class);
+		+ snakeCaseName(ReadUsingVariablePathTest.class) + ".csv";
 	private static final int EXPECTED_COUNT = 10_000;
 	private static final int TIMEOUT_MILLIS = 1_000_000;
 	private static final String CONTAINER_ITEM_OUTPUT_PATH = MongooseContainer.getContainerItemOutputPath(
