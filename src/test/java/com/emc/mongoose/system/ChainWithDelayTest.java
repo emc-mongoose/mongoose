@@ -161,7 +161,7 @@ import static org.junit.Assert.fail;
 		);
 		stdOutContent = testContainer.stdOutContent();
 		duration = System.currentTimeMillis() - duration;
-		finishedInTime = (TimeUnit.MILLISECONDS.toSeconds(duration) <= TIME_LIMIT + 15);
+		finishedInTime = (TimeUnit.MILLISECONDS.toSeconds(duration) <= TIME_LIMIT + 100);
 		containerExitCode = testContainer.exitStatusCode();
 	}
 

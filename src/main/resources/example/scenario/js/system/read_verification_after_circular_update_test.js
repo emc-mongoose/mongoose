@@ -6,13 +6,14 @@ var cmd_1 = new java.lang.ProcessBuilder()
     .start();
 cmd_1.waitFor();
 
-var step_1 = PreconditionLoad
+PreconditionLoad
     .config({
       "load" : {
         "step" : {
           "limit" : {
             "count" : 1000
-          }
+          },
+          "id": STEP_ID_CREATE
         }
       },
       "item" : {
@@ -27,15 +28,14 @@ PreconditionLoad
     .config({
       "load" : {
         "op" : {
-          "recycle" : {
-            "enabled" : true
-          },
+          "recycle" : true,
           "type" : "update"
         },
         "step" : {
           "limit" : {
-            "time" : "1m"
-          }
+            "count": 10000
+          },
+			"id": STEP_ID_UPDATE
         }
       },
       "item" : {
@@ -65,6 +65,9 @@ ReadLoad
       "load" : {
         "op" : {
           "type" : "read"
+        },
+        "step" : {
+			"id": STEP_ID_READ
         }
       },
       "item" : {

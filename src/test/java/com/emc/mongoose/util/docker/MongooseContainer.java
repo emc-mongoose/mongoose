@@ -41,7 +41,8 @@ extends ContainerBase {
 	public static final String CONTAINER_HOME_PATH = Paths.get("/root", "." + APP_NAME, APP_VERSION).toString();
 	private static final String IMAGE_NAME = "emcmongoose/mongoose";
 	private static final String ENTRYPOINT = "/opt/mongoose/entrypoint.sh";
-	private static final String ENTRYPOINT_DEBUG = "/opt/mongoose/entrypoint-debug.sh";
+	private static final String ENTRYPOINT_DEBUG = "/opt/mongoose/entrypoint_debug.sh";
+	private static final String ENTRYPOINT_LIMIT_HEAP_1GB = "/opt/mongoose/entrypoint_limit_heap_1GB.sh";
 	private static final int PORT_DEBUG = 5005;
 	private static final int PORT_JMX = 9010;
 	public static final String CONTAINER_SHARE_PATH = CONTAINER_HOME_PATH + "/share";
@@ -149,6 +150,6 @@ extends ContainerBase {
 
 	@Override
 	protected final String entrypoint() {
-		return ENTRYPOINT;
+		return ENTRYPOINT_LIMIT_HEAP_1GB;
 	}
 }
