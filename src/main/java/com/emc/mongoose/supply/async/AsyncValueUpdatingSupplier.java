@@ -46,8 +46,7 @@ extends ValueUpdatingSupplier<T> {
 			}
 
 			@Override
-			protected final void doClose()
-			throws IOException {
+			protected final void doClose() {
 				lastValue = null;
 			}
 		};

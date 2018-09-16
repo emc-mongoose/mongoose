@@ -10,7 +10,7 @@ import com.emc.mongoose.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.util.OpenFilesCounter;
 import com.emc.mongoose.util.PortTools;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
 import static com.emc.mongoose.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
@@ -45,12 +45,13 @@ import java.util.stream.Collectors;
 
 
 	private final String SCENARIO_PATH = null; //default
-	private final String CONTAINER_ITEM_OUTPUT_PATH =
-		MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
-	private final int TIMEOUT_IN_MILLIS = 60_000;
+	private final String containerItemOutputPath = MongooseEntryNodeContainer.getContainerItemOutputPath(
+		getClass().getSimpleName()
+	);
+	private static final int TIMEOUT_IN_MILLIS = 60_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
-	private final MongooseContainer testContainer;
+	private final MongooseEntryNodeContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
 	private final RunMode runMode;
@@ -58,11 +59,10 @@ import java.util.stream.Collectors;
 
 	public UnlimitedCreateTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
+	) throws Exception {
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
 		this.storageType = storageType;
@@ -88,9 +88,9 @@ import java.util.stream.Collectors;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
+				args.add("--item-output-path=" + containerItemOutputPath);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
+					DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -108,7 +108,7 @@ import java.util.stream.Collectors;
 				break;
 		}
 		//use default scenario
-		testContainer = new MongooseContainer(
+		testContainer = new MongooseEntryNodeContainer(
 			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
 		);
 	}
@@ -156,7 +156,7 @@ import java.util.stream.Collectors;
 		if(storageType.equals(StorageType.FS)) {
 			//because of the following line the test is valid only in 'run_mode = local'
 			final int actualConcurrency = OpenFilesCounter.getOpenFilesCount(
-				MongooseContainer.getHostItemOutputPath(stepId)
+				MongooseEntryNodeContainer.getHostItemOutputPath(stepId)
 			);
 			assertTrue(
 				"Expected concurrency <= " + actualConcurrency + ", actual: " + actualConcurrency,

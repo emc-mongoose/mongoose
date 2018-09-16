@@ -35,7 +35,7 @@ import static com.emc.mongoose.item.op.Operation.Status.INTERRUPTED;
 import static com.emc.mongoose.item.op.Operation.Status.SUCC;
 import static com.emc.mongoose.logging.MetricsAsciiTableLogMessage.TABLE_HEADER;
 import static com.emc.mongoose.logging.MetricsAsciiTableLogMessage.TABLE_HEADER_PERIOD;
-import static com.emc.mongoose.util.docker.MongooseContainer.APP_HOME_DIR;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.APP_HOME_DIR;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;

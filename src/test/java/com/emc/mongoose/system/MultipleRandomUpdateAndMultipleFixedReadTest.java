@@ -11,7 +11,7 @@ import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
-import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -48,9 +48,9 @@ import static com.emc.mongoose.util.LogValidationUtil.testOpTraceLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.testOpTraceRecord;
 import static com.emc.mongoose.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.util.docker.MongooseContainer.systemTestContainerScenarioPath;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.systemTestContainerScenarioPath;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class) public class MultipleRandomUpdateAndMultipleFixedReadTest {
@@ -65,13 +65,13 @@ import static org.junit.Assert.assertEquals;
 	private final long EXPECTED_COUNT = 2_000;
 	private final int UPDATE_RANDOM_RANGES_COUNT = 5;
 	private final String CONTAINER_ITEM_OUTPUT_PATH =
-		MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
+		MongooseEntryNodeContainer.getContainerItemOutputPath(getClass().getSimpleName());
 	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final SizeInBytes expectedUpdateSize;
 	private final SizeInBytes expectedReadSize;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
-	private final MongooseContainer testContainer;
+	private final MongooseEntryNodeContainer testContainer;
 	private final String stepIdUpdate;
 	private final String stepIdRead;
 	private final String stepId;
@@ -84,10 +84,10 @@ import static org.junit.Assert.assertEquals;
 
 	public MultipleRandomUpdateAndMultipleFixedReadTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
-		final Map<String, Object> schema =
-			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
+	) throws Exception {
+		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
+			APP_NAME, Thread.currentThread().getContextClassLoader()
+		);
 		config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
 		final Object avgPeriodRaw = config.val("output-metrics-average-period");
 		if(avgPeriodRaw instanceof String) {
@@ -99,9 +99,9 @@ import static org.junit.Assert.assertEquals;
 		stepIdUpdate = stepId + "_UPDATE";
 		stepIdRead = stepId + "_READ";
 		try {
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepIdUpdate).toFile());
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepIdRead).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepIdUpdate).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepIdRead).toFile());
 		} catch(final IOException ignored) {
 		}
 		this.runMode = runMode;
@@ -159,7 +159,7 @@ import static org.junit.Assert.assertEquals;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer = new MongooseContainer(
+		testContainer = new MongooseEntryNodeContainer(
 			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
 		);
 	}

@@ -143,9 +143,7 @@ public interface FileIoHelper {
 					range2read.position(range2read.position() + n);
 					countBytesDone += n;
 				} catch(final DataCorruptionException e) {
-					throw new DataCorruptionException(
-						currPos + e.getOffset() - countBytesDone, e.expected, e.actual
-					);
+					throw new DataCorruptionException(currPos + e.getOffset() - countBytesDone, e.expected, e.actual);
 				}
 			}
 			if(Loggers.MSG.isTraceEnabled()) {
@@ -154,7 +152,7 @@ public interface FileIoHelper {
 					range2read.size()
 				);
 			}
-			if(countBytesDone == currRangeSize) {
+			if(countBytesDone == currRangeSize && countBytesDone < rangesSizeSum) {
 				op.currRangeIdx(currRangeIdx + 1);
 				op.countBytesDone(0);
 			} else {
@@ -301,7 +299,7 @@ public interface FileIoHelper {
 				return true;
 			}
 			countBytesDone += n;
-			if(countBytesDone == currRangeSize) {
+			if(countBytesDone == currRangeSize && countBytesDone < rangesSizeSum) {
 				op.currRangeIdx(currRangeIdx + 1);
 				op.countBytesDone(0);
 			} else {

@@ -71,7 +71,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 extends NetStorageDriverBase<I, O>
 implements HttpStorageDriver<I, O> {
 
-	private final static String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
+	private static final String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
 	private static final Function<String, BatchSupplier<String>> ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
 		try {
 			return new AsyncPatternDefinedSupplier(ServiceTaskExecutor.INSTANCE, pattern);
@@ -418,10 +418,31 @@ implements HttpStorageDriver<I, O> {
 	protected void doClose()
 	throws IOException {
 		super.doClose();
+		uriQueryInput.close();
 		dateSupplier.close();
 		sharedHeaders.clear();
 		dynamicHeaders.clear();
+		headerNameInputs
+			.values()
+			.forEach(
+				headerNameInput -> {
+					try {
+						headerNameInput.close();
+					} catch(final IOException ignored) {
+					}
+				}
+			);
 		headerNameInputs.clear();
+		headerValueInputs
+			.values()
+			.forEach(
+				headerValueInput -> {
+					try {
+						headerValueInput.close();
+					} catch(final IOException ignored) {
+					}
+				}
+			);
 		headerValueInputs.clear();
 	}
 }

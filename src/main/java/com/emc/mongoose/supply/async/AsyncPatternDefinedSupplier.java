@@ -14,12 +14,7 @@ implements PatternDefinedSupplier {
 	
 	public AsyncPatternDefinedSupplier(final FibersExecutor executor, final String pattern)
 	throws OmgShootMyFootException {
-		this(
-			executor,
-			new RangePatternDefinedSupplier(
-				pattern, AsyncStringSupplierFactory.getInstance(executor)
-			)
-		);
+		this(executor, new RangePatternDefinedSupplier(pattern, AsyncStringSupplierFactory.getInstance(executor)));
 	}
 	
 	private AsyncPatternDefinedSupplier(final FibersExecutor executor, final PatternDefinedSupplier wrappedSupplier)

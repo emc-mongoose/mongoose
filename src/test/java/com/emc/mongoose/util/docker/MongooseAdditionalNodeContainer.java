@@ -1,19 +1,20 @@
 package com.emc.mongoose.util.docker;
 
+import static com.emc.mongoose.util.docker.MongooseContainer.ENTRYPOINT_LIMIT_HEAP_1GB;
+import static com.emc.mongoose.util.docker.MongooseContainer.IMAGE_NAME;
+import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
+import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
+
+import static java.util.Collections.emptyList;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
-import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static java.util.Collections.emptyList;
-
 public final class MongooseAdditionalNodeContainer
 extends ContainerBase {
 
-	private static final String IMAGE_NAME = "emcmongoose/mongoose";
 	public static final int DEFAULT_PORT = 10000;
 	private static final Map<String, Path> VOLUME_BINDS = new HashMap<String, Path>() {{
 		put(CONTAINER_SHARE_PATH, HOST_SHARE_PATH);
@@ -21,12 +22,12 @@ extends ContainerBase {
 
 	public MongooseAdditionalNodeContainer()
 	throws InterruptedException {
-		this(MongooseContainer.IMAGE_VERSION, DEFAULT_PORT);
+		this(MongooseEntryNodeContainer.IMAGE_VERSION, DEFAULT_PORT);
 	}
 
 	public MongooseAdditionalNodeContainer(final int port)
 	throws InterruptedException {
-		this(MongooseContainer.IMAGE_VERSION, port);
+		this(MongooseEntryNodeContainer.IMAGE_VERSION, port);
 	}
 
 	public MongooseAdditionalNodeContainer(final String version, final int svcPort)
@@ -50,6 +51,6 @@ extends ContainerBase {
 
 	@Override
 	protected String entrypoint() {
-		return null;
+		return ENTRYPOINT_LIMIT_HEAP_1GB;
 	}
 }

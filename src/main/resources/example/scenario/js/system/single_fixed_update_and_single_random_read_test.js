@@ -46,6 +46,9 @@ UpdateLoad
       "load" : {
         "op" : {
           "type" : "update"
+        },
+        "step" : {
+        	"id" : STEP_ID_UPDATE
         }
       },
       "item" : {
@@ -76,7 +79,10 @@ ReadLoad
       "load" : {
         "op" : {
           "type" : "read"
-        }
+        },
+		"step" : {
+			"id" : STEP_ID_READ
+		}
       },
       "item" : {
         "data" : {

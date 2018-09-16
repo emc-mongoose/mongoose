@@ -1,6 +1,5 @@
 package com.emc.mongoose.system;
 
-import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.params.Concurrency;
 import com.emc.mongoose.params.EnvParams;
@@ -9,10 +8,9 @@ import com.emc.mongoose.params.RunMode;
 import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
-import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -32,11 +30,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.util.docker.MongooseContainer.systemTestContainerScenarioPath;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.systemTestContainerScenarioPath;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class) public class WeightedLoadTest {
@@ -50,11 +47,11 @@ import static org.junit.Assert.assertTrue;
 	private final long DURATION_LIMIT = 120_000;
 	private final int TIMEOUT_IN_MILLIS = 120_000;
 	private final String CONTAINER_ITEM_OUTPUT_PATH =
-		MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
+		MongooseEntryNodeContainer.getContainerItemOutputPath(getClass().getSimpleName());
 	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
-	private final MongooseContainer testContainer;
+	private final MongooseEntryNodeContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
 	private final RunMode runMode;
@@ -70,7 +67,7 @@ import static org.junit.Assert.assertTrue;
 			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
 		this.storageType = storageType;
@@ -127,7 +124,7 @@ import static org.junit.Assert.assertTrue;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer = new MongooseContainer(
+		testContainer = new MongooseEntryNodeContainer(
 			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
 		);
 	}
@@ -152,9 +149,9 @@ import static org.junit.Assert.assertTrue;
 			.values()
 			.parallelStream()
 			.forEach(
-				storageMock -> {
+				node -> {
 					try {
-						storageMock.close();
+						node.close();
 					} catch(final Throwable t) {
 						t.printStackTrace(System.err);
 					}

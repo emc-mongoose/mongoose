@@ -1,6 +1,5 @@
 package com.emc.mongoose.system;
 
-import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.params.Concurrency;
@@ -10,7 +9,7 @@ import com.emc.mongoose.params.RunMode;
 import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.confuse.SchemaProvider;
@@ -35,12 +34,11 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.util.LogValidationUtil.testOpTraceLogRecords;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_HOME_PATH;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.CONTAINER_HOME_PATH;
 import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.util.docker.MongooseContainer.systemTestContainerScenarioPath;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.systemTestContainerScenarioPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -52,25 +50,27 @@ import static org.junit.Assert.assertTrue;
 	}
 
 	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
-	private final int TIMEOUT_IN_MILLIS = 1000_000;
+	private final int TIMEOUT_IN_MILLIS = 1_000_000;
 	private final String ITEM_DATA_INPUT_FILE = CONTAINER_HOME_PATH + "/example/content/textexample";
-	private final String CONTAINER_ITEM_OUTPUT_PATH =
-		MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
+	private final String CONTAINER_ITEM_OUTPUT_PATH = MongooseEntryNodeContainer.getContainerItemOutputPath(
+		getClass().getSimpleName()
+	);
 	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
-	private final MongooseContainer testContainer;
+	private final MongooseEntryNodeContainer testContainer;
 	private final String stepId;
 
 	public ReadCustomContentVerificationFailTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
 	)
 	throws Exception {
-		final Map<String, Object> schema =
-			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
+		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
+			APP_NAME, Thread.currentThread().getContextClassLoader()
+		);
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
 		try {
@@ -89,9 +89,9 @@ import static org.junit.Assert.assertTrue;
 			case ATMOS:
 			case S3:
 			case SWIFT:
-				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-					Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
-					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
+					HttpStorageMockContainer.DEFAULT_PORT, false, null, null, Character.MAX_RADIX,
+					HttpStorageMockContainer.DEFAULT_CAPACITY, HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
 					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
 					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
 					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
@@ -120,7 +120,7 @@ import static org.junit.Assert.assertTrue;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer = new MongooseContainer(
+		testContainer = new MongooseEntryNodeContainer(
 			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
 		);
 	}
@@ -138,9 +138,9 @@ import static org.junit.Assert.assertTrue;
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(storageMock -> {
+		slaveNodes.values().parallelStream().forEach(node -> {
 			try {
-				storageMock.close();
+				node.close();
 			} catch(final Throwable t) {
 				t.printStackTrace(System.err);
 			}

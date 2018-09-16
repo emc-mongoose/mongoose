@@ -393,8 +393,8 @@ extends AmzS3StorageDriver {
 			reqHeaders, httpRequest.method(), httpRequest.uri()
 		);
 		assertEquals(
-			"POST\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + '\n' + bucketName + '/'
-				+ itemId + "?uploadId=qazxswedc",
+			"POST\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + '\n' + bucketName + '/' + itemId
+				+ "?uploadId=qazxswedc",
 			canonicalReq
 		);
 	}
