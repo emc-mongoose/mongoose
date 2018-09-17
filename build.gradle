@@ -55,6 +55,7 @@ ext {
 
 	}
 
+	apply plugin: 'docker'
 	apply plugin: "cz.augi.docker-java"
 
 
