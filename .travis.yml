@@ -91,7 +91,7 @@ jobs:
       - CONCURRENCY=low,medium
       - ITEM_SIZE=small,medium
       - MONGOOSE_VERSION=$TAG
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=fs,swift RUN_MODE=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew systemTest --tests com.emc.mongoose.system.CircularReadLimitByTimeTest
     - env:

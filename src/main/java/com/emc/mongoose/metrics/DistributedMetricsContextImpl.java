@@ -207,9 +207,10 @@ implements DistributedMetricsContext<S> {
 		final Snapshot latSnapshot = new UniformSnapshot(allLatencies);
 		final long currentTimeMillis = System.currentTimeMillis();
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
-		lastSnapshot = (S) new DistributedMetricsSnapshotImpl(countSucc, succRateLast, countFail, failRateLast, countByte,
-			byteRateLast, tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyLast, actualConcurrencyMean,
-			concurrencyLimit, sumDur, sumLat, nodeCountSupplier.getAsInt(), durSnapshot, latSnapshot
+		lastSnapshot = (S) new DistributedMetricsSnapshotImpl(
+			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast, tsStart,
+			prevElapsedTime + currElapsedTime, actualConcurrencyLast, actualConcurrencyMean, concurrencyLimit, sumDur,
+			sumLat, nodeCountSupplier.getAsInt(), durSnapshot, latSnapshot
 		);
 		if(metricsListener != null) {
 			metricsListener.notify(lastSnapshot);

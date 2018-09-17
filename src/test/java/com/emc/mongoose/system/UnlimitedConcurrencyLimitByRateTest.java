@@ -2,7 +2,6 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.params.Concurrency;
 import com.emc.mongoose.params.EnvParams;
 import com.emc.mongoose.params.ItemSize;
@@ -29,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,11 +62,11 @@ import static org.junit.Assert.assertTrue;
 	private static final SizeInBytes SIZE_LIMIT = new SizeInBytes("10GB");
 	private static final int TIME_LIMIT_SEC = 60;
 	private static final int RATE_LIMIT = 1_000;
-	private final int TIMEOUT_IN_MILLIS = 1_000_000;
-	private final String CONTAINER_ITEM_OUTPUT_PATH = MongooseEntryNodeContainer.getContainerItemOutputPath(
+	private static final int TIMEOUT_IN_MILLIS = 1_000_000;
+	private final String containerItemOutputPath = MongooseEntryNodeContainer.getContainerItemOutputPath(
 		getClass().getSimpleName()
 	);
-	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
+	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseEntryNodeContainer testContainer;
@@ -101,7 +101,7 @@ import static org.junit.Assert.assertTrue;
 		this.runMode = runMode;
 		this.itemSize = itemSize;
 		try {
-			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
+			Files.delete(Paths.get(hostItemOutputFile));
 		} catch(final Exception ignored) {
 		}
 		final List<String> env =
@@ -121,13 +121,13 @@ import static org.junit.Assert.assertTrue;
 				);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
-				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
+				args.add("--storage-net-node-addrs=" + String.join(",", storageMocks.keySet()));
 				break;
 			case FS:
-				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
+				args.add("--item-output-path=" + containerItemOutputPath);
 				args.add("--load-step-limit-size=" + SIZE_LIMIT);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
+					DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -185,14 +185,9 @@ import static org.junit.Assert.assertTrue;
 	public final void test()
 	throws Exception {
 		testMetricsTableStdout(
-			stdOutContent, stepId, storageType, runMode.getNodeCount(), COUNT_LIMIT,
-			new HashMap<OpType, Integer>() {{
-				put(CREATE, 0);
-			}}
+			stdOutContent, stepId, storageType, runMode.getNodeCount(), COUNT_LIMIT, Collections.singletonMap(CREATE, 0)
 		);
-		testFinalMetricsStdout(
-			stdOutContent, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), stepId
-		);
+		testFinalMetricsStdout(stdOutContent, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), stepId);
 		final List<CSVRecord> metricsLogRecs = getMetricsLogRecords(stepId);
 		testMetricsLogRecords(
 			metricsLogRecs, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), COUNT_LIMIT, TIME_LIMIT_SEC,
