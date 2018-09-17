@@ -56,6 +56,11 @@ ext {
 	}
 
 	apply plugin: "cz.augi.docker-java"
+
+
+	dockerJava {
+		image = "emc-mongoose/mongoose"
+	}
 	
 	task dockerImage(type: Docker) {
 			applicationName = 'test app name'
