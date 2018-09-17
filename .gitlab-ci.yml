@@ -10,7 +10,6 @@ stages:
 
 before_script:
   - chmod +x gradlew
-  - docker version
   
 #temporary: fetch is faster than clone 
 variables:
