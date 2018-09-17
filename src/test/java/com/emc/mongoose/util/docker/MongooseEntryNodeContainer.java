@@ -9,6 +9,8 @@ import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.Constants.USER_HOME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.util.TestCaseUtil.snakeCaseName;
+import static com.emc.mongoose.util.docker.MongooseContainer.PORT_DEBUG;
+import static com.emc.mongoose.util.docker.MongooseContainer.PORT_JMX;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
@@ -100,7 +102,7 @@ extends ContainerBase {
 		final List<String> env, final List<String> args, final boolean attachOutputFlag,
 		final boolean collectOutputFlag, final boolean outputMetricsTracePersistFlag
 	) throws InterruptedException {
-		super(version, env, VOLUME_BINDS, attachOutputFlag, collectOutputFlag, MongooseContainer.PORT_DEBUG, MongooseContainer.PORT_JMX);
+		super(version, env, VOLUME_BINDS, attachOutputFlag, collectOutputFlag, PORT_DEBUG, PORT_JMX);
 		this.args = args;
 		this.args.add("--load-step-id=" + stepId);
 		this.args.add("--storage-driver-limit-concurrency=" + concurrency.getValue());

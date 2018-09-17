@@ -40,7 +40,7 @@ public class ParallelPipelineAndInfiniteLoopTest {
 		return EnvParams.PARAMS;
 	}
 
-	private final String SCENARIO_PATH = enduranceTestContainerScenarioPath(getClass());
+	private final String scenarioPath = enduranceTestContainerScenarioPath(getClass());
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseEntryNodeContainer testContainer;
@@ -109,7 +109,7 @@ public class ParallelPipelineAndInfiniteLoopTest {
 				break;
 		}
 		testContainer = new MongooseEntryNodeContainer(
-			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args, true, false, false
+			stepId, storageType, runMode, concurrency, itemSize.getValue(), scenarioPath, env, args, true, false, false
 		);
 	}
 

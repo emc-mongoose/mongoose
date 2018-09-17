@@ -210,18 +210,14 @@ import static org.junit.Assert.assertTrue;
 			}
 		}
 		assertEquals(1, items.size());
-		String itemPath, itemId;
-		long itemOffset;
-		long size;
-		String modLayerAndMask;
 		final CSVRecord itemRec = items.get(0);
-		itemPath = itemRec.get(0);
-		itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
-		itemOffset = Long.parseLong(itemRec.get(1), 0x10);
+		final String itemPath = itemRec.get(0);
+		final String itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
+		final long itemOffset = Long.parseLong(itemRec.get(1), 0x10);
 		assertEquals(Long.parseLong(itemId, itemIdRadix), itemOffset);
-		size = Long.parseLong(itemRec.get(2));
+		final long size = Long.parseLong(itemRec.get(2));
 		assertEquals(itemSize.getValue().get(), size);
-		modLayerAndMask = itemRec.get(3);
+		final String modLayerAndMask = itemRec.get(3);
 		assertEquals("0/0", modLayerAndMask);
 		testFinalMetricsStdout(
 			stdOutContent, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), stepId
