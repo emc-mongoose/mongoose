@@ -57,6 +57,8 @@ buildscript {
 
 apply plugin: "cz.augi.docker-java"
 
+apply plugin: "application"
+mainClassName = 'com.emc.mongoose.Main'
 
 dockerJava {
 	image = "emc-mongoose/mongoose"
