@@ -17,7 +17,7 @@ variables:
 
 docker_images:
   stage: docker_images
-  script: "./gradlew dockerImage"
+  script: "./gradlew dockerJava"
 
 unit_tests:
   stage: unit_tests

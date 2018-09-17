@@ -62,10 +62,6 @@ dockerJava {
 	image = "emc-mongoose/mongoose"
 }
 
-task dockerImage(type: Docker) {
-		applicationName = 'test app name'
-		tagVersion = '3.6.2'
-}
 
 allprojects {
 
