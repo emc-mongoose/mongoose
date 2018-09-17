@@ -50,7 +50,7 @@ ext {
 			jcenter()
 		}
 		dependencies {
-    		classpath "gradle.plugin.cz.augi:gradle-docker-java:1.6.4"
+    		classpath "cz.augi:gradle-docker-java:1.6.4"
   		}
 
 	}
