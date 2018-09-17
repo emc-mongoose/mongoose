@@ -208,7 +208,7 @@ import static org.junit.Assert.assertTrue;
 		assertTrue(rate < RATE_LIMIT + RATE_LIMIT / 2);
 		final long totalSize = Long.parseLong(totalMetricsRec.get("Size"));
 		if(StorageType.FS.equals(storageType)) {
-			assertTrue(totalSize < SIZE_LIMIT.get() + SIZE_LIMIT.get() / 10);
+			assertTrue(totalSize < SIZE_LIMIT.get() + SIZE_LIMIT.get() / 5);
 		}
 		final long durationInSec = TimeUnit.MILLISECONDS.toSeconds(duration);
 		assertTrue(
