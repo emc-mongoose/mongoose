@@ -57,14 +57,15 @@ import static org.junit.Assert.assertTrue;
 		return EnvParams.PARAMS;
 	}
 
-	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
+	private final String scenarioPath = systemTestContainerScenarioPath(getClass());
 	private static final int COUNT_LIMIT = 1_000_000;
 	private static final SizeInBytes SIZE_LIMIT = new SizeInBytes("10GB");
 	private static final int TIME_LIMIT_SEC = 60;
 	private static final int RATE_LIMIT = 1_000;
-	private final int TIMEOUT_IN_MILLIS = 1000_000;
-	private final String CONTAINER_ITEM_OUTPUT_PATH =
-		MongooseEntryNodeContainer.getContainerItemOutputPath(getClass().getSimpleName());
+	private final int TIMEOUT_IN_MILLIS = 1_000_000;
+	private final String CONTAINER_ITEM_OUTPUT_PATH = MongooseEntryNodeContainer.getContainerItemOutputPath(
+		getClass().getSimpleName()
+	);
 	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
@@ -80,10 +81,10 @@ import static org.junit.Assert.assertTrue;
 
 	public UnlimitedConcurrencyLimitByRateTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
-		final Map<String, Object> schema =
-			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
+	) throws Exception {
+		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
+			APP_NAME, Thread.currentThread().getContextClassLoader()
+		);
 		config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
 		final Object avgPeriodRaw = config.val("output-metrics-average-period");
 		if(avgPeriodRaw instanceof String) {
@@ -124,6 +125,7 @@ import static org.junit.Assert.assertTrue;
 				break;
 			case FS:
 				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
+				args.add("--load-step-limit-size=" + SIZE_LIMIT);
 				try {
 					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
 				} catch(final Exception e) {
@@ -143,7 +145,7 @@ import static org.junit.Assert.assertTrue;
 				break;
 		}
 		testContainer = new MongooseEntryNodeContainer(
-			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
+			stepId, storageType, runMode, concurrency, itemSize.getValue(), scenarioPath, env, args
 		);
 	}
 
