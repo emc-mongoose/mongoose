@@ -10,6 +10,7 @@ stages:
 
 before_script:
   - chmod +x gradlew
+  - echo $PATH
   
 #temporary: fetch is faster than clone 
 variables:
