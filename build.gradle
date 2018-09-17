@@ -44,29 +44,28 @@ ext {
 }
 
 
-	buildscript {
-		repositories {
-			mavenCentral()	
-			jcenter()
-		}
-		dependencies {
-    		classpath "cz.augi:gradle-docker-java:1.6.4"
-  		}
-
+buildscript {
+	repositories {
+		mavenCentral()	
+		jcenter()
+	}
+	dependencies {
+		classpath "cz.augi:gradle-docker-java:1.6.4"
 	}
 
-	apply plugin: 'docker'
-	apply plugin: "cz.augi.docker-java"
+}
+
+apply plugin: "cz.augi.docker-java"
 
 
-	dockerJava {
-		image = "emc-mongoose/mongoose"
-	}
-	
-	task dockerImage(type: Docker) {
-			applicationName = 'test app name'
-			tagVersion = '3.6.2'
-	}
+dockerJava {
+	image = "emc-mongoose/mongoose"
+}
+
+task dockerImage(type: Docker) {
+		applicationName = 'test app name'
+		tagVersion = '3.6.2'
+}
 
 allprojects {
 

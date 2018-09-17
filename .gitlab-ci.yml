@@ -10,6 +10,7 @@ stages:
 
 before_script:
   - chmod +x gradlew
+  - docker version
   
 #temporary: fetch is faster than clone 
 variables:
@@ -17,7 +18,7 @@ variables:
 
 docker_images:
   stage: docker_images
-  script: "./gradlew dockerImage --stacktrace"
+  script: "./gradlew dockerImage"
 
 unit_tests:
   stage: unit_tests
