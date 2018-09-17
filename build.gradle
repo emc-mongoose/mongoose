@@ -62,6 +62,9 @@ dockerJava {
 	image = "emc-mongoose/mongoose"
 }
 
+task distDocker {
+	
+}
 
 allprojects {
 
