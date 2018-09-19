@@ -4,16 +4,7 @@ import com.emc.mongoose.tests.system.base.params.Concurrency;
 import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
-import com.emc.mongoose.ui.config.item.ItemConfig;
-import com.emc.mongoose.ui.config.item.naming.NamingConfig;
-import com.emc.mongoose.ui.config.storage.StorageConfig;
-import com.emc.mongoose.ui.config.storage.driver.DriverConfig;
-import com.emc.mongoose.ui.config.storage.mock.MockConfig;
-import com.emc.mongoose.ui.config.storage.mock.container.ContainerConfig;
-import com.emc.mongoose.ui.config.storage.mock.fail.FailConfig;
-import com.emc.mongoose.ui.config.storage.net.NetConfig;
-import com.emc.mongoose.ui.config.storage.net.node.NodeConfig;
-import com.emc.mongoose.ui.log.Loggers;
+import com.emc.mongoose.logging.Loggers;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;

@@ -1,33 +1,14 @@
-include "api:common"
-include "api:metrics"
-include "api:model"
-include "load:generator"
-include "load:controller"
-include "scenario"
-include "scenario:json"
-include "storage:driver"
-include "storage:driver:builder"
-include "storage:driver:mock:dummy"
-include "storage:driver:net"
-include "storage:driver:net:mock"
-include "storage:driver:net:http"
-include "storage:driver:net:http:emc"
-include "storage:driver:nio"
-include "storage:driver:nio:mock"
-include "storage:driver:service"
-include "tests:unit"
-include "tests:system"
-include "tests:perf"
-include "ui"
+include "load:step:linear"
+include "load:step:pipeline"
+include "load:step:weighted"
+include "storage:driver:coop"
+include "storage:driver:coop:net"
+include "storage:driver:coop:net:http"
+include "storage:driver:coop:net:http:atmos"
+include "storage:driver:coop:net:http:s3"
+include "storage:driver:coop:net:http:swift"
+include "storage:driver:coop:nio"
+include "storage:driver:coop:nio:fs"
+include "storage:driver:preempt"
 
 rootProject.name = "mongoose"
-
-void renameBuildFiles(def project) {
-	project.children.each {
-		subproject ->
-			renameBuildFiles(subproject)
-			subproject.buildFileName = subproject.name + ".gradle"
-	}
-}
-
-renameBuildFiles(rootProject)

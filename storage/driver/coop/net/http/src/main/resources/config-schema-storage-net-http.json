@@ -1,0 +1,12 @@
+{
+	"storage": {
+		"net": {
+			"http": {
+				"headers": "map",
+				"uri": {
+					"args": "map"
+				}
+			}
+		}
+	}
+}

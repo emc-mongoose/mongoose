@@ -1,0 +1,12 @@
+{
+	"storage": {
+		"net": {
+			"http": {
+				// Specifies whether filesystem access is enabled or not
+				"fsAccess": false,
+				// The storage namespace.
+				"namespace": null
+			}
+		}
+	}
+}

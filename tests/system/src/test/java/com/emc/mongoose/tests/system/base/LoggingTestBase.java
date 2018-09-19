@@ -10,7 +10,7 @@ import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.BufferingOutputStream;
 import com.emc.mongoose.tests.system.util.LogPatterns;
-import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.logging.LogUtil;
 import static com.emc.mongoose.api.common.Constants.K;
 import static com.emc.mongoose.api.common.Constants.KEY_TEST_STEP_ID;
 import static com.emc.mongoose.api.common.Constants.MIB;
@@ -21,7 +21,7 @@ import static com.emc.mongoose.api.metrics.logging.MetricsAsciiTableLogMessage.T
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.INTERRUPTED;
 import static com.emc.mongoose.api.model.io.task.IoTask.Status.SUCC;
 
-import com.emc.mongoose.ui.log.Loggers;
+import com.emc.mongoose.logging.Loggers;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;

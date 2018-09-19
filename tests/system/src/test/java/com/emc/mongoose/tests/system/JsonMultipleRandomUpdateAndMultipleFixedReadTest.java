@@ -10,7 +10,7 @@ import com.emc.mongoose.tests.system.base.params.DriverCount;
 import com.emc.mongoose.tests.system.base.params.ItemSize;
 import com.emc.mongoose.tests.system.base.params.StorageType;
 import com.emc.mongoose.tests.system.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.logging.LogUtil;
 import static com.emc.mongoose.api.common.env.PathUtil.getBaseDir;
 import static com.emc.mongoose.api.common.Constants.DIR_EXAMPLE_SCENARIO;
 
@@ -39,7 +39,7 @@ extends OldScenarioTestBase {
 	private SizeInBytes expectedUpdateSize;
 	private SizeInBytes expectedReadSize;
 	
-	private static final long EXPECTED_COUNT = 10000;
+	private static final long EXPECTED_COUNT = 10_000;
 	private static final int UPDATE_RANDOM_RANGES_COUNT = 5;
 
 	public JsonMultipleRandomUpdateAndMultipleFixedReadTest(

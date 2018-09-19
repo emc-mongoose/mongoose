@@ -76,7 +76,7 @@ extends ScenarioTestBase {
 
 	@Override
 	protected Path makeScenarioPath() {
-		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "js", "types", "chain.js");
+		return Paths.get(getBaseDir(), DIR_EXAMPLE_SCENARIO, "js", "types", "pipeline.js");
 	}
 
 	public final void test()
