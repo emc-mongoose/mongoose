@@ -73,5 +73,8 @@ See also the **[comparison with similiar tools](doc/comparison.md)**.
     * [Copy Mode](doc/design/copy_mode.md)
     * [Pipeline Load](doc/design/pipeline_load.md)
     * [Weighted Load](doc/design/weighted_load.md)
+* Integrations
+    * [Grafana](doc/integrations/grafana.md)
+    * [Prometheus](doc/integrations/prometheus.md)
 * [Contributing](CONTRIBUTING.md)
 * [Changelog](doc/changelog.md)
