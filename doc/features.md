@@ -11,7 +11,7 @@
 3. [Extension](#3-extension)<br/>
  3.1. [Load Steps](#31-load-steps)<br/>
  3.2. [Storage Drivers](#32-storage-drivers)<br/>
- 3.3. [Scenario Engines](#33-scenario-engine)<br/>
+ 3.3. [Scenario Engine](#33-scenario-engine)<br/>
 
 # 1. Scalability
 
@@ -55,7 +55,7 @@ but remains type-safe and structure-safe
 
 ## 2.3. [Scenarios](input/scenarios.md)
 
-Allow to organize the load steps in the required order and reuse the complex performance tests
+Scenaruis allow to organize the load steps in the required order and reuse the complex performance tests
 
 ## 2.4. [Metrics Reporting](output/metrics.md)
 

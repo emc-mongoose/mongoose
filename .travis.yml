@@ -64,24 +64,14 @@ jobs:
       - docker push emcmongoose/mongoose-scripting-jython:$TAG
 
     - stage: "System tests"
-    # STORAGE_TYPE=atmos,fs RUN_MODE=local CONCURRENCY=low ITEM_SIZE=empty,medium,huge ./gradlew systemTest --tests com.emc.mongoose.system.UnlimitedCreateTest
-      env:
-      - TEST=UnlimitedCreateTest
-      - STORAGE_TYPE=atmos,fs
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=low
-      - ITEM_SIZE=medium,huge
-      - MONGOOSE_VERSION=$TAG
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
     # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew systemTest --tests com.emc.mongoose.system.ChainWithDelayTest
-    - env:
+      env:
       - TEST=ChainWithDelayTest
       - STORAGE_TYPE=atmos,s3
       - RUN_MODE=local,distributed
       - CONCURRENCY=single,low,medium
       - ITEM_SIZE=medium
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=atmos,s3,fs RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew systemTest --tests com.emc.mongoose.system.CircularAppendTest
     - env:
@@ -100,7 +90,7 @@ jobs:
       - RUN_MODE=local,distributed
       - CONCURRENCY=single,high
       - ITEM_SIZE=empty,medium
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew systemTest --tests com.emc.mongoose.system.CopyUsingInputPathTest
     - env:
@@ -129,7 +119,7 @@ jobs:
       - RUN_MODE=local,distributed
       - CONCURRENCY=low,medium
       - ITEM_SIZE=large
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.MultipleFixedUpdateAndSingleFixedReadTest
     - env:
@@ -137,7 +127,7 @@ jobs:
       - STORAGE_TYPE=fs,s3
       - RUN_MODE=local,distributed
       - CONCURRENCY=low,medium
-      - ITEM_SIZE=small,medium
+      - ITEM_SIZE=small
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.MultipleRandomUpdateAndMultipleFixedReadTest
@@ -168,10 +158,10 @@ jobs:
       - MONGOOSE_VERSION=$TAG
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew systemTest --tests com.emc.mongoose.system.ReadVerificationAfterCircularUpdateTest
+    # STORAGE_TYPE=fs,s3 RUN_MODE=local CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew systemTest --tests com.emc.mongoose.system.ReadVerificationAfterCircularUpdateTest
     - env:
       - TEST=ReadVerificationAfterCircularUpdateTest
-      - STORAGE_TYPE=fs,atmos
+      - STORAGE_TYPE=fs,s3
       - RUN_MODE=local,distributed
       - CONCURRENCY=low,medium
       - ITEM_SIZE=small
@@ -202,6 +192,16 @@ jobs:
       - RUN_MODE=local,distributed
       - CONCURRENCY=unlimited
       - ITEM_SIZE=small,medium,large
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+    # STORAGE_TYPE=atmos,fs RUN_MODE=local CONCURRENCY=low ITEM_SIZE=empty,medium,huge ./gradlew systemTest --tests com.emc.mongoose.system.UnlimitedCreateTest
+    - env:
+      - TEST=UnlimitedCreateTest
+      - STORAGE_TYPE=atmos,fs
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=low
+      - ITEM_SIZE=medium,huge
+      - MONGOOSE_VERSION=$TAG
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=fs,s3,swift RUN_MODE=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew systemTest --tests com.emc.mongoose.system.WeightedLoadTest

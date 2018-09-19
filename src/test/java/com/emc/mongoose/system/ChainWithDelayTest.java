@@ -1,7 +1,5 @@
 package com.emc.mongoose.system;
 
-import com.emc.mongoose.config.BundledDefaultsProvider;
-import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.params.Concurrency;
 import com.emc.mongoose.params.EnvParams;
@@ -10,12 +8,10 @@ import com.emc.mongoose.params.RunMode;
 import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.net.NetUtil;
-import com.github.akurilov.commons.reflection.TypeUtil;
-import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
@@ -38,14 +34,12 @@ import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.M;
-import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.util.LogValidationUtil.testOpTraceLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.util.docker.MongooseContainer.systemTestContainerScenarioPath;
-import static com.emc.mongoose.util.docker.MongooseContainer.getHostItemOutputPath;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.systemTestContainerScenarioPath;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.getHostItemOutputPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -65,7 +59,7 @@ import static org.junit.Assert.fail;
 	private final String zone2Addr;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
-	private final MongooseContainer testContainer;
+	private final MongooseEntryNodeContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
 	private final RunMode runMode;
@@ -82,7 +76,7 @@ import static org.junit.Assert.fail;
 		);
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
 		this.storageType = storageType;
@@ -144,7 +138,7 @@ import static org.junit.Assert.fail;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer = new MongooseContainer(
+		testContainer = new MongooseEntryNodeContainer(
 			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
 		);
 	}
@@ -161,7 +155,7 @@ import static org.junit.Assert.fail;
 		);
 		stdOutContent = testContainer.stdOutContent();
 		duration = System.currentTimeMillis() - duration;
-		finishedInTime = (TimeUnit.MILLISECONDS.toSeconds(duration) <= TIME_LIMIT + 15);
+		finishedInTime = (TimeUnit.MILLISECONDS.toSeconds(duration) <= TIME_LIMIT + 100);
 		containerExitCode = testContainer.exitStatusCode();
 	}
 

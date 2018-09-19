@@ -57,11 +57,11 @@ extends SimpleChannelInboundHandler<M> {
 		final Channel channel = ctx.channel();
 		final O op = (O) channel.attr(NetStorageDriver.ATTR_KEY_OPERATION).get();
 		if(op != null) {
-			if(driver.isStopped() || driver.isClosed()) {
-				op.status(INTERRUPTED);
-			} else if(cause instanceof PrematureChannelClosureException) {
+			if(driver.isStarted() || driver.isShutdown()) {
 				LogUtil.exception(Level.WARN, cause, "Premature channel closure");
 				op.status(FAIL_IO);
+			} else if(cause instanceof PrematureChannelClosureException) {
+				op.status(INTERRUPTED);
 			} else {
 				LogUtil.exception(Level.WARN, cause, "Client handler failure");
 				op.status(FAIL_UNKNOWN);

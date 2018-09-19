@@ -8,7 +8,7 @@ import com.emc.mongoose.params.ItemSize;
 import com.emc.mongoose.params.RunMode;
 import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.util.LogValidationUtil.getMetricsTotalLogRecords;
@@ -18,10 +18,10 @@ import static com.emc.mongoose.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.util.TestCaseUtil.snakeCaseName;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
 import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.util.docker.MongooseContainer.systemTestContainerScenarioPath;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.systemTestContainerScenarioPath;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -69,7 +69,7 @@ import java.util.stream.Collectors;
 	private final String CONTAINER_ITEM_OUTPUT_FILE = CONTAINER_SHARE_PATH + "/" + ITEM_OUTPUT_FILE;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
-	private final MongooseContainer testContainer;
+	private final MongooseEntryNodeContainer testContainer;
 	private final String stepId;
 	private final RunMode runMode;
 	private final Concurrency concurrency;
@@ -78,7 +78,6 @@ import java.util.stream.Collectors;
 	private final SizeInBytes sizeLimit;
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private String stdOutContent = null;
-	private long expectedCountMin;
 	private long expectedCountMax;
 
 	public MultipartCreateTest(
@@ -91,14 +90,13 @@ import java.util.stream.Collectors;
 			Math.min(SizeInBytes.toFixedSize("100GB"), 5 * concurrency.getValue() * fullItemSize.getAvg())
 		);
 		Loggers.MSG.info("Use the size limit: {}", sizeLimit);
-		expectedCountMin = sizeLimit.get() / fullItemSize.getMax();
 		expectedCountMax = sizeLimit.get() / fullItemSize.getMin();
 		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
 			APP_NAME, Thread.currentThread().getContextClassLoader()
 		);
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
 		this.runMode = runMode;
@@ -145,7 +143,7 @@ import java.util.stream.Collectors;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer = new MongooseContainer(
+		testContainer = new MongooseEntryNodeContainer(
 			stepId, storageType, runMode, concurrency, fullItemSize, SCENARIO_PATH, env, args
 		);
 	}
@@ -212,7 +210,6 @@ import java.util.stream.Collectors;
 		long sizeSum = 0;
 		final int n = itemRecs.size();
 		assertTrue(n > 0);
-		assertTrue("Expected no less than " + expectedCountMin + " items, but got " + n, expectedCountMin <= n);
 		assertTrue("Expected no more than " + expectedCountMax + " items, but got " + n, expectedCountMax >= n);
 		for(final CSVRecord itemRec : itemRecs) {
 			nextItemSize = Long.parseLong(itemRec.get(2));
@@ -220,7 +217,7 @@ import java.util.stream.Collectors;
 			assertTrue(fullItemSize.getMax() >= nextItemSize);
 			sizeSum += nextItemSize;
 		}
-		final long delta = 10 * runMode.getNodeCount() * concurrency.getValue() * partSize.getAvg();
+		final long delta = 100 * runMode.getNodeCount() * concurrency.getValue() * partSize.getAvg();
 		assertTrue(
 			"Expected to transfer no more than " + sizeLimit + "+" + delta + ", but transferred actually: "
 				+ new SizeInBytes(sizeSum),

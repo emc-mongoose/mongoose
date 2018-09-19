@@ -207,7 +207,7 @@ test via environment variable `MONGOOSE_VERSION`:
 ```bash
 export MONGOOSE_VERSION=testing
 export STORAGE_TYPE=atmos
-export DRIVER_COUNT=distributed
+export RUN_MODE=distributed
 export CONCURRENCY=medium
 export ITEM_SIZE=small
 ./gradlew clean systemTest --tests com.emc.mongoose.system.CreateNoLimitTest
@@ -218,7 +218,7 @@ export ITEM_SIZE=small
 ```bash
 export MONGOOSE_VERSION=testing
 export STORAGE_TYPE=swift
-export DRIVER_COUNT=distributed
+export RUN_MODE=distributed
 export CONCURRENCY=unlimited
 export ITEM_SIZE=large
 ./gradlew clean enduranceTest --tests com.emc.mongoose.endurance.ParallelPipelineAndInfiniteLoopTest

@@ -11,7 +11,7 @@ import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.util.HttpStorageMockUtil;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
@@ -56,7 +56,7 @@ import static com.emc.mongoose.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
 import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
 import static org.junit.Assert.assertEquals;
@@ -77,7 +77,7 @@ import static org.junit.Assert.assertTrue;
 	private final String HOST_ITEM_OUTPUT_FILE;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
-	private final MongooseContainer testContainer;
+	private final MongooseEntryNodeContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
 	private final RunMode runMode;
@@ -110,7 +110,7 @@ import static org.junit.Assert.assertTrue;
 			+ stepId + ".csv";
 		HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + '_' + stepId + ".csv";
 		try {
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
 		this.storageType = storageType;
@@ -153,7 +153,7 @@ import static org.junit.Assert.assertTrue;
 				break;
 			case FS:
 				try {
-					DirWithManyFilesDeleter.deleteExternal(MongooseContainer.getHostItemOutputPath(stepId));
+					DirWithManyFilesDeleter.deleteExternal(MongooseEntryNodeContainer.getHostItemOutputPath(stepId));
 				} catch(final Throwable t) {
 					Assert.fail(t.toString());
 				}
@@ -171,7 +171,7 @@ import static org.junit.Assert.assertTrue;
 				break;
 		}
 		//use default scenario
-		testContainer = new MongooseContainer(
+		testContainer = new MongooseEntryNodeContainer(
 			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
 		);
 	}
@@ -218,7 +218,7 @@ import static org.junit.Assert.assertTrue;
 				}
 			);
 		try {
-			DirWithManyFilesDeleter.deleteExternal(MongooseContainer.getHostItemOutputPath(stepId));
+			DirWithManyFilesDeleter.deleteExternal(MongooseEntryNodeContainer.getHostItemOutputPath(stepId));
 		} catch(final Throwable t) {
 			Assert.fail(t.toString());
 		}
@@ -230,7 +230,7 @@ import static org.junit.Assert.assertTrue;
 		assertEquals("Container exit code should be 0", 0, containerExitCode);
 		final LongAdder opTraceRecCount = new LongAdder();
 		final Consumer<CSVRecord> opTraceRecFunc;
-		final String hostItemOutputPath = MongooseContainer.getHostItemOutputPath(stepId);
+		final String hostItemOutputPath = MongooseEntryNodeContainer.getHostItemOutputPath(stepId);
 		if(storageType.equals(StorageType.FS)) {
 			opTraceRecFunc = opTraceRecord -> {
 				File nextDstFile;

@@ -475,6 +475,11 @@ implements LoadStepClient {
 
 			super.doClose();
 
+			if(null != metricsAggregator) {
+				metricsAggregator.close();
+				metricsAggregator = null;
+			}
+
 			stepSlices
 				.parallelStream()
 				.forEach(
@@ -493,11 +498,6 @@ implements LoadStepClient {
 				);
 			Loggers.MSG.debug("{}: closed all {} step slices", id(), stepSlices.size());
 			stepSlices.clear();
-
-			if(null != metricsAggregator) {
-				metricsAggregator.close();
-				metricsAggregator = null;
-			}
 
 			itemDataInputFileSlicers.forEach(
 				itemDataInputFileSlicer -> {

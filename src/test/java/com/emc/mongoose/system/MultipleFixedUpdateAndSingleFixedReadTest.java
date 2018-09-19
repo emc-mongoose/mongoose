@@ -10,7 +10,7 @@ import com.emc.mongoose.params.RunMode;
 import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
@@ -48,9 +48,9 @@ import static com.emc.mongoose.util.LogValidationUtil.testOpTraceLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.testOpTraceRecord;
 import static com.emc.mongoose.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.util.docker.MongooseContainer.BUNDLED_DEFAULTS;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.BUNDLED_DEFAULTS;
 import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.util.docker.MongooseContainer.systemTestContainerScenarioPath;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.systemTestContainerScenarioPath;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class) public class MultipleFixedUpdateAndSingleFixedReadTest {
@@ -64,13 +64,13 @@ import static org.junit.Assert.assertEquals;
 	private final int TIMEOUT_IN_MILLIS = 1_000_000;
 	private final long EXPECTED_COUNT = 2_000;
 	private final String CONTAINER_ITEM_OUTPUT_PATH =
-		MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
+		MongooseEntryNodeContainer.getContainerItemOutputPath(getClass().getSimpleName());
 	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final SizeInBytes expectedUpdateSize;
 	private final SizeInBytes expectedReadSize;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
-	private final MongooseContainer testContainer;
+	private final MongooseEntryNodeContainer testContainer;
 	private final String stepId;
 	private final String stepIdUpdate;
 	private final String stepIdRead;
@@ -96,17 +96,18 @@ import static org.junit.Assert.assertEquals;
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		stepIdUpdate = stepId + "_UPDATE";
-		stepIdRead = stepId + "READ_";
+		stepIdRead = stepId + "_READ";
 		try {
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepIdUpdate).toFile());
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepIdRead).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepIdUpdate).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepIdRead).toFile());
 		} catch(final IOException ignored) {
 		}
 		this.runMode = runMode;
 		this.concurrency = concurrency;
-		this.expectedUpdateSize =
-			new SizeInBytes(- LongStream.of(2 - 5, 10 - 20, 50 - 100, 200 - 500, 1000 - 2000).sum());
+		this.expectedUpdateSize = new SizeInBytes(
+			-LongStream.of(2 - 5, 10 - 20, 50 - 100, 200 - 500, 1000 - 2000).sum()
+		);
 		this.expectedReadSize = new SizeInBytes(itemSize.getValue().get() - 256);
 		try {
 			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
@@ -157,7 +158,7 @@ import static org.junit.Assert.assertEquals;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer = new MongooseContainer(
+		testContainer = new MongooseEntryNodeContainer(
 			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
 		);
 	}
@@ -202,7 +203,8 @@ import static org.junit.Assert.assertEquals;
 			ioTraceRecCount.increment();
 		};
 		testOpTraceLogRecords(stepIdUpdate, ioTraceRecFuncUpdate);
-		assertEquals("There should be " + EXPECTED_COUNT + " records in the I/O trace log file", EXPECTED_COUNT,
+		assertEquals(
+			"There should be " + EXPECTED_COUNT + " records in the I/O trace log file", EXPECTED_COUNT,
 			ioTraceRecCount.sum()
 		);
 		//READ
@@ -212,17 +214,20 @@ import static org.junit.Assert.assertEquals;
 			ioTraceRecCount.increment();
 		};
 		testOpTraceLogRecords(stepIdRead, ioTraceRecFuncRead);
-		assertEquals("There should be " + EXPECTED_COUNT + " records in the I/O trace log file", EXPECTED_COUNT,
+		assertEquals(
+			"There should be " + EXPECTED_COUNT + " records in the I/O trace log file", EXPECTED_COUNT,
 			ioTraceRecCount.sum()
 		);
 		//TOTAL
 		final List<CSVRecord> totalMetrcisLogRecordsUpdate = getMetricsTotalLogRecords(stepIdUpdate);
-		testTotalMetricsLogRecord(totalMetrcisLogRecordsUpdate.get(0), OpType.UPDATE, concurrency.getValue(),
-			runMode.getNodeCount(), expectedUpdateSize, EXPECTED_COUNT, 0
+		testTotalMetricsLogRecord(
+			totalMetrcisLogRecordsUpdate.get(0), OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
+			expectedUpdateSize, EXPECTED_COUNT, 0
 		);
 		final List<CSVRecord> totalMetrcisLogRecordsRead = getMetricsTotalLogRecords(stepIdRead);
-		testTotalMetricsLogRecord(totalMetrcisLogRecordsRead.get(0), OpType.READ, concurrency.getValue(),
-			runMode.getNodeCount(), expectedReadSize, EXPECTED_COUNT, 0
+		testTotalMetricsLogRecord(
+			totalMetrcisLogRecordsRead.get(0), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
+			expectedReadSize, EXPECTED_COUNT, 0
 		);
 		final List<CSVRecord> updateMetricsRecords = getMetricsLogRecords(stepIdUpdate);
 		final List<CSVRecord> readMetricsRecords = getMetricsLogRecords(stepIdRead);
@@ -235,7 +240,8 @@ import static org.junit.Assert.assertEquals;
 			EXPECTED_COUNT, 0, averagePeriod
 		);
 		testFinalMetricsStdout(
-			stdOutContent, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), expectedUpdateSize, stepIdUpdate
+			stdOutContent, OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(), expectedUpdateSize,
+			stepIdUpdate
 		);
 		testFinalMetricsStdout(
 			stdOutContent, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), expectedReadSize, stepIdRead

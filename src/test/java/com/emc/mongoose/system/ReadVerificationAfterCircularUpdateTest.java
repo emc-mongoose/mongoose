@@ -11,7 +11,7 @@ import com.emc.mongoose.params.RunMode;
 import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
@@ -43,12 +43,11 @@ import static com.emc.mongoose.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.getMetricsTotalLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.testOpTraceLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.testMetricsLogRecords;
-import static com.emc.mongoose.util.LogValidationUtil.testMetricsTableStdout;
 import static com.emc.mongoose.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.util.docker.MongooseContainer.systemTestContainerScenarioPath;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.systemTestContainerScenarioPath;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class) public class ReadVerificationAfterCircularUpdateTest {
@@ -58,15 +57,18 @@ import static org.junit.Assert.assertEquals;
 		return EnvParams.PARAMS;
 	}
 
-	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
-	private final int TIMEOUT_IN_MILLIS = 1000_000;
-	private final String CONTAINER_ITEM_OUTPUT_PATH =
-		MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
-	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
+	private final String scenarioPath = systemTestContainerScenarioPath(getClass());
+	private static final int TIMEOUT_IN_MILLIS = 1_000_000;
+	private final String containerItemOutputPath = MongooseEntryNodeContainer.getContainerItemOutputPath(
+		getClass().getSimpleName()
+	);
+	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
-	private final MongooseContainer testContainer;
-	private final String stepId;
+	private final MongooseEntryNodeContainer testContainer;
+	private final String stepIdCreate;
+	private final String stepIdUpdate;
+	private final String stepIdRead;
 	private final StorageType storageType;
 	private final RunMode runMode;
 	private final Concurrency concurrency;
@@ -77,10 +79,10 @@ import static org.junit.Assert.assertEquals;
 
 	public ReadVerificationAfterCircularUpdateTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
-		final Map<String, Object> schema =
-			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
+	) throws Exception {
+		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
+			APP_NAME, Thread.currentThread().getContextClassLoader()
+		);
 		config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
 		final Object avgPeriodRaw = config.val("output-metrics-average-period");
 		if(avgPeriodRaw instanceof String) {
@@ -88,9 +90,12 @@ import static org.junit.Assert.assertEquals;
 		} else {
 			averagePeriod = TypeUtil.typeConvert(avgPeriodRaw, int.class);
 		}
-		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
+		final String stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
+		stepIdCreate = stepId + "_Create";
+		stepIdUpdate = stepId + "_Update";
+		stepIdRead = stepId + "_Read";
 		try {
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepIdRead).toFile());
 		} catch(final IOException ignored) {
 		}
 		this.storageType = storageType;
@@ -98,7 +103,7 @@ import static org.junit.Assert.assertEquals;
 		this.concurrency = concurrency;
 		this.itemSize = itemSize;
 		try {
-			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
+			Files.delete(Paths.get(hostItemOutputFile));
 		} catch(final Exception ignored) {
 		}
 		final List<String> env = System
@@ -107,6 +112,9 @@ import static org.junit.Assert.assertEquals;
 			.stream()
 			.map(e -> e.getKey() + "=" + e.getValue())
 			.collect(Collectors.toList());
+		env.add("STEP_ID_CREATE=" + stepIdCreate);
+		env.add("STEP_ID_UPDATE=" + stepIdUpdate);
+		env.add("STEP_ID_READ=" + stepIdRead);
 		final List<String> args = new ArrayList<>();
 		switch(storageType) {
 			case ATMOS:
@@ -121,12 +129,12 @@ import static org.junit.Assert.assertEquals;
 				);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
-				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
+				args.add("--storage-net-node-addrs=" + String.join(",", storageMocks.keySet()));
 				break;
 			case FS:
-				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
+				args.add("--item-output-path=" + containerItemOutputPath);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
+					DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -140,11 +148,11 @@ import static org.junit.Assert.assertEquals;
 					final String addr = "127.0.0.1:" + port;
 					slaveNodes.put(addr, nodeSvc);
 				}
-				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
+				args.add("--load-step-node-addrs=" + String.join(",", slaveNodes.keySet()));
 				break;
 		}
-		testContainer = new MongooseContainer(
-			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
+		testContainer = new MongooseEntryNodeContainer(
+			stepId, storageType, runMode, concurrency, itemSize.getValue(), scenarioPath, env, args
 		);
 	}
 
@@ -162,9 +170,9 @@ import static org.junit.Assert.assertEquals;
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(storageMock -> {
+		slaveNodes.values().parallelStream().forEach(node -> {
 			try {
-				storageMock.close();
+				node.close();
 			} catch(final Throwable t) {
 				t.printStackTrace(System.err);
 			}
@@ -192,25 +200,17 @@ import static org.junit.Assert.assertEquals;
 				Operation.Status.SUCC, Operation.Status.values()[Integer.parseInt(ioTraceRec.get(3))]
 			);
 		};
-		testOpTraceLogRecords(stepId, ioTraceReqTestFunc);
+		testOpTraceLogRecords(stepIdRead, ioTraceReqTestFunc);
 		testTotalMetricsLogRecord(
-			getMetricsTotalLogRecords(stepId).get(0), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
+			getMetricsTotalLogRecords(stepIdRead).get(0), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
 			itemSize.getValue(), 0, 0
 		);
 		testMetricsLogRecords(
-			getMetricsLogRecords(stepId), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
+			getMetricsLogRecords(stepIdRead), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
 			itemSize.getValue(), 0, 0, averagePeriod
 		);
 		testFinalMetricsStdout(
-			stdOutContent, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), stepId
-		);
-		testMetricsTableStdout(
-			stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
-			new HashMap<OpType, Integer>() {{
-				put(OpType.CREATE, concurrency.getValue());
-				put(OpType.UPDATE, concurrency.getValue());
-				put(OpType.READ, concurrency.getValue());
-			}}
+			stdOutContent, OpType.READ, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), stepIdRead
 		);
 	}
 }

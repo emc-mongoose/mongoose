@@ -2,7 +2,7 @@
 
 ## 2018
 * [4.0.0](#400) TBD
-* [3.6.2](#362) TBD
+* [3.6.2](#362) 08/08/18
 * [3.6.1](#361) 03/26/18
 
 ## 2017
@@ -79,10 +79,6 @@ specific configuration options the extensible configuration was
 implemented. The new [external library](https://github.com/akurilov/confuse) is used for this purpose.
 The configuration is assembled dynamically, including the
 sub-configurations provided by the extensions resolved in the runtime.
-
-#### 4. Storage Node Failover Support
-
-TODO
 
 ### Non-functional
 

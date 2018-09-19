@@ -2,7 +2,6 @@ package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
-import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.params.Concurrency;
 import com.emc.mongoose.params.EnvParams;
 import com.emc.mongoose.params.ItemSize;
@@ -10,7 +9,7 @@ import com.emc.mongoose.params.RunMode;
 import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
@@ -29,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +46,7 @@ import static com.emc.mongoose.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
-import static com.emc.mongoose.util.docker.MongooseContainer.systemTestContainerScenarioPath;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.systemTestContainerScenarioPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -57,18 +57,19 @@ import static org.junit.Assert.assertTrue;
 		return EnvParams.PARAMS;
 	}
 
-	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
+	private final String scenarioPath = systemTestContainerScenarioPath(getClass());
 	private static final int COUNT_LIMIT = 1_000_000;
 	private static final SizeInBytes SIZE_LIMIT = new SizeInBytes("10GB");
 	private static final int TIME_LIMIT_SEC = 60;
 	private static final int RATE_LIMIT = 1_000;
-	private final int TIMEOUT_IN_MILLIS = 1000_000;
-	private final String CONTAINER_ITEM_OUTPUT_PATH =
-		MongooseContainer.getContainerItemOutputPath(getClass().getSimpleName());
-	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
+	private static final int TIMEOUT_IN_MILLIS = 1_000_000;
+	private final String containerItemOutputPath = MongooseEntryNodeContainer.getContainerItemOutputPath(
+		getClass().getSimpleName()
+	);
+	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
-	private final MongooseContainer testContainer;
+	private final MongooseEntryNodeContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
 	private final RunMode runMode;
@@ -80,10 +81,10 @@ import static org.junit.Assert.assertTrue;
 
 	public UnlimitedConcurrencyLimitByRateTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
-		final Map<String, Object> schema =
-			SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
+	) throws Exception {
+		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
+			APP_NAME, Thread.currentThread().getContextClassLoader()
+		);
 		config = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
 		final Object avgPeriodRaw = config.val("output-metrics-average-period");
 		if(avgPeriodRaw instanceof String) {
@@ -93,14 +94,14 @@ import static org.junit.Assert.assertTrue;
 		}
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
 		this.storageType = storageType;
 		this.runMode = runMode;
 		this.itemSize = itemSize;
 		try {
-			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
+			Files.delete(Paths.get(hostItemOutputFile));
 		} catch(final Exception ignored) {
 		}
 		final List<String> env =
@@ -110,22 +111,23 @@ import static org.junit.Assert.assertTrue;
 			case ATMOS:
 			case S3:
 			case SWIFT:
-				final HttpStorageMockContainer storageMock =
-					new HttpStorageMockContainer(HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-						Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
-						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
-						HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-						HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
-					);
+				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
+					HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
+					Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
+					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+				);
 				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
-				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
+				args.add("--storage-net-node-addrs=" + String.join(",", storageMocks.keySet()));
 				break;
 			case FS:
-				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
+				args.add("--item-output-path=" + containerItemOutputPath);
+				args.add("--load-step-limit-size=" + SIZE_LIMIT);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
+					DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -142,8 +144,8 @@ import static org.junit.Assert.assertTrue;
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer = new MongooseContainer(
-			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
+		testContainer = new MongooseEntryNodeContainer(
+			stepId, storageType, runMode, concurrency, itemSize.getValue(), scenarioPath, env, args
 		);
 	}
 
@@ -163,9 +165,9 @@ import static org.junit.Assert.assertTrue;
 	public final void tearDown()
 	throws Exception {
 		testContainer.close();
-		slaveNodes.values().parallelStream().forEach(storageMock -> {
+		slaveNodes.values().parallelStream().forEach(node -> {
 			try {
-				storageMock.close();
+				node.close();
 			} catch(final Throwable t) {
 				t.printStackTrace(System.err);
 			}
@@ -183,14 +185,9 @@ import static org.junit.Assert.assertTrue;
 	public final void test()
 	throws Exception {
 		testMetricsTableStdout(
-			stdOutContent, stepId, storageType, runMode.getNodeCount(), COUNT_LIMIT,
-			new HashMap<OpType, Integer>() {{
-				put(CREATE, 0);
-			}}
+			stdOutContent, stepId, storageType, runMode.getNodeCount(), COUNT_LIMIT, Collections.singletonMap(CREATE, 0)
 		);
-		testFinalMetricsStdout(
-			stdOutContent, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), stepId
-		);
+		testFinalMetricsStdout(stdOutContent, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), stepId);
 		final List<CSVRecord> metricsLogRecs = getMetricsLogRecords(stepId);
 		testMetricsLogRecords(
 			metricsLogRecs, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), COUNT_LIMIT, TIME_LIMIT_SEC,
@@ -206,12 +203,12 @@ import static org.junit.Assert.assertTrue;
 		assertTrue(rate < RATE_LIMIT + RATE_LIMIT / 2);
 		final long totalSize = Long.parseLong(totalMetricsRec.get("Size"));
 		if(StorageType.FS.equals(storageType)) {
-			assertTrue(totalSize < SIZE_LIMIT.get() + SIZE_LIMIT.get() / 10);
+			assertTrue(totalSize < SIZE_LIMIT.get() + SIZE_LIMIT.get() / 5);
 		}
 		final long durationInSec = TimeUnit.MILLISECONDS.toSeconds(duration);
 		assertTrue(
 			"Test time was " + durationInSec + " while expected no more than " + TIME_LIMIT_SEC,
-			TIME_LIMIT_SEC + 5 >= durationInSec
+			TIME_LIMIT_SEC + 15 >= durationInSec
 		);
 	}
 }

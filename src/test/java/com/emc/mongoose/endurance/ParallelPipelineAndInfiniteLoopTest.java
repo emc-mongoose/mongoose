@@ -8,9 +8,9 @@ import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
-import com.emc.mongoose.util.docker.MongooseContainer;
+import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
-import static com.emc.mongoose.util.docker.MongooseContainer.enduranceTestContainerScenarioPath;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.enduranceTestContainerScenarioPath;
 import static org.junit.Assert.fail;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
@@ -40,10 +40,10 @@ public class ParallelPipelineAndInfiniteLoopTest {
 		return EnvParams.PARAMS;
 	}
 
-	private final String SCENARIO_PATH = enduranceTestContainerScenarioPath(getClass());
+	private final String scenarioPath = enduranceTestContainerScenarioPath(getClass());
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
-	private final MongooseContainer testContainer;
+	private final MongooseEntryNodeContainer testContainer;
 	private final String stepId;
 	private final StorageType storageType;
 	private final RunMode runMode;
@@ -55,7 +55,7 @@ public class ParallelPipelineAndInfiniteLoopTest {
 	) throws Exception {
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
-			FileUtils.deleteDirectory(Paths.get(MongooseContainer.HOST_LOG_PATH.toString(), stepId).toFile());
+			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
 		this.storageType = storageType;
@@ -91,7 +91,7 @@ public class ParallelPipelineAndInfiniteLoopTest {
 				break;
 			case FS:
 				try {
-					DirWithManyFilesDeleter.deleteExternal(MongooseContainer.getHostItemOutputPath(stepId));
+					DirWithManyFilesDeleter.deleteExternal(MongooseEntryNodeContainer.getHostItemOutputPath(stepId));
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -108,8 +108,8 @@ public class ParallelPipelineAndInfiniteLoopTest {
 				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
 				break;
 		}
-		testContainer = new MongooseContainer(
-			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args, true, false, false
+		testContainer = new MongooseEntryNodeContainer(
+			stepId, storageType, runMode, concurrency, itemSize.getValue(), scenarioPath, env, args, true, false, false
 		);
 	}
 

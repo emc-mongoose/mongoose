@@ -128,8 +128,7 @@ extends AmzS3StorageDriver {
 	private AmzS3StorageDriverTest(final Config config)
 	throws Exception {
 		super(
-			"test-storage-driver-s3",
-			DataInput.instance(null, "7a42d9c483244167", new SizeInBytes("4MB"), 16),
+			"test-storage-driver-s3", DataInput.instance(null, "7a42d9c483244167", new SizeInBytes("4MB"), 16),
 			config.configVal("storage"), false, config.intVal("load-batch-size")
 		);
 	}
@@ -394,8 +393,8 @@ extends AmzS3StorageDriver {
 			reqHeaders, httpRequest.method(), httpRequest.uri()
 		);
 		assertEquals(
-			"POST\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + '\n' + bucketName + '/'
-				+ itemId + "?uploadId=qazxswedc",
+			"POST\n\n\n" + reqHeaders.get(HttpHeaderNames.DATE) + '\n' + bucketName + '/' + itemId
+				+ "?uploadId=qazxswedc",
 			canonicalReq
 		);
 	}
