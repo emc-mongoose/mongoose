@@ -1,27 +1,127 @@
 # Contents
 
-1. [Load Average](#1-load-average)<br/>
-1.1. [Console](#11-console)<br/>
-1.1.1. [Table Fields Description](#111-table-fields-description)<br/>
-1.2. [File](#12-files)<br/>
-2. [Load Step Summary](#2-load-step-summary)<br/>
-2.1. [Console](#21-console)<br/>
-2.2. [File](#22-files)<br/>
-3. [Operation Traces](#3-operation-traces)<br/>
-3.1. [Console](#31-console)<br/>
-3.2. [File](#32-files)<br/>
-4. [Threshold](#4-threshold)<br/>
-4.1. [Console](#41-console)<br/>
-4.2. [File](#42-files)<br/>
+1. [General](#1-general)
+1.1. [Logging Subsystem](#11-logging-subsystem)
+1.1.1. [Load Step Id](#111-load-step-id)
+1.1.2. [Console](#112-console)
+1.1.3. [Files](#113-files)
+1.2. [Categories](#12-categories)
+1.2.1. [CLI Arguments](#121-cli-arguments)
+1.2.2. [Configuration Dump](#122-configuration-dump)
+1.2.3. [Scenario Dump](#123-scenario-dump)
+1.2.4. [3rd Party Log Messages](#124-3rd-party-log-messages)
+1.2.5. [Error Messages](#125-error-messages)
+1.2.6. [General Messages](#126-general-messages)
+1.2.7. [Item List Files](#127-item-list-files)
+2. [Metrics](#2-metrics)
+2.1. [Load Average](#21-load-average)<br/>
+2.1.1. [Console](#211-console)<br/>
+2.1.1.1. [Table Fields Description](#2111-table-fields-description)<br/>
+2.1.2. [File](#212-files)<br/>
+2.2. [Load Step Summary](#22-load-step-summary)<br/>
+2.2.1. [Console](#221-console)<br/>
+2.2.2. [File](#222-files)<br/>
+2.3. [Operation Traces](#23-operation-traces)<br/>
+2.3.1. [Console](#231-console)<br/>
+2.3.2. [File](#232-files)<br/>
+2.4. [Threshold](#24-threshold)<br/>
+2.4.1. [Console](#241-console)<br/>
+2.4.2. [File](#242-files)<br/>
 
-# 1. Load Average
+# 1. General
+
+## 1.1. Logging Subsystem
+
+Mongoose uses the [Apache Log4J2](http://logging.apache.org/log4j/2.x/) library to handle the
+overwhelming majority of its output due to
+[high performance capabilities](http://logging.apache.org/log4j/2.x/performance.html).
+
+The Log4J2 configuration is bundled into the `mongoose.jar` resources as `log4j2.json` file and
+is not designated to be changed by user since v3.5. Also the `log4j2.component.properties` file
+bundled into that jar to specify the additional options tuning the logging subsystem performance.
+
+### 1.1.1 Load Step Id
+
+The load step id is used to differentiate the log messages. If step id is not set, it's generated automatically using
+the following pattern: `<STEP_TYPE>-<yyyyMMdd.HHmmss.SSS>` There's also the special prefix "none-" which used instead of
+a step type if the message is logged out of any load step context.
+
+### 1.1.2 Console
+
+Console output is slightly colored by default for better readability.
+To disable the console output coloring set the `output-color` configuration option to "false".
+
+### 1.1.3. Files
+
+The most of log messages are written to the output files using dynamic output file path:
+`<MONGOOSE_DIR>/log/<STEP_ID>/...` where "STEP_ID" may change during runtime.
+
+## 1.2. Categories
+
+### 1.2.1. CLI Arguments
+
+The CLI arguments are logged once per run into the `cli.args.log` log
+file.
+
+### 1.2.2. Configuration Dump
+
+The configuration (defaults after the CLI arguments applied) is logged
+once per run into the `config.json` log file.
+
+### 1.2.3. Scenario Dump
+
+The scenario used for the test is logged once per run into the
+`scenario.txt` log file.
+
+### 1.2.4. 3rd Party Log Messages
+
+The log messages from the 3rd party components (dependency libraries) are intercepted and logged
+into the `3rdparty.log` file with the *dynamic path*. Logging level: "INFO".
+
+### 1.2.5. Error Messages
+
+* Error messages with level "INFO" or higher are displayed on the console with orange color.
+* Error messages with level "DEBUG" or higher are written to the file `errors.log` with the
+  *dynamic path*
+
+### 1.2.6. General Messages
+
+* Info messages with level "INFO" or higher are displayed on the console with grey color.
+* Info messages with level "DEBUG" or higher are written to the file `messages.log` with the
+  *dynamic path*
+
+### 1.2.7. Item List Files
+
+To persist the info about the items processed by a load step the items output file should be used.
+
+```bash
+java -jar <MONGOOSE_DIR>/mongoose.jar --test-step-limit-count=1000 --item-output-file=items.csv
+```
+In the example above the info about 1000 items processed by the load step will be persisted in the
+`items.csv` output file.
+
+The items list file may be useful if it's needed to perform another load step using these items:
+```bash
+java -jar <MONGOOSE_DIR>/mongoose.jar --read --item-input-file=items.csv
+```
+
+Items list file contains the CSV records each occupying a line.
+Each record contains comma-separated values which are:
+1. Full Item Path
+2. Data ring buffer offset (hexadecimal)
+3. Size (decimal)
+4. A pair of [layer/mask](../design/data_reentrancy.md) values separated with "/" character
+
+# 2. Metrics
+
+## 2.1. Load Average
 
 Load average metrics records are thought to be produced periodically to monitor the load step state
 in the nearly real time mode. The producing period is configurable (`output-metrics-average-period`)
 and the default value is "10s" (10 seconds). Setting this period to 0 will disable the load average
 metrics output at all.
 
-## 1.1. Console
+### 2.1.1. Console
 
 The average metrics are displayed in the console in the form of ASCII table for better readability.
 The header is displayed each 20 rows by default. Use the
@@ -55,7 +155,7 @@ Table output example:
 1881901842|170824183731|CREATE|       585|577.05    |        2270|     0|180.039|11.65720|1165.72|    754406|   19747777
 ```
 
-### 1.1.1. Table Fields Description
+#### 2.1.1.1. Table Fields Description
 
 Field Name            | Description
 ----------------------|------------
@@ -72,7 +172,7 @@ Last Rate / [MB/s]    | The moving average megabytes per second rate for the las
 Mean Latency [us]     | The last mean latency measured in the microseconds.
 Mean Duration [us]    | The last mean operation duration measured in the microseconds.
 
-## 1.2. Files
+### 2.1.2. Files
 
 Average metrics data is written to a CSV file `metrics.csv` with *dynamic path*. To prevent the average metrics file
 output the configuration parameter `output-metrics-average-persist` should be set to "false". Note that the file output
@@ -109,11 +209,11 @@ LatencyMed[us]  | Median of the operations latency distribution
 LatencyHiQ[us]  | High quartile of the operations latency distribution
 LatencyMax[us]  | Maximum operation latency
 
-# 2. Load Step Summary
+## 2.2. Load Step Summary
 
 At the end of each load step the summary metrics are produced.
 
-## 2.1. Console
+### 2.2.1. Console
 
 Console summary metrics output has YAML format for the better readability:
 ```yaml
@@ -165,22 +265,22 @@ Console summary metrics output has YAML format for the better readability:
 
   and "t" is the configured *load-metrics-period* parameter.
 
-## 2.2. Files
+### 2.2.2. Files
 
 The summary metrics produced at the end of each load step and the results are written to a CSV file `metrics.total.csv`.
 The layout is the same as for average metrics file output. To disable the summary metrics file output the configuration
 parameter `output-metrics-summary-persist` should be set to "false". Note that the file output for the metrics is always
 disabled for the load step slices (i.e. on the additional/remote nodes in the distributed mode).
 
-# 3. Operation Traces
+## 2.3. Operation Traces
 
 The metrics for each load operation (request either file operation).
 
-## 3.1. Console
+### 2.3.1. Console
 
 The console output is absent.
 
-## 3.2. Files
+### 2.3.2. Files
 
 The file output is disabled by default.
 To enable the file output, set the `output-metrics-trace-persist` configuration parameter to "true".
@@ -234,7 +334,7 @@ To enable the file output, set the `output-metrics-trace-persist` configuration 
 | 12   | Data item corrupted               | 2xx                                    |
 | 13   | Not enough space on the storage   | 507                                    |
 
-# 4. Threshold
+## 2.4. Threshold
 
 Mongoose controls the concurrency level by accounting the active channels at any moment of the time.
 The channel may be an open file either established network connection. The channel is active when
@@ -272,7 +372,7 @@ java -jar mongoose-<VER>.jar \
     --output-metrics-threshold=0.8
 ```
 
-## 4.1. Console
+### 2.4.1. Console
 
 1. The threshold state entrance is marked with the following log message:
 
@@ -282,7 +382,7 @@ java -jar mongoose-<VER>.jar \
 
    `<CONTEXT>: the active load operations count is below the threshold of <COUNT>, stopping the additional metrics accounting`
 
-## 4.2. Files
+### 2.4.2. Files
 
 The layout is the same as usual metrics log files layout, the log file name is: `metrics.threshold.total.csv`. Note that
 the file output for the metrics is always disabled for the load step slices (i.e. on the additional/remote nodes in the

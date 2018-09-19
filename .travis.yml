@@ -81,6 +81,10 @@ jobs:
     # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew systemTest --tests com.emc.mongoose.system.CopyUsingInputPathTest
     - env:
       - TEST=CopyUsingInputPathTest
+      - STORAGE_TYPE=fs
+      - RUN_MODE=local
+      - CONCURENCY=single,medium
+      - ITEM_SIZE=empty,small
       script: "./gradlew -Dtest.single=${TEST} :tests:system:test"
 
     # STORAGE_TYPE=fs,s3,swift DRIVER_COUNT=local,distributed CONCURRENCY=low,high ITEM_SIZE=empty,small ./gradlew -Dtest.single=JsonDeleteUsingInputPathLimitByRateTest :tests:system:test
