@@ -2,7 +2,9 @@ package com.emc.mongoose.metrics;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
+
 import com.emc.mongoose.item.op.OpType;
+
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.io.IOException;
@@ -37,7 +39,6 @@ implements MetricsContext<S> {
 	private final long outputPeriodMillis;
 	private volatile long lastOutputTs = 0;
 	private volatile S lastSnapshot = null;
-	private volatile MetricsListener metricsListener = null;
 	private volatile MetricsContext thresholdMetricsCtx = null;
 	private volatile boolean thresholdStateExitedFlag = false;
 	private final Lock timingLock = new ReentrantLock();
@@ -295,9 +296,6 @@ implements MetricsContext<S> {
 			actualConcurrencySnapshot.getMean(), concurrencyLimit, lastDurationSum, lastLatencySum, reqDurSnapshot,
 			respLatSnapshot
 		);
-		if(metricsListener != null) {
-			metricsListener.notify(lastSnapshot);
-		}
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.refreshLastSnapshot();
 		}
@@ -309,11 +307,6 @@ implements MetricsContext<S> {
 			refreshLastSnapshot();
 		}
 		return lastSnapshot;
-	}
-
-	@Override
-	public final void metricsListener(final MetricsListener metricsListener) {
-		this.metricsListener = metricsListener;
 	}
 
 	@Override

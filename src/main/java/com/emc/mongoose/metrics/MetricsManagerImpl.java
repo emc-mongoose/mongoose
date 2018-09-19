@@ -108,7 +108,9 @@ implements MetricsManager {
 			final Map<MetricsContext, AutoCloseable> stepMetrics = allMetrics.computeIfAbsent(
 				id, c -> new ConcurrentHashMap<>()
 			);
-			stepMetrics.put(metricsCtx, new Meter(metricsCtx));
+			if(metricsCtx instanceof DistributedMetricsContext) {
+				stepMetrics.put(metricsCtx, new Meter((DistributedMetricsContext) metricsCtx));
+			}
 			Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
 		} catch(final Exception e) {
 			LogUtil.exception(

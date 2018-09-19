@@ -1,5 +1,56 @@
 # Contents
 
+1. Defaults
+2. Configuration
+2.1. Load Scaling
+2.1.1. Rate Limit
+2.1.2. Storage Driver Concurrency Limit
+2.1.3. Distributed Mode
+2.2. Parameterizing
+2.2.1. Request HTTP Headers Parameterizing
+2.2.2. Output Path Parameterizing
+2.2.3. Multiuser Load
+2.3. Storage Drivers
+3. Load Generation Patterns
+3.1. Load Operations
+3.1.1. Basic Types
+3.1.1.1. Create
+3.1.1.1.1. Basic
+3.1.1.1.2. Copy Mode
+3.1.1.2. Read
+3.1.1.2.1. Basic
+3.1.1.2.2. Content Verification
+3.1.1.3. Update
+3.1.1.4. Delete
+3.1.1.5. Noop
+3.1.2. Byte Ranges Operations
+3.1.2.1. Read
+3.1.2.1.1. Random Ranges
+3.1.2.1.2. Fixed Ranges
+3.1.2.2. Update
+3.1.2.2.1. Random Ranges
+3.1.2.2.2. Fixed Ranges
+3.1.2.2.2.1. Append
+3.1.3. Composite Operations
+3.1.3.1. Storage-Side Concatenation
+3.1.3.1.1. S3 Multipart Upload
+3.1.3.1.2. Swift Dynamic Large Objects
+3.1.4. Recycle Mode
+3.2. Load Steps
+3.2.1. Identification
+3.2.1. Limits
+3.2.1.1. Operations Count Limit
+3.2.1.2. Time Limit
+3.2.1.3. Transfer Size Limit
+3.2.1.4. End Of Input
+3.2.2. Types
+3.2.2.1. Linear
+3.2.2.2. Pipeline
+3.2.2.3. Weighted Load
+3.2.2.4. Extending
+4. Scenarios
+5. Metrics Reporting
+
 1. **[Configuration](#1-configuration)**<br/>
 1.1. **<i>[Configuration Syntax](#11-configuration-syntax)</i>**<br/>
 1.2. **<i>[Aliasing](#12-aliasing)</i>**<br/>

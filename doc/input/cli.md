@@ -10,7 +10,5 @@ java -jar mongoose-<VERSION>.jar \
     --storage-net-node-addrs=10.20.30.40,10.20.30.41
 ```
 
-To find all available CLI options please refer to
-[Configuration](configuration.md) section. For example the
-configuration option `item-data-size` corresponds to the CLI argument
-`--item-data-size`.
+To find all available CLI options please refer to [Configuration](configuration.md) section. For example the
+configuration option `item-data-size` corresponds to the CLI argument `--item-data-size`.

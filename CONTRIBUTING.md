@@ -17,10 +17,9 @@
 4.1.3.1. [Containerized Tests](#4131-containerized-tests)<br/>
 4.2. [Releasing](#42-releasing)<br/>
 5. [Code](#6-code)<br/>
-5.1. [Branching](#61-branching)<br/>
-5.2. [Style](#62-style)<br/>
-5.3. [Exception Handling](#63-exception-handling)<br/>
-5.4. [Performance](#64-performance)<br/>
+5.1. [Style](#51-style)<br/>
+5.2. [Exception Handling](#52-exception-handling)<br/>
+5.3. [Performance](#53-performance)<br/>
 
 # 1. Contributors
 
@@ -239,30 +238,19 @@ export ITEM_SIZE=large
    git tag -a latest -m <X>.<Y>.<Z>
    git push --tags --force
    ```
-6. Create the pull request to the `master` branch
-7. Merge the pull request if reviewed and approved
-   *Note*:
-   > This is a no-return point. Making any further changes will require a new version!
-8. Upload the artifacts to the Central Maven repo:
+6. Set the `latest` tag also for the Docker images.
+7. Upload the artifacts to the Central Maven repo:
    1.
     ```bash
     ./gradlew clean uploadArchives
     ```
    2. Go to the https://oss.sonatype.org/#stagingRepositories find the corresponding repository, close and then release
       it.
-9. Update the projects depending on the Mongoose's API (storage drivers, at least)
+8. Update the projects depending on the Mongoose's API (storage drivers, at least)
 
 # 5. Code
 
-## 5.1. Branches
-
-The branching rules in the Mongoose project are simple:
-![branching](doc/images/branching.png)
-1. There's a separate "archive" branch for each release with name "release-vX.Y.Z" where "X.Y.Z" is a version number.
-2. The integration branch is named "integration". All feature PRs should base on the integration branch.
-3. The PR/merge to the master branch is performed when the release decision is made (all tests are ok, documentation is added, etc).
-
-## 5.2. Style
+## 5.1. Style
 
 * Indent code with TAB having width of 4 characters
 * Code line width: 120 characters
@@ -271,7 +259,7 @@ The branching rules in the Mongoose project are simple:
   * Default concrete implementation should be names as `FooImpl`
 * Any field/local variable should be *final* if possible
 
-## 5.3. Exception Handling
+## 5.2. Exception Handling
 
 The threads are not used in the usual way (*fibers* are used instead for the multitasking purposes). Therefore, having
 an `InterruptedException` thrown means that the run was interrupted externally. To stop the run, it's necessary to pass
@@ -294,7 +282,7 @@ occasionally:
     2. `Exception`
     3. `RuntimeException`
 
-## 5.4. Performance
+## 5.3. Performance
 Take care about the performance in the ***critical*** places:
 * Avoid *frequent* objects instantiation
 * Avoid unnecessary *frequent* allocation

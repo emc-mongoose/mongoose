@@ -1,59 +1,52 @@
 package com.emc.mongoose.metrics;
 
 import com.emc.mongoose.logging.LogUtil;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.svc.ServiceUtil.MBEAN_SERVER;
+
 import com.github.akurilov.commons.system.SizeInBytes;
+import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
+
 import org.apache.logging.log4j.Level;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.ObjectName;
 import java.util.Hashtable;
 
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static com.emc.mongoose.svc.ServiceUtil.MBEAN_SERVER;
-
 /**
  Created by andrey on 05.07.17.
  */
 public final class Meter
-	implements MeterMBean {
+implements MeterMBean {
 
-	private final MetricsContext metricsCtx;
+	private final DistributedMetricsContext metricsCtx;
 	private final ObjectName objectName;
 
-	public Meter(final MetricsContext metricsCtx)
+	public Meter(final DistributedMetricsContext metricsCtx)
 	throws Exception {
 		this.metricsCtx = metricsCtx;
 		final Hashtable<String, String> props = new Hashtable<>();
 		props.put(KEY_STEP_ID, metricsCtx.stepId());
 		props.put(KEY_OP_TYPE, metricsCtx.opType().name());
-		if(metricsCtx instanceof DistributedMetricsContext) {
-			props.put(
-				KEY_NODE_COUNT, Integer.toString(((DistributedMetricsSnapshot) metricsCtx.lastSnapshot()).nodeCount())
-			);
-		} else {
-			props.put(KEY_NODE_COUNT, "1");
-		}
+		props.put(KEY_NODE_COUNT, Integer.toString(metricsCtx.lastSnapshot().nodeCount()));
 		props.put(KEY_CONCURRENCY_LIMIT, Integer.toString(metricsCtx.concurrencyLimit()));
 		final String itemDataSizeStr;
 		final SizeInBytes itemDataSize = metricsCtx.itemDataSize();
 		if(itemDataSize.getMin() == itemDataSize.getMax()) {
 			itemDataSizeStr = itemDataSize.toString();
 		} else {
-			itemDataSizeStr = SizeInBytes.formatFixedSize(itemDataSize.getMin()) + '-'
-				+ SizeInBytes.formatFixedSize(itemDataSize.getMax());
+			itemDataSizeStr = formatFixedSize(itemDataSize.getMin()) + '-' + formatFixedSize(itemDataSize.getMax());
 		}
 		props.put(KEY_ITEM_DATA_SIZE, itemDataSizeStr);
 		objectName = new ObjectName(METRICS_DOMAIN, props);
 		metricsCtx.metricsListener(this);
-		if((metricsCtx instanceof DistributedMetricsContext)) {
-			try {
-				MBEAN_SERVER.registerMBean(this, objectName);
-			} catch(final InstanceAlreadyExistsException e) {
-				LogUtil.exception(
-					Level.WARN, e, "Failed to expose the metrics context \"{}\" with name \"{}\" for JMX service",
-					metricsCtx, objectName
-				);
-			}
+		try {
+			MBEAN_SERVER.registerMBean(this, objectName);
+		} catch(final InstanceAlreadyExistsException e) {
+			LogUtil.exception(
+				Level.WARN, e, "Failed to expose the metrics context \"{}\" with name \"{}\" for JMX service",
+				metricsCtx, objectName
+			);
 		}
 	}
 
@@ -67,10 +60,10 @@ public final class Meter
 		}
 	}
 
-	private volatile MetricsSnapshot lastSnapshot = null;
+	private volatile DistributedMetricsSnapshot lastSnapshot = null;
 
 	@Override
-	public final void notify(final MetricsSnapshot snapshot) {
+	public final void notify(final DistributedMetricsSnapshot snapshot) {
 		this.lastSnapshot = snapshot;
 	}
 
@@ -222,5 +215,10 @@ public final class Meter
 	@Override
 	public long[] latencyValues() {
 		return lastSnapshot.latencyValues();
+	}
+
+	@Override
+	public int nodeCount() {
+		return lastSnapshot.nodeCount();
 	}
 }

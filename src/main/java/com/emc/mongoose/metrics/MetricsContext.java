@@ -50,8 +50,6 @@ extends Closeable, Comparable<MetricsContext<S>> {
 
 	S lastSnapshot();
 
-	void metricsListener(final MetricsListener metricsListener);
-
 	long transferSizeSum();
 
 	// threshold-related accounting methods below

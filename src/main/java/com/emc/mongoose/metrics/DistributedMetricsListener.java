@@ -5,11 +5,11 @@ package com.emc.mongoose.metrics;
  The entity accepting the metrics updates
  */
 @FunctionalInterface
-public interface MetricsListener {
+public interface DistributedMetricsListener {
 
 	/**
 	 Update the state with the snapshot
 	 @param snapshot the metrics snapshot to update the metrics listener state
 	 */
-	void notify(final MetricsSnapshot snapshot);
+	void notify(final DistributedMetricsSnapshot snapshot);
 }

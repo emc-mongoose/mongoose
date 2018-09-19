@@ -9,13 +9,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import static java.lang.Math.min;
 
 public class ConcurrentSlidingWindowReservoir
-	implements Reservoir {
+implements Reservoir {
 
 	private static final int DEFAULT_SIZE = 1028;
 	private final long[] measurements;
 	private final AtomicLong offset;
 
-	public ConcurrentSlidingWindowReservoir(int size) {
+	public ConcurrentSlidingWindowReservoir(final int size) {
 		this.measurements = new long[size];
 		this.offset = new AtomicLong();
 	}
@@ -24,17 +24,13 @@ public class ConcurrentSlidingWindowReservoir
 		this(DEFAULT_SIZE);
 	}
 
-	public int offset() {
-		return offset.intValue();
-	}
-
 	@Override
 	public int size() {
 		return (int) min(offset.get(), measurements.length);
 	}
 
 	@Override
-	public void update(long value) {
+	public void update(final long value) {
 		measurements[(int) (offset.incrementAndGet() % measurements.length)] = value;
 	}
 

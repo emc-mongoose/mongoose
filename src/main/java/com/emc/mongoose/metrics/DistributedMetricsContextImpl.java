@@ -32,8 +32,8 @@ implements DistributedMetricsContext<S> {
 	private volatile long tsStart = - 1, prevElapsedTime = 0;
 	private volatile long lastOutputTs = 0;
 	private volatile S lastSnapshot = null;
-	private volatile MetricsListener metricsListener = null;
-	private volatile MetricsContext thresholdMetricsCtx = null;
+	private volatile DistributedMetricsListener metricsListener = null;
+	private volatile DistributedMetricsContext thresholdMetricsCtx = null;
 	private volatile boolean thresholdStateExitedFlag = false;
 
 	public DistributedMetricsContextImpl(
@@ -229,7 +229,7 @@ implements DistributedMetricsContext<S> {
 	}
 
 	@Override
-	public void metricsListener(final MetricsListener metricsListener) {
+	public void metricsListener(final DistributedMetricsListener metricsListener) {
 		this.metricsListener = metricsListener;
 	}
 
