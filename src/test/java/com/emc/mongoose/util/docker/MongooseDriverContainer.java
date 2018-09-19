@@ -7,8 +7,6 @@ import com.emc.mongoose.params.StorageType;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.BuildImageResultCallback;
 
 import java.io.File;
@@ -21,30 +19,20 @@ import java.util.Map;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
+import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.Constants.USER_HOME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.util.TestCaseUtil.snakeCaseName;
 
-public final class MongooseContainer
+public final class MongooseDriverContainer
 	extends ContainerBase {
 
-	public static final String IMAGE_VERSION = System.getenv("MONGOOSE_VERSION");
-	public static final Config BUNDLED_DEFAULTS;
-
-	static {
-		try {
-			BUNDLED_DEFAULTS = new BundledDefaultsProvider().config(
-				ARG_PATH_SEP, SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader())
-			);
-		} catch(final Exception e) {
-			throw new AssertionError(e);
-		}
-	}
-
-	public static final String APP_VERSION = BUNDLED_DEFAULTS.stringVal("run-version");
-	public static final String APP_HOME_DIR = Paths.get(USER_HOME, "." + APP_NAME, APP_VERSION).toString();
-	public static final String CONTAINER_HOME_PATH = Paths.get("/root", "." + APP_NAME, APP_VERSION).toString();
-	private static final String IMAGE_NAME = "emcmongoose/mongoose";
+	public static final String IMAGE_VERSION = MongooseContainer.IMAGE_VERSION;
+	public static final String APP_VERSION = MongooseContainer.APP_VERSION;
+	public static final String APP_HOME_DIR = MongooseContainer.APP_HOME_DIR;
+	public static final String BASE_DIR = new File("").getAbsolutePath();
+	public static final String CONTAINER_HOME_PATH = MongooseContainer.CONTAINER_HOME_PATH;
+	private static String IMAGE_NAME;
 	private static final String ENTRYPOINT = "/opt/mongoose/entrypoint.sh";
 	private static final String ENTRYPOINT_DEBUG = "/opt/mongoose/entrypoint-debug.sh";
 	private static final int PORT_DEBUG = 5005;
@@ -69,11 +57,11 @@ public final class MongooseContainer
 	}};
 
 	public static String systemTestContainerScenarioPath(final Class testCaseCls) {
-		return CONTAINER_HOME_PATH + "/" + DIR_EXAMPLE_SCENARIO + "/js/system/" + snakeCaseName(testCaseCls) + ".js";
+		return MongooseContainer.systemTestContainerScenarioPath(testCaseCls);
 	}
 
 	public static String enduranceTestContainerScenarioPath(final Class testCaseCls) {
-		return CONTAINER_HOME_PATH + "/" + DIR_EXAMPLE_SCENARIO + "/js/endurance/" + snakeCaseName(testCaseCls) + ".js";
+		return MongooseContainer.enduranceTestContainerScenarioPath(testCaseCls);
 	}
 
 	private final List<String> args;
@@ -81,35 +69,35 @@ public final class MongooseContainer
 	private String hostItemOutputPath = null;
 
 	public static String getContainerItemOutputPath(final String stepId) {
-		return Paths.get(CONTAINER_SHARE_PATH, stepId).toString();
+		return MongooseContainer.getContainerItemOutputPath(stepId);
 	}
 
 	public static String getHostItemOutputPath(final String stepId) {
-		return Paths.get(HOST_SHARE_PATH.toString(), stepId).toString();
+		return MongooseContainer.getHostItemOutputPath(stepId);
 	}
 
-	public MongooseContainer(
-		final String stepId, final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
+	public MongooseDriverContainer(
+		final String imageName, final String stepId, final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
 		final SizeInBytes itemSize, final String containerScenarioPath, final List<String> env, final List<String> args
 	)
 	throws InterruptedException {
-		this(stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args, true, true, true);
+		this(imageName, stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args, true, true, true);
 	}
 
-	public MongooseContainer(
-		final String stepId, final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
+	public MongooseDriverContainer(
+		final String imageName, final String stepId, final StorageType storageType, final RunMode runMode, final Concurrency concurrency,
 		final SizeInBytes itemSize, final String containerScenarioPath, final List<String> env, final List<String> args,
 		final boolean attachOutputFlag, final boolean collectOutputFlag, final boolean outputMetricsTracePersistFlag
 	)
 	throws InterruptedException {
 		this(
-			IMAGE_VERSION, stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args,
+			imageName, IMAGE_VERSION, stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args,
 			attachOutputFlag, collectOutputFlag, outputMetricsTracePersistFlag
 		);
 	}
 
-	public MongooseContainer(
-		final String version, final String stepId, final String containerScenarioPath,
+	public MongooseDriverContainer(
+		final String imageName, final String version, final String stepId, final String containerScenarioPath,
 		final List<String> env, final List<String> args, final boolean attachOutputFlag,
 		final boolean collectOutputFlag, final boolean outputMetricsTracePersistFlag
 	)
@@ -123,16 +111,17 @@ public final class MongooseContainer
 		if(containerScenarioPath != null) {
 			this.args.add("--run-scenario=" + containerScenarioPath);
 		}
+		buildImage(imageName);
 	}
 
-	public MongooseContainer(
-		final String version, final String stepId, final StorageType storageType, final RunMode runMode,
+	public MongooseDriverContainer(
+		final String imageName, final String version, final String stepId, final StorageType storageType, final RunMode runMode,
 		final Concurrency concurrency, final SizeInBytes itemSize, final String containerScenarioPath,
 		final List<String> env, final List<String> args, final boolean attachOutputFlag,
 		final boolean collectOutputFlag, final boolean outputMetricsTracePersistFlag
 	)
 	throws InterruptedException {
-		this(version, stepId, containerScenarioPath, env, args, attachOutputFlag, collectOutputFlag,
+		this(imageName, version, stepId, containerScenarioPath, env, args, attachOutputFlag, collectOutputFlag,
 			outputMetricsTracePersistFlag);
 		this.args.add("--storage-driver-limit-concurrency=" + concurrency.getValue());
 		this.args.add("--item-data-size=" + itemSize);
@@ -153,6 +142,26 @@ public final class MongooseContainer
 				args.add("--storage-net-http-namespace=ns1");
 				break;
 		}
+	}
+
+	public static final String buildImage(final String tag){
+		final File dockerBuildFile = Paths
+			.get(BASE_DIR, "docker", "Dockerfile")
+			.toFile();
+		final BuildImageResultCallback buildImageResultCallback = new BuildImageResultCallback();
+		Docker.CLIENT
+			.buildImageCmd()
+			.withBaseDirectory(new File(BASE_DIR))
+			.withDockerfile(dockerBuildFile)
+			.withBuildArg("MONGOOSE_VERSION", APP_VERSION)
+			.withPull(true)
+			.withTags(Collections.singleton(tag))
+			.exec(buildImageResultCallback);
+		return buildImageResultCallback.awaitImageId();
+	}
+
+	public final void imageName(final String imageName){
+		IMAGE_NAME = imageName;
 	}
 
 	@Override
