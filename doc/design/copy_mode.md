@@ -13,8 +13,7 @@ writing new objects.
 * Works only if the input path is different from the output one
 * Copying the containers (Swift) is not supported
 * Copying the buckets (S3) is not supported
-* Copying the objects (Atmos) while using /rest/object interface is
-  not supported yet
+* Copying the objects (Atmos) while using /rest/object interface is not supported yet
 
 # Approach
 
