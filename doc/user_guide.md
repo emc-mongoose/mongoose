@@ -31,8 +31,6 @@
 2.3.1. *[Items Output Delay](#231-items-output-delay)*<br/>
 2.3.2. *[Items Output File](#232-items-output-file)*<br/>
 2.3.3. *[Items Output Path](#233-items-output-path)*<br/>
-2.3.3.1. [Constant Items Output Path](#2331-constant-items-output-path)<br/>
-2.3.3.2. [Pattern Items Output Path](#2332-pattern-items-output-path)<br/>
 3. **[Content](#3-content)**<br/>
 3.1. **<i>[Uniform Random Data Payload](#31-uniform-random-data-payload)</i>**<br/>
 3.2. **<i>[Payload From the External File](#32-payload-from-the-external-file)</i>**<br/>
@@ -131,11 +129,11 @@
 
 ## 1.1. Configuration Syntax
 
-See the [[Configuration|v3.6 Configuration]] documentation for syntax details.
+See the [[Configuration|input/configuration]] documentation for syntax details.
 
 ## 1.2. Aliasing
 
-See the [[Configuration Aliasing|v3.6 Configuration#3-aliasing]] documentation for details.
+See the [[Configuration Aliasing|input/configuration#3-aliasing]] documentation for details.
 
 ## 1.3. Parameterized Configuration
 
@@ -173,25 +171,25 @@ The data items type is used by default.
 
 Fixed data item size is used by default. The default size value is 1MB.
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-data-size=10KB
+java -jar mongoose-<VERSION>.jar --item-data-size=10KB
 ```
 
 ##### 2.1.1.1.1. Empty Data Items
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-data-size=0
+java -jar mongoose-<VERSION>.jar --item-data-size=0
 ```
 
 #### 2.1.1.2. Random Size Data Items
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-data-size=5MB-15MB
+java -jar mongoose-<VERSION>.jar --item-data-size=5MB-15MB
 ```
 
 #### 2.1.1.2.1. Biased Random Size Data Items
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-data-size=0-100MB,0.2
+java -jar mongoose-<VERSION>.jar --item-data-size=0-100MB,0.2
 ```
 
 Note:
@@ -205,13 +203,13 @@ The path items type may be useful to work with directories/buckets/containers
 (depending on the storage driver type used)
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-type=path
+java -jar mongoose-<VERSION>.jar --item-type=path
 ```
 
 ### 2.1.3. Token Items
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-type=token
+java -jar mongoose-<VERSION>.jar --item-type=token
 ```
 
 ## 2.2. Items Input
@@ -222,13 +220,13 @@ The items input may be a file or a path which should be listed.
 ### 2.2.1. Items Input File
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-input-file=<PATH_TO_ITEMS_FILE> ...
+java -jar mongoose-<VERSION>.jar --item-input-file=<PATH_TO_ITEMS_FILE> ...
 ```
 
 ### 2.2.2. Items Path Listing Input
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-input-path=/bucket1 ...
+java -jar mongoose-<VERSION>.jar --item-input-path=/bucket1 ...
 ```
 
 ### 2.2.3. New Items Input
@@ -243,37 +241,37 @@ Random item ids are used by default. The collision probability is highly negligi
 ### 2.2.3.2. Ascending Item Ids
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-naming-type=asc ...
+java -jar mongoose-<VERSION>.jar --item-naming-type=asc ...
 ```
 
 ### 2.2.3.3. Descending Item Ids
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-naming-type=desc ...
+java -jar mongoose-<VERSION>.jar --item-naming-type=desc ...
 ```
 
 ### 2.2.3.4. Items Id Prefix
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-naming-prefix=item_ ...
+java -jar mongoose-<VERSION>.jar --item-naming-prefix=item_ ...
 ```
 
 ### 2.2.3.5. Items Id Radix
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-naming-radix=10 ...
+java -jar mongoose-<VERSION>.jar --item-naming-radix=10 ...
 ```
 
 ### 2.2.3.6. Items Id Offset
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-naming-offset=12345 ...
+java -jar mongoose-<VERSION>.jar --item-naming-offset=12345 ...
 ```
 
 ### 2.2.3.7. Items Id Length
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-naming-length=13 ...
+java -jar mongoose-<VERSION>.jar --item-naming-length=13 ...
 ```
 
 ## 2.3. Items Output
@@ -285,27 +283,19 @@ replication using the "chain" step (see the scenario step types for details). Th
 in seconds.
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-output-delay=60
+java -jar mongoose-<VERSION>.jar --item-output-delay=60
 ```
 
 ### 2.3.2. Items Output File
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-output-file=items.csv
+java -jar mongoose-<VERSION>.jar --item-output-file=items.csv
 ```
 
 ### 2.3.3. Items Output Path
 
-#### 2.3.3.1. Constant Items Output Path
-
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-output-path=/bucketOrContainerOrDir
-```
-
-#### 2.3.3.2. Pattern Items Output Path
-
-```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-output-path=/mnt/storage/%p\{16\;2\} ...
+java -jar mongoose-<VERSION>.jar --item-output-path=/bucketOrContainerOrDir
 ```
 
 # 3. Content
@@ -321,13 +311,13 @@ configurable seed number to pre-generate some amount (4MB) of the random
 uniform data. To use the custom seed use the following option:
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-data-content-seed=5eed42b1gb00b5
+java -jar mongoose-<VERSION>.jar --item-data-content-seed=5eed42b1gb00b5
 ```
 
 ## 3.2. Payload From the External File
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-data-content-file=<PATH_TO_CONTENT_FILE>
+java -jar mongoose-<VERSION>.jar --item-data-content-file=<PATH_TO_CONTENT_FILE>
 ```
 
 # 4. Concurrency
@@ -354,7 +344,7 @@ The default concurrency limit is 1. Mongoose is able to use a custom concurrency
 
 **Example:**
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --load-limit-concurrency=1000000
+java -jar mongoose-<VERSION>.jar --load-limit-concurrency=1000000
 ```
 
 ## 4.2. Unlimited Concurrency
@@ -363,7 +353,7 @@ The concurrency limit may be disabled (by setting its value to 0)
 
 **Example**:
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --load-limit-concurrency=0
+java -jar mongoose-<VERSION>.jar --load-limit-concurrency=0
 ```
 
 **Note**:
@@ -380,7 +370,7 @@ useful to perform read/update/append/overwrite the objects/files multiple times 
 
 **Example:**
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --load-generator-recycle-enabled
+java -jar mongoose-<VERSION>.jar --load-generator-recycle-enabled
 ```
 
 For details see the [[Recycle Mode|v3.6 Recycle Mode]] specification.
@@ -400,7 +390,7 @@ as the output log files parent directory name. It may be useful to override the 
 with a descriptive one.
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --test-step-id=myTest1
+java -jar mongoose-<VERSION>.jar --test-step-id=myTest1
 ```
 
 ## 6.2. Test Steps Limitation
@@ -413,7 +403,7 @@ A test step tries to execute eternally if its item input is infinite and no othe
 
 To make a test step to process (CRUD) no more than 1000 items, for example:
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --test-step-limit-count=1000
+java -jar mongoose-<VERSION>.jar --test-step-limit-count=1000
 ```
 
 ### 6.2.3. Limit Step by Rate
@@ -422,19 +412,19 @@ It may be useful to limit the rate by a max number of operations per second. The
 limit value may be a real number, for example 0.01 (op/s).
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --load-rate-limit=1234.5
+java -jar mongoose-<VERSION>.jar --load-rate-limit=1234.5
 ```
 
 ### 6.2.4. Limit Step by Processed Data Size
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --test-step-limit-size=123GB
+java -jar mongoose-<VERSION>.jar --test-step-limit-size=123GB
 ```
 
 ### 6.2.5. Limit Step by Time
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --test-step-limit-time=15m
+java -jar mongoose-<VERSION>.jar --test-step-limit-time=15m
 ```
 
 ### 6.2.6. Limit Step by End of Items Input
@@ -444,7 +434,7 @@ from the input are processed (copied/read/updated/deleted). This is true only if
 configured to recycle the I/O tasks again and again (recycle mode is disabled).
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-input-[file|path]=<INPUT_FILE_OR_PATH> ...
+java -jar mongoose-<VERSION>.jar --item-input-[file|path]=<INPUT_FILE_OR_PATH> ...
 ```
 
 In the example above, the test step will finish when all items from the specified items file are
@@ -458,7 +448,7 @@ By default, the standard output contains the color codes for better readability.
 To disable the standard output color codes use the following option:
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --output-color=false
+java -jar mongoose-<VERSION>.jar --output-color=false
 ```
 
 ## 7.2. Metrics Output
@@ -470,7 +460,7 @@ java -jar <MONGOOSE_DIR>/mongoose.jar --output-color=false
 The default time interval between the metric outputs is 10s. This value may be changed.
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --output-metrics-average-period=1m
+java -jar mongoose-<VERSION>.jar --output-metrics-average-period=1m
 ```
 
 #### 7.2.1.2. Average Metrics Output Persistence
@@ -479,7 +469,7 @@ By default each load step outputs the current metrics periodically to the consol
 To disable the average metrics file output use the following option:
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --output-metrics-average-persist=false
+java -jar mongoose-<VERSION>.jar --output-metrics-average-persist=false
 ```
 
 #### 7.2.1.3. Average Metrics Table Header Output Period
@@ -488,7 +478,7 @@ By default the table header is displayed every 20 records.
 To change this number, use the following option:
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --output-metrics-average-table-header-period=50
+java -jar mongoose-<VERSION>.jar --output-metrics-average-table-header-period=50
 ```
 
 ### 7.2.2. Summary Metrics Output
@@ -497,7 +487,7 @@ By default each load step outputs the summary metrics at its end to the console 
 To disable the summary metrics file output use the following option:
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --output-metrics-summary-persist=false
+java -jar mongoose-<VERSION>.jar --output-metrics-summary-persist=false
 ```
 
 ## 7.2.3. Trace Metrics Output
@@ -507,13 +497,13 @@ This kind of info is called "I/O trace". To output the I/O trace records into th
 specify the following option:
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --output-metrics-trace-persist
+java -jar mongoose-<VERSION>.jar --output-metrics-trace-persist
 ```
 
 ## 7.2.4. Metrics Accounting Threshold
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --test-step-metrics-threshold=0.95
+java -jar mongoose-<VERSION>.jar --test-step-metrics-threshold=0.95
 ```
 
 # 8. Load Types
@@ -524,7 +514,7 @@ The "dry run" operation type. Does everything except actual storage I/O. May be 
 the Mongoose's internal performance.
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --noop
+java -jar mongoose-<VERSION>.jar --noop
 ```
 
 ## 8.2. Create
@@ -538,7 +528,7 @@ Create load type is used by default. The behavior may differ on the other config
 ### 8.2.2. Copy Mode
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --item-input-[file|path]=<INPUT_FILE_OR_PATH> --item-output-path=/bucketOrDir
+java -jar mongoose-<VERSION>.jar --item-input-[file|path]=<INPUT_FILE_OR_PATH> --item-output-path=/bucketOrDir
 ```
 
 ## 8.3. Read
@@ -547,13 +537,13 @@ java -jar <MONGOOSE_DIR>/mongoose.jar --item-input-[file|path]=<INPUT_FILE_OR_PA
 
 Read operations don't perform a content validation by default.
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --read ...
+java -jar mongoose-<VERSION>.jar --read ...
 ```
 
 ### 8.3.2. Read With Enabled Validation
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --read --item-data-verify ...
+java -jar mongoose-<VERSION>.jar --read --item-data-verify ...
 ```
 
 ### 8.3.3. Partial Read
@@ -770,7 +760,7 @@ Load.run();
 ## 9.3. Custom Scenario File
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
     --test-scenario-file=<PATH_TO_SCENARIO_FILE>
 ```
 
@@ -964,7 +954,7 @@ java -jar <MONGOOSE_DIR>/mongoose-storage-driver-service.jar
 
 - Start the controller:
 ```
-java -jar <MONGOOSE_DIR>/mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
     --storage-driver-remote \
     ...
 ```
@@ -985,7 +975,7 @@ java -jar <MONGOOSE_DIR>/mongoose-storage-driver-service.jar \
 
 - Start the controller:
 ```
-java -jar <MONGOOSE_DIR>/mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
 	--storage-driver-remote \
 	--storage-driver-addrs=127.0.0.1:1099,127.0.0.1:1100 \
 	...
@@ -1000,7 +990,7 @@ java -jar <MONGOOSE_DIR>/mongoose-storage-driver-service.jar
 
 - Start the controller on another host:
 ```
-java -jar <MONGOOSE_DIR>/mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
 	--storage-driver-remote \
 	--storage-driver-addrs=<DRIVER_IP_ADDR> \
 	...
@@ -1015,7 +1005,7 @@ java -jar <MONGOOSE_DIR>/mongoose-storage-driver-service.jar
 
 - Start the controller on another host:
 ```
-java -jar <MONGOOSE_DIR>/mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
 	--storage-driver-remote \
 	--storage-driver-addrs=<DRIVER1>,<DRIVER2>,... \
 	...
@@ -1059,7 +1049,7 @@ endpoints.
 ### 10.4.2. SSL/TLS
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
     --storage-net-ssl \
     --storage-net-node-port=9021 \
     ...
@@ -1072,7 +1062,7 @@ react on a connection. Mongoose should fail such I/O task and continue to go on.
 to set a response timeout which allows to interrupt the I/O task and continue to work.
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
     --storage-net-timeoutMillisec=100000 \
     ...
 ```
@@ -1087,14 +1077,14 @@ improves the I/O performance significantly. But users may set the buffer sizes m
 
 Example: setting the *input* buffer to 100KB:
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
     --storage-net-rcvBuf=100KB \
     ...
 ```
 
 Example: setting the *output* buffer to 10MB:
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar \
+java -jar mongoose-<VERSION>.jar \
     --storage-net-sndBuf=10MB \
     ...
 ```

@@ -78,7 +78,6 @@ import java.util.stream.Collectors;
 	private final SizeInBytes sizeLimit;
 	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private String stdOutContent = null;
-	private long expectedCountMin;
 	private long expectedCountMax;
 
 	public MultipartCreateTest(
@@ -91,7 +90,6 @@ import java.util.stream.Collectors;
 			Math.min(SizeInBytes.toFixedSize("100GB"), 5 * concurrency.getValue() * fullItemSize.getAvg())
 		);
 		Loggers.MSG.info("Use the size limit: {}", sizeLimit);
-		expectedCountMin = sizeLimit.get() / fullItemSize.getMax();
 		expectedCountMax = sizeLimit.get() / fullItemSize.getMin();
 		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
 			APP_NAME, Thread.currentThread().getContextClassLoader()
@@ -212,7 +210,6 @@ import java.util.stream.Collectors;
 		long sizeSum = 0;
 		final int n = itemRecs.size();
 		assertTrue(n > 0);
-		assertTrue("Expected no less than " + expectedCountMin + " items, but got " + n, expectedCountMin <= n);
 		assertTrue("Expected no more than " + expectedCountMax + " items, but got " + n, expectedCountMax >= n);
 		for(final CSVRecord itemRec : itemRecs) {
 			nextItemSize = Long.parseLong(itemRec.get(2));
