@@ -7,8 +7,8 @@
 
 1. [Overview](#1-overview)
 2. [Features](#2-features)<br/>
-&nbsp;2.1. [Comparison With Similar Tools](#21-comparison-with-similar-tools)<br/>
-&nbsp;&nbsp;2.1.1. [General](#211-general)<br/>
+ 2.1. [Comparison With Similar Tools](#21-comparison-with-similar-tools)<br/>
+  2.1.1. [General](#211-general)<br/>
         2.1.2. [Purpose](#212-purpose)<br/>
         2.1.3. [Scalability](#213-scalability)<br/>
         2.1.4. [Input](#214-input)<br/>
