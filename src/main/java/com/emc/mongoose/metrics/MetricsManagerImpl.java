@@ -1,5 +1,6 @@
 package com.emc.mongoose.metrics;
 
+import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.logging.ExtResultsXmlLogMessage;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -17,8 +18,10 @@ import org.apache.logging.log4j.ThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -33,7 +36,8 @@ implements MetricsManager {
 
 	private static final String CLS_NAME = MetricsManagerImpl.class.getSimpleName();
 
-	private final Map<String, Map<MetricsContext, AutoCloseable>> allMetrics = new ConcurrentHashMap<>();
+	private final Map<String, List<MetricsContext>> allMetrics = new ConcurrentHashMap<>();
+	private final Map<DistributedMetricsContext, AutoCloseable> distributedMetrics = new ConcurrentHashMap<>();
 	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
 
 	private long outputPeriodMillis;
@@ -53,7 +57,7 @@ implements MetricsManager {
 			int actualConcurrency;
 			int nextConcurrencyThreshold;
 			for(final String id : allMetrics.keySet()) {
-				for(final MetricsContext metricsCtx : allMetrics.get(id).keySet()) {
+				for(final MetricsContext metricsCtx : allMetrics.get(id)) {
 					ThreadContext.put(KEY_STEP_ID, metricsCtx.stepId());
 					metricsCtx.refreshLastSnapshot();
 					actualConcurrency = metricsCtx.lastSnapshot().actualConcurrencyLast();
@@ -84,7 +88,7 @@ implements MetricsManager {
 					}
 				}
 			}
-			// periodic console output
+			// console output
 			if(!selectedMetrics.isEmpty()) {
 				Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
 				selectedMetrics.clear();
@@ -99,17 +103,17 @@ implements MetricsManager {
 	public void register(final String id, final MetricsContext metricsCtx) {
 		try(
 			final Instance logCtx = put(KEY_STEP_ID, id)
-				.put(KEY_CLASS_NAME, MetricsManagerImpl.class.getSimpleName())
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			if(!isStarted()) {
 				start();
 				Loggers.MSG.debug("Started the metrics manager fiber");
 			}
-			final Map<MetricsContext, AutoCloseable> stepMetrics = allMetrics.computeIfAbsent(
-				id, c -> new ConcurrentHashMap<>()
-			);
+			final List<MetricsContext> stepMetrics = allMetrics.computeIfAbsent(id, c -> new ArrayList<>());
+			stepMetrics.add(metricsCtx);
 			if(metricsCtx instanceof DistributedMetricsContext) {
-				stepMetrics.put(metricsCtx, new Meter((DistributedMetricsContext) metricsCtx));
+				final DistributedMetricsContext distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
+				distributedMetrics.put(distributedMetricsCtx, new Meter(distributedMetricsCtx));
 			}
 			Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
 		} catch(final Exception e) {
@@ -123,11 +127,11 @@ implements MetricsManager {
 	public void unregister(final String id, final MetricsContext metricsCtx) {
 		try(
 			final Instance stepIdCtx = put(KEY_STEP_ID, id)
-				.put(KEY_CLASS_NAME, MetricsManagerImpl.class.getSimpleName())
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
-			final Map<MetricsContext, AutoCloseable> stepMetrics = allMetrics.get(id);
+			final List<MetricsContext> stepMetrics = allMetrics.get(id);
 			if(stepMetrics != null) {
-				metricsCtx.refreshLastSnapshot(); // last time
+				metricsCtx.refreshLastSnapshot(); // one last time
 				// check for the metrics threshold state if entered
 				if(metricsCtx.thresholdStateEntered() && ! metricsCtx.thresholdStateExited()) {
 					exitMetricsThresholdState(metricsCtx);
@@ -141,17 +145,20 @@ implements MetricsManager {
 				}
 				// console output
 				if(metricsCtx instanceof DistributedMetricsContext) {
+					final DistributedMetricsContext distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
 					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx)));
 					Loggers.METRICS_STD_OUT.info(
-						new StepResultsMetricsLogMessage((DistributedMetricsContext) metricsCtx)
+						new StepResultsMetricsLogMessage(distributedMetricsCtx)
 					);
-				}
-				final AutoCloseable meterMBean = stepMetrics.remove(metricsCtx);
-				if(meterMBean != null) {
-					try {
-						meterMBean.close();
-					} catch(final Exception e) {
-						LogUtil.exception(Level.WARN, e, "Failed to close the meter MBean");
+					final AutoCloseable meterMBean = distributedMetrics.remove(distributedMetricsCtx);
+					if(meterMBean != null) {
+						try {
+							meterMBean.close();
+						} catch(final InterruptRunException e) {
+							throw e;
+						} catch(final Exception e) {
+							LogUtil.exception(Level.WARN, e, "Failed to close the meter MBean");
+						}
 					}
 				}
 			} else {
@@ -186,9 +193,21 @@ implements MetricsManager {
 
 	@Override
 	protected final void doClose() {
-		for(final Map<MetricsContext, AutoCloseable> meters : allMetrics.values()) {
-			meters.clear();
-		}
+		allMetrics.values().forEach(List::clear);
 		allMetrics.clear();
+		distributedMetrics
+			.values()
+			.forEach(
+				mBean -> {
+					try {
+						mBean.close();
+					} catch(final InterruptRunException e) {
+						throw e;
+					} catch(final Exception e) {
+						LogUtil.exception(Level.WARN, e, "Failed to close the meter MBean");
+					}
+				}
+			);
+		distributedMetrics.clear();
 	}
 }
