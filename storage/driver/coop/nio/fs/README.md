@@ -1,9 +1,8 @@
 # Introduction
 
-The storage driver implementation may be used to perform file non-blocking I/O. Typically used to
-test CIFS/HDFS/NFS shares mounted locally. However, testing distributed filesystems using generic
-filesystem storage drivers may be not accurate due to additional VFS layer. The measured rates may
-be:
+The storage driver implementation may be used to perform file non-blocking I/O. Typically used totest CIFS/HDFS/NFS
+shares mounted locally. However, testing distributed filesystems via the mounted shares may be not accurate due to
+additional VFS layer. The measured rates may be:
 * Inadequately low due to frequent system calls
 * Higher than network bandwidth due to local caching by VFS
 
