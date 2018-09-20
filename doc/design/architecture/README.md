@@ -155,4 +155,4 @@ Using more threads for "calculations" causes higher throughput (operations count
 responsiveness (e.g. lower latency). However using more threads for I/O causes higher observable bandwidth (transferred
 bytes count per unit of time), which is especially obvious while performing I/O on the large data items.
 
-![Calc vs I/O balance](/doc/images/calc_vs_io_problem.png)
+![Calc vs I/O balance](../../images/calc_vs_io_problem.png)
