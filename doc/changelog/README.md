@@ -58,21 +58,21 @@
 
 ### Functional
 
-#### 1. [P2P Distributed Mode](../design/distributed_mode.md)
+#### 1. [P2P Distributed Mode](doc/design/distributed_mode/README.md)
 
 The new distributed mode design is based on P2P (peer-to-peer) principles such as task/workload slicing and independent
 execution. This allows to choose any node from the set to initiate the run. Also there's no more need to dedicate the
 host for the controller. The remote API is also available to deploy applications on top of Mongoose node set such as
 GUI.
 
-#### 2. Automated [Installer](../design/installer.md)
+#### 2. Automated [Installer](src/main/java/com/emc/mongoose/env/README.md)
 
 New Mongoose is delivered as a single jar instead of tarball. This jar
 installs all the required files automatically if needed in the user
 home directory. Also, the installer detects the extensions and installs
 them too.
 
-#### 3. [Extensible](../api/extensions/general.md) Configuration
+#### 3. Extensible Configuration
 
 Some extensions require specific configuration options. To support the
 specific configuration options the extensible configuration was
@@ -87,7 +87,7 @@ scenarios to v4.0.0 scenarios is provided: https://github.com/emc-mongoose/scena
 
 ## Fixed Bugs
 
-*
+* TBD
 
 # 3.6.2
 

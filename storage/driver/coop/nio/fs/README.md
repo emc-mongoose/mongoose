@@ -15,7 +15,7 @@ be:
 * Automatic destination path creation on demand
 * Data item operation types:
     * `create`, additional modes:
-        * [copy](../../../design/copy_mode.md)
+        * [copy](doc/design/copy_mode/README.md)
     * `read`
         * full
         * random byte ranges
@@ -29,11 +29,6 @@ be:
     * `noop`
 
 # Usage
-
-Latest stable pre-built jar file is available at:
-https://github.com/emc-mongoose/mongoose-storage-driver-fs/releases/download/latest/mongoose-storage-driver-fs.jar
-This jar file may be downloaded manually and placed into the `ext`
-directory of Mongoose to be automatically loaded into the runtime.
 
 ```bash
 java -jar mongoose-<VERSION>.jar \

@@ -82,6 +82,7 @@ docker run \
 | mongoose-storage-driver-cifs | Base image + CIFS storage driver implementation (planned) |
 | [mongoose-storage-driver-hdfs](https://github.com/emc-mongoose/mongoose-storage-driver-hdfs) | Base image + HDFS storage driver implementation |
 | mongoose-storage-driver-nfs | Base image + NFS storage driver implementation (planned) |
+| [mongoose-storage-driver-pravega](https://github.com/emc-mongoose/mongoose-storage-driver-pravega) | Base image + [Pravega](http://pravega.io) storage driver implementation (planned) |
 
 ## Additional Notes
 

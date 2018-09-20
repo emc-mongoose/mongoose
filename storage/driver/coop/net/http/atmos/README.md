@@ -31,11 +31,6 @@
 
 # Usage
 
-Latest stable pre-built jar file is available at:
-https://github.com/emc-mongoose/mongoose-storage-driver-atmos/releases/download/latest/mongoose-storage-driver-atmos.jar
-This jar file may be downloaded manually and placed into the `ext`
-directory of Mongoose to be automatically loaded into the runtime.
-
 ```bash
 java -jar mongoose-<VERSION>.jar \
     --storage-driver-type=atmos \

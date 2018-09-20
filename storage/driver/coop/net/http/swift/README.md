@@ -14,8 +14,8 @@
 * Path listing input (with JSON response payload)
 * Data item operation types:
     * `create`
-        * [copy](../../../design/copy_mode.md)
-        * [Dynamic Large Objects](../../../design/storage_side_concatenation.md)
+        * [copy](doc/design/copy_mode/README.md)
+        * [Dynamic Large Objects](src/main/java/com/emc/mongoose/item/op/composite/README.md)
     * `read`
         * full
         * random byte ranges
@@ -37,11 +37,6 @@
     * `noop`
 
 # Usage
-
-Latest stable pre-built jar file is available at:
-https://github.com/emc-mongoose/mongoose-storage-driver-swift/releases/download/latest/mongoose-storage-driver-swift.jar
-This jar file may be downloaded manually and placed into the `ext`
-directory of Mongoose to be automatically loaded into the runtime.
 
 ```bash
 java -jar mongoose-<VERSION>.jar \

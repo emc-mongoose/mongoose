@@ -10,7 +10,7 @@ node.
 
 | v3.x.x | v4.x.x
 |--------|-------
-| ![Distributed Mode v3.x.x](../images/distributed_mode_v3.png) | ![Distributed Mode v4.x.x](../images/distributed_mode_v4.png)
+| ![Distributed Mode v3.x.x](doc/images/distributed_mode_v3.png) | ![Distributed Mode v4.x.x](doc/images/distributed_mode_v4.png)
 
 * **v3.x.x**
     * The "controller" is used to initiate the run
