@@ -43,7 +43,7 @@
 &nbsp;&nbsp;3.7. Design<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.1. [Architecture](doc/design/architecture/README.md)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.2. [Distributed Mode](doc/design/distributed_mode/README.md)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.3. [Installer](doc/design/installer/README.md)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.7.3. [Installer](src/main/java/com/emc/mongoose/env/README.md)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.4. [Recycle Mode](doc/design/recycle_mode/README.md)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.5. [Data Reentrancy](doc/design/data_reentrancy/README.md)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.6. [Byte Range Operations](doc/design/byte_range_operations/README.md)<br/>
