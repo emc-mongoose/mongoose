@@ -29,7 +29,7 @@
 &nbsp;&nbsp;&nbsp;2.4.3. [Scenario Engine](#243-scenario-engine)<br/>
 3. Documentation<br/>
 &nbsp;&nbsp;3.1. [Deployment](doc/deployment/README.md)<br/>
-&nbsp;&nbsp;3.2. [User Guide](doc/user_guide/README.md)<br/>
+&nbsp;&nbsp;3.2. [Usage](doc/usage/README.md)<br/>
 &nbsp;&nbsp;3.2. [Troubleshooting](doc/troubleshooting/README.md)<br/>
 &nbsp;&nbsp;3.3. Storage Drivers<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.3.1. [General](storage/driver/README.md)<br/>
@@ -124,7 +124,7 @@ from the table below
 |**Extensible to support custom storage API**|  :heavy_check_mark:   | :heavy_check_mark: |
 
 
-# 2.2. Scalability
+## 2.2. Scalability
 
 ### 2.2.1. Vertical
 
@@ -219,7 +219,7 @@ Mongoose supports some storage types out-of-the-box:
 * OpenStack Swift
 * Filesystem
 
-The following additional storage driver implementations are publicly available:
+The following additional storage driver implementations are available:
 * [HDFS](https://github.com/emc-mongoose/mongoose-storage-driver-hdfs)
 
 ### 2.4.3. Scenario Engine
