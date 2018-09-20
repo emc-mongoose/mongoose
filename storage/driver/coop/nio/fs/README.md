@@ -15,7 +15,7 @@ be:
 * Automatic destination path creation on demand
 * Data item operation types:
     * `create`, additional modes:
-        * [copy](doc/design/copy_mode/README.md)
+        * [copy](../../../../../doc/design/copy_mode/README.md)
     * `read`
         * full
         * random byte ranges
