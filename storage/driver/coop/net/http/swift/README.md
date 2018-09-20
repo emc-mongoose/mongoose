@@ -14,8 +14,8 @@
 * Path listing input (with JSON response payload)
 * Data item operation types:
     * `create`
-        * [copy](doc/design/copy_mode/README.md)
-        * [Dynamic Large Objects](src/main/java/com/emc/mongoose/item/op/composite/README.md)
+        * [copy](../../../../../../doc/design/copy_mode/README.md)
+        * [Dynamic Large Objects](../../../../../../src/main/java/com/emc/mongoose/item/op/composite/README.md)
     * `read`
         * full
         * random byte ranges
