@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.driver.net.base;
+package com.emc.mongoose.storage.driver.coop.net;
 
 import io.netty.handler.ssl.OpenSslContext;
 import io.netty.handler.ssl.SslContext;

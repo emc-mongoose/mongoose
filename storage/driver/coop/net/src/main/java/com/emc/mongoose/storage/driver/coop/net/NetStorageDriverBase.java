@@ -28,6 +28,7 @@ import com.github.akurilov.confuse.Config;
 
 import com.github.akurilov.netty.connection.pool.MultiNodeConnPoolImpl;
 import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;
+
 import static com.github.akurilov.netty.connection.pool.NonBlockingConnPool.ATTR_KEY_NODE;
 
 import io.netty.bootstrap.Bootstrap;
