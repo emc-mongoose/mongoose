@@ -4,18 +4,18 @@ The basic load step executes the same type of operation for each item
 supplied by the input. It's easy to execute several types of operations
 by executing a sequence of the load steps:
 
-![Figure 1](../../doc/images/chain-fig1-subsequent-load-steps.png)
+![Figure 1](../../../doc/images/chain-fig1-subsequent-load-steps.png)
 
 However, sometimes it's necessary to execute the different types of
 operations on the items asynchronously (e.g. each item traverses through
 the "pipeline" of load operations):
 
-![Figure 2](../../doc/images/chain-fig2-create-read.png)
+![Figure 2](../../../doc/images/chain-fig2-create-read.png)
 
 Additional useful possibility is to sustain some fixed delay between
 the operations in the pipeline:
 
-![Figure 3](../../doc/images/chain-fig3-create-read-with-delay.png)
+![Figure 3](../../../doc/images/chain-fig3-create-read-with-delay.png)
 
 # Limitations
 
