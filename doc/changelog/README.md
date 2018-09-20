@@ -58,14 +58,14 @@
 
 ### Functional
 
-#### 1. [P2P Distributed Mode](doc/design/distributed_mode/README.md)
+#### 1. P2P Distributed Mode
 
 The new distributed mode design is based on P2P (peer-to-peer) principles such as task/workload slicing and independent
 execution. This allows to choose any node from the set to initiate the run. Also there's no more need to dedicate the
 host for the controller. The remote API is also available to deploy applications on top of Mongoose node set such as
 GUI.
 
-#### 2. Automated [Installer](src/main/java/com/emc/mongoose/env/README.md)
+#### 2. Automated Installer
 
 New Mongoose is delivered as a single jar instead of tarball. This jar
 installs all the required files automatically if needed in the user
