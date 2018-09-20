@@ -6,9 +6,9 @@
 # Contents
 
 1. [Overview](#1-overview)
-2. [Features](#2-features)
-    2.1. [Comparison With Similar Tools](#21-comparison-with-similar-tools)<br/>
-        2.1.1. [General](#211-general)<br/>
+2. [Features](#2-features)<br/>
+&nbsp;2.1. [Comparison With Similar Tools](#21-comparison-with-similar-tools)<br/>
+&nbsp;&nbsp;2.1.1. [General](#211-general)<br/>
         2.1.2. [Purpose](#212-purpose)<br/>
         2.1.3. [Scalability](#213-scalability)<br/>
         2.1.4. [Input](#214-input)<br/>
@@ -27,7 +27,7 @@
         2.4.1. [Load Steps](#241-load-steps)<br/>
         2.4.2. [Storage Drivers](#242-storage-drivers)<br/>
         2.4.3. [Scenario Engine](#243-scenario-engine)<br/>
-3. Documentation
+3. Documentation<br/>
     3.1. [Deployment](doc/deployment/README.md)<br/>
     3.2. [User Guide](doc/user_guide/README.md)<br/>
     3.2. [Troubleshooting](doc/troubleshooting/README.md)<br/>
