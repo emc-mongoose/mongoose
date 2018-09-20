@@ -23,7 +23,7 @@ objects/files in the unlimited manner (infinitely either using time limit).
 
 # Approach
 
-The [Load Generator](../architecture/README.md#load-generator) component is
+The [Load Generator](../architecture/README.md#22-load-generator) component is
 responsible for the operations recycling. There are two additional methods in
 its interface to support the recycling:
 * Check if the load generator is configured to recycle the operations:
@@ -35,7 +35,7 @@ its interface to support the recycling:
     void recycle(final O op);
     ```
 
-The [Load Step Context](../architecture/README.md#load-step-context) component keeps in memory the latest state for all items
+The [Load Step Context](../architecture/README.md#23-load-step-context) component keeps in memory the latest state for all items
 being processed in the recycle mode to meet the requirement (5).
 
 Also, there's a specific ***"nothing to recycle"*** state which requires
