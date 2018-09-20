@@ -7,52 +7,52 @@
 
 1. [Overview](#1-overview)
 2. [Features](#2-features)<br/>
- 2.1. [Comparison With Similar Tools](#21-comparison-with-similar-tools)<br/>
-  2.1.1. [General](#211-general)<br/>
-        2.1.2. [Purpose](#212-purpose)<br/>
-        2.1.3. [Scalability](#213-scalability)<br/>
-        2.1.4. [Input](#214-input)<br/>
-        2.1.5. [Output](#215-output)<br/>
-        2.1.6. [Load Generation Patterns](#216-load-generation-patterns)<br/>
-        2.1.7. [Storages Support](#217-storages-support)<br/>
-    2.2. [Scalability](#22-scalability)<br/>
-        2.2.1. [Vertical](#221-vertical)<br/>
-        2.2.2. [Horizontal](#222-horizontal)<br/>
-    2.3. [Customization](#23-customization)<br/>
-        2.3.1. [Flexible Configuration](#231-flexible-configuration)<br/>
-        2.3.2. [Load Generation Patterns](#232-load-generation-patterns)<br/>
-        2.3.3. [Scenarios](#233-scenarios)<br/>
-        2.3.4. [Metrics Reporting](#234-metrics-reporting)<br/>
-    2.4. [Extension](#24-extension)<br/>
-        2.4.1. [Load Steps](#241-load-steps)<br/>
-        2.4.2. [Storage Drivers](#242-storage-drivers)<br/>
-        2.4.3. [Scenario Engine](#243-scenario-engine)<br/>
+&nbsp;2.1. [Comparison With Similar Tools](#21-comparison-with-similar-tools)<br/>
+&nbsp;&nbsp;2.1.1. [General](#211-general)<br/>
+&nbsp;&nbsp;2.1.2. [Purpose](#212-purpose)<br/>
+&nbsp;&nbsp;2.1.3. [Scalability](#213-scalability)<br/>
+&nbsp;&nbsp;2.1.4. [Input](#214-input)<br/>
+&nbsp;&nbsp;2.1.5. [Output](#215-output)<br/>
+&nbsp;&nbsp;2.1.6. [Load Generation Patterns](#216-load-generation-patterns)<br/>
+&nbsp;&nbsp;2.1.7. [Storages Support](#217-storages-support)<br/>
+&nbsp;2.2. [Scalability](#22-scalability)<br/>
+&nbsp;&nbsp;2.2.1. [Vertical](#221-vertical)<br/>
+&nbsp;&nbsp;2.2.2. [Horizontal](#222-horizontal)<br/>
+&nbsp;2.3. [Customization](#23-customization)<br/>
+&nbsp;&nbsp;2.3.1. [Flexible Configuration](#231-flexible-configuration)<br/>
+&nbsp;&nbsp;2.3.2. [Load Generation Patterns](#232-load-generation-patterns)<br/>
+&nbsp;&nbsp;2.3.3. [Scenarios](#233-scenarios)<br/>
+&nbsp;&nbsp;2.3.4. [Metrics Reporting](#234-metrics-reporting)<br/>
+&nbsp;2.4. [Extension](#24-extension)<br/>
+&nbsp;&nbsp;2.4.1. [Load Steps](#241-load-steps)<br/>
+&nbsp;&nbsp;2.4.2. [Storage Drivers](#242-storage-drivers)<br/>
+&nbsp;&nbsp;2.4.3. [Scenario Engine](#243-scenario-engine)<br/>
 3. Documentation<br/>
-    3.1. [Deployment](doc/deployment/README.md)<br/>
-    3.2. [User Guide](doc/user_guide/README.md)<br/>
-    3.2. [Troubleshooting](doc/troubleshooting/README.md)<br/>
-    3.3. Storage Drivers<br/>
-        3.3.1. [General](storage/driver/README.md)<br/>
-        3.3.2. [S3](storage/driver/coop/net/http/s3/README.md)<br/>
-        3.3.3. [Atmos](storage/driver/coop/net/http/atmos/README.md)<br/>
-        3.3.4. [Swift](storage/driver/coop/net/http/swift/README.md)<br/>
-        3.3.5. [FS](storage/driver/coop/nio/fs/README.md)<br/>
-    3.4. [Dependencies](doc/dependencies/README.md)<br/>
-    3.5. [Input](doc/input/README.md)<br/>
-    3.6. [Output](doc/output/README.md)<br/>
-    3.7. Design<br/>
-        3.7.1. [Architecture](doc/design/architecture/README.md)<br/>
-        3.7.2. [Distributed Mode](doc/design/distributed_mode/README.md)<br/>
-        3.7.3. [Installer](doc/design/installer/README.md)<br/>
-        3.7.4. [Recycle Mode](doc/design/recycle_mode/README.md)<br/>
-        3.7.5. [Data Reentrancy](doc/design/data_reentrancy/README.md)<br/>
-        3.7.6. [Byte Range Operations](doc/design/byte_range_operations/README.md)<br/>
-        3.7.7. [Copy Mode](doc/design/copy_mode/README.md)<br/>
-        3.7.8. [Pipeline Load](load/step/pipeline/README.md)<br/>
-        3.7.9. [Weighted Load](load/step/weighted/README.md)<br/>
-    3.8. [Integrations](doc/integrations/README.md)<br/>
-    3.9. [Contributing](CONTRIBUTING.md)<br/>
-    3.10. [Changelog](doc/changelog/README.md)<br/>
+&nbsp;3.1. [Deployment](doc/deployment/README.md)<br/>
+&nbsp;3.2. [User Guide](doc/user_guide/README.md)<br/>
+&nbsp;3.2. [Troubleshooting](doc/troubleshooting/README.md)<br/>
+&nbsp;3.3. Storage Drivers<br/>
+&nbsp;&nbsp;3.3.1. [General](storage/driver/README.md)<br/>
+&nbsp;&nbsp;3.3.2. [S3](storage/driver/coop/net/http/s3/README.md)<br/>
+&nbsp;&nbsp;3.3.3. [Atmos](storage/driver/coop/net/http/atmos/README.md)<br/>
+&nbsp;&nbsp;3.3.4. [Swift](storage/driver/coop/net/http/swift/README.md)<br/>
+&nbsp;&nbsp;3.3.5. [FS](storage/driver/coop/nio/fs/README.md)<br/>
+&nbsp;3.4. [Dependencies](doc/dependencies/README.md)<br/>
+&nbsp;3.5. [Input](doc/input/README.md)<br/>
+&nbsp;3.6. [Output](doc/output/README.md)<br/>
+&nbsp;3.7. Design<br/>
+&nbsp;&nbsp;3.7.1. [Architecture](doc/design/architecture/README.md)<br/>
+&nbsp;&nbsp;3.7.2. [Distributed Mode](doc/design/distributed_mode/README.md)<br/>
+&nbsp;&nbsp;3.7.3. [Installer](doc/design/installer/README.md)<br/>
+&nbsp;&nbsp;3.7.4. [Recycle Mode](doc/design/recycle_mode/README.md)<br/>
+&nbsp;&nbsp;3.7.5. [Data Reentrancy](doc/design/data_reentrancy/README.md)<br/>
+&nbsp;&nbsp;3.7.6. [Byte Range Operations](doc/design/byte_range_operations/README.md)<br/>
+&nbsp;&nbsp;3.7.7. [Copy Mode](doc/design/copy_mode/README.md)<br/>
+&nbsp;&nbsp;3.7.8. [Pipeline Load](load/step/pipeline/README.md)<br/>
+&nbsp;&nbsp;3.7.9. [Weighted Load](load/step/weighted/README.md)<br/>
+&nbsp;3.8. [Integrations](doc/integrations/README.md)<br/>
+&nbsp;3.9. [Contributing](CONTRIBUTING.md)<br/>
+&nbsp;3.10. [Changelog](doc/changelog/README.md)<br/>
 
 # 1. Overview
 
