@@ -1,5 +1,7 @@
-1. Rate
+# Load Scaling
 
-2. Concurrency
+## 1. Rate
 
-3. Distributed Mode
+## 2. Concurrency
+
+## 3. Distributed Mode
