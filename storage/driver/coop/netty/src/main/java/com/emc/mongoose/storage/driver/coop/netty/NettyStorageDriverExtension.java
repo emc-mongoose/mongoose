@@ -11,7 +11,7 @@ import java.util.List;
 
 import static com.emc.mongoose.Constants.APP_NAME;
 
-public final class NetStorageDriverExtension
+public final class NettyStorageDriverExtension
 extends ExtensionBase {
 
 	private static final SchemaProvider SCHEMA_PROVIDER = new JsonSchemaProviderBase() {

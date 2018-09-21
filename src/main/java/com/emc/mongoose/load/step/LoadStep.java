@@ -23,7 +23,7 @@ extends Daemon {
 	String getTypeName()
 	throws RemoteException;
 
-	List<MetricsSnapshot> metricsSnapshots()
+	List<? extends MetricsSnapshot> metricsSnapshots()
 	throws RemoteException;
 
 	@Override

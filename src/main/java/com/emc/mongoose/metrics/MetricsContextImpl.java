@@ -19,43 +19,31 @@ import java.util.function.IntSupplier;
  Start timestamp and elapsed time is in milliseconds while other time values are in microseconds.
  */
 public class MetricsContextImpl<S extends MetricsSnapshotImpl>
+extends MetricsContextBase<S>
 implements MetricsContext<S> {
 
 	private final Clock clock = new ResumableUserTimeClock();
 	private final Histogram reqDuration, respLatency, actualConcurrency;
-	private volatile com.codahale.metrics.Snapshot reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot;
 	private final LongAdder reqDurationSum, respLatencySum;
-	private volatile long lastDurationSum = 0, lastLatencySum = 0;
 	private final CustomMeter throughputSuccess, throughputFail, reqBytes;
-	private final long ts;
-	private volatile long tsStart = - 1, prevElapsedTime = 0;
-	private final String id;
-	private final OpType opType;
 	private final IntSupplier actualConcurrencyGauge;
-	private final int concurrencyLimit;
-	private final int thresholdConcurrency;
-	private final SizeInBytes itemDataSize;
-	private final boolean stdOutColorFlag;
-	private final long outputPeriodMillis;
-	private volatile long lastOutputTs = 0;
-	private volatile S lastSnapshot = null;
-	private volatile MetricsContext thresholdMetricsCtx = null;
-	private volatile boolean thresholdStateExitedFlag = false;
 	private final Lock timingLock = new ReentrantLock();
+
+	private volatile long prevElapsedTime = 0;
+	private volatile long lastDurationSum = 0;
+	private volatile long lastLatencySum = 0;
+	private volatile com.codahale.metrics.Snapshot reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot;
 
 	public MetricsContextImpl(
 		final String id, final OpType opType, final IntSupplier actualConcurrencyGauge, final int concurrencyLimit,
-		final int thresholdConcurrency, final SizeInBytes itemDataSize, final int updateIntervalSec,
+		final int concurrencyThreshold, final SizeInBytes itemDataSize, final int updateIntervalSec,
 		final boolean stdOutColorFlag
 	) {
-		this.id = id;
-		this.opType = opType;
+		super(
+			id, opType, concurrencyLimit, concurrencyThreshold, itemDataSize, stdOutColorFlag,
+			TimeUnit.SECONDS.toMillis(updateIntervalSec)
+		);
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-		this.concurrencyLimit = concurrencyLimit;
-		this.thresholdConcurrency = thresholdConcurrency > 0 ? thresholdConcurrency : Integer.MAX_VALUE;
-		this.itemDataSize = itemDataSize;
-		this.stdOutColorFlag = stdOutColorFlag;
-		this.outputPeriodMillis = TimeUnit.SECONDS.toMillis(updateIntervalSec);
 		respLatency = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
 		respLatSnapshot = respLatency.getSnapshot();
 		respLatencySum = new LongAdder();
@@ -67,37 +55,19 @@ implements MetricsContext<S> {
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
 		throughputFail = new CustomMeter(clock, updateIntervalSec);
 		reqBytes = new CustomMeter(clock, updateIntervalSec);
-		ts = System.nanoTime();
 	}
 
 	@Override
 	public final void start() {
-		tsStart = System.currentTimeMillis();
+		super.start();
 		throughputSuccess.resetStartTime();
 		throughputFail.resetStartTime();
 		reqBytes.resetStartTime();
 	}
 
 	@Override
-	public final boolean isStarted() {
-		return tsStart > - 1;
-	}
-
-	@Override
 	public final void markElapsedTime(final long millis) {
 		prevElapsedTime = millis;
-	}
-
-	@Override
-	public void close()
-	throws IOException {
-		prevElapsedTime = System.currentTimeMillis() - tsStart;
-		tsStart = - 1;
-		lastSnapshot = null;
-		if(thresholdMetricsCtx != null) {
-			thresholdMetricsCtx.close();
-			thresholdMetricsCtx = null;
-		}
 	}
 
 	@Override
@@ -211,36 +181,6 @@ implements MetricsContext<S> {
 	}
 
 	@Override
-	public final String stepId() {
-		return id;
-	}
-
-	@Override
-	public final OpType opType() {
-		return opType;
-	}
-
-	@Override
-	public final int concurrencyLimit() {
-		return concurrencyLimit;
-	}
-
-	@Override
-	public final int concurrencyThreshold() {
-		return thresholdConcurrency;
-	}
-
-	@Override
-	public final SizeInBytes itemDataSize() {
-		return itemDataSize;
-	}
-
-	@Override
-	public final boolean stdOutColorEnabled() {
-		return stdOutColorFlag;
-	}
-
-	@Override
 	public final boolean avgPersistEnabled() {
 		return false;
 	}
@@ -255,26 +195,12 @@ implements MetricsContext<S> {
 		return false;
 	}
 
-	@Override
-	public final long outputPeriodMillis() {
-		return outputPeriodMillis;
-	}
-
-	@Override
-	public final long lastOutputTs() {
-		return lastOutputTs;
-	}
-
-	@Override
-	public final void lastOutputTs(final long ts) {
-		lastOutputTs = ts;
-	}
-
 	@Override @SuppressWarnings("unchecked")
 	public void refreshLastSnapshot() {
 		final long currentTimeMillis = System.currentTimeMillis();
+		final long tsStart = startTimeStamp();
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
-		if(currentTimeMillis - lastOutputTs > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
+		if(currentTimeMillis - lastOutputTs() > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
 			if(lastDurationSum != reqDurationSum.sum() || lastLatencySum != respLatencySum.sum()) {
 				if(timingLock.tryLock()) {
 					try {
@@ -296,17 +222,7 @@ implements MetricsContext<S> {
 			actualConcurrencySnapshot.getMean(), concurrencyLimit, lastDurationSum, lastLatencySum, reqDurSnapshot,
 			respLatSnapshot
 		);
-		if(thresholdMetricsCtx != null) {
-			thresholdMetricsCtx.refreshLastSnapshot();
-		}
-	}
-
-	@Override
-	public final S lastSnapshot() {
-		if(lastSnapshot == null) {
-			refreshLastSnapshot();
-		}
-		return lastSnapshot;
+		super.refreshLastSnapshot();
 	}
 
 	@Override
@@ -315,59 +231,11 @@ implements MetricsContext<S> {
 	}
 
 	@Override
-	public final boolean thresholdStateEntered() {
-		return thresholdMetricsCtx != null && thresholdMetricsCtx.isStarted();
-	}
-
-	@Override
-	public final void enterThresholdState()
-	throws IllegalStateException {
-		if(thresholdMetricsCtx != null) {
-			throw new IllegalStateException("Nested metrics context already exists");
-		}
-		thresholdMetricsCtx =
-			new MetricsContextImpl(id, opType, actualConcurrencyGauge, concurrencyLimit, 0, itemDataSize,
-				(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag
-			);
-		thresholdMetricsCtx.start();
-	}
-
-	@Override
-	public final MetricsContext thresholdMetrics()
-	throws IllegalStateException {
-		if(thresholdMetricsCtx == null) {
-			throw new IllegalStateException("Nested metrics context is not exist");
-		}
-		return thresholdMetricsCtx;
-	}
-
-	@Override
-	public final boolean thresholdStateExited() {
-		return thresholdStateExitedFlag;
-	}
-
-	@Override
-	public final void exitThresholdState()
-	throws IllegalStateException {
-		if(thresholdMetricsCtx == null) {
-			throw new IllegalStateException("Threshold state was not entered");
-		}
-		try {
-			thresholdMetricsCtx.close();
-		} catch(final IOException e) {
-			e.printStackTrace(System.err);
-		}
-		thresholdStateExitedFlag = true;
-	}
-
-	@Override
-	public final int hashCode() {
-		return (int) ts;
-	}
-
-	@Override
-	public final int compareTo(final MetricsContext<S> other) {
-		return Long.compare(hashCode(), other.hashCode());
+	protected MetricsContextImpl<S> newThresholdMetricsContext() {
+		return new MetricsContextImpl<>(
+			id, opType, actualConcurrencyGauge, concurrencyLimit, 0, itemDataSize,
+			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag
+		);
 	}
 
 	@Override @SuppressWarnings("unchecked")
@@ -385,5 +253,12 @@ implements MetricsContext<S> {
 	@Override
 	public final String toString() {
 		return "MetricsContext(" + opType.name() + '-' + concurrencyLimit + "x1@" + id + ")";
+	}
+
+	@Override
+	public final void close()
+	throws IOException  {
+		super.close();
+		prevElapsedTime = System.currentTimeMillis() - startTimeStamp();
 	}
 }

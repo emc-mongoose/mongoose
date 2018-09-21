@@ -8,11 +8,11 @@ should be located on the Mongoose remote node hosts (in the
 ```
 storage-driver
 |── storage-driver-coop
-|   |── storage-driver-coop-net
-|   |   └── storage-driver-coop-net-http
-|   |       |── storage-driver-coop-net-http-atmos
-|   |       |── storage-driver-coop-net-http-s3
-|   |       └── storage-driver-coop-net-http-swift
+|   |── storage-driver-coop-netty
+|   |   └── storage-driver-coop-netty-http
+|   |       |── storage-driver-coop-netty-http-atmos
+|   |       |── storage-driver-coop-netty-http-s3
+|   |       └── storage-driver-coop-netty-http-swift
 |   └── storage-driver-nio
 |       └── storage-driver-nio-fs
 └── storage-driver-preempt
@@ -27,8 +27,8 @@ storage-driver
     * `com.emc.mongoose.storage.driver.StorageDriverBase`
     * `com.emc.mongoose.storage.driver.coop.CooperativeStorageDriverBase`
     * `com.emc.mongoose.storage.driver.coop.nio.NioStorageDriverBase`
-    * `com.emc.mongoose.storage.driver.coop.net.NetStorageDriverBase`
-    * `com.emc.mongoose.storage.driver.coop.net.http.HttpStorageDriverBase`
+    * `com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverBase`
+    * `com.emc.mongoose.storage.driver.coop.netty.http.HttpStorageDriverBase`
     * `com.emc.mongoose.storage.driver.preemptive.PreemptiveStorageDriverBase`
     These are designed for the extension.
 

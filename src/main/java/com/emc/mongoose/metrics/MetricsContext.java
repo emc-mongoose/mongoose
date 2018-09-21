@@ -16,7 +16,7 @@ extends Closeable, Comparable<MetricsContext<S>> {
 	int DEFAULT_RESERVOIR_SIZE = 0x1_000;
 
 	// these are useful as labels/tags
-	String stepId();
+	String id();
 
 	OpType opType();
 
@@ -45,6 +45,8 @@ extends Closeable, Comparable<MetricsContext<S>> {
 	void start();
 
 	boolean isStarted();
+
+	long startTimeStamp();
 
 	void refreshLastSnapshot();
 

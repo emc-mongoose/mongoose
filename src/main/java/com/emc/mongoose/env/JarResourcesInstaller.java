@@ -88,7 +88,7 @@ implements Installer {
 		try(final InputStream srcFileInput = resourceStream(srcFilePath)) {
 			final long copiedBytesCount = Files.copy(srcFileInput, dstPath);
 			Loggers.MSG.debug("The file {} installed ({})", dstPath, copiedBytesCount);
-		} catch(final IOException e) {
+		} catch(final Exception e) {
 			LogUtil.exception(Level.WARN, e, "Failed to install file {}", dstPath);
 		}
 	}

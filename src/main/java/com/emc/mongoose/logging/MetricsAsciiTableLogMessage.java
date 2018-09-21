@@ -61,7 +61,7 @@ extends LogMessageBase {
 				}
 				ROW_OUTPUT_COUNTER ++;
 				strb
-					.appendFixedWidthPadLeft(metricsCtx.stepId(), 10, ' ')
+					.appendFixedWidthPadLeft(metricsCtx.id(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadLeft(FMT_DATE_METRICS_TABLE.format(new Date()), 12, ' ')
 					.append(TABLE_BORDER_VERTICAL);

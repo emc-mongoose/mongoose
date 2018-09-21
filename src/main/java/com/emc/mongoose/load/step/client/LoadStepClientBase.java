@@ -19,7 +19,9 @@ import com.emc.mongoose.load.step.client.metrics.MetricsAggregatorImpl;
 import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.metrics.DistributedMetricsContext;
 import com.emc.mongoose.metrics.DistributedMetricsContextImpl;
+import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.MetricsContext;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsSnapshot;
@@ -328,7 +330,7 @@ implements LoadStepClient {
 		final int originIndex, final OpType opType, final int concurrencyLimit, final Config metricsConfig,
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
-		final double concurrencyThreshold = concurrencyLimit * metricsConfig.doubleVal("threshold");
+		final int concurrencyThreshold = (int) (concurrencyLimit * metricsConfig.doubleVal("threshold"));
 		final int metricsAvgPeriod;
 		final Object metricsAvgPeriodRaw = metricsConfig.val("average-period");
 		if(metricsAvgPeriodRaw instanceof String) {
@@ -341,7 +343,7 @@ implements LoadStepClient {
 		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
 		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
 		// further usage
-		final MetricsContext metricsCtx = new DistributedMetricsContextImpl(
+		final DistributedMetricsContext metricsCtx = new DistributedMetricsContextImpl<>(
 			id(), opType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
 			outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
 			() -> metricsSnapshotsByIndex(originIndex)

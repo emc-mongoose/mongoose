@@ -32,7 +32,7 @@ import static com.emc.mongoose.Constants.MIB;
 
 	@Override
 	public final void formatTo(final StringBuilder buffer) {
-		buffer.append("<result id=\"").append(metricsCtx.stepId()).append("\" ");
+		buffer.append("<result id=\"").append(metricsCtx.id()).append("\" ");
 		final MetricsSnapshot snapshot = metricsCtx.lastSnapshot();
 		final long startTimeMillis = snapshot.startTimeMillis();
 		final Date startDate = new Date(startTimeMillis);

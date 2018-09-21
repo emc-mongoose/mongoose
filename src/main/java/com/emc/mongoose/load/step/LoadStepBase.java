@@ -39,7 +39,7 @@ implements LoadStep, Runnable {
 	protected final List<Extension> extensions;
 	protected final List<Config> ctxConfigs;
 	protected final MetricsManager metricsMgr;
-	protected final List<MetricsContext<MetricsSnapshot>> metricsContexts = new ArrayList<>();
+	protected final List<MetricsContext<? extends MetricsSnapshot>> metricsContexts = new ArrayList<>();
 
 	private volatile long timeLimitSec = Long.MAX_VALUE;
 	private volatile long startTimeSec = -1;
@@ -60,7 +60,7 @@ implements LoadStep, Runnable {
 	}
 
 	@Override
-	public final List<MetricsSnapshot> metricsSnapshots() {
+	public final List<? extends MetricsSnapshot> metricsSnapshots() {
 		return metricsContexts
 			.stream()
 			.map(MetricsContext::lastSnapshot)

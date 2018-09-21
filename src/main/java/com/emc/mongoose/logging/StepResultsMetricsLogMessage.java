@@ -23,7 +23,7 @@ extends LogMessageBase {
 	private final DistributedMetricsSnapshot snapshot;
 
 	public StepResultsMetricsLogMessage(final DistributedMetricsContext metricsCtx) {
-		this(metricsCtx.opType(), metricsCtx.stepId(), metricsCtx.lastSnapshot());
+		this(metricsCtx.opType(), metricsCtx.id(), metricsCtx.lastSnapshot());
 	}
 
 	StepResultsMetricsLogMessage(final OpType opType, final String stepId, final DistributedMetricsSnapshot snapshot) {

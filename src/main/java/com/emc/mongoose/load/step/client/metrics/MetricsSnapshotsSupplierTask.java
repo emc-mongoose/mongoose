@@ -8,5 +8,5 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public interface MetricsSnapshotsSupplierTask
-extends Supplier<List<MetricsSnapshot>>, Fiber {
+extends Supplier<List<? extends MetricsSnapshot>>, Fiber {
 }

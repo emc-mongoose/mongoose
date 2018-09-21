@@ -17,7 +17,7 @@ extends ExclusiveFiberBase
 implements MetricsSnapshotsSupplierTask {
 
 	private final LoadStep loadStep;
-	private volatile List<MetricsSnapshot> snapshotsByOrigin;
+	private volatile List<? extends MetricsSnapshot> snapshotsByOrigin;
 
 	public MetricsSnapshotsSupplierTaskImpl(final LoadStep loadStep) {
 		this(ServiceTaskExecutor.INSTANCE, loadStep);
@@ -38,7 +38,7 @@ implements MetricsSnapshotsSupplierTask {
 	}
 
 	@Override
-	public final List<MetricsSnapshot> get() {
+	public final List<? extends MetricsSnapshot> get() {
 		return snapshotsByOrigin;
 	}
 

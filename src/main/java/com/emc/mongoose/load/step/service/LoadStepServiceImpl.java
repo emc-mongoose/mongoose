@@ -95,7 +95,7 @@ implements LoadStepService {
 	}
 
 	@Override
-	public final List<MetricsSnapshot> metricsSnapshots()
+	public final List<? extends MetricsSnapshot> metricsSnapshots()
 	throws RemoteException {
 		return localLoadStep.metricsSnapshots();
 	}
