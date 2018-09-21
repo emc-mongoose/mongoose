@@ -38,8 +38,7 @@
 |------|------------------|------------------
 | User | Report the issues | Definitely unknown
 | Developer | <ul><li>Development</li><li>Testing</li><li>Automation</li><li>Documentation</li></ul> | <ul><li>Veronika Kochugova</li><li>Andrey Kurilov</li><ul>
-| Owner | <ul><li>The next version scope definition</li><li>Roadmap definition</li><li>User interaction</li></ul> | Andrey Kurilov
-| Manager | The explicit scopes approval | ********
+| Owner | <ul><li>The next version scope definition</li><li>Roadmap definition</li><li>User interaction</li></ul> | <ul><li>Andrey Kurilov</li><li>Veronika Kochugova</li></ul>
 
 # 2. Versions
 
@@ -84,9 +83,9 @@ Tracker link: https://mongoose-issues.atlassian.net/projects/BASE
 | State       | Description |
 |-------------|-------------|
 | OPEN        | All new issues should have this state. The issues are selected from the set of the *OPEN* issues for the proposal and review process. The task is updated w/ the corresponding comment but left in the *OPEN* state if it's considered incomplete/incorrect. Also incomplete/incorrect issue should be assigned back to the reporter.
-| PROPOSED    | The issue is selected for the approval by the *manager*.
-| DEFERRED    | Manager has approved the issue to be processed after the next major/minor (non-patch) version is released.
-| ACCEPTED    | Manager approved the issue to be processed before the next major/minor (non-patch) version is released.
+| PROPOSED    | The issue is selected for the approval by the *owners*.
+| DEFERRED    | Owners have approved the issue to be processed after the next major/minor (non-patch) version is released.
+| ACCEPTED    | Owners approved the issue to be processed before the next major/minor (non-patch) version is released.
 | ESCALATED   | Critical defect which interrupts all *DEFERRED*/*ACCEPTED* issues processing. Causes the new *patch* version release ASAP.
 | IN PROGRESS | The issue is in progress currently
 | RESOLVED    | Issue is done and the corresponding changes are merged into the `integration` branch.
