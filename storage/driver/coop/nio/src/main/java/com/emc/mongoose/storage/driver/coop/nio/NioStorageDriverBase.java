@@ -113,7 +113,7 @@ implements NioStorageDriver<I, O> {
 					for(int i = 0; i < opBuffSize; i ++) {
 						op = opBuff.get(i);
 						// if timeout, put the op into the temporary buffer
-						if(System.nanoTime() - startTimeNanos >= TIMEOUT_NANOS) {
+						if(System.nanoTime() - startTimeNanos >= SOFT_DURATION_LIMIT) {
 							opLocalBuff.add(op);
 							continue;
 						}
@@ -137,7 +137,7 @@ implements NioStorageDriver<I, O> {
 						// remove the op from the buffer if it is not active more
 						if(!ACTIVE.equals(op.status())) {
 							concurrencyThrottle.release();
-							opCompleted(op);
+							handleCompleted(op);
 						} else {
 							// the op remains in the buffer for the next iteration
 							opLocalBuff.add(op);
@@ -168,7 +168,7 @@ implements NioStorageDriver<I, O> {
 				if(ACTIVE.equals(op.status())) {
 					op.status(INTERRUPTED);
 					concurrencyThrottle.release();
-					opCompleted(op);
+					handleCompleted(op);
 				}
 			}
 			Loggers.MSG.debug("Finish the remaining active load operations done");
@@ -299,7 +299,7 @@ implements NioStorageDriver<I, O> {
 
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
-				if(opBuffLocks[i].tryLock(Fiber.TIMEOUT_NANOS, TimeUnit.NANOSECONDS)) {
+				if(opBuffLocks[i].tryLock(Fiber.WARN_DURATION_LIMIT, TimeUnit.NANOSECONDS)) {
 					try {
 						opBuffs[i].clear();
 					} finally {

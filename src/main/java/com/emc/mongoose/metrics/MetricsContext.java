@@ -10,7 +10,7 @@ import java.io.Closeable;
  Created by andrey on 14.07.16.
  */
 public interface MetricsContext<S extends MetricsSnapshot>
-extends Closeable, Comparable<MetricsContext<S>> {
+extends AutoCloseable, Comparable<MetricsContext<S>> {
 
 	int DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
 	int DEFAULT_RESERVOIR_SIZE = 0x1_000;
@@ -85,4 +85,7 @@ extends Closeable, Comparable<MetricsContext<S>> {
 	long lastOutputTs();
 
 	void lastOutputTs(final long ts);
+
+	@Override
+	void close();
 }

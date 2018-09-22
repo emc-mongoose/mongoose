@@ -64,7 +64,7 @@ implements StorageDriver<I, O> {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
-		prepareOperation(op);
+		prepare(op);
 		if(inOpQueue.offer(op)) {
 			scheduledOpCount.increment();
 			return true;
@@ -83,7 +83,7 @@ implements StorageDriver<I, O> {
 		O nextOp;
 		while(i < to && isStarted()) {
 			nextOp = ops.get(i);
-			prepareOperation(nextOp);
+			prepare(nextOp);
 			if(inOpQueue.offer(ops.get(i))) {
 				i ++;
 			} else {
@@ -104,7 +104,7 @@ implements StorageDriver<I, O> {
 		int n = 0;
 		for(final O nextOp: ops) {
 			if(isStarted()) {
-				prepareOperation(nextOp);
+				prepare(nextOp);
 				if(inOpQueue.offer(nextOp)) {
 					n ++;
 				} else {
@@ -157,33 +157,35 @@ implements StorageDriver<I, O> {
 	throws InterruptRunException, IllegalStateException;
 
 	@SuppressWarnings("unchecked")
-	protected final void opCompleted(final O op) {
-
-		super.opCompleted(op);
-
-		completedOpCount.increment();
-
-		if(op instanceof CompositeOperation) {
-			final CompositeOperation parentOp = (CompositeOperation) op;
-			if(!parentOp.allSubOperationsDone()) {
-				final List<O> subOps = parentOp.subOperations();
-				for(final O nextSubOp: subOps) {
-					if(!childOpQueue.offer(nextSubOp/*, 1, TimeUnit.MICROSECONDS*/)) {
+	protected final boolean handleCompleted(final O op) {
+		if(super.handleCompleted(op)) {
+			completedOpCount.increment();
+			if(op instanceof CompositeOperation) {
+				final CompositeOperation parentOp = (CompositeOperation) op;
+				if(!parentOp.allSubOperationsDone()) {
+					final List<O> subOps = parentOp.subOperations();
+					for(final O nextSubOp: subOps) {
+						if(!childOpQueue.offer(nextSubOp)) {
+							Loggers.ERR.warn("{}: Child operations queue overflow, dropping the operation", toString());
+							return false;
+						}
+					}
+				}
+			} else if(op instanceof PartialOperation) {
+				final PartialOperation subOp = (PartialOperation) op;
+				final CompositeOperation parentOp = subOp.parent();
+				if(parentOp.allSubOperationsDone()) {
+					// execute once again to finalize the things if necessary:
+					// complete the multipart upload, for example
+					if(!childOpQueue.offer((O) parentOp)) {
 						Loggers.ERR.warn("{}: Child operations queue overflow, dropping the operation", toString());
-						break;
+						return false;
 					}
 				}
 			}
-		} else if(op instanceof PartialOperation) {
-			final PartialOperation subOp = (PartialOperation) op;
-			final CompositeOperation parentOp = subOp.parent();
-			if(parentOp.allSubOperationsDone()) {
-				// execute once again to finalize the things if necessary:
-				// complete the multipart upload, for example
-				if(!childOpQueue.offer((O) parentOp/*, 1, TimeUnit.MICROSECONDS*/)) {
-					Loggers.ERR.warn("{}: Child operations queue overflow, dropping the operation", toString());
-				}
-			}
+			return true;
+		} else {
+			return false;
 		}
 	}
 

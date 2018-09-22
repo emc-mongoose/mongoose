@@ -252,12 +252,11 @@ implements MetricsContext<S> {
 
 	@Override
 	public final String toString() {
-		return "MetricsContext(" + opType.name() + '-' + concurrencyLimit + "x1@" + id + ")";
+		return getClass().getSimpleName() + "(" + opType.name() + '-' + concurrencyLimit + "x1@" + id + ")";
 	}
 
 	@Override
-	public final void close()
-	throws IOException  {
+	public final void close() {
 		super.close();
 		prevElapsedTime = System.currentTimeMillis() - startTimeStamp();
 	}

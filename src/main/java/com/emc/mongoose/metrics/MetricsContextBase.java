@@ -4,8 +4,6 @@ import com.emc.mongoose.item.op.OpType;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 
-import java.io.IOException;
-
 public abstract class MetricsContextBase<S extends MetricsSnapshot>
 implements MetricsContext<S> {
 
@@ -145,11 +143,7 @@ implements MetricsContext<S> {
 		if(thresholdMetricsCtx == null) {
 			throw new IllegalStateException("Threshold state was not entered");
 		}
-		try {
-			thresholdMetricsCtx.close();
-		} catch(final IOException e) {
-			e.printStackTrace(System.err);
-		}
+		thresholdMetricsCtx.close();
 		thresholdStateExitedFlag = true;
 	}
 
@@ -169,8 +163,7 @@ implements MetricsContext<S> {
 	}
 
 	@Override
-	public void close()
-	throws IOException {
+	public void close() {
 		tsStart = - 1;
 		lastSnapshot = null;
 		if(thresholdMetricsCtx != null) {

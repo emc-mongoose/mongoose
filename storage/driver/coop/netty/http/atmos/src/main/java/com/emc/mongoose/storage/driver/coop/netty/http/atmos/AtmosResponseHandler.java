@@ -41,7 +41,7 @@ extends HttpResponseHandlerBase<I, O> {
 					op.item().name(location);
 					Loggers.ERR.warn("Unexpected location value: \"{}\"", location);
 				}
-				// set the paths to null to avoid the path calculation in the opCompleted call
+				// set the paths to null to avoid the path calculation in the handleCompleted call
 				op.srcPath(null);
 				op.dstPath(null);
 			}

@@ -181,4 +181,16 @@ implements DistributedMetricsContext<S> {
 			return false;
 		}
 	}
+
+	@Override
+	public final String toString() {
+		return getClass().getSimpleName() + "(" + opType.name() + '-' + concurrencyLimit + "x" + nodeCount() + "@" + id
+			+ ")";
+	}
+
+	@Override
+	public final void close() {
+		super.close();
+		prevElapsedTime = System.currentTimeMillis() - startTimeStamp();
+	}
 }

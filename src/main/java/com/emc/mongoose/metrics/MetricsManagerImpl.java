@@ -21,11 +21,13 @@ import static org.apache.logging.log4j.CloseableThreadContext.put;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  Created by kurila on 18.05.17.
@@ -36,7 +38,7 @@ implements MetricsManager {
 
 	private static final String CLS_NAME = MetricsManagerImpl.class.getSimpleName();
 
-	private final Map<String, List<MetricsContext>> allMetrics = new ConcurrentHashMap<>();
+	private final Set<MetricsContext> allMetrics = new ConcurrentSkipListSet<>();
 	private final Map<DistributedMetricsContext, AutoCloseable> distributedMetrics = new ConcurrentHashMap<>();
 	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
 
@@ -56,35 +58,33 @@ implements MetricsManager {
 		try {
 			int actualConcurrency;
 			int nextConcurrencyThreshold;
-			for(final String id : allMetrics.keySet()) {
-				for(final MetricsContext metricsCtx : allMetrics.get(id)) {
-					ThreadContext.put(KEY_STEP_ID, metricsCtx.id());
-					metricsCtx.refreshLastSnapshot();
-					actualConcurrency = metricsCtx.lastSnapshot().actualConcurrencyLast();
-					// threshold load state checks
-					nextConcurrencyThreshold = metricsCtx.concurrencyThreshold();
-					if(nextConcurrencyThreshold > 0 && actualConcurrency >= nextConcurrencyThreshold) {
-						if(!metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
-							Loggers.MSG.info(
-								"{}: the threshold of {} active load operations count is reached, " +
-									"starting the additional metrics accounting",
-								metricsCtx.toString(), metricsCtx.concurrencyThreshold()
-							);
-							metricsCtx.enterThresholdState();
-						}
-					} else if(metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
-						exitMetricsThresholdState(metricsCtx);
+			for(final MetricsContext metricsCtx : allMetrics) {
+				ThreadContext.put(KEY_STEP_ID, metricsCtx.id());
+				metricsCtx.refreshLastSnapshot();
+				actualConcurrency = metricsCtx.lastSnapshot().actualConcurrencyLast();
+				// threshold load state checks
+				nextConcurrencyThreshold = metricsCtx.concurrencyThreshold();
+				if(nextConcurrencyThreshold > 0 && actualConcurrency >= nextConcurrencyThreshold) {
+					if(!metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
+						Loggers.MSG.info(
+							"{}: the threshold of {} active load operations count is reached, " +
+								"starting the additional metrics accounting",
+							metricsCtx.toString(), metricsCtx.concurrencyThreshold()
+						);
+						metricsCtx.enterThresholdState();
 					}
-					// periodic output
-					outputPeriodMillis = metricsCtx.outputPeriodMillis();
-					lastOutputTs = metricsCtx.lastOutputTs();
-					nextOutputTs = System.currentTimeMillis();
-					if(outputPeriodMillis > 0 && nextOutputTs - lastOutputTs >= outputPeriodMillis) {
-						selectedMetrics.add(metricsCtx);
-						metricsCtx.lastOutputTs(nextOutputTs);
-						if(metricsCtx.avgPersistEnabled()) {
-							Loggers.METRICS_FILE.info(new MetricsCsvLogMessage(metricsCtx));
-						}
+				} else if(metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
+					exitMetricsThresholdState(metricsCtx);
+				}
+				// periodic output
+				outputPeriodMillis = metricsCtx.outputPeriodMillis();
+				lastOutputTs = metricsCtx.lastOutputTs();
+				nextOutputTs = System.currentTimeMillis();
+				if(outputPeriodMillis > 0 && nextOutputTs - lastOutputTs >= outputPeriodMillis) {
+					selectedMetrics.add(metricsCtx);
+					metricsCtx.lastOutputTs(nextOutputTs);
+					if(metricsCtx.avgPersistEnabled()) {
+						Loggers.METRICS_FILE.info(new MetricsCsvLogMessage(metricsCtx));
 					}
 				}
 			}
@@ -100,17 +100,16 @@ implements MetricsManager {
 	}
 
 	@Override
-	public void register(final String id, final MetricsContext metricsCtx) {
+	public void register(final MetricsContext metricsCtx) {
 		try(
-			final Instance logCtx = put(KEY_STEP_ID, id)
+			final Instance logCtx = put(KEY_STEP_ID, metricsCtx.id())
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			if(!isStarted()) {
 				start();
 				Loggers.MSG.debug("Started the metrics manager fiber");
 			}
-			final List<MetricsContext> stepMetrics = allMetrics.computeIfAbsent(id, c -> new ArrayList<>());
-			stepMetrics.add(metricsCtx);
+			allMetrics.add(metricsCtx);
 			if(metricsCtx instanceof DistributedMetricsContext) {
 				final DistributedMetricsContext distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
 				distributedMetrics.put(distributedMetricsCtx, new Meter(distributedMetricsCtx));
@@ -124,13 +123,12 @@ implements MetricsManager {
 	}
 
 	@Override
-	public void unregister(final String id, final MetricsContext metricsCtx) {
+	public void unregister(final MetricsContext metricsCtx) {
 		try(
-			final Instance stepIdCtx = put(KEY_STEP_ID, id)
+			final Instance logCtx = put(KEY_STEP_ID, metricsCtx.id())
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
-			final List<MetricsContext> stepMetrics = allMetrics.get(id);
-			if(stepMetrics != null) {
+			if(allMetrics.remove(metricsCtx)) {
 				metricsCtx.refreshLastSnapshot(); // one last time
 				// check for the metrics threshold state if entered
 				if(metricsCtx.thresholdStateEntered() && ! metricsCtx.thresholdStateExited()) {
@@ -164,9 +162,6 @@ implements MetricsManager {
 			} else {
 				Loggers.ERR.debug("Metrics context \"{}\" has not been registered", metricsCtx);
 			}
-			if(stepMetrics != null && stepMetrics.size() == 0) {
-				allMetrics.remove(id);
-			}
 			Loggers.MSG.debug("Metrics context \"{}\" unregistered", metricsCtx);
 		} finally {
 			if(allMetrics.size() == 0) {
@@ -193,7 +188,7 @@ implements MetricsManager {
 
 	@Override
 	protected final void doClose() {
-		allMetrics.values().forEach(List::clear);
+		allMetrics.forEach(MetricsContext::close);
 		allMetrics.clear();
 		distributedMetrics
 			.values()

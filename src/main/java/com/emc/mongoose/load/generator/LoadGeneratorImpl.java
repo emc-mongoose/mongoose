@@ -303,7 +303,7 @@ implements LoadGenerator<I, O> {
 		// generator builder should close it
 		if(itemInput != null) {
 			try {
-				inputLock.tryLock(Fiber.TIMEOUT_NANOS, TimeUnit.NANOSECONDS);
+				inputLock.tryLock(Fiber.WARN_DURATION_LIMIT, TimeUnit.NANOSECONDS);
 				itemInput.close();
 			} catch(final InterruptedException e) {
 				throw new InterruptRunException(e);

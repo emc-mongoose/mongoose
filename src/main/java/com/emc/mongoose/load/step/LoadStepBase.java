@@ -128,12 +128,10 @@ implements LoadStep, Runnable {
 			LogUtil.exception(Level.WARN, cause, "{} step failed to start", id());
 		}
 
-		metricsContexts.forEach(
-			metricsCtx -> {
-				metricsCtx.start();
-				metricsMgr.register(id(), metricsCtx);
-			}
-		);
+		metricsContexts
+			.stream()
+			.peek(MetricsContext::start)
+			.forEach(metricsMgr::register);
 	}
 
 	protected abstract void doStartWrapped()
@@ -155,7 +153,7 @@ implements LoadStep, Runnable {
 	protected void doStop()
 	throws InterruptRunException {
 
-		metricsContexts.forEach(metricsCtx -> metricsMgr.unregister(id(), metricsCtx));
+		metricsContexts.forEach(metricsMgr::unregister);
 
 		final long t = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - startTimeSec;
 		if(t < 0) {
@@ -174,15 +172,6 @@ implements LoadStep, Runnable {
 	@Override
 	protected void doClose()
 	throws IOException {
-		metricsContexts
-			.forEach(
-				metricsCtx -> {
-					try {
-						metricsCtx.close();
-					} catch(final IOException e) {
-						LogUtil.exception(Level.WARN, e, "Failed to close the metrics context \"{}\"", metricsCtx);
-					}
-				}
-			);
+		metricsContexts.forEach(MetricsContext::close);
 	}
 }

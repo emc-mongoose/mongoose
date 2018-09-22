@@ -91,7 +91,7 @@ implements StorageDriver<I,O> {
 	protected abstract String requestNewAuthToken(final Credential credential)
 	throws InterruptRunException;
 
-	protected void prepareOperation(final O op)
+	protected void prepare(final O op)
 	throws InterruptRunException {
 		op.reset();
 		if(op instanceof DataOperation) {
@@ -116,14 +116,20 @@ implements StorageDriver<I,O> {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	protected void opCompleted(final O op) {
-		if(Loggers.MSG.isTraceEnabled()) {
-			Loggers.MSG.trace("{}: Load operation completed", op);
-		}
-		final O opResult = op.result();
-		if(!opsResultsQueue.offer(opResult)) {
-			Loggers.ERR.error("{}: Load operations results queue overflow, dropping the result", toString());
+	protected boolean handleCompleted(final O op) {
+		if(isStopped()) {
+			return false;
+		} else {
+			if(Loggers.MSG.isTraceEnabled()) {
+				Loggers.MSG.trace("{}: Load operation completed", op);
+			}
+			final O opResult = op.result();
+			if(opsResultsQueue.offer(opResult)) {
+				return true;
+			} else {
+				Loggers.ERR.error("{}: Load operations results queue overflow, dropping the result", toString());
+				return false;
+			}
 		}
 	}
 

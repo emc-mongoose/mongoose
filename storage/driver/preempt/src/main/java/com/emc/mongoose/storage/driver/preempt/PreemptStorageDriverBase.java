@@ -46,7 +46,7 @@ implements StorageDriver<I,O> {
 	public final boolean put(final O op)
 	throws InterruptRunException, EOFException {
 		try {
-			ioExecutor.execute(wrapBlockingOperation(op));
+			ioExecutor.execute(wrapToBlocking(op));
 			return true;
 		} catch(final RejectedExecutionException e) {
 			if(!isStarted() || ioExecutor.isShutdown() || ioExecutor.isTerminated()) {
@@ -65,7 +65,7 @@ implements StorageDriver<I,O> {
 		int i = from;
 		try {
 			while(i < to) {
-				ioExecutor.execute(wrapBlockingOperation(ops.get(i)));
+				ioExecutor.execute(wrapToBlocking(ops.get(i)));
 				i ++;
 			}
 		} catch(final RejectedExecutionException ignored) {
@@ -79,12 +79,12 @@ implements StorageDriver<I,O> {
 		return put(ops, 0, ops.size());
 	}
 
-	private Runnable wrapBlockingOperation(final O op)
+	private Runnable wrapToBlocking(final O op)
 	throws InterruptRunException {
-		prepareOperation(op);
+		prepare(op);
 		return () -> {
 			execute(op);
-			opCompleted(op);
+			handleCompleted(op);
 		};
 	}
 

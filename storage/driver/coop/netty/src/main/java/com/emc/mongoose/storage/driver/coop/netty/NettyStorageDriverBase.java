@@ -547,7 +547,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 		if(channel != null) {
 			connPool.release(channel);
 		}
-		opCompleted(op);
+		handleCompleted(op);
 	}
 
 	@Override

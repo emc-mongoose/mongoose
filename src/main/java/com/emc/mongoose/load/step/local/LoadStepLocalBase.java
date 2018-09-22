@@ -110,7 +110,9 @@ extends LoadStepBase {
 						try {
 							if(stepCtx.isDone()) {
 								awaitCountDown.countDown();
-								stop();
+								if(!stepCtx.isStopped()) {
+									stop();
+								}
 							}
 						} catch(final Exception e) {
 							LogUtil.exception(

@@ -70,7 +70,7 @@ extends CoopStorageDriverBase<I, O> {
 		}
 		op.finishResponse();
 		op.status(Operation.Status.SUCC);
-		opCompleted(op);
+		handleCompleted(op);
 		return true;
 	}
 
