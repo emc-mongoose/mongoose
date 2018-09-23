@@ -3,9 +3,9 @@
 1. [Overview](#1-overview)<br/>
 1.1. [CLI](#11-cli)<br/>
 1.2. [Reference Table](#12-reference-table)<br/>
-1.2.1. [Specific Types](#112-specific-types)<br/>
-1.2.1.1. [Time](#1211-time)<br/>
-1.2.1.2. [Size](#1212-size)<br/>
+1.3. [Specific Types](#13-specific-types)<br/>
+1.3.1. [Time](#131-time)<br/>
+1.3.2. [Size](#132-size)<br/>
 2. [Parameterization](#2-parameterization)<br/>
 2.1. [Symchronous Supply](#21-synchronous-supply)<br/>
 2.2. [Asynchronous Supply](#22-asynchronous-supply)<br/>
@@ -106,9 +106,9 @@ The command-line options are directly mapped to the configuration items. For exa
 | storage-driver-threads                         | Integer >= 0 | 0 | The count of the shared/global I/O executor threads. 0 means automatic value (CPU cores/threads count)
 | storage-driver-type                            | String | s3 | The identifier pointing to the one of the registered storage driver implementations to use
 
-#### 1.2.1. Specific Types
+#### 1.3. Specific Types
 
-##### 1.2.1.1. Time
+##### 1.3.1. Time
 
 The configuration parameters supporting the time type:
 * item-output-delay
@@ -128,7 +128,7 @@ The configuration parameters supporting the time type:
 | "6M"  | Invalid value
 | "7y"  | Invalid value
 
-##### 1.2.1.2. Size
+##### 1.3.2. Size
 
 The configuration parameters supporting the time type:
 
@@ -314,3 +314,12 @@ for i in $(seq 10 99); do echo "user-$i,secret-$i" >> credentials.csv; done
 ## 3. Aliasing
 
 The configuration aliasing is used primarily for backward compatibility to map old configuration paths to the new ones.
+Also there's a shortcut alias for the load operation types:
+
+| Alias  | Meaning
+|--------|--------
+| create | load-op-type=create
+| read   | load-op-type=read
+| update | load-op-type=update
+| delete | load-op-type=delete
+| noop   | load-op-type=noop

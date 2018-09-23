@@ -2,18 +2,17 @@
 
 1. Input<br/>
 1.1. [Defaults](defaults/README.md)<br/>
-1.2. Configuration<br/>
-1.2.1. Parameterizing<br/>
-1.2.1.1 Request HTTP Headers Parameterizing<br/>
-1.2.1.2. Output Path Parameterizing<br/>
-1.2.1.3. Multiuser Load<br/>
-1.2.2. Storage Drivers<br/>
-1.2.2.1. [Netty Based](../../storage/driver/coop/netty/README.md)<br/>
-1.2.2.1.1. HTTP Storage Drivers<br/>
-1.2.2.1.1.1. [Atmos](../../storage/driver/coop/netty/http/atmos/README.md)<br/>
-1.2.2.1.1.2. [S3](../../storage/driver/coop/netty/http/s3/README.md)<br/>
-1.2.2.1.1.3. [Swift](../../storage/driver/coop/netty/http/swift/README.md)<br/>
-1.2.2.2. [Filesystem](../../storage/driver/coop/nio/fs/README.md)<br/>
+1.2. [Configuration](configuration/README.md)<br/>
+1.2.1. [CLI](configuration/README.md#11-cli)<br/>
+1.2.2. [Reference Table](configuration/README.md#12-reference-table)<br/>
+1.2.3. [Parameterizing](configuration/README.md#2-parameterization)<br/>
+1.2.4. Storage Drivers<br/>
+1.2.4.1. [Netty Based](../../storage/driver/coop/netty/README.md)<br/>
+1.2.4.1.1. [HTTP Storage Drivers](../../storage/driver/coop/netty/http/README.md)<br/>
+1.2.4.1.1.1. [Atmos](../../storage/driver/coop/netty/http/atmos/README.md)<br/>
+1.2.4.1.1.2. [S3](../../storage/driver/coop/netty/http/s3/README.md)<br/>
+1.2.4.1.1.3. [Swift](../../storage/driver/coop/netty/http/swift/README.md)<br/>
+1.2.4.2. [Filesystem](../../storage/driver/coop/nio/fs/README.md)<br/>
 1.3. [Scenarios](../input/README.md#3-scenarios)<br/>
 2. Output<br/>
 2.1. [General](../output/general/README.md)<br/>

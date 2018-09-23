@@ -164,7 +164,7 @@ implements MetricsContext<S> {
 
 	@Override
 	public void close() {
-		tsStart = - 1;
+		tsStart = -1;
 		lastSnapshot = null;
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.close();

@@ -11,8 +11,9 @@ import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
+import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FibersExecutor;
-
+import com.sun.swing.internal.plaf.metal.resources.metal;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
@@ -28,6 +29,10 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  Created by kurila on 18.05.17.
@@ -41,6 +46,7 @@ implements MetricsManager {
 	private final Set<MetricsContext> allMetrics = new ConcurrentSkipListSet<>();
 	private final Map<DistributedMetricsContext, AutoCloseable> distributedMetrics = new ConcurrentHashMap<>();
 	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
+	private final Lock outputLock = new ReentrantLock();
 
 	private long outputPeriodMillis;
 	private long lastOutputTs;
@@ -54,48 +60,52 @@ implements MetricsManager {
 	protected final void invokeTimedExclusively(final long startTimeNanos) {
 
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+		int actualConcurrency;
+		int nextConcurrencyThreshold;
 
-		try {
-			int actualConcurrency;
-			int nextConcurrencyThreshold;
-			for(final MetricsContext metricsCtx : allMetrics) {
-				ThreadContext.put(KEY_STEP_ID, metricsCtx.id());
-				metricsCtx.refreshLastSnapshot();
-				actualConcurrency = metricsCtx.lastSnapshot().actualConcurrencyLast();
-				// threshold load state checks
-				nextConcurrencyThreshold = metricsCtx.concurrencyThreshold();
-				if(nextConcurrencyThreshold > 0 && actualConcurrency >= nextConcurrencyThreshold) {
-					if(!metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
-						Loggers.MSG.info(
-							"{}: the threshold of {} active load operations count is reached, " +
-								"starting the additional metrics accounting",
-							metricsCtx.toString(), metricsCtx.concurrencyThreshold()
-						);
-						metricsCtx.enterThresholdState();
+		if(outputLock.tryLock()) {
+			try {
+				for(final MetricsContext metricsCtx : allMetrics) {
+					ThreadContext.put(KEY_STEP_ID, metricsCtx.id());
+					metricsCtx.refreshLastSnapshot();
+					actualConcurrency = metricsCtx.lastSnapshot().actualConcurrencyLast();
+					// threshold load state checks
+					nextConcurrencyThreshold = metricsCtx.concurrencyThreshold();
+					if(nextConcurrencyThreshold > 0 && actualConcurrency >= nextConcurrencyThreshold) {
+						if(!metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
+							Loggers.MSG.info(
+								"{}: the threshold of {} active load operations count is reached, " +
+									"starting the additional metrics accounting",
+								metricsCtx.toString(), metricsCtx.concurrencyThreshold()
+							);
+							metricsCtx.enterThresholdState();
+						}
+					} else if(metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
+						exitMetricsThresholdState(metricsCtx);
 					}
-				} else if(metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
-					exitMetricsThresholdState(metricsCtx);
-				}
-				// periodic output
-				outputPeriodMillis = metricsCtx.outputPeriodMillis();
-				lastOutputTs = metricsCtx.lastOutputTs();
-				nextOutputTs = System.currentTimeMillis();
-				if(outputPeriodMillis > 0 && nextOutputTs - lastOutputTs >= outputPeriodMillis) {
-					selectedMetrics.add(metricsCtx);
-					metricsCtx.lastOutputTs(nextOutputTs);
-					if(metricsCtx.avgPersistEnabled()) {
-						Loggers.METRICS_FILE.info(new MetricsCsvLogMessage(metricsCtx));
+					// periodic output
+					outputPeriodMillis = metricsCtx.outputPeriodMillis();
+					lastOutputTs = metricsCtx.lastOutputTs();
+					nextOutputTs = System.currentTimeMillis();
+					if(outputPeriodMillis > 0 && nextOutputTs - lastOutputTs >= outputPeriodMillis) {
+						selectedMetrics.add(metricsCtx);
+						metricsCtx.lastOutputTs(nextOutputTs);
+						if(metricsCtx.avgPersistEnabled()) {
+							Loggers.METRICS_FILE.info(new MetricsCsvLogMessage(metricsCtx));
+						}
 					}
 				}
+				// console output
+				if(!selectedMetrics.isEmpty()) {
+					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
+					selectedMetrics.clear();
+				}
+			} catch(final ConcurrentModificationException ignored) {
+			} catch(final Throwable cause) {
+				LogUtil.exception(Level.DEBUG, cause, "Metrics manager failure");
+			} finally {
+				outputLock.unlock();
 			}
-			// console output
-			if(!selectedMetrics.isEmpty()) {
-				Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
-				selectedMetrics.clear();
-			}
-		} catch(final ConcurrentModificationException ignored) {
-		} catch(final Throwable cause) {
-			LogUtil.exception(Level.DEBUG, cause, "Metrics manager failure");
 		}
 	}
 
@@ -129,34 +139,50 @@ implements MetricsManager {
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			if(allMetrics.remove(metricsCtx)) {
-				metricsCtx.refreshLastSnapshot(); // one last time
-				// check for the metrics threshold state if entered
-				if(metricsCtx.thresholdStateEntered() && ! metricsCtx.thresholdStateExited()) {
-					exitMetricsThresholdState(metricsCtx);
-				}
-				// file output
-				if(metricsCtx.sumPersistEnabled()) {
-					Loggers.METRICS_FILE_TOTAL.info(new MetricsCsvLogMessage(metricsCtx));
-				}
-				if(metricsCtx.perfDbResultsFileEnabled()) {
-					Loggers.METRICS_EXT_RESULTS_FILE.info(new ExtResultsXmlLogMessage(metricsCtx));
-				}
-				// console output
-				if(metricsCtx instanceof DistributedMetricsContext) {
-					final DistributedMetricsContext distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
-					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx)));
-					Loggers.METRICS_STD_OUT.info(
-						new StepResultsMetricsLogMessage(distributedMetricsCtx)
-					);
-					final AutoCloseable meterMBean = distributedMetrics.remove(distributedMetricsCtx);
-					if(meterMBean != null) {
-						try {
-							meterMBean.close();
-						} catch(final InterruptRunException e) {
-							throw e;
-						} catch(final Exception e) {
-							LogUtil.exception(Level.WARN, e, "Failed to close the meter MBean");
+				try {
+					if(!outputLock.tryLock(Fiber.WARN_DURATION_LIMIT, TimeUnit.NANOSECONDS)) {
+						Loggers.ERR.warn(
+							"Acquire lock timeout while unregistering the metrics context \"{}\"", metricsCtx
+						);
+					}
+					metricsCtx.refreshLastSnapshot(); // one last time
+					// check for the metrics threshold state if entered
+					if(metricsCtx.thresholdStateEntered() && ! metricsCtx.thresholdStateExited()) {
+						exitMetricsThresholdState(metricsCtx);
+					}
+					// file output
+					if(metricsCtx.sumPersistEnabled()) {
+						Loggers.METRICS_FILE_TOTAL.info(new MetricsCsvLogMessage(metricsCtx));
+					}
+					if(metricsCtx.perfDbResultsFileEnabled()) {
+						Loggers.METRICS_EXT_RESULTS_FILE.info(new ExtResultsXmlLogMessage(metricsCtx));
+					}
+					// console output
+					if(metricsCtx instanceof DistributedMetricsContext) {
+						final DistributedMetricsContext distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
+						Loggers.METRICS_STD_OUT.info(
+							new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx))
+						);
+						Loggers.METRICS_STD_OUT.info(
+							new StepResultsMetricsLogMessage(distributedMetricsCtx)
+						);
+						final AutoCloseable meterMBean = distributedMetrics.remove(distributedMetricsCtx);
+						if(meterMBean != null) {
+							try {
+								meterMBean.close();
+							} catch(final InterruptRunException e) {
+								throw e;
+							} catch(final Exception e) {
+								LogUtil.exception(Level.WARN, e, "Failed to close the meter MBean");
+							}
 						}
+					}
+				} catch(final InterruptedException e) {
+					throw new InterruptRunException(e);
+				} finally {
+					try {
+						outputLock.unlock();
+					} catch(final IllegalMonitorStateException ignored) {
 					}
 				}
 			} else {

@@ -22,13 +22,13 @@
 3.1.4. [Pipeline Load](#314-pipeline-load)<br/>
 3.2. [Other Scripting Languages](#32-other-scripting-languages)
 
-# 1. Introduction
+## 1. Introduction
 
 The user scenarios are executed by the
 [Java's scripting engine](https://docs.oracle.com/javase/8/docs/technotes/guides/scripting/).
 Mongoose exposes the specific DSL to the user scenarios to run the performance tests.
 
-## 1. JSR-223 Compliance
+### 1.1. JSR-223 Compliance
 
 The JSR-223 compliant scenario engines support has the following benefits in comparison to the old
 approach:
@@ -49,7 +49,7 @@ execution flow control, including the [Resume Support](#24-resume-support).
 * Command step type was removed. The new [external command](#311-external-command) should be called
 using the particular scenario language method.
 
-# 2. DSL
+## 2. DSL
 
 Generally, to define a scenario an user should:
 1. Define at least one load step in the script
@@ -62,7 +62,7 @@ Javascript. It's necessary to put the custom JSR-223 implementation jar
 to the `<USER_HOME_DIR>/.mongoose/<VERSION>/ext` directory to use other scripting languages for
 scenarios.
 
-## 2.1. Load Step
+### 2.1. Load Step
 
 The load step is the basic entity which should be used to make a scenario.
 Mongoose's DSL defines few basic steps and a lot of additional shortcut
@@ -72,7 +72,7 @@ steps.
 > All scenario statements are executed locally except the load steps. In the
 > distributed mode the steps are sliced and executed on the nodes (both entry and additional nodes).
 
-### 2.1.1. Methods
+#### 2.1.1. Methods
 
 1. ```config(config)```
 
@@ -112,9 +112,9 @@ steps.
     The convenience method for blocking execution flow. Includes ```start()```, ```await()``` and
     ```close()``` calls sequence. Returns nothing.
 
-### 2.1.2. Types
+#### 2.1.2. Types
 
-#### 2.1.2.1. Basic
+##### 2.1.2.1. Basic
 
 | Step Type Name | Description | Example |
 |----------------|-------------|---------|
@@ -122,9 +122,9 @@ steps.
 | PipelineLoad | Execute a pipeline load | [link](#314-pipeline-load) |
 | WeightedLoad | Execute a weighted load | [link](#313-weighted-load) |
 
-#### 2.1.2.2. Additional Shortcuts
+##### 2.1.2.2. Additional Shortcuts
 
-##### 2.1.2.2.1. Built-In
+###### 2.1.2.2.1. Built-In
 
 1. `PreconditionLoad`
 
@@ -170,7 +170,7 @@ steps.
     A load with `read` operations type. Performs the single byte range
     update operations.
 
-##### 2.1.2.2.2. Custom
+###### 2.1.2.2.2. Custom
 
 It's possible to define a custom shortcut step types what is especially
 useful for the `load` step type and its derivatives. This is because the
@@ -231,7 +231,7 @@ java -jar <MONGOOSE_DIR>/mongoose.jar \
     --run-scenario=copy.js
 ```
 
-## 2.2. Values Substitution
+### 2.2. Values Substitution
 
 The environment variables are accessible from a scenario with the same
 name:
@@ -281,7 +281,7 @@ PipelineLoad
     .run();
 ```
 
-# 2.3. Non-Blocking Execution
+## 2.3. Non-Blocking Execution
 
 In the new version it's possible to execute the steps asynchronously. This allows to deprecate the
 special ```parallel``` step wrapper.
@@ -313,7 +313,7 @@ step2.close();
 **Note**:
 It's necessary to invoke ```close()``` method if asynchronous execution mode is used.
 
-# 2.4. Resume Support
+## 2.4. Resume Support
 
 ```start``` and ```stop``` methods may be used as resume and pause accordingly (if the particular
 step implementation supports the pausing/resuming).
@@ -335,20 +335,20 @@ var resumedLoadStep = pausedLoadStep.start();
 ...
 ```
 
-# 3. Examples
+## 3. Examples
 
 The complete set of the example scenarios is available in the
 `<MONGOOSE_DIR>/example/scenario` directory. The scenarios are sorted by
 the language.
 
-## 3.1. Javascript
+### 3.1. Javascript
 
 Javascript is the default scripting language which should be used for
 the custom user scenarios. Other scripting languages are not supported.
 An user may use deprecated JSON scenarios either JSR-223 compliant
 scripting language at his/her own risk.
 
-### 3.1.1. External Command
+#### 3.1.1. External Command
 
 Example:
 
@@ -373,7 +373,7 @@ but is not portable.
 step discards previous value setting. **Returns** the new step instance of the same type so the
 call may be included into the call chain.
 
-### 3.1.2. Linear Load
+#### 3.1.2. Linear Load
 
 Example:
 
@@ -387,7 +387,7 @@ An argument should be a dictionary/map with a structure equivalent to the config
 configurations (see the [details](#21222-custom)). **Returns** the new step instance of the same
 type so the call may be included into the call chain.
 
-### 3.1.3. Weighted Load
+#### 3.1.3. Weighted Load
 
 See also the [weighted load spec](../design/weighted_load.md)
 
@@ -432,7 +432,7 @@ An argument should be a dictionary/map with a structure equivalent to the config
 step appends the configuration structure to the list. **Returns** the new step instance of the same
 type so the call may be included into the call chain.
 
-### 3.1.4. Pipeline Load
+#### 3.1.4. Pipeline Load
 
 See also the [pipeline load spec](../design/pipeline_load.md)
 

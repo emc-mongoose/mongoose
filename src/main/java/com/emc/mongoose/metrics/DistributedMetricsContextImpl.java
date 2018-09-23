@@ -190,7 +190,7 @@ implements DistributedMetricsContext<S> {
 
 	@Override
 	public final void close() {
-		super.close();
 		prevElapsedTime = System.currentTimeMillis() - startTimeStamp();
+		super.close();
 	}
 }
