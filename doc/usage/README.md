@@ -1,26 +1,23 @@
 # Contents
 
 1. Input<br/>
-1.1. [Defaults](defaults)<br/>
+1.1. [Defaults](defaults/README.md)<br/>
 1.2. Configuration<br/>
 1.2.1. Parameterizing<br/>
 1.2.1.1 Request HTTP Headers Parameterizing<br/>
 1.2.1.2. Output Path Parameterizing<br/>
 1.2.1.3. Multiuser Load<br/>
 1.2.2. Storage Drivers<br/>
-1.2.2.1. [Netty Based](../../storage/driver/coop/netty)<br/>
-1.2.2.1.1. Node Balancing<br/>
-1.2.2.1.2. SSL/TLS<br/>
-1.2.2.1.3. Connection Timeout<br/>
-1.2.2.1.4. I/O Buffer Size<br/>
-1.2.2.1.5. [Atmos](../../storage/driver/coop/netty/http/atmos)<br/>
-1.2.2.1.6. [S3](../../storage/driver/coop/netty/http/s3)<br/>
-1.2.2.1.7. [Swift](../../storage/driver/coop/netty/http/swift)<br/>
-1.2.2.2. [Filesystem](../../storage/driver/coop/nio/fs)<br/>
+1.2.2.1. [Netty Based](../../storage/driver/coop/netty/README.md)<br/>
+1.2.2.1.1. HTTP Storage Drivers<br/>
+1.2.2.1.1.1. [Atmos](../../storage/driver/coop/netty/http/atmos/README.md)<br/>
+1.2.2.1.1.2. [S3](../../storage/driver/coop/netty/http/s3/README.md)<br/>
+1.2.2.1.1.3. [Swift](../../storage/driver/coop/netty/http/swift/README.md)<br/>
+1.2.2.2. [Filesystem](../../storage/driver/coop/nio/fs/README.md)<br/>
 1.3. [Scenarios](../input/README.md#3-scenarios)<br/>
 2. Output<br/>
-2.1. [General](../output/general)<br/>
-2.2. [Metrics](../output/metrics)<br/>
+2.1. [General](../output/general/README.md)<br/>
+2.2. [Metrics](../output/metrics/README.md)<br/>
 3. Load Generation<br/>
 3.1. Items<br/>
 3.1.1. Types<br/>

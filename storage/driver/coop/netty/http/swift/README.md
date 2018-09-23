@@ -1,4 +1,6 @@
-# Features
+# Swift Storage Driver
+
+## 1. Features
 
 * API version: 1.0
 * Authentification:
@@ -36,7 +38,7 @@
     * `delete`
     * `noop`
 
-# Usage
+## 2. Usage
 
 ```bash
 java -jar mongoose-<VERSION>.jar \
@@ -44,7 +46,14 @@ java -jar mongoose-<VERSION>.jar \
     ...
 ```
 
-## Notes
+### 2.1. Configuration Reference
+
+| Name                                           | Type         | Default Value    | Description                                      |
+|:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
+| storage-net-http-namespace                     | String | null | The HTTP storage namespace. WARNING: the default value (null) will not work in the case of Swift API
+| storage-net-http-versioning                    | Flag | false | Specifies whether the versioning storage feature is used or not
+
+### 2.2. Notes
 
 * A **container** may be specified with `item-input-path` either `item-output-path` configuration option
 * DLO creation should be enabled using the `item-data-ranges-threshold` configuration option

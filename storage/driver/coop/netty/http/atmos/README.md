@@ -1,4 +1,6 @@
-# Features
+# Atmos Storage Driver
+
+## 1. Features
 
 * API version: ?
 * Authentification:
@@ -29,7 +31,7 @@
     * `delete`
     * `noop`
 
-# Usage
+## 2. Usage
 
 ```bash
 java -jar mongoose-<VERSION>.jar \
@@ -37,6 +39,13 @@ java -jar mongoose-<VERSION>.jar \
     ...
 ```
 
-## Notes
+### 2.1. Configuration Reference
+
+| Name                                           | Type         | Default Value    | Description                                      |
+|:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
+| storage-net-http-fsAccess                      | Flag | false | Specifies whether filesystem access is enabled or not
+| storage-net-http-namespace                     | String | null | The HTTP storage namespace.
+
+### 2.2. Notes
 
 * To specify a subtenant use the `storage-auth-token` configuration option
