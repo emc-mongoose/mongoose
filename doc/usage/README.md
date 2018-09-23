@@ -2,10 +2,10 @@
 
 1. Input<br/>
 1.1. [Defaults](defaults/README.md)<br/>
-1.2. [Configuration](configuration/README.md)<br/>
-1.2.1. [CLI](configuration/README.md#11-cli)<br/>
-1.2.2. [Reference Table](configuration/README.md#12-reference-table)<br/>
-1.2.3. [Parameterizing](configuration/README.md#2-parameterization)<br/>
+1.2. [Configuration](../configuration/README.md)<br/>
+1.2.1. [CLI](../configuration/README.md#11-cli)<br/>
+1.2.2. [Reference Table](../configuration/README.md#12-reference-table)<br/>
+1.2.3. [Parameterizing](../configuration/README.md#2-parameterization)<br/>
 1.2.4. Storage Drivers<br/>
 1.2.4.1. [Netty Based](../../storage/driver/coop/netty/README.md)<br/>
 1.2.4.1.1. [HTTP Storage Drivers](../../storage/driver/coop/netty/http/README.md)<br/>
