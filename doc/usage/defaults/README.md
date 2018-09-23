@@ -45,8 +45,8 @@ java -jar mongoose-<VERSION>.jar --run-scenario=custom_scenario_file.js
 
 ## 3. Load Generation
 
-|   |
-|---|---
+|   |   |
+|---|---|
 | Item type | Data
 | Item size | 1MB
 | Item payload | Random bytes, defined by the default seed value
@@ -61,16 +61,16 @@ java -jar mongoose-<VERSION>.jar --run-scenario=custom_scenario_file.js
 
 ## 4. Storage
 
-|   |
-|---|---
+|   |   |
+|---|---|
 | Storage authentication | None (no uid/secret/token/etc is used)
 | Storage driver | S3
 | Storage nodes | 127.0.0.1:9020
 
 ## 4. Load Scaling
 
-|                   |
-|-------------------|-----------------
-| Rate limit        | none
-| Concurrency Limit | 1
-| Distributed mode  | off (standalone)
+|                   |                  |
+|-------------------|------------------|
+| Rate limit        | none             |
+| Concurrency Limit | 1                |
+| Distributed mode  | off (standalone) |
