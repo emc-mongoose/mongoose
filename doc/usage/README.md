@@ -81,6 +81,6 @@
 3.3.3.2. [Pipeline](../../load/step/pipeline/README.md)<br/>
 3.3.3.3. [Weighted Load](../../load/step/weighted/README.md)<br/>
 4. [Load Scaling](scaling)
-4.1. [Rate](scaling/REAMDE.md#1-rate)<br/>
-4.2. [Concurrency](scaling/REAMDE.md#2-concurrency)<br/>
-4.3. [Distributed Mode](scaling/REAMDE.md#3-distributed-mode)<br/>
+4.1. [Rate](scaling/README.md#1-rate)<br/>
+4.2. [Concurrency](scaling/README.md#2-concurrency)<br/>
+4.3. [Distributed Mode](scaling/README.md#3-distributed-mode)<br/>
