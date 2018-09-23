@@ -33,8 +33,8 @@ java -jar mongoose-<VERSION>.jar --run-scenario=custom_scenario_file.js
 
 ## 2. Output
 
-|   |
-|---|---
+|   |   |
+|---|---|
 | Console colors | Yes
 | Console metrics output period | 10 seconds
 | Persist the periodic metrics also into the file | Yes
