@@ -141,7 +141,7 @@ implements LoadStepContext<I, O> {
 		}
 		// issue SLTM-938 fix
 		if(isNothingToRecycle()) {
-			Loggers.ERR.warn("{}: done due to recycling load operations absence (all failed)", id);
+			Loggers.ERR.warn("{}: no load operations to recycle (all failed?)", id);
 			return true;
 		}
 		return false;
@@ -194,9 +194,10 @@ implements LoadStepContext<I, O> {
 
 	// issue SLTM-938 fix
 	private boolean isNothingToRecycle() {
-		return recycleFlag && generator.isNothingToRecycle() && generator.isNothingToRecycle() &&
+		final long resultCount = counterResults.sum();
+		return recycleFlag && generator.isNothingToRecycle() &&
 			// all generated ops executed at least once
-			counterResults.sum() >= generator.generatedOpCount() &&
+			resultCount > 0 && resultCount >= generator.generatedOpCount() &&
 			// no successful op results
 			latestSuccOpResultByItem.size() == 0;
 	}

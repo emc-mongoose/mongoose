@@ -44,7 +44,7 @@ docker run \
     --network host \
     emcmongoose/mongoose \
     --run-node [\
-    --test-step-node-port=<PORT>]
+    --load-step-node-port=<PORT>]
 ```
 
 #### Run

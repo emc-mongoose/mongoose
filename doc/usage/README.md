@@ -78,9 +78,8 @@
 3.3.2.4. End Of Input<br/>
 3.3.3. Types<br/>
 3.3.3.1. Linear<br/>
-3.3.3.2. Pipeline<br/>
-3.3.3.2.1. Delay Between Load Operations<br/>
-3.3.3.3. Weighted Load<br/>
+3.3.3.2. [Pipeline](../../load/step/pipeline/README.md)<br/>
+3.3.3.3. [Weighted Load](../../load/step/weighted/README.md)<br/>
 4. [Load Scaling](scaling)
 4.1. [Rate](scaling/REAMDE.md#1-rate)<br/>
 4.2. [Concurrency](scaling/REAMDE.md#2-concurrency)<br/>
