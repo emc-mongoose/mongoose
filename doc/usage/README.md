@@ -14,9 +14,9 @@
 1.2.4.1.1.3. [Swift](../../storage/driver/coop/netty/http/swift/README.md)<br/>
 1.2.4.2. [Filesystem](../../storage/driver/coop/nio/fs/README.md)<br/>
 1.3. [Scenarios](../input/scenarios/README.md)<br/>
-2. Output<br/>
-2.1. [General](../output/general/README.md)<br/>
-2.2. [Metrics](../output/metrics/README.md)<br/>
+2. [Output](../output/README.md)<br/>
+2.1. [General](../output#1-general)<br/>
+2.2. [Metrics](../output#2-metrics)<br/>
 3. Load Generation<br/>
 3.1. Items<br/>
 3.1.1. Types<br/>
