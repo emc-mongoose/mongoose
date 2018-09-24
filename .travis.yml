@@ -132,15 +132,6 @@ jobs:
       - ITEM_SIZE=small
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.SingleFixedUpdateAndSingleRandomReadTest
-    - env:
-      - TEST=SingleFixedUpdateAndSingleRandomReadTest
-      - STORAGE_TYPE=fs,s3
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=single,medium
-      - ITEM_SIZE=small,medium
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
     # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.SingleRandomUpdateAndMultipleRandomReadTest
     - env:
       - TEST=SingleRandomUpdateAndMultipleRandomReadTest
@@ -168,7 +159,16 @@ jobs:
       - ITEM_SIZE=empty,small
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    #- stage: "Unstable system tests"
+    - stage: "Unstable system tests"
+    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.SingleFixedUpdateAndSingleRandomReadTest
+      env:
+      - TEST=SingleFixedUpdateAndSingleRandomReadTest
+      - STORAGE_TYPE=fs,s3
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=single,medium
+      - ITEM_SIZE=small,medium
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
 
     - stage: "System tests, failing on Travis (check locally)"
     # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew systemTest --tests com.emc.mongoose.system.CopyUsingInputPathTest
