@@ -1,26 +1,33 @@
-# Introduction
+# Byte Ranges Operations
 
 Partial write/read and append operations performance is the subject of interest also in some cases.
 To configure the partial/append operations it's necessary to specify the byte ranges to work with somehow.
 There are two ways - use *random* byte ranges and to specify the *fixed* byte ranges.
 The *random* byte ranges are specified by the count of the arbitrary ranges selected randomly by internal algorithm.
-There's also **[RFC 7233](https://tools.ietf.org/html/rfc7233)** specification describing how to specify the *fixed* byte ranges.
+There's also **[RFC 7233](https://tools.ietf.org/html/rfc7233)** specification describing how to specify the *fixed*
+byte ranges.
 
-# Limitations
+## 1. Limitations
 
 * Effective only if load type is set to **update** or **read**.
 
 * Random byte range count should not be more than maximum for the particular data item size used.
   (For details please refer to [this section](data_reentrancy.md#random-range-update))
 
-* It's not allowed to specify both random and fixed byte ranges simultaneously. The fixed byte ranges configuration will be used in this case only.
+* It's not allowed to specify both random and fixed byte ranges simultaneously. The fixed byte ranges configuration will
+  be used in this case only.
 
-# Approach
+## 2. Configuration
 
-* Note that combining multiple fixed ranges is also possible and is a valid case.
-* The fixed ranges configuration will be used if both fixed and random ranges are configured (invalid case but should not lead to failure).
+* Update/Read load type should be used to use the feature: `--update`/`--read` or
+    `--load-type=update`/`--load-type=read`
 
-## Read/Update Behavior Table
+* Fixed byte ranges may be specified using the `--item-data-ranges-fixed=<VALUE>` configuration parameter.
+    Multiple byte ranges may be specified using the comma as ranges separator.
+
+* Random byte ranges may be specified using the `--item-data-ranges-random=<COUNT>` configuration parameter.
+
+## 3. Effect
 
 | Byte Ranges Configuration | Effect |
 |---------------------------|--------|
@@ -31,7 +38,9 @@ There's also **[RFC 7233](https://tools.ietf.org/html/rfc7233)** specification d
 | Fixed value: "N1-N2"      | Read/Overwrite the part of the data tiem with the same data in the range of N1-N2 bytes.<br/>**Note that according RFC 7233 the N2 is included in the range**.<br/>N1 should be not more than N2.<br/>N2 may be more than data item size. |
 | Fixed value: "-N-"        | Append N bytes to the data item using the same data source. |
 
-## CLI examples
+## 4. Examples
+
+### 4.1. Random Ranges
 
 Random ranges read example:
 ```bash
@@ -51,6 +60,8 @@ java -jar mongoose-<VERSION>.jar \
 	--item-output-file=items_updated.csv \
 	...
 ```
+
+### 4.2. Fixed Ranges
 
 Partial read of the data items from 2KB *(2048th byte, the 1st byte after 2048 bytes)* to the end:
 ```bash
@@ -109,16 +120,6 @@ java -jar mongoose-<VERSION>.jar \
 	...
 ```
 
-Append 16KB to the data items:
-```bash
-java -jar mongoose-<VERSION>.jar \
-	--update \
-	--item-data-ranges-fixed=-16KB- \
-	--item-input-file=items2append_16KB_tails.csv \
-	--item-output-file=items_appended.csv \
-	...
-```
-
 Partially read the data items using multiple fixed ranges configuration:
 ```bash
 java -jar mongoose-<VERSION>.jar \
@@ -128,7 +129,14 @@ java -jar mongoose-<VERSION>.jar \
 	...
 ```
 
-# Configuration
+#### 4.2.1. Append
 
-* Update/Read load type should be used to use the feature: **--update**/**--read** or **--load-type=update**/**--load-type=read**
-* Fixed byte ranges should be specified using the **--item-data-ranges-fixed=<VALUE>** configuration parameter.
+Append 16KB to the data items:
+```bash
+java -jar mongoose-<VERSION>.jar \
+	--update \
+	--item-data-ranges-fixed=-16KB- \
+	--item-input-file=items2append_16KB_tails.csv \
+	--item-output-file=items_appended.csv \
+	...
+```
