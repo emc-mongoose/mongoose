@@ -57,9 +57,9 @@
 3.2.1.4. [Delete](load/operations/types#4-delete)<br/>
 3.2.1.5. [Noop](load/operations/types#5-noop)<br/>
 3.2.2. [Byte Ranges Operations](load/operations/byte_ranges)<br/>
-3.2.2.1. [Random Ranges](load/operations/byte_ranges#41-random-ranges)
-3.2.2.2. [Fixed Ranges](load/operations/byte_ranges#42-fixed-ranges)
-3.2.2.2.1. [Append](load/operations/byte_ranges#421-append)
+3.2.2.1. [Random Ranges](load/operations/byte_ranges#41-random-ranges)<br/>
+3.2.2.2. [Fixed Ranges](load/operations/byte_ranges#42-fixed-ranges)<br/>
+3.2.2.2.1. [Append](load/operations/byte_ranges#421-append)<br/>
 3.2.3. [Composite Operations](load/operations/composite)<br/>
 3.2.3.1. [Storage-Side Concatenation](load/operations/composite#1-storage-side-concatenation)<br/>
 3.2.3.1.1. [S3 Multipart Upload](load/operations/composite#131-s3-multipart-upload)<br/>
