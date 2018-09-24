@@ -19,32 +19,32 @@
 2.2. [Metrics](../output#2-metrics)<br/>
 3. Load Generation<br/>
 3.1. Items<br/>
-3.1.1. Types<br/>
-3.1.1.1. Data<br/>
-3.1.1.1.1. Size<br/>
-3.1.1.1.1.1. Fixed<br/>
-3.1.1.1.1.2. Random<br/>
-3.1.1.1.2. Payload<br/>
-3.1.1.1.2.1. Random Using Seed<br/>
-3.1.1.1.2.2. From External File<br/>
-3.1.1.2. Path<br/>
-3.1.1.3. Token<br/>
-3.1.2. Input<br/>
-3.1.2.1. File<br/>
-3.1.2.2. Item Path Listing Input<br/>
-3.1.2.3. New Items Input<br/>
-3.1.2.3.1. Naming<br/>
-3.1.2.3.1.1. Types<br/>
-3.1.2.3.1.1.1. Random<br/>
-3.1.2.3.1.1.2. Ascending<br/>
-3.1.2.3.1.1.1. Descending<br/>
-3.1.2.3.1.2. Prefix<br/>
-3.1.2.3.1.3. Radix<br/>
-3.1.2.3.1.4. Offset<br/>
-3.1.2.3.1.5. Length<br/>
-3.1.3. Output<br/>
-3.1.3.1. File<br/>
-3.1.3.1. Path<br/>
+3.1.1. [Types](item/types)<br/>
+3.1.1.1. [Data](item/types#1-data)<br/>
+3.1.1.1.1. [Size](item/types#11-size)<br/>
+3.1.1.1.1.1. [Fixed](item/types#111-fixed)<br/>
+3.1.1.1.1.2. [Random](item/types#112-random)<br/>
+3.1.1.1.2. [Payload](item/types#12-payload)<br/>
+3.1.1.1.2.1. [Random Using A Seed](item/types#121-random-using-a-seed)<br/>
+3.1.1.1.2.2. [Custom Using An External File](item/types#122-custom-using-an-external-file)<br/>
+3.1.1.2. [Path](item/types#2-path)<br/>
+3.1.1.3. [Token](item/types#3-token)<br/>
+3.1.2. [Input](item/input)<br/>
+3.1.2.1. [File](item/input#1-file)<br/>
+3.1.2.2. [Item Path Listing Input](item/input#2-item-path-listing-input)<br/>
+3.1.2.3. [New Items Input](item/input#3-new-items-input)<br/>
+3.1.2.3.1. [Naming](item/input#31-naming)<br/>
+3.1.2.3.1.1. [Types](item/input#311-types)<br/>
+3.1.2.3.1.1.1. [Random](item/input#3111-random)<br/>
+3.1.2.3.1.1.2. [Ascending](item/input#3112-ascending)<br/>
+3.1.2.3.1.1.1. [Descending](item/input#3113-descending)<br/>
+3.1.2.3.1.2. [Prefix](item/input#312-prefix)<br/>
+3.1.2.3.1.3. [Radix](item/input#313-radix)<br/>
+3.1.2.3.1.4. [Offset](item/input#314-offset)<br/>
+3.1.2.3.1.5. [Length](item/input#315-length)<br/>
+3.1.3. [Output](item/output)<br/>
+3.1.3.1. [File](item/output#1-file)<br/>
+3.1.3.1. [Path](item/output#2-path)<br/>
 3.2. Load Operations<br/>
 3.2.1. Types<br/>
 3.2.1.1. Create<br/>
