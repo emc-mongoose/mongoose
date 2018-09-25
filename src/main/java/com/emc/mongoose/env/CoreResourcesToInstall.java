@@ -17,8 +17,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public final class MainInstaller
-extends JarResourcesInstaller {
+public final class CoreResourcesToInstall
+extends InstallableJarResources {
 
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(Arrays.asList(
 		// initial configuration/defaults file
@@ -91,7 +91,7 @@ extends JarResourcesInstaller {
 	));
 	private final Path appHomePath;
 
-	public MainInstaller() {
+	public CoreResourcesToInstall() {
 		final Config bundledDefaults;
 		try {
 			final Map<String, Object> schema = SchemaProvider.resolveAndReduce(

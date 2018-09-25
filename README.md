@@ -28,31 +28,30 @@
 &nbsp;&nbsp;&nbsp;&nbsp;2.4.2. [Storage Drivers](#242-storage-drivers)<br/>
 &nbsp;&nbsp;&nbsp;2.4.3. [Scenario Engine](#243-scenario-engine)<br/>
 3. Documentation<br/>
-&nbsp;&nbsp;3.1. [Deployment](doc/deployment/README.md)<br/>
-&nbsp;&nbsp;3.2. [Usage](doc/usage/README.md)<br/>
-&nbsp;&nbsp;3.2. [Troubleshooting](doc/troubleshooting/README.md)<br/>
+&nbsp;&nbsp;3.1. [Deployment](doc/deployment)<br/>
+&nbsp;&nbsp;3.2. [Usage](doc/usage)<br/>
+&nbsp;&nbsp;3.2. [Troubleshooting](doc/troubleshooting)<br/>
 &nbsp;&nbsp;3.3. Storage Drivers<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.3.1. [General](storage/driver/README.md)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.3.2. [S3](storage/driver/coop/net/http/s3/README.md)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.3.3. [Atmos](storage/driver/coop/net/http/atmos/README.md)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.3.4. [Swift](storage/driver/coop/net/http/swift/README.md)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.3.5. [FS](storage/driver/coop/nio/fs/README.md)<br/>
-&nbsp;&nbsp;3.4. [Dependencies](doc/dependencies/README.md)<br/>
-&nbsp;&nbsp;3.5. [Input](doc/input/README.md)<br/>
-&nbsp;&nbsp;3.6. [Output](doc/output/README.md)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.3.2. [S3](storage/driver/coop/netty/http/s3)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.3.3. [Atmos](storage/driver/coop/netty/http/atmos)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.3.4. [Swift](storage/driver/coop/netty/http/swift)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.3.5. [FS](storage/driver/coop/nio/fs)<br/>
+&nbsp;&nbsp;3.4. [Dependencies](doc/dependencies)<br/>
+&nbsp;&nbsp;3.5. [Input](doc/input)<br/>
+&nbsp;&nbsp;3.6. [Output](doc/output)<br/>
 &nbsp;&nbsp;3.7. Design<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.1. [Architecture](doc/design/architecture/README.md)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.2. [Distributed Mode](doc/design/distributed_mode/README.md)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.3. [Installer](src/main/java/com/emc/mongoose/env/README.md)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.4. [Recycle Mode](doc/design/recycle_mode/README.md)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.5. [Data Reentrancy](doc/design/data_reentrancy/README.md)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.6. [Byte Range Operations](doc/design/byte_range_operations/README.md)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.7. [Copy Mode](doc/design/copy_mode/README.md)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.8. [Pipeline Load](load/step/pipeline/README.md)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.9. [Weighted Load](load/step/weighted/README.md)<br/>
-&nbsp;&nbsp;3.8. [Integrations](doc/integrations/README.md)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.7.1. [Architecture](doc/design/architecture)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.7.2. [Distributed Mode](doc/design/distributed_mode)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.7.3. [Installer](src/main/java/com/emc/mongoose/env)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.7.4. [Recycle Mode](doc/design/recycle_mode)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.7.5. [Data Reentrancy](doc/design/data_reentrancy)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.7.6. [Byte Range Operations](doc/design/byte_range_operations)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.7.7. [Copy Mode](doc/design/copy_mode)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.7.8. [Pipeline Load](load/step/pipeline)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.7.9. [Weighted Load](load/step/weighted)<br/>
+&nbsp;&nbsp;3.8. [Integrations](doc/integrations)<br/>
 &nbsp;&nbsp;3.9. [Contributing](CONTRIBUTING.md)<br/>
-&nbsp;&nbsp;3.10. [Changelog](doc/changelog/README.md)<br/>
+&nbsp;&nbsp;3.10. [Changelog](doc/changelog)<br/>
 
 # 1. Overview
 
@@ -109,9 +108,9 @@ It is designed to be used for:
 ### 2.1.6. Load Generation Patterns
 |                       | Mongoose  | COSBench | LoadRunner | Locust |
 | ---                   | :---:     | :---:    | :---:      | :---:  |
-|**[Weighted load](design/weighted_load.md)**|:heavy_check_mark:| :heavy_check_mark:| TBD |:x:|
-|**[Pipeline load](design/pipeline_load.md)**|:heavy_check_mark:| :x:| TBD |:x:|
-|**[Recycle mode](design/recycle_mode.md)**|:heavy_check_mark: |:x:| TBD |:x:|
+|**[Weighted load](load/step/weighted)**|:heavy_check_mark:| :heavy_check_mark:| TBD |:x:|
+|**[Pipeline load](load/step/pipeline)**|:heavy_check_mark:| :x:| TBD |:x:|
+|**[Recycle mode](doc/design/recycle_mode)**|:heavy_check_mark: |:x:| TBD |:x:|
 
 ### 2.1.7. Storages Support
 
@@ -133,7 +132,7 @@ significant performance degradation.
 
 ### 2.2.2. Horizontal
 
-The [distributed mode](design/distributed_mode.md) in Mongoose was designed as P2P network. Each peer/node performs
+The [distributed mode](doc/design/distributed_mode.md) in Mongoose was designed as P2P network. Each peer/node performs
 independently as much as possible. This eliminates the excess network interaction between the nodes which may be a
 bottleneck.
 
@@ -141,34 +140,34 @@ bottleneck.
 
 ### 2.3.1. Flexible Configuration
 
-Supports the [parameterization](input/configuration.md#2-parameterization) and [extension](api/extensions/general.md)
+Supports the [parameterization](doc/input/configuration#2-parameterization) and [extension](api/extensions/general.md)
 but remains type-safe and structure-safe
 
 ### 2.3.2. Load Generation Patterns
 
-* CRUD operations and the extensions: Noop, [Copy](design/copy_mode.md)
+* CRUD operations and the extensions: Noop, [Copy](doc/design/copy_mode)
 
-* [Parial Operations](design/byte_range_operations.md)
+* [Parial Operations](doc/usage/load/operations/byte_ranges)
 
-* [Composite Operations](design/storage_side_concatenation.md)
+* [Composite Operations](doc/design/storage_side_concatenation.md)
 
 * Complex Load Steps
-    * [Pipeline Load](design/pipeline_load.md)
-    * [Weighted Load](design/weighted_load.md)
-* [Recycle Mode](design/recycle_mode.md)
+    * [Pipeline Load](load/step/pipeline)
+    * [Weighted Load](load/step/weighted)
+* [Recycle Mode](doc/design/recycle_mode)
 
-* [Data Reentrancy](design/data_reentrancy.md)
+* [Data Reentrancy](doc/design/data_reentrancy)
 
   Allows to validate the data read back from the storage successfully even after the data items have been randomly
   updated multiple times before
 
 * Custom Payload Data
 
-### 2.3.3. [Scenarios](input/scenarios.md)
+### 2.3.3. [Scenarios](doc/input/scenarios)
 
 Scenaruis allow to organize the load steps in the required order and reuse the complex performance tests
 
-### 2.3.4. [Metrics Reporting](output/metrics.md)
+### 2.3.4. [Metrics Reporting](doc/output#metrics)
 
 The metrics reported by Mongoose are designed to be most useful for the performance analysis. The following metrics are
 available:
@@ -204,20 +203,27 @@ so called *I/O trace* records).
 Mongoose is designed to be agnostic to the particular extensions implementations. This allows to support any storage,
 scenario language, different load step kinds.
 
-### 2.4.1. [Load Steps](api/extensions/load_steps.md)
+### 2.4.1. Load Steps
 
-It's possible to implement a custom load step.
+A load step controls the load operations flow. Different load step implementations may do it in the different way. There
+are the available out-of-the-box:
+
+* [Linear](load/step/linear)
+  The most basic load step. All load operations have the same type.
+
+* [Pipeline](load/step/pipeline)
+  Executes a sequence of the different load operations for each item independently.
+
+* [Weighted](load/step/weighted)
+  Executes the load operations of different types sustaining the specified ratio (weights).
 
 ### 2.4.2. Storage Drivers
 
-Mongoose accounts and operates with abstract *items* which may be files, objects, directories, tokens, buckets, etc. The
-exact behaviour is defined by the particular storage driver implementation.
-
-Mongoose supports some storage types out-of-the-box:
-* Amazon S3
-* EMC Atmos
-* OpenStack Swift
-* Filesystem
+The actual load is being executed by the storage drivers. Mongoose supports some storage types out-of-the-box:
+* [Amazon S3](storage/driver/coop/netty/http/s3)
+* [EMC Atmos](storage/driver/coop/netty/http/atmos)
+* [OpenStack Swift](storage/driver/coop/netty/http/swift)
+* [Filesystem](storage/driver/coop/nio/fs)
 
 The following additional storage driver implementations are available:
 * [HDFS](https://github.com/emc-mongoose/mongoose-storage-driver-hdfs)

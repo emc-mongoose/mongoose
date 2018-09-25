@@ -16,7 +16,11 @@ import java.util.ServiceLoader;
 import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
-public interface Extension {
+/**
+ * Extension is an @see {@link com.emc.mongoose.env.Installable} with the configuration and the configuration schema.
+ */
+public interface Extension
+extends Installable {
 
 	Logger LOG = Logger.getLogger(Extension.class.getSimpleName());
 
@@ -74,8 +78,6 @@ public interface Extension {
 	}
 
 	String id();
-
-	void install(final Path appHomePath);
 
 	Config defaults(final Path appHomePath);
 

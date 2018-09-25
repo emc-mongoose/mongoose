@@ -141,7 +141,7 @@ import static org.junit.Assert.assertTrue;
 					final String addr = "127.0.0.1:" + port;
 					slaveNodes.put(addr, nodeSvc);
 				}
-				args.add("--load-step-node-addrs=" + slaveNodes.keySet().stream().collect(Collectors.joining(",")));
+				args.add("--load-step-node-addrs=" + String.join(",", slaveNodes.keySet()));
 				break;
 		}
 		testContainer = new MongooseEntryNodeContainer(
@@ -207,8 +207,8 @@ import static org.junit.Assert.assertTrue;
 		}
 		final long durationInSec = TimeUnit.MILLISECONDS.toSeconds(duration);
 		assertTrue(
-			"Test time was " + durationInSec + " while expected no more than " + TIME_LIMIT_SEC,
-			TIME_LIMIT_SEC + 15 >= durationInSec
+			"Test time was " + durationInSec + " while expected no more than " + (TIME_LIMIT_SEC + 30),
+			TIME_LIMIT_SEC + 30 >= durationInSec
 		);
 	}
 }

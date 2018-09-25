@@ -217,7 +217,7 @@ import java.util.stream.Collectors;
 			assertTrue(fullItemSize.getMax() >= nextItemSize);
 			sizeSum += nextItemSize;
 		}
-		final long delta = 100 * runMode.getNodeCount() * concurrency.getValue() * partSize.getAvg();
+		final long delta = sizeLimit.get() / 10;
 		assertTrue(
 			"Expected to transfer no more than " + sizeLimit + "+" + delta + ", but transferred actually: "
 				+ new SizeInBytes(sizeSum),

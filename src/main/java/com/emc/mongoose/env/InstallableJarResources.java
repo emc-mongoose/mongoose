@@ -16,17 +16,17 @@ import java.util.List;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
 
-public abstract class JarResourcesInstaller
-implements Installer {
+public abstract class InstallableJarResources
+implements Installable {
 
 	@Override
-	public void accept(final Path appHomePath) {
+	public void install(final Path dstPath) {
 		try {
-			Files.createDirectories(appHomePath);
+			Files.createDirectories(dstPath);
 		} catch(final IOException e) {
 			e.printStackTrace(System.err);
 		}
-		resourceFilesToInstall().forEach(resFile -> installResourcesFile(appHomePath, resFile));
+		resourceFilesToInstall().forEach(resFile -> installResourcesFile(dstPath, resFile));
 		Loggers.MSG.debug("Installer finished: \"{}\"", getClass().getCanonicalName());
 	}
 

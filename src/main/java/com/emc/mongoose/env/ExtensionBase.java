@@ -15,13 +15,8 @@ import java.nio.file.Paths;
 import java.util.Map;
 
 public abstract class ExtensionBase
-extends JarResourcesInstaller
+extends InstallableJarResources
 implements Extension {
-
-	@Override
-	public final void install(final Path appHomePath) {
-		accept(appHomePath);
-	}
 
 	@Override
 	public final Config defaults(final Path appHomePath) {

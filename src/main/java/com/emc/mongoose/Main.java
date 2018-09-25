@@ -6,7 +6,8 @@ import com.emc.mongoose.config.AliasingUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.env.MainInstaller;
+import com.emc.mongoose.env.CoreResourcesToInstall;
+import com.emc.mongoose.env.Installable;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -55,8 +56,8 @@ public final class Main {
 
 	public static void main(final String... args) {
 
-		final MainInstaller mainInstaller = new MainInstaller();
-		final Path appHomePath = mainInstaller.appHomePath();
+		final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
+		final Path appHomePath = coreResources.appHomePath();
 		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
 		LogUtil.init(appHomePath.toString());
 
@@ -65,8 +66,8 @@ public final class Main {
 				.put(KEY_CLASS_NAME, Main.class.getSimpleName())
 		) {
 
-			// invoke the main installer
-			mainInstaller.accept(appHomePath);
+			// install the core resources
+			coreResources.install(appHomePath);
 
 			// resolve the initial config schema
 			final Map<String, Object> mainConfigSchema = SchemaProvider
