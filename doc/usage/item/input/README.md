@@ -31,19 +31,21 @@ Random new items naming pattern is used by default
 
 ##### 3.1.1.2. Ascending
 
-
-
+Generate new item ids in the ascending order:
 ```bash
 java -jar mongoose-<VERSION>.jar --item-naming-type=asc ...
 ```
 
 ##### 3.1.1.3. Descending
 
+Generate new item ids in the descending order:
 ```bash
 java -jar mongoose-<VERSION>.jar --item-naming-type=desc ...
 ```
 
 #### 3.1.2. Prefix
+
+The prefix option may be used to prepend some value for each new item.
 
 ```bash
 java -jar mongoose-<VERSION>.jar --item-naming-prefix=item_prefix_ ...
