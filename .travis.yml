@@ -69,15 +69,6 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs,swift RUN_MODE=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew systemTest --tests com.emc.mongoose.system.CircularReadLimitByTimeTest
-    - env:
-      - TEST=CircularReadLimitByTimeTest
-      - STORAGE_TYPE=fs,swift
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=single,high
-      - ITEM_SIZE=empty,medium
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
     # STORAGE_TYPE=fs RUN_MODE=local CONCURRENCY=low,high ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.CreateLimitBySizeTest
     - env:
       - TEST=CreateLimitBySizeTest
@@ -121,15 +112,6 @@ jobs:
       - RUN_MODE=local,distributed
       - CONCURRENCY=low,medium
       - ITEM_SIZE=small,medium
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
-    # STORAGE_TYPE=fs RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=empty,small ./gradlew systemTest --tests com.emc.mongoose.system.ReadUsingVariablePathTest
-    - env:
-      - TEST=ReadUsingVariablePathTest
-      - STORAGE_TYPE=fs
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=single,low,medium,high
-      - ITEM_SIZE=empty,small
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=fs,s3 RUN_MODE=local CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew systemTest --tests com.emc.mongoose.system.ReadVerificationAfterCircularUpdateTest
@@ -178,8 +160,26 @@ jobs:
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     - stage: "Unstable system tests"
-    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.SingleFixedUpdateAndSingleRandomReadTest
+    # STORAGE_TYPE=fs,swift RUN_MODE=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew systemTest --tests com.emc.mongoose.system.CircularReadLimitByTimeTest
       env:
+      - TEST=CircularReadLimitByTimeTest
+      - STORAGE_TYPE=fs,swift
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=single,high
+      - ITEM_SIZE=empty,medium
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+    # STORAGE_TYPE=fs RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=empty,small ./gradlew systemTest --tests com.emc.mongoose.system.ReadUsingVariablePathTest
+    - env:
+      - TEST=ReadUsingVariablePathTest
+      - STORAGE_TYPE=fs
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=single,low,medium,high
+      - ITEM_SIZE=empty,small
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+    # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium,high ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.SingleFixedUpdateAndSingleRandomReadTest
+    - env:
       - TEST=SingleFixedUpdateAndSingleRandomReadTest
       - STORAGE_TYPE=fs,s3
       - RUN_MODE=local,distributed

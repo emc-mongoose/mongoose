@@ -90,7 +90,7 @@ It is designed to be used for:
 |                                                    | Mongoose  | COSBench | LoadRunner | Locust |
 | ---                                                | :---:     | :---:    | :---:      | :---:  |
 |**Horizontal** (Distributed Mode)                 |:heavy_check_mark:|:heavy_check_mark:| TBD |:heavy_check_mark:|
-|**Vertical** (Max sustained concurrency per instance)|[1_048_576](https://github.com/emc-mongoose/mongoose/blob/feature-v4-doc/doc/features.md#12-fibers)|[1024](http://cosbench.1094679.n5.nabble.com/how-many-connections-users-can-cosbench-create-to-test-one-swift-storage-tp325p326.html)| TBD |[1_000_000](https://locust.io/)|
+|**Vertical** (Max sustained concurrency per instance)| 1_048_576 |[1024](http://cosbench.1094679.n5.nabble.com/how-many-connections-users-can-cosbench-create-to-test-one-swift-storage-tp325p326.html)| TBD |[1_000_000](https://locust.io/)|
 
 ### 2.1.4. Input
 |                  | Mongoose  | COSBench | LoadRunner | Locust |
@@ -167,7 +167,7 @@ structure-safe.
 
 Scenaruis allow to organize the load steps in the required order and reuse the complex performance tests
 
-### 2.3.4. [Metrics Reporting](doc/output#metrics)
+### 2.3.4. [Metrics Reporting](doc/output#2-metrics)
 
 The metrics reported by Mongoose are designed to be most useful for the performance analysis. The following metrics are
 available:
