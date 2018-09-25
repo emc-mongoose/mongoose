@@ -1,13 +1,11 @@
 package com.emc.mongoose.metrics;
 
 import com.codahale.metrics.Clock;
-import com.codahale.metrics.Histogram;
-
 import com.emc.mongoose.item.op.OpType;
 
 import com.github.akurilov.commons.system.SizeInBytes;
+import io.prometheus.client.Histogram;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -44,13 +42,13 @@ implements MetricsContext<S> {
 			TimeUnit.SECONDS.toMillis(updateIntervalSec)
 		);
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-		respLatency = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
-		respLatSnapshot = respLatency.getSnapshot();
+		respLatency = Histogram.build().register();
+		respLatSnapshot = SnapshotBuilder.build(respLatency);
 		respLatencySum = new LongAdder();
-		reqDuration = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
-		reqDurSnapshot = reqDuration.getSnapshot();
-		actualConcurrency = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
-		actualConcurrencySnapshot = actualConcurrency.getSnapshot();
+		reqDuration = Histogram.build().name("reqDuration").register();
+		reqDurSnapshot = SnapshotBuilder.build(reqDuration);
+		actualConcurrency = Histogram.build().name("actualConcurrency").register();
+		actualConcurrencySnapshot = SnapshotBuilder.build(actualConcurrency);
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
 		throughputFail = new CustomMeter(clock, updateIntervalSec);
@@ -77,8 +75,8 @@ implements MetricsContext<S> {
 		if(latency > 0 && duration > latency) {
 			timingLock.lock();
 			try {
-				reqDuration.update(duration);
-				respLatency.update(latency);
+				reqDuration.observe(duration);
+				respLatency.observe(latency);
 			} finally {
 				timingLock.unlock();
 			}
@@ -96,8 +94,8 @@ implements MetricsContext<S> {
 		if(latency > 0 && duration > latency) {
 			timingLock.lock();
 			try {
-				reqDuration.update(duration);
-				respLatency.update(latency);
+				reqDuration.observe(duration);
+				respLatency.observe(latency);
 			} finally {
 				timingLock.unlock();
 			}
@@ -123,8 +121,8 @@ implements MetricsContext<S> {
 			if(latency > 0 && duration > latency) {
 				timingLock.lock();
 				try {
-					reqDuration.update(duration);
-					respLatency.update(latency);
+					reqDuration.observe(duration);
+					respLatency.observe(latency);
 				} finally {
 					timingLock.unlock();
 				}
@@ -150,8 +148,8 @@ implements MetricsContext<S> {
 			if(latency > 0 && duration > latency) {
 				timingLock.lock();
 				try {
-					reqDuration.update(duration);
-					respLatency.update(latency);
+					reqDuration.observe(duration);
+					respLatency.observe(latency);
 				} finally {
 					timingLock.unlock();
 				}
@@ -204,8 +202,8 @@ implements MetricsContext<S> {
 			if(lastDurationSum != reqDurationSum.sum() || lastLatencySum != respLatencySum.sum()) {
 				if(timingLock.tryLock()) {
 					try {
-						reqDurSnapshot = reqDuration.getSnapshot();
-						respLatSnapshot = respLatency.getSnapshot();
+						reqDurSnapshot = SnapshotBuilder.build(reqDuration);
+						respLatSnapshot = SnapshotBuilder.build(respLatency);
 					} finally {
 						timingLock.unlock();
 					}
@@ -213,8 +211,8 @@ implements MetricsContext<S> {
 				lastLatencySum = respLatencySum.sum();
 				lastDurationSum = reqDurationSum.sum();
 			}
-			actualConcurrency.update(actualConcurrencyGauge.getAsInt());
-			actualConcurrencySnapshot = actualConcurrency.getSnapshot();
+			actualConcurrency.observe(actualConcurrencyGauge.getAsInt());
+			actualConcurrencySnapshot = SnapshotBuilder.build(actualConcurrency);
 		}
 		lastSnapshot = (S) new MetricsSnapshotImpl(throughputSuccess.getCount(), throughputSuccess.
 			getLastRate(), throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
