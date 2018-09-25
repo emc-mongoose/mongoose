@@ -36,8 +36,8 @@ Note:
 ### 1.2. Payload
 
 **Note**:
-> Same `item-data-input-*` configuration options should be used to create, update and read load operations. The content
-> verification read capability will not work correctly otherwise.
+> Same `item-data-input-*` configuration options should be used for `create`, `update` and `read` load operations. The
+> content verification read capability will not work correctly otherwise.
 
 #### 1.2.1. Random Using A Seed
 
