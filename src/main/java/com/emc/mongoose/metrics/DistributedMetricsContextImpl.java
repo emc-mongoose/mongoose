@@ -1,8 +1,5 @@
 package com.emc.mongoose.metrics;
 
-import com.codahale.metrics.Snapshot;
-import com.codahale.metrics.UniformSnapshot;
-
 import com.emc.mongoose.item.op.OpType;
 
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -133,8 +130,8 @@ implements DistributedMetricsContext<S> {
 				lastLatIdx++;
 			}
 		}
-		final Snapshot durSnapshot = new UniformSnapshot(allDurations);
-		final Snapshot latSnapshot = new UniformSnapshot(allLatencies);
+		final Snapshot durSnapshot = null;//new UniformSnapshot(allDurations);
+		final Snapshot latSnapshot = null;//new UniformSnapshot(allLatencies);
 		final long currentTimeMillis = System.currentTimeMillis();
 		final long tsStart = startTimeStamp();
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;

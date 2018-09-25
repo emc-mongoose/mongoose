@@ -1,9 +1,9 @@
 package com.emc.mongoose.metrics;
 
-import com.codahale.metrics.Clock;
 import com.codahale.metrics.EWMA;
 import com.codahale.metrics.Metric;
 
+import java.time.Clock;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
@@ -26,12 +26,12 @@ implements Metric {
 		final int intervalSecs = 1;
 		rateAvg = new EWMA(1 - exp(-intervalSecs / ps), intervalSecs, TimeUnit.SECONDS);
 		this.clock = clock;
-		startTime = clock.getTick();
+		startTime = clock.millis();
 		lastTick.set(startTime);
 	}
 	//
 	public void resetStartTime() {
-		startTime = clock.getTick();
+		startTime = clock.millis();
 		lastTick.set(startTime);
 	}
 	//
@@ -55,7 +55,7 @@ implements Metric {
 
 	private void tickIfNecessary() {
 		final long oldTick = lastTick.get();
-		final long newTick = clock.getTick();
+		final long newTick = clock.millis();
 		final long age = newTick - oldTick;
 		if(age > TICK_INTERVAL) {
 			final long newIntervalStartTick = newTick - age % TICK_INTERVAL;
@@ -76,7 +76,7 @@ implements Metric {
 		if(getCount() == 0) {
 			return 0.0;
 		} else {
-			final double elapsed = (clock.getTick() - startTime);
+			final double elapsed = (clock.millis() - startTime);
 			return getCount() / elapsed * TimeUnit.SECONDS.toNanos(1);
 		}
 	}
