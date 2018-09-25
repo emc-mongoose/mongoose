@@ -42,12 +42,12 @@ implements MetricsContext<S> {
 			TimeUnit.SECONDS.toMillis(updateIntervalSec)
 		);
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-		respLatency = Histogram.build().register();
+		respLatency = Histogram.build().name("respLatency").help("latency of response").register();
 		respLatSnapshot = SnapshotBuilder.build(respLatency);
 		respLatencySum = new LongAdder();
-		reqDuration = Histogram.build().name("reqDuration").register();
+		reqDuration = Histogram.build().name("reqDuration").help("duration of request").register();
 		reqDurSnapshot = SnapshotBuilder.build(reqDuration);
-		actualConcurrency = Histogram.build().name("actualConcurrency").register();
+		actualConcurrency = Histogram.build().name("actualConcurrency").help("actually value of concurrency").register();
 		actualConcurrencySnapshot = SnapshotBuilder.build(actualConcurrency);
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
