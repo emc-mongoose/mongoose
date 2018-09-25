@@ -1,6 +1,6 @@
 # Recycling The Load Operations
 
-> See also the [Recycling Specification](../../../../doc/design/recycle_mode).
+> See also the [Recycling Specification](../../../../design/recycle_mode).
 
 The load operations recycling capability allows to perform the load operations multiple times on each item. This  may be
 useful to `read` or `update` the same items multiple times each.
