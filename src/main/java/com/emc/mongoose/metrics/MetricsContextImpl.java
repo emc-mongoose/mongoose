@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.IntSupplier;
 
 /**
@@ -49,6 +48,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			.quantile(1.0, 0.0)  // max
 			.quantile(0.25,0.01) //loQ
 			.quantile(0.75,0.01) //hiQ
+			.quantile(0.5, 0.01) //med
 			.name(name)
 			.help(help)
 			.register();
@@ -226,11 +226,10 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			actualConcurrency.observe(actualConcurrencyGauge.getAsInt());
 			actualConcurrencySnapshot = new Snapshot(actualConcurrency);
 		}
-		lastSnapshot = (S) new MetricsSnapshotImpl(throughputSuccess.getCount(), throughputSuccess.
-																									  getLastRate(),
-			throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
-			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyGauge.getAsInt(),
-			actualConcurrencySnapshot.mean(), concurrencyLimit, lastDurationSum, lastLatencySum, reqDurSnapshot,
+		lastSnapshot = (S) new MetricsSnapshotImpl(throughputSuccess.count(), throughputSuccess.lastRate(),
+			throughputFail.count(), throughputFail.lastRate(), reqBytes.count(),
+			reqBytes.lastRate(), tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyGauge.getAsInt(),
+			actualConcurrencySnapshot.mean(), concurrencyLimit, reqDurSnapshot,
 			respLatSnapshot
 		);
 		super.refreshLastSnapshot();
@@ -238,7 +237,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 
 	@Override
 	public final long transferSizeSum() {
-		return reqBytes.getCount();
+		return reqBytes.count();
 	}
 
 	@Override

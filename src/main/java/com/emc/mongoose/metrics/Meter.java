@@ -178,11 +178,6 @@ implements MeterMBean {
 	}
 
 	@Override
-	public long[] durationValues() {
-		return lastSnapshot.durationValues();
-	}
-
-	@Override
 	public final long latencyMin() {
 		return lastSnapshot.latencyMin();
 	}
@@ -210,11 +205,6 @@ implements MeterMBean {
 	@Override
 	public final double latencyMean() {
 		return lastSnapshot.latencyMean();
-	}
-
-	@Override
-	public long[] latencyValues() {
-		return lastSnapshot.latencyValues();
 	}
 
 	@Override

@@ -1,6 +1,5 @@
 package com.emc.mongoose.metrics;
 
-import com.codahale.metrics.EWMA;
 import com.codahale.metrics.Metric;
 
 import java.time.Clock;
@@ -68,21 +67,21 @@ implements Metric {
 		}
 	}
 
-	public long getCount() {
+	public long count() {
 		return count.sum();
 	}
 
 	public double getMeanRate() {
-		if(getCount() == 0) {
+		if(count() == 0) {
 			return 0.0;
 		} else {
 			final double elapsed = (clock.millis() - startTime);
-			return getCount() / elapsed * TimeUnit.SECONDS.toNanos(1);
+			return count() / elapsed * TimeUnit.SECONDS.toNanos(1);
 		}
 	}
 
-	public double getLastRate() {
+	public double lastRate() {
 		tickIfNecessary();
-		return rateAvg.getRate(TimeUnit.SECONDS);
+		return rateAvg.rate(TimeUnit.SECONDS);
 	}
 }

@@ -56,9 +56,6 @@ extends Serializable {
 	/** @return value in microseconds */
 	double durationMean();
 
-	/** @return values in microseconds */
-	long[] durationValues();
-
 	/** @return value in microseconds */
 	long latencyMin();
 
@@ -76,7 +73,4 @@ extends Serializable {
 
 	/** @return value in microseconds */
 	double latencyMean();
-
-	/** @return values in microseconds */
-	long[] latencyValues();
 }
