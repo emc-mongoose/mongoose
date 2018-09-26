@@ -57,7 +57,7 @@ public class CustomMeter {
 			final long newIntervalStartTick = newTick - age % TICK_INTERVAL;
 			if(lastTick.compareAndSet(oldTick, newIntervalStartTick)) {
 				final long requiredTicks = age / TICK_INTERVAL;
-				for(long i = 0; i < requiredTicks; i ++) {
+				for(long i = 0; i < requiredTicks; ++ i) {
 					rateAvg.tick();
 				}
 			}
