@@ -9,7 +9,7 @@ PreconditionLoad
                 ]
             ],
             load: [
-                step: [
+                op: [
                     limit: [
                         count: FIRST_STEP_COUNT_LIMIT
                     ]

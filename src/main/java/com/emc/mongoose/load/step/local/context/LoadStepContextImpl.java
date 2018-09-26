@@ -76,42 +76,38 @@ implements LoadStepContext<I, O> {
 	 @param id test step id
 	 **/
 	public LoadStepContextImpl(
-		final String id,
-		final LoadGenerator<I, O> generator,
-		final StorageDriver<I, O> driver,
-		final MetricsContext metricsCtx,
-		final Config limitConfig,
-		final boolean tracePersistFlag,
-		final int batchSize,
-		final int recycleLimit,
-		final boolean recycleFlag,
-		final boolean retryFlag
+		final String id, final LoadGenerator<I, O> generator, final StorageDriver<I, O> driver,
+		final MetricsContext metricsCtx, final Config loadConfig, final boolean tracePersistFlag
 	) {
 		this.id = id;
 		this.generator = generator;
 		this.driver = driver;
 		this.metricsCtx = metricsCtx;
 		this.tracePersistFlag = tracePersistFlag;
-		this.batchSize = batchSize;
-		this.recycleFlag = recycleFlag;
-		this.retryFlag = retryFlag;
+		this.batchSize = loadConfig.intVal("batch-size");
+		final Config opConfig = loadConfig.configVal("op");
+		this.recycleFlag = opConfig.boolVal("recycle");
+		this.retryFlag = opConfig.boolVal("retry");
+		final Config opLimitConfig = opConfig.configVal("limit");
+		final int recycleLimit = opLimitConfig.intVal("recycle");
 		if(recycleFlag || retryFlag) {
 			latestSuccOpResultByItem = new ConcurrentHashMap<>(recycleLimit);
 		} else {
 			latestSuccOpResultByItem = null;
 		}
 		resultsTransferTask = new TransferFiber<>(ServiceTaskExecutor.INSTANCE, driver, this, batchSize);
-		final long configCountLimit = limitConfig.longVal("count");
+		final long configCountLimit = opLimitConfig.longVal("count");
 		this.countLimit = configCountLimit > 0 ? configCountLimit : Long.MAX_VALUE;
 		final SizeInBytes configSizeLimit;
-		final Object configSizeLimitRaw = limitConfig.val("size");
+		final Config stepLimitConfig = loadConfig.configVal("step-limit");
+		final Object configSizeLimitRaw = stepLimitConfig.val("size");
 		if(configSizeLimitRaw instanceof String) {
 			configSizeLimit = new SizeInBytes((String) configSizeLimitRaw);
 		} else {
 			configSizeLimit = new SizeInBytes(TypeUtil.typeConvert(configSizeLimitRaw, long.class));
 		}
 		this.sizeLimit = configSizeLimit.get() > 0 ? configSizeLimit.get() : Long.MAX_VALUE;
-		final Config failConfig = limitConfig.configVal("fail");
+		final Config failConfig = opLimitConfig.configVal("fail");
 		final long configFailCount = failConfig.longVal("count");
 		this.failCountLimit = configFailCount > 0 ? configFailCount : Long.MAX_VALUE;
 		this.failRateLimitFlag = failConfig.boolVal("rate");

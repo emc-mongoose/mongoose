@@ -97,8 +97,8 @@ Example:
 * item-naming-offset: 0
 * item-naming-radix: 10
 * item-naming-scheme: asc
+* load-op-limit-count: 18
 * load-step-node-addrs: A,B,C
-* load-step-limit-count: 18
 
 | Node    | Offset | Resulting Item Names |
 |---------|--------|----------------------|

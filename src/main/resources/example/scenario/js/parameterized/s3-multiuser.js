@@ -14,7 +14,7 @@ var multiUserConfig = {
 		}
 	},
 	"load" : {
-		"step" : {
+		"op" : {
 			"limit" : {
 				"count" : 10000
 			}

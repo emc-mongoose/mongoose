@@ -20,7 +20,7 @@ PreconditionLoad
     .config(parentConfig_1)
     .config({
       "load" : {
-        "step" : {
+        "op" : {
           "limit" : {
             "count" : COUNT_LIMIT
           }

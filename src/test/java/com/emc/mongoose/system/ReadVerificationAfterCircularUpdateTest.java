@@ -62,6 +62,9 @@ import static org.junit.Assert.assertEquals;
 	private final String containerItemOutputPath = MongooseEntryNodeContainer.getContainerItemOutputPath(
 		getClass().getSimpleName()
 	);
+	private final String hostItemOutputPath = MongooseEntryNodeContainer.getHostItemOutputPath(
+		getClass().getSimpleName()
+	);
 	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
@@ -134,7 +137,7 @@ import static org.junit.Assert.assertEquals;
 			case FS:
 				args.add("--item-output-path=" + containerItemOutputPath);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
+					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}

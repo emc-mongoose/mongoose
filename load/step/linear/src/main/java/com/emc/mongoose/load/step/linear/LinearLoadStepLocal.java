@@ -117,7 +117,6 @@ extends LoadStepLocalBase {
 					final LoadGeneratorBuilder generatorBuilder = new LoadGeneratorBuilderImpl<>()
 						.itemConfig(itemConfig)
 						.loadConfig(loadConfig)
-						.limitConfig(limitConfig)
 						.itemType(itemType)
 						.itemFactory((ItemFactory) itemFactory)
 						.storageDriver(driver)
@@ -127,11 +126,9 @@ extends LoadStepLocalBase {
 						generatorBuilder.addThrottle(new RateThrottle(rateLimit));
 					}
 					final LoadGenerator generator = generatorBuilder.build();
-
 					final LoadStepContext stepCtx = new LoadStepContextImpl<>(
-						testStepId, generator, driver, metricsContexts.get(0), limitConfig,
-						outputConfig.boolVal("metrics-trace-persist"), batchSize, opConfig.intVal("limit-recycle"),
-						opConfig.boolVal("recycle"), opConfig.boolVal("retry")
+						testStepId, generator, driver, metricsContexts.get(0), loadConfig,
+						outputConfig.boolVal("metrics-trace-persist")
 					);
 					stepContexts.add(stepCtx);
 

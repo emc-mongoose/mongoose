@@ -18,9 +18,13 @@ PreconditionLoad
                 }
             },
             "load": {
+                "op": {
+                    "limit": {
+                        "count": 100000
+                    }
+                },
                 "step": {
                     "limit": {
-                        "count": 100000,
                         "size": "1GB",
                         "time": "30s"
                     }
@@ -31,6 +35,7 @@ PreconditionLoad
     .run();
 
 Load
+	.config(sharedConfig)
     .config(
         {
             "item": {

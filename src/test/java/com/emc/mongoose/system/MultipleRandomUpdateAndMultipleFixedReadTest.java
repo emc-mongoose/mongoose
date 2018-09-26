@@ -64,8 +64,12 @@ import static org.junit.Assert.assertEquals;
 	private final int TIMEOUT_IN_MILLIS = 1_000_000;
 	private final long EXPECTED_COUNT = 2_000;
 	private final int UPDATE_RANDOM_RANGES_COUNT = 5;
-	private final String CONTAINER_ITEM_OUTPUT_PATH =
-		MongooseEntryNodeContainer.getContainerItemOutputPath(getClass().getSimpleName());
+	private final String containerItemOutputPath = MongooseEntryNodeContainer.getContainerItemOutputPath(
+		getClass().getSimpleName()
+	);
+	private final String hostItemOutputPath = MongooseEntryNodeContainer.getHostItemOutputPath(
+		getClass().getSimpleName()
+	);
 	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final SizeInBytes expectedUpdateSize;
 	private final SizeInBytes expectedReadSize;
@@ -140,9 +144,9 @@ import static org.junit.Assert.assertEquals;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
+				args.add("--item-output-path=" + containerItemOutputPath);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
+					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}

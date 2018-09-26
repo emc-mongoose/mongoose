@@ -263,12 +263,12 @@ implements LoadStepClient {
 			configSlices.add(configSlice);
 		}
 		if(sliceCount > 1) { // distributed mode
-			final long countLimit = config.longVal("load-step-limit-count");
+			final long countLimit = config.longVal("load-op-limit-count");
 			if(countLimit > 0) {
-				ConfigSliceUtil.sliceLongValue(countLimit, configSlices, "load-step-limit-count");
+				ConfigSliceUtil.sliceLongValue(countLimit, configSlices, "load-op-limit-count");
 				configSlices
 					.stream()
-					.mapToLong(configSlice -> configSlice.longVal("load-step-limit-count"))
+					.mapToLong(configSlice -> configSlice.longVal("load-op-limit-count"))
 					.filter(countLimitSlice -> countLimitSlice == 0)
 					.findAny()
 					.ifPresent(
@@ -279,12 +279,12 @@ implements LoadStepClient {
 						)
 					);
 			}
-			final long countFailLimit = config.longVal("load-step-limit-fail-count");
+			final long countFailLimit = config.longVal("load-op-limit-fail-count");
 			if(countFailLimit > 0) {
-				ConfigSliceUtil.sliceLongValue(countFailLimit, configSlices, "load-step-limit-fail-count");
+				ConfigSliceUtil.sliceLongValue(countFailLimit, configSlices, "load-op-limit-fail-count");
 				configSlices
 					.stream()
-					.mapToLong(configSlice -> configSlice.longVal("load-step-limit-fail-count"))
+					.mapToLong(configSlice -> configSlice.longVal("load-op-limit-fail-count"))
 					.filter(failCountLimitSlice -> failCountLimitSlice == 0)
 					.findAny()
 					.ifPresent(

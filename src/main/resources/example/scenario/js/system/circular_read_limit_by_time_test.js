@@ -8,10 +8,12 @@ PreconditionLoad
 	.config(
 		{
 			"load" : {
-				"step" : {
+				"op" : {
 					"limit" : {
 						"count" : 1
-					},
+					}
+				},
+				"step" : {
 					"node" : {
 						"addrs" : null // disable the distributed mode here to write the single item
 					}

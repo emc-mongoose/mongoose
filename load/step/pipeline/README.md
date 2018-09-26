@@ -28,8 +28,8 @@ used.
 
 3. There are the configuration parameters which are shared by the
 pipeline step's load contexts and may not be set independently:
-   * `test-step-id`
-   * `test-step-limit-time`
+   * `load-step-id`
+   * `load-step-limit-time`
 The values for these parameters are taken from the ***1st***
 configuration element of the pipeline load step.
 

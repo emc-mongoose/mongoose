@@ -119,7 +119,7 @@ import static org.junit.Assert.assertTrue;
 			case FS:
 				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
+					DirWithManyFilesDeleter.deleteExternal(HOST_ITEM_OUTPUT_PATH);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
