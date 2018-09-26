@@ -9,7 +9,7 @@ import static java.lang.Math.exp;
 
 public class CustomMeter {
 	//
-	private static final long TICK_INTERVAL = TimeUnit.SECONDS.toNanos(1);
+	private static final long TICK_INTERVAL = TimeUnit.SECONDS.toMillis(1);
 	//
 	private final EWMA rateAvg;
 	private final LongAdder count = new LongAdder();
