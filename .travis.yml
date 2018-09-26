@@ -91,15 +91,6 @@ jobs:
       - ITEM_SIZE=empty,small
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.MultipleFixedUpdateAndSingleFixedReadTest
-    - env:
-      - TEST=MultipleFixedUpdateAndSingleFixedReadTest
-      - STORAGE_TYPE=fs,s3
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=low,medium
-      - ITEM_SIZE=small
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
     # STORAGE_TYPE=fs,s3,swift RUN_MODE=local,distributed CONCURRENCY=single,low,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.SingleRandomUpdateAndMultipleRandomReadTest
     - env:
       - TEST=SingleRandomUpdateAndMultipleRandomReadTest
@@ -135,6 +126,15 @@ jobs:
       - RUN_MODE=local,distributed
       - CONCURRENCY=single,high
       - ITEM_SIZE=empty,medium
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+    # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.MultipleFixedUpdateAndSingleFixedReadTest
+    - env:
+      - TEST=MultipleFixedUpdateAndSingleFixedReadTest
+      - STORAGE_TYPE=fs,s3
+      - RUN_MODE=local,distributed
+      - CONCURRENCY=low,medium
+      - ITEM_SIZE=small
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     # STORAGE_TYPE=fs,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=small,medium ./gradlew systemTest --tests com.emc.mongoose.system.MultipleRandomUpdateAndMultipleFixedReadTest
