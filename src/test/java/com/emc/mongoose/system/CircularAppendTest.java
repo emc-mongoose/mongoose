@@ -43,6 +43,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
@@ -86,8 +87,7 @@ import java.util.stream.Collectors;
 
 	public CircularAppendTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	)
-	throws Exception {
+	) throws Exception {
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
@@ -256,12 +256,12 @@ import java.util.stream.Collectors;
 		);
 		final int n = items.size();
 		CSVRecord itemRec;
-		for(int i = 0; i < n; i++) {
+		for(int i = 0; i < n; i ++) {
 			itemRec = items.get(i);
 			itemPath = itemRec.get(0);
-			for(int j = i; j < n; j++) {
+			for(int j = i; j < n; j ++) {
 				if(i != j) {
-					assertFalse(itemPath.equals(items.get(j).get(0)));
+					assertNotEquals(itemPath, items.get(j).get(0));
 				}
 			}
 			itemId = itemPath.substring(itemPath.lastIndexOf('/') + 1);
