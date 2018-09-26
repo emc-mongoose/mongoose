@@ -1,7 +1,5 @@
 package com.emc.mongoose.metrics;
 
-import com.codahale.metrics.Metric;
-
 import java.time.Clock;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -9,8 +7,7 @@ import java.util.concurrent.atomic.LongAdder;
 
 import static java.lang.Math.exp;
 
-public class CustomMeter
-implements Metric {
+public class CustomMeter {
 	//
 	private static final long TICK_INTERVAL = TimeUnit.SECONDS.toNanos(1);
 	//
