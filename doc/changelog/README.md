@@ -1,7 +1,7 @@
 # Contents
 
 ## 2018
-* [4.0.0](#400) TBD
+* [4.0.0](#400) 2018-09-28
 * [3.6.2](#362) 08/08/18
 * [3.6.1](#361) 03/26/18
 
@@ -87,7 +87,8 @@ scenarios to v4.0.0 scenarios is provided: https://github.com/emc-mongoose/scena
 
 ## Fixed Bugs
 
-* TBD
+* [BASE-1226](https://mongoose-issues.atlassian.net/browse/BASE-1226) Load operations results queue contains the unhandled elements
+*
 
 # 3.6.2
 
