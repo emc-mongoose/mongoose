@@ -1,6 +1,6 @@
 package com.emc.mongoose.util.docker;
 
-import static com.emc.mongoose.util.docker.MongooseContainer.ENTRYPOINT_LIMIT_HEAP_1GB;
+import static com.emc.mongoose.util.docker.MongooseContainer.ENTRYPOINT;
 import static com.emc.mongoose.util.docker.MongooseContainer.IMAGE_NAME;
 import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
 import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
