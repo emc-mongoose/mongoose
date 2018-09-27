@@ -144,6 +144,6 @@ extends ContainerBase {
 
 	@Override
 	protected final String entrypoint() {
-		return MongooseContainer.ENTRYPOINT_DEBUG;
+		return MongooseContainer.ENTRYPOINT;
 	}
 }
