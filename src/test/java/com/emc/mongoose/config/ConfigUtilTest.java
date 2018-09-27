@@ -31,7 +31,7 @@ public class ConfigUtilTest {
 		}};
 
 		final String sep = "-";
-		final Map<String, Object> dstMap = new HashMap<>();
+		final Map<String, String> dstMap = new HashMap<>();
 		ConfigUtil.flatten(srcMap, dstMap, sep, null);
 
 		assertNull(dstMap.get("a-aa"));

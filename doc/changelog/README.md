@@ -1,7 +1,7 @@
 # Contents
 
 ## 2018
-* [4.0.0](#400) 2018-09-28
+* [4.0.0](#400) 2018-10-01
 * [3.6.2](#362) 08/08/18
 * [3.6.1](#361) 03/26/18
 
@@ -75,7 +75,8 @@ needed in the user home directory. Also, the installer detects the extensions an
 Some extensions require specific configuration options. To support the specific configuration options the extensible
 configuration was implemented. The new [external library](https://github.com/akurilov/confuse) is used for this purpose.
 The configuration is assembled dynamically, including the sub-configurations provided by the extensions resolved in the
-runtime.
+runtime. **Note** that command line arguments shouldn't be used to specify the dictionary type values like the custom
+HTTP headers.
 
 ### Non-functional
 
