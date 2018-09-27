@@ -51,6 +51,6 @@ extends ContainerBase {
 
 	@Override
 	protected String entrypoint() {
-		return ENTRYPOINT_LIMIT_HEAP_1GB;
+		return ENTRYPOINT;
 	}
 }
