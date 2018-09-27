@@ -14,9 +14,8 @@ public interface CliArgUtil {
 	String ARG_PREFIX = "--";
 	String ARG_PATH_SEP = "-";
 	String ARG_VAL_SEP = "=";
-	String NESTED_ARG_VAL_SEP = ":";
 
-	static Map<String, Object> parseArgs(final String... args) {
+	static Map<String, String> parseArgs(final String... args) {
 		return Arrays
 			.stream(args)
 			.peek(
@@ -31,29 +30,7 @@ public interface CliArgUtil {
 			.map(arg -> arg.split(ARG_VAL_SEP, 2))
 			// handle the shortcuts for boolean options (--smth-enabled -> --smth-enabled=true)
 			.map(argValPair -> argValPair.length == 2 ? argValPair : new String[] { argValPair[0], TRUE.toString() })
-			// handle the "nested" arg/val pairs in the values, merge them into the map
-			.collect(
-				Collectors.toMap(
-					// key
-					argValPair -> argValPair[0],
-					// value
-					argValPair -> {
-						final String[] nestedArgValPair = argValPair[1].split(NESTED_ARG_VAL_SEP, 2);
-						if(nestedArgValPair.length == 1) {
-							return argValPair[1];
-						} else {
-							final Map<String, String> result = new HashMap<>();
-							result.put(nestedArgValPair[0], nestedArgValPair[1]);
-							return result;
-						}
-					},
-					// merge the values under the same key properly
-					(val1, val2) -> {
-						((Map<String, String>) val1).putAll((Map<String, String>) val2);
-						return val1;
-					}
-				)
-			);
+			.collect(Collectors.toMap(argValPair -> argValPair[0], argValPair -> argValPair[1]));
 	}
 
 	@SuppressWarnings("CollectionWithoutInitialCapacity")

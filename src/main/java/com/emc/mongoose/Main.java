@@ -124,9 +124,9 @@ public final class Main {
 
 				// parse the CLI args and apply them to the config instance
 				try {
-					final Map<String, Object> parsedArgs = CliArgUtil.parseArgs(args);
+					final Map<String, String> parsedArgs = CliArgUtil.parseArgs(args);
 					final List<Map<String, Object>> aliasingConfig = config.listVal("aliasing");
-					final Map<String, Object> aliasedArgs = AliasingUtil.apply(parsedArgs, aliasingConfig);
+					final Map<String, String> aliasedArgs = AliasingUtil.apply(parsedArgs, aliasingConfig);
 					aliasedArgs.forEach(config::val);
 				} catch(final IllegalArgumentNameException e) {
 					final String formattedAllCliArgs = allCliArgs(config.schema(), config.pathSep())

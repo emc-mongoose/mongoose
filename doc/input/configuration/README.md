@@ -6,6 +6,7 @@
 1.3. [Specific Types](#13-specific-types)<br/>
 1.3.1. [Time](#131-time)<br/>
 1.3.2. [Size](#132-size)<br/>
+1.3.3. [Dictionary](#133-dictionary)<br/>
 2. [Parameterization](#2-parameterization)<br/>
 2.1. [Symchronous Supply](#21-synchronous-supply)<br/>
 2.2. [Asynchronous Supply](#22-asynchronous-supply)<br/>
@@ -151,6 +152,11 @@ The configuration parameters supporting the time type:
 | "2MB"   | 2MB
 | "6EB"   | 6EB (exobytes)
 | "7YB"   | Invalid Value
+
+##### 1.3.3. Dictionary
+
+Some configuration values support the dictionary type. Don't use the command line arguments for the dictionary values
+setting.
 
 ## 2. Parameterization
 

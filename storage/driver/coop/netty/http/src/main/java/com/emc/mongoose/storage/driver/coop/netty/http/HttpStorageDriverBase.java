@@ -98,13 +98,13 @@ implements HttpStorageDriver<I, O> {
 		final Config httpConfig = storageConfig.configVal("net-http");
 
 		final Map<String, String> headersMap = httpConfig.mapVal("headers");
-		String headerValue;
-		for(final String headerName : headersMap.keySet()) {
-			headerValue = headersMap.get(headerName);
-			if(- 1 < headerName.indexOf(PATTERN_CHAR) || - 1 < headerValue.indexOf(PATTERN_CHAR)) {
-				dynamicHeaders.add(headerName, headerValue);
+		for(final Map.Entry<String, String> header : headersMap.entrySet()) {
+			final String headerKey = header.getKey();
+			final String headerValue = header.getValue();
+			if(- 1 < (headerKey).indexOf(PATTERN_CHAR) || - 1 < headerValue.indexOf(PATTERN_CHAR)) {
+				dynamicHeaders.add(headerKey, headerValue);
 			} else {
-				sharedHeaders.add(headerName, headerValue);
+				sharedHeaders.add(headerKey, headerValue);
 			}
 		}
 

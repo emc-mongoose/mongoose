@@ -13,7 +13,7 @@ public interface AliasingUtil {
 	String DEPRECATED = "deprecated";
 	String ARG_VAL_SEP = "=";
 
-	static Map<String, Object> apply(final Map<String, Object> args, final List<Map<String, Object>> aliasingConfig)
+	static Map<String, String> apply(final Map<String, String> args, final List<Map<String, Object>> aliasingConfig)
 	throws IllegalArgumentException {
 
 		String aliasName;
@@ -21,9 +21,9 @@ public interface AliasingUtil {
 		boolean deprecationFlag;
 		String[] aliasArgValPair;
 		String newArgName;
-		Object newArgValue;
+		String newArgValue;
 
-		final Map<String, Object> newArgs = new HashMap<>();
+		final Map<String, String> newArgs = new HashMap<>();
 
 		for(final String argName : args.keySet()) {
 
