@@ -9,16 +9,25 @@
 
 ## 2. Custom HTTP Headers
 
+CLI example:
+```bash
+java -jar mongoose-<VERSION>.jar \
+    --storage-net-http-headers=header-name-0:header_value_0 \
+    --storage-net-http-headers=header-name-1:header_value_1 \
+    ...
+```
+
+Scenario example:
 ```javascript
 var customHttpHeadersConfig = {
     "storage" : {
         "net" : {
             "http" : {
                 "headers" : {
-                    "header_name_0" : "header_value_0",
-                    "header_name_1" : "header_value_1",
+                    "header-name-0" : "header_value_0",
+                    "header-name-1" : "header_value_1",
                     // ...
-                    "header_name_N" : "header_value_N"
+                    "header-name-N" : "header_value_N"
                 }
             }
         }
@@ -34,14 +43,12 @@ Load
 ### 2.1. Parameterizing
 
 CLI example, note the "\" characters to escape the whitespaces in the header value:
-
 ```bash
 java -jar mongoose-<VERSION>.jar \
     --storage-net-http-headers=myOwnHeaderName:MyOwnHeaderValue\ %d[0-1000]\ %f{###.##}[-2--1]\ %D{yyyy-MM-dd'T'HH:mm:ssZ}[1970/01/01-2016/01/01]
 ```
 
 Scenario example, note the parameterized header name:
-
 ```javascript
 var varHttpHeadersConfig = {
     "storage" : {

@@ -86,7 +86,7 @@ public interface ConfigUtil {
 	}
 
 	static void flatten(
-		final Map<String, Object> configMap, final Map<String, String> argValPairs, final String sep,
+		final Map<String, Object> configMap, final Map<String, Object> argValPairs, final String sep,
 		final String prefix
 	) {
 		for(final String k : configMap.keySet()) {

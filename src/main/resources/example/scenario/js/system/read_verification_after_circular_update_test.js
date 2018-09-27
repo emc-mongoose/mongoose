@@ -9,10 +9,12 @@ cmd_1.waitFor();
 PreconditionLoad
     .config({
       "load" : {
-        "step" : {
+        "op" : {
           "limit" : {
             "count" : 1000
-          },
+          }
+        },
+        "step" : {
           "id": STEP_ID_CREATE
         }
       },

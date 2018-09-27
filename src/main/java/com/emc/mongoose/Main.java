@@ -7,7 +7,6 @@ import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.env.CoreResourcesToInstall;
-import com.emc.mongoose.env.Installable;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -125,9 +124,9 @@ public final class Main {
 
 				// parse the CLI args and apply them to the config instance
 				try {
-					final Map<String, String> parsedArgs = CliArgUtil.parseArgs(args);
+					final Map<String, Object> parsedArgs = CliArgUtil.parseArgs(args);
 					final List<Map<String, Object>> aliasingConfig = config.listVal("aliasing");
-					final Map<String, String> aliasedArgs = AliasingUtil.apply(parsedArgs, aliasingConfig);
+					final Map<String, Object> aliasedArgs = AliasingUtil.apply(parsedArgs, aliasingConfig);
 					aliasedArgs.forEach(config::val);
 				} catch(final IllegalArgumentNameException e) {
 					final String formattedAllCliArgs = allCliArgs(config.schema(), config.pathSep())

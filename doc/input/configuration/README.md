@@ -268,9 +268,8 @@ var multiUserConfig = {
         }
     },
     "load" : {
-        "step" : {
+        "op" : {
             "limit" : {
-                "concurrency" : 10,
                 "count" : 10000
             }
         }
@@ -281,6 +280,9 @@ var multiUserConfig = {
             "uid" : "user-%d(314159265){00}[0-99]"
         },
         "driver" : {
+            "limit" : {
+                "concurrency" : 10
+            },
             "type" : "s3"
         }
     }

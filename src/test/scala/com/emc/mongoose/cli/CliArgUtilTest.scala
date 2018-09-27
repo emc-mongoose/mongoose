@@ -14,12 +14,14 @@ final class CliArgUtilTest {
 		val parsedArgs = CliArgUtil parseArgs(
 			"--name=goose",
 			"--io-buffer-size=1KB-4MB",
-			"--storage-node-http-headers=customHeaderName:customHeaderValue",
+			"--storage-node-http-headers-key0=val0",
+			"--storage-node-http-headers-key1=val1",
 			"--enable-some-feature",
 		)
 		assertEquals("goose", parsedArgs get "name")
 		assertEquals("1KB-4MB", parsedArgs get "io-buffer-size")
-		assertEquals("customHeaderName:customHeaderValue", parsedArgs get "storage-node-http-headers")
+		assertEquals("val0", parsedArgs get "storage-node-http-headers-key0")
+		assertEquals("val1", parsedArgs get "storage-node-http-headers-key1")
 		assertEquals(TRUE toString, parsedArgs get "enable-some-feature")
 	}
 }

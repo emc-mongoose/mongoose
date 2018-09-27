@@ -135,7 +135,7 @@ implements MetricsManager {
 		) {
 			if(allMetrics.remove(metricsCtx)) {
 				try {
-					if(!outputLock.tryLock(Fiber.WARN_DURATION_LIMIT, TimeUnit.NANOSECONDS)) {
+					if(!outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 						Loggers.ERR.warn(
 							"Acquire lock timeout while unregistering the metrics context \"{}\"", metricsCtx
 						);
