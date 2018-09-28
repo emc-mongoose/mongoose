@@ -10,8 +10,9 @@ import com.emc.mongoose.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
 import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
+import static com.emc.mongoose.util.docker.MongooseContainer.ENDURANCE_TEST_MEMORY_LIMIT;
+import static com.emc.mongoose.util.docker.MongooseContainer.IMAGE_VERSION;
 import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.enduranceTestContainerScenarioPath;
-import static org.junit.Assert.fail;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 
@@ -22,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -101,7 +103,9 @@ public class ParallelPipelineAndInfiniteLoopTest {
 			case DISTRIBUTED:
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
 					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
-					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
+					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(
+						IMAGE_VERSION, port, ENDURANCE_TEST_MEMORY_LIMIT
+					);
 					final String addr = "127.0.0.1:" + port;
 					slaveNodes.put(addr, nodeSvc);
 				}
@@ -109,7 +113,8 @@ public class ParallelPipelineAndInfiniteLoopTest {
 				break;
 		}
 		testContainer = new MongooseEntryNodeContainer(
-			stepId, storageType, runMode, concurrency, itemSize.getValue(), scenarioPath, env, args, true, false, false
+			IMAGE_VERSION, stepId, storageType, runMode, concurrency, itemSize.getValue(), scenarioPath, env, args,
+			true, false, false, ENDURANCE_TEST_MEMORY_LIMIT
 		);
 	}
 

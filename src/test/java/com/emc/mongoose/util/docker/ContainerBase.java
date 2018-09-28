@@ -42,13 +42,21 @@ implements Docker.Container {
 	private final StringBuilder stdOutBuff;
 	private final StringBuilder stdErrBuff;
 	private final ResultCallback<Frame> streamsCallback;
+	private final long memoryLimit;
 	private String containerId;
 	private int containerExitCode = Integer.MIN_VALUE;
 
 	protected ContainerBase(
 		final String version, final List<String> env, final Map<String, Path> volumeBinds,
 		final boolean attachOutputFlag, final boolean collectOutputFlag, final int... ports
-	) throws InterruptedException{
+	) throws InterruptedException {
+		this(version, env, volumeBinds, attachOutputFlag, collectOutputFlag, DEFAULT_MEMORY_LIMIT, ports);
+	}
+
+	protected ContainerBase(
+		final String version, final List<String> env, final Map<String, Path> volumeBinds,
+		final boolean attachOutputFlag, final boolean collectOutputFlag, final long memoryLimit, final int... ports
+	) throws InterruptedException {
 		this.version = (version == null || version.isEmpty()) ? DEFAULT_IMAGE_VERSION : version;
 		this.env = env;
 		this.volumeBinds = volumeBinds;
@@ -61,6 +69,7 @@ implements Docker.Container {
 			stdErrBuff = null;
 		}
 		streamsCallback = new ContainerOutputCallback(stdOutBuff, stdErrBuff);
+		this.memoryLimit = memoryLimit;
 		this.ports = ports;
 		final String imageNameWithVer = imageName() + ":" + this.version;
 		try {
@@ -121,7 +130,7 @@ implements Docker.Container {
 			.withName(imageName().replace('/', '_') + '_' + this.hashCode())
 			.withNetworkMode("host")
 			.withExposedPorts(exposedPorts)
-			.withMemory(DEFAULT_MEMORY_LIMIT)
+			.withMemory(memoryLimit)
 			.withCmd(args);
 		if(env != null && !env.isEmpty()) {
 			createContainerCmd.withEnv(env);

@@ -25,7 +25,6 @@ import java.util.Map;
 public final class MongooseEntryNodeContainer
 extends ContainerBase {
 
-	public static final String IMAGE_VERSION = System.getenv("MONGOOSE_VERSION");
 	public static final Config BUNDLED_DEFAULTS;
 
 	static {
@@ -91,7 +90,7 @@ extends ContainerBase {
 		final boolean attachOutputFlag, final boolean collectOutputFlag, final boolean outputMetricsTracePersistFlag
 	) throws InterruptedException {
 		this(
-			IMAGE_VERSION, stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args,
+			MongooseContainer.IMAGE_VERSION, stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args,
 			attachOutputFlag, collectOutputFlag, outputMetricsTracePersistFlag
 		);
 	}
@@ -102,7 +101,19 @@ extends ContainerBase {
 		final List<String> env, final List<String> args, final boolean attachOutputFlag,
 		final boolean collectOutputFlag, final boolean outputMetricsTracePersistFlag
 	) throws InterruptedException {
-		super(version, env, VOLUME_BINDS, attachOutputFlag, collectOutputFlag, PORT_DEBUG, PORT_JMX);
+		this(
+			version, stepId, storageType, runMode, concurrency, itemSize, containerScenarioPath, env, args,
+			attachOutputFlag, collectOutputFlag, outputMetricsTracePersistFlag, DEFAULT_MEMORY_LIMIT
+		);
+	}
+
+	public MongooseEntryNodeContainer(
+		final String version, final String stepId, final StorageType storageType, final RunMode runMode,
+		final Concurrency concurrency, final SizeInBytes itemSize, final String containerScenarioPath,
+		final List<String> env, final List<String> args, final boolean attachOutputFlag,
+		final boolean collectOutputFlag, final boolean outputMetricsTracePersistFlag, final long memoryLimit
+	) throws InterruptedException {
+		super(version, env, VOLUME_BINDS, attachOutputFlag, collectOutputFlag, memoryLimit, PORT_DEBUG, PORT_JMX);
 		this.args = args;
 		this.args.add("--load-step-id=" + stepId);
 		this.args.add("--storage-driver-limit-concurrency=" + concurrency.getValue());
@@ -144,6 +155,6 @@ extends ContainerBase {
 
 	@Override
 	protected final String entrypoint() {
-		return MongooseContainer.ENTRYPOINT;
+		return MongooseContainer.ENTRYPOINT_LIMIT_HEAP_1GB;
 	}
 }

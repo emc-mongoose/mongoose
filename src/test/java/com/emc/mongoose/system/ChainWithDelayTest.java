@@ -149,13 +149,10 @@ import static org.junit.Assert.fail;
 		slaveNodes.values().forEach(AsyncRunnableBase::start);
 		long duration = System.currentTimeMillis();
 		testContainer.start();
-		System.out.println(
-			"Test container await(" + (TIME_LIMIT + 30) + "[s]) returned: "
-				+ testContainer.await(TIME_LIMIT + 30, TimeUnit.SECONDS)
-		);
+		System.out.println("Test container await(120[s]) returned: " + testContainer.await(120, TimeUnit.SECONDS));
 		stdOutContent = testContainer.stdOutContent();
 		duration = System.currentTimeMillis() - duration;
-		finishedInTime = (TimeUnit.MILLISECONDS.toSeconds(duration) <= TIME_LIMIT + 100);
+		finishedInTime = (TimeUnit.MILLISECONDS.toSeconds(duration) <= 120);
 		containerExitCode = testContainer.exitStatusCode();
 	}
 
