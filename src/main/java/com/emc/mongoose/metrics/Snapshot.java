@@ -1,6 +1,7 @@
 package com.emc.mongoose.metrics;
 
 import io.prometheus.client.Collector;
+import io.prometheus.client.Histogram;
 import io.prometheus.client.Summary;
 
 import java.util.Comparator;
@@ -19,6 +20,7 @@ public class Snapshot {
 	final private double loQ;
 	final private double min;
 	final private double max;
+	//final private Histogram histogram;
 
 	public Snapshot(
 		final double mean, final double sum, final double med, final double hiQ, final double loQ,
@@ -32,6 +34,7 @@ public class Snapshot {
 		this.loQ = loQ;
 		this.min = min;
 		this.max = max;
+		//this.histogram = null;
 	}
 
 	public Snapshot(final Summary summary) {
@@ -46,6 +49,25 @@ public class Snapshot {
 			&& metric.labelNames.contains("quantile")
 			&& metric.labelValues.contains(q.toString());
 		this.med = samples.stream().filter(m -> isQuantile.apply(0.5, m)).findFirst().get().value;
+		this.hiQ = samples.stream().filter(m -> isQuantile.apply(0.75, m)).findFirst().get().value;
+		this.loQ = samples.stream().filter(m -> isQuantile.apply(0.25, m)).findFirst().get().value;
+		this.min = samples.stream().filter(m -> isQuantile.apply(Double.MIN_VALUE, m)).findFirst().get().value;
+		this.max = samples.stream().filter(m -> isQuantile.apply(1.0, m)).findFirst().get().value;
+	}
+
+	public Snapshot(final Histogram histogram) {
+		//this.histogram = histogram;
+		final String metricName = histogram.collect().get(0).name;
+		final List<Collector.MetricFamilySamples.Sample> samples = histogram.collect().get(0).samples;
+		this.sum = samples.stream().filter(metric -> metric.name.equals(metricName + "_sum")).findFirst().get().value;
+		this.count = samples.stream().filter(
+			metric -> metric.name.equals(metricName + "_count")).findFirst().get().value;
+		this.mean = this.sum / this.count;
+		final BiFunction<Double, Collector.MetricFamilySamples.Sample, Boolean> isQuantile = (q, metric)
+			-> metric.name.equals(metricName)
+			&& metric.labelNames.contains("quantile")
+			&& metric.labelValues.contains(q.toString());
+		this.med = 0;
 		this.hiQ = samples.stream().filter(m -> isQuantile.apply(0.75, m)).findFirst().get().value;
 		this.loQ = samples.stream().filter(m -> isQuantile.apply(0.25, m)).findFirst().get().value;
 		this.min = samples.stream().filter(m -> isQuantile.apply(Double.MIN_VALUE, m)).findFirst().get().value;
