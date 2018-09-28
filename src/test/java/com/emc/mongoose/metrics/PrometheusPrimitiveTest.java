@@ -49,6 +49,7 @@ public class PrometheusPrimitiveTest {
 	public final void testHistogram() {
 		final Histogram someMetric = Histogram
 			.build()
+			.linearBuckets(0.0,0.5,20)
 			.name("some_metric_h")
 			.help("Measured metric.")
 			.register();

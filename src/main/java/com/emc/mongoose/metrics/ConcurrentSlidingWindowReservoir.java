@@ -2,6 +2,8 @@ package com.emc.mongoose.metrics;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import static java.lang.Math.min;
+
 /**
  @author veronika K. on 28.09.18 */
 public class ConcurrentSlidingWindowReservoir {
@@ -31,7 +33,7 @@ public class ConcurrentSlidingWindowReservoir {
 		for(int i = 0; i < values.length; i++) {
 			values[i] = measurements[i];
 		}
-		return new UniformSnapshot(values);
+		return new Snapshot(values);
 	}
 
 
