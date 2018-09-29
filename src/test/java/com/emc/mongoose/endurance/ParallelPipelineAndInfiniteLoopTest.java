@@ -76,9 +76,10 @@ public class ParallelPipelineAndInfiniteLoopTest {
 			.collect(Collectors.toList());
 		final List<String> args = new ArrayList<>();
 		switch(storageType) {
+			case SWIFT:
+				args.add("--storage-net-http-namespace=ns1");
 			case ATMOS:
 			case S3:
-			case SWIFT:
 				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
 					HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
 					Character.MAX_RADIX, 10 * HttpStorageMockContainer.DEFAULT_CAPACITY,
