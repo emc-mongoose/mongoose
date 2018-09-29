@@ -13,7 +13,6 @@ import static com.emc.mongoose.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.util.docker.MongooseContainer.ENDURANCE_TEST_MEMORY_LIMIT;
 import static com.emc.mongoose.util.docker.MongooseContainer.IMAGE_VERSION;
 import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.enduranceTestContainerScenarioPath;
-import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.getHostItemOutputPath;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 
@@ -36,7 +35,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class InfiniteLoopTest {
+public class PipelineTest {
 
 	@Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
 	public static List<Object[]> envParams() {
@@ -53,7 +52,7 @@ public class InfiniteLoopTest {
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
 
-	public InfiniteLoopTest(
+	public PipelineTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
 	) throws Exception {
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
@@ -94,7 +93,7 @@ public class InfiniteLoopTest {
 				break;
 			case FS:
 				try {
-					DirWithManyFilesDeleter.deleteExternal(getHostItemOutputPath(stepId));
+					DirWithManyFilesDeleter.deleteExternal(MongooseEntryNodeContainer.getHostItemOutputPath(stepId));
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
