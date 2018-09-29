@@ -13,7 +13,7 @@ public interface Docker {
 	interface Container
 	extends AsyncRunnable  {
 
-		long DEFAULT_MEMORY_LIMIT = SizeInBytes.toFixedSize("1536MB");
+		long DEFAULT_MEMORY_LIMIT = SizeInBytes.toFixedSize("2GB");
 
 		int exitStatusCode();
 
