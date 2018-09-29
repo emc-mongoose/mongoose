@@ -50,7 +50,9 @@ extends InstallableJarResources {
 		// the default scenario which is invoked if no scenario is specified
 		"example/scenario/js/default.js",
 		// tests scenario files
+		"example/scenario/js/endurance/infinite_loop_test.js",
 		"example/scenario/js/endurance/parallel_pipeline_and_infinite_loop_test.js",
+		"example/scenario/js/endurance/pipeline_test.js",
 		"example/scenario/js/system/circular_append_test.js",
 		"example/scenario/js/system/copy_using_input_path_test.js",
 		"example/scenario/js/system/read_using_variable_path_test.js",
