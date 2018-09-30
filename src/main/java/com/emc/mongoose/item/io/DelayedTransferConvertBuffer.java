@@ -3,7 +3,7 @@ package com.emc.mongoose.item.io;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.TransferConvertBuffer;
 import com.emc.mongoose.item.op.Operation;
-
+import com.emc.mongoose.logging.Loggers;
 import com.github.akurilov.commons.io.Input;
 
 import java.io.EOFException;
@@ -54,9 +54,10 @@ implements TransferConvertBuffer<I, O> {
 	public final boolean put(final O ioResult)
 	throws EOFException, IOException {
 		if(poisonedFlag) {
-			throw new EOFException("Poisoned already");
+			throw new EOFException(this.toString() + ": has been poisoned before");
 		}
 		if(ioResult == null) {
+			Loggers.MSG.debug("{}: poisoned", this);
 			return poisonedFlag = true;
 		}
 		while(true) {
@@ -87,7 +88,7 @@ implements TransferConvertBuffer<I, O> {
 	public final int put(final List<O> ioResults, final int from, final int to)
 	throws EOFException, IOException {
 		if(poisonedFlag) {
-			throw new EOFException("Poisoned already");
+			throw new EOFException(this + ": has been poisoned before");
 		}
 		int n;
 		O ioResult;
@@ -99,6 +100,7 @@ implements TransferConvertBuffer<I, O> {
 						for(int j = 0; j < n; j ++) {
 							ioResult = ioResults.get(i + j);
 							if(ioResult == null) {
+								Loggers.MSG.debug("{}: poisoned", this);
 								poisonedFlag = true;
 								return to - i - j;
 							}
