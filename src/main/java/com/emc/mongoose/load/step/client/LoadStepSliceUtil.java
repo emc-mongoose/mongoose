@@ -17,6 +17,7 @@ import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -39,8 +40,10 @@ public interface LoadStepSliceUtil {
 		}
 
 		final String stepSvcName;
+		final List<Config> ctxConfigsCopy = new ArrayList<>();
+		ctxConfigsCopy.addAll(ctxConfigs);
 		try {
-			stepSvcName = stepMgrSvc.getStepService(stepTypeName, configSlice, ctxConfigs);
+			stepSvcName = stepMgrSvc.getStepService(stepTypeName, configSlice, ctxConfigsCopy);
 		} catch(final Exception e) {
 			LogUtil.exception(Level.ERROR, e, "Failed to start the new scenario step service @ {}", nodeAddrWithPort);
 			e.printStackTrace();
