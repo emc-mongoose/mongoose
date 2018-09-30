@@ -43,6 +43,7 @@ public interface LoadStepSliceUtil {
 			stepSvcName = stepMgrSvc.getStepService(stepTypeName, configSlice, ctxConfigs);
 		} catch(final Exception e) {
 			LogUtil.exception(Level.ERROR, e, "Failed to start the new scenario step service @ {}", nodeAddrWithPort);
+			e.printStackTrace();
 			return null;
 		}
 
