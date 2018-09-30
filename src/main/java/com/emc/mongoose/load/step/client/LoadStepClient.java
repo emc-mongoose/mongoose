@@ -26,4 +26,8 @@ extends LoadStep {
 	 */
 	<T extends LoadStepClient> T append(final Map<String, Object> context)
 	throws InterruptRunException;
+
+	@Override
+	LoadStepClient stop()
+	throws InterruptRunException;
 }

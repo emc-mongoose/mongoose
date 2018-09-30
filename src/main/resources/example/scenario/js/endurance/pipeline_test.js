@@ -56,4 +56,4 @@ var pipelineLoad = PipelineLoad
 	.append(pipelineUpdateCtx)
 	.append(pipelineReadCtx)
 	.append(pipelineDeleteCtx)
-	.start();
+	.run();
