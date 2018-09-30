@@ -6,7 +6,9 @@ import com.github.akurilov.commons.math.MathUtil;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,9 +57,10 @@ public interface ConfigSliceUtil {
 			final int sliceCountPerGcd = sliceCount / gcd;
 			final int storageNodeCountPerGcd = storageNodeCount / gcd;
 			for(int i = 0; i < gcd; i ++) {
-				final List<String> storageNodeAddrsSlice = storageNodeAddrs.subList(
-					storageNodeCountPerGcd * i, storageNodeCountPerGcd * (i + 1)
-				);
+				final Collection<String> storageNodeAddrsSlice = new ArrayList<>(storageNodeCountPerGcd);
+				for(int j = storageNodeCountPerGcd * i; j < storageNodeCountPerGcd * (i + 1); j ++) {
+					storageNodeAddrsSlice.add(storageNodeAddrs.get(j));
+				}
 				for(int j = i * sliceCountPerGcd; j < (i + 1) * sliceCountPerGcd; j ++) {
 					Loggers.MSG.info(
 						"Load step slice #{} ({}) storage nodes: {}", j, (j == 0 ? "local" : "remote"),
