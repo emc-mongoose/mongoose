@@ -1,23 +1,22 @@
 package com.emc.mongoose.metrics;
 
 import com.emc.mongoose.logging.LogUtil;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static com.emc.mongoose.svc.ServiceUtil.MBEAN_SERVER;
-
 import com.github.akurilov.commons.system.SizeInBytes;
-import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
-
 import org.apache.logging.log4j.Level;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.ObjectName;
 import java.util.Hashtable;
 
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.svc.ServiceUtil.MBEAN_SERVER;
+import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
+
 /**
  Created by andrey on 05.07.17.
  */
 public final class Meter
-implements MeterMBean {
+	implements MeterMBean {
 
 	private final DistributedMetricsContext metricsCtx;
 	private final ObjectName objectName;
@@ -178,6 +177,11 @@ implements MeterMBean {
 	}
 
 	@Override
+	public long[] durationValues() {
+		return lastSnapshot.durationValues();
+	}
+
+	@Override
 	public final long latencyMin() {
 		return lastSnapshot.latencyMin();
 	}
@@ -205,6 +209,11 @@ implements MeterMBean {
 	@Override
 	public final double latencyMean() {
 		return lastSnapshot.latencyMean();
+	}
+
+	@Override
+	public long[] latencyValues() {
+		return lastSnapshot.latencyValues();
 	}
 
 	@Override

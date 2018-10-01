@@ -5,27 +5,16 @@ import java.util.Collection;
 import java.util.List;
 
 import static java.lang.Math.floor;
+import static java.lang.Math.log;
 
 /**
  @author veronika K. on 25.09.18 */
 public class Snapshot {
 
-	private double mean;
-	private long count;
-	private long sum;
-	private double med;
-	private long min;
-	private long max;
 	private final long[] values;
 
-	private void init(){
+	private void init() {
 		Arrays.sort(this.values);
-		this.min = min();
-		this.max = max();
-		this.mean = mean();
-		this.med = median();
-		this.count = size();
-		this.sum = new Double(this.count * this.mean).longValue();
 	}
 
 	public Snapshot(final Collection<Long> values) {
@@ -45,16 +34,16 @@ public class Snapshot {
 	public Snapshot(final List<Snapshot> snapshots) {
 		int size = 0;
 		for(Snapshot s : snapshots) {
-			size += s.size();
+			size += s.count();
 		}
 		this.values = new long[size];
 		int index_s = 0;
 		for(Snapshot s : snapshots) {
-			final long[] copy = Arrays.copyOf(s.values(),s.size());
+			final long[] copy = Arrays.copyOf(s.values(), s.count());
 			for(int i = 0; i < copy.length; i++) {
-				this.values[index_s*i + i] = copy[i];
+				this.values[index_s * i + i] = copy[i];
 			}
-			++index_s;
+			++ index_s;
 		}
 		init();
 	}
@@ -79,7 +68,7 @@ public class Snapshot {
 		return lower + (pos - floor(pos)) * (upper - lower);
 	}
 
-	public int size() {
+	public int count() {
 		return values.length;
 	}
 
@@ -112,16 +101,11 @@ public class Snapshot {
 		return quantile(0.5);
 	}
 
-	public long sum(){
-		if (sum == 0) {
-			double sum = 0;
-			for(long value : values) {
-				sum += value;
-			}
-			this.sum = new Double(sum).longValue();
-			return this.sum;
-		} else {
-			return sum;
+	public long sum() {
+		long sum = 0;
+		for(long value : values) {
+			sum += value;
 		}
+		return sum;
 	}
 }

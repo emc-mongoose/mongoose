@@ -2,20 +2,14 @@ package com.emc.mongoose.metrics;
 
 import com.emc.mongoose.item.op.OpType;
 import com.github.akurilov.commons.system.SizeInBytes;
-import io.prometheus.client.Summary;
 
 import java.time.Clock;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.BiFunction;
 import java.util.function.IntSupplier;
 
-/**
- Created by kurila on 15.09.15.
- Start timestamp and elapsed time is in milliseconds while other time values are in microseconds.
- */
 public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 	extends MetricsContextBase<S>
 	implements MetricsContext<S> {
@@ -41,12 +35,12 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			TimeUnit.SECONDS.toMillis(updateIntervalSec)
 		);
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-		respLatency = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
+		respLatency = new Histogram(DEFAULT_RESERVOIR_SIZE);
 		respLatSnapshot = respLatency.snapshot();
 		respLatencySum = new LongAdder();
-		reqDuration = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
+		reqDuration = new Histogram(DEFAULT_RESERVOIR_SIZE);
 		reqDurSnapshot = reqDuration.snapshot();
-		actualConcurrency = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
+		actualConcurrency = new Histogram(DEFAULT_RESERVOIR_SIZE);
 		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);

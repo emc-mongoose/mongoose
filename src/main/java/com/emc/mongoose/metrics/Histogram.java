@@ -13,6 +13,12 @@ public class Histogram {
 		this.reservoir = reservoir;
 		this.count = new LongAdder();
 	}
+
+	public Histogram(final int reservoirSize) {
+		this.reservoir = new ConcurrentSlidingWindowReservoir(reservoirSize);
+		this.count = new LongAdder();
+	}
+
 	public void update(int value) {
 		update((long) value);
 	}
