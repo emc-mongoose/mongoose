@@ -174,7 +174,7 @@ implements LoadGenerator<I, O> {
 									}
 								}
 							} catch(final EOFException e) {
-								Loggers.MSG.debug("{}: finish due to output's EOF", name);
+								Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
 								outputFinishFlag = true;
 							} catch(final IOException e) {
 								LogUtil.exception(Level.ERROR, e, "{}: operation output failure", name);
@@ -189,12 +189,12 @@ implements LoadGenerator<I, O> {
 									opBuff.clear();
 								}
 							} catch(final EOFException e) {
-								Loggers.MSG.debug("{}: finish due to output's EOF", name);
+								Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
 								outputFinishFlag = true;
 							} catch(final RemoteException e) {
 								final Throwable cause = e.getCause();
 								if(cause instanceof EOFException) {
-									Loggers.MSG.debug("{}: finish due to output's EOF", name);
+									Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
 									outputFinishFlag = true;
 								} else {
 									LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
@@ -303,7 +303,7 @@ implements LoadGenerator<I, O> {
 		// generator builder should close it
 		if(itemInput != null) {
 			try {
-				inputLock.tryLock(Fiber.WARN_DURATION_LIMIT, TimeUnit.NANOSECONDS);
+				inputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS);
 				itemInput.close();
 			} catch(final InterruptedException e) {
 				throw new InterruptRunException(e);

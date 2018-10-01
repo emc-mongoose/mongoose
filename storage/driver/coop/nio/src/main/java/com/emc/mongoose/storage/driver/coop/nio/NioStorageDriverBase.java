@@ -113,7 +113,7 @@ implements NioStorageDriver<I, O> {
 					for(int i = 0; i < opBuffSize; i ++) {
 						op = opBuff.get(i);
 						// if timeout, put the op into the temporary buffer
-						if(System.nanoTime() - startTimeNanos >= SOFT_DURATION_LIMIT) {
+						if(System.nanoTime() - startTimeNanos >= SOFT_DURATION_LIMIT_NANOS) {
 							opLocalBuff.add(op);
 							continue;
 						}
@@ -299,7 +299,7 @@ implements NioStorageDriver<I, O> {
 
 		for(int i = 0; i < ioWorkerCount; i ++) {
 			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
-				if(opBuffLocks[i].tryLock(Fiber.WARN_DURATION_LIMIT, TimeUnit.NANOSECONDS)) {
+				if(opBuffLocks[i].tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 					try {
 						opBuffs[i].clear();
 					} finally {

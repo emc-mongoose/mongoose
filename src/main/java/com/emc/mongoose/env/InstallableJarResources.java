@@ -89,7 +89,7 @@ implements Installable {
 			final long copiedBytesCount = Files.copy(srcFileInput, dstPath);
 			Loggers.MSG.debug("The file {} installed ({})", dstPath, copiedBytesCount);
 		} catch(final Exception e) {
-			LogUtil.exception(Level.WARN, e, "Failed to install file {}", dstPath);
+			LogUtil.exception(Level.WARN, e, "Failed to copy file from {} to {}", srcFilePath, dstPath);
 		}
 	}
 

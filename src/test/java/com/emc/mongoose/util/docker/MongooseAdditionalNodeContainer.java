@@ -1,5 +1,6 @@
 package com.emc.mongoose.util.docker;
 
+import static com.emc.mongoose.util.docker.MongooseContainer.ENTRYPOINT;
 import static com.emc.mongoose.util.docker.MongooseContainer.ENTRYPOINT_LIMIT_HEAP_1GB;
 import static com.emc.mongoose.util.docker.MongooseContainer.IMAGE_NAME;
 import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
@@ -22,17 +23,22 @@ extends ContainerBase {
 
 	public MongooseAdditionalNodeContainer()
 	throws InterruptedException {
-		this(MongooseEntryNodeContainer.IMAGE_VERSION, DEFAULT_PORT);
+		this(MongooseContainer.IMAGE_VERSION, DEFAULT_PORT);
 	}
 
 	public MongooseAdditionalNodeContainer(final int port)
 	throws InterruptedException {
-		this(MongooseEntryNodeContainer.IMAGE_VERSION, port);
+		this(MongooseContainer.IMAGE_VERSION, port);
 	}
 
 	public MongooseAdditionalNodeContainer(final String version, final int svcPort)
 	throws InterruptedException {
-		super(version, emptyList(), VOLUME_BINDS, false, false, svcPort);
+		this(version, svcPort, DEFAULT_MEMORY_LIMIT);
+	}
+
+	public MongooseAdditionalNodeContainer(final String version, final int svcPort, final long memoryLimit)
+	throws InterruptedException {
+		super(version, emptyList(), VOLUME_BINDS, false, false, memoryLimit, svcPort);
 	}
 
 	@Override

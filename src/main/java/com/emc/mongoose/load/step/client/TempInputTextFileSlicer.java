@@ -182,7 +182,7 @@ implements AutoCloseable {
 			try {
 				String line;
 
-				while(System.nanoTime() - startTimeNanos < SOFT_DURATION_LIMIT) {
+				while(System.nanoTime() - startTimeNanos < SOFT_DURATION_LIMIT_NANOS) {
 
 					if(System.currentTimeMillis() - lastProgressOutputTimeMillis > OUTPUT_PROGRESS_PERIOD_MILLIS) {
 						Loggers.MSG.info(

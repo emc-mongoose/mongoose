@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.item.op.OpType.CREATE;
+import static com.emc.mongoose.params.StorageType.FS;
 import static com.emc.mongoose.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.getMetricsTotalLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.testMetricsLogRecords;
@@ -64,6 +65,9 @@ import static org.junit.Assert.assertTrue;
 	private static final int RATE_LIMIT = 1_000;
 	private static final int TIMEOUT_IN_MILLIS = 1_000_000;
 	private final String containerItemOutputPath = MongooseEntryNodeContainer.getContainerItemOutputPath(
+		getClass().getSimpleName()
+	);
+	private final String hostItemOutputPath = MongooseEntryNodeContainer.getHostItemOutputPath(
 		getClass().getSimpleName()
 	);
 	private final String hostItemOutputFile = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
@@ -104,8 +108,12 @@ import static org.junit.Assert.assertTrue;
 			Files.delete(Paths.get(hostItemOutputFile));
 		} catch(final Exception ignored) {
 		}
-		final List<String> env =
-			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
+		final List<String> env = System
+			.getenv()
+			.entrySet()
+			.stream()
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.toList());
 		final List<String> args = new ArrayList<>();
 		switch(storageType) {
 			case ATMOS:
@@ -127,7 +135,7 @@ import static org.junit.Assert.assertTrue;
 				args.add("--item-output-path=" + containerItemOutputPath);
 				args.add("--load-step-limit-size=" + SIZE_LIMIT);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
+					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -202,7 +210,7 @@ import static org.junit.Assert.assertTrue;
 		final double rate = Double.parseDouble(totalMetricsRec.get("TPAvg[op/s]"));
 		assertTrue(rate < RATE_LIMIT + RATE_LIMIT / 2);
 		final long totalSize = Long.parseLong(totalMetricsRec.get("Size"));
-		if(StorageType.FS.equals(storageType)) {
+		if(FS.equals(storageType)) {
 			assertTrue(totalSize < SIZE_LIMIT.get() + SIZE_LIMIT.get() / 5);
 		}
 		final long durationInSec = TimeUnit.MILLISECONDS.toSeconds(duration);

@@ -350,9 +350,9 @@ public interface LogValidationUtil {
 			assertTrue(Long.toString(countSucc), countSucc > 0);
 		}
 		final long countFail = Long.parseLong(metrics.get("CountFail"));
-		//assertTrue("Failures count: " + Long.toString(countFail), countFail < 1);
+		assertTrue("Failures count: " + Long.toString(countFail), countFail < 1);
 		//use delta = 5%, because sometimes default storage-mock return error (1 missing response)
-		assertEquals(Long.toString(countFail), 0, countFail, countSucc * 0.05);
+		//assertEquals(Long.toString(countFail), 0, countFail, countSucc * 0.05);
 		if(countSucc > 0) {
 			final long avgItemSize = totalBytes / countSucc;
 			if(expectedItemDataSize.getMin() < expectedItemDataSize.getMax()) {

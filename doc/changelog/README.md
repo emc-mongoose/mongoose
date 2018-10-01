@@ -1,7 +1,7 @@
 # Contents
 
 ## 2018
-* [4.0.0](#400) TBD
+* [4.0.0](#400) 2018-10-01
 * [3.6.2](#362) 08/08/18
 * [3.6.1](#361) 03/26/18
 
@@ -60,34 +60,42 @@
 
 #### 1. P2P Distributed Mode
 
-The new distributed mode design is based on P2P (peer-to-peer) principles such as task/workload slicing and independent
-execution. This allows to choose any node from the set to initiate the run. Also there's no more need to dedicate the
-host for the controller. The remote API is also available to deploy applications on top of Mongoose node set such as
-GUI.
+The new distributed mode design is based on P2P (peer-to-peer) principles such as task/workload slicing (partitioning)
+and independent execution. This allows to choose any node from the set to initiate the run. Also there's no more need to
+dedicate the host for the controller. The remote API is also available to deploy applications on top of Mongoose node
+set such as GUI.
 
 #### 2. Automated Installer
 
-New Mongoose is delivered as a single jar instead of tarball. This jar
-installs all the required files automatically if needed in the user
-home directory. Also, the installer detects the extensions and installs
-them too.
+New Mongoose is delivered as a single jar instead of tarball. This jar installs all the required files automatically if
+needed in the user home directory. Also, the installer detects the extensions and installs them too.
 
 #### 3. Extensible Configuration
 
-Some extensions require specific configuration options. To support the
-specific configuration options the extensible configuration was
-implemented. The new [external library](https://github.com/akurilov/confuse) is used for this purpose.
-The configuration is assembled dynamically, including the
-sub-configurations provided by the extensions resolved in the runtime.
+Some extensions require specific configuration options. To support the specific configuration options the extensible
+configuration was implemented. The new [external library](https://github.com/akurilov/confuse) is used for this purpose.
+The configuration is assembled dynamically, including the sub-configurations provided by the extensions resolved in the
+runtime. **Note** that command line arguments shouldn't be used to specify the dictionary type values like the custom
+HTTP headers.
 
 ### Non-functional
 
 1. Mongoose v4.0.0 doesn't work with deprecated JSON scenarios anymore. So the tool converting the Mongoose v3.x
 scenarios to v4.0.0 scenarios is provided: https://github.com/emc-mongoose/scenario-converter-3to4
 
+2. New public [issue tracker (Jira)](https://mongoose-issues.atlassian.net/browse/BASE) is introduced instead of GitHub
+issue tracker.
+
 ## Fixed Bugs
 
-* TBD
+| Id | Short Description |
+|----|-------------------|
+| [BASE-1226](https://mongoose-issues.atlassian.net/browse/BASE-1226) | Load operations results queue contains the unhandled elements
+| SLTM-1164 | Ugly error message
+| SLTM-1177 | Reported duration/latency min/max values are not absolute
+| SLTM-1185 | Configuration: failed to convert string value to a list of strings
+| SLTM-1195 | SSL performance degradation after migration to Netty
+| SLTM-1213 | Incorrect final metrics : latency > duration
 
 # 3.6.2
 

@@ -78,7 +78,7 @@ extends ExclusiveFiberBase {
 				n += childOpQueue.drainTo(buff, batchSize - n);
 			}
 			// check for the fiber invocation timeout
-			if(SOFT_DURATION_LIMIT <= System.nanoTime() - startTimeNanos) {
+			if(SOFT_DURATION_LIMIT_NANOS <= System.nanoTime() - startTimeNanos) {
 				return;
 			}
 			// new tasks
@@ -86,7 +86,7 @@ extends ExclusiveFiberBase {
 				n += inOpQueue.drainTo(buff, batchSize - n);
 			}
 			// check for the fiber invocation timeout
-			if(SOFT_DURATION_LIMIT <= System.nanoTime() - startTimeNanos) {
+			if(SOFT_DURATION_LIMIT_NANOS <= System.nanoTime() - startTimeNanos) {
 				return;
 			}
 			// submit the tasks if any
@@ -117,7 +117,7 @@ extends ExclusiveFiberBase {
 	protected final void doClose()
 	throws InterruptRunException {
 		try {
-			if(buffLock.tryLock(WARN_DURATION_LIMIT, TimeUnit.NANOSECONDS)) {
+			if(buffLock.tryLock(WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 				buff.clear();
 			} else {
 				Loggers.ERR.warn("BufferLock timeout on close");

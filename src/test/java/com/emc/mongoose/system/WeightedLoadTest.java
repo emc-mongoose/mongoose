@@ -46,8 +46,12 @@ import static org.junit.Assert.assertTrue;
 	private final String SCENARIO_PATH = systemTestContainerScenarioPath(getClass());
 	private final long DURATION_LIMIT = 120_000;
 	private final int TIMEOUT_IN_MILLIS = 120_000;
-	private final String CONTAINER_ITEM_OUTPUT_PATH =
-		MongooseEntryNodeContainer.getContainerItemOutputPath(getClass().getSimpleName());
+	private final String containerItemOutputPath = MongooseEntryNodeContainer.getContainerItemOutputPath(
+		getClass().getSimpleName()
+	);
+	private final String hostItemOutputPath = MongooseEntryNodeContainer.getHostItemOutputPath(
+		getClass().getSimpleName()
+	);
 	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
@@ -105,9 +109,9 @@ import static org.junit.Assert.assertTrue;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
-				args.add("--item-output-path=" + CONTAINER_ITEM_OUTPUT_PATH);
+				args.add("--item-output-path=" + containerItemOutputPath);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(CONTAINER_ITEM_OUTPUT_PATH);
+					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}

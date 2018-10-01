@@ -229,7 +229,7 @@ implements StorageDriver<I, O> {
 	@Override
 	protected final void doStop()
 	throws IllegalStateException {
-		Loggers.MSG.debug("{}: interrupted", toString());
+		Loggers.MSG.debug("{}: stopped", toString());
 	}
 
 	@Override

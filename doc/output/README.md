@@ -42,9 +42,9 @@ bundled into that jar to specify the additional options tuning the logging subsy
 
 ### 1.1.1 Load Step Id
 
-The load step id is used to differentiate the log messages. If step id is not set, it's generated automatically using
-the following pattern: `<STEP_TYPE>-<yyyyMMdd.HHmmss.SSS>` There's also the special prefix "none-" which used instead of
-a step type if the message is logged out of any load step context.
+The load step id is used to differentiate the log messages and metrics. If step id is not set, it's generated
+automatically using the following pattern: `<STEP_TYPE>-<yyyyMMdd.HHmmss.SSS>` There's also the special prefix "none-"
+which used instead of a step type if the message is logged out of any load step context.
 
 ### 1.1.2 Console
 
@@ -95,7 +95,7 @@ into the `3rdparty.log` file with the *dynamic path*. Logging level: "INFO".
 To persist the info about the items processed by a load step the items output file should be used.
 
 ```bash
-java -jar <MONGOOSE_DIR>/mongoose.jar --test-step-limit-count=1000 --item-output-file=items.csv
+java -jar <MONGOOSE_DIR>/mongoose.jar --load-op-limit-count=1000 --item-output-file=items.csv
 ```
 In the example above the info about 1000 items processed by the load step will be persisted in the
 `items.csv` output file.

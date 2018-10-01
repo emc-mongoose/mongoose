@@ -24,8 +24,6 @@ public interface LoadGeneratorBuilder<I extends Item, O extends Operation<I>, T 
 
 	LoadGeneratorBuilder<I, O, T> loadConfig(final Config loadConfig);
 
-	LoadGeneratorBuilder<I, O, T> limitConfig(final Config limitConfig);
-
 	LoadGeneratorBuilder<I, O, T> itemType(final ItemType itemType);
 
 	LoadGeneratorBuilder<I, O, T> itemFactory(final ItemFactory<I> itemFactory);

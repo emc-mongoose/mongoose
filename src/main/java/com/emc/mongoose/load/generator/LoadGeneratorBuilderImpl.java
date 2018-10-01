@@ -55,7 +55,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
@@ -70,7 +69,6 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 	private Config itemConfig = null;
 	private Config loadConfig = null;
-	private Config limitConfig = null;
 	private ItemType itemType = null;
 	private ItemFactory<I> itemFactory = null;
 	private Config authConfig = null;
@@ -91,12 +89,6 @@ implements LoadGeneratorBuilder<I, O, T> {
 	public LoadGeneratorBuilderImpl<I, O, T> loadConfig(final Config loadConfig) {
 		this.loadConfig = loadConfig;
 		this.batchSize = loadConfig.intVal("batch-size");
-		return this;
-	}
-
-	@Override
-	public LoadGeneratorBuilderImpl<I, O, T> limitConfig(final Config limitConfig) {
-		this.limitConfig = limitConfig;
 		return this;
 	}
 
@@ -161,14 +153,11 @@ implements LoadGeneratorBuilder<I, O, T> {
 
 		// prepare
 		final OperationsBuilder<I, O> opsBuilder;
-		if(limitConfig == null) {
-			throw new OmgShootMyFootException("Test step limit config is not set");
-		}
-		final long countLimit = limitConfig.longVal("count");
 		if(loadConfig == null) {
 			throw new OmgShootMyFootException("Load config is not set");
 		}
 		final Config opConfig = loadConfig.configVal("op");
+		final long countLimit = opConfig.longVal("limit-count");
 		final boolean shuffleFlag = opConfig.boolVal("shuffle");
 		if(itemConfig == null) {
 			throw new OmgShootMyFootException("Item config is not set");

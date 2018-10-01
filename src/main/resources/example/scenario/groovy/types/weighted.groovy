@@ -19,10 +19,14 @@ final preconditionLoad1 = PreconditionLoad
                 ]
             ],
             load : [
+	            op :[
+	                limit : [
+	                    count : 10000
+	                ]
+	            ],
                 step : [
                     limit : [
-                        concurrency : sharedConcurrency,
-                        count : 10000
+                        concurrency : sharedConcurrency
                     ]
                 ]
             ]

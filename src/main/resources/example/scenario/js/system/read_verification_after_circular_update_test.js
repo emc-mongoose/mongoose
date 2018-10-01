@@ -9,10 +9,12 @@ cmd_1.waitFor();
 PreconditionLoad
     .config({
       "load" : {
-        "step" : {
+        "op" : {
           "limit" : {
             "count" : 1000
-          },
+          }
+        },
+        "step" : {
           "id": STEP_ID_CREATE
         }
       },
@@ -29,14 +31,14 @@ PreconditionLoad
       "load" : {
         "op" : {
           "recycle" : true,
-          "type" : "update"
-        },
-        "step" : {
+          "type" : "update",
           "limit" : {
             "count": 10000
-          },
+          }
+        },
+		"step" : {
 			"id": STEP_ID_UPDATE
-        }
+		}
       },
       "item" : {
         "data" : {

@@ -9,9 +9,13 @@ cmd_1.waitFor();
 PreconditionLoad
     .config({
       "load" : {
+        "op" : {
+            "limit": {
+                "count" : 10000
+            }
+        },
         "step" : {
           "limit" : {
-            "count" : 10000,
             "size" : "1GB"
           }
         }

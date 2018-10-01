@@ -90,7 +90,7 @@ It is designed to be used for:
 |                                                    | Mongoose  | COSBench | LoadRunner | Locust |
 | ---                                                | :---:     | :---:    | :---:      | :---:  |
 |**Horizontal** (Distributed Mode)                 |:heavy_check_mark:|:heavy_check_mark:| TBD |:heavy_check_mark:|
-|**Vertical** (Max sustained concurrency per instance)|[1_048_576](https://github.com/emc-mongoose/mongoose/blob/feature-v4-doc/doc/features.md#12-fibers)|[1024](http://cosbench.1094679.n5.nabble.com/how-many-connections-users-can-cosbench-create-to-test-one-swift-storage-tp325p326.html)| TBD |[1_000_000](https://locust.io/)|
+|**Vertical** (Max sustained concurrency per instance)| 1_048_576 |[1024](http://cosbench.1094679.n5.nabble.com/how-many-connections-users-can-cosbench-create-to-test-one-swift-storage-tp325p326.html)| TBD |[1_000_000](https://locust.io/)|
 
 ### 2.1.4. Input
 |                  | Mongoose  | COSBench | LoadRunner | Locust |
@@ -132,7 +132,7 @@ significant performance degradation.
 
 ### 2.2.2. Horizontal
 
-The [distributed mode](doc/design/distributed_mode.md) in Mongoose was designed as P2P network. Each peer/node performs
+The [distributed mode](doc/design/distributed_mode) in Mongoose was designed as P2P network. Each peer/node performs
 independently as much as possible. This eliminates the excess network interaction between the nodes which may be a
 bottleneck.
 
@@ -140,16 +140,16 @@ bottleneck.
 
 ### 2.3.1. Flexible Configuration
 
-Supports the [parameterization](doc/input/configuration#2-parameterization) and [extension](api/extensions/general.md)
-but remains type-safe and structure-safe
+Supports the [parameterization](doc/input/configuration#2-parameterization) and extension but remains type-safe and
+structure-safe.
 
 ### 2.3.2. Load Generation Patterns
 
-* CRUD operations and the extensions: Noop, [Copy](doc/design/copy_mode)
+* CRUD operations and the extensions: Noop, [Copy](doc/design/copy_mode), etc
 
 * [Parial Operations](doc/usage/load/operations/byte_ranges)
 
-* [Composite Operations](doc/design/storage_side_concatenation.md)
+* [Composite Operations](doc/usage/load/operations/composite)
 
 * Complex Load Steps
     * [Pipeline Load](load/step/pipeline)
@@ -167,7 +167,7 @@ but remains type-safe and structure-safe
 
 Scenaruis allow to organize the load steps in the required order and reuse the complex performance tests
 
-### 2.3.4. [Metrics Reporting](doc/output#metrics)
+### 2.3.4. [Metrics Reporting](doc/output#2-metrics)
 
 The metrics reported by Mongoose are designed to be most useful for the performance analysis. The following metrics are
 available:
@@ -198,7 +198,7 @@ The *average* metrics output is being done periodically while a load step is run
 done once when a load step is finished. Also, it's possible to obtain the highest precision metrics (for each operation,
 so called *I/O trace* records).
 
-## 2.4. [Extension](api/extensions/general.md)
+## 2.4. [Extension](src/main/java/com/emc/mongoose/env)
 
 Mongoose is designed to be agnostic to the particular extensions implementations. This allows to support any storage,
 scenario language, different load step kinds.

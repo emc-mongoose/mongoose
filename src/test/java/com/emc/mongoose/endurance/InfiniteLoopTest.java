@@ -13,17 +13,11 @@ import static com.emc.mongoose.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.util.docker.MongooseContainer.ENDURANCE_TEST_MEMORY_LIMIT;
 import static com.emc.mongoose.util.docker.MongooseContainer.IMAGE_VERSION;
 import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.enduranceTestContainerScenarioPath;
+import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.getHostItemOutputPath;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 
 import org.apache.commons.io.FileUtils;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -34,8 +28,15 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.fail;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 @RunWith(Parameterized.class)
-public class ParallelPipelineAndInfiniteLoopTest {
+public class InfiniteLoopTest {
 
 	@Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
 	public static List<Object[]> envParams() {
@@ -52,7 +53,7 @@ public class ParallelPipelineAndInfiniteLoopTest {
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
 
-	public ParallelPipelineAndInfiniteLoopTest(
+	public InfiniteLoopTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
 	) throws Exception {
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
@@ -94,7 +95,7 @@ public class ParallelPipelineAndInfiniteLoopTest {
 				break;
 			case FS:
 				try {
-					DirWithManyFilesDeleter.deleteExternal(MongooseEntryNodeContainer.getHostItemOutputPath(stepId));
+					DirWithManyFilesDeleter.deleteExternal(getHostItemOutputPath(stepId));
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}

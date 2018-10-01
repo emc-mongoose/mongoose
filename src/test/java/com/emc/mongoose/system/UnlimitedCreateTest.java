@@ -48,6 +48,9 @@ import java.util.stream.Collectors;
 	private final String containerItemOutputPath = MongooseEntryNodeContainer.getContainerItemOutputPath(
 		getClass().getSimpleName()
 	);
+	private final String hostItemOutputPath = MongooseEntryNodeContainer.getHostItemOutputPath(
+		getClass().getSimpleName()
+	);
 	private static final int TIMEOUT_IN_MILLIS = 60_000;
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
@@ -90,7 +93,7 @@ import java.util.stream.Collectors;
 			case FS:
 				args.add("--item-output-path=" + containerItemOutputPath);
 				try {
-					DirWithManyFilesDeleter.deleteExternal(containerItemOutputPath);
+					DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}

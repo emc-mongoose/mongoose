@@ -2,9 +2,12 @@ package com.emc.mongoose.config;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static java.lang.Boolean.TRUE;
 
 public interface CliArgUtil {
 
@@ -15,20 +18,19 @@ public interface CliArgUtil {
 	static Map<String, String> parseArgs(final String... args) {
 		return Arrays
 			.stream(args)
-			.map(
+			.peek(
 				arg -> {
-					if(arg.startsWith(ARG_PREFIX)) {
-						return arg.substring(ARG_PREFIX.length()).split(ARG_VAL_SEP, 2);
-					} else {
+					if(!arg.startsWith(ARG_PREFIX)) {
 						throw new IllegalArgumentNameException(arg);
 					}
 				}
 			)
-			.map(
-				argValuePair -> argValuePair.length == 2 ?
-					argValuePair : new String[] { argValuePair[0], Boolean.TRUE.toString() }
-			)
-			.collect(Collectors.toMap(argValuePair -> argValuePair[0], argValuePair -> argValuePair[1]));
+			.map(arg -> arg.substring(ARG_PREFIX.length()))
+			// split args to key/value pairs by the '=' symbol
+			.map(arg -> arg.split(ARG_VAL_SEP, 2))
+			// handle the shortcuts for boolean options (--smth-enabled -> --smth-enabled=true)
+			.map(argValPair -> argValPair.length == 2 ? argValPair : new String[] { argValPair[0], TRUE.toString() })
+			.collect(Collectors.toMap(argValPair -> argValPair[0], argValPair -> argValPair[1]));
 	}
 
 	@SuppressWarnings("CollectionWithoutInitialCapacity")

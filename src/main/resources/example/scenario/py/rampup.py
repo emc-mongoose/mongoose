@@ -42,10 +42,14 @@ def configCreate(iterId, size, itemOutputFile, limitCount, limitTime):
             }
         },
         "load": {
+            "op": {
+                "limit": {
+                    "count": limitCount
+                }
+            },
             "step": {
                 "id": "create0_" + iterId,
                 "limit": {
-                    "count": limitCount,
                     "time": limitTime
                 }
             }

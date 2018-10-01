@@ -4,12 +4,12 @@ Load
 			"load" : {
 				"op" : {
 					"limit" : {
+						"count" : 1000000,
 						"rate" : 1000
 					}
 				},
 				"step" : {
 					"limit" : {
-						"count" : 1000000,
 						"time" : "1m"
 					}
 				}

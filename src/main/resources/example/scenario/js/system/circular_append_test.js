@@ -15,7 +15,7 @@ PreconditionLoad
 				}
 			},
 			"load": {
-				"step": {
+				"op": {
 					"limit": {
 						"count": BASE_ITEMS_COUNT
 					}
@@ -44,9 +44,7 @@ Load
 			"load": {
 				"op": {
 					"recycle": true,
-					"type": "update"
-				},
-				"step": {
+					"type": "update",
 					"limit": {
 						"count": ~~(BASE_ITEMS_COUNT * APPEND_COUNT)
 					}

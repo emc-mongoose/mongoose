@@ -45,10 +45,14 @@ static def configCreate(iterId, size, itemOutputFile, limitCount, limitTime) {
             ]
         ],
         load: [
+	        op: [
+	            limit: [
+	                count: limitCount
+	            ]
+	        ],
             step: [
                 id: "create0_$iterId".toString(),
                 limit: [
-                    count: limitCount,
                     time: limitTime
                 ]
             ]

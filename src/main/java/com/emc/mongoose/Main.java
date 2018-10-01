@@ -7,7 +7,6 @@ import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.env.CoreResourcesToInstall;
-import com.emc.mongoose.env.Installable;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;

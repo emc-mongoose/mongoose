@@ -18,13 +18,6 @@ import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 
 import org.apache.commons.io.FileUtils;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -34,8 +27,15 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.fail;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 @RunWith(Parameterized.class)
-public class ParallelPipelineAndInfiniteLoopTest {
+public class PipelineTest {
 
 	@Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
 	public static List<Object[]> envParams() {
@@ -52,7 +52,7 @@ public class ParallelPipelineAndInfiniteLoopTest {
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
 
-	public ParallelPipelineAndInfiniteLoopTest(
+	public PipelineTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
 	) throws Exception {
 		stepId = stepId(getClass(), storageType, runMode, concurrency, itemSize);
