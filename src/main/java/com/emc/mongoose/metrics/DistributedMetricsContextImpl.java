@@ -109,10 +109,8 @@ public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotI
 			byteRateLast += snapshot.byteRateLast();
 			actualConcurrencyLast += snapshot.actualConcurrencyLast();
 			actualConcurrencyMean += snapshot.actualConcurrencyMean();
-			durSnapshots.add(new Snapshot(snapshot.durationMean(), snapshot.durationSum(), snapshot.durationMed(),
-				snapshot.durationHiQ(), snapshot.latencyLoQ(), snapshot.durationMin(), snapshot.durationMax()));
-			latSnapshots.add(new Snapshot(snapshot.latencyMean(), snapshot.latencySum(), snapshot.latencyMed(),
-				snapshot.latencyHiQ(), snapshot.latencyLoQ(), snapshot.latencyMin(), snapshot.latencyMax()));
+			durSnapshots.add(new Snapshot(snapshot.durationValues()));
+			latSnapshots.add(new Snapshot(snapshot.latencyValues()));
 		}
 		final Snapshot durSnapshot = new Snapshot(durSnapshots);
 		final Snapshot latSnapshot = new Snapshot(latSnapshots);

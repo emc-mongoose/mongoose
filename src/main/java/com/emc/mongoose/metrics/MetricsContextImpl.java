@@ -21,7 +21,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 	implements MetricsContext<S> {
 
 	private final Clock clock = Clock.systemDefaultZone();
-	private final Summary reqDuration, respLatency, actualConcurrency;
+	private final Histogram reqDuration, respLatency, actualConcurrency;
 	private final LongAdder reqDurationSum, respLatencySum;
 	private final CustomMeter throughputSuccess, throughputFail, reqBytes;
 	private final IntSupplier actualConcurrencyGauge;
@@ -41,25 +41,13 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			TimeUnit.SECONDS.toMillis(updateIntervalSec)
 		);
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-
-		final BiFunction<String,String,Summary> buildSummary = (name,help) -> Summary
-			.build()
-			.quantile(Double.MIN_VALUE, 0.0)  // min
-			.quantile(1.0, 0.0)  // max
-			.quantile(0.25,0.01) //loQ
-			.quantile(0.75,0.01) //hiQ
-			.quantile(0.5, 0.01) //med
-			.name(name)
-			.help(help)
-			.register();
-
-		respLatency = buildSummary.apply("respLatency","Latency of response");
-		respLatSnapshot = new Snapshot(respLatency);
+		respLatency = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
+		respLatSnapshot = respLatency.snapshot();
 		respLatencySum = new LongAdder();
-		reqDuration = buildSummary.apply("reqDuration","duration of request");
-		reqDurSnapshot = new Snapshot(reqDuration);
-		actualConcurrency = buildSummary.apply("actualConcurrency","actually value of concurrency");
-		actualConcurrencySnapshot = new Snapshot(actualConcurrency);
+		reqDuration = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
+		reqDurSnapshot = reqDuration.snapshot();
+		actualConcurrency = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
+		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
 		throughputFail = new CustomMeter(clock, updateIntervalSec);
@@ -86,8 +74,8 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 		if(latency > 0 && duration > latency) {
 			timingLock.lock();
 			try {
-				reqDuration.observe(duration);
-				respLatency.observe(latency);
+				reqDuration.update(duration);
+				respLatency.update(latency);
 			} finally {
 				timingLock.unlock();
 			}
@@ -105,8 +93,8 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 		if(latency > 0 && duration > latency) {
 			timingLock.lock();
 			try {
-				reqDuration.observe(duration);
-				respLatency.observe(latency);
+				reqDuration.update(duration);
+				respLatency.update(latency);
 			} finally {
 				timingLock.unlock();
 			}
@@ -132,8 +120,8 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			if(latency > 0 && duration > latency) {
 				timingLock.lock();
 				try {
-					reqDuration.observe(duration);
-					respLatency.observe(latency);
+					reqDuration.update(duration);
+					respLatency.update(latency);
 				} finally {
 					timingLock.unlock();
 				}
@@ -159,8 +147,8 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			if(latency > 0 && duration > latency) {
 				timingLock.lock();
 				try {
-					reqDuration.observe(duration);
-					respLatency.observe(latency);
+					reqDuration.update(duration);
+					respLatency.update(latency);
 				} finally {
 					timingLock.unlock();
 				}
@@ -214,8 +202,8 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			if(lastDurationSum != reqDurationSum.sum() || lastLatencySum != respLatencySum.sum()) {
 				if(timingLock.tryLock()) {
 					try {
-						reqDurSnapshot = new Snapshot(reqDuration);
-						respLatSnapshot = new Snapshot(respLatency);
+						reqDurSnapshot = reqDuration.snapshot();
+						respLatSnapshot = respLatency.snapshot();
 					} finally {
 						timingLock.unlock();
 					}
@@ -223,8 +211,8 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 				lastLatencySum = respLatencySum.sum();
 				lastDurationSum = reqDurationSum.sum();
 			}
-			actualConcurrency.observe(actualConcurrencyGauge.getAsInt());
-			actualConcurrencySnapshot = new Snapshot(actualConcurrency);
+			actualConcurrency.update(actualConcurrencyGauge.getAsInt());
+			actualConcurrencySnapshot = actualConcurrency.snapshot();
 		}
 		lastSnapshot = (S) new MetricsSnapshotImpl(throughputSuccess.count(), throughputSuccess.lastRate(),
 			throughputFail.count(), throughputFail.lastRate(), reqBytes.count(),

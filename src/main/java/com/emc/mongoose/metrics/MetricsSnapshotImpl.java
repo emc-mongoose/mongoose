@@ -3,14 +3,21 @@ package com.emc.mongoose.metrics;
 public class MetricsSnapshotImpl
 	implements MetricsSnapshot {
 
+	private final double LO_QUANTILE_VALUE = 0.75;
+	private final double HI_QUANTILE_VALUE = 0.75;
+
 	private final long countSucc;
 	private final double succRateLast;
 	private final long countFail;
 	private final double failRateLast;
 	private final long countByte;
 	private final double byteRateLast;
-	private transient Snapshot durSnapshot;
-	private transient Snapshot latSnapshot;
+	private final long durValues[];
+	private transient Snapshot durSnapshot = null;
+	private final long latValues[];
+	private transient Snapshot latSnapshot = null;
+	private final long sumDur;
+	private final long sumLat;
 	private final long startTimeMillis;
 	private final long elapsedTimeMillis;
 	private final int actualConcurrencyLast;
@@ -35,7 +42,11 @@ public class MetricsSnapshotImpl
 		this.actualConcurrencyMean = actualConcurrencyMean;
 		this.concurrencyLimit = concurrencyLimit;
 		this.durSnapshot = durSnapshot;
+		this.durValues = durSnapshot.values();
 		this.latSnapshot = latSnapshot;
+		this.latValues = latSnapshot.values();
+		this.sumDur = durSnapshot.sum();
+		this.sumLat = latSnapshot.sum();
 	}
 
 	@Override
@@ -95,17 +106,17 @@ public class MetricsSnapshotImpl
 
 	@Override
 	public final long durationLoQ() {
-		return new Double(durSnapshot.loQ()).longValue();
+		return new Double(durSnapshot.quantile(HI_QUANTILE_VALUE)).longValue();
 	}
 
 	@Override
 	public final long durationMed() {
-		return new Double(durSnapshot.med()).longValue();
+		return new Double(durSnapshot.median()).longValue();
 	}
 
 	@Override
 	public final long durationHiQ() {
-		return new Double(durSnapshot.hiQ()).longValue();
+		return new Double(durSnapshot.quantile(LO_QUANTILE_VALUE)).longValue();
 	}
 
 	@Override
@@ -124,23 +135,28 @@ public class MetricsSnapshotImpl
 	}
 
 	@Override
+	public final long[] durationValues() {
+		return durValues;
+	}
+
+	@Override
 	public final long latencyMin() {
 		return new Double(durSnapshot.min()).longValue();
 	}
 
 	@Override
 	public final long latencyLoQ() {
-		return new Double(latSnapshot.loQ()).longValue();
+		return new Double(latSnapshot.quantile(LO_QUANTILE_VALUE)).longValue();
 	}
 
 	@Override
 	public final long latencyMed() {
-		return new Double(latSnapshot.med()).longValue();
+		return new Double(latSnapshot.median()).longValue();
 	}
 
 	@Override
 	public final long latencyHiQ() {
-		return new Double(latSnapshot.hiQ()).longValue();
+		return new Double(latSnapshot.quantile(HI_QUANTILE_VALUE)).longValue();
 	}
 
 	@Override
@@ -156,6 +172,11 @@ public class MetricsSnapshotImpl
 	@Override
 	public final double latencyMean() {
 		return new Double(latSnapshot.mean()).longValue();
+	}
+
+	@Override
+	public final long[] latencyValues() {
+		return latValues;
 	}
 
 	@Override

@@ -43,12 +43,18 @@ public class Snapshot {
 	}
 
 	public Snapshot(final List<Snapshot> snapshots) {
+		int size = 0;
+		for(Snapshot s : snapshots) {
+			size += s.size();
+		}
+		this.values = new long[size];
+		int index_s = 0;
 		for(Snapshot s : snapshots) {
 			final long[] copy = Arrays.copyOf(s.values(),s.size());
-			this.values = new long[copy.length];
 			for(int i = 0; i < copy.length; i++) {
-				this.values[i] = (Long) copy[i];
+				this.values[index_s*i + i] = copy[i];
 			}
+			++index_s;
 		}
 		init();
 	}
@@ -99,14 +105,23 @@ public class Snapshot {
 		if(values.length == 0) {
 			return 0;
 		}
-		double sum = 0;
-		for(long value : values) {
-			sum += value;
-		}
-		return sum / values.length;
+		return sum() / values.length;
 	}
 
 	public double median() {
 		return quantile(0.5);
+	}
+
+	public long sum(){
+		if (sum == 0) {
+			double sum = 0;
+			for(long value : values) {
+				sum += value;
+			}
+			this.sum = new Double(sum).longValue();
+			return this.sum;
+		} else {
+			return sum;
+		}
 	}
 }

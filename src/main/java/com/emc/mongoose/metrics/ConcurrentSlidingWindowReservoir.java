@@ -28,7 +28,7 @@ public class ConcurrentSlidingWindowReservoir {
 		measurements[(int) (offset.incrementAndGet() % measurements.length)] = value;
 	}
 
-	public Snapshot getSnapshot() {
+	public Snapshot snapshot() {
 		final long[] values = new long[size()];
 		for(int i = 0; i < values.length; i++) {
 			values[i] = measurements[i];
