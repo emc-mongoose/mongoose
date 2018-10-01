@@ -251,6 +251,9 @@ dependencies {
 		"com.lmax:disruptor:${depVersion.disruptor}",
 		// https://mvnrepository.com/artifact/io.prometheus/simpleclient
 		"io.prometheus:simpleclient:${depVersion.tsdbMetrics}",
+		"io.prometheus:simpleclient_httpserver:${depVersion.tsdbMetrics}",
+		"io.prometheus:simpleclient_servlet:${depVersion.tsdbMetrics}",
+		"io.prometheus:simpleclient_hotspot:${depVersion.tsdbMetrics}",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 		// actually the deps below are the runtime deps

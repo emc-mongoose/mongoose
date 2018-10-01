@@ -7,16 +7,15 @@ import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.logging.MetricsAsciiTableLogMessage;
 import com.emc.mongoose.logging.MetricsCsvLogMessage;
 import com.emc.mongoose.logging.StepResultsMetricsLogMessage;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FibersExecutor;
+import io.prometheus.client.Collector;
+import io.prometheus.client.Summary;
+import io.prometheus.client.exporter.HTTPServer;
+import io.prometheus.client.hotspot.DefaultExports;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
@@ -29,35 +28,39 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
+
 /**
  Created by kurila on 18.05.17.
  */
 public class MetricsManagerImpl
-extends ExclusiveFiberBase
-implements MetricsManager {
+	extends ExclusiveFiberBase
+	implements MetricsManager {
 
 	private static final String CLS_NAME = MetricsManagerImpl.class.getSimpleName();
-
 	private final Set<MetricsContext> allMetrics = new ConcurrentSkipListSet<>();
 	private final Map<DistributedMetricsContext, AutoCloseable> distributedMetrics = new ConcurrentHashMap<>();
 	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
 	private final Lock outputLock = new ReentrantLock();
-
+	private final HTTPServer server;
 	private long outputPeriodMillis;
 	private long lastOutputTs;
 	private long nextOutputTs;
 
-	public MetricsManagerImpl(final FibersExecutor executor) {
-		super(executor);
+	public MetricsManagerImpl(final FibersExecutor instance, final HTTPServer server) {
+		super(instance);
+		this.server = server;
+		//DefaultExports.initialize();
 	}
 
 	@Override
 	protected final void invokeTimedExclusively(final long startTimeNanos) {
-
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 		int actualConcurrency;
 		int nextConcurrencyThreshold;
-
 		if(outputLock.tryLock()) {
 			try {
 				for(final MetricsContext metricsCtx : allMetrics) {
@@ -67,7 +70,7 @@ implements MetricsManager {
 					// threshold load state checks
 					nextConcurrencyThreshold = metricsCtx.concurrencyThreshold();
 					if(nextConcurrencyThreshold > 0 && actualConcurrency >= nextConcurrencyThreshold) {
-						if(!metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
+						if(! metricsCtx.thresholdStateEntered() && ! metricsCtx.thresholdStateExited()) {
 							Loggers.MSG.info(
 								"{}: the threshold of {} active load operations count is reached, " +
 									"starting the additional metrics accounting",
@@ -75,7 +78,7 @@ implements MetricsManager {
 							);
 							metricsCtx.enterThresholdState();
 						}
-					} else if(metricsCtx.thresholdStateEntered() && !metricsCtx.thresholdStateExited()) {
+					} else if(metricsCtx.thresholdStateEntered() && ! metricsCtx.thresholdStateExited()) {
 						exitMetricsThresholdState(metricsCtx);
 					}
 					// periodic output
@@ -91,7 +94,7 @@ implements MetricsManager {
 					}
 				}
 				// console output
-				if(!selectedMetrics.isEmpty()) {
+				if(! selectedMetrics.isEmpty()) {
 					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
 					selectedMetrics.clear();
 				}
@@ -110,7 +113,7 @@ implements MetricsManager {
 			final Instance logCtx = put(KEY_STEP_ID, metricsCtx.id())
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
-			if(!isStarted()) {
+			if(! isStarted()) {
 				start();
 				Loggers.MSG.debug("Started the metrics manager fiber");
 			}
@@ -135,7 +138,7 @@ implements MetricsManager {
 		) {
 			if(allMetrics.remove(metricsCtx)) {
 				try {
-					if(!outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
+					if(! outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 						Loggers.ERR.warn(
 							"Acquire lock timeout while unregistering the metrics context \"{}\"", metricsCtx
 						);

@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static java.lang.Math.floor;
-import static java.lang.Math.log;
 
 /**
  @author veronika K. on 25.09.18 */
