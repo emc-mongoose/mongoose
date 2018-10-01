@@ -191,15 +191,15 @@ jobs:
       - ITEM_SIZE=small,medium,large
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    - stage: "Allowed to fail"
-      # STORAGE_TYPE=s3,swift RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=large ./gradlew systemTest --tests com.emc.mongoose.system.MultipartCreateTest
-      env:
-      - TEST=MultipartCreateTest
-      - STORAGE_TYPE=s3,swift
-      - RUN_MODE=local,distributed
-      - CONCURRENCY=low,medium
-      - ITEM_SIZE=large
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+#    - stage: "Allowed to fail"
+#      # STORAGE_TYPE=s3,swift RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=large ./gradlew systemTest --tests com.emc.mongoose.system.MultipartCreateTest
+#      env:
+#      - TEST=MultipartCreateTest
+#      - STORAGE_TYPE=s3,swift
+#      - RUN_MODE=local,distributed
+#      - CONCURRENCY=low,medium
+#      - ITEM_SIZE=large
+#      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     - stage: "Deploy"
       deploy:
