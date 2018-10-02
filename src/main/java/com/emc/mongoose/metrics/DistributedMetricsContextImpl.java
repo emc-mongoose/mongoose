@@ -1,27 +1,23 @@
 package com.emc.mongoose.metrics;
 
-import com.codahale.metrics.Snapshot;
-import com.codahale.metrics.UniformSnapshot;
-
 import com.emc.mongoose.item.op.OpType;
-
 import com.github.akurilov.commons.system.SizeInBytes;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotImpl>
-extends MetricsContextBase<S>
-implements DistributedMetricsContext<S> {
+	extends MetricsContextBase<S>
+	implements DistributedMetricsContext<S> {
 
 	private final IntSupplier nodeCountSupplier;
 	private final Supplier<List<MetricsSnapshot>> snapshotsSupplier;
 	private final boolean avgPersistFlag;
 	private final boolean sumPersistFlag;
 	private final boolean perfDbResultsFileFlag;
-
 	private volatile long prevElapsedTime = 0;
 	private volatile DistributedMetricsListener metricsListener = null;
 
@@ -90,7 +86,8 @@ implements DistributedMetricsContext<S> {
 		return perfDbResultsFileFlag;
 	}
 
-	@Override @SuppressWarnings("unchecked")
+	@Override
+	@SuppressWarnings("unchecked")
 	public void refreshLastSnapshot() {
 		final List<MetricsSnapshot> snapshots = snapshotsSupplier.get();
 		long countSucc = 0;
@@ -101,10 +98,8 @@ implements DistributedMetricsContext<S> {
 		double byteRateLast = 0;
 		int actualConcurrencyLast = 0;
 		double actualConcurrencyMean = 0;
-		long sumDur = 0;
-		int durValCount = 0;
-		long sumLat = 0;
-		int latValCount = 0;
+		final List<Snapshot> durSnapshots = new ArrayList<>();
+		final List<Snapshot> latSnapshots = new ArrayList<>();
 		for(final MetricsSnapshot snapshot : snapshots) {
 			countSucc += snapshot.succCount();
 			succRateLast += snapshot.succRateLast();
@@ -114,34 +109,18 @@ implements DistributedMetricsContext<S> {
 			byteRateLast += snapshot.byteRateLast();
 			actualConcurrencyLast += snapshot.actualConcurrencyLast();
 			actualConcurrencyMean += snapshot.actualConcurrencyMean();
-			sumDur += snapshot.durationSum();
-			durValCount += snapshot.durationValues().length;
-			sumLat += snapshot.latencySum();
-			latValCount += snapshot.latencyValues().length;
+			durSnapshots.add(new Snapshot(snapshot.durationValues()));
+			latSnapshots.add(new Snapshot(snapshot.latencyValues()));
 		}
-		final long[] allDurations = new long[durValCount];
-		final long[] allLatencies = new long[latValCount];
-		int lastDurIdx = 0;
-		int lastLatIdx = 0;
-		for(final MetricsSnapshot snapshot : snapshots) {
-			for(final long dur : snapshot.durationValues()) {
-				allDurations[lastDurIdx] = dur;
-				lastDurIdx++;
-			}
-			for(final long lat : snapshot.latencyValues()) {
-				allLatencies[lastLatIdx] = lat;
-				lastLatIdx++;
-			}
-		}
-		final Snapshot durSnapshot = new UniformSnapshot(allDurations);
-		final Snapshot latSnapshot = new UniformSnapshot(allLatencies);
+		final Snapshot durSnapshot = new Snapshot(durSnapshots);
+		final Snapshot latSnapshot = new Snapshot(latSnapshots);
 		final long currentTimeMillis = System.currentTimeMillis();
 		final long tsStart = startTimeStamp();
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
 		lastSnapshot = (S) new DistributedMetricsSnapshotImpl(
 			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast, tsStart,
-			prevElapsedTime + currElapsedTime, actualConcurrencyLast, actualConcurrencyMean, concurrencyLimit, sumDur,
-			sumLat, nodeCountSupplier.getAsInt(), durSnapshot, latSnapshot
+			prevElapsedTime + currElapsedTime, actualConcurrencyLast, actualConcurrencyMean, concurrencyLimit,
+			nodeCountSupplier.getAsInt(), durSnapshot, latSnapshot
 		);
 		if(metricsListener != null) {
 			metricsListener.notify(lastSnapshot);

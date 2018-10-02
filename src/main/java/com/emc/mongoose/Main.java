@@ -30,6 +30,7 @@ import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
+import io.prometheus.client.exporter.HTTPServer;
 import org.apache.commons.lang.StringUtils;
 
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
@@ -53,7 +54,15 @@ import java.util.stream.Collectors;
 
 public final class Main {
 
+	private static HTTPServer server;
+
 	public static void main(final String... args) {
+
+		try {
+			server = new HTTPServer(1234);
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
 
 		final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
 		final Path appHomePath = coreResources.appHomePath();
@@ -155,7 +164,7 @@ public final class Main {
 				Loggers.CONFIG.info(ConfigUtil.toString(config));
 
 				// init the metrics manager
-				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
+				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE, server);
 
 				if(config.boolVal("run-node")) {
 					runNode(config, extensions, metricsMgr);

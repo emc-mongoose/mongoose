@@ -1,9 +1,10 @@
 package com.emc.mongoose.metrics;
 
-import com.codahale.metrics.UniformSnapshot;
-
 public class MetricsSnapshotImpl
-implements MetricsSnapshot {
+	implements MetricsSnapshot {
+
+	private final double LO_QUANTILE_VALUE = 0.75;
+	private final double HI_QUANTILE_VALUE = 0.75;
 
 	private final long countSucc;
 	private final double succRateLast;
@@ -12,9 +13,9 @@ implements MetricsSnapshot {
 	private final long countByte;
 	private final double byteRateLast;
 	private final long durValues[];
-	private transient com.codahale.metrics.Snapshot durSnapshot = null;
+	private transient Snapshot durSnapshot = null;
 	private final long latValues[];
-	private transient com.codahale.metrics.Snapshot latSnapshot = null;
+	private transient Snapshot latSnapshot = null;
 	private final long sumDur;
 	private final long sumLat;
 	private final long startTimeMillis;
@@ -27,8 +28,7 @@ implements MetricsSnapshot {
 		final long countSucc, final double succRateLast, final long countFail, final double failRateLast,
 		final long countByte, final double byteRateLast, final long startTimeMillis, final long elapsedTimeMillis,
 		final int actualConcurrencyLast, final double actualConcurrencyMean, final int concurrencyLimit,
-		final long sumDur, final long sumLat, final com.codahale.metrics.Snapshot durSnapshot,
-		final com.codahale.metrics.Snapshot latSnapshot
+		final Snapshot durSnapshot, final Snapshot latSnapshot
 	) {
 		this.countSucc = countSucc;
 		this.succRateLast = succRateLast;
@@ -36,17 +36,17 @@ implements MetricsSnapshot {
 		this.failRateLast = failRateLast;
 		this.countByte = countByte;
 		this.byteRateLast = byteRateLast;
-		this.sumDur = sumDur;
-		this.sumLat = sumLat;
 		this.startTimeMillis = startTimeMillis;
 		this.elapsedTimeMillis = elapsedTimeMillis;
 		this.actualConcurrencyLast = actualConcurrencyLast;
 		this.actualConcurrencyMean = actualConcurrencyMean;
 		this.concurrencyLimit = concurrencyLimit;
 		this.durSnapshot = durSnapshot;
-		this.durValues = durSnapshot.getValues();
+		this.durValues = durSnapshot.values();
 		this.latSnapshot = latSnapshot;
-		this.latValues = latSnapshot.getValues();
+		this.latValues = latSnapshot.values();
+		this.sumDur = durSnapshot.sum();
+		this.sumLat = latSnapshot.sum();
 	}
 
 	@Override
@@ -101,55 +101,37 @@ implements MetricsSnapshot {
 
 	@Override
 	public final long durationMin() {
-		if(durSnapshot == null) {
-			durSnapshot = new UniformSnapshot(durValues);
-		}
-		return durSnapshot.getMin();
+		return new Double(durSnapshot.min()).longValue();
 	}
 
 	@Override
 	public final long durationLoQ() {
-		if(durSnapshot == null) {
-			durSnapshot = new UniformSnapshot(durValues);
-		}
-		return (long) durSnapshot.getValue(0.25);
+		return new Double(durSnapshot.quantile(HI_QUANTILE_VALUE)).longValue();
 	}
 
 	@Override
 	public final long durationMed() {
-		if(durSnapshot == null) {
-			durSnapshot = new UniformSnapshot(durValues);
-		}
-		return (long) durSnapshot.getValue(0.5);
+		return new Double(durSnapshot.median()).longValue();
 	}
 
 	@Override
 	public final long durationHiQ() {
-		if(durSnapshot == null) {
-			durSnapshot = new UniformSnapshot(durValues);
-		}
-		return (long) durSnapshot.getValue(0.75);
+		return new Double(durSnapshot.quantile(LO_QUANTILE_VALUE)).longValue();
 	}
 
 	@Override
 	public final long durationMax() {
-		if(durSnapshot == null) {
-			durSnapshot = new UniformSnapshot(durValues);
-		}
-		return durSnapshot.getMax();
+		return new Double(durSnapshot.max()).longValue();
 	}
 
 	@Override
 	public final long durationSum() {
-		return sumDur;
+		return new Double(durSnapshot.sum()).longValue();
 	}
 
 	@Override
 	public final double durationMean() {
-		if(durSnapshot == null) {
-			durSnapshot = new UniformSnapshot(durValues);
-		}
-		return durSnapshot.getMean();
+		return new Double(durSnapshot.mean()).longValue();
 	}
 
 	@Override
@@ -159,55 +141,37 @@ implements MetricsSnapshot {
 
 	@Override
 	public final long latencyMin() {
-		if(latSnapshot == null) {
-			latSnapshot = new UniformSnapshot(latValues);
-		}
-		return latSnapshot.getMin();
+		return new Double(durSnapshot.min()).longValue();
 	}
 
 	@Override
 	public final long latencyLoQ() {
-		if(latSnapshot == null) {
-			latSnapshot = new UniformSnapshot(latValues);
-		}
-		return (long) latSnapshot.getValue(0.25);
+		return new Double(latSnapshot.quantile(LO_QUANTILE_VALUE)).longValue();
 	}
 
 	@Override
 	public final long latencyMed() {
-		if(latSnapshot == null) {
-			latSnapshot = new UniformSnapshot(latValues);
-		}
-		return (long) latSnapshot.getValue(0.5);
+		return new Double(latSnapshot.median()).longValue();
 	}
 
 	@Override
 	public final long latencyHiQ() {
-		if(latSnapshot == null) {
-			latSnapshot = new UniformSnapshot(latValues);
-		}
-		return (long) latSnapshot.getValue(0.75);
+		return new Double(latSnapshot.quantile(HI_QUANTILE_VALUE)).longValue();
 	}
 
 	@Override
 	public final long latencyMax() {
-		if(latSnapshot == null) {
-			latSnapshot = new UniformSnapshot(latValues);
-		}
-		return latSnapshot.getMax();
+		return new Double(latSnapshot.max()).longValue();
 	}
 
 	@Override
 	public final long latencySum() {
-		return sumLat;
+		return new Double(latSnapshot.sum()).longValue();
 	}
 
 	@Override
 	public final double latencyMean() {
-		if(latSnapshot == null) {
-			latSnapshot = new UniformSnapshot(latValues);
-		}
-		return latSnapshot.getMean();
+		return new Double(latSnapshot.mean()).longValue();
 	}
 
 	@Override

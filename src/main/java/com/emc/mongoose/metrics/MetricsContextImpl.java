@@ -1,38 +1,29 @@
 package com.emc.mongoose.metrics;
 
-import com.codahale.metrics.Clock;
-import com.codahale.metrics.Histogram;
-
 import com.emc.mongoose.item.op.OpType;
-
 import com.github.akurilov.commons.system.SizeInBytes;
 
-import java.io.IOException;
+import java.time.Clock;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntSupplier;
 
-/**
- Created by kurila on 15.09.15.
- Start timestamp and elapsed time is in milliseconds while other time values are in microseconds.
- */
 public class MetricsContextImpl<S extends MetricsSnapshotImpl>
-extends MetricsContextBase<S>
-implements MetricsContext<S> {
+	extends MetricsContextBase<S>
+	implements MetricsContext<S> {
 
-	private final Clock clock = new ResumableUserTimeClock();
+	private final Clock clock = Clock.systemDefaultZone();
 	private final Histogram reqDuration, respLatency, actualConcurrency;
 	private final LongAdder reqDurationSum, respLatencySum;
 	private final CustomMeter throughputSuccess, throughputFail, reqBytes;
 	private final IntSupplier actualConcurrencyGauge;
 	private final Lock timingLock = new ReentrantLock();
-
 	private volatile long prevElapsedTime = 0;
 	private volatile long lastDurationSum = 0;
 	private volatile long lastLatencySum = 0;
-	private volatile com.codahale.metrics.Snapshot reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot;
+	private volatile Snapshot reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot;
 
 	public MetricsContextImpl(
 		final String id, final OpType opType, final IntSupplier actualConcurrencyGauge, final int concurrencyLimit,
@@ -44,13 +35,13 @@ implements MetricsContext<S> {
 			TimeUnit.SECONDS.toMillis(updateIntervalSec)
 		);
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-		respLatency = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
-		respLatSnapshot = respLatency.getSnapshot();
+		respLatency = new Histogram(DEFAULT_RESERVOIR_SIZE).name("LATENCY").labelValue(id).register();
+		respLatSnapshot = respLatency.snapshot();
 		respLatencySum = new LongAdder();
-		reqDuration = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
-		reqDurSnapshot = reqDuration.getSnapshot();
-		actualConcurrency = new Histogram(new ConcurrentSlidingWindowReservoir(DEFAULT_RESERVOIR_SIZE));
-		actualConcurrencySnapshot = actualConcurrency.getSnapshot();
+		reqDuration = new Histogram(DEFAULT_RESERVOIR_SIZE).name("DURATION").labelValue(id).register();
+		reqDurSnapshot = reqDuration.snapshot();
+		actualConcurrency = new Histogram(DEFAULT_RESERVOIR_SIZE).name("CONCURRENCY").labelValue(id).register();
+		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
 		throughputFail = new CustomMeter(clock, updateIntervalSec);
@@ -195,7 +186,8 @@ implements MetricsContext<S> {
 		return false;
 	}
 
-	@Override @SuppressWarnings("unchecked")
+	@Override
+	@SuppressWarnings("unchecked")
 	public void refreshLastSnapshot() {
 		final long currentTimeMillis = System.currentTimeMillis();
 		final long tsStart = startTimeStamp();
@@ -204,8 +196,8 @@ implements MetricsContext<S> {
 			if(lastDurationSum != reqDurationSum.sum() || lastLatencySum != respLatencySum.sum()) {
 				if(timingLock.tryLock()) {
 					try {
-						reqDurSnapshot = reqDuration.getSnapshot();
-						respLatSnapshot = respLatency.getSnapshot();
+						reqDurSnapshot = reqDuration.snapshot();
+						respLatSnapshot = respLatency.snapshot();
 					} finally {
 						timingLock.unlock();
 					}
@@ -214,12 +206,12 @@ implements MetricsContext<S> {
 				lastDurationSum = reqDurationSum.sum();
 			}
 			actualConcurrency.update(actualConcurrencyGauge.getAsInt());
-			actualConcurrencySnapshot = actualConcurrency.getSnapshot();
+			actualConcurrencySnapshot = actualConcurrency.snapshot();
 		}
-		lastSnapshot = (S) new MetricsSnapshotImpl(throughputSuccess.getCount(), throughputSuccess.
-			getLastRate(), throughputFail.getCount(), throughputFail.getLastRate(), reqBytes.getCount(),
-			reqBytes.getLastRate(), tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyGauge.getAsInt(),
-			actualConcurrencySnapshot.getMean(), concurrencyLimit, lastDurationSum, lastLatencySum, reqDurSnapshot,
+		lastSnapshot = (S) new MetricsSnapshotImpl(throughputSuccess.count(), throughputSuccess.lastRate(),
+			throughputFail.count(), throughputFail.lastRate(), reqBytes.count(),
+			reqBytes.lastRate(), tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyGauge.getAsInt(),
+			actualConcurrencySnapshot.mean(), concurrencyLimit, reqDurSnapshot,
 			respLatSnapshot
 		);
 		super.refreshLastSnapshot();
@@ -227,7 +219,7 @@ implements MetricsContext<S> {
 
 	@Override
 	public final long transferSizeSum() {
-		return reqBytes.getCount();
+		return reqBytes.count();
 	}
 
 	@Override
@@ -238,7 +230,8 @@ implements MetricsContext<S> {
 		);
 	}
 
-	@Override @SuppressWarnings("unchecked")
+	@Override
+	@SuppressWarnings("unchecked")
 	public boolean equals(final Object other) {
 		if(null == other) {
 			return false;

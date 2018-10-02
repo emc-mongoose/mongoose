@@ -23,11 +23,12 @@ ext {
 		scala: "2.12.6",
 		slf4j: "1.7.25",
 		log4j: "2.8.2",
-		metrics: "4.0.3",
+		tsdbMetrics: "0.5.0",
 		nagaina: "3.6.11",
 		netty: "4.1.25.Final",
 		nettyConnectionPool: "1.0.9",
 		nettyTcNative: "2.0.12.Final",
+
 	]
 
 	leafProjects = subprojects.findAll {
@@ -248,7 +249,11 @@ dependencies {
 		"com.github.akurilov:fiber4j:${depVersion.fiber4j}",
 		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
 		"com.lmax:disruptor:${depVersion.disruptor}",
-		"io.dropwizard.metrics:metrics-core:${depVersion.metrics}",
+		// https://mvnrepository.com/artifact/io.prometheus/simpleclient
+		"io.prometheus:simpleclient:${depVersion.tsdbMetrics}",
+		"io.prometheus:simpleclient_httpserver:${depVersion.tsdbMetrics}",
+		"io.prometheus:simpleclient_servlet:${depVersion.tsdbMetrics}",
+		"io.prometheus:simpleclient_hotspot:${depVersion.tsdbMetrics}",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 		// actually the deps below are the runtime deps
