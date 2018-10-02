@@ -35,12 +35,12 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			TimeUnit.SECONDS.toMillis(updateIntervalSec)
 		);
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-		respLatency = new Histogram(DEFAULT_RESERVOIR_SIZE).name("LATENCY").register();
+		respLatency = new Histogram(DEFAULT_RESERVOIR_SIZE).name("LATENCY").labelValue(id).register();
 		respLatSnapshot = respLatency.snapshot();
 		respLatencySum = new LongAdder();
-		reqDuration = new Histogram(DEFAULT_RESERVOIR_SIZE).name("DURATION").register();
+		reqDuration = new Histogram(DEFAULT_RESERVOIR_SIZE).name("DURATION").labelValue(id).register();
 		reqDurSnapshot = reqDuration.snapshot();
-		actualConcurrency = new Histogram(DEFAULT_RESERVOIR_SIZE).name("CONCURRENCY").register();
+		actualConcurrency = new Histogram(DEFAULT_RESERVOIR_SIZE).name("CONCURRENCY").labelValue(id).register();
 		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		reqDurationSum = new LongAdder();
 		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
