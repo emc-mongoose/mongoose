@@ -51,15 +51,8 @@ import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 public final class Main {
 
-	private static Server server;
-
 	public static void main(final String... args) {
-		try {
-			server = new Server(1234);
-			server.join();
-		} catch(InterruptedException e) {
-			e.printStackTrace();
-		}
+		final Server server = new Server(1234);
 		final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
 		final Path appHomePath = coreResources.appHomePath();
 		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
