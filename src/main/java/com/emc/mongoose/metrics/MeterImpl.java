@@ -7,8 +7,9 @@ import java.util.concurrent.atomic.LongAdder;
 
 import static java.lang.Math.exp;
 
-public class CustomMeter {
-	//
+public class MeterImpl
+	implements Meter {
+
 	private static final long TICK_INTERVAL = TimeUnit.SECONDS.toMillis(1);
 	//
 	private final EWMA rateAvg;
@@ -16,33 +17,29 @@ public class CustomMeter {
 	private final Clock clock;
 	private final AtomicLong lastTick = new AtomicLong();
 	private long startTime;
+
 	//
-	public CustomMeter(final Clock clock, final int periodSec) {
+	public MeterImpl(final Clock clock, final int periodSec) {
 		final double ps = periodSec > 0 ? periodSec : 10;
 		final int intervalSecs = 1;
-		rateAvg = new EWMA(1 - exp(-intervalSecs / ps), intervalSecs, TimeUnit.SECONDS);
+		rateAvg = new EWMA(1 - exp(- intervalSecs / ps), intervalSecs, TimeUnit.SECONDS);
 		this.clock = clock;
 		startTime = clock.millis();
 		lastTick.set(startTime);
 	}
-	//
+
+	@Override
 	public void resetStartTime() {
 		startTime = clock.millis();
 		lastTick.set(startTime);
 	}
-	//
-	/**
-	 * Mark the occurrence of an event.
-	 */
+
+	@Override
 	public void mark() {
 		mark(1);
 	}
 
-	/**
-	 * Mark the occurrence of a given number of events.
-	 *
-	 * @param n the number of events
-	 */
+	@Override
 	public void mark(long n) {
 		tickIfNecessary();
 		count.add(n);
@@ -64,11 +61,13 @@ public class CustomMeter {
 		}
 	}
 
+	@Override
 	public long count() {
 		return count.sum();
 	}
 
-	public double getMeanRate() {
+	@Override
+	public double meanRate() {
 		if(count() == 0) {
 			return 0.0;
 		} else {
@@ -77,6 +76,7 @@ public class CustomMeter {
 		}
 	}
 
+	@Override
 	public double lastRate() {
 		tickIfNecessary();
 		return rateAvg.rate(TimeUnit.SECONDS);
