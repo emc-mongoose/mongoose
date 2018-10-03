@@ -41,7 +41,7 @@ public class Histogram
 		return count.sum();
 	}
 
-	public Snapshot snapshot() {
+	public HistogramSnapshotImpl snapshot() {
 		return reservoir.snapshot();
 	}
 
@@ -60,7 +60,7 @@ public class Histogram
 		List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
 		final List<String> labelNames = Arrays.asList(labelName);
 		final List<String> labelValues = Arrays.asList(labelValue);
-		final Snapshot snapshot = snapshot();
+		final HistogramSnapshotImpl snapshot = snapshot();
 		samples.add(new MetricFamilySamples.Sample(metricName + "_count", labelNames, labelValues, snapshot.count()));
 		samples.add(new MetricFamilySamples.Sample(metricName + "_sum", labelNames, labelValues, snapshot.sum()));
 		samples.add(new MetricFamilySamples.Sample(metricName + "_max", labelNames, labelValues, snapshot.max()));

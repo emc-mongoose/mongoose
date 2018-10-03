@@ -8,5 +8,5 @@ interface Reservoir {
 
 	void update(final long value);
 
-	Snapshot snapshot();
+	HistogramSnapshotImpl snapshot();
 }

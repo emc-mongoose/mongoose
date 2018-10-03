@@ -33,11 +33,11 @@ public class ConcurrentSlidingWindowReservoir
 	}
 
 	@Override
-	public Snapshot snapshot() {
+	public HistogramSnapshotImpl snapshot() {
 		final long[] values = new long[size()];
 		for(int i = 0; i < values.length; i++) {
 			values[i] = measurements[i];
 		}
-		return new Snapshot(values);
+		return new HistogramSnapshotImpl(values);
 	}
 }

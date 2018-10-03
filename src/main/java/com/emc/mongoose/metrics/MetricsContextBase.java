@@ -1,11 +1,10 @@
 package com.emc.mongoose.metrics;
 
 import com.emc.mongoose.item.op.OpType;
-
 import com.github.akurilov.commons.system.SizeInBytes;
 
 public abstract class MetricsContextBase<S extends MetricsSnapshot>
-implements MetricsContext<S> {
+	implements MetricsContext<S> {
 
 	protected final long ts;
 	protected final String id;
@@ -15,7 +14,6 @@ implements MetricsContext<S> {
 	protected final SizeInBytes itemDataSize;
 	protected final boolean stdOutColorFlag;
 	protected final long outputPeriodMillis;
-
 	private volatile long tsStart = - 1;
 	private volatile long lastOutputTs = 0;
 	private volatile boolean thresholdStateExitedFlag = false;
@@ -43,7 +41,7 @@ implements MetricsContext<S> {
 
 	@Override
 	public final boolean isStarted() {
-		return tsStart > -1;
+		return tsStart > - 1;
 	}
 
 	@Override
@@ -164,7 +162,7 @@ implements MetricsContext<S> {
 
 	@Override
 	public void close() {
-		tsStart = -1;
+		tsStart = - 1;
 		lastSnapshot = null;
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.close();

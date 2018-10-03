@@ -10,7 +10,7 @@ public final class DistributedMetricsSnapshotImpl
 		final long countSucc, final double succRateLast, final long countFail, final double failRateLast,
 		final long countByte, final double byteRateLast, final long startTimeMillis, final long elapsedTimeMillis,
 		final int actualConcurrencyLast, final double actualConcurrencyMean, final int concurrencyLimit,
-		final int nodeCount, final Snapshot durSnapshot, final Snapshot latSnapshot
+		final int nodeCount, final HistogramSnapshotImpl durSnapshot, final HistogramSnapshotImpl latSnapshot
 	) {
 		super(
 			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast, startTimeMillis,

@@ -23,7 +23,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 	private volatile long prevElapsedTime = 0;
 	private volatile long lastDurationSum = 0;
 	private volatile long lastLatencySum = 0;
-	private volatile Snapshot reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot;
+	private volatile HistogramSnapshotImpl reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot;
 
 	public MetricsContextImpl(
 		final String id, final OpType opType, final IntSupplier actualConcurrencyGauge, final int concurrencyLimit,

@@ -5,7 +5,6 @@ public class MetricsSnapshotImpl
 
 	private final double LO_QUANTILE_VALUE = 0.25;
 	private final double HI_QUANTILE_VALUE = 0.75;
-
 	private final long countSucc;
 	private final double succRateLast;
 	private final long countFail;
@@ -13,9 +12,9 @@ public class MetricsSnapshotImpl
 	private final long countByte;
 	private final double byteRateLast;
 	private final long durValues[];
-	private transient Snapshot durSnapshot = null;
+	private transient HistogramSnapshotImpl durSnapshot = null;
 	private final long latValues[];
-	private transient Snapshot latSnapshot = null;
+	private transient HistogramSnapshotImpl latSnapshot = null;
 	private final long sumDur;
 	private final long sumLat;
 	private final long startTimeMillis;
@@ -28,7 +27,7 @@ public class MetricsSnapshotImpl
 		final long countSucc, final double succRateLast, final long countFail, final double failRateLast,
 		final long countByte, final double byteRateLast, final long startTimeMillis, final long elapsedTimeMillis,
 		final int actualConcurrencyLast, final double actualConcurrencyMean, final int concurrencyLimit,
-		final Snapshot durSnapshot, final Snapshot latSnapshot
+		final HistogramSnapshotImpl durSnapshot, final HistogramSnapshotImpl latSnapshot
 	) {
 		this.countSucc = countSucc;
 		this.succRateLast = succRateLast;

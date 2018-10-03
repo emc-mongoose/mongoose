@@ -1,16 +1,13 @@
 package com.emc.mongoose.metrics;
 
 import com.emc.mongoose.item.op.OpType;
-
 import com.github.akurilov.commons.system.SizeInBytes;
-
-import java.io.Closeable;
 
 /**
  Created by andrey on 14.07.16.
  */
 public interface MetricsContext<S extends MetricsSnapshot>
-extends AutoCloseable, Comparable<MetricsContext<S>> {
+	extends AutoCloseable, Comparable<MetricsContext<S>> {
 
 	int DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
 	int DEFAULT_RESERVOIR_SIZE = 0x1_000;
@@ -23,7 +20,6 @@ extends AutoCloseable, Comparable<MetricsContext<S>> {
 	int concurrencyLimit();
 
 	SizeInBytes itemDataSize();
-
 	// metrics accounting methods
 
 	void markSucc(final long bytes, final long duration, final long latency);
@@ -39,7 +35,6 @@ extends AutoCloseable, Comparable<MetricsContext<S>> {
 	void markFail(final long count);
 
 	void markElapsedTime(final long millis);
-
 	// state control methods below
 
 	void start();
@@ -53,13 +48,12 @@ extends AutoCloseable, Comparable<MetricsContext<S>> {
 	S lastSnapshot();
 
 	long transferSizeSum();
-
 	// threshold-related accounting methods below
 
 	int concurrencyThreshold();
 
 	boolean thresholdStateEntered();
-	
+
 	void enterThresholdState()
 	throws IllegalStateException;
 
@@ -69,7 +63,6 @@ extends AutoCloseable, Comparable<MetricsContext<S>> {
 
 	void exitThresholdState()
 	throws IllegalStateException;
-
 	// output configuration methods below
 
 	boolean stdOutColorEnabled();

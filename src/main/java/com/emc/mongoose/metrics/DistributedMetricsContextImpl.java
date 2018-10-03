@@ -98,8 +98,8 @@ public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotI
 		double byteRateLast = 0;
 		int actualConcurrencyLast = 0;
 		double actualConcurrencyMean = 0;
-		final List<Snapshot> durSnapshots = new ArrayList<>();
-		final List<Snapshot> latSnapshots = new ArrayList<>();
+		final List<HistogramSnapshotImpl> durSnapshots = new ArrayList<>();
+		final List<HistogramSnapshotImpl> latSnapshots = new ArrayList<>();
 		for(final MetricsSnapshot snapshot : snapshots) {
 			countSucc += snapshot.succCount();
 			succRateLast += snapshot.succRateLast();
@@ -109,11 +109,11 @@ public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotI
 			byteRateLast += snapshot.byteRateLast();
 			actualConcurrencyLast += snapshot.actualConcurrencyLast();
 			actualConcurrencyMean += snapshot.actualConcurrencyMean();
-			durSnapshots.add(new Snapshot(snapshot.durationValues()));
-			latSnapshots.add(new Snapshot(snapshot.latencyValues()));
+			durSnapshots.add(new HistogramSnapshotImpl(snapshot.durationValues()));
+			latSnapshots.add(new HistogramSnapshotImpl(snapshot.latencyValues()));
 		}
-		final Snapshot durSnapshot = new Snapshot(durSnapshots);
-		final Snapshot latSnapshot = new Snapshot(latSnapshots);
+		final HistogramSnapshotImpl durSnapshot = new HistogramSnapshotImpl(durSnapshots);
+		final HistogramSnapshotImpl latSnapshot = new HistogramSnapshotImpl(latSnapshots);
 		final long currentTimeMillis = System.currentTimeMillis();
 		final long tsStart = startTimeStamp();
 		final long currElapsedTime = tsStart > 0 ? currentTimeMillis - tsStart : 0;
