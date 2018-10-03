@@ -47,14 +47,14 @@ public class Snapshot {
 		init();
 	}
 
-	public double quantile(final double quantile) {
+	public long quantile(final double quantile) {
 		if(quantile < 0.0 || quantile > 1.0 || Double.isNaN(quantile)) {
 			throw new IllegalArgumentException(quantile + " is not in [0..1]");
 		}
 		if(values.length == 0) {
-			return 0.0;
+			return 0;
 		}
-		final double pos = quantile * (values.length + 1);
+		final long pos = new Double(quantile * (values.length + 1)).longValue();
 		final int index = (int) pos;
 		if(index < 1) {
 			return values[0];
@@ -62,9 +62,9 @@ public class Snapshot {
 		if(index >= values.length) {
 			return values[values.length - 1];
 		}
-		final double lower = values[index - 1];
-		final double upper = values[index];
-		return lower + (pos - floor(pos)) * (upper - lower);
+		final long lower = values[index - 1];
+		final long upper = values[index];
+		return lower + (pos - new Double(floor(pos)).longValue()) * (upper - lower);
 	}
 
 	public int count() {
@@ -89,14 +89,14 @@ public class Snapshot {
 		return values[0];
 	}
 
-	public double mean() {
+	public long mean() {
 		if(values.length == 0) {
 			return 0;
 		}
 		return sum() / values.length;
 	}
 
-	public double median() {
+	public long median() {
 		return quantile(0.5);
 	}
 

@@ -101,37 +101,37 @@ public class MetricsSnapshotImpl
 
 	@Override
 	public final long durationMin() {
-		return new Double(durSnapshot.min()).longValue();
+		return durSnapshot.min();
 	}
 
 	@Override
 	public final long durationLoQ() {
-		return new Double(durSnapshot.quantile(HI_QUANTILE_VALUE)).longValue();
+		return durSnapshot.quantile(HI_QUANTILE_VALUE);
 	}
 
 	@Override
 	public final long durationMed() {
-		return new Double(durSnapshot.median()).longValue();
+		return durSnapshot.median();
 	}
 
 	@Override
 	public final long durationHiQ() {
-		return new Double(durSnapshot.quantile(LO_QUANTILE_VALUE)).longValue();
+		return durSnapshot.quantile(LO_QUANTILE_VALUE);
 	}
 
 	@Override
 	public final long durationMax() {
-		return new Double(durSnapshot.max()).longValue();
+		return durSnapshot.max();
 	}
 
 	@Override
 	public final long durationSum() {
-		return new Double(durSnapshot.sum()).longValue();
+		return durSnapshot.sum();
 	}
 
 	@Override
 	public final double durationMean() {
-		return new Double(durSnapshot.mean()).longValue();
+		return durSnapshot.mean();
 	}
 
 	@Override
@@ -141,37 +141,37 @@ public class MetricsSnapshotImpl
 
 	@Override
 	public final long latencyMin() {
-		return new Double(durSnapshot.min()).longValue();
+		return durSnapshot.min();
 	}
 
 	@Override
 	public final long latencyLoQ() {
-		return new Double(latSnapshot.quantile(LO_QUANTILE_VALUE)).longValue();
+		return latSnapshot.quantile(LO_QUANTILE_VALUE);
 	}
 
 	@Override
 	public final long latencyMed() {
-		return new Double(latSnapshot.median()).longValue();
+		return latSnapshot.median();
 	}
 
 	@Override
 	public final long latencyHiQ() {
-		return new Double(latSnapshot.quantile(HI_QUANTILE_VALUE)).longValue();
+		return latSnapshot.quantile(HI_QUANTILE_VALUE);
 	}
 
 	@Override
 	public final long latencyMax() {
-		return new Double(latSnapshot.max()).longValue();
+		return latSnapshot.max();
 	}
 
 	@Override
 	public final long latencySum() {
-		return new Double(latSnapshot.sum()).longValue();
+		return latSnapshot.sum();
 	}
 
 	@Override
 	public final double latencyMean() {
-		return new Double(latSnapshot.mean()).longValue();
+		return latSnapshot.mean();
 	}
 
 	@Override
