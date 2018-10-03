@@ -6,7 +6,9 @@ import static java.lang.Math.min;
 
 /**
  @author veronika K. on 28.09.18 */
-public class ConcurrentSlidingWindowReservoir {
+public class ConcurrentSlidingWindowReservoir
+	implements Reservoir {
+
 	private static final int DEFAULT_SIZE = 1028;
 	private final long[] measurements;
 	private final AtomicLong offset;
@@ -20,14 +22,17 @@ public class ConcurrentSlidingWindowReservoir {
 		this(DEFAULT_SIZE);
 	}
 
+	@Override
 	public int size() {
 		return (int) min(offset.get(), measurements.length);
 	}
 
+	@Override
 	public void update(final long value) {
 		measurements[(int) (offset.incrementAndGet() % measurements.length)] = value;
 	}
 
+	@Override
 	public Snapshot snapshot() {
 		final long[] values = new long[size()];
 		for(int i = 0; i < values.length; i++) {
@@ -35,6 +40,4 @@ public class ConcurrentSlidingWindowReservoir {
 		}
 		return new Snapshot(values);
 	}
-
-
 }
