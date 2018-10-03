@@ -1,43 +1,28 @@
 package com.emc.mongoose;
 
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.AliasingUtil;
-import com.emc.mongoose.config.IllegalArgumentNameException;
+import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.ConfigUtil;
-import com.emc.mongoose.env.Extension;
+import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.env.CoreResourcesToInstall;
+import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
+import com.emc.mongoose.load.step.ScriptEngineUtil;
+import com.emc.mongoose.load.step.service.LoadStepManagerServiceImpl;
+import com.emc.mongoose.load.step.service.file.FileManagerServiceImpl;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
-import static com.emc.mongoose.Constants.DIR_EXT;
-import static com.emc.mongoose.Constants.PATH_DEFAULTS;
-import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
-import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
-
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsManagerImpl;
 import com.emc.mongoose.svc.Service;
-import com.emc.mongoose.load.step.ScriptEngineUtil;
-import com.emc.mongoose.load.step.service.file.FileManagerServiceImpl;
-import com.emc.mongoose.load.step.service.LoadStepManagerServiceImpl;
-
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
-import io.prometheus.client.exporter.HTTPServer;
 import org.apache.commons.lang.StringUtils;
-
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
-
-import static javax.script.ScriptContext.ENGINE_SCOPE;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
+import org.eclipse.jetty.server.Server;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -52,52 +37,56 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
+import static com.emc.mongoose.Constants.DIR_EXT;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.Constants.PATH_DEFAULTS;
+import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
+import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
+import static javax.script.ScriptContext.ENGINE_SCOPE;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
+
 public final class Main {
 
-	private static HTTPServer server;
+	private static Server server;
 
 	public static void main(final String... args) {
-
 		try {
-			server = new HTTPServer(1234);
-		} catch(IOException e) {
+			server = new Server(1234);
+			server.join();
+		} catch(InterruptedException e) {
 			e.printStackTrace();
 		}
-
 		final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
 		final Path appHomePath = coreResources.appHomePath();
 		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
 		LogUtil.init(appHomePath.toString());
-
 		try(
 			final Instance logCtx = put(KEY_STEP_ID, initialStepId)
 				.put(KEY_CLASS_NAME, Main.class.getSimpleName())
 		) {
-
 			// install the core resources
 			coreResources.install(appHomePath);
-
 			// resolve the initial config schema
 			final Map<String, Object> mainConfigSchema = SchemaProvider
 				.resolve(APP_NAME, Thread.currentThread().getContextClassLoader())
 				.stream()
 				.findFirst()
 				.orElseThrow(IllegalStateException::new);
-
 			// load the defaults
 			final Config mainDefaults = ConfigUtil.loadConfig(
 				Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile(), mainConfigSchema
 			);
-
 			// extensions
 			try(
 				final URLClassLoader extClsLoader = Extension.extClassLoader(
 					Paths.get(appHomePath.toString(), DIR_EXT).toFile()
 				)
 			) {
-
 				final List<Extension> extensions = Extension.load(extClsLoader);
-
 				// install the extensions
 				final StringBuilder availExtMsg = new StringBuilder("Available/installed extensions:\n");
 				extensions.forEach(
@@ -115,7 +104,6 @@ public final class Main {
 					}
 				);
 				Loggers.MSG.info(availExtMsg);
-
 				// apply the extensions defaults
 				final Config config;
 				try {
@@ -130,7 +118,6 @@ public final class Main {
 					LogUtil.exception(Level.ERROR, e, "Failed to load the defaults");
 					return;
 				}
-
 				// parse the CLI args and apply them to the config instance
 				try {
 					final Map<String, String> parsedArgs = CliArgUtil.parseArgs(args);
@@ -162,10 +149,8 @@ public final class Main {
 				}
 				Arrays.stream(args).forEach(Loggers.CLI::info);
 				Loggers.CONFIG.info(ConfigUtil.toString(config));
-
 				// init the metrics manager
 				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE, server);
-
 				if(config.boolVal("run-node")) {
 					runNode(config, extensions, metricsMgr);
 				} else {
@@ -205,12 +190,11 @@ public final class Main {
 		// get the scenario file/path
 		final Path scenarioPath;
 		final String scenarioFile = config.stringVal("run-scenario");
-		if(scenarioFile != null && !scenarioFile.isEmpty()) {
+		if(scenarioFile != null && ! scenarioFile.isEmpty()) {
 			scenarioPath = Paths.get(scenarioFile);
 		} else {
 			scenarioPath = Paths.get(appHomePath.toString(), DIR_EXAMPLE_SCENARIO, "js", "default.js");
 		}
-
 		final StringBuilder strb = new StringBuilder();
 		try {
 			Files
@@ -223,14 +207,11 @@ public final class Main {
 		}
 		final String scenarioText = strb.toString();
 		Loggers.SCENARIO.log(Level.INFO, scenarioText);
-
 		final ScriptEngine scriptEngine = ScriptEngineUtil.resolve(scenarioPath, extClsLoader);
 		if(scriptEngine == null) {
 			Loggers.ERR.fatal("Failed to resolve the scenario engine for the file \"{}\"", scenarioPath);
 		} else {
-
 			Loggers.MSG.info("Using the \"{}\" scenario engine", scriptEngine.getFactory().getEngineName());
-
 			// expose the environment values
 			System.getenv().forEach(scriptEngine::put);
 			// expose the loaded configuration

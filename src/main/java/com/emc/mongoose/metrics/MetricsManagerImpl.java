@@ -10,12 +10,9 @@ import com.emc.mongoose.logging.StepResultsMetricsLogMessage;
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FibersExecutor;
-import io.prometheus.client.Collector;
-import io.prometheus.client.Summary;
-import io.prometheus.client.exporter.HTTPServer;
-import io.prometheus.client.hotspot.DefaultExports;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
+import org.eclipse.jetty.server.Server;
 
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
@@ -45,12 +42,12 @@ public class MetricsManagerImpl
 	private final Map<DistributedMetricsContext, AutoCloseable> distributedMetrics = new ConcurrentHashMap<>();
 	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
 	private final Lock outputLock = new ReentrantLock();
-	private final HTTPServer server;
+	private final Server server;
 	private long outputPeriodMillis;
 	private long lastOutputTs;
 	private long nextOutputTs;
 
-	public MetricsManagerImpl(final FibersExecutor instance, final HTTPServer server) {
+	public MetricsManagerImpl(final FibersExecutor instance, final Server server) {
 		super(instance);
 		this.server = server;
 		//DefaultExports.initialize();
