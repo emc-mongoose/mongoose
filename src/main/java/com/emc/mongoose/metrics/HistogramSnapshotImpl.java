@@ -8,7 +8,8 @@ import static java.lang.Math.floor;
 
 /**
  @author veronika K. on 25.09.18 */
-public class Snapshot {
+public class HistogramSnapshotImpl
+	implements HistogramSnapshot {
 
 	private final long[] values;
 
@@ -16,7 +17,7 @@ public class Snapshot {
 		Arrays.sort(this.values);
 	}
 
-	public Snapshot(final Collection<Long> values) {
+	public HistogramSnapshotImpl(final Collection<Long> values) {
 		final Object[] copy = values.toArray();
 		this.values = new long[copy.length];
 		for(int i = 0; i < copy.length; i++) {
@@ -25,19 +26,19 @@ public class Snapshot {
 		init();
 	}
 
-	public Snapshot(final long[] values) {
+	public HistogramSnapshotImpl(final long[] values) {
 		this.values = Arrays.copyOf(values, values.length);
 		init();
 	}
 
-	public Snapshot(final List<Snapshot> snapshots) {
+	public HistogramSnapshotImpl(final List<HistogramSnapshotImpl> snapshots) {
 		int size = 0;
-		for(Snapshot s : snapshots) {
+		for(HistogramSnapshotImpl s : snapshots) {
 			size += s.count();
 		}
 		this.values = new long[size];
 		int index_s = 0;
-		for(Snapshot s : snapshots) {
+		for(HistogramSnapshotImpl s : snapshots) {
 			final long[] copy = Arrays.copyOf(s.values(), s.count());
 			for(int i = 0; i < copy.length; i++) {
 				this.values[index_s * i + i] = copy[i];
@@ -47,6 +48,7 @@ public class Snapshot {
 		init();
 	}
 
+	@Override
 	public long quantile(final double quantile) {
 		if(quantile < 0.0 || quantile > 1.0 || Double.isNaN(quantile)) {
 			throw new IllegalArgumentException(quantile + " is not in [0..1]");
@@ -67,14 +69,17 @@ public class Snapshot {
 		return lower + (pos - new Double(floor(pos)).longValue()) * (upper - lower);
 	}
 
+	@Override
 	public int count() {
 		return values.length;
 	}
 
+	@Override
 	public long[] values() {
 		return Arrays.copyOf(values, values.length);
 	}
 
+	@Override
 	public long max() {
 		if(values.length == 0) {
 			return 0;
@@ -82,6 +87,7 @@ public class Snapshot {
 		return values[values.length - 1];
 	}
 
+	@Override
 	public long min() {
 		if(values.length == 0) {
 			return 0;
@@ -89,6 +95,7 @@ public class Snapshot {
 		return values[0];
 	}
 
+	@Override
 	public long mean() {
 		if(values.length == 0) {
 			return 0;
@@ -100,6 +107,7 @@ public class Snapshot {
 		return quantile(0.5);
 	}
 
+	@Override
 	public long sum() {
 		long sum = 0;
 		for(long value : values) {
