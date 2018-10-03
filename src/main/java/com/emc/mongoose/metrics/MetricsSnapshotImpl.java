@@ -1,5 +1,7 @@
 package com.emc.mongoose.metrics;
 
+import com.emc.mongoose.metrics.util.HistogramSnapshotImpl;
+
 public class MetricsSnapshotImpl
 	implements MetricsSnapshot {
 

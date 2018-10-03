@@ -1,4 +1,4 @@
-package com.emc.mongoose.metrics;
+package com.emc.mongoose.metrics.util;
 
 import java.util.concurrent.TimeUnit;
 

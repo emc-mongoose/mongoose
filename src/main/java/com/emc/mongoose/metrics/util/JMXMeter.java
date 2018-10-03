@@ -1,6 +1,8 @@
-package com.emc.mongoose.metrics;
+package com.emc.mongoose.metrics.util;
 
 import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.metrics.context.DistributedMetricsContext;
+import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import com.github.akurilov.commons.system.SizeInBytes;
 import org.apache.logging.log4j.Level;
 

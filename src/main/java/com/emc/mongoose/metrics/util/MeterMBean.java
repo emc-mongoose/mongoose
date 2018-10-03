@@ -1,4 +1,7 @@
-package com.emc.mongoose.metrics;
+package com.emc.mongoose.metrics.util;
+
+import com.emc.mongoose.metrics.DistributedMetricsListener;
+import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 
 /**
  Created by andrey on 05.07.17.

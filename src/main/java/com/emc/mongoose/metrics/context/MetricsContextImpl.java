@@ -1,6 +1,10 @@
-package com.emc.mongoose.metrics;
+package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.metrics.MetricsSnapshotImpl;
+import com.emc.mongoose.metrics.util.Histogram;
+import com.emc.mongoose.metrics.util.HistogramSnapshotImpl;
+import com.emc.mongoose.metrics.util.MeterImpl;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.time.Clock;

@@ -1,5 +1,9 @@
 package com.emc.mongoose.metrics;
 
+import com.emc.mongoose.metrics.util.HistogramSnapshotImpl;
+
+/**
+ @author veronika K. */
 public final class DistributedMetricsSnapshotImpl
 	extends MetricsSnapshotImpl
 	implements DistributedMetricsSnapshot {
