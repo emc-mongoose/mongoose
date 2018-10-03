@@ -20,9 +20,12 @@ import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
+import io.prometheus.client.exporter.MetricsServlet;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -52,7 +55,6 @@ import static org.apache.logging.log4j.CloseableThreadContext.put;
 public final class Main {
 
 	public static void main(final String... args) {
-		final Server server = new Server(1234);
 		final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
 		final Path appHomePath = coreResources.appHomePath();
 		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
@@ -143,11 +145,26 @@ public final class Main {
 				Arrays.stream(args).forEach(Loggers.CLI::info);
 				Loggers.CONFIG.info(ConfigUtil.toString(config));
 				// init the metrics manager
-				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE, server);
-				if(config.boolVal("run-node")) {
-					runNode(config, extensions, metricsMgr);
-				} else {
-					runScenario(config, extensions, extClsLoader, metricsMgr, appHomePath);
+				//TODO: add args like "--...-port" for server starting
+				//
+				final Server server = new Server(1234);
+				ServletContextHandler context = new ServletContextHandler();
+				context.setContextPath("/");
+				server.setHandler(context);
+				context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+				server.start();
+				//
+				try {
+					final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE, server);
+					if(config.boolVal("run-node")) {
+						runNode(config, extensions, metricsMgr);
+					} else {
+						runScenario(config, extensions, extClsLoader, metricsMgr, appHomePath);
+					}
+				} catch(final Exception e) {
+					throw e;
+				} finally {
+					server.stop();
 				}
 			}
 		} catch(final InterruptedException | InterruptRunException e) {
