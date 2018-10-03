@@ -18,7 +18,7 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.storage.driver.StorageDriver;
-import com.emc.mongoose.metrics.MetricsContext;
+import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.logging.Loggers;
 
 import com.github.akurilov.commons.reflection.TypeUtil;

@@ -1,6 +1,6 @@
 package com.emc.mongoose.logging;
 
-import com.emc.mongoose.metrics.MetricsContext;
+import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.item.op.OpType;
 import static com.emc.mongoose.env.DateUtil.FMT_DATE_METRICS_TABLE;

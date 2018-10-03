@@ -1,7 +1,7 @@
 package com.emc.mongoose.logging;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.DistributedMetricsContext;
+import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import static com.emc.mongoose.Constants.K;
 import static com.emc.mongoose.Constants.M;

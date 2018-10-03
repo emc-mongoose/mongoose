@@ -14,11 +14,9 @@ public class MetricsSnapshotImpl
 	private final long countByte;
 	private final double byteRateLast;
 	private final long durValues[];
-	private transient HistogramSnapshotImpl durSnapshot = null;
+	private transient HistogramSnapshotImpl durSnapshot;
 	private final long latValues[];
-	private transient HistogramSnapshotImpl latSnapshot = null;
-	private final long sumDur;
-	private final long sumLat;
+	private transient HistogramSnapshotImpl latSnapshot;
 	private final long startTimeMillis;
 	private final long elapsedTimeMillis;
 	private final int actualConcurrencyLast;
@@ -46,8 +44,6 @@ public class MetricsSnapshotImpl
 		this.durValues = durSnapshot.values();
 		this.latSnapshot = latSnapshot;
 		this.latValues = latSnapshot.values();
-		this.sumDur = durSnapshot.sum();
-		this.sumLat = latSnapshot.sum();
 	}
 
 	@Override

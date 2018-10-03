@@ -8,7 +8,7 @@ import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
-import com.emc.mongoose.metrics.MetricsContext;
+import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.item.op.OpType;

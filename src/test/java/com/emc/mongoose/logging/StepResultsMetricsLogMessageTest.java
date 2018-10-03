@@ -4,7 +4,7 @@ package com.emc.mongoose.logging;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshotImpl;
-import com.emc.mongoose.metrics.HistogramSnapshotImpl;
+import com.emc.mongoose.metrics.util.HistogramSnapshotImpl;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
