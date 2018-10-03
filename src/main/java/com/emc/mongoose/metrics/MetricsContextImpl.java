@@ -17,7 +17,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 	private final Clock clock = Clock.systemDefaultZone();
 	private final Histogram reqDuration, respLatency, actualConcurrency;
 	private final LongAdder reqDurationSum, respLatencySum;
-	private final CustomMeter throughputSuccess, throughputFail, reqBytes;
+	private final MeterImpl throughputSuccess, throughputFail, reqBytes;
 	private final IntSupplier actualConcurrencyGauge;
 	private final Lock timingLock = new ReentrantLock();
 	private volatile long prevElapsedTime = 0;
@@ -43,9 +43,9 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 		actualConcurrency = new Histogram(DEFAULT_RESERVOIR_SIZE).name("CONCURRENCY").labelValue(id).register();
 		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		reqDurationSum = new LongAdder();
-		throughputSuccess = new CustomMeter(clock, updateIntervalSec);
-		throughputFail = new CustomMeter(clock, updateIntervalSec);
-		reqBytes = new CustomMeter(clock, updateIntervalSec);
+		throughputSuccess = new MeterImpl(clock, updateIntervalSec);
+		throughputFail = new MeterImpl(clock, updateIntervalSec);
+		reqBytes = new MeterImpl(clock, updateIntervalSec);
 	}
 
 	@Override

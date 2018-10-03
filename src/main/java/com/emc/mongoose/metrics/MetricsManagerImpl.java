@@ -117,7 +117,7 @@ public class MetricsManagerImpl
 			allMetrics.add(metricsCtx);
 			if(metricsCtx instanceof DistributedMetricsContext) {
 				final DistributedMetricsContext distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
-				distributedMetrics.put(distributedMetricsCtx, new Meter(distributedMetricsCtx));
+				distributedMetrics.put(distributedMetricsCtx, new JMXMeter(distributedMetricsCtx));
 			}
 			Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
 		} catch(final Exception e) {
