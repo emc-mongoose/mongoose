@@ -1,34 +1,31 @@
-import groovy.json.JsonSlurper
 import groovy.json.JsonParserType
-
+import groovy.json.JsonSlurper
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
-
 description = "Mongoose is a high-load storage performance testing tool"
 
 ext {
-
 	depVersion = [
-		confuse: "1.1.4",
-		confuseIoJson: "1.0.3",
-		commonsCodec: "1.11",
-		commonsLang: "2.6",
-		disruptor: "3.4.2",
-		fiber4j: "1.0.5",
-		jackson: "2.9.6",
-		javaCommons: "2.1.8",
-		javassist: "3.23.1-GA",
-		junit: "[4,)",
-		scala: "2.12.6",
-		slf4j: "1.7.25",
-		log4j: "2.8.2",
-		tsdbMetrics: "0.5.0",
-		nagaina: "3.6.11",
-		netty: "4.1.25.Final",
+		confuse            : "1.1.4",
+		confuseIoJson      : "1.0.3",
+		commonsCodec       : "1.11",
+		commonsLang        : "2.6",
+		disruptor          : "3.4.2",
+		fiber4j            : "1.0.5",
+		jackson            : "2.9.6",
+		javaCommons        : "2.1.8",
+		javassist          : "3.23.1-GA",
+		jetty              : "9.4.12.v20180830",
+		junit              : "[4,)",
+		scala              : "2.12.6",
+		slf4j              : "1.7.25",
+		log4j              : "2.8.2",
+		tsdbMetrics        : "0.5.0",
+		nagaina            : "3.6.11",
+		netty              : "4.1.25.Final",
 		nettyConnectionPool: "1.0.9",
-		nettyTcNative: "2.0.12.Final",
-
+		nettyTcNative      : "2.0.12.Final",
 	]
 
 	leafProjects = subprojects.findAll {
@@ -45,7 +42,6 @@ ext {
 }
 
 allprojects {
-
 	buildscript {
 		repositories {
 			mavenCentral()
@@ -88,7 +84,6 @@ allprojects {
 	}
 
 	test {
-
 		exclude "com/emc/mongoose/endurance/*"
 		exclude "com/emc/mongoose/integration/*"
 		exclude "com/emc/mongoose/system/*"
@@ -105,7 +100,6 @@ allprojects {
 	}
 
 	task integrationTest(type: Test) {
-
 		include "com/emc/mongoose/integration/*"
 
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
@@ -119,7 +113,6 @@ allprojects {
 	}
 
 	task systemTest(type: Test) {
-
 		include "com/emc/mongoose/system/*"
 
 		maxHeapSize "1g"
@@ -185,7 +178,6 @@ allprojects {
 				}
 
 				pom {
-
 					groupId = rootProject.group
 					name = nameParts.join("-")
 					artifactId = name
@@ -221,15 +213,13 @@ allprojects {
 		}
 	}
 }
-
 String defineVersion() {
-	def configFilePath = [ rootDir, "src", "main", "resources", "config", "defaults.json", ]
+	def configFilePath = [rootDir, "src", "main", "resources", "config", "defaults.json",]
 		.join(File.separator);
 	def inputFile = new File(configFilePath)
 	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
 	json.run.version
 }
-
 task printVersion {
 	group = "versioning"
 	description = "Prints Mongoose version."
@@ -237,7 +227,6 @@ task printVersion {
 }
 
 dependencies {
-
 	provided(
 		"commons-codec:commons-codec:${depVersion.commonsCodec}",
 		"commons-lang:commons-lang:${depVersion.commonsLang}",
@@ -251,7 +240,6 @@ dependencies {
 		"com.lmax:disruptor:${depVersion.disruptor}",
 		// https://mvnrepository.com/artifact/io.prometheus/simpleclient
 		"io.prometheus:simpleclient:${depVersion.tsdbMetrics}",
-		"io.prometheus:simpleclient_httpserver:${depVersion.tsdbMetrics}",
 		"io.prometheus:simpleclient_servlet:${depVersion.tsdbMetrics}",
 		"io.prometheus:simpleclient_hotspot:${depVersion.tsdbMetrics}",
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
@@ -260,6 +248,7 @@ dependencies {
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
 		"org.slf4j:slf4j-api:${depVersion.slf4j}",
+		"org.eclipse.jetty:jetty-server:${depVersion.jetty}",
 	)
 
 	testCompile(
@@ -273,16 +262,13 @@ dependencies {
 		"org.apache.commons:commons-math3:3.6.1",
 	)
 }
-
 void collectName(Project p, LinkedList<String> names) {
 	names.addFirst p.name
 	if(p.parent != null) {
 		collectName(p.parent, names)
 	}
 }
-
 subprojects {
-
 	task sourcesJar(type: Jar, dependsOn: classes) {
 		LinkedList names = new LinkedList()
 		collectName(project, names)
@@ -309,7 +295,6 @@ subprojects {
 task wrapper(type: Wrapper) {
 	gradleVersion = "4.7"
 }
-
 static def isTestsProject(final Project p) {
 	if(p == null) {
 		return false
@@ -319,49 +304,46 @@ static def isTestsProject(final Project p) {
 		return isTestsProject(p.parent)
 	}
 }
-
 task mergeLog4j2PluginsDat(dependsOn: compileJava) {
 	doLast {
-
 		byte[] pluginsData
 		byte[] customPluginsData
 
 		configurations.provided
 			.each {
-				if(!it.isDirectory()) {
-					zipTree(it)
-						.filter {
-							it.toString().endsWith(log4j2PluginsDatPath.toString())
-						}
-						.each {
-							pluginsData = Files.readAllBytes(Paths.get(it.toString()))
-						}
+			if(!it.isDirectory()) {
+				zipTree(it)
+					.filter {
+					it.toString().endsWith(log4j2PluginsDatPath.toString())
+				}
+				.each {
+					pluginsData = Files.readAllBytes(Paths.get(it.toString()))
 				}
 			}
+		}
 
 		sourceSets.main.output.classesDirs
 			.any {
-				customPluginsData = Files.readAllBytes(
-					Paths.get(it.toString(), log4j2PluginsDatPath.toString(),)
-				)
-			}
+			customPluginsData = Files.readAllBytes(
+				Paths.get(it.toString(), log4j2PluginsDatPath.toString(),)
+			)
+		}
 
 		sourceSets.main.output.classesDirs
 			.any {
-				Files.write(
-					Paths.get(it.toString(), log4j2PluginsDatPath.toString(),),
-					pluginsData, StandardOpenOption.TRUNCATE_EXISTING
-				)
-				Files.write(
-					Paths.get(it.toString(), log4j2PluginsDatPath.toString(),),
-					customPluginsData, StandardOpenOption.APPEND
-				)
-			}
+			Files.write(
+				Paths.get(it.toString(), log4j2PluginsDatPath.toString(),),
+				pluginsData, StandardOpenOption.TRUNCATE_EXISTING
+			)
+			Files.write(
+				Paths.get(it.toString(), log4j2PluginsDatPath.toString(),),
+				customPluginsData, StandardOpenOption.APPEND
+			)
+		}
 	}
 }
 
 task dist(type: Jar) {
-
 	dependsOn += compileJava
 	dependsOn += mergeLog4j2PluginsDat
 
@@ -388,14 +370,14 @@ task dist(type: Jar) {
 
 	leafProjects
 		.each {
-			final Project p = it
-			from(p.jar.outputs.files) {
-				into "${File.separator}ext"
-				rename {
-					fileName -> "${p.description}.jar"
-				}
+		final Project p = it
+		from(p.jar.outputs.files) {
+			into "${File.separator}ext"
+			rename {
+				fileName -> "${p.description}.jar"
 			}
 		}
+	}
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
