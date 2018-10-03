@@ -20,7 +20,7 @@ public class HistogramSnapshotImpl
 	public HistogramSnapshotImpl(final Collection<Long> values) {
 		final Object[] copy = values.toArray();
 		this.values = new long[copy.length];
-		for(int i = 0; i < copy.length; i++) {
+		for(int i = 0; i < copy.length; ++ i) {
 			this.values[i] = (Long) copy[i];
 		}
 		init();
@@ -33,12 +33,12 @@ public class HistogramSnapshotImpl
 
 	public HistogramSnapshotImpl(final List<HistogramSnapshotImpl> snapshots) {
 		int size = 0;
-		for(HistogramSnapshotImpl s : snapshots) {
+		for(final HistogramSnapshotImpl s : snapshots) {
 			size += s.count();
 		}
 		this.values = new long[size];
 		int index_s = 0;
-		for(HistogramSnapshotImpl s : snapshots) {
+		for(final HistogramSnapshotImpl s : snapshots) {
 			final long[] copy = Arrays.copyOf(s.values(), s.count());
 			for(int i = 0; i < copy.length; i++) {
 				this.values[index_s * i + i] = copy[i];
@@ -110,7 +110,7 @@ public class HistogramSnapshotImpl
 	@Override
 	public long sum() {
 		long sum = 0;
-		for(long value : values) {
+		for(final long value : values) {
 			sum += value;
 		}
 		return sum;

@@ -28,11 +28,11 @@ public class Histogram
 		this.count = new LongAdder();
 	}
 
-	public void update(int value) {
+	public void update(final int value) {
 		update((long) value);
 	}
 
-	public void update(long value) {
+	public void update(final long value) {
 		count.increment();
 		reservoir.update(value);
 	}

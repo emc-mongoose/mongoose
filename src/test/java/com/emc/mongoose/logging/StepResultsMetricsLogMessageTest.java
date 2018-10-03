@@ -4,7 +4,7 @@ package com.emc.mongoose.logging;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshotImpl;
-import com.emc.mongoose.metrics.Snapshot;
+import com.emc.mongoose.metrics.HistogramSnapshotImpl;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -46,7 +46,7 @@ extends StepResultsMetricsLogMessage {
 	private static final DistributedMetricsSnapshot SNAPSHOT = new DistributedMetricsSnapshotImpl(
 		COUNT, 789, 123, 4.56, 7890123, 4567, 1234567890,
 		123456, 456789, 7.89, 10
-		, 2, new Snapshot(DURATIONS), new Snapshot(LATENCIES)
+		, 2, new HistogramSnapshotImpl(DURATIONS), new HistogramSnapshotImpl(LATENCIES)
 	);
 
 	public StepResultsMetricsLogMessageTest() {

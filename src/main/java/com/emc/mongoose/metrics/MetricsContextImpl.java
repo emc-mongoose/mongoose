@@ -108,7 +108,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 		reqBytes.mark(bytes);
 		final int timingsLen = Math.min(durationValues.length, latencyValues.length);
 		long duration, latency;
-		for(int i = 0; i < timingsLen; i++) {
+		for(int i = 0; i < timingsLen; ++ i) {
 			duration = durationValues[i];
 			latency = latencyValues[i];
 			if(latency > 0 && duration > latency) {
@@ -135,7 +135,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 		reqBytes.mark(bytes);
 		final int timingsLen = Math.min(durationValues.length, latencyValues.length);
 		long duration, latency;
-		for(int i = 0; i < timingsLen; i++) {
+		for(int i = 0; i < timingsLen; ++ i) {
 			duration = durationValues[i];
 			latency = latencyValues[i];
 			if(latency > 0 && duration > latency) {
