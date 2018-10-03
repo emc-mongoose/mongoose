@@ -3,7 +3,7 @@ package com.emc.mongoose.metrics;
 public class MetricsSnapshotImpl
 	implements MetricsSnapshot {
 
-	private final double LO_QUANTILE_VALUE = 0.75;
+	private final double LO_QUANTILE_VALUE = 0.25;
 	private final double HI_QUANTILE_VALUE = 0.75;
 
 	private final long countSucc;
