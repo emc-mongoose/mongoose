@@ -18,6 +18,16 @@ public interface Constants {
 	String KEY_HOME_DIR = "home_dir";
 	String KEY_STEP_ID = "step_id";
 	String KEY_CLASS_NAME = "class_name";
+	//
+	String METRIC_NAME_DUR = "DURATION";
+	String METRIC_NAME_LAT = "LATENCY";
+	String METRIC_NAME_CONC = "CONCURRENCY";
+	String METRIC_LABEL_SIZE = "ITEM_DATA_SIZE";
+	String METRIC_LABEL_ID = "STEP_ID";
+	String METRIC_LABEL_OP_TYPE = "OP_TYPE";
+	String METRIC_LABEL_CONC= "CONCURRENCY";
+	String METRIC_LABEL_NODE= "NODE_COUNT"; //???
+	//
 	int MIB = 0x10_00_00;
 	double K = 1e3;
 	double M = 1e6;

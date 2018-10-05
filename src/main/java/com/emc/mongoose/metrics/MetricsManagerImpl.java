@@ -1,5 +1,6 @@
 package com.emc.mongoose.metrics;
 
+import com.emc.mongoose.Server;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.logging.ExtResultsXmlLogMessage;
 import com.emc.mongoose.logging.LogUtil;
@@ -14,7 +15,6 @@ import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FibersExecutor;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
-import org.eclipse.jetty.server.Server;
 
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
