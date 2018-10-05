@@ -40,7 +40,7 @@ public class MeterImpl
 	}
 
 	@Override
-	public void mark(long n) {
+	public void mark(final long n) {
 		tickIfNecessary();
 		count.add(n);
 		rateAvg.update(n);

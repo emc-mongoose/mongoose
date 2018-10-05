@@ -60,13 +60,13 @@ public class EWMA
 	 @param interval the expected tick interval
 	 @param intervalUnit the time unit of the tick interval
 	 */
-	public EWMA(double alpha, long interval, TimeUnit intervalUnit) {
+	public EWMA(final double alpha,final long interval,final TimeUnit intervalUnit) {
 		this.interval = intervalUnit.toNanos(interval);
 		this.alpha = alpha;
 	}
 
 	@Override
-	public void update(long n) {
+	public void update(final long n) {
 		uncounted.add(n);
 	}
 
@@ -84,7 +84,7 @@ public class EWMA
 	}
 
 	@Override
-	public double rate(TimeUnit rateUnit) {
+	public double rate(final TimeUnit rateUnit) {
 		return rate * (double) rateUnit.toNanos(1);
 	}
 }

@@ -67,7 +67,7 @@ public class Histogram
 		samples.add(new MetricFamilySamples.Sample(metricName + "_min", labelNames, labelValues, snapshot.min()));
 		samples.add(new MetricFamilySamples.Sample(metricName + "_mean", labelNames, labelValues, snapshot.mean()));
 		MetricFamilySamples mfs = new MetricFamilySamples(metricName, Type.UNTYPED, "help", samples);
-		List<MetricFamilySamples> mfsList = new ArrayList<MetricFamilySamples>(1);
+		final List<MetricFamilySamples> mfsList = new ArrayList<>(1);
 		mfsList.add(mfs);
 		return mfsList;
 	}

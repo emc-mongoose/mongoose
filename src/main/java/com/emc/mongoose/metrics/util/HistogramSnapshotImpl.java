@@ -13,22 +13,9 @@ public class HistogramSnapshotImpl
 
 	private final long[] values;
 
-	private void init() {
-		Arrays.sort(this.values);
-	}
-
-	public HistogramSnapshotImpl(final Collection<Long> values) {
-		final Object[] copy = values.toArray();
-		this.values = new long[copy.length];
-		for(int i = 0; i < copy.length; ++ i) {
-			this.values[i] = (Long) copy[i];
-		}
-		init();
-	}
-
 	public HistogramSnapshotImpl(final long[] values) {
 		this.values = Arrays.copyOf(values, values.length);
-		init();
+		Arrays.sort(this.values);
 	}
 
 	public HistogramSnapshotImpl(final List<HistogramSnapshotImpl> snapshots) {
@@ -45,7 +32,7 @@ public class HistogramSnapshotImpl
 			}
 			++ index_s;
 		}
-		init();
+		Arrays.sort(this.values);
 	}
 
 	@Override
