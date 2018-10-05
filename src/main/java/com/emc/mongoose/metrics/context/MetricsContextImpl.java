@@ -14,10 +14,19 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntSupplier;
 
+import static com.emc.mongoose.Constants.METRIC_LABEL_CONC;
+import static com.emc.mongoose.Constants.METRIC_LABEL_ID;
+import static com.emc.mongoose.Constants.METRIC_LABEL_OP_TYPE;
+import static com.emc.mongoose.Constants.METRIC_LABEL_SIZE;
+import static com.emc.mongoose.Constants.METRIC_NAME_CONC;
+import static com.emc.mongoose.Constants.METRIC_NAME_DUR;
+import static com.emc.mongoose.Constants.METRIC_NAME_LAT;
+
 public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 	extends MetricsContextBase<S>
 	implements MetricsContext<S> {
 
+	private final String[] labelNames = { METRIC_LABEL_ID, METRIC_LABEL_OP_TYPE, METRIC_LABEL_SIZE, METRIC_LABEL_CONC };
 	private final Clock clock = Clock.systemDefaultZone();
 	private final Histogram reqDuration, respLatency, actualConcurrency;
 	private final LongAdder reqDurationSum, respLatencySum;
@@ -39,14 +48,28 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			TimeUnit.SECONDS.toMillis(updateIntervalSec)
 		);
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-		respLatency = new Histogram(DEFAULT_RESERVOIR_SIZE).name("LATENCY").labelValue(id).register();
+		final String[] labelValues = { id, opType.name(), itemDataSize.toString(), String.valueOf(concurrencyLimit) };
+		//
+		respLatency = new Histogram(DEFAULT_RESERVOIR_SIZE)
+			.name(METRIC_NAME_DUR)
+			.labels(labelNames, labelValues)
+			.register();
 		respLatSnapshot = respLatency.snapshot();
 		respLatencySum = new LongAdder();
-		reqDuration = new Histogram(DEFAULT_RESERVOIR_SIZE).name("DURATION").labelValue(id).register();
+		//
+		reqDuration = new Histogram(DEFAULT_RESERVOIR_SIZE)
+			.name(METRIC_NAME_LAT)
+			.labels(labelNames, labelValues)
+			.register();
 		reqDurSnapshot = reqDuration.snapshot();
-		actualConcurrency = new Histogram(DEFAULT_RESERVOIR_SIZE).name("CONCURRENCY").labelValue(id).register();
-		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		reqDurationSum = new LongAdder();
+		//
+		actualConcurrency = new Histogram(DEFAULT_RESERVOIR_SIZE)
+			.name(METRIC_NAME_CONC)
+			.labels(labelNames, labelValues)
+			.register();
+		actualConcurrencySnapshot = actualConcurrency.snapshot();
+		//
 		throughputSuccess = new MeterImpl(clock, updateIntervalSec);
 		throughputFail = new MeterImpl(clock, updateIntervalSec);
 		reqBytes = new MeterImpl(clock, updateIntervalSec);

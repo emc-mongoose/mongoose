@@ -15,8 +15,9 @@ public class Histogram
 	private final ConcurrentSlidingWindowReservoir reservoir;
 	private final LongAdder count;
 	private String metricName = String.valueOf(this.hashCode());
-	private final String labelName = "STEP_ID";
-	private String labelValue = String.valueOf(this.hashCode());
+	private final List<String> labelValues = new ArrayList<>();
+	private final List<String> labelNames = new ArrayList<>();
+//	private final Map<String, String> labels = new HashMap<>();
 
 	public Histogram(final ConcurrentSlidingWindowReservoir reservoir) {
 		this.reservoir = reservoir;
@@ -50,16 +51,26 @@ public class Histogram
 		return this;
 	}
 
-	public Histogram labelValue(final String value) {
-		labelValue = value;
+	public Histogram label(final String name, final String value) {
+		this.labelNames.add(name);
+		this.labelValues.add(value);
+		return this;
+	}
+
+	public Histogram labels(final String[] names, final String[] values) {
+		if(names.length != values.length) {
+			throw new IllegalArgumentException(
+				"The number of label names(" + names.length +
+					") does not match the number of values(" + values.length + ")");
+		}
+		this.labelNames.addAll(Arrays.asList(names));
+		this.labelValues.addAll(Arrays.asList(values));
 		return this;
 	}
 
 	@Override
 	public List<MetricFamilySamples> collect() {
 		List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
-		final List<String> labelNames = Arrays.asList(labelName);
-		final List<String> labelValues = Arrays.asList(labelValue);
 		final HistogramSnapshotImpl snapshot = snapshot();
 		samples.add(new MetricFamilySamples.Sample(metricName + "_count", labelNames, labelValues, snapshot.count()));
 		samples.add(new MetricFamilySamples.Sample(metricName + "_sum", labelNames, labelValues, snapshot.sum()));
@@ -72,11 +83,11 @@ public class Histogram
 		return mfsList;
 	}
 
-	public String labelName() {
-		return labelName;
+	public List<String> labelNames() {
+		return labelNames;
 	}
 
-	public String labelValue() {
-		return labelValue;
+	public List<String> labelValues() {
+		return labelValues;
 	}
 }
