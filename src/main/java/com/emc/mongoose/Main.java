@@ -39,14 +39,10 @@ import java.util.stream.Collectors;
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.Constants.DIR_EXT;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.Constants.PATH_DEFAULTS;
 import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
 import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
 import static javax.script.ScriptContext.ENGINE_SCOPE;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 public final class Main {
 
@@ -55,22 +51,11 @@ public final class Main {
 		final Path appHomePath = coreResources.appHomePath();
 		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
 		LogUtil.init(appHomePath.toString());
-		try(
-			final Instance logCtx = put(KEY_STEP_ID, initialStepId)
-				.put(KEY_CLASS_NAME, Main.class.getSimpleName())
-		) {
+		try {
 			// install the core resources
 			coreResources.install(appHomePath);
-			// resolve the initial config schema
-			final Map<String, Object> mainConfigSchema = SchemaProvider
-				.resolve(APP_NAME, Thread.currentThread().getContextClassLoader())
-				.stream()
-				.findFirst()
-				.orElseThrow(IllegalStateException::new);
 			// load the defaults
-			final Config mainDefaults = ConfigUtil.loadConfig(
-				Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile(), mainConfigSchema
-			);
+			final Config defaultConfig = loadDefaultConfig(appHomePath);
 			// extensions
 			try(
 				final URLClassLoader extClsLoader = Extension.extClassLoader(
@@ -81,7 +66,7 @@ public final class Main {
 				// install the extensions
 				installExt(extensions, appHomePath);
 				// apply the extensions defaults
-				Config config = applyExtDefault(extensions, mainDefaults, appHomePath);
+				Config config = applyExtDefault(extensions, defaultConfig, appHomePath);
 				// parse the CLI args and apply them to the config instance
 				config = applyArgsToConfig(args, config, initialStepId);
 				// init the metrics manager
@@ -102,6 +87,17 @@ public final class Main {
 			LogUtil.exception(Level.FATAL, e, "Unexpected failure");
 			e.printStackTrace();
 		}
+	}
+
+	private static Config loadDefaultConfig(final Path appHomePath)
+	throws Exception {
+		final Map<String, Object> mainConfigSchema = SchemaProvider
+			.resolve(APP_NAME, Thread.currentThread().getContextClassLoader())
+			.stream()
+			.findFirst()
+			.orElseThrow(IllegalStateException::new);
+		// load the defaults
+		return ConfigUtil.loadConfig(Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile(), mainConfigSchema);
 	}
 
 	private static void installExt(final List<Extension> extensions, final Path appHomePath) {
