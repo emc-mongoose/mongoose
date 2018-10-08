@@ -4,8 +4,6 @@ import io.prometheus.client.exporter.MetricsServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
-import java.util.Arrays;
-
 /**
  @author veronika K. on 05.10.18 */
 public class Server {
@@ -36,13 +34,6 @@ public class Server {
 	public void stop() {
 		try {
 			server.stop();
-			Arrays.asList(server.getChildHandlers()).stream().peek(handler -> {
-				try {
-					handler.stop();
-				} catch(Exception e) {
-					e.printStackTrace();
-				}
-			});
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
