@@ -46,7 +46,8 @@ import static javax.script.ScriptContext.ENGINE_SCOPE;
 
 public final class Main {
 
-	public static void main(final String... args) {
+	public static void main(final String... args)
+	throws Exception {
 		final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
 		final Path appHomePath = coreResources.appHomePath();
 		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
@@ -76,15 +77,16 @@ public final class Main {
 					throw e;
 				}
 				// init the metrics manager
-				//TODO: add args like "--...-port" for server starting
-				final Server server = new Server().start();
+				//TODO: add port to defaults
+				//final int port = configWithArgs.intVal("run-port");
+				final int port = 1234;
+				final Server server = new Server(port).start();
 				//
 				try {
 					run(configWithArgs, extensions, extClsLoader, appHomePath, server);
-				} catch(final Exception e) {
-					throw e;
 				} finally {
 					server.stop();
+					Thread.currentThread().join();
 				}
 			}
 		} catch(final InterruptedException | InterruptRunException e) {
