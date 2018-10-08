@@ -70,14 +70,14 @@ public class Histogram
 
 	@Override
 	public List<MetricFamilySamples> collect() {
-		List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
+		final List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
 		final HistogramSnapshotImpl snapshot = snapshot();
 		samples.add(new MetricFamilySamples.Sample(metricName + "_count", labelNames, labelValues, snapshot.count()));
 		samples.add(new MetricFamilySamples.Sample(metricName + "_sum", labelNames, labelValues, snapshot.sum()));
 		samples.add(new MetricFamilySamples.Sample(metricName + "_max", labelNames, labelValues, snapshot.max()));
 		samples.add(new MetricFamilySamples.Sample(metricName + "_min", labelNames, labelValues, snapshot.min()));
 		samples.add(new MetricFamilySamples.Sample(metricName + "_mean", labelNames, labelValues, snapshot.mean()));
-		MetricFamilySamples mfs = new MetricFamilySamples(metricName, Type.UNTYPED, "help", samples);
+		final MetricFamilySamples mfs = new MetricFamilySamples(metricName, Type.UNTYPED, "help", samples);
 		final List<MetricFamilySamples> mfsList = new ArrayList<>(1);
 		mfsList.add(mfs);
 		return mfsList;

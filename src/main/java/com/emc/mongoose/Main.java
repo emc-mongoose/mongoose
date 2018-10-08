@@ -141,8 +141,10 @@ public final class Main {
 				Arrays.stream(args).forEach(Loggers.CLI::info);
 				Loggers.CONFIG.info(ConfigUtil.toString(config));
 				// init the metrics manager
-				//TODO: add args like "--...-port" for server starting
-				final Server server = new Server(1234).start();
+				//TODO: add port in defaults
+				//final int port = config.intVal("run-port");
+				final int port = 1234;
+				final Server server = new Server(port).start();
 				//
 				try {
 					final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE, server);
@@ -155,6 +157,7 @@ public final class Main {
 					throw e;
 				} finally {
 					server.stop();
+					Thread.currentThread().join();
 				}
 			}
 		} catch(final InterruptedException | InterruptRunException e) {
