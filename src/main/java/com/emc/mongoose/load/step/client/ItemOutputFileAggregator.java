@@ -1,5 +1,6 @@
 package com.emc.mongoose.load.step.client;
 
+import com.emc.mongoose.env.FsUtil;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.load.step.service.file.FileManagerService;
@@ -21,6 +22,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
@@ -89,13 +91,11 @@ implements AutoCloseable {
 			2, new LogContextThreadFactory("collectItemOutputFileWorker", true)
 		);
 		final CountDownLatch finishLatch = new CountDownLatch(1);
+		final Path itemOutputPath = Paths.get(itemOutputFile);
+		FsUtil.createParentDirsIfNotExist(itemOutputPath);
 		executor.submit(
 			() -> {
-				try(
-					final OutputStream localItemOutput = Files.newOutputStream(
-						Paths.get(itemOutputFile), APPEND_OPEN_OPTIONS
-					)
-				) {
+				try(final OutputStream localItemOutput = Files.newOutputStream(itemOutputPath, APPEND_OPEN_OPTIONS)) {
 					final Lock localItemOutputLock = new ReentrantLock();
 					itemOutputFileSlices
 						.entrySet()

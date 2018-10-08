@@ -24,6 +24,10 @@ import com.emc.mongoose.metrics.context.DistributedMetricsContextImpl;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.storage.driver.StorageDriver;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.config.ConfigUtil.flatten;
+
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.net.NetUtil;
@@ -32,6 +36,9 @@ import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
+
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -46,12 +53,6 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static com.emc.mongoose.config.ConfigUtil.flatten;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 public abstract class LoadStepClientBase
 extends LoadStepBase
@@ -396,7 +397,7 @@ implements LoadStepClient {
 						protected final void invokeTimedExclusively(final long startTimeNanos) {
 							Loggers.MSG.trace("{}: await for the step slice \"{}\" started", id(), stepSlice);
 							try {
-								if(stepSlice.await(1, TimeUnit.NANOSECONDS)) {
+								if(stepSlice.await(SOFT_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 									awaitCountDown.countDown();
 									stop();
 								}
@@ -408,7 +409,7 @@ implements LoadStepClient {
 							} catch(final InterruptedException e) {
 								throw new InterruptRunException(e);
 							} catch(final IllegalStateException e) {
-								LogUtil.exception(Level.DEBUG, e, "{}: failure in the await method", id());
+								LogUtil.exception(Level.WARN, e, "{}: failure in the await method", id());
 							}
 						}
 					}
@@ -425,13 +426,13 @@ implements LoadStepClient {
 						} catch(final InterruptRunException e) {
 							throw e;
 						} catch(final Exception e) {
-							LogUtil.exception(Level.DEBUG, e, "{}: await task closing failure", id());
+							LogUtil.exception(Level.WARN, e, "{}: await task closing failure", id());
 						}
 					}
 				);
 			}
 		} finally {
-			Loggers.MSG.debug("{}: await for {} step slices done", id(), stepSliceCount);
+			Loggers.MSG.info("{}: await for {} step slices done", id(), stepSliceCount);
 		}
 	}
 

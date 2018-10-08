@@ -1,5 +1,6 @@
 package com.emc.mongoose.item.io;
 
+import com.emc.mongoose.env.FsUtil;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.op.Operation;
 
@@ -22,6 +23,7 @@ implements Output<O> {
 
 	public ItemInfoFileOutput(final Path filePath)
 	throws IOException {
+		FsUtil.createParentDirsIfNotExist(filePath);
 		itemInfoOutput = new TextFileOutput(filePath);
 	}
 	
