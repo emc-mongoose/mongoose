@@ -64,17 +64,23 @@ public final class Main {
 			) {
 				final List<Extension> extensions = Extension.load(extClsLoader);
 				// install the extensions
-				installExt(extensions, appHomePath);
-				// apply the extensions defaults
-				Config config = applyExtDefault(extensions, defaultConfig, appHomePath);
-				// parse the CLI args and apply them to the config instance
-				config = applyArgsToConfig(args, config, initialStepId);
+				installExtensions(extensions, appHomePath);
+				final Config configWithArgs;
+				try {
+					// apply the extensions defaults
+					final Config config = collectDefaults(extensions, defaultConfig, appHomePath);
+					// parse the CLI args and apply them to the config instance
+					configWithArgs = applyArgsToConfig(args, config, initialStepId);
+				} catch(final Exception e) {
+					LogUtil.exception(Level.ERROR, e, "Failed to load the defaults");
+					throw e;
+				}
 				// init the metrics manager
 				//TODO: add args like "--...-port" for server starting
 				final Server server = new Server().start();
 				//
 				try {
-					run(config, extensions, extClsLoader, appHomePath, server);
+					run(configWithArgs, extensions, extClsLoader, appHomePath, server);
 				} catch(final Exception e) {
 					throw e;
 				} finally {
@@ -100,7 +106,7 @@ public final class Main {
 		return ConfigUtil.loadConfig(Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile(), mainConfigSchema);
 	}
 
-	private static void installExt(final List<Extension> extensions, final Path appHomePath) {
+	private static void installExtensions(final List<Extension> extensions, final Path appHomePath) {
 		final StringBuilder availExtMsg = new StringBuilder("Available/installed extensions:\n");
 		extensions.forEach(
 			ext -> {
@@ -119,21 +125,17 @@ public final class Main {
 		Loggers.MSG.info(availExtMsg);
 	}
 
-	private static Config applyExtDefault(
+	private static Config collectDefaults(
 		final List<Extension> extensions, final Config mainDefaults, final Path appHomePath
-	) {
-		try {
-			final List<Config> allDefaults = extensions
-				.stream()
-				.map(ext -> ext.defaults(appHomePath))
-				.filter(Objects::nonNull)
-				.collect(Collectors.toList());
-			allDefaults.add(mainDefaults);
-			return ConfigUtil.merge(mainDefaults.pathSep(), allDefaults);
-		} catch(final Exception e) {
-			LogUtil.exception(Level.ERROR, e, "Failed to load the defaults");
-			throw e;
-		}
+	)
+	throws Exception {
+		final List<Config> allDefaults = extensions
+			.stream()
+			.map(ext -> ext.defaults(appHomePath))
+			.filter(Objects::nonNull)
+			.collect(Collectors.toList());
+		allDefaults.add(mainDefaults);
+		return ConfigUtil.merge(mainDefaults.pathSep(), allDefaults);
 	}
 
 	private static Config applyArgsToConfig(
@@ -152,16 +154,13 @@ public final class Main {
 				"Invalid argument: \"{}\"\nThe list of all possible args:\n{}", e.getMessage(),
 				formattedAllCliArgs
 			);
-			throw e;
 		} catch(final InvalidValuePathException e) {
 			Loggers.ERR.fatal("Invalid configuration option: \"{}\"", e.path());
-			throw e;
 		} catch(final InvalidValueTypeException e) {
 			Loggers.ERR.fatal(
 				"Invalid configuration value type for the option \"{}\", expected: {}, " + "actual: {}",
 				e.path(), e.expectedType(), e.actualType()
 			);
-			throw e;
 		}
 		if(null == config.val("load-step-id")) {
 			config.val("load-step-id", initialStepId);
