@@ -1,6 +1,7 @@
 # Contents
 
 ## 2018
+* [4.0.1](#401) 2018-10-08
 * [4.0.0](#400) 2018-10-01
 * [3.6.2](#362) 08/08/18
 * [3.6.1](#361) 03/26/18
@@ -51,6 +52,15 @@
 * [0.1.5](#015) 09/22/14
 * [0.1.4](#014) 09/17/14
 * [0.1.3](#013) 08/15/14
+
+# 4.0.1
+
+## Fixed Bugs
+
+| Id | Short Description |
+|----|-------------------|
+| [BASE-1276](https://mongoose-issues.atlassian.net/browse/BASE-1276) | Fails to create the file if the parent directory doesn't exist |
+| [BASE-1277](https://mongoose-issues.atlassian.net/browse/BASE-1277) | Hang for some time when a distributed load step has already finished |
 
 # 4.0.0
 

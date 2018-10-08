@@ -42,9 +42,7 @@ import java.io.IOException;
 public abstract class HttpResponseHandlerBase<I extends Item, O extends Operation<I>>
 extends ResponseHandlerBase<HttpObject, I, O> {
 	
-	protected HttpResponseHandlerBase(
-		final HttpStorageDriverBase<I, O> driver, final boolean verifyFlag
-	) {
+	protected HttpResponseHandlerBase(final HttpStorageDriverBase<I, O> driver, final boolean verifyFlag) {
 		super(driver, verifyFlag);
 	}
 
@@ -100,9 +98,8 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 	
 	protected abstract void handleResponseHeaders(final O op, final HttpHeaders respHeaders);
 
-	protected void handleResponseContentChunk(
-		final Channel channel, final O op, final ByteBuf contentChunk
-	) throws IOException {
+	protected void handleResponseContentChunk(final Channel channel, final O op, final ByteBuf contentChunk)
+	throws IOException {
 		if(OpType.READ.equals(op.type())) {
 			if(op instanceof DataOperation) {
 				final DataOperation dataOp = (DataOperation) op;
