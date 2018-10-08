@@ -21,8 +21,6 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.context.DistributedMetricsContextImpl;
-import com.emc.mongoose.metrics.DistributedMetricsContext;
-import com.emc.mongoose.metrics.DistributedMetricsContextImpl;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.storage.driver.StorageDriver;
