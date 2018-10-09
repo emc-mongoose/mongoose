@@ -30,6 +30,7 @@ public class Server {
 	public void stop() {
 		try {
 			server.stop();
+			server.join();
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

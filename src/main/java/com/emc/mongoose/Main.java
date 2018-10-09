@@ -86,7 +86,6 @@ public final class Main {
 					run(configWithArgs, extensions, extClsLoader, appHomePath);
 				} finally {
 					server.stop();
-					Thread.currentThread().join();
 				}
 			}
 		} catch(final InterruptedException | InterruptRunException e) {
