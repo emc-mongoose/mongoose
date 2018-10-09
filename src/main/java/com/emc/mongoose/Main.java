@@ -83,7 +83,7 @@ public final class Main {
 				final Server server = new Server(port).start();
 				//
 				try {
-					run(configWithArgs, extensions, extClsLoader, appHomePath, server);
+					run(configWithArgs, extensions, extClsLoader, appHomePath);
 				} finally {
 					server.stop();
 					Thread.currentThread().join();
@@ -175,10 +175,10 @@ public final class Main {
 
 	private static void run(
 		final Config config, final List<Extension> extensions, final URLClassLoader extClsLoader,
-		final Path appHomePath, final Server server
+		final Path appHomePath
 	)
 	throws InterruptedException {
-		final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE, server);
+		final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
 		if(config.boolVal("run-node")) {
 			runNode(config, extensions, metricsMgr);
 		} else {

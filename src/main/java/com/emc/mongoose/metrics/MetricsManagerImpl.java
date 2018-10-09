@@ -42,15 +42,12 @@ public class MetricsManagerImpl
 	private final Set<MetricsContext> allMetrics = new ConcurrentSkipListSet<>();
 	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
 	private final Lock outputLock = new ReentrantLock();
-	private final Server server;
 	private long outputPeriodMillis;
 	private long lastOutputTs;
 	private long nextOutputTs;
 
-	public MetricsManagerImpl(final FibersExecutor instance, final Server server) {
+	public MetricsManagerImpl(final FibersExecutor instance) {
 		super(instance);
-		this.server = server;
-		//DefaultExports.initialize();
 	}
 
 	@Override
