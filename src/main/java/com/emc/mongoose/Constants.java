@@ -25,8 +25,8 @@ public interface Constants {
 	String METRIC_LABEL_SIZE = "ITEM_DATA_SIZE";
 	String METRIC_LABEL_ID = "STEP_ID";
 	String METRIC_LABEL_OP_TYPE = "OP_TYPE";
-	String METRIC_LABEL_CONC= "CONCURRENCY";
-	String METRIC_LABEL_NODE= "NODE_COUNT"; //???
+	String METRIC_LABEL_CONC = "CONCURRENCY";
+	String METRIC_LABEL_NODE = "NODE_COUNT";
 	//
 	int MIB = 0x10_00_00;
 	double K = 1e3;

@@ -1,7 +1,6 @@
 package com.emc.mongoose.metrics.util;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import static java.lang.Math.floor;
@@ -97,8 +96,8 @@ public class HistogramSnapshotImpl
 	@Override
 	public long sum() {
 		long sum = 0;
-		for(final long value : values) {
-			sum += value;
+		for(int i = 0; i < values.length; ++ i) {
+			sum += values[i];
 		}
 		return sum;
 	}
