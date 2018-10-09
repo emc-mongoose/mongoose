@@ -32,8 +32,8 @@ public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotI
 		final boolean perfDbResultsFileFlag, final Supplier<List<MetricsSnapshot>> snapshotsSupplier
 	) {
 		super(
-			id, opType, concurrencyLimit, concurrencyThreshold, itemDataSize, stdOutColorFlag,
-			TimeUnit.SECONDS.toMillis(updateIntervalSec)
+			id, opType, concurrencyLimit, nodeCountSupplier.getAsInt(), concurrencyThreshold, itemDataSize,
+			stdOutColorFlag, TimeUnit.SECONDS.toMillis(updateIntervalSec)
 		);
 		this.nodeCountSupplier = nodeCountSupplier;
 		this.snapshotsSupplier = snapshotsSupplier;
@@ -124,7 +124,7 @@ public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotI
 		lastSnapshot = (S) new DistributedMetricsSnapshotImpl(
 			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast, tsStart,
 			prevElapsedTime + currElapsedTime, actualConcurrencyLast, actualConcurrencyMean, concurrencyLimit,
-			nodeCountSupplier.getAsInt(), durSnapshot, latSnapshot
+			nodeCountSupplier.getAsInt(), durSnapshot, latSnapshot, LO_Q_VALUE, HI_Q_VALUE
 		);
 		if(metricsListener != null) {
 			metricsListener.notify(lastSnapshot);

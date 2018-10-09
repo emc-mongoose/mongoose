@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.LongAdder;
 
 /**
  @author veronika K. on 09.10.18 */
-public class MetricsCollector
+public class MetricCollector
 	extends Collector {
 
 	private double loQuantileValue = 0.25;
@@ -25,11 +25,11 @@ public class MetricsCollector
 	//
 	//TODO: public getters ?
 
-	public MetricsCollector(final int reservoirSize) {
+	public MetricCollector(final int reservoirSize) {
 		this.histogram = new Histogram(reservoirSize);
 	}
 
-	public MetricsCollector() {
+	public MetricCollector() {
 		this.histogram = new Histogram();
 	}
 
@@ -48,28 +48,28 @@ public class MetricsCollector
 		}
 	}
 
-	public MetricsCollector name(final String name) {
+	public MetricCollector name(final String name) {
 		metricName = name + "_" + hashCode();
 		return this;
 	}
 
-	public MetricsCollector loQ(final double q) {
+	public MetricCollector loQ(final double q) {
 		loQuantileValue = q;
 		return this;
 	}
 
-	public MetricsCollector hiQ(final double q) {
+	public MetricCollector hiQ(final double q) {
 		hiQuantileValue = q;
 		return this;
 	}
 
-	public MetricsCollector label(final String name, final String value) {
+	public MetricCollector label(final String name, final String value) {
 		this.labelNames.add(name);
 		this.labelValues.add(value);
 		return this;
 	}
 
-	public MetricsCollector labels(final String[] names, final String[] values) {
+	public MetricCollector labels(final String[] names, final String[] values) {
 		if(names.length != values.length) {
 			throw new IllegalArgumentException(
 				"The number of label names(" + names.length +

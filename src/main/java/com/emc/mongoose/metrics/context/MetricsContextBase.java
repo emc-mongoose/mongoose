@@ -4,9 +4,23 @@ import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.github.akurilov.commons.system.SizeInBytes;
 
+import static com.emc.mongoose.Constants.METRIC_LABEL_CONC;
+import static com.emc.mongoose.Constants.METRIC_LABEL_ID;
+import static com.emc.mongoose.Constants.METRIC_LABEL_NODE;
+import static com.emc.mongoose.Constants.METRIC_LABEL_OP_TYPE;
+import static com.emc.mongoose.Constants.METRIC_LABEL_SIZE;
+
 public abstract class MetricsContextBase<S extends MetricsSnapshot>
 	implements MetricsContext<S> {
 
+	//TODO: make configured
+	protected final double LO_Q_VALUE = 0.25;
+	protected final double HI_Q_VALUE = 0.75;
+	//
+	protected final String[] labelValues;
+	protected final String[] labelNames =
+		{ METRIC_LABEL_ID, METRIC_LABEL_OP_TYPE, METRIC_LABEL_SIZE, METRIC_LABEL_CONC, METRIC_LABEL_NODE };
+	//
 	protected final long ts;
 	protected final String id;
 	protected final OpType opType;
@@ -22,8 +36,9 @@ public abstract class MetricsContextBase<S extends MetricsSnapshot>
 	protected volatile S lastSnapshot = null;
 
 	protected MetricsContextBase(
-		final String id, final OpType opType, final int concurrencyLimit, final int concurrencyThreshold,
-		final SizeInBytes itemDataSize, final boolean stdOutColorFlag, final long outputPeriodMillis
+		final String id, final OpType opType, final int concurrencyLimit, final int nodeCount,
+		final int concurrencyThreshold, final SizeInBytes itemDataSize, final boolean stdOutColorFlag,
+		final long outputPeriodMillis
 	) {
 		ts = System.nanoTime();
 		this.id = id;
@@ -33,6 +48,13 @@ public abstract class MetricsContextBase<S extends MetricsSnapshot>
 		this.itemDataSize = itemDataSize;
 		this.stdOutColorFlag = stdOutColorFlag;
 		this.outputPeriodMillis = outputPeriodMillis;
+		this.labelValues = new String[] {
+			id,
+			opType.name(),
+			itemDataSize.toString(),
+			String.valueOf(concurrencyLimit),
+			String.valueOf(nodeCount)
+		};
 	}
 
 	@Override

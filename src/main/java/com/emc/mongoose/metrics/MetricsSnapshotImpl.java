@@ -5,8 +5,8 @@ import com.emc.mongoose.metrics.util.HistogramSnapshotImpl;
 public class MetricsSnapshotImpl
 	implements MetricsSnapshot {
 
-	private final double LO_QUANTILE_VALUE = 0.25;
-	private final double HI_QUANTILE_VALUE = 0.75;
+	private final double loQValue;
+	private final double hiQValue;
 	private final long countSucc;
 	private final double succRateLast;
 	private final long countFail;
@@ -27,7 +27,8 @@ public class MetricsSnapshotImpl
 		final long countSucc, final double succRateLast, final long countFail, final double failRateLast,
 		final long countByte, final double byteRateLast, final long startTimeMillis, final long elapsedTimeMillis,
 		final int actualConcurrencyLast, final double actualConcurrencyMean, final int concurrencyLimit,
-		final HistogramSnapshotImpl durSnapshot, final HistogramSnapshotImpl latSnapshot
+		final HistogramSnapshotImpl durSnapshot, final HistogramSnapshotImpl latSnapshot, final double loQValue,
+		final double hiQValue
 	) {
 		this.countSucc = countSucc;
 		this.succRateLast = succRateLast;
@@ -44,6 +45,19 @@ public class MetricsSnapshotImpl
 		this.durValues = durSnapshot.values();
 		this.latSnapshot = latSnapshot;
 		this.latValues = latSnapshot.values();
+		//
+		this.loQValue = loQValue;
+		this.hiQValue = hiQValue;
+	}
+
+	@Override
+	public double loQValue() {
+		return loQValue;
+	}
+
+	@Override
+	public double hiQValue() {
+		return hiQValue;
 	}
 
 	@Override
@@ -103,7 +117,7 @@ public class MetricsSnapshotImpl
 
 	@Override
 	public final long durationLoQ() {
-		return durSnapshot.quantile(HI_QUANTILE_VALUE);
+		return durSnapshot.quantile(hiQValue);
 	}
 
 	@Override
@@ -113,7 +127,7 @@ public class MetricsSnapshotImpl
 
 	@Override
 	public final long durationHiQ() {
-		return durSnapshot.quantile(LO_QUANTILE_VALUE);
+		return durSnapshot.quantile(loQValue);
 	}
 
 	@Override
@@ -143,7 +157,7 @@ public class MetricsSnapshotImpl
 
 	@Override
 	public final long latencyLoQ() {
-		return latSnapshot.quantile(LO_QUANTILE_VALUE);
+		return latSnapshot.quantile(loQValue);
 	}
 
 	@Override
@@ -153,7 +167,7 @@ public class MetricsSnapshotImpl
 
 	@Override
 	public final long latencyHiQ() {
-		return latSnapshot.quantile(HI_QUANTILE_VALUE);
+		return latSnapshot.quantile(hiQValue);
 	}
 
 	@Override

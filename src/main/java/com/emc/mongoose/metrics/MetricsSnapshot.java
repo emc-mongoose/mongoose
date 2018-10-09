@@ -5,6 +5,10 @@ import java.io.Serializable;
 public interface MetricsSnapshot
 	extends Serializable {
 
+	double loQValue();
+
+	double hiQValue();
+
 	int concurrencyLimit();
 
 	long succCount();

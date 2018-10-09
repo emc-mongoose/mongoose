@@ -4,7 +4,7 @@ import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.MetricsSnapshotImpl;
 import com.emc.mongoose.metrics.util.HistogramSnapshotImpl;
 import com.emc.mongoose.metrics.util.MeterImpl;
-import com.emc.mongoose.metrics.util.MetricsCollector;
+import com.emc.mongoose.metrics.util.MetricCollector;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.time.Clock;
@@ -14,10 +14,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntSupplier;
 
-import static com.emc.mongoose.Constants.METRIC_LABEL_CONC;
-import static com.emc.mongoose.Constants.METRIC_LABEL_ID;
-import static com.emc.mongoose.Constants.METRIC_LABEL_OP_TYPE;
-import static com.emc.mongoose.Constants.METRIC_LABEL_SIZE;
 import static com.emc.mongoose.Constants.METRIC_NAME_CONC;
 import static com.emc.mongoose.Constants.METRIC_NAME_DUR;
 import static com.emc.mongoose.Constants.METRIC_NAME_LAT;
@@ -26,10 +22,8 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 	extends MetricsContextBase<S>
 	implements MetricsContext<S> {
 
-	private final String[] labelNames =
-		{ METRIC_LABEL_ID, METRIC_LABEL_OP_TYPE, METRIC_LABEL_SIZE, METRIC_LABEL_CONC };
 	private final Clock clock = Clock.systemDefaultZone();
-	private final MetricsCollector reqDuration, respLatency, actualConcurrency;
+	private final MetricCollector reqDuration, respLatency, actualConcurrency;
 	private final LongAdder reqDurationSum, respLatencySum;
 	private final MeterImpl throughputSuccess, throughputFail, reqBytes;
 	private final IntSupplier actualConcurrencyGauge;
@@ -45,34 +39,34 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 		final boolean stdOutColorFlag
 	) {
 		super(
-			id, opType, concurrencyLimit, concurrencyThreshold, itemDataSize, stdOutColorFlag,
+			id, opType, concurrencyLimit, 1, concurrencyThreshold, itemDataSize, stdOutColorFlag,
 			TimeUnit.SECONDS.toMillis(updateIntervalSec)
 		);
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-		final String[] labelValues = {
-			id,
-			opType.name(),
-			itemDataSize.toString(),
-			String.valueOf(concurrencyLimit)
-		};
 		//
-		respLatency = new MetricsCollector(DEFAULT_RESERVOIR_SIZE)
-			.name(METRIC_NAME_DUR)
+		respLatency = new MetricCollector(DEFAULT_RESERVOIR_SIZE)
+			.name(METRIC_NAME_LAT)
 			.labels(labelNames, labelValues)
+			.loQ(LO_Q_VALUE)
+			.hiQ(HI_Q_VALUE)
 			.register();
 		respLatSnapshot = respLatency.snapshot();
 		respLatencySum = new LongAdder();
 		//
-		reqDuration = new MetricsCollector(DEFAULT_RESERVOIR_SIZE)
-			.name(METRIC_NAME_LAT)
+		reqDuration = new MetricCollector(DEFAULT_RESERVOIR_SIZE)
+			.name(METRIC_NAME_DUR)
 			.labels(labelNames, labelValues)
+			.loQ(LO_Q_VALUE)
+			.hiQ(HI_Q_VALUE)
 			.register();
 		reqDurSnapshot = reqDuration.snapshot();
 		reqDurationSum = new LongAdder();
 		//
-		actualConcurrency = new MetricsCollector(DEFAULT_RESERVOIR_SIZE)
+		actualConcurrency = new MetricCollector(DEFAULT_RESERVOIR_SIZE)
 			.name(METRIC_NAME_CONC)
 			.labels(labelNames, labelValues)
+			.loQ(LO_Q_VALUE)
+			.hiQ(HI_Q_VALUE)
 			.register();
 		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		//
@@ -245,7 +239,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			throughputFail.count(), throughputFail.lastRate(), reqBytes.count(),
 			reqBytes.lastRate(), tsStart, prevElapsedTime + currElapsedTime, actualConcurrencyGauge.getAsInt(),
 			actualConcurrencySnapshot.mean(), concurrencyLimit, reqDurSnapshot,
-			respLatSnapshot
+			respLatSnapshot, LO_Q_VALUE, HI_Q_VALUE
 		);
 		super.refreshLastSnapshot();
 	}

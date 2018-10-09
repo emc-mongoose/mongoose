@@ -10,7 +10,7 @@ import java.util.List;
  @author veronika K. on 09.10.18 */
 public class MetricsCollectorTest {
 
-	private final MetricsCollector metricsCollector = new MetricsCollector();
+	private final MetricCollector metricsCollector = new MetricCollector();
 	private final int METRICS_COUNT = 7;    //sum, min, max, count, mean, loQ, hiQ
 	private final long ITERATION_COUNT = 10_000_000;
 

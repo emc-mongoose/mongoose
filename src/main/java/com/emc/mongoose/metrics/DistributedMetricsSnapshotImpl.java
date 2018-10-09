@@ -14,12 +14,13 @@ public final class DistributedMetricsSnapshotImpl
 		final long countSucc, final double succRateLast, final long countFail, final double failRateLast,
 		final long countByte, final double byteRateLast, final long startTimeMillis, final long elapsedTimeMillis,
 		final int actualConcurrencyLast, final double actualConcurrencyMean, final int concurrencyLimit,
-		final int nodeCount, final HistogramSnapshotImpl durSnapshot, final HistogramSnapshotImpl latSnapshot
+		final int nodeCount, final HistogramSnapshotImpl durSnapshot, final HistogramSnapshotImpl latSnapshot,
+		final double loQValue, final double hiQValue
 	) {
 		super(
 			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast, startTimeMillis,
 			elapsedTimeMillis, actualConcurrencyLast, actualConcurrencyMean, concurrencyLimit,
-			durSnapshot, latSnapshot
+			durSnapshot, latSnapshot, loQValue, hiQValue
 		);
 		this.nodeCount = nodeCount;
 	}
