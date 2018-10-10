@@ -199,7 +199,6 @@ import java.util.stream.Collectors;
 	public final void test()
 	throws Exception {
 		try {
-			System.out.println("\nTEST\n");
 			final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
 			assertTrue("There should be more than 0 metrics records in the log file", metricsLogRecords.size() > 0);
 			final int outputMetricsAveragePeriod;
