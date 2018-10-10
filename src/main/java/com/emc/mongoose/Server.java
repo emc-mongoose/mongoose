@@ -1,12 +1,13 @@
 package com.emc.mongoose;
 
+import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import io.prometheus.client.exporter.MetricsServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 /**
  @author veronika K. on 05.10.18 */
-public class Server {
+public class Server extends AsyncRunnableBase {
 
 	private final org.eclipse.jetty.server.Server server;
 
@@ -18,16 +19,15 @@ public class Server {
 		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
 	}
 
-	public Server start() {
+	public void doStart() {
 		try {
 			server.start();
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
-		return this;
 	}
 
-	public void stop() {
+	public void doStop() {
 		try {
 			server.stop();
 			server.join();
