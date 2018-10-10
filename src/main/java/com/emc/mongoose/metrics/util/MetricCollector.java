@@ -15,7 +15,7 @@ public class MetricCollector
 
 	private double loQuantileValue = 0.25;
 	private double hiQuantileValue = 0.75;
-	private final Histogram histogram;
+	private final HistogramImpl histogramImpl;
 	private String metricName = String.valueOf(this.hashCode());
 	private final List<String> labelValues = new ArrayList<>();
 	private final List<String> labelNames = new ArrayList<>();
@@ -26,11 +26,11 @@ public class MetricCollector
 	//TODO: public getters ?
 
 	public MetricCollector(final int reservoirSize) {
-		this.histogram = new Histogram(reservoirSize);
+		this.histogramImpl = new HistogramImpl(reservoirSize);
 	}
 
 	public MetricCollector() {
-		this.histogram = new Histogram();
+		this.histogramImpl = new HistogramImpl();
 	}
 
 	public void update(final int value) {
@@ -38,7 +38,7 @@ public class MetricCollector
 	}
 
 	public void update(final long value) {
-		histogram.update(value);
+		histogramImpl.update(value);
 		sum.add(value);
 		if(value < min.get()) {
 			min.set(value);
@@ -83,7 +83,7 @@ public class MetricCollector
 	@Override
 	public List<MetricFamilySamples> collect() {
 		final List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
-		final HistogramSnapshotImpl snapshot = histogram.snapshot(); //for quantieles
+		final HistogramSnapshotImpl snapshot = histogramImpl.snapshot(); //for quantieles
 		samples.add(new MetricFamilySamples.Sample(metricName + "_count", labelNames, labelValues, count()));
 		samples.add(new MetricFamilySamples.Sample(metricName + "_sum", labelNames, labelValues, sum()));
 		samples.add(new MetricFamilySamples.Sample(metricName + "_max", labelNames, labelValues, max()));
@@ -100,7 +100,7 @@ public class MetricCollector
 	}
 
 	public HistogramSnapshotImpl snapshot(){
-		return histogram.snapshot();
+		return histogramImpl.snapshot();
 	}
 
 	public List<String> labelNames() {
@@ -112,7 +112,7 @@ public class MetricCollector
 	}
 
 	private long count() {
-		return histogram.count();
+		return histogramImpl.count();
 	}
 
 	private long sum() {
