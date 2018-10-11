@@ -1,8 +1,9 @@
-package com.emc.mongoose.metrics;
+package com.emc.mongoose.perf;
 
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Reservoir;
 import com.codahale.metrics.UniformReservoir;
+import com.emc.mongoose.metrics.ConcurrentSlidingWindowReservoir;
 import org.junit.Test;
 
 import java.util.concurrent.Callable;
@@ -10,7 +11,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
-public class ReservoirTest {
+public class ReservoirPerfTest {
 
 	private final int TIME_LIMIT = 100;
 

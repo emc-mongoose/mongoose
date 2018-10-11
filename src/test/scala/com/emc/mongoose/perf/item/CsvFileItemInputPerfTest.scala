@@ -1,16 +1,17 @@
-package com.emc.mongoose.item
+package com.emc.mongoose.perf.item
 
-import com.github.akurilov.commons.system.SizeInBytes
-import org.junit.{Assert, Before, Test}
 import java.io.EOFException
 import java.nio.file.{Files, Paths}
 import java.util
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
 
+import com.emc.mongoose.item._
 import com.emc.mongoose.item.io.{CsvFileItemInput, CsvFileItemOutput, NewDataItemInput}
+import com.github.akurilov.commons.system.SizeInBytes
+import org.junit.{Assert, Before, Test}
 
-final class CsvFileItemInputTest {
+final class CsvFileItemInputPerfTest {
 
 	private val BATCH_SIZE = 0x1000
 	private val FILE_NAME = "items.csv"

@@ -1,20 +1,21 @@
-package com.emc.mongoose.item
+package com.emc.mongoose.perf.item
 
-import com.emc.mongoose.item.op.data.{DataOperation, DataOperationsBuilderImpl}
-import com.emc.mongoose.supply.ConstantStringSupplier
-import com.github.akurilov.commons.io.Input
-import com.github.akurilov.commons.system.SizeInBytes
-import org.junit._
 import java.io.EOFException
 import java.util
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
 
+import com.emc.mongoose.item._
 import com.emc.mongoose.item.io.{DelayedTransferConvertBuffer, NewDataItemInput}
-import com.emc.mongoose.item.op.{OperationsBuilder, OpType}
+import com.emc.mongoose.item.op.data.{DataOperation, DataOperationsBuilderImpl}
+import com.emc.mongoose.item.op.{OpType, OperationsBuilder}
+import com.emc.mongoose.supply.ConstantStringSupplier
+import com.github.akurilov.commons.io.Input
+import com.github.akurilov.commons.system.SizeInBytes
 import org.junit.Assert.fail
+import org.junit._
 
-final class DelayedTransferBufferTest {
+final class DelayedTransferBufferPerfTest {
 
 	private val BATCH_SIZE = 0x1000
 	private val BUFF_CAPACITY = 1000000
