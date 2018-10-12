@@ -4,7 +4,7 @@ import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.MetricsSnapshotImpl;
 import com.emc.mongoose.metrics.util.RateMeter;
 import com.emc.mongoose.metrics.util.RateMeterImpl;
-import com.emc.mongoose.metrics.util.SingleMetricSnapshot;
+import com.emc.mongoose.metrics.util.RateMetricSnapshot;
 import com.emc.mongoose.metrics.util.TimingMeter;
 import com.emc.mongoose.metrics.util.TimingMeterImpl;
 import com.emc.mongoose.metrics.util.TimingMetricSnapshot;
@@ -28,9 +28,9 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 	implements MetricsContext<S> {
 
 	private final Clock clock = Clock.systemDefaultZone();
-	private final TimingMeter reqDuration, respLatency, actualConcurrency;
-	private final RateMeter throughputSuccess, throughputFail, reqBytes;
-	private volatile SingleMetricSnapshot reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot;
+	private final TimingMeter<TimingMetricSnapshot> reqDuration, respLatency, actualConcurrency;
+	private final RateMeter<RateMetricSnapshot> throughputSuccess, throughputFail, reqBytes;
+	private volatile TimingMetricSnapshot reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot;
 	private final IntSupplier actualConcurrencyGauge;
 	private final Lock timingLock = new ReentrantLock();
 	private volatile long lastDurationSum = 0;
@@ -196,7 +196,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			if(lastDurationSum != reqDuration.sum() || lastLatencySum != respLatency.sum()) {
 				if(timingLock.tryLock()) {
 					try {
-						reqDurSnapshot =reqDuration.snapshot();
+						reqDurSnapshot = reqDuration.snapshot();
 						respLatSnapshot = respLatency.snapshot();
 					} finally {
 						timingLock.unlock();
@@ -205,7 +205,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 				lastLatencySum = respLatency.sum();
 				lastDurationSum = reqDuration.sum();
 			}
-			actualConcurrencySnapshot =actualConcurrency.snapshot();
+			actualConcurrencySnapshot = actualConcurrency.snapshot();
 		}
 		lastSnapshot = (S) new MetricsSnapshotImpl(reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot,
 			throughputFail.snapshot(), throughputSuccess.snapshot(), reqBytes.snapshot(), elapsedTimeMillis()
