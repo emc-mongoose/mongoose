@@ -90,7 +90,6 @@ public final class Main {
 				server.setHandler(context);
 				context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
 				server.start();
-				server.join();
 				//
 				try {
 					run(configWithArgs, extensions, extClsLoader, appHomePath);

@@ -10,12 +10,10 @@ public class TimingMeterImpl
 
 	private final HistogramImpl histogramImpl;
 	private final LongAdder count = new LongAdder();
+	private final LongAdder sum = new LongAdder();
 	private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);
 	private final AtomicLong max = new AtomicLong(Long.MIN_VALUE);
-	//
 	private String metricName;
-	//private final String metricName;
-	//count,max,min,sum,mean,histogram
 
 	public TimingMeterImpl(final int reservoirSize, final String metricName) {
 		this(new HistogramImpl(reservoirSize), metricName);
@@ -32,7 +30,8 @@ public class TimingMeterImpl
 
 	public void update(final long value) {
 		histogramImpl.update(value);
-		count.add(value);
+		count.increment();
+		sum.add(value);
 		if(value < min.get()) {
 			min.set(value);
 		}
@@ -50,7 +49,7 @@ public class TimingMeterImpl
 	}
 
 	public long sum() {
-		return count.sum();
+		return sum.sum();
 	}
 
 	public long min() {
@@ -62,7 +61,7 @@ public class TimingMeterImpl
 	}
 
 	public long count() {
-		return count.longValue();
+		return count.sum();
 	}
 
 	public double mean() {

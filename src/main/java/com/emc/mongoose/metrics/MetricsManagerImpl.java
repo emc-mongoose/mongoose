@@ -29,6 +29,11 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.Constants.METRIC_LABEL_CONC;
+import static com.emc.mongoose.Constants.METRIC_LABEL_ID;
+import static com.emc.mongoose.Constants.METRIC_LABEL_NODE;
+import static com.emc.mongoose.Constants.METRIC_LABEL_OP_TYPE;
+import static com.emc.mongoose.Constants.METRIC_LABEL_SIZE;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
@@ -117,7 +122,21 @@ public class MetricsManagerImpl
 			allMetrics.add(metricsCtx);
 			if(metricsCtx instanceof DistributedMetricsContext) {
 				final DistributedMetricsContext distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
-				distributedMetrics.put(distributedMetricsCtx, new PrometheusMetricsExporter(distributedMetricsCtx));
+				final String[] labelNames =
+					{ METRIC_LABEL_ID, METRIC_LABEL_OP_TYPE, METRIC_LABEL_CONC, METRIC_LABEL_NODE, METRIC_LABEL_SIZE };
+				final String[] labelValues = {
+					metricsCtx.id(),
+					metricsCtx.opType().name(),
+					String.valueOf(metricsCtx.concurrencyLimit()),
+					String.valueOf(((DistributedMetricsContext) metricsCtx).nodeCount()),
+					metricsCtx.itemDataSize().toString()
+				};
+				distributedMetrics.put(
+					distributedMetricsCtx,
+					new PrometheusMetricsExporter(distributedMetricsCtx)
+						.labels(labelNames, labelValues)
+						.register()
+				);
 			}
 			Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
 		} catch(final Exception e) {
@@ -161,16 +180,6 @@ public class MetricsManagerImpl
 						Loggers.METRICS_STD_OUT.info(
 							new StepResultsMetricsLogMessage(distributedMetricsCtx)
 						);
-//						final AutoCloseable meterMBean = distributedMetrics.remove(distributedMetricsCtx);
-//						if(meterMBean != null) {
-//							try {
-//								meterMBean.close();
-//							} catch(final InterruptRunException e) {
-//								throw e;
-//							} catch(final Exception e) {
-//								LogUtil.exception(Level.WARN, e, "Failed to close the meter MBean");
-//							}
-//						}
 					}
 				} catch(final InterruptedException e) {
 					throw new InterruptRunException(e);
