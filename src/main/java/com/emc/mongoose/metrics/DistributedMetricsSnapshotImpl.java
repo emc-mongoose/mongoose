@@ -1,6 +1,7 @@
 package com.emc.mongoose.metrics;
 
-import com.emc.mongoose.metrics.util.HistogramSnapshotImpl;
+import com.emc.mongoose.metrics.util.RateMetricSnapshot;
+import com.emc.mongoose.metrics.util.TimingMetricSnapshot;
 
 /**
  @author veronika K. */
@@ -11,16 +12,15 @@ public final class DistributedMetricsSnapshotImpl
 	private final int nodeCount;
 
 	public DistributedMetricsSnapshotImpl(
-		final long countSucc, final double succRateLast, final long countFail, final double failRateLast,
-		final long countByte, final double byteRateLast, final long startTimeMillis, final long elapsedTimeMillis,
-		final int actualConcurrencyLast, final double actualConcurrencyMean, final int concurrencyLimit,
-		final int nodeCount, final HistogramSnapshotImpl durSnapshot, final HistogramSnapshotImpl latSnapshot,
-		final double loQValue, final double hiQValue
+		final TimingMetricSnapshot durSnapshot,
+		final TimingMetricSnapshot latSnapshot,
+		final TimingMetricSnapshot actualConcurrencySnapshot,
+		final RateMetricSnapshot failsSnapshot,
+		final RateMetricSnapshot successSnapshot,
+		final RateMetricSnapshot bytesSnapshot,
+		final int nodeCount
 	) {
-		super(
-			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast, startTimeMillis,
-			elapsedTimeMillis, actualConcurrencyLast, actualConcurrencyMean, concurrencyLimit,
-			durSnapshot, latSnapshot, loQValue, hiQValue
+		super(durSnapshot, latSnapshot, actualConcurrencySnapshot, failsSnapshot, successSnapshot, bytesSnapshot
 		);
 		this.nodeCount = nodeCount;
 	}

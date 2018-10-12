@@ -1,212 +1,60 @@
 package com.emc.mongoose.metrics;
 
-import com.emc.mongoose.metrics.util.HistogramSnapshotImpl;
+import com.emc.mongoose.metrics.util.RateMetricSnapshot;
+import com.emc.mongoose.metrics.util.TimingMetricSnapshot;
 
 public class MetricsSnapshotImpl
 	implements MetricsSnapshot {
 
-	private final double loQValue;
-	private final double hiQValue;
-	private final long countSucc;
-	private final double succRateLast;
-	private final long countFail;
-	private final double failRateLast;
-	private final long countByte;
-	private final double byteRateLast;
-	private final long durValues[];
-	private transient HistogramSnapshotImpl durSnapshot;
-	private final long latValues[];
-	private transient HistogramSnapshotImpl latSnapshot;
-	private final long startTimeMillis;
-	private final long elapsedTimeMillis;
-	private final int actualConcurrencyLast;
-	private final double actualConcurrencyMean;
-	private final int concurrencyLimit;
+	private transient TimingMetricSnapshot durSnapshot;
+	private transient TimingMetricSnapshot latSnapshot;
+	private transient TimingMetricSnapshot actualConcurrencySnapshot;
+	private transient RateMetricSnapshot failsSnapshot;
+	private transient RateMetricSnapshot successSnapshot;
+	private transient RateMetricSnapshot bytesSnapshot;
 
 	public MetricsSnapshotImpl(
-		final long countSucc, final double succRateLast, final long countFail, final double failRateLast,
-		final long countByte, final double byteRateLast, final long startTimeMillis, final long elapsedTimeMillis,
-		final int actualConcurrencyLast, final double actualConcurrencyMean, final int concurrencyLimit,
-		final HistogramSnapshotImpl durSnapshot, final HistogramSnapshotImpl latSnapshot, final double loQValue,
-		final double hiQValue
+		final TimingMetricSnapshot durSnapshot, final TimingMetricSnapshot latSnapshot,
+		final TimingMetricSnapshot actualConcurrencySnapshot,
+		final RateMetricSnapshot failsSnapshot,
+		final RateMetricSnapshot successSnapshot,
+		final RateMetricSnapshot bytesSnapshot
 	) {
-		this.countSucc = countSucc;
-		this.succRateLast = succRateLast;
-		this.countFail = countFail;
-		this.failRateLast = failRateLast;
-		this.countByte = countByte;
-		this.byteRateLast = byteRateLast;
-		this.startTimeMillis = startTimeMillis;
-		this.elapsedTimeMillis = elapsedTimeMillis;
-		this.actualConcurrencyLast = actualConcurrencyLast;
-		this.actualConcurrencyMean = actualConcurrencyMean;
-		this.concurrencyLimit = concurrencyLimit;
 		this.durSnapshot = durSnapshot;
-		this.durValues = durSnapshot.values();
 		this.latSnapshot = latSnapshot;
-		this.latValues = latSnapshot.values();
-		//
-		this.loQValue = loQValue;
-		this.hiQValue = hiQValue;
+		this.actualConcurrencySnapshot = actualConcurrencySnapshot;
+		this.failsSnapshot = failsSnapshot;
+		this.successSnapshot = successSnapshot;
+		this.bytesSnapshot = bytesSnapshot;
 	}
 
 	@Override
-	public double loQValue() {
-		return loQValue;
+	public TimingMetricSnapshot durationSnapshot() {
+		return durSnapshot;
 	}
 
 	@Override
-	public double hiQValue() {
-		return hiQValue;
+	public TimingMetricSnapshot latencySnapshot() {
+		return latSnapshot;
 	}
 
 	@Override
-	public final int concurrencyLimit() {
-		return concurrencyLimit;
+	public TimingMetricSnapshot concurrencySnapshot() {
+		return actualConcurrencySnapshot;
 	}
 
 	@Override
-	public final long succCount() {
-		return countSucc;
+	public RateMetricSnapshot byteSnapshot() {
+		return bytesSnapshot;
 	}
 
 	@Override
-	public final double succRateMean() {
-		return elapsedTimeMillis == 0 ? 0 : 1000.0 * countSucc / elapsedTimeMillis;
+	public RateMetricSnapshot successSnapshot() {
+		return successSnapshot;
 	}
 
 	@Override
-	public final double succRateLast() {
-		return succRateLast;
-	}
-
-	@Override
-	public final long failCount() {
-		return countFail;
-	}
-
-	@Override
-	public final double failRateMean() {
-		return elapsedTimeMillis == 0 ? 0 : 1000.0 * countFail / elapsedTimeMillis;
-	}
-
-	@Override
-	public final double failRateLast() {
-		return failRateLast;
-	}
-
-	@Override
-	public final long byteCount() {
-		return countByte;
-	}
-
-	@Override
-	public final double byteRateMean() {
-		return elapsedTimeMillis == 0 ? 0 : 1000.0 * countByte / elapsedTimeMillis;
-	}
-
-	@Override
-	public final double byteRateLast() {
-		return byteRateLast;
-	}
-
-	@Override
-	public final long durationMin() {
-		return durSnapshot.min();
-	}
-
-	@Override
-	public final long durationLoQ() {
-		return durSnapshot.quantile(hiQValue);
-	}
-
-	@Override
-	public final long durationMed() {
-		return durSnapshot.median();
-	}
-
-	@Override
-	public final long durationHiQ() {
-		return durSnapshot.quantile(loQValue);
-	}
-
-	@Override
-	public final long durationMax() {
-		return durSnapshot.max();
-	}
-
-	@Override
-	public final long durationSum() {
-		return durSnapshot.sum();
-	}
-
-	@Override
-	public final double durationMean() {
-		return durSnapshot.mean();
-	}
-
-	@Override
-	public final long[] durationValues() {
-		return durValues;
-	}
-
-	@Override
-	public final long latencyMin() {
-		return durSnapshot.min();
-	}
-
-	@Override
-	public final long latencyLoQ() {
-		return latSnapshot.quantile(loQValue);
-	}
-
-	@Override
-	public final long latencyMed() {
-		return latSnapshot.median();
-	}
-
-	@Override
-	public final long latencyHiQ() {
-		return latSnapshot.quantile(hiQValue);
-	}
-
-	@Override
-	public final long latencyMax() {
-		return latSnapshot.max();
-	}
-
-	@Override
-	public final long latencySum() {
-		return latSnapshot.sum();
-	}
-
-	@Override
-	public final double latencyMean() {
-		return latSnapshot.mean();
-	}
-
-	@Override
-	public final long[] latencyValues() {
-		return latValues;
-	}
-
-	@Override
-	public final long startTimeMillis() {
-		return startTimeMillis;
-	}
-
-	@Override
-	public final long elapsedTimeMillis() {
-		return elapsedTimeMillis;
-	}
-
-	@Override
-	public final int actualConcurrencyLast() {
-		return actualConcurrencyLast;
-	}
-
-	@Override
-	public final double actualConcurrencyMean() {
-		return actualConcurrencyMean;
+	public RateMetricSnapshot failsSnapshot() {
+		return failsSnapshot;
 	}
 }

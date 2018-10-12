@@ -17,14 +17,14 @@ public class HistogramSnapshotImpl
 		Arrays.sort(this.values);
 	}
 
-	public HistogramSnapshotImpl(final List<HistogramSnapshotImpl> snapshots) {
+	public HistogramSnapshotImpl(final List<HistogramSnapshot> snapshots) {
 		int size = 0;
-		for(final HistogramSnapshotImpl s : snapshots) {
+		for(final HistogramSnapshot s : snapshots) {
 			size += s.count();
 		}
 		this.values = new long[size];
 		int index_s = 0;
-		for(final HistogramSnapshotImpl s : snapshots) {
+		for(final HistogramSnapshot s : snapshots) {
 			final long[] copy = Arrays.copyOf(s.values(), s.count());
 			for(int i = 0; i < copy.length; i++) {
 				this.values[index_s * i + i] = copy[i];

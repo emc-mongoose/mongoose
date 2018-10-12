@@ -13,10 +13,6 @@ import static com.emc.mongoose.Constants.METRIC_LABEL_SIZE;
 public abstract class MetricsContextBase<S extends MetricsSnapshot>
 	implements MetricsContext<S> {
 
-	//TODO: make configured
-	protected final double LO_Q_VALUE = 0.25;
-	protected final double HI_Q_VALUE = 0.75;
-	//
 	protected final String[] labelValues;
 	protected final String[] labelNames =
 		{ METRIC_LABEL_ID, METRIC_LABEL_OP_TYPE, METRIC_LABEL_SIZE, METRIC_LABEL_CONC, METRIC_LABEL_NODE };

@@ -7,11 +7,12 @@ import java.util.concurrent.atomic.LongAdder;
 
 import static java.lang.Math.exp;
 
-public class MeterImpl
-	implements Meter {
+public class RateMeterImpl
+	implements RateMeter {
 
 	private static final long TICK_INTERVAL = TimeUnit.SECONDS.toMillis(1);
 	//
+	private final String metricName;
 	private final EWMA rateAvg;
 	private final LongAdder count = new LongAdder();
 	private final Clock clock;
@@ -19,13 +20,14 @@ public class MeterImpl
 	private long startTime;
 
 	//
-	public MeterImpl(final Clock clock, final int periodSec) {
+	public RateMeterImpl(final Clock clock, final int periodSec, final String name) {
 		final double ps = periodSec > 0 ? periodSec : 10;
 		final int intervalSecs = 1;
 		rateAvg = new EWMA(1 - exp(- intervalSecs / ps), intervalSecs, TimeUnit.SECONDS);
 		this.clock = clock;
 		startTime = clock.millis();
 		lastTick.set(startTime);
+		this.metricName = name;
 	}
 
 	@Override
@@ -60,17 +62,28 @@ public class MeterImpl
 	}
 
 	@Override
+	public String name() {
+		return metricName;
+	}
+
+	@Override
 	public long count() {
 		return count.sum();
+		//return count.longValue();
+	}
+
+	@Override
+	public RateMetricSnapshot snapshot() {
+		return new RateMetricSnapshotImpl(lastRate(), meanRate(), metricName, count());
 	}
 
 	@Override
 	public double meanRate() {
-		if(count() == 0) {
+		if(count.sum() == 0) {
 			return 0.0;
 		} else {
 			final double elapsed = (clock.millis() - startTime);
-			return count() / elapsed * TimeUnit.SECONDS.toNanos(1);
+			return count.sum() / elapsed * TimeUnit.SECONDS.toNanos(1);
 		}
 	}
 

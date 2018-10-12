@@ -35,9 +35,6 @@ public interface MetricsContext<S extends MetricsSnapshot>
 
 	void markFail(final long count);
 
-	void markElapsedTime(final long millis);
-	// state control methods below
-
 	void start();
 
 	boolean isStarted();

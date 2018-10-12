@@ -1,6 +1,5 @@
 package com.emc.mongoose.metrics;
 
-import com.emc.mongoose.Server;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.logging.ExtResultsXmlLogMessage;
 import com.emc.mongoose.logging.LogUtil;
@@ -10,6 +9,7 @@ import com.emc.mongoose.logging.MetricsCsvLogMessage;
 import com.emc.mongoose.logging.StepResultsMetricsLogMessage;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.context.MetricsContext;
+import com.emc.mongoose.metrics.util.PrometheusMetricsExporter;
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FibersExecutor;
@@ -18,6 +18,7 @@ import org.apache.logging.log4j.ThreadContext;
 
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,14 +41,16 @@ public class MetricsManagerImpl
 
 	private static final String CLS_NAME = MetricsManagerImpl.class.getSimpleName();
 	private final Set<MetricsContext> allMetrics = new ConcurrentSkipListSet<>();
+	private final Map<DistributedMetricsContext, PrometheusMetricsExporter> distributedMetrics =
+		new ConcurrentHashMap<>();
 	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
 	private final Lock outputLock = new ReentrantLock();
 	private long outputPeriodMillis;
 	private long lastOutputTs;
 	private long nextOutputTs;
 
-	public MetricsManagerImpl(final FibersExecutor instance) {
-		super(instance);
+	protected MetricsManagerImpl(final FibersExecutor executor) {
+		super(executor);
 	}
 
 	@Override
@@ -60,7 +63,7 @@ public class MetricsManagerImpl
 				for(final MetricsContext metricsCtx : allMetrics) {
 					ThreadContext.put(KEY_STEP_ID, metricsCtx.id());
 					metricsCtx.refreshLastSnapshot();
-					actualConcurrency = metricsCtx.lastSnapshot().actualConcurrencyLast();
+					actualConcurrency = new Double(metricsCtx.lastSnapshot().concurrencySnapshot().mean()).intValue();
 					// threshold load state checks
 					nextConcurrencyThreshold = metricsCtx.concurrencyThreshold();
 					if(nextConcurrencyThreshold > 0 && actualConcurrency >= nextConcurrencyThreshold) {
@@ -112,10 +115,14 @@ public class MetricsManagerImpl
 				Loggers.MSG.debug("Started the metrics manager fiber");
 			}
 			allMetrics.add(metricsCtx);
+			if(metricsCtx instanceof DistributedMetricsContext) {
+				final DistributedMetricsContext distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
+				distributedMetrics.put(distributedMetricsCtx, new PrometheusMetricsExporter(distributedMetricsCtx));
+			}
 			Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
 		} catch(final Exception e) {
 			LogUtil.exception(
-				Level.WARN, e, "Failed to register the metrics context \"{}\"", metricsCtx.toString()
+				Level.WARN, e, "Failed to register the MBean for the metrics context \"{}\"", metricsCtx.toString()
 			);
 		}
 	}
@@ -154,6 +161,16 @@ public class MetricsManagerImpl
 						Loggers.METRICS_STD_OUT.info(
 							new StepResultsMetricsLogMessage(distributedMetricsCtx)
 						);
+//						final AutoCloseable meterMBean = distributedMetrics.remove(distributedMetricsCtx);
+//						if(meterMBean != null) {
+//							try {
+//								meterMBean.close();
+//							} catch(final InterruptRunException e) {
+//								throw e;
+//							} catch(final Exception e) {
+//								LogUtil.exception(Level.WARN, e, "Failed to close the meter MBean");
+//							}
+//						}
 					}
 				} catch(final InterruptedException e) {
 					throw new InterruptRunException(e);
@@ -194,5 +211,6 @@ public class MetricsManagerImpl
 	protected final void doClose() {
 		allMetrics.forEach(MetricsContext::close);
 		allMetrics.clear();
+		distributedMetrics.clear();
 	}
 }
