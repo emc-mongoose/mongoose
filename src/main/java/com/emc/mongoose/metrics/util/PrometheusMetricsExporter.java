@@ -17,6 +17,7 @@ public class PrometheusMetricsExporter
 	private final List<String> labelNames = new ArrayList<>();
 	private final DistributedMetricsContext metricsContext;
 	private final List<Double> quantileValues = new ArrayList<>();
+	private String help = "";
 
 	public PrometheusMetricsExporter(final DistributedMetricsContext context) {
 		this.metricsContext = context;
@@ -55,6 +56,11 @@ public class PrometheusMetricsExporter
 		return this;
 	}
 
+	public PrometheusMetricsExporter help(final String helpInfo) {
+		help = helpInfo;
+		return this;
+	}
+
 	@Override
 	public List<Collector.MetricFamilySamples> collect() {
 		final DistributedMetricsSnapshot metricsSnapshot = metricsContext.lastSnapshot();
@@ -67,14 +73,14 @@ public class PrometheusMetricsExporter
 		metrics.add(metricsSnapshot.failsSnapshot());
 		//
 		final List<Collector.MetricFamilySamples> mfsList = new ArrayList<>();
-		final List<Collector.MetricFamilySamples.Sample> samples = new ArrayList<>();
 		for(final SingleMetricSnapshot metric : metrics) {
+			final List<Collector.MetricFamilySamples.Sample> samples = new ArrayList<>();
 			if(metric instanceof TimingMetricSnapshot) {
 				samples.addAll(collect((TimingMetricSnapshot) metric));
 			} else {
 				samples.addAll(collect((RateMetricSnapshot) metric));
 			}
-			final MetricFamilySamples mfs = new MetricFamilySamples(metric.name(), Type.UNTYPED, "help", samples);
+			final MetricFamilySamples mfs = new MetricFamilySamples(metric.name(), Type.UNTYPED, help, samples);
 			mfsList.add(mfs);
 		}
 		return mfsList;
