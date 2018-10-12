@@ -1,40 +1,41 @@
 package com.emc.mongoose.logging;
 
-import com.emc.mongoose.metrics.context.MetricsContext;
-import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.item.op.OpType;
-import static com.emc.mongoose.env.DateUtil.FMT_DATE_METRICS_TABLE;
-import static com.emc.mongoose.logging.LogUtil.RESET;
-import static com.emc.mongoose.Constants.MIB;
-import static com.emc.mongoose.logging.LogUtil.getFailureRatioAnsiColorCode;
-
+import com.emc.mongoose.metrics.MetricsSnapshot;
+import com.emc.mongoose.metrics.context.MetricsContext;
 import org.apache.commons.lang.text.StrBuilder;
-
-import static org.apache.commons.lang.SystemUtils.LINE_SEPARATOR;
 
 import java.util.Date;
 import java.util.Set;
+
+import static com.emc.mongoose.Constants.MIB;
+import static com.emc.mongoose.env.DateUtil.FMT_DATE_METRICS_TABLE;
+import static com.emc.mongoose.logging.LogUtil.RESET;
+import static com.emc.mongoose.logging.LogUtil.getFailureRatioAnsiColorCode;
+import static org.apache.commons.lang.SystemUtils.LINE_SEPARATOR;
 
 /**
  Created by kurila on 18.05.17.
  Not thread safe, relies on the MetricsManager's (caller) exclusive invocation lock
  */
 public class MetricsAsciiTableLogMessage
-extends LogMessageBase {
+	extends LogMessageBase {
 
 	public static final String TABLE_HEADER =
-		"------------------------------------------------------------------------------------------------------------------------" + LINE_SEPARATOR +
-		" Step Id  | Timestamp  |  Op  |     Concurrency     |       Count       | Step  |   Last Rate    |  Mean    |   Mean    " + LINE_SEPARATOR +
-		" (last 10 |            | type |---------------------|-------------------| Time  |----------------| Latency  | Duration  " + LINE_SEPARATOR +
-		" symbols) |yyMMddHHmmss|      | Current  |   Mean   |   Success  |Failed|  [s]  | [op/s] |[MB/s] |  [us]    |   [us]    " + LINE_SEPARATOR +
-		"----------|------------|------|----------|----------|------------|------|-------|--------|-------|----------|-----------" + LINE_SEPARATOR;
+		"------------------------------------------------------------------------------------------------------------------------" +
+			LINE_SEPARATOR +
+			" Step Id  | Timestamp  |  Op  |     Concurrency     |       Count       | Step  |   Last Rate    |  Mean    |   Mean    " +
+			LINE_SEPARATOR +
+			" (last 10 |            | type |---------------------|-------------------| Time  |----------------| Latency  | Duration  " +
+			LINE_SEPARATOR +
+			" symbols) |yyMMddHHmmss|      | Current  |   Mean   |   Success  |Failed|  [s]  | [op/s] |[MB/s] |  [us]    |   [us]    " +
+			LINE_SEPARATOR +
+			"----------|------------|------|----------|----------|------------|------|-------|--------|-------|----------|-----------" +
+			LINE_SEPARATOR;
 	public static final String TABLE_BORDER_VERTICAL = "|";
 	public static final int TABLE_HEADER_PERIOD = 20;
-
 	private static volatile long ROW_OUTPUT_COUNTER = 0;
-
 	private final Set<MetricsContext> metrics;
-
 	private volatile String formattedMsg = null;
 
 	public MetricsAsciiTableLogMessage(final Set<MetricsContext> metrics) {
@@ -52,14 +53,14 @@ extends LogMessageBase {
 			boolean stdOutColorFlag;
 			for(final MetricsContext metricsCtx : metrics) {
 				snapshot = metricsCtx.lastSnapshot();
-				succCount = snapshot.succCount();
-				failCount = snapshot.failCount();
+				succCount = snapshot.successSnapshot().count();
+				failCount = snapshot.failsSnapshot().count();
 				opType = metricsCtx.opType();
 				stdOutColorFlag = metricsCtx.stdOutColorEnabled();
 				if(0 == ROW_OUTPUT_COUNTER % TABLE_HEADER_PERIOD) {
 					strb.append(TABLE_HEADER);
 				}
-				ROW_OUTPUT_COUNTER ++;
+				ROW_OUTPUT_COUNTER++;
 				strb
 					.appendFixedWidthPadLeft(metricsCtx.id(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
@@ -93,9 +94,9 @@ extends LogMessageBase {
 				}
 				strb
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft(snapshot.actualConcurrencyLast(), 10, ' ')
+					.appendFixedWidthPadLeft(snapshot.concurrencySnapshot().mean(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight(formatFixedWidth(snapshot.actualConcurrencyMean(), 10), 10, ' ')
+					.appendFixedWidthPadRight(formatFixedWidth(snapshot.concurrencySnapshot().mean(), 10), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadLeft(succCount, 12, ' ').append(TABLE_BORDER_VERTICAL);
 				if(stdOutColorFlag) {
@@ -109,13 +110,13 @@ extends LogMessageBase {
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadRight((double) snapshot.elapsedTimeMillis() / 1000, 7, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight(formatFixedWidth(snapshot.succRateLast(), 8), 8, ' ')
+					.appendFixedWidthPadRight(formatFixedWidth(snapshot.successSnapshot().last(), 8), 8, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight(formatFixedWidth(snapshot.byteRateLast() / MIB, 7), 7, ' ')
+					.appendFixedWidthPadRight(formatFixedWidth(snapshot.byteSnapshot().last() / MIB, 7), 7, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft((long) snapshot.latencyMean(), 10, ' ')
+					.appendFixedWidthPadLeft((long) snapshot.latencySnapshot().mean(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft((long) snapshot.durationMean(), 11, ' ')
+					.appendFixedWidthPadLeft((long) snapshot.durationSnapshot().mean(), 11, ' ')
 					.appendNewLine();
 			}
 			formattedMsg = strb.toString();

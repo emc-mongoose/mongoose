@@ -19,4 +19,9 @@ public interface MetricsSnapshot
 	RateMetricSnapshot successSnapshot();
 
 	RateMetricSnapshot failsSnapshot();
+
+	/**
+	 @return value in milliseconds
+	 */
+	long elapsedTimeMillis();
 }

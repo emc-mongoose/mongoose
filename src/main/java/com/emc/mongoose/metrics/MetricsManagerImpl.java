@@ -49,8 +49,8 @@ public class MetricsManagerImpl
 	private long lastOutputTs;
 	private long nextOutputTs;
 
-	protected MetricsManagerImpl(final FibersExecutor executor) {
-		super(executor);
+	public MetricsManagerImpl(final FibersExecutor instance) {
+		super(instance);
 	}
 
 	@Override

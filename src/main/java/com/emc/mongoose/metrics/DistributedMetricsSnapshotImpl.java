@@ -29,4 +29,9 @@ public final class DistributedMetricsSnapshotImpl
 	public int nodeCount() {
 		return nodeCount;
 	}
+
+	@Override
+	public long elapsedTimeMillis() {
+		return 0;
+	}
 }

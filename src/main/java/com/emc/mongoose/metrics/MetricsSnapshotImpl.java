@@ -57,4 +57,9 @@ public class MetricsSnapshotImpl
 	public RateMetricSnapshot failsSnapshot() {
 		return failsSnapshot;
 	}
+
+	@Override
+	public long elapsedTimeMillis() {
+		return 0;
+	}
 }
