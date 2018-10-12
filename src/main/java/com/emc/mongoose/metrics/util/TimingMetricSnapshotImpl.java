@@ -50,7 +50,11 @@ public class TimingMetricSnapshotImpl
 		this.max = newMax;
 		this.min = newMin;
 		this.histogramSnapshot = new HistogramSnapshotImpl(histogramSnapshots);
-		this.metricName = snapshots.get(0).name();
+		if(snapshots.size() != 0) {
+			this.metricName = snapshots.get(0).name();
+		} else {
+			this.metricName = "";
+		}
 	}
 
 	@Override
