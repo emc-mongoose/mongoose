@@ -77,6 +77,8 @@ public interface MetricsContext<S extends MetricsSnapshot>
 
 	void lastOutputTs(final long ts);
 
+	long elapsedTimeMillis();
+
 	@Override
 	void close();
 }

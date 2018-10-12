@@ -12,13 +12,16 @@ public class MetricsSnapshotImpl
 	private transient RateMetricSnapshot failsSnapshot;
 	private transient RateMetricSnapshot successSnapshot;
 	private transient RateMetricSnapshot bytesSnapshot;
+	private final long elapsedTimeMillis;
 
 	public MetricsSnapshotImpl(
-		final TimingMetricSnapshot durSnapshot, final TimingMetricSnapshot latSnapshot,
+		final TimingMetricSnapshot durSnapshot,
+		final TimingMetricSnapshot latSnapshot,
 		final TimingMetricSnapshot actualConcurrencySnapshot,
 		final RateMetricSnapshot failsSnapshot,
 		final RateMetricSnapshot successSnapshot,
-		final RateMetricSnapshot bytesSnapshot
+		final RateMetricSnapshot bytesSnapshot,
+		final long elapsedTimeMillis
 	) {
 		this.durSnapshot = durSnapshot;
 		this.latSnapshot = latSnapshot;
@@ -26,6 +29,7 @@ public class MetricsSnapshotImpl
 		this.failsSnapshot = failsSnapshot;
 		this.successSnapshot = successSnapshot;
 		this.bytesSnapshot = bytesSnapshot;
+		this.elapsedTimeMillis = elapsedTimeMillis;
 	}
 
 	@Override
@@ -60,6 +64,6 @@ public class MetricsSnapshotImpl
 
 	@Override
 	public long elapsedTimeMillis() {
-		return 0;
+		return elapsedTimeMillis;
 	}
 }

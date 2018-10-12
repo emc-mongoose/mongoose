@@ -2,8 +2,8 @@ package com.emc.mongoose.metrics.util;
 
 /**
  @author veronika K. on 10.10.18 */
-interface TimingMeter
-	extends Meter {
+public interface TimingMeter<S extends SingleMetricSnapshot>
+	extends Meter<S> {
 
 	long sum();
 

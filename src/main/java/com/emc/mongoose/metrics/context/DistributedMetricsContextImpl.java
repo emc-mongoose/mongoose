@@ -116,7 +116,7 @@ public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotI
 		final TimingMetricSnapshot durSnapshot = new TimingMetricSnapshotImpl(durSnapshots);
 		final TimingMetricSnapshot latSnapshot = new TimingMetricSnapshotImpl(latSnapshots);
 		lastSnapshot = (S) new DistributedMetricsSnapshotImpl(durSnapshot, latSnapshot, actualConcurrencySnapshot,
-			failsSnapshot, successSnapshot, bytesSnapshot, nodeCountSupplier.getAsInt()
+			failsSnapshot, successSnapshot, bytesSnapshot, nodeCountSupplier.getAsInt(), elapsedTimeMillis()
 		);
 		if(metricsListener != null) {
 			metricsListener.notify(lastSnapshot);

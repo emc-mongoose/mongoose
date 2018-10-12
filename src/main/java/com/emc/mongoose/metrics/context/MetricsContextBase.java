@@ -4,19 +4,9 @@ import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.github.akurilov.commons.system.SizeInBytes;
 
-import static com.emc.mongoose.Constants.METRIC_LABEL_CONC;
-import static com.emc.mongoose.Constants.METRIC_LABEL_ID;
-import static com.emc.mongoose.Constants.METRIC_LABEL_NODE;
-import static com.emc.mongoose.Constants.METRIC_LABEL_OP_TYPE;
-import static com.emc.mongoose.Constants.METRIC_LABEL_SIZE;
-
 public abstract class MetricsContextBase<S extends MetricsSnapshot>
 	implements MetricsContext<S> {
 
-	protected final String[] labelValues;
-	protected final String[] labelNames =
-		{ METRIC_LABEL_ID, METRIC_LABEL_OP_TYPE, METRIC_LABEL_SIZE, METRIC_LABEL_CONC, METRIC_LABEL_NODE };
-	//
 	protected final long ts;
 	protected final String id;
 	protected final OpType opType;
@@ -44,13 +34,6 @@ public abstract class MetricsContextBase<S extends MetricsSnapshot>
 		this.itemDataSize = itemDataSize;
 		this.stdOutColorFlag = stdOutColorFlag;
 		this.outputPeriodMillis = outputPeriodMillis;
-		this.labelValues = new String[] {
-			id,
-			opType.name(),
-			itemDataSize.toString(),
-			String.valueOf(concurrencyLimit),
-			String.valueOf(nodeCount)
-		};
 	}
 
 	@Override
@@ -187,5 +170,9 @@ public abstract class MetricsContextBase<S extends MetricsSnapshot>
 			thresholdMetricsCtx.close();
 			thresholdMetricsCtx = null;
 		}
+	}
+
+	public long elapsedTimeMillis() {
+		return (System.currentTimeMillis() - ts);
 	}
 }

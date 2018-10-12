@@ -7,8 +7,8 @@ import java.util.concurrent.atomic.LongAdder;
 
 import static java.lang.Math.exp;
 
-public class RateMeterImpl
-	implements RateMeter {
+public class RateMeterImpl<S extends SingleMetricSnapshot>
+	implements RateMeter<S> {
 
 	private static final long TICK_INTERVAL = TimeUnit.SECONDS.toMillis(1);
 	//
@@ -72,8 +72,13 @@ public class RateMeterImpl
 	}
 
 	@Override
-	public RateMetricSnapshot snapshot() {
-		return new RateMetricSnapshotImpl(lastRate(), meanRate(), metricName, count());
+	public S snapshot() {
+		return (S) new RateMetricSnapshotImpl(lastRate(), meanRate(), metricName, count());
+	}
+
+	@Override
+	public long elapsedTimeMillis() {
+		return (clock.millis() - startTime);
 	}
 
 	@Override

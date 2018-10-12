@@ -2,8 +2,8 @@ package com.emc.mongoose.metrics.util;
 
 /**
  @author veronika K. on 03.10.18 */
-public interface RateMeter
-	extends Meter {
+public interface RateMeter<S extends SingleMetricSnapshot>
+	extends Meter<S> {
 
 	void resetStartTime();
 	//
@@ -23,4 +23,6 @@ public interface RateMeter
 	double meanRate();
 
 	double lastRate();
+
+	long elapsedTimeMillis();
 }

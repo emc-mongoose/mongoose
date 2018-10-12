@@ -5,8 +5,8 @@ import java.util.concurrent.atomic.LongAdder;
 
 /**
  @author veronika K. on 10.10.18 */
-public class TimingMeterImpl
-	implements TimingMeter {
+public class TimingMeterImpl<S extends SingleMetricSnapshot>
+	implements TimingMeter<S> {
 
 	private final HistogramImpl histogramImpl;
 	private final LongAdder count = new LongAdder();
@@ -44,8 +44,9 @@ public class TimingMeterImpl
 		return metricName;
 	}
 
-	public SingleMetricSnapshot snapshot() {
-		return new TimingMetricSnapshotImpl(sum(), count(), min(), max(), mean(), histogramImpl.snapshot(), metricName);
+	public S snapshot() {
+		return (S) new TimingMetricSnapshotImpl(
+			sum(), count(), min(), max(), mean(), histogramImpl.snapshot(), metricName);
 	}
 
 	public long sum() {

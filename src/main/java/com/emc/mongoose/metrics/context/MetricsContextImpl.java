@@ -2,7 +2,10 @@ package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.MetricsSnapshotImpl;
+import com.emc.mongoose.metrics.util.RateMeter;
 import com.emc.mongoose.metrics.util.RateMeterImpl;
+import com.emc.mongoose.metrics.util.SingleMetricSnapshot;
+import com.emc.mongoose.metrics.util.TimingMeter;
 import com.emc.mongoose.metrics.util.TimingMeterImpl;
 import com.emc.mongoose.metrics.util.TimingMetricSnapshot;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -25,9 +28,9 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 	implements MetricsContext<S> {
 
 	private final Clock clock = Clock.systemDefaultZone();
-	private final TimingMeterImpl reqDuration, respLatency, actualConcurrency;
-	private final RateMeterImpl throughputSuccess, throughputFail, reqBytes;
-	private volatile TimingMetricSnapshot reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot;
+	private final TimingMeter reqDuration, respLatency, actualConcurrency;
+	private final RateMeter throughputSuccess, throughputFail, reqBytes;
+	private volatile SingleMetricSnapshot reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot;
 	private final IntSupplier actualConcurrencyGauge;
 	private final Lock timingLock = new ReentrantLock();
 	private volatile long lastDurationSum = 0;
@@ -44,14 +47,14 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 		);
 		//
 		respLatency = new TimingMeterImpl(DEFAULT_RESERVOIR_SIZE, METRIC_NAME_LAT);
-		respLatSnapshot = (TimingMetricSnapshot) respLatency.snapshot();
+		respLatSnapshot = respLatency.snapshot();
 		//
 		reqDuration = new TimingMeterImpl(DEFAULT_RESERVOIR_SIZE, METRIC_NAME_DUR);
-		reqDurSnapshot = (TimingMetricSnapshot) reqDuration.snapshot();
+		reqDurSnapshot = reqDuration.snapshot();
 		//
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
 		actualConcurrency = new TimingMeterImpl(DEFAULT_RESERVOIR_SIZE, METRIC_NAME_CONC);
-		actualConcurrencySnapshot = (TimingMetricSnapshot) actualConcurrency.snapshot();
+		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		//
 		throughputSuccess = new RateMeterImpl(clock, updateIntervalSec, METRIC_NAME_SUCC);
 		//
@@ -193,8 +196,8 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			if(lastDurationSum != reqDuration.sum() || lastLatencySum != respLatency.sum()) {
 				if(timingLock.tryLock()) {
 					try {
-						reqDurSnapshot = (TimingMetricSnapshot) reqDuration.snapshot();
-						respLatSnapshot = (TimingMetricSnapshot) respLatency.snapshot();
+						reqDurSnapshot =reqDuration.snapshot();
+						respLatSnapshot = respLatency.snapshot();
 					} finally {
 						timingLock.unlock();
 					}
@@ -202,10 +205,10 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 				lastLatencySum = respLatency.sum();
 				lastDurationSum = reqDuration.sum();
 			}
-			actualConcurrencySnapshot = (TimingMetricSnapshot) actualConcurrency.snapshot();
+			actualConcurrencySnapshot =actualConcurrency.snapshot();
 		}
 		lastSnapshot = (S) new MetricsSnapshotImpl(reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot,
-			throughputFail.snapshot(), throughputSuccess.snapshot(), reqBytes.snapshot()
+			throughputFail.snapshot(), throughputSuccess.snapshot(), reqBytes.snapshot(), elapsedTimeMillis()
 		);
 		super.refreshLastSnapshot();
 	}

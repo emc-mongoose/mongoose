@@ -10,6 +10,7 @@ public final class DistributedMetricsSnapshotImpl
 	implements DistributedMetricsSnapshot {
 
 	private final int nodeCount;
+	private long elapsedTimeMillis;
 
 	public DistributedMetricsSnapshotImpl(
 		final TimingMetricSnapshot durSnapshot,
@@ -18,11 +19,15 @@ public final class DistributedMetricsSnapshotImpl
 		final RateMetricSnapshot failsSnapshot,
 		final RateMetricSnapshot successSnapshot,
 		final RateMetricSnapshot bytesSnapshot,
-		final int nodeCount
+		final int nodeCount,
+		final long elapsedTimeMillis
 	) {
-		super(durSnapshot, latSnapshot, actualConcurrencySnapshot, failsSnapshot, successSnapshot, bytesSnapshot
+		super(
+			durSnapshot, latSnapshot, actualConcurrencySnapshot, failsSnapshot, successSnapshot, bytesSnapshot,
+			elapsedTimeMillis
 		);
 		this.nodeCount = nodeCount;
+		this.elapsedTimeMillis = elapsedTimeMillis;
 	}
 
 	@Override
@@ -32,6 +37,6 @@ public final class DistributedMetricsSnapshotImpl
 
 	@Override
 	public long elapsedTimeMillis() {
-		return 0;
+		return elapsedTimeMillis;
 	}
 }
