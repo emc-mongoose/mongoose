@@ -34,7 +34,11 @@ public class RateMetricSnapshotImpl
 		this.lastRate = newLastRate / snapshotsCount;
 		this.meanRate = newMeanRate / snapshotsCount;
 		this.count = newCount;
-		this.metricName = snapshots.get(0).name();
+		if(snapshots.size() != 0) {
+			this.metricName = snapshots.get(0).name();
+		} else {
+			this.metricName = "";
+		}
 	}
 
 	@Override

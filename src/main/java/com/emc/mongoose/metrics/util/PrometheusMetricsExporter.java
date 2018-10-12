@@ -31,7 +31,7 @@ public class PrometheusMetricsExporter
 		return this;
 	}
 
-	public PrometheusMetricsExporter quantile(final double[] values) {
+	public PrometheusMetricsExporter quantiles(final double[] values) {
 		for(int i = 0; i < values.length; ++ i) {
 			quantile(values[i]);
 		}
@@ -70,10 +70,12 @@ public class PrometheusMetricsExporter
 		final List<Collector.MetricFamilySamples.Sample> samples = new ArrayList<>();
 		for(final SingleMetricSnapshot metric : metrics) {
 			if(metric instanceof TimingMetricSnapshot) {
-				collect((TimingMetricSnapshot) metric);
+				samples.addAll(collect((TimingMetricSnapshot) metric));
 			} else {
-				collect((RateMetricSnapshot) metric);
+				samples.addAll(collect((RateMetricSnapshot) metric));
 			}
+			final MetricFamilySamples mfs = new MetricFamilySamples(metric.name(), Type.UNTYPED, "help", samples);
+			mfsList.add(mfs);
 		}
 		return mfsList;
 	}
@@ -104,16 +106,12 @@ public class PrometheusMetricsExporter
 			metric.sum()
 		));
 		samples.add(
-			new Collector.MetricFamilySamples.Sample(metricName + "_max", labelNames, labelValues,
-				metric.max()
+			new Collector.MetricFamilySamples.Sample(metricName + "_mean", labelNames, labelValues,
+				metric.mean()
 			));
 		samples.add(
 			new Collector.MetricFamilySamples.Sample(metricName + "_min", labelNames, labelValues,
 				metric.min()
-			));
-		samples.add(
-			new Collector.MetricFamilySamples.Sample(metricName + "_min", labelNames, labelValues,
-				metric.mean()
 			));
 		for(int i = 0; i < quantileValues.size(); ++ i) {
 			samples.add(
@@ -121,6 +119,10 @@ public class PrometheusMetricsExporter
 					labelNames, labelValues, snapshot.quantile(quantileValues.get(i))
 				));
 		}
+		samples.add(
+			new Collector.MetricFamilySamples.Sample(metricName + "_max", labelNames, labelValues,
+				metric.max()
+			));
 		return samples;
 	}
 }

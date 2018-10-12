@@ -141,8 +141,10 @@ public class MetricsManagerImpl
 			Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
 		} catch(final Exception e) {
 			LogUtil.exception(
-				Level.WARN, e, "Failed to register the MBean for the metrics context \"{}\"", metricsCtx.toString()
+				Level.WARN, e, "Failed to register the Prometheus Exporter for the metrics context \"{}\"",
+				metricsCtx.toString()
 			);
+			e.printStackTrace();
 		}
 	}
 
