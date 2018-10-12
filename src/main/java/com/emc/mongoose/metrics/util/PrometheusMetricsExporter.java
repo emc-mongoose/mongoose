@@ -16,7 +16,6 @@ public class PrometheusMetricsExporter
 	private final List<String> labelValues = new ArrayList<>();
 	private final List<String> labelNames = new ArrayList<>();
 	private final DistributedMetricsContext metricsContext;
-	//private final List<Meter> metrics = new ArrayList<>();
 	private final List<Double> quantileValues = new ArrayList<>();
 
 	public PrometheusMetricsExporter(final DistributedMetricsContext context) {

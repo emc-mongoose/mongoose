@@ -69,7 +69,6 @@ public class RateMeterImpl
 	@Override
 	public long count() {
 		return count.sum();
-		//return count.longValue();
 	}
 
 	@Override
