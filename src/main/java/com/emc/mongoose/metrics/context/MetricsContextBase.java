@@ -173,6 +173,6 @@ public abstract class MetricsContextBase<S extends MetricsSnapshot>
 	}
 
 	public long elapsedTimeMillis() {
-		return (System.currentTimeMillis() - ts);
+		return (System.currentTimeMillis() - tsStart);
 	}
 }
