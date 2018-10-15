@@ -26,7 +26,6 @@ public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotI
 	private final boolean avgPersistFlag;
 	private final boolean sumPersistFlag;
 	private final boolean perfDbResultsFileFlag;
-	private final List<Meter> metrics;
 	private volatile DistributedMetricsListener metricsListener = null;
 
 	public DistributedMetricsContextImpl(
@@ -44,7 +43,6 @@ public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotI
 		this.avgPersistFlag = avgPersistFlag;
 		this.sumPersistFlag = sumPersistFlag;
 		this.perfDbResultsFileFlag = perfDbResultsFileFlag;
-		this.metrics = new ArrayList<>();
 	}
 
 	@Override
