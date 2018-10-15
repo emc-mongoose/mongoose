@@ -46,7 +46,7 @@ public class TimingMetricSnapshotImpl
 		}
 		this.count = newCount;
 		this.sum = newSum;
-		this.mean = ((double) newSum) / snapshotsCount;
+		this.mean = ((double) newSum) / (newCount);
 		this.max = newMax;
 		this.min = newMin;
 		this.histogramSnapshot = new HistogramSnapshotImpl(histogramSnapshots);

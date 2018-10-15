@@ -205,6 +205,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 				lastLatencySum = respLatency.sum();
 				lastDurationSum = reqDuration.sum();
 			}
+			actualConcurrency.update(actualConcurrencyGauge.getAsInt());
 			actualConcurrencySnapshot = actualConcurrency.snapshot();
 		}
 		lastSnapshot = (S) new MetricsSnapshotImpl(reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot,
