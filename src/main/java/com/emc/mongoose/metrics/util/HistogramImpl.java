@@ -23,6 +23,13 @@ public class HistogramImpl
 		this(new ConcurrentSlidingWindowReservoir());
 	}
 
+	public HistogramImpl(final long[] values) {
+		this();
+		for(int i = 0; i < values.length; ++ i) {
+			update(values[i]);
+		}
+	}
+
 	@Override
 	public void update(final int value) {
 		update((long) value);

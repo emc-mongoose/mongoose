@@ -1,8 +1,14 @@
 package com.emc.mongoose.logging;
 
+import com.emc.mongoose.Constants;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshotImpl;
+import com.emc.mongoose.metrics.util.HistogramImpl;
+import com.emc.mongoose.metrics.util.RateMetricSnapshot;
+import com.emc.mongoose.metrics.util.RateMetricSnapshotImpl;
+import com.emc.mongoose.metrics.util.TimingMeterImpl;
+import com.emc.mongoose.metrics.util.TimingMetricSnapshot;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -40,14 +46,30 @@ public class StepResultsMetricsLogMessageTest
 		}
 	}
 
-	private static final DistributedMetricsSnapshot SNAPSHOT = new DistributedMetricsSnapshotImpl(null, null, null,
-		null, null, null, 1, 1
-	);
-//	private static final DistributedMetricsSnapshot SNAPSHOT = new DistributedMetricsSnapshotImpl(
-//		COUNT, 789, 123, 4.56, 7890123, 4567, 1234567890,
-//		123456, 456789, 7.89, 10
-//		, 2, new HistogramSnapshotImpl(DURATIONS), new HistogramSnapshotImpl(LATENCIES)
-//	);
+	private static final long[] CONCURRENCIES = new long[COUNT];
+
+	static {
+		for(int i = 0; i < COUNT; i++) {
+			CONCURRENCIES[i] = 10;
+		}
+	}
+
+	private static final DistributedMetricsSnapshot SNAPSHOT;
+
+	static {
+		final TimingMetricSnapshot dS = new TimingMeterImpl<TimingMetricSnapshot>(
+			new HistogramImpl(DURATIONS), Constants.METRIC_NAME_DUR).snapshot();
+		final TimingMetricSnapshot lS = new TimingMeterImpl<TimingMetricSnapshot>(
+			new HistogramImpl(LATENCIES), Constants.METRIC_NAME_LAT).snapshot();
+		final TimingMetricSnapshot cS = new TimingMeterImpl<TimingMetricSnapshot>(
+			new HistogramImpl(CONCURRENCIES), Constants.METRIC_NAME_CONC).snapshot();
+		final RateMetricSnapshot fS = new RateMetricSnapshotImpl(0, 0, Constants.METRIC_NAME_FAIL, 0);
+		final RateMetricSnapshot sS = new RateMetricSnapshotImpl(
+			COUNT / durSum, COUNT / durSum, Constants.METRIC_NAME_SUCC, COUNT);
+		final RateMetricSnapshot bS = new RateMetricSnapshotImpl(
+			COUNT / durSum, COUNT / durSum, Constants.METRIC_NAME_BYTE, new Double(COUNT * Constants.K).longValue());
+		SNAPSHOT = new DistributedMetricsSnapshotImpl(dS, lS, cS, fS, sS, bS, 2, 123456);
+	}
 
 	public StepResultsMetricsLogMessageTest() {
 		super(OP_TYPE, STEP_ID, 0, SNAPSHOT);
