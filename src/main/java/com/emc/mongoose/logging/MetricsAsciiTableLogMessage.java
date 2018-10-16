@@ -94,7 +94,7 @@ public class MetricsAsciiTableLogMessage
 				}
 				strb
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft(snapshot.concurrencySnapshot().mean(), 10, ' ')
+					.appendFixedWidthPadLeft(snapshot.concurrencySnapshot().histogramSnapshot().last(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadRight(formatFixedWidth(snapshot.concurrencySnapshot().mean(), 10), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)

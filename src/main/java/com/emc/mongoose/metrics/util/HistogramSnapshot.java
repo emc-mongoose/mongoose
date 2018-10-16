@@ -17,4 +17,6 @@ public interface HistogramSnapshot {
 	long mean();
 
 	long sum();
+
+	long last();
 }

@@ -39,7 +39,7 @@ public final class MetricsCsvLogMessage
 				snapshot instanceof DistributedMetricsSnapshot ? ((DistributedMetricsSnapshot) snapshot).nodeCount() : 1
 			)
 			.append(',')
-			.append(snapshot.concurrencySnapshot().mean()).append(',')
+			.append(snapshot.concurrencySnapshot().histogramSnapshot().last()).append(',')
 			.append(snapshot.concurrencySnapshot().mean()).append(',')
 			.append(snapshot.successSnapshot().count()).append(',')
 			.append(snapshot.failsSnapshot().count()).append(',')

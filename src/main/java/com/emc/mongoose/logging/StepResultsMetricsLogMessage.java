@@ -49,7 +49,7 @@ public class StepResultsMetricsLogMessage
 			.append("  Concurrency:                 ").append(lineSep)
 			.append("    Limit Per Storage Driver:  ").append(concurrencyLimit).append(lineSep)
 			.append("    Actual:                    ").append(lineSep)
-			.append("      Last:                    ").append(snapshot.concurrencySnapshot().mean()).append(lineSep)
+			.append("      Last:                    ").append(snapshot.concurrencySnapshot().histogramSnapshot().last()).append(lineSep)
 			.append("      Mean:                    ").append(snapshot.concurrencySnapshot().mean()).append(lineSep)
 			.append("  Operations Count:            ").append(lineSep)
 			.append("    Successful:                ").append(snapshot.successSnapshot().count()).append(lineSep)

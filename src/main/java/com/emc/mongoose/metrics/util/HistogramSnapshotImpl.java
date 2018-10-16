@@ -101,4 +101,9 @@ public class HistogramSnapshotImpl
 		}
 		return sum;
 	}
+
+	@Override
+	public long last() {
+		return values[values.length - 1];
+	}
 }

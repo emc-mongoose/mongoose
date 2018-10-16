@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -43,6 +44,8 @@ public class MetricsManagerTest {
 	private static final int MARK_BYTES = 10;
 	private static final int MARK_DUR = 11; //dur must be more than lat (dur > lat)
 	private static final int MARK_LAT = 10;
+	private static final String[] TIMING_METRICS = { "count", "sum", "mean", "min", "max" };
+	private static final String[] RATE_METRICS = { "count", "meanRate", "lastRate" };
 	private final String STEP_ID = MetricsManagerTest.class.getSimpleName();
 	private final OpType OP_TYPE = OpType.CREATE;
 	private final IntSupplier nodeCountSupplier = () -> 1;
@@ -90,21 +93,39 @@ public class MetricsManagerTest {
 			metricsContext.markSucc(MARK_BYTES, MARK_DUR, MARK_LAT);
 			metricsContext.markFail();
 			metricsContext.refreshLastSnapshot();
-			//TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(1);
 		}
 		final String result = resultFromServer("http://localhost:" + PORT + CONTEXT);
 		System.out.println(result);
 		//
-		final String[] metrics = { "count", "sum", "mean", "min", "max" };
-		final Map expectedValues = new HashMap();
-		//duration
-		final Double[] values = { new Double(ITERATION_COUNT), }
-		for(final String key : metrics) {
-			expectedValues.put(key, new Double(ITERATION_COUNT));
-		}
-		testMetric(result, Constants.METRIC_NAME_DUR, expectedValues);
+		testTimingMetric(result, MARK_DUR, Constants.METRIC_NAME_DUR);
+		testTimingMetric(result, MARK_LAT, Constants.METRIC_NAME_LAT);
+		testTimingMetric(result, nodeCountSupplier.getAsInt(), Constants.METRIC_NAME_CONC);
+		//
+//		testRateMetric(result, ITEM_DATA_SIZE.get(), Constants.METRIC_NAME_BYTE);
+//		testRateMetric(result, ITERATION_COUNT, Constants.METRIC_NAME_FAIL);
+//		testRateMetric(result, ITERATION_COUNT, Constants.METRIC_NAME_SUCC);
 		//
 		((MetricsManagerImpl) metricsMgr).doClose();
+	}
+
+	private void testTimingMetric(final String stdOut, final double markValue, final String name) {
+		final Map expectedValues = new HashMap();
+		final Double[] values =
+			{ (double) ITERATION_COUNT, markValue * ITERATION_COUNT, markValue, markValue, markValue };
+		for(int i = 0; i < TIMING_METRICS.length; ++ i) {
+			expectedValues.put(TIMING_METRICS[i], values[i]);
+		}
+		testMetric(stdOut, name, expectedValues);
+	}
+
+	private void testRateMetric(final String stdOut, final double markValue, final String name) {
+		final Map expectedValues = new HashMap();
+		final Double[] values = { (double) ITERATION_COUNT, markValue, markValue };
+		for(int i = 0; i < RATE_METRICS.length; ++ i) {
+			expectedValues.put(TIMING_METRICS[i], values[i]);
+		}
+		testMetric(stdOut, name, expectedValues);
 	}
 
 	private String resultFromServer(final String urlPath) {
