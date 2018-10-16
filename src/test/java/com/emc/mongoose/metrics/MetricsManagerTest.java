@@ -40,10 +40,10 @@ public class MetricsManagerTest {
 	private static final int PORT = 1111;
 	private static final String CONTEXT = "/metrics";
 	private static final int ITERATION_COUNT = 10;
-	private static final Double ACCURACY = 0.0001;
-	private static final int MARK_BYTES = 10;
-	private static final int MARK_DUR = 11; //dur must be more than lat (dur > lat)
-	private static final int MARK_LAT = 10;
+	private static final Double TIMING_ACCURACY = 0.0001;
+	private static final Double RATE_ACCURACY = 0.1;
+	private static final int MARK_DUR = 1_100_000; //dur must be more than lat (dur > lat)
+	private static final int MARK_LAT = 1_000_000;
 	private static final String[] TIMING_METRICS = { "count", "sum", "mean", "min", "max" };
 	private static final String[] RATE_METRICS = { "count", "meanRate", "lastRate" };
 	private final String STEP_ID = MetricsManagerTest.class.getSimpleName();
@@ -52,7 +52,7 @@ public class MetricsManagerTest {
 	private final int concurrencyLimit = 0;
 	private final int concurrencyThreshold = 0;
 	private final SizeInBytes ITEM_DATA_SIZE = ItemSize.SMALL.getValue();
-	private final int UPDATE_INTERVAL_SEC = 1;
+	private final int UPDATE_INTERVAL_SEC = (int) TimeUnit.MICROSECONDS.toSeconds(MARK_DUR);
 	private Supplier<List<MetricsSnapshot>> snapshotsSupplier;
 	private final Server server = new Server(PORT);
 	//
@@ -90,10 +90,10 @@ public class MetricsManagerTest {
 		final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
 		metricsMgr.register(distributedMetricsContext);
 		for(int i = 0; i < ITERATION_COUNT; ++ i) {
-			metricsContext.markSucc(MARK_BYTES, MARK_DUR, MARK_LAT);
+			metricsContext.markSucc(ITEM_DATA_SIZE.get(), MARK_DUR, MARK_LAT);
 			metricsContext.markFail();
 			metricsContext.refreshLastSnapshot();
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.MICROSECONDS.sleep(MARK_DUR);
 		}
 		final String result = resultFromServer("http://localhost:" + PORT + CONTEXT);
 		System.out.println(result);
@@ -102,30 +102,39 @@ public class MetricsManagerTest {
 		testTimingMetric(result, MARK_LAT, Constants.METRIC_NAME_LAT);
 		testTimingMetric(result, nodeCountSupplier.getAsInt(), Constants.METRIC_NAME_CONC);
 		//
-//		testRateMetric(result, ITEM_DATA_SIZE.get(), Constants.METRIC_NAME_BYTE);
-//		testRateMetric(result, ITERATION_COUNT, Constants.METRIC_NAME_FAIL);
-//		testRateMetric(result, ITERATION_COUNT, Constants.METRIC_NAME_SUCC);
+		final int stepTimeMicroSec = MARK_DUR;
+		testRateMetric(result, ITEM_DATA_SIZE.get(), Constants.METRIC_NAME_BYTE, stepTimeMicroSec);
+		testRateMetric(result, 1, Constants.METRIC_NAME_FAIL, stepTimeMicroSec);
+		testRateMetric(result, 1, Constants.METRIC_NAME_SUCC, stepTimeMicroSec);
 		//
 		((MetricsManagerImpl) metricsMgr).doClose();
 	}
 
 	private void testTimingMetric(final String stdOut, final double markValue, final String name) {
 		final Map expectedValues = new HashMap();
-		final Double[] values =
-			{ (double) ITERATION_COUNT, markValue * ITERATION_COUNT, markValue, markValue, markValue };
+		double count = ITERATION_COUNT;
+		if(name.equals(Constants.METRIC_NAME_CONC)) {
+			// +1, because in the refreshLastSnapshot lat & dur account only after the condition, and concurrency - every time
+			++ count;
+		}
+		final Double[] values = { count, markValue * count, markValue, markValue, markValue };
 		for(int i = 0; i < TIMING_METRICS.length; ++ i) {
 			expectedValues.put(TIMING_METRICS[i], values[i]);
 		}
-		testMetric(stdOut, name, expectedValues);
+		testMetric(stdOut, name, expectedValues, TIMING_ACCURACY);
 	}
 
-	private void testRateMetric(final String stdOut, final double markValue, final String name) {
+	private void testRateMetric(final String stdOut, final double markValue, final String name, final int time) {
 		final Map expectedValues = new HashMap();
-		final Double[] values = { (double) ITERATION_COUNT, markValue, markValue };
-		for(int i = 0; i < RATE_METRICS.length; ++ i) {
-			expectedValues.put(TIMING_METRICS[i], values[i]);
+		double count = ITERATION_COUNT;
+		if(name.equals(Constants.METRIC_NAME_BYTE)) {
+			count *= markValue;
 		}
-		testMetric(stdOut, name, expectedValues);
+		final Double[] values = { count, markValue * time, markValue };
+		for(int i = 0; i < RATE_METRICS.length; ++ i) {
+			expectedValues.put(RATE_METRICS[i], values[i]);
+		}
+		testMetric(stdOut, name, expectedValues, RATE_ACCURACY);
 	}
 
 	private String resultFromServer(final String urlPath) {
@@ -146,7 +155,8 @@ public class MetricsManagerTest {
 	}
 
 	private void testMetric(
-		final String resultOutput, final String metricName, final Map<String, Double> expectedValues
+		final String resultOutput, final String metricName, final Map<String, Double> expectedValues,
+		final double accuracy
 	) {
 		for(final String key : expectedValues.keySet()) {
 			final Pattern p = Pattern.compile(metricName + "_" + key + "\\{.+\\} .+");
@@ -154,7 +164,8 @@ public class MetricsManagerTest {
 			Assert.assertEquals(m.find(), true);
 			final Double actualValue = Double.valueOf(m.group().split("}")[1]);
 			final Double expectedValue = Double.valueOf(expectedValues.get(key));
-			Assert.assertEquals(actualValue, expectedValue, expectedValue * ACCURACY);
+			Assert.assertEquals(
+				"metric : " + metricName + "_" + key, actualValue, expectedValue, expectedValue * accuracy);
 		}
 	}
 }
