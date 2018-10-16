@@ -69,24 +69,22 @@ public class MetricsManagerTest {
 		context.addServlet(new ServletHolder(new MetricsServlet()), CONTEXT);
 		server.start();
 		//
-		metricsContext = new MetricsContextImpl<>(STEP_ID, OP_TYPE, () -> 1, concurrencyLimit,
-			concurrencyThreshold, ITEM_DATA_SIZE, UPDATE_INTERVAL_SEC, true
+		metricsContext = new MetricsContextImpl<>(
+			STEP_ID, OP_TYPE, () -> 1, concurrencyLimit, concurrencyThreshold, ITEM_DATA_SIZE, UPDATE_INTERVAL_SEC, true
 		);
 		snapshotsSupplier = () -> Arrays.asList(metricsContext.lastSnapshot());
 		metricsContext.start();
 		//
-		distributedMetricsContext = new DistributedMetricsContextImpl(STEP_ID, OP_TYPE,
-			nodeCountSupplier,
-			concurrencyLimit, concurrencyThreshold, ITEM_DATA_SIZE, UPDATE_INTERVAL_SEC, true, true,
-			true, true, snapshotsSupplier
+		distributedMetricsContext = new DistributedMetricsContextImpl(
+			STEP_ID, OP_TYPE, nodeCountSupplier, concurrencyLimit, concurrencyThreshold, ITEM_DATA_SIZE,
+			UPDATE_INTERVAL_SEC, true, true, true, true, snapshotsSupplier
 		);
 		distributedMetricsContext.start();
-		//
 	}
 
 	@Test
 	public void test()
-	throws InterruptedException {
+	throws Exception {
 		final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
 		metricsMgr.register(distributedMetricsContext);
 		for(int i = 0; i < ITERATION_COUNT; ++ i) {
@@ -107,17 +105,17 @@ public class MetricsManagerTest {
 		testRateMetric(result, 1, Constants.METRIC_NAME_FAIL, stepTimeMicroSec);
 		testRateMetric(result, 1, Constants.METRIC_NAME_SUCC, stepTimeMicroSec);
 		//
-		((MetricsManagerImpl) metricsMgr).doClose();
+		metricsMgr.close();
 	}
 
 	private void testTimingMetric(final String stdOut, final double markValue, final String name) {
-		final Map expectedValues = new HashMap();
+		final Map<String, Double> expectedValues = new HashMap<>();
 		double count = ITERATION_COUNT;
 		if(name.equals(Constants.METRIC_NAME_CONC)) {
 			// +1, because in the refreshLastSnapshot lat & dur account only after the condition, and concurrency - every time
 			++ count;
 		}
-		final Double[] values = { count, markValue * count, markValue, markValue, markValue };
+		final double[] values = { count, markValue * count, markValue, markValue, markValue };
 		for(int i = 0; i < TIMING_METRICS.length; ++ i) {
 			expectedValues.put(TIMING_METRICS[i], values[i]);
 		}
@@ -125,7 +123,7 @@ public class MetricsManagerTest {
 	}
 
 	private void testRateMetric(final String stdOut, final double markValue, final String name, final int time) {
-		final Map expectedValues = new HashMap();
+		final Map<String, Double> expectedValues = new HashMap<>();
 		double count = ITERATION_COUNT;
 		if(name.equals(Constants.METRIC_NAME_BYTE)) {
 			count *= markValue;
@@ -137,21 +135,15 @@ public class MetricsManagerTest {
 		testMetric(stdOut, name, expectedValues, RATE_ACCURACY);
 	}
 
-	private String resultFromServer(final String urlPath) {
-		final StringBuffer stringBuffer = new StringBuffer();
-		try {
-			final URL url = new URL(urlPath);
-			final URLConnection conn = url.openConnection();
-			final BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+	private String resultFromServer(final String urlPath)
+	throws Exception {
+		final StringBuilder stringBuffer = new StringBuilder();
+		final URL url = new URL(urlPath);
+		final URLConnection conn = url.openConnection();
+		try(final BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
 			br.lines().forEach(l -> stringBuffer.append(l).append("\n"));
-			br.close();
-		} catch(final MalformedURLException ex) {
-			ex.printStackTrace();
-		} catch(final IOException e) {
-			e.printStackTrace();
-		} finally {
-			return stringBuffer.toString();
 		}
+		return stringBuffer.toString();
 	}
 
 	private void testMetric(
