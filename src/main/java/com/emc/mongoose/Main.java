@@ -186,6 +186,13 @@ public final class Main {
 		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
 	}
 
+	private static void addControlService(final Server server) {
+		final ServletContextHandler context = new ServletContextHandler();
+		context.setContextPath("/");
+		server.setHandler(context);
+		//context.addServlet(new ServletHolder(new MetricsServlet()), "/control");
+	}
+
 	private static void runNode(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
 	throws InterruptRunException, InterruptedException {
 		final int listenPort = config.intVal("load-step-node-port");
