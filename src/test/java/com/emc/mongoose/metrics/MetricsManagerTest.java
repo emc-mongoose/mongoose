@@ -130,7 +130,8 @@ public class MetricsManagerTest {
 		if(name.equals(Constants.METRIC_NAME_BYTE)) {
 			count *= markValue;
 		}
-		final Double[] values = { count, markValue * time, markValue };
+		//TODO: micros?
+		final Double[] values = { count, markValue, markValue };
 		for(int i = 0; i < RATE_METRICS.length; ++ i) {
 			expectedValues.put(RATE_METRICS[i], values[i]);
 		}
