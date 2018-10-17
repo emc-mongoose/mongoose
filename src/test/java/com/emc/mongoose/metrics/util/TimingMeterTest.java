@@ -10,8 +10,7 @@ public class TimingMeterTest {
 	final private static int INTERVALS = 100;
 
 	@Test
-	public void test()
-	throws InterruptedException {
+	public void test() {
 		final TimingMeter meter = new TimingMeterImpl(new HistogramImpl(), "SOME_METRIC");
 		int sum = 0;
 		for(int i = 0; i < INTERVALS; ++ i) {
