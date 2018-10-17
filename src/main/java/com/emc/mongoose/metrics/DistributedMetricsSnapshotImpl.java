@@ -6,8 +6,8 @@ import com.emc.mongoose.metrics.util.TimingMetricSnapshot;
 /**
  @author veronika K. */
 public final class DistributedMetricsSnapshotImpl
-	extends MetricsSnapshotImpl
-	implements DistributedMetricsSnapshot {
+extends MetricsSnapshotImpl
+implements DistributedMetricsSnapshot {
 
 	private final int nodeCount;
 	private long elapsedTimeMillis;

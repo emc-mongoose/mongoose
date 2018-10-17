@@ -1,13 +1,15 @@
 package com.emc.mongoose.metrics.util;
 
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
-
+import java.util.stream.LongStream;
 import static java.lang.Math.min;
 
 /**
  @author veronika K. on 28.09.18 */
 public class ConcurrentSlidingWindowReservoir
-	implements Reservoir {
+implements Reservoir {
 
 	private static final int DEFAULT_SIZE = 1028;
 	private final long[] measurements;
@@ -34,10 +36,8 @@ public class ConcurrentSlidingWindowReservoir
 
 	@Override
 	public HistogramSnapshotImpl snapshot() {
-		final long[] values = new long[size()];
-		for(int i = 0; i < values.length; i++) {
-			values[i] = measurements[i];
-		}
-		return new HistogramSnapshotImpl(values);
+		final SortedSet<Long> sortedVals = new TreeSet<>();
+		LongStream.of(measurements).forEach(sortedVals::add);
+		return new HistogramSnapshotImpl(sortedVals.stream().mapToLong(x -> x).toArray());
 	}
 }

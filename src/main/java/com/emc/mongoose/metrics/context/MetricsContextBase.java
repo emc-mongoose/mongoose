@@ -5,7 +5,7 @@ import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 public abstract class MetricsContextBase<S extends MetricsSnapshot>
-	implements MetricsContext<S> {
+implements MetricsContext<S> {
 
 	protected final long ts;
 	protected final String id;
