@@ -1,8 +1,11 @@
 package com.emc.mongoose.metrics.util;
 
+import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
+
 import io.prometheus.client.Collector;
+import static io.prometheus.client.Collector.MetricFamilySamples.Sample;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,8 +51,9 @@ extends Collector {
 	public PrometheusMetricsExporter labels(final String[] names, final String[] values) {
 		if(names.length != values.length) {
 			throw new IllegalArgumentException(
-				"The number of label names(" + names.length +
-					") does not match the number of values(" + values.length + ")");
+				"The number of label names(" + names.length + ") does not match the number of values(" + values.length
+					+ ")"
+			);
 		}
 		this.labelNames.addAll(Arrays.asList(names));
 		this.labelValues.addAll(Arrays.asList(values));
@@ -62,73 +66,61 @@ extends Collector {
 	}
 
 	@Override
-	public List<Collector.MetricFamilySamples> collect() {
-		final DistributedMetricsSnapshot metricsSnapshot = metricsContext.lastSnapshot();
-		final List<SingleMetricSnapshot> metrics = new ArrayList<>(6);
-		metrics.add(metricsSnapshot.durationSnapshot());
-		metrics.add(metricsSnapshot.latencySnapshot());
-		metrics.add(metricsSnapshot.concurrencySnapshot());
-		metrics.add(metricsSnapshot.byteSnapshot());
-		metrics.add(metricsSnapshot.successSnapshot());
-		metrics.add(metricsSnapshot.failsSnapshot());
-		//
-		final List<Collector.MetricFamilySamples> mfsList = new ArrayList<>();
-		for(final SingleMetricSnapshot metric : metrics) {
-			final List<Collector.MetricFamilySamples.Sample> samples = new ArrayList<>();
-			if(metric instanceof TimingMetricSnapshot) {
-				samples.addAll(collect((TimingMetricSnapshot) metric));
-			} else {
-				samples.addAll(collect((RateMetricSnapshot) metric));
-			}
-			final MetricFamilySamples mfs = new MetricFamilySamples(metric.name(), Type.UNTYPED, help, samples);
-			mfsList.add(mfs);
+	public List<MetricFamilySamples> collect() {
+		final List<MetricFamilySamples> mfsList = new ArrayList<>();
+		final DistributedMetricsSnapshot snapshot = metricsContext.lastSnapshot();
+		if(snapshot != null) {
+			collectSnapshot(snapshot.durationSnapshot(), mfsList);
+			collectSnapshot(snapshot.latencySnapshot(), mfsList);
+			collectSnapshot(snapshot.concurrencySnapshot(), mfsList);
+			collectSnapshot(snapshot.byteSnapshot(), mfsList);
+			collectSnapshot(snapshot.successSnapshot(), mfsList);
+			collectSnapshot(snapshot.failsSnapshot(), mfsList);
 		}
 		return mfsList;
 	}
 
-	private List<MetricFamilySamples.Sample> collect(final RateMetricSnapshot metric) {
+	private void collectSnapshot(
+		final SingleMetricSnapshot snapshot, final List<MetricFamilySamples> mfsList
+	) {
+		final List<Sample> samples = new ArrayList<>();
+		if(snapshot instanceof TimingMetricSnapshot) {
+			samples.addAll(collect((TimingMetricSnapshot) snapshot));
+		} else if(snapshot instanceof RateMetricSnapshot){
+			samples.addAll(collect((RateMetricSnapshot) snapshot));
+		} else {
+			Loggers.ERR.warn("Unexpected metric snapshot type: {}", snapshot.getClass());
+		}
+		final MetricFamilySamples mfs = new MetricFamilySamples(snapshot.name(), Type.UNTYPED, help, samples);
+		mfsList.add(mfs);
+	}
+
+	private List<Sample> collect(final RateMetricSnapshot metric) {
 		final String metricName = metric.name();
-		final List<Collector.MetricFamilySamples.Sample> samples = new ArrayList<>();
-		samples.add(new Collector.MetricFamilySamples.Sample(metricName + "_count", labelNames, labelValues,
-			metric.count()
-		));
-		samples.add(new Collector.MetricFamilySamples.Sample(metricName + "_meanRate", labelNames, labelValues,
-			metric.mean()
-		));
-		samples.add(new Collector.MetricFamilySamples.Sample(metricName + "_lastRate", labelNames, labelValues,
-			metric.last()
-		));
+		final List<Sample> samples = new ArrayList<>();
+		samples.add(new Sample(metricName + "_count", labelNames, labelValues, metric.count()));
+		samples.add(new Sample(metricName + "_meanRate", labelNames, labelValues, metric.mean()));
+		samples.add(new Sample(metricName + "_lastRate", labelNames, labelValues, metric.last()));
 		return samples;
 	}
 
-	private List<MetricFamilySamples.Sample> collect(final TimingMetricSnapshot metric) {
-		final List<Collector.MetricFamilySamples.Sample> samples = new ArrayList<>();
-		final HistogramSnapshot snapshot = metric.histogramSnapshot(); //for quantieles
+	private List<Sample> collect(final TimingMetricSnapshot metric) {
+		final List<Sample> samples = new ArrayList<>();
+		final HistogramSnapshot snapshot = metric.histogramSnapshot(); //for quantiles
 		final String metricName = metric.name();
-		samples.add(new Collector.MetricFamilySamples.Sample(metricName + "_count", labelNames, labelValues,
-			metric.count()
-		));
-		samples.add(new Collector.MetricFamilySamples.Sample(metricName + "_sum", labelNames, labelValues,
-			metric.sum()
-		));
-		samples.add(
-			new Collector.MetricFamilySamples.Sample(metricName + "_mean", labelNames, labelValues,
-				metric.mean()
-			));
-		samples.add(
-			new Collector.MetricFamilySamples.Sample(metricName + "_min", labelNames, labelValues,
-				metric.min()
-			));
+		samples.add(new Sample(metricName + "_count", labelNames, labelValues, metric.count()));
+		samples.add(new Sample(metricName + "_sum", labelNames, labelValues, metric.sum()));
+		samples.add(new Sample(metricName + "_mean", labelNames, labelValues, metric.mean()));
+		samples.add(new Sample(metricName + "_min", labelNames, labelValues, metric.min()));
 		for(int i = 0; i < quantileValues.size(); ++ i) {
 			samples.add(
-				new Collector.MetricFamilySamples.Sample(metricName + "_quantile_" + quantileValues.get(i),
-					labelNames, labelValues, snapshot.quantile(quantileValues.get(i))
-				));
+				new Sample(
+					metricName + "_quantile_" + quantileValues.get(i), labelNames, labelValues,
+					snapshot.quantile(quantileValues.get(i))
+				)
+			);
 		}
-		samples.add(
-			new Collector.MetricFamilySamples.Sample(metricName + "_max", labelNames, labelValues,
-				metric.max()
-			));
+		samples.add(new Sample(metricName + "_max", labelNames, labelValues, metric.max()));
 		return samples;
 	}
 }
