@@ -1,11 +1,9 @@
 package com.emc.mongoose.metrics.util;
 
-import java.util.List;
-
 /**
  @author veronika K. on 12.10.18 */
 public class RateMetricSnapshotImpl
-	implements RateMetricSnapshot {
+implements RateMetricSnapshot {
 
 	private final double lastRate;
 	private final double meanRate;
@@ -19,26 +17,6 @@ public class RateMetricSnapshotImpl
 		this.meanRate = meanRate;
 		this.metricName = metricName;
 		this.count = count;
-	}
-
-	public RateMetricSnapshotImpl(final List<RateMetricSnapshot> snapshots) {
-		double newLastRate = 0;
-		double newMeanRate = 0;
-		long newCount = 0;
-		final int snapshotsCount = snapshots.size();
-		for(final RateMetricSnapshot snapshot : snapshots) {
-			newCount += snapshot.count();
-			newLastRate += snapshot.last();
-			newMeanRate += snapshot.mean();
-		}
-		this.lastRate = newLastRate / snapshotsCount;
-		this.meanRate = newMeanRate / snapshotsCount;
-		this.count = newCount;
-		if(snapshots.size() != 0) {
-			this.metricName = snapshots.get(0).name();
-		} else {
-			this.metricName = "";
-		}
 	}
 
 	@Override

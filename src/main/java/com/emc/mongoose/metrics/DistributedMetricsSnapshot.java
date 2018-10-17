@@ -3,7 +3,7 @@ package com.emc.mongoose.metrics;
 /**
  @author veronika K. */
 public interface DistributedMetricsSnapshot
-	extends MetricsSnapshot {
+extends MetricsSnapshot {
 
 	/**
 	 @return values in microseconds

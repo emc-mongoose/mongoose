@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  @author veronika K. on 12.10.18 */
 public interface SingleMetricSnapshot
-	extends Serializable {
+extends Serializable {
 
 	String name();
 

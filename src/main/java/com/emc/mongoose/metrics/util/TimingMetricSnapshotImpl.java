@@ -1,12 +1,9 @@
 package com.emc.mongoose.metrics.util;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  @author veronika K. on 12.10.18 */
 public class TimingMetricSnapshotImpl
-	implements TimingMetricSnapshot {
+implements TimingMetricSnapshot {
 
 	private final long sum;
 	private final long count;
@@ -18,8 +15,7 @@ public class TimingMetricSnapshotImpl
 
 	public TimingMetricSnapshotImpl(
 		final long sum, final long count, final long min, final long max, final double mean,
-		final HistogramSnapshot histogramSnapshot,
-		final String metricName
+		final HistogramSnapshot histogramSnapshot, final String metricName
 	) {
 		this.sum = sum;
 		this.count = count;
@@ -28,33 +24,6 @@ public class TimingMetricSnapshotImpl
 		this.mean = mean;
 		this.histogramSnapshot = histogramSnapshot;
 		this.metricName = metricName;
-	}
-
-	public TimingMetricSnapshotImpl(final List<TimingMetricSnapshot> snapshots) {
-		long newCount = 0;
-		long newSum = 0;
-		long newMax = Long.MIN_VALUE;
-		long newMin = Long.MAX_VALUE;
-		final int snapshotsCount = snapshots.size();
-		final List<HistogramSnapshot> histogramSnapshots = new ArrayList<>();
-		for(final TimingMetricSnapshot snapshot : snapshots) {
-			newCount += snapshot.count();
-			newSum += snapshot.sum();
-			newMax = Math.max(newMax, snapshot.max());
-			newMin = Math.min(newMin, snapshot.min());
-			histogramSnapshots.add(snapshot.histogramSnapshot());
-		}
-		this.count = newCount;
-		this.sum = newSum;
-		this.mean = ((double) newSum) / (newCount);
-		this.max = newMax;
-		this.min = newMin;
-		this.histogramSnapshot = new HistogramSnapshotImpl(histogramSnapshots);
-		if(snapshots.size() != 0) {
-			this.metricName = snapshots.get(0).name();
-		} else {
-			this.metricName = "";
-		}
 	}
 
 	@Override

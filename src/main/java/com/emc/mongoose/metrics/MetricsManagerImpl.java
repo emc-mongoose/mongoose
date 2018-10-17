@@ -10,11 +10,20 @@ import com.emc.mongoose.logging.StepResultsMetricsLogMessage;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.metrics.util.PrometheusMetricsExporter;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.Constants.METRIC_LABELS;
+
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FibersExecutor;
+
+import io.prometheus.client.CollectorRegistry;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
@@ -27,22 +36,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static com.emc.mongoose.Constants.METRIC_LABEL_CONC;
-import static com.emc.mongoose.Constants.METRIC_LABEL_ID;
-import static com.emc.mongoose.Constants.METRIC_LABEL_NODE;
-import static com.emc.mongoose.Constants.METRIC_LABEL_OP_TYPE;
-import static com.emc.mongoose.Constants.METRIC_LABEL_SIZE;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
-
 /**
  Created by kurila on 18.05.17.
  */
 public class MetricsManagerImpl
-	extends ExclusiveFiberBase
-	implements MetricsManager {
+extends ExclusiveFiberBase
+implements MetricsManager {
 
 	private static final String CLS_NAME = MetricsManagerImpl.class.getSimpleName();
 	private final Set<MetricsContext> allMetrics = new ConcurrentSkipListSet<>();
@@ -50,9 +49,6 @@ public class MetricsManagerImpl
 		new ConcurrentHashMap<>();
 	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
 	private final Lock outputLock = new ReentrantLock();
-	private long outputPeriodMillis;
-	private long lastOutputTs;
-	private long nextOutputTs;
 
 	public MetricsManagerImpl(final FibersExecutor instance) {
 		super(instance);
@@ -84,9 +80,9 @@ public class MetricsManagerImpl
 						exitMetricsThresholdState(metricsCtx);
 					}
 					// periodic output
-					outputPeriodMillis = metricsCtx.outputPeriodMillis();
-					lastOutputTs = metricsCtx.lastOutputTs();
-					nextOutputTs = System.currentTimeMillis();
+					final long outputPeriodMillis = metricsCtx.outputPeriodMillis();
+					final long lastOutputTs = metricsCtx.lastOutputTs();
+					final long nextOutputTs = System.currentTimeMillis();
 					if(outputPeriodMillis > 0 && nextOutputTs - lastOutputTs >= outputPeriodMillis) {
 						selectedMetrics.add(metricsCtx);
 						metricsCtx.lastOutputTs(nextOutputTs);
@@ -122,8 +118,6 @@ public class MetricsManagerImpl
 			allMetrics.add(metricsCtx);
 			if(metricsCtx instanceof DistributedMetricsContext) {
 				final DistributedMetricsContext distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
-				final String[] labelNames =
-					{ METRIC_LABEL_ID, METRIC_LABEL_OP_TYPE, METRIC_LABEL_CONC, METRIC_LABEL_NODE, METRIC_LABEL_SIZE };
 				final String[] labelValues = {
 					metricsCtx.id(),
 					metricsCtx.opType().name(),
@@ -134,7 +128,7 @@ public class MetricsManagerImpl
 				distributedMetrics.put(
 					distributedMetricsCtx,
 					new PrometheusMetricsExporter(distributedMetricsCtx)
-						.labels(labelNames, labelValues)
+						.labels(METRIC_LABELS, labelValues)
 						.register()
 				);
 			}
@@ -156,7 +150,7 @@ public class MetricsManagerImpl
 		) {
 			if(allMetrics.remove(metricsCtx)) {
 				try {
-					if(! outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
+					if(!outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 						Loggers.ERR.warn(
 							"Acquire lock timeout while unregistering the metrics context \"{}\"", metricsCtx
 						);
@@ -179,9 +173,11 @@ public class MetricsManagerImpl
 						Loggers.METRICS_STD_OUT.info(
 							new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx))
 						);
-						Loggers.METRICS_STD_OUT.info(
-							new StepResultsMetricsLogMessage(distributedMetricsCtx)
-						);
+						Loggers.METRICS_STD_OUT.info(new StepResultsMetricsLogMessage(distributedMetricsCtx));
+						final PrometheusMetricsExporter exporter = distributedMetrics.remove(distributedMetricsCtx);
+						if(exporter != null) {
+							CollectorRegistry.defaultRegistry.unregister(exporter);
+						}
 					}
 				} catch(final InterruptedException e) {
 					throw new InterruptRunException(e);

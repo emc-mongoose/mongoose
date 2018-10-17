@@ -163,6 +163,8 @@
 	"run": {
 		// start in the node service node
 		"node": false,
+		// the port to expose the metrics & control API
+		"port": 9999,
 		// The scenario file to run, null means invoking the default.js scenario bundled into the distribution
 		"scenario": null,
 		// The Mongoose version

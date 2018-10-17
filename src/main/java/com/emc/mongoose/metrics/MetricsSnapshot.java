@@ -6,7 +6,7 @@ import com.emc.mongoose.metrics.util.TimingMetricSnapshot;
 import java.io.Serializable;
 
 public interface MetricsSnapshot
-	extends Serializable {
+extends Serializable {
 
 	TimingMetricSnapshot durationSnapshot();
 

@@ -81,20 +81,19 @@ public final class Main {
 					throw e;
 				}
 				// init the metrics manager
-				//TODO: add port to defaults
-				//final int port = configWithArgs.intVal("run-port");
-				final int port = 1234;
-				final Server server = new Server(port);
-				final ServletContextHandler context = new ServletContextHandler();
-				context.setContextPath("/");
-				server.setHandler(context);
-				context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
-				server.start();
-				//
-				try {
-					run(configWithArgs, extensions, extClsLoader, appHomePath);
-				} finally {
-					server.stop();
+				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
+				if(configWithArgs.boolVal("run-node")) {
+					runNode(configWithArgs, extensions, metricsMgr);
+				} else {
+					final int port = configWithArgs.intVal("run-port");
+					final Server server = new Server(port);
+					addMetricsService(server);
+					server.start();
+					try {
+						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
+					} finally {
+						server.stop();
+					}
 				}
 			}
 		} catch(final InterruptedException | InterruptRunException e) {
@@ -137,8 +136,7 @@ public final class Main {
 
 	private static Config collectDefaults(
 		final List<Extension> extensions, final Config mainDefaults, final Path appHomePath
-	)
-	throws Exception {
+	) throws Exception {
 		final List<Config> allDefaults = extensions
 			.stream()
 			.map(ext -> ext.defaults(appHomePath))
@@ -181,17 +179,11 @@ public final class Main {
 		return config;
 	}
 
-	private static void run(
-		final Config config, final List<Extension> extensions, final URLClassLoader extClsLoader,
-		final Path appHomePath
-	)
-	throws InterruptedException {
-		final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
-		if(config.boolVal("run-node")) {
-			runNode(config, extensions, metricsMgr);
-		} else {
-			runScenario(config, extensions, extClsLoader, metricsMgr, appHomePath);
-		}
+	private static void addMetricsService(final Server server) {
+		final ServletContextHandler context = new ServletContextHandler();
+		context.setContextPath("/");
+		server.setHandler(context);
+		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
 	}
 
 	private static void runNode(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
@@ -230,9 +222,14 @@ public final class Main {
 				.lines(scenarioPath)
 				.forEach(line -> strb.append(line).append(System.lineSeparator()));
 		} catch(final IOException e) {
-			LogUtil.exception(
-				Level.FATAL, e, "Failed to read the scenario file \"{}\"", scenarioPath
-			);
+			LogUtil.exception(Level.FATAL, e, "Failed to read the scenario file \"{}\"", scenarioPath);
+			try {
+				Files
+					.list(scenarioPath.getParent())
+					.forEach(System.out::println);
+			} catch(final IOException ee) {
+				ee.printStackTrace(System.err);
+			}
 		}
 		final String scenarioText = strb.toString();
 		Loggers.SCENARIO.log(Level.INFO, scenarioText);

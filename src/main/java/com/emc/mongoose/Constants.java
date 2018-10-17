@@ -25,11 +25,14 @@ public interface Constants {
 	String METRIC_NAME_SUCC = "SUCCESS";
 	String METRIC_NAME_FAIL = "FAILS";
 	String METRIC_NAME_BYTE = "BYTES";
-	String METRIC_LABEL_SIZE = "ITEM_DATA_SIZE";
-	String METRIC_LABEL_ID = "STEP_ID";
-	String METRIC_LABEL_OP_TYPE = "OP_TYPE";
-	String METRIC_LABEL_CONC = "CONCURRENCY";
-	String METRIC_LABEL_NODE = "NODE_COUNT";
+	//
+	String[] METRIC_LABELS = {
+		"STEP_ID",
+		"OP_TYPE",
+		"CONCURRENCY",
+		"NODE_COUNT",
+		"ITEM_DATA_SIZE",
+	};
 	//
 	int MIB = 0x10_00_00;
 	double K = 1e3;

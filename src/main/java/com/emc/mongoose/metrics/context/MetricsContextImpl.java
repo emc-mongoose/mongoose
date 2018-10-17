@@ -46,21 +46,21 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			TimeUnit.SECONDS.toMillis(updateIntervalSec)
 		);
 		//
-		respLatency = new TimingMeterImpl(DEFAULT_RESERVOIR_SIZE, METRIC_NAME_LAT);
+		respLatency = new TimingMeterImpl<>(DEFAULT_RESERVOIR_SIZE, METRIC_NAME_LAT);
 		respLatSnapshot = respLatency.snapshot();
 		//
-		reqDuration = new TimingMeterImpl(DEFAULT_RESERVOIR_SIZE, METRIC_NAME_DUR);
+		reqDuration = new TimingMeterImpl<>(DEFAULT_RESERVOIR_SIZE, METRIC_NAME_DUR);
 		reqDurSnapshot = reqDuration.snapshot();
 		//
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-		actualConcurrency = new TimingMeterImpl(DEFAULT_RESERVOIR_SIZE, METRIC_NAME_CONC);
+		actualConcurrency = new TimingMeterImpl<>(DEFAULT_RESERVOIR_SIZE, METRIC_NAME_CONC);
 		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		//
-		throughputSuccess = new RateMeterImpl(clock, updateIntervalSec, METRIC_NAME_SUCC);
+		throughputSuccess = new RateMeterImpl<>(clock, updateIntervalSec, METRIC_NAME_SUCC);
 		//
-		throughputFail = new RateMeterImpl(clock, updateIntervalSec, METRIC_NAME_FAIL);
+		throughputFail = new RateMeterImpl<>(clock, updateIntervalSec, METRIC_NAME_FAIL);
 		//
-		reqBytes = new RateMeterImpl(clock, updateIntervalSec, METRIC_NAME_BYTE);
+		reqBytes = new RateMeterImpl<>(clock, updateIntervalSec, METRIC_NAME_BYTE);
 	}
 
 	@Override
@@ -208,8 +208,9 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			actualConcurrency.update(actualConcurrencyGauge.getAsInt());
 			actualConcurrencySnapshot = actualConcurrency.snapshot();
 		}
-		lastSnapshot = (S) new MetricsSnapshotImpl(reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot,
-			throughputFail.snapshot(), throughputSuccess.snapshot(), reqBytes.snapshot(), elapsedTimeMillis()
+		lastSnapshot = (S) new MetricsSnapshotImpl(
+			reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot, throughputFail.snapshot(),
+			throughputSuccess.snapshot(), reqBytes.snapshot(), elapsedTimeMillis()
 		);
 		super.refreshLastSnapshot();
 	}
