@@ -66,6 +66,15 @@ public class PrometheusMetricsExporter
 	public List<Collector.MetricFamilySamples> collect() {
 		final DistributedMetricsSnapshot metricsSnapshot = metricsContext.lastSnapshot();
 		final List<Collector.MetricFamilySamples> mfsList = new ArrayList<>();
+		mfsList.add(new MetricFamilySamples(
+			Constants.METRIC_NAME_TIME,
+			Type.UNTYPED,
+			help,
+			Arrays.asList(
+				new Collector.MetricFamilySamples.Sample(Constants.METRIC_NAME_TIME + "_value", labelNames, labelValues,
+					metricsSnapshot.elapsedTimeMillis()
+				))
+		));
 		//
 		mfsList.add(new MetricFamilySamples(
 			Constants.METRIC_NAME_LAT,

@@ -18,9 +18,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
@@ -95,6 +93,11 @@ public class MetricsManagerTest {
 		}
 		final String result = resultFromServer("http://localhost:" + PORT + CONTEXT);
 		System.out.println(result);
+		//
+		final Map tmp = new HashMap();
+		final long elapsedTimeMillis = TimeUnit.MICROSECONDS.toMillis(MARK_DUR * ITERATION_COUNT);
+		tmp.put("value", new Double(elapsedTimeMillis));
+		testMetric(result, Constants.METRIC_NAME_TIME, tmp, RATE_ACCURACY);
 		//
 		testTimingMetric(result, MARK_DUR, Constants.METRIC_NAME_DUR);
 		testTimingMetric(result, MARK_LAT, Constants.METRIC_NAME_LAT);
