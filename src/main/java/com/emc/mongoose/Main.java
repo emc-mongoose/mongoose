@@ -81,9 +81,7 @@ public final class Main {
 					throw e;
 				}
 				// init the metrics manager
-				//TODO: add port to defaults
-				//final int port = configWithArgs.intVal("run-port");
-				final int port = 1234;
+				final int port = configWithArgs.intVal("run-port");
 				final Server server = new Server(port);
 				final ServletContextHandler context = new ServletContextHandler();
 				context.setContextPath("/");
