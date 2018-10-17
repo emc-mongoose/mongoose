@@ -41,8 +41,8 @@ import static org.apache.logging.log4j.CloseableThreadContext.put;
  Created by kurila on 18.05.17.
  */
 public class MetricsManagerImpl
-	extends ExclusiveFiberBase
-	implements MetricsManager {
+extends ExclusiveFiberBase
+implements MetricsManager {
 
 	private static final String CLS_NAME = MetricsManagerImpl.class.getSimpleName();
 	private final Set<MetricsContext> allMetrics = new ConcurrentSkipListSet<>();
@@ -122,8 +122,9 @@ public class MetricsManagerImpl
 			allMetrics.add(metricsCtx);
 			if(metricsCtx instanceof DistributedMetricsContext) {
 				final DistributedMetricsContext distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
-				final String[] labelNames =
-					{ METRIC_LABEL_ID, METRIC_LABEL_OP_TYPE, METRIC_LABEL_CONC, METRIC_LABEL_NODE, METRIC_LABEL_SIZE };
+				final String[] labelNames = {
+					METRIC_LABEL_ID, METRIC_LABEL_OP_TYPE, METRIC_LABEL_CONC, METRIC_LABEL_NODE, METRIC_LABEL_SIZE
+				};
 				final String[] labelValues = {
 					metricsCtx.id(),
 					metricsCtx.opType().name(),
@@ -156,7 +157,7 @@ public class MetricsManagerImpl
 		) {
 			if(allMetrics.remove(metricsCtx)) {
 				try {
-					if(! outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
+					if(!outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 						Loggers.ERR.warn(
 							"Acquire lock timeout while unregistering the metrics context \"{}\"", metricsCtx
 						);

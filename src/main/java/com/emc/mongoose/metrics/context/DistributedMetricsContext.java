@@ -4,7 +4,7 @@ import com.emc.mongoose.metrics.DistributedMetricsListener;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 
 public interface DistributedMetricsContext<S extends DistributedMetricsSnapshot>
-	extends MetricsContext<S> {
+extends MetricsContext<S> {
 
 	int nodeCount();
 

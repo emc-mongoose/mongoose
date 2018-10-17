@@ -8,7 +8,7 @@ import static java.lang.Math.floor;
 /**
  @author veronika K. on 25.09.18 */
 public class HistogramSnapshotImpl
-	implements HistogramSnapshot {
+implements HistogramSnapshot {
 
 	private final long[] values;
 
@@ -23,13 +23,14 @@ public class HistogramSnapshotImpl
 			size += s.count();
 		}
 		this.values = new long[size];
-		int index_s = 0;
-		for(final HistogramSnapshot s : snapshots) {
+		int snapshotIndex = 0;
+		for(int i = 0; i < snapshots.size(); i ++) {
+			final HistogramSnapshot s = snapshots.get(i);
 			final long[] copy = Arrays.copyOf(s.values(), s.count());
-			for(int i = 0; i < copy.length; i++) {
-				this.values[index_s * i + i] = copy[i];
+			for(int j = 0; j < copy.length; j ++) {
+				this.values[snapshotIndex * j + j] = copy[j];
 			}
-			++ index_s;
+			snapshotIndex ++;
 		}
 		Arrays.sort(this.values);
 	}

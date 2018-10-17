@@ -11,7 +11,7 @@ public interface MetricsContext<S extends MetricsSnapshot>
 	extends AutoCloseable, Comparable<MetricsContext<S>> {
 
 	int DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
-	int DEFAULT_RESERVOIR_SIZE = 0x1_000;
+	int DEFAULT_RESERVOIR_SIZE = 0x10_00;
 
 	// these are useful as labels/tags
 	String id();

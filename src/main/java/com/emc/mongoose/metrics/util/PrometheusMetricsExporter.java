@@ -11,7 +11,7 @@ import java.util.List;
 /**
  @author veronika K. on 10.10.18 */
 public class PrometheusMetricsExporter
-	extends Collector {
+extends Collector {
 
 	private final List<String> labelValues = new ArrayList<>();
 	private final List<String> labelNames = new ArrayList<>();
