@@ -46,7 +46,8 @@ public class TimingMeterImpl<S extends SingleMetricSnapshot>
 
 	public S snapshot() {
 		return (S) new TimingMetricSnapshotImpl(
-			sum(), count(), min(), max(), mean(), histogramImpl.snapshot(), metricName);
+			sum(), count(), min(), max(), mean(), histogramImpl.snapshot(), metricName
+		);
 	}
 
 	public long sum() {

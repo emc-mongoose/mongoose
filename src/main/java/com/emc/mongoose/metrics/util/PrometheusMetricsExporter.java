@@ -5,10 +5,13 @@ import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 
 import io.prometheus.client.Collector;
+
+import static com.emc.mongoose.Constants.METRIC_NAME_TIME;
 import static io.prometheus.client.Collector.MetricFamilySamples.Sample;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -76,6 +79,14 @@ extends Collector {
 			collectSnapshot(snapshot.byteSnapshot(), mfsList);
 			collectSnapshot(snapshot.successSnapshot(), mfsList);
 			collectSnapshot(snapshot.failsSnapshot(), mfsList);
+			mfsList.add(
+				new MetricFamilySamples(
+					METRIC_NAME_TIME, Type.GAUGE, help,
+					Collections.singletonList(
+						new Sample(METRIC_NAME_TIME + "_value", labelNames, labelValues, snapshot.elapsedTimeMillis())
+					)
+				)
+			);
 		}
 		return mfsList;
 	}
@@ -86,7 +97,7 @@ extends Collector {
 		final List<Sample> samples = new ArrayList<>();
 		if(snapshot instanceof TimingMetricSnapshot) {
 			samples.addAll(collect((TimingMetricSnapshot) snapshot));
-		} else if(snapshot instanceof RateMetricSnapshot){
+		} else if(snapshot instanceof RateMetricSnapshot) {
 			samples.addAll(collect((RateMetricSnapshot) snapshot));
 		} else {
 			Loggers.ERR.warn("Unexpected metric snapshot type: {}", snapshot.getClass());

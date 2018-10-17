@@ -112,11 +112,9 @@ public class MetricsManagerTest {
 
 	private void testTimingMetric(final String stdOut, final double markValue, final String name) {
 		final Map<String, Double> expectedValues = new HashMap<>();
-		double count = ITERATION_COUNT;
-		if(name.equals(Constants.METRIC_NAME_CONC)) {
-			// +1, because in the refreshLastSnapshot lat & dur account only after the condition, and concurrency - every time
-			++ count;
-		}
+		// +1, because in the refreshLastSnapshot lat & dur account only after the condition, and concurrency - every time
+		final double count = name.equals(Constants.METRIC_NAME_CONC) ?
+			ITERATION_COUNT + 1 : ITERATION_COUNT;
 		final double[] values = { count, markValue * count, markValue, markValue, markValue };
 		for(int i = 0; i < TIMING_METRICS.length; ++ i) {
 			expectedValues.put(TIMING_METRICS[i], values[i]);
@@ -159,7 +157,8 @@ public class MetricsManagerTest {
 			final Double actualValue = Double.valueOf(m.group().split("}")[1]);
 			final Double expectedValue = Double.valueOf(expectedValues.get(key));
 			Assert.assertEquals(
-				"metric : " + metricName + "_" + key, actualValue, expectedValue, expectedValue * accuracy);
+				"metric : " + metricName + "_" + key, expectedValue, actualValue, expectedValue * accuracy
+			);
 		}
 	}
 }
