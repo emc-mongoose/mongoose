@@ -81,16 +81,22 @@ public class RateMeterImpl<S extends SingleMetricSnapshot>
 		return (clock.millis() - startTime);
 	}
 
+	/**
+	 @return mean rate per sec [.../s]
+	 */
 	@Override
 	public double meanRate() {
 		if(count.sum() == 0) {
 			return 0.0;
 		} else {
-			final double elapsed = (clock.millis() - startTime);
-			return count.sum() / elapsed * TimeUnit.SECONDS.toNanos(1);
+			final double elapsed = TimeUnit.MILLISECONDS.toSeconds(clock.millis() - startTime);
+			return count.sum() / elapsed;
 		}
 	}
 
+	/**
+	 @return last rate per sec [.../s]
+	 */
 	@Override
 	public double lastRate() {
 		tickIfNecessary();

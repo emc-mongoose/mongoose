@@ -25,6 +25,7 @@ public interface Constants {
 	String METRIC_NAME_SUCC = "SUCCESS";
 	String METRIC_NAME_FAIL = "FAILS";
 	String METRIC_NAME_BYTE = "BYTES";
+	String METRIC_NAME_TIME = "ELAPSED_TIME";
 	//
 	String[] METRIC_LABELS = {
 		"STEP_ID",

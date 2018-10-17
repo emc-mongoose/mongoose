@@ -18,9 +18,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
@@ -41,7 +39,7 @@ public class MetricsManagerTest {
 	private static final String CONTEXT = "/metrics";
 	private static final int ITERATION_COUNT = 10;
 	private static final Double TIMING_ACCURACY = 0.0001;
-	private static final Double RATE_ACCURACY = 0.1;
+	private static final Double RATE_ACCURACY = 0.2;
 	private static final int MARK_DUR = 1_100_000; //dur must be more than lat (dur > lat)
 	private static final int MARK_LAT = 1_000_000;
 	private static final String[] TIMING_METRICS = { "count", "sum", "mean", "min", "max" };
@@ -96,14 +94,18 @@ public class MetricsManagerTest {
 		final String result = resultFromServer("http://localhost:" + PORT + CONTEXT);
 		System.out.println(result);
 		//
+		final Map tmp = new HashMap();
+		final long elapsedTimeMillis = TimeUnit.MICROSECONDS.toMillis(MARK_DUR * ITERATION_COUNT);
+		tmp.put("value", new Double(elapsedTimeMillis));
+		testMetric(result, Constants.METRIC_NAME_TIME, tmp, RATE_ACCURACY);
+		//
 		testTimingMetric(result, MARK_DUR, Constants.METRIC_NAME_DUR);
 		testTimingMetric(result, MARK_LAT, Constants.METRIC_NAME_LAT);
 		testTimingMetric(result, nodeCountSupplier.getAsInt(), Constants.METRIC_NAME_CONC);
 		//
-		final int stepTimeMicroSec = MARK_DUR;
-		testRateMetric(result, ITEM_DATA_SIZE.get(), Constants.METRIC_NAME_BYTE, stepTimeMicroSec);
-		testRateMetric(result, 1, Constants.METRIC_NAME_FAIL, stepTimeMicroSec);
-		testRateMetric(result, 1, Constants.METRIC_NAME_SUCC, stepTimeMicroSec);
+		testRateMetric(result, ITEM_DATA_SIZE.get(), Constants.METRIC_NAME_BYTE);
+		testRateMetric(result, 1, Constants.METRIC_NAME_FAIL);
+		testRateMetric(result, 1, Constants.METRIC_NAME_SUCC);
 		//
 		metricsMgr.close();
 	}
@@ -122,13 +124,13 @@ public class MetricsManagerTest {
 		testMetric(stdOut, name, expectedValues, TIMING_ACCURACY);
 	}
 
-	private void testRateMetric(final String stdOut, final double markValue, final String name, final int time) {
+	private void testRateMetric(final String stdOut, final double markValue, final String name) {
 		final Map<String, Double> expectedValues = new HashMap<>();
 		double count = ITERATION_COUNT;
 		if(name.equals(Constants.METRIC_NAME_BYTE)) {
 			count *= markValue;
 		}
-		final Double[] values = { count, markValue * time, markValue };
+		final Double[] values = { count, markValue, markValue };
 		for(int i = 0; i < RATE_METRICS.length; ++ i) {
 			expectedValues.put(RATE_METRICS[i], values[i]);
 		}
@@ -137,13 +139,13 @@ public class MetricsManagerTest {
 
 	private String resultFromServer(final String urlPath)
 	throws Exception {
-		final StringBuilder stringBuffer = new StringBuilder();
+		final StringBuilder stringBuilder = new StringBuilder();
 		final URL url = new URL(urlPath);
 		final URLConnection conn = url.openConnection();
 		try(final BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-			br.lines().forEach(l -> stringBuffer.append(l).append("\n"));
+			br.lines().forEach(l -> stringBuilder.append(l).append("\n"));
 		}
-		return stringBuffer.toString();
+		return stringBuilder.toString();
 	}
 
 	private void testMetric(
