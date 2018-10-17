@@ -91,7 +91,7 @@ extends Collector {
 		} else {
 			Loggers.ERR.warn("Unexpected metric snapshot type: {}", snapshot.getClass());
 		}
-		final MetricFamilySamples mfs = new MetricFamilySamples(snapshot.name(), Type.UNTYPED, help, samples);
+		final MetricFamilySamples mfs = new MetricFamilySamples(snapshot.name(), Type.GAUGE, help, samples);
 		mfsList.add(mfs);
 	}
 
@@ -113,12 +113,11 @@ extends Collector {
 		samples.add(new Sample(metricName + "_mean", labelNames, labelValues, metric.mean()));
 		samples.add(new Sample(metricName + "_min", labelNames, labelValues, metric.min()));
 		for(int i = 0; i < quantileValues.size(); ++ i) {
-			samples.add(
-				new Sample(
-					metricName + "_quantile_" + quantileValues.get(i), labelNames, labelValues,
-					snapshot.quantile(quantileValues.get(i))
-				)
+			final Sample sample = new Sample(
+				metricName + "_quantile_" + quantileValues.get(i), labelNames, labelValues,
+				snapshot.quantile(quantileValues.get(i))
 			);
+			samples.add(sample);
 		}
 		samples.add(new Sample(metricName + "_max", labelNames, labelValues, metric.max()));
 		return samples;
