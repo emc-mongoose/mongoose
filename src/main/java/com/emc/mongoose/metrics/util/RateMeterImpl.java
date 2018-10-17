@@ -82,7 +82,7 @@ public class RateMeterImpl<S extends SingleMetricSnapshot>
 	}
 
 	/**
-	 @return mean rate per microsec [.../us]
+	 @return mean rate per sec [.../s]
 	 */
 	@Override
 	public double meanRate() {
@@ -90,16 +90,16 @@ public class RateMeterImpl<S extends SingleMetricSnapshot>
 			return 0.0;
 		} else {
 			final double elapsed = TimeUnit.MILLISECONDS.toSeconds(clock.millis() - startTime);
-			return count.sum() / elapsed * TimeUnit.SECONDS.toMicros(1);
+			return count.sum() / elapsed;
 		}
 	}
 
 	/**
-	 @return last rate per microsec [.../us]
+	 @return last rate per sec [.../s]
 	 */
 	@Override
 	public double lastRate() {
 		tickIfNecessary();
-		return rateAvg.rate(TimeUnit.SECONDS) * TimeUnit.SECONDS.toMicros(1);
+		return rateAvg.rate(TimeUnit.SECONDS);
 	}
 }

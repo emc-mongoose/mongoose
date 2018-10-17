@@ -20,7 +20,15 @@ public interface RateMeter<S extends SingleMetricSnapshot>
 	 */
 	void mark(final long n);
 
+	/**
+	 @return mean rate per sec [.../s]
+	 */
+
 	double meanRate();
+
+	/**
+	 @return last rate per sec [.../s]
+	 */
 
 	double lastRate();
 

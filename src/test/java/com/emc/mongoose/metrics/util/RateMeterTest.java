@@ -26,11 +26,10 @@ public class RateMeterTest {
 		//
 		Assert.assertEquals(meter.count(), INTERVALS);
 		//
-		//meter return rates per micros
-		final double expectedRateMicros = ((double) INTERVALS / TimeUnit.MILLISECONDS.toSeconds(ELAPSED_TIME)) *
-			TimeUnit.SECONDS.toMicros(1);
-		Assert.assertEquals(meter.meanRate(), expectedRateMicros, expectedRateMicros * 0.1);
-		Assert.assertEquals(meter.lastRate(), expectedRateMicros, expectedRateMicros * 0.1);
+		//meter return rates per sec
+		final double expectedRate = ((double) INTERVALS / TimeUnit.MILLISECONDS.toSeconds(ELAPSED_TIME));
+		Assert.assertEquals(meter.meanRate(), expectedRate, expectedRate * 0.1);
+		Assert.assertEquals(meter.lastRate(), expectedRate, expectedRate * 0.1);
 		//
 		Assert.assertEquals(meter.elapsedTimeMillis() > ELAPSED_TIME, true);
 		Assert.assertEquals(meter.elapsedTimeMillis(), ELAPSED_TIME, ELAPSED_TIME * 0.2);
