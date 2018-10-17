@@ -1,5 +1,6 @@
 package com.emc.mongoose.metrics.util;
 
+import com.emc.mongoose.Constants;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import io.prometheus.client.Collector;
@@ -11,7 +12,7 @@ import java.util.List;
 /**
  @author veronika K. on 10.10.18 */
 public class PrometheusMetricsExporter
-extends Collector {
+	extends Collector {
 
 	private final List<String> labelValues = new ArrayList<>();
 	private final List<String> labelNames = new ArrayList<>();
@@ -64,25 +65,50 @@ extends Collector {
 	@Override
 	public List<Collector.MetricFamilySamples> collect() {
 		final DistributedMetricsSnapshot metricsSnapshot = metricsContext.lastSnapshot();
-		final List<SingleMetricSnapshot> metrics = new ArrayList<>(6);
-		metrics.add(metricsSnapshot.durationSnapshot());
-		metrics.add(metricsSnapshot.latencySnapshot());
-		metrics.add(metricsSnapshot.concurrencySnapshot());
-		metrics.add(metricsSnapshot.byteSnapshot());
-		metrics.add(metricsSnapshot.successSnapshot());
-		metrics.add(metricsSnapshot.failsSnapshot());
-		//
 		final List<Collector.MetricFamilySamples> mfsList = new ArrayList<>();
-		for(final SingleMetricSnapshot metric : metrics) {
-			final List<Collector.MetricFamilySamples.Sample> samples = new ArrayList<>();
-			if(metric instanceof TimingMetricSnapshot) {
-				samples.addAll(collect((TimingMetricSnapshot) metric));
-			} else {
-				samples.addAll(collect((RateMetricSnapshot) metric));
-			}
-			final MetricFamilySamples mfs = new MetricFamilySamples(metric.name(), Type.UNTYPED, help, samples);
-			mfsList.add(mfs);
-		}
+		//
+		mfsList.add(new MetricFamilySamples(
+			Constants.METRIC_NAME_LAT,
+			Type.UNTYPED,
+			help,
+			(collect(metricsSnapshot.latencySnapshot()))
+		));
+		//
+		mfsList.add(new MetricFamilySamples(
+			Constants.METRIC_NAME_DUR,
+			Type.UNTYPED,
+			help,
+			(collect(metricsSnapshot.durationSnapshot()))
+		));
+		//
+		mfsList.add(new MetricFamilySamples(
+			Constants.METRIC_NAME_CONC,
+			Type.UNTYPED,
+			help,
+			(collect(metricsSnapshot.concurrencySnapshot()))
+		));
+		//
+		mfsList.add(new MetricFamilySamples(
+			Constants.METRIC_NAME_SUCC,
+			Type.UNTYPED,
+			help,
+			(collect(metricsSnapshot.successSnapshot()))
+		));
+		//
+		mfsList.add(new MetricFamilySamples(
+			Constants.METRIC_NAME_FAIL,
+			Type.UNTYPED,
+			help,
+			(collect(metricsSnapshot.failsSnapshot()))
+		));
+		//
+		mfsList.add(new MetricFamilySamples(
+			Constants.METRIC_NAME_BYTE,
+			Type.UNTYPED,
+			help,
+			(collect(metricsSnapshot.byteSnapshot()))
+		));
+		//
 		return mfsList;
 	}
 
