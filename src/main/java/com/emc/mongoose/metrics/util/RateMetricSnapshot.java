@@ -1,6 +1,8 @@
 package com.emc.mongoose.metrics.util;
 
 import java.util.List;
+import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  @author veronika K. on 12.10.18 */
@@ -14,19 +16,19 @@ public interface RateMetricSnapshot
 		if(snapshotsCount == 1) {
 			return snapshots.get(0);
 		} else {
-			double lastRateSum = 0;
-			double meanRateSum = 0;
-			long countSum = 0;
-			RateMetricSnapshot nextSnapshot;
-			for(int i = 0; i < snapshotsCount; i++) {
-				nextSnapshot = snapshots.get(i);
-				countSum += nextSnapshot.count();
-				lastRateSum += nextSnapshot.last();
-				meanRateSum += nextSnapshot.mean();
-			}
+			final DoubleAdder lastRateSum = new DoubleAdder();
+			final DoubleAdder meanRateSum = new DoubleAdder();
+			final LongAdder countSum = new LongAdder();
+			snapshots.parallelStream().forEach(s -> {
+					countSum.add(s.count());
+					lastRateSum.add(s.last());
+					meanRateSum.add(s.mean());
+				}
+			);
 			return new RateMetricSnapshotImpl(
-				lastRateSum / snapshotsCount, meanRateSum / snapshotsCount,
-				snapshots.size() > 0 ? snapshots.get(0).name() : "", countSum
+				lastRateSum.doubleValue() / snapshotsCount,
+				meanRateSum.doubleValue() / snapshotsCount,
+				snapshotsCount > 0 ? snapshots.get(0).name() : "", countSum.longValue()
 			);
 		}
 	}
