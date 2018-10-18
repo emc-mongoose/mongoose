@@ -216,7 +216,6 @@ public class MetricsManagerImpl
 	@Override
 	protected final void doClose() {
 		allMetrics.forEach(MetricsContext::close);
-		allMetrics.forEach(m -> unregister(m));
 		allMetrics.clear();
 		distributedMetrics.clear();
 	}
