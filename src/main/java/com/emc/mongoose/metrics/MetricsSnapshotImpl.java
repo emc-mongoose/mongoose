@@ -6,13 +6,13 @@ import com.emc.mongoose.metrics.util.TimingMetricSnapshot;
 public class MetricsSnapshotImpl
 	implements MetricsSnapshot {
 
-	private transient TimingMetricSnapshot durSnapshot;
-	private transient TimingMetricSnapshot latSnapshot;
-	private transient TimingMetricSnapshot actualConcurrencySnapshot;
-	private transient RateMetricSnapshot failsSnapshot;
-	private transient RateMetricSnapshot successSnapshot;
-	private transient RateMetricSnapshot bytesSnapshot;
-	private final long elapsedTimeMillis;
+	private final TimingMetricSnapshot durSnapshot;
+	private final TimingMetricSnapshot latSnapshot;
+	private final TimingMetricSnapshot actualConcurrencySnapshot;
+	private final RateMetricSnapshot failsSnapshot;
+	private final RateMetricSnapshot successSnapshot;
+	private final RateMetricSnapshot bytesSnapshot;
+	protected final long elapsedTimeMillis;
 
 	public MetricsSnapshotImpl(
 		final TimingMetricSnapshot durSnapshot,

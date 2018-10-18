@@ -10,7 +10,6 @@ extends MetricsSnapshotImpl
 implements DistributedMetricsSnapshot {
 
 	private final int nodeCount;
-	private long elapsedTimeMillis;
 
 	public DistributedMetricsSnapshotImpl(
 		final TimingMetricSnapshot durSnapshot,
@@ -27,7 +26,6 @@ implements DistributedMetricsSnapshot {
 			elapsedTimeMillis
 		);
 		this.nodeCount = nodeCount;
-		this.elapsedTimeMillis = elapsedTimeMillis;
 	}
 
 	@Override
