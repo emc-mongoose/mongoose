@@ -112,14 +112,16 @@ public class MetricsManagerTest {
 
 	private void testTimingMetric(final String stdOut, final double markValue, final String name) {
 		final Map<String, Double> expectedValues = new HashMap<>();
-		// +1, because in the refreshLastSnapshot lat & dur account only after the condition, and concurrency - every time
+		// concurrency count != iteration_count, because in the refreshLastSnapshot lat & dur account only after the condition, and concurrency - every time
 		final double count = name.equals(Constants.METRIC_NAME_CONC) ?
-			ITERATION_COUNT + 1 : ITERATION_COUNT;
+							 ITERATION_COUNT + 1 : ITERATION_COUNT;
+		final double accuracy = name.equals(Constants.METRIC_NAME_CONC) ?
+								RATE_ACCURACY : TIMING_ACCURACY;
 		final double[] values = { count, markValue * count, markValue, markValue, markValue };
 		for(int i = 0; i < TIMING_METRICS.length; ++ i) {
 			expectedValues.put(TIMING_METRICS[i], values[i]);
 		}
-		testMetric(stdOut, name, expectedValues, TIMING_ACCURACY);
+		testMetric(stdOut, name, expectedValues, accuracy);
 	}
 
 	private void testRateMetric(final String stdOut, final double markValue, final String name) {
