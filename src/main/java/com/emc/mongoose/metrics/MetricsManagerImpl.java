@@ -103,16 +103,17 @@ public class MetricsManagerImpl
 		}
 	}
 
+	public void startIfNotStarted() {
+		if(! isStarted()) {
+			super.start();
+			Loggers.MSG.debug("Started the metrics manager fiber");
+		}
+	}
+
 	@Override
 	public void register(final MetricsContext metricsCtx) {
-		try(
-			final Instance logCtx = put(KEY_STEP_ID, metricsCtx.id())
-				.put(KEY_CLASS_NAME, getClass().getSimpleName())
-		) {
-			if(! isStarted()) {
-				start();
-				Loggers.MSG.debug("Started the metrics manager fiber");
-			}
+		try {
+			startIfNotStarted();
 			allMetrics.add(metricsCtx);
 			if(metricsCtx instanceof DistributedMetricsContext) {
 				final DistributedMetricsContext distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
@@ -215,6 +216,7 @@ public class MetricsManagerImpl
 	@Override
 	protected final void doClose() {
 		allMetrics.forEach(MetricsContext::close);
+		allMetrics.forEach(m -> unregister(m));
 		allMetrics.clear();
 		distributedMetrics.clear();
 	}
