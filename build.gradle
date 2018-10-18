@@ -17,7 +17,6 @@ ext {
 		javaCommons        : "2.1.8",
 		javassist          : "3.23.1-GA",
 		jetty              : "9.4.12.v20180830",
-		jersey             : "1.19.4",
 		junit              : "[4,)",
 		scala              : "2.12.6",
 		slf4j              : "1.7.25",
@@ -251,7 +250,6 @@ dependencies {
 		"org.slf4j:slf4j-api:${depVersion.slf4j}",
 		"org.eclipse.jetty:jetty-server:${depVersion.jetty}",
 		"org.eclipse.jetty:jetty-servlet:${depVersion.jetty}",
-		"com.sun.jersey:jersey-server:${depVersion.jersey}",
 	)
 
 	testCompile(

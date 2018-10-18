@@ -16,20 +16,30 @@ import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsManagerImpl;
 import com.emc.mongoose.svc.Service;
+import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
+import static com.emc.mongoose.Constants.DIR_EXT;
+import static com.emc.mongoose.Constants.PATH_DEFAULTS;
+import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
+import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
+
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
+
 import io.prometheus.client.exporter.MetricsServlet;
+
 import org.apache.commons.lang.StringUtils;
+
 import org.apache.logging.log4j.Level;
+
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-import javax.servlet.ServletContainerInitializer;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -41,12 +51,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
-import static com.emc.mongoose.Constants.DIR_EXT;
-import static com.emc.mongoose.Constants.PATH_DEFAULTS;
-import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
-import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
 import static javax.script.ScriptContext.ENGINE_SCOPE;
 
 public final class Main {
@@ -89,7 +93,6 @@ public final class Main {
 					final int port = configWithArgs.intVal("run-port");
 					final Server server = new Server(port);
 					addMetricsService(server);
-					addControlService(server);
 					server.start();
 					try {
 						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
@@ -138,8 +141,7 @@ public final class Main {
 
 	private static Config collectDefaults(
 		final List<Extension> extensions, final Config mainDefaults, final Path appHomePath
-	)
-	throws Exception {
+	) throws Exception {
 		final List<Config> allDefaults = extensions
 			.stream()
 			.map(ext -> ext.defaults(appHomePath))
@@ -193,14 +195,6 @@ public final class Main {
 		final ServletContextHandler context = new ServletContextHandler();
 		context.setContextPath("/");
 		server.setHandler(context);
-
-		final ServletHolder jerseyServlet = context.addServlet(, "/*");
-		jerseyServlet.setInitOrder(0);
-
-		// Tells the Jersey Servlet which REST service/class to load.
-		jerseyServlet.setInitParameter(
-			"jersey.config.server.provider.classnames",
-			EntryPoint.class.getCanonicalName());
 		//context.addServlet(new ServletHolder(new MetricsServlet()), "/control");
 	}
 
