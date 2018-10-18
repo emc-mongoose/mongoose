@@ -75,15 +75,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 	public final void markSucc(final long bytes, final long duration, final long latency) {
 		throughputSuccess.mark();
 		reqBytes.mark(bytes);
-		if(latency > 0 && duration > latency) {
-			timingLock.lock();
-			try {
-				reqDuration.update(duration);
-				respLatency.update(latency);
-			} finally {
-				timingLock.unlock();
-			}
-		}
+		updateLatAndDur(latency, duration);
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.markSucc(bytes, duration, latency);
 		}
@@ -92,15 +84,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 	@Override
 	public final void markPartSucc(final long bytes, final long duration, final long latency) {
 		reqBytes.mark(bytes);
-		if(latency > 0 && duration > latency) {
-			timingLock.lock();
-			try {
-				reqDuration.update(duration);
-				respLatency.update(latency);
-			} finally {
-				timingLock.unlock();
-			}
-		}
+		updateLatAndDur(latency, duration);
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.markPartSucc(bytes, duration, latency);
 		}
@@ -117,15 +101,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 		for(int i = 0; i < timingsLen; ++ i) {
 			duration = durationValues[i];
 			latency = latencyValues[i];
-			if(latency > 0 && duration > latency) {
-				timingLock.lock();
-				try {
-					reqDuration.update(duration);
-					respLatency.update(latency);
-				} finally {
-					timingLock.unlock();
-				}
-			}
+			updateLatAndDur(latency, duration);
 		}
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.markSucc(count, bytes, durationValues, latencyValues);
@@ -142,18 +118,22 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 		for(int i = 0; i < timingsLen; ++ i) {
 			duration = durationValues[i];
 			latency = latencyValues[i];
-			if(latency > 0 && duration > latency) {
-				timingLock.lock();
-				try {
-					reqDuration.update(duration);
-					respLatency.update(latency);
-				} finally {
-					timingLock.unlock();
-				}
-			}
+			updateLatAndDur(latency, duration);
 		}
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.markPartSucc(bytes, durationValues, latencyValues);
+		}
+	}
+
+	private final void updateLatAndDur(final long latency, final long duration) {
+		if(latency > 0 && duration > latency) {
+			timingLock.lock();
+			try {
+				reqDuration.update(duration);
+				respLatency.update(latency);
+			} finally {
+				timingLock.unlock();
+			}
 		}
 	}
 
@@ -194,16 +174,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 		final long currentTimeMillis = System.currentTimeMillis();
 		if(currentTimeMillis - lastOutputTs() > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
 			if(lastDurationSum != reqDuration.sum() || lastLatencySum != respLatency.sum()) {
-				if(timingLock.tryLock()) {
-					try {
-						reqDurSnapshot = reqDuration.snapshot();
-						respLatSnapshot = respLatency.snapshot();
-					} finally {
-						timingLock.unlock();
-					}
-				}
-				lastLatencySum = respLatency.sum();
-				lastDurationSum = reqDuration.sum();
+				refreshLatAndDur();
 			}
 			actualConcurrency.update(actualConcurrencyGauge.getAsInt());
 			actualConcurrencySnapshot = actualConcurrency.snapshot();
@@ -213,6 +184,19 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			throughputSuccess.snapshot(), reqBytes.snapshot(), elapsedTimeMillis()
 		);
 		super.refreshLastSnapshot();
+	}
+
+	private void refreshLatAndDur() {
+		if(timingLock.tryLock()) {
+			try {
+				reqDurSnapshot = reqDuration.snapshot();
+				respLatSnapshot = respLatency.snapshot();
+			} finally {
+				timingLock.unlock();
+			}
+		}
+		lastLatencySum = respLatency.sum();
+		lastDurationSum = reqDuration.sum();
 	}
 
 	@Override
