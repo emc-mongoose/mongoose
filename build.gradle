@@ -101,6 +101,7 @@ allprojects {
 
 	task integrationTest(type: Test) {
 		include "com/emc/mongoose/integration/*"
+		exclude "**/RollingAppenderTest*"
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
