@@ -8,7 +8,8 @@ import java.util.stream.LongStream;
 
 /**
  @author veronika K. on 03.10.18 */
-public interface HistogramSnapshot extends Serializable {
+public interface HistogramSnapshot
+	extends Serializable {
 
 	long quantile(final double quantile);
 

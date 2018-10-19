@@ -67,6 +67,6 @@ public class TimingMeterImpl<S extends SingleMetricSnapshot>
 	}
 
 	public double mean() {
-		return ((double) sum()) / count();
+		return (sum() == 0) ? 0 : ((double) sum()) / count();
 	}
 }
