@@ -39,7 +39,7 @@ public class RollingAppenderTest {
 			RollingAppenderTest.logger.info(counter);
 		}
 		//
-		Assert.assertEquals("The file is not created after deletion: Log4j2 bug", false, new File(fileName).exists());
+		Assert.assertEquals("The file is not created after deletion: Log4j2 bug", true, new File(fileName).exists());
 	}
 }
 
