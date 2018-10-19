@@ -40,6 +40,10 @@ public interface TimingMetricSnapshot
 			newMin = Math.min(newMin, nextSnapshot.min());
 			histogramSnapshots.add(nextSnapshot.histogramSnapshot());
 		}
+		if(sumOfSums == 0) {
+			newMin = 0;
+			newMax = 0;
+		}
 		return new TimingMetricSnapshotImpl(
 			sumOfSums, countSum, newMin, newMax, ((double) sumOfSums) / countSum,
 			HistogramSnapshot.aggregate(histogramSnapshots), snapshots.get(0).name()
