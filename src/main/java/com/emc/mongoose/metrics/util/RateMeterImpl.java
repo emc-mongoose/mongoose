@@ -90,7 +90,7 @@ public class RateMeterImpl<S extends SingleMetricSnapshot>
 			return 0.0;
 		} else {
 			final double elapsed = TimeUnit.MILLISECONDS.toSeconds(clock.millis() - startTime);
-			return count.sum() / elapsed;
+			return (elapsed == 0) ? 0 : count.sum() / elapsed;
 		}
 	}
 
