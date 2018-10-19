@@ -1,10 +1,10 @@
 package com.emc.mongoose.integration;
 
 import org.apache.log4j.Appender;
-import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.RollingFileAppender;
 import org.apache.log4j.SimpleLayout;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -28,17 +28,18 @@ public class RollingAppenderTest {
 			System.out.println(counter);
 			RollingAppenderTest.logger.info(counter);
 		}
+		Assert.assertEquals("The file is not created", true, new File(fileName).exists());
 		new File(fileName).delete();
+		//
 		System.out.println("<File is deleted>");
-		//logger.removeAllAppenders();
-		//appender = new RollingFileAppender(new SimpleLayout(), fileName);
-		//logger.addAppender(appender);
-
+		//
 		for(int counter = LIMIT; counter < LIMIT * 2; ++ counter) {
 			TimeUnit.SECONDS.sleep(1);
 			System.out.println(counter);
 			RollingAppenderTest.logger.info(counter);
 		}
+		//
+		Assert.assertEquals("The file is not created after deletion: Log4j2 bug", true, new File(fileName).exists());
 	}
 }
 
