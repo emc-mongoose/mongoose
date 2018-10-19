@@ -1,8 +1,11 @@
-package com.emc.mongoose.metrics;
+package com.emc.mongoose.integration;
 
 import com.emc.mongoose.Constants;
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.metrics.MetricsManager;
+import com.emc.mongoose.metrics.MetricsManagerImpl;
+import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.context.DistributedMetricsContextImpl;
 import com.emc.mongoose.metrics.context.MetricsContext;
@@ -33,7 +36,7 @@ import java.util.regex.Pattern;
 
 /**
  @author veronika K. on 15.10.18 */
-public class MetricsManagerTest {
+public class ExposedMetricsTest {
 
 	private static final int PORT = 1111;
 	private static final String CONTEXT = "/metrics";
@@ -44,7 +47,7 @@ public class MetricsManagerTest {
 	private static final int MARK_LAT = 1_000_000;
 	private static final String[] TIMING_METRICS = { "count", "sum", "mean", "min", "max" };
 	private static final String[] RATE_METRICS = { "count", "meanRate", "lastRate" };
-	private final String STEP_ID = MetricsManagerTest.class.getSimpleName();
+	private final String STEP_ID = ExposedMetricsTest.class.getSimpleName();
 	private final OpType OP_TYPE = OpType.CREATE;
 	private final IntSupplier nodeCountSupplier = () -> 1;
 	private final int concurrencyLimit = 0;
