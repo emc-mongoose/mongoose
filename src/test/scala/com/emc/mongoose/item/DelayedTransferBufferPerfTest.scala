@@ -14,7 +14,7 @@ import com.emc.mongoose.item.io.{DelayedTransferConvertBuffer, NewDataItemInput}
 import com.emc.mongoose.item.op.{OperationsBuilder, OpType}
 import org.junit.Assert.fail
 
-final class DelayedTransferBufferTest {
+final class DelayedTransferBufferPerfTest {
 
 	private val BATCH_SIZE = 0x1000
 	private val BUFF_CAPACITY = 1000000

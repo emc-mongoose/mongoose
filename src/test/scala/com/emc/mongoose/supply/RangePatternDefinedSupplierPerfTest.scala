@@ -7,7 +7,7 @@ import java.util
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
 
-final class RangePatternDefinedSupplierTest {
+final class RangePatternDefinedSupplierPerfTest {
 	
 	private val BATCH_SIZE = 0x1000
 	private val TIME_LIMIT_SEC = 50

@@ -1,5 +1,7 @@
 package com.emc.mongoose.load.generator;
 
+import com.emc.mongoose.load.generator.LoadGenerator;
+import com.emc.mongoose.load.generator.LoadGeneratorImpl;
 import com.github.akurilov.commons.io.collection.ListInput;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.io.Input;
@@ -31,7 +33,7 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  Created by kurila on 30.03.17.
  */
-public class LoadGeneratorImplTest {
+public class LoadGeneratorImplPerfTest {
 	
 	private static final int BATCH_SIZE = 0x1000;
 	

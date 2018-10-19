@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.LongAdder
 
 import com.emc.mongoose.item.io.{CsvFileItemInput, CsvFileItemOutput, NewDataItemInput}
 
-final class CsvFileItemInputTest {
+final class CsvFileItemInputPerfTest {
 
 	private val BATCH_SIZE = 0x1000
 	private val FILE_NAME = "items.csv"

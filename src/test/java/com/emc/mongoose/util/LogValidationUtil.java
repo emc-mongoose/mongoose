@@ -286,7 +286,7 @@ public interface LogValidationUtil {
 			durMin = Integer.parseInt(nextRecord.get("DurationMin[us]"));
 			assertTrue(durAvg >= durMin);
 			durLoQ = Integer.parseInt(nextRecord.get("DurationLoQ[us]"));
-			assertTrue(durLoQ >= durMin);
+			assertTrue("Duration LoQ (" + durLoQ + ") should not be less than min (" + durMin + ")", durLoQ >= durMin);
 			durMed = Integer.parseInt(nextRecord.get("DurationMed[us]"));
 			assertTrue(durMed >= durLoQ);
 			durHiQ = Integer.parseInt(nextRecord.get("DurationHiQ[us]"));
