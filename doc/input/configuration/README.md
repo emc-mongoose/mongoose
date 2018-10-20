@@ -101,6 +101,7 @@ The command-line options are directly mapped to the configuration items. For exa
 | storage-auth-uid                               | String | null | The authentication identifier
 | storage-auth-secret                            | String | null | The authentication secret
 | storage-auth-token                             | String | null | S3: no effect, Atmos: subtenant, Swift: token
+| storage-namespace                              | String | null | The storage namespace
 | **storage-driver-limit-concurrency**           | Integer >= 0 | 1 | The concurrency limit (per node in case of distributed mode). In case of filesystem this is the max number of open files at any moment. In case of HTTP this is the max number of the active connections at any moment.
 | **storage-driver-limit-queue-input**           | Integer > 0 | 1000000 | Storage drivers internal input operations queue size limit
 | **storage-driver-limit-queue-output**          | Integer > 0 | 1000000 | Storage drivers internal output operations queue size limit

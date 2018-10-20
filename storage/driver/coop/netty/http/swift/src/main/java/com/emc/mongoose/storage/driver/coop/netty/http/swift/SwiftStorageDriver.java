@@ -81,8 +81,8 @@ extends HttpStorageDriverBase<I, O> {
 		final int batchSize
 	) throws OmgShootMyFootException, InterruptedException {
 		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
+		namespace = storageConfig.stringVal("namespace");
 		final Config httpConfig = storageConfig.configVal("net-http");
-		namespace = httpConfig.stringVal("namespace");
 		versioning = httpConfig.boolVal("versioning");
 		if(namespace == null) {
 			throw new IllegalArgumentNameException("Namespace is not set");
