@@ -14,6 +14,9 @@ implements HistogramSnapshot {
 	private final long[] sortedVals;
 
 	public HistogramSnapshotImpl(final long[] vals) {
+		if(0 == vals.length) {
+			throw new IllegalArgumentException("Empty snapshot creation attempt");
+		}
 		this.sortedVals = vals;
 		Arrays.sort(this.sortedVals);
 	}
@@ -34,11 +37,7 @@ implements HistogramSnapshot {
 	@Override
 	public long quantile(final double quantile) {
 		if(quantile >= 0.0 || quantile < 1.0) {
-			if(sortedVals.length == 0) {
-				return 0;
-			} else {
-				return sortedVals[(int) (quantile * sortedVals.length)];
-			}
+			return sortedVals[(int) (quantile * sortedVals.length)];
 		} else {
 			throw new IllegalArgumentException(quantile + " is not in range [0..1)");
 		}

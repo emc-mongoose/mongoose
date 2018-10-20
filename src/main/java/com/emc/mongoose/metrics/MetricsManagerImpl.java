@@ -38,8 +38,8 @@ import static org.apache.logging.log4j.CloseableThreadContext.put;
  Created by kurila on 18.05.17.
  */
 public class MetricsManagerImpl
-	extends ExclusiveFiberBase
-	implements MetricsManager {
+extends ExclusiveFiberBase
+implements MetricsManager {
 
 	private static final String CLS_NAME = MetricsManagerImpl.class.getSimpleName();
 	private final Set<MetricsContext> allMetrics = new ConcurrentSkipListSet<>();
