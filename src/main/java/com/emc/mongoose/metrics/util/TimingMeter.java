@@ -14,6 +14,4 @@ extends Meter<S> {
 	double mean();
 
 	void update(final long value);
-
-	void update(final int value);
 }

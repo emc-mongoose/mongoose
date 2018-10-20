@@ -20,10 +20,7 @@ implements TimingMeter<S> {
 		this.metricName = metricName;
 	}
 
-	public void update(final int value) {
-		update((long) value);
-	}
-
+	@Override
 	public void update(final long value) {
 		histogram.update(value);
 		count.increment();
@@ -36,10 +33,12 @@ implements TimingMeter<S> {
 		}
 	}
 
+	@Override
 	public String name() {
 		return metricName;
 	}
 
+	@Override
 	public S snapshot() {
 		if(sum() == 0) {
 			return (S) new TimingMetricSnapshotImpl(0, 0, 0, 0, 0, histogram.snapshot(), "");
@@ -49,22 +48,27 @@ implements TimingMeter<S> {
 		);
 	}
 
+	@Override
 	public long sum() {
 		return sum.sum();
 	}
 
+	@Override
 	public long min() {
 		return min.longValue();
 	}
 
+	@Override
 	public long max() {
 		return max.longValue();
 	}
 
+	@Override
 	public long count() {
 		return count.sum();
 	}
 
+	@Override
 	public double mean() {
 		return (sum() == 0) ? 0 : ((double) sum()) / count();
 	}
