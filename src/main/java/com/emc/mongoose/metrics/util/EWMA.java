@@ -8,7 +8,7 @@ import static java.lang.Math.exp;
 /**
  @author veronika K. on 26.09.18 */
 public class EWMA
-	implements LoadAverage {
+implements LoadAverage {
 
 	private static final int INTERVAL = 5;
 	private static final double SECONDS_PER_MINUTE = 60.0;

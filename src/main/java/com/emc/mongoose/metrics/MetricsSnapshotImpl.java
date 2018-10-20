@@ -4,7 +4,7 @@ import com.emc.mongoose.metrics.util.RateMetricSnapshot;
 import com.emc.mongoose.metrics.util.TimingMetricSnapshot;
 
 public class MetricsSnapshotImpl
-	implements MetricsSnapshot {
+implements MetricsSnapshot {
 
 	private final TimingMetricSnapshot durSnapshot;
 	private final TimingMetricSnapshot latSnapshot;

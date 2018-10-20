@@ -5,8 +5,9 @@ import com.emc.mongoose.metrics.DistributedMetricsListener;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshotImpl;
 import com.emc.mongoose.metrics.MetricsSnapshot;
 import com.emc.mongoose.metrics.util.RateMetricSnapshot;
+import com.emc.mongoose.metrics.util.RateMetricSnapshotImpl;
 import com.emc.mongoose.metrics.util.TimingMetricSnapshot;
-
+import com.emc.mongoose.metrics.util.TimingMetricSnapshotImpl;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.util.ArrayList;
@@ -130,12 +131,12 @@ implements DistributedMetricsContext<S> {
 					byteSnapshots.add(snapshot.byteSnapshot());
 					conSnapshots.add(snapshot.concurrencySnapshot());
 				}
-				successSnapshot = RateMetricSnapshot.aggregate(succSnapshots);
-				failsSnapshot = RateMetricSnapshot.aggregate(failSnapshots);
-				bytesSnapshot = RateMetricSnapshot.aggregate(byteSnapshots);
-				actualConcurrencySnapshot = TimingMetricSnapshot.aggregate(conSnapshots);
-				durSnapshot = TimingMetricSnapshot.aggregate(durSnapshots);
-				latSnapshot = TimingMetricSnapshot.aggregate(latSnapshots);
+				successSnapshot = RateMetricSnapshotImpl.aggregate(succSnapshots);
+				failsSnapshot = RateMetricSnapshotImpl.aggregate(failSnapshots);
+				bytesSnapshot = RateMetricSnapshotImpl.aggregate(byteSnapshots);
+				actualConcurrencySnapshot = TimingMetricSnapshotImpl.aggregate(conSnapshots);
+				durSnapshot = TimingMetricSnapshotImpl.aggregate(durSnapshots);
+				latSnapshot = TimingMetricSnapshotImpl.aggregate(latSnapshots);
 
 			}
 

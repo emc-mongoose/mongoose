@@ -2,6 +2,8 @@ package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.MetricsSnapshotImpl;
+import com.emc.mongoose.metrics.util.ConcurrentSlidingWindowLongReservoir;
+import com.emc.mongoose.metrics.util.HistogramImpl;
 import com.emc.mongoose.metrics.util.RateMeter;
 import com.emc.mongoose.metrics.util.RateMeterImpl;
 import com.emc.mongoose.metrics.util.RateMetricSnapshot;
@@ -46,14 +48,20 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			TimeUnit.SECONDS.toMillis(updateIntervalSec)
 		);
 		//
-		respLatency = new TimingMeterImpl<>(DEFAULT_RESERVOIR_SIZE, METRIC_NAME_LAT);
+		respLatency = new TimingMeterImpl<>(
+			new HistogramImpl(new ConcurrentSlidingWindowLongReservoir(DEFAULT_RESERVOIR_SIZE)), METRIC_NAME_LAT
+		);
 		respLatSnapshot = respLatency.snapshot();
 		//
-		reqDuration = new TimingMeterImpl<>(DEFAULT_RESERVOIR_SIZE, METRIC_NAME_DUR);
+		reqDuration = new TimingMeterImpl<>(
+			new HistogramImpl(new ConcurrentSlidingWindowLongReservoir(DEFAULT_RESERVOIR_SIZE)), METRIC_NAME_DUR
+		);
 		reqDurSnapshot = reqDuration.snapshot();
 		//
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-		actualConcurrency = new TimingMeterImpl<>(DEFAULT_RESERVOIR_SIZE, METRIC_NAME_CONC);
+		actualConcurrency = new TimingMeterImpl<>(
+			new HistogramImpl(new ConcurrentSlidingWindowLongReservoir(DEFAULT_RESERVOIR_SIZE)), METRIC_NAME_CONC
+		);
 		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		//
 		throughputSuccess = new RateMeterImpl<>(clock, updateIntervalSec, METRIC_NAME_SUCC);

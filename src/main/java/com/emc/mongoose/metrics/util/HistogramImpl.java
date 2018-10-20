@@ -5,29 +5,14 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  @author veronika K. on 01.10.18 */
 public class HistogramImpl
-	implements Histogram {
+implements Histogram {
 
-	private final ConcurrentSlidingWindowReservoir reservoir;
+	private final LongReservoir reservoir;
 	private final LongAdder count;
 
-	public HistogramImpl(final ConcurrentSlidingWindowReservoir reservoir) {
+	public HistogramImpl(final LongReservoir reservoir) {
 		this.reservoir = reservoir;
 		this.count = new LongAdder();
-	}
-
-	public HistogramImpl(final int reservoirSize) {
-		this(new ConcurrentSlidingWindowReservoir(reservoirSize));
-	}
-
-	public HistogramImpl() {
-		this(new ConcurrentSlidingWindowReservoir());
-	}
-
-	public HistogramImpl(final long[] values) {
-		this();
-		for(int i = 0; i < values.length; ++ i) {
-			update(values[i]);
-		}
 	}
 
 	@Override
@@ -48,6 +33,6 @@ public class HistogramImpl
 
 	@Override
 	public HistogramSnapshotImpl snapshot() {
-		return reservoir.snapshot();
+		return new HistogramSnapshotImpl(reservoir.snapshot());
 	}
 }

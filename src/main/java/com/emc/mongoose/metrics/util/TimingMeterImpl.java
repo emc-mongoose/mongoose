@@ -5,22 +5,18 @@ import java.util.concurrent.atomic.LongAdder;
 
 /**
  @author veronika K. on 10.10.18 */
-public class TimingMeterImpl<S extends SingleMetricSnapshot>
-	implements TimingMeter<S> {
+public class TimingMeterImpl<S extends TimingMetricSnapshot>
+implements TimingMeter<S> {
 
-	private final HistogramImpl histogramImpl;
+	private final Histogram histogram;
 	private final LongAdder count = new LongAdder();
 	private final LongAdder sum = new LongAdder();
 	private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);
 	private final AtomicLong max = new AtomicLong(Long.MIN_VALUE);
 	private String metricName;
 
-	public TimingMeterImpl(final int reservoirSize, final String metricName) {
-		this(new HistogramImpl(reservoirSize), metricName);
-	}
-
-	public TimingMeterImpl(final HistogramImpl histogramImpl, final String metricName) {
-		this.histogramImpl = histogramImpl;
+	public TimingMeterImpl(final Histogram histogram, final String metricName) {
+		this.histogram = histogram;
 		this.metricName = metricName;
 	}
 
@@ -29,7 +25,7 @@ public class TimingMeterImpl<S extends SingleMetricSnapshot>
 	}
 
 	public void update(final long value) {
-		histogramImpl.update(value);
+		histogram.update(value);
 		count.increment();
 		sum.add(value);
 		if(value < min.get()) {
@@ -46,10 +42,10 @@ public class TimingMeterImpl<S extends SingleMetricSnapshot>
 
 	public S snapshot() {
 		if(sum() == 0) {
-			return (S) new TimingMetricSnapshotImpl(0, 0, 0, 0, 0, histogramImpl.snapshot(), "");
+			return (S) new TimingMetricSnapshotImpl(0, 0, 0, 0, 0, histogram.snapshot(), "");
 		}
 		return (S) new TimingMetricSnapshotImpl(
-			sum(), count(), min(), max(), mean(), histogramImpl.snapshot(), metricName
+			sum(), count(), min(), max(), mean(), histogram.snapshot(), metricName
 		);
 	}
 

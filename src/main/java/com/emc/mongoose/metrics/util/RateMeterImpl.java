@@ -7,11 +7,11 @@ import java.util.concurrent.atomic.LongAdder;
 
 import static java.lang.Math.exp;
 
-public class RateMeterImpl<S extends SingleMetricSnapshot>
-	implements RateMeter<S> {
+public class RateMeterImpl<S extends RateMetricSnapshot>
+implements RateMeter<S> {
 
 	private static final long TICK_INTERVAL = TimeUnit.SECONDS.toMillis(1);
-	//
+
 	private final String metricName;
 	private final EWMA rateAvg;
 	private final LongAdder count = new LongAdder();
@@ -19,7 +19,6 @@ public class RateMeterImpl<S extends SingleMetricSnapshot>
 	private final AtomicLong lastTick = new AtomicLong();
 	private long startTime;
 
-	//
 	public RateMeterImpl(final Clock clock, final int periodSec, final String name) {
 		final double ps = periodSec > 0 ? periodSec : 10;
 		final int intervalSecs = 1;

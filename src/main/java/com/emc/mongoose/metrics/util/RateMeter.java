@@ -3,10 +3,9 @@ package com.emc.mongoose.metrics.util;
 /**
  @author veronika K. on 03.10.18 */
 public interface RateMeter<S extends SingleMetricSnapshot>
-	extends Meter<S> {
+extends Meter<S> {
 
 	void resetStartTime();
-	//
 
 	/**
 	 Mark the occurrence of an event.

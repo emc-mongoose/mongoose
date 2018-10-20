@@ -4,6 +4,8 @@ import com.emc.mongoose.Constants;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.DistributedMetricsSnapshotImpl;
+import com.emc.mongoose.metrics.util.ConcurrentSlidingWindowLongReservoir;
+import com.emc.mongoose.metrics.util.Histogram;
 import com.emc.mongoose.metrics.util.HistogramImpl;
 import com.emc.mongoose.metrics.util.RateMetricSnapshot;
 import com.emc.mongoose.metrics.util.RateMetricSnapshotImpl;
@@ -15,11 +17,12 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.Test;
 
 import java.util.Map;
+import java.util.stream.LongStream;
 
 import static org.junit.Assert.assertEquals;
 
 public class StepResultsMetricsLogMessageTest
-	extends StepResultsMetricsLogMessage {
+extends StepResultsMetricsLogMessage {
 
 	private static final OpType OP_TYPE = OpType.READ;
 	private static final String STEP_ID = StepResultsMetricsLogMessageTest.class.getSimpleName();
@@ -57,12 +60,16 @@ public class StepResultsMetricsLogMessageTest
 	private static final DistributedMetricsSnapshot SNAPSHOT;
 
 	static {
-		final TimingMetricSnapshot dS = new TimingMeterImpl<TimingMetricSnapshot>(
-			new HistogramImpl(DURATIONS), Constants.METRIC_NAME_DUR).snapshot();
-		final TimingMetricSnapshot lS = new TimingMeterImpl<TimingMetricSnapshot>(
-			new HistogramImpl(LATENCIES), Constants.METRIC_NAME_LAT).snapshot();
-		final TimingMetricSnapshot cS = new TimingMeterImpl<TimingMetricSnapshot>(
-			new HistogramImpl(CONCURRENCIES), Constants.METRIC_NAME_CONC).snapshot();
+		Histogram h;
+		h = new HistogramImpl(new ConcurrentSlidingWindowLongReservoir(COUNT));
+		LongStream.of(DURATIONS).forEach(h::update);
+		final TimingMetricSnapshot dS = new TimingMeterImpl<>(h, Constants.METRIC_NAME_DUR).snapshot();
+		h = new HistogramImpl(new ConcurrentSlidingWindowLongReservoir(COUNT));
+		LongStream.of(LATENCIES).forEach(h::update);
+		final TimingMetricSnapshot lS = new TimingMeterImpl<>(h, Constants.METRIC_NAME_LAT).snapshot();
+		h = new HistogramImpl(new ConcurrentSlidingWindowLongReservoir(COUNT));
+		LongStream.of(CONCURRENCIES).forEach(h::update);
+		final TimingMetricSnapshot cS = new TimingMeterImpl<>(h, Constants.METRIC_NAME_CONC).snapshot();
 		final RateMetricSnapshot fS = new RateMetricSnapshotImpl(0, 0, Constants.METRIC_NAME_FAIL, 0);
 		final RateMetricSnapshot sS = new RateMetricSnapshotImpl(
 			COUNT / durSum, COUNT / durSum, Constants.METRIC_NAME_SUCC, COUNT);

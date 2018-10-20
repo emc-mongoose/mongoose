@@ -11,7 +11,9 @@ public class TimingMeterTest {
 
 	@Test
 	public void test() {
-		final TimingMeter meter = new TimingMeterImpl(new HistogramImpl(), "SOME_METRIC");
+		final TimingMeter meter = new TimingMeterImpl<>(
+			new HistogramImpl(new ConcurrentSlidingWindowLongReservoir()), "SOME_METRIC"
+		);
 		int sum = 0;
 		for(int i = 0; i < INTERVALS; ++ i) {
 			meter.update(i);

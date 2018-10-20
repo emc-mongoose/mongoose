@@ -10,5 +10,5 @@ public interface Histogram {
 
 	long count();
 
-	HistogramSnapshotImpl snapshot();
+	HistogramSnapshot snapshot();
 }
