@@ -1,5 +1,8 @@
 package com.emc.mongoose.metrics.util;
 
+import com.emc.mongoose.metrics.snapshot.HistogramSnapshot;
+import com.emc.mongoose.metrics.type.Histogram;
+import com.emc.mongoose.metrics.type.HistogramImpl;
 import org.junit.Test;
 
 import java.util.stream.LongStream;

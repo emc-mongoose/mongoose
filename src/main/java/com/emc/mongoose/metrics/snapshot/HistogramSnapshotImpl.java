@@ -1,4 +1,4 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.snapshot;
 
 import java.util.Arrays;
 import java.util.List;

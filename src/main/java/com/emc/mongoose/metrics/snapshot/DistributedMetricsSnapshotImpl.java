@@ -1,7 +1,4 @@
-package com.emc.mongoose.metrics;
-
-import com.emc.mongoose.metrics.util.RateMetricSnapshot;
-import com.emc.mongoose.metrics.util.TimingMetricSnapshot;
+package com.emc.mongoose.metrics.snapshot;
 
 /**
  @author veronika K. */

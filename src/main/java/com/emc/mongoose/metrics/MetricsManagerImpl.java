@@ -90,7 +90,7 @@ implements MetricsManager {
 					}
 				}
 				// console output
-				if(! selectedMetrics.isEmpty()) {
+				if(!selectedMetrics.isEmpty()) {
 					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
 					selectedMetrics.clear();
 				}
@@ -149,7 +149,7 @@ implements MetricsManager {
 		) {
 			if(allMetrics.remove(metricsCtx)) {
 				try {
-					if(! outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
+					if(!outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 						Loggers.ERR.warn(
 							"Acquire lock timeout while unregistering the metrics context \"{}\"", metricsCtx
 						);

@@ -2,7 +2,7 @@ package com.emc.mongoose.load.step.client.metrics;
 
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.load.step.LoadStep;
-import com.emc.mongoose.metrics.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
 import com.emc.mongoose.logging.LogUtil;
 
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;

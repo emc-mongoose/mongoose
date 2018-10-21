@@ -1,5 +1,6 @@
 package com.emc.mongoose.metrics.util;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 import static java.lang.Math.min;
 
@@ -10,11 +11,11 @@ implements LongReservoir {
 
 	private static final int DEFAULT_SIZE = 1028;
 	private final long[] measurements;
-	private final AtomicLong offset;
+	private final AtomicLong count;
 
 	public ConcurrentSlidingWindowLongReservoir(final int size) {
 		this.measurements = new long[size];
-		this.offset = new AtomicLong();
+		this.count = new AtomicLong();
 	}
 
 	public ConcurrentSlidingWindowLongReservoir() {
@@ -23,16 +24,21 @@ implements LongReservoir {
 
 	@Override
 	public int size() {
-		return (int) min(offset.get(), measurements.length);
+		return (int) min(count.get(), measurements.length);
 	}
 
 	@Override
 	public void update(final long value) {
-		measurements[(int) (offset.incrementAndGet() % measurements.length)] = value;
+		measurements[(int) (count.getAndIncrement() % measurements.length)] = value;
 	}
 
 	@Override
 	public long[] snapshot() {
-		return measurements.clone();
+		final long countSnapshot = count.get();
+		if(countSnapshot < measurements.length) {
+			return Arrays.copyOf(measurements, (int) countSnapshot);
+		} else {
+			return measurements.clone();
+		}
 	}
 }

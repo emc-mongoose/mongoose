@@ -2,7 +2,7 @@ package com.emc.mongoose.metrics.util;
 
 /**
  @author veronika K. on 03.10.18 */
-interface LongReservoir {
+public interface LongReservoir {
 
 	int size();
 

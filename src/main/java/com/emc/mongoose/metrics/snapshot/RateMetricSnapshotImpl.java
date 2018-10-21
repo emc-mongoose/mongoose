@@ -1,4 +1,4 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.snapshot;
 
 import java.util.List;
 
@@ -23,9 +23,6 @@ implements RateMetricSnapshot {
 
 	public static RateMetricSnapshot aggregate(final List<RateMetricSnapshot> snapshots) {
 		final int snapshotsCount = snapshots.size();
-		if(snapshotsCount == 0) {
-			return new RateMetricSnapshotImpl(0, 0, "", 0);
-		}
 		if(snapshotsCount == 1) {
 			return snapshots.get(0);
 		}

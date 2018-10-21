@@ -1,23 +1,25 @@
 package com.emc.mongoose.logging;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
-import com.emc.mongoose.metrics.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.DistributedMetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
 import com.emc.mongoose.metrics.context.MetricsContext;
-import org.apache.logging.log4j.message.AsynchronouslyFormattable;
-
-import java.util.Date;
-
+import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import static com.emc.mongoose.Constants.K;
 import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.env.DateUtil.FMT_DATE_ISO8601;
+
+import org.apache.logging.log4j.message.AsynchronouslyFormattable;
+
+import java.util.Date;
 
 /**
  Created by kurila on 18.05.17.
  */
 @AsynchronouslyFormattable
 public final class MetricsCsvLogMessage
-	extends LogMessageBase {
+extends LogMessageBase {
 
 	private final MetricsSnapshot snapshot;
 	private final OpType opType;
@@ -31,6 +33,13 @@ public final class MetricsCsvLogMessage
 
 	@Override
 	public final void formatTo(final StringBuilder strb) {
+
+		final TimingMetricSnapshot concurrencySnapshot = snapshot.concurrencySnapshot();
+		final TimingMetricSnapshot durationSnapshot = snapshot.durationSnapshot();
+		final RateMetricSnapshot successCountSnapshot = snapshot.successSnapshot();
+		final RateMetricSnapshot byteCountSnapshot = snapshot.byteSnapshot();
+		final TimingMetricSnapshot latencySnapshot = snapshot.latencySnapshot();
+
 		strb
 			.append('"').append(FMT_DATE_ISO8601.format(new Date())).append('"').append(',')
 			.append(opType.name()).append(',')
@@ -39,28 +48,28 @@ public final class MetricsCsvLogMessage
 				snapshot instanceof DistributedMetricsSnapshot ? ((DistributedMetricsSnapshot) snapshot).nodeCount() : 1
 			)
 			.append(',')
-			.append(snapshot.concurrencySnapshot().histogramSnapshot().last()).append(',')
-			.append(snapshot.concurrencySnapshot().mean()).append(',')
-			.append(snapshot.successSnapshot().count()).append(',')
+			.append(concurrencySnapshot.histogramSnapshot().last()).append(',')
+			.append(concurrencySnapshot.mean()).append(',')
+			.append(successCountSnapshot.count()).append(',')
 			.append(snapshot.failsSnapshot().count()).append(',')
-			.append(snapshot.byteSnapshot().count()).append(',')
+			.append(byteCountSnapshot.count()).append(',')
 			.append(snapshot.elapsedTimeMillis() / K).append(',')
-			.append(snapshot.durationSnapshot().sum() / M).append(',')
-			.append(snapshot.successSnapshot().mean()).append(',')
-			.append(snapshot.successSnapshot().last()).append(',')
-			.append(snapshot.byteSnapshot().mean()).append(',')
-			.append(snapshot.byteSnapshot().last()).append(',')
-			.append(snapshot.durationSnapshot().mean()).append(',')
-			.append(snapshot.durationSnapshot().min()).append(',')
-			.append(snapshot.durationSnapshot().quantile(0.25)).append(',')
-			.append(snapshot.durationSnapshot().quantile(0.5)).append(',')
-			.append(snapshot.durationSnapshot().quantile(0.75)).append(',')
-			.append(snapshot.durationSnapshot().max()).append(',')
-			.append(snapshot.latencySnapshot().mean()).append(',')
-			.append(snapshot.latencySnapshot().min()).append(',')
-			.append(snapshot.latencySnapshot().quantile(0.25)).append(',')
-			.append(snapshot.latencySnapshot().quantile(0.5)).append(',')
-			.append(snapshot.latencySnapshot().quantile(0.75)).append(',')
-			.append(snapshot.latencySnapshot().max());
+			.append(durationSnapshot.sum() / M).append(',')
+			.append(successCountSnapshot.mean()).append(',')
+			.append(successCountSnapshot.last()).append(',')
+			.append(byteCountSnapshot.mean()).append(',')
+			.append(byteCountSnapshot.last()).append(',')
+			.append(durationSnapshot.mean()).append(',')
+			.append(durationSnapshot.min()).append(',')
+			.append(durationSnapshot.quantile(0.25)).append(',')
+			.append(durationSnapshot.quantile(0.5)).append(',')
+			.append(durationSnapshot.quantile(0.75)).append(',')
+			.append(durationSnapshot.max()).append(',')
+			.append(latencySnapshot.mean()).append(',')
+			.append(latencySnapshot.min()).append(',')
+			.append(latencySnapshot.quantile(0.25)).append(',')
+			.append(latencySnapshot.quantile(0.5)).append(',')
+			.append(latencySnapshot.quantile(0.75)).append(',')
+			.append(latencySnapshot.max());
 	}
 }

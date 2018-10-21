@@ -1,4 +1,7 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.type;
+
+import com.emc.mongoose.metrics.snapshot.SingleMetricSnapshot;
+import com.emc.mongoose.metrics.util.Meter;
 
 /**
  @author veronika K. on 03.10.18 */

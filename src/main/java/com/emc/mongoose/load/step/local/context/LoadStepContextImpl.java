@@ -15,7 +15,7 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.logging.OperationTraceCsvBatchLogMessage;
 import com.emc.mongoose.logging.OperationTraceCsvLogMessage;
-import com.emc.mongoose.metrics.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.github.akurilov.commons.io.Output;

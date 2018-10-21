@@ -1,6 +1,8 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.type;
 
-import java.util.concurrent.atomic.AtomicLong;
+import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshotImpl;
+
 import java.util.concurrent.atomic.LongAdder;
 
 /**
@@ -11,9 +13,9 @@ implements TimingMeter<S> {
 	private final Histogram histogram;
 	private final LongAdder count = new LongAdder();
 	private final LongAdder sum = new LongAdder();
-	private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);
-	private final AtomicLong max = new AtomicLong(Long.MIN_VALUE);
-	private String metricName;
+	private volatile long min = Long.MAX_VALUE;
+	private volatile long max = Long.MIN_VALUE;
+	private final String metricName;
 
 	public TimingMeterImpl(final Histogram histogram, final String metricName) {
 		this.histogram = histogram;
@@ -25,11 +27,11 @@ implements TimingMeter<S> {
 		histogram.update(value);
 		count.increment();
 		sum.add(value);
-		if(value < min.get()) {
-			min.set(value);
+		if(value < min) {
+			min = value;
 		}
-		if(value > max.get()) {
-			max.set(value);
+		if(value > max) {
+			max = value;
 		}
 	}
 
@@ -43,9 +45,7 @@ implements TimingMeter<S> {
 		if(sum() == 0) {
 			return (S) new TimingMetricSnapshotImpl(0, 0, 0, 0, 0, histogram.snapshot(), "");
 		}
-		return (S) new TimingMetricSnapshotImpl(
-			sum(), count(), min(), max(), mean(), histogram.snapshot(), metricName
-		);
+		return (S) new TimingMetricSnapshotImpl(sum(), count(), min(), max(), mean(), histogram.snapshot(), metricName);
 	}
 
 	@Override
@@ -55,12 +55,12 @@ implements TimingMeter<S> {
 
 	@Override
 	public long min() {
-		return min.longValue();
+		return min;
 	}
 
 	@Override
 	public long max() {
-		return max.longValue();
+		return max;
 	}
 
 	@Override

@@ -1,5 +1,7 @@
 package com.emc.mongoose.metrics;
 
+import com.emc.mongoose.metrics.snapshot.DistributedMetricsSnapshot;
+
 /**
  Created by andrey on 06.07.17.
  The entity accepting the metrics updates

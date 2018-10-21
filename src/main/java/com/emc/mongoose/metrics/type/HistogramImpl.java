@@ -1,4 +1,7 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.type;
+
+import com.emc.mongoose.metrics.snapshot.HistogramSnapshotImpl;
+import com.emc.mongoose.metrics.util.LongReservoir;
 
 import java.util.concurrent.atomic.LongAdder;
 

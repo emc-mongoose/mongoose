@@ -1,4 +1,7 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.type;
+
+import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.RateMetricSnapshotImpl;
 
 import java.time.Clock;
 import java.util.concurrent.TimeUnit;

@@ -1,7 +1,7 @@
 package com.emc.mongoose.logging;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import org.apache.commons.lang.text.StrBuilder;
 

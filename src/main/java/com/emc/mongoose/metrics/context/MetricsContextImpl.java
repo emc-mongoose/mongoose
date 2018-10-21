@@ -1,15 +1,15 @@
 package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.MetricsSnapshotImpl;
+import com.emc.mongoose.metrics.snapshot.MetricsSnapshotImpl;
 import com.emc.mongoose.metrics.util.ConcurrentSlidingWindowLongReservoir;
-import com.emc.mongoose.metrics.util.HistogramImpl;
-import com.emc.mongoose.metrics.util.RateMeter;
-import com.emc.mongoose.metrics.util.RateMeterImpl;
-import com.emc.mongoose.metrics.util.RateMetricSnapshot;
-import com.emc.mongoose.metrics.util.TimingMeter;
-import com.emc.mongoose.metrics.util.TimingMeterImpl;
-import com.emc.mongoose.metrics.util.TimingMetricSnapshot;
+import com.emc.mongoose.metrics.type.HistogramImpl;
+import com.emc.mongoose.metrics.type.RateMeter;
+import com.emc.mongoose.metrics.type.RateMeterImpl;
+import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
+import com.emc.mongoose.metrics.type.TimingMeter;
+import com.emc.mongoose.metrics.type.TimingMeterImpl;
+import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.time.Clock;
@@ -189,9 +189,9 @@ implements MetricsContext<S> {
 	public void refreshLastSnapshot() {
 		final long currentTimeMillis = System.currentTimeMillis();
 		if(currentTimeMillis - lastOutputTs() > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
-			//if(lastDurationSum != reqDuration.sum() || lastLatencySum != respLatency.sum()) {
+			if(lastDurationSum != reqDuration.sum() || lastLatencySum != respLatency.sum()) {
 				refreshTimings();
-			//}
+			}
 			actualConcurrency.update(actualConcurrencyGauge.getAsInt());
 			actualConcurrencySnapshot = actualConcurrency.snapshot();
 		}

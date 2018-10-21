@@ -1,4 +1,6 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.type;
+
+import com.emc.mongoose.metrics.snapshot.HistogramSnapshot;
 
 /**
  @author veronika K. on 10.10.18 */

@@ -2,7 +2,7 @@ package com.emc.mongoose.load.step;
 
 import com.emc.mongoose.concurrent.Daemon;
 import com.emc.mongoose.exception.InterruptRunException;
-import com.emc.mongoose.metrics.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnable;
 
