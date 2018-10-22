@@ -14,9 +14,6 @@ implements HistogramSnapshot {
 	private final long[] sortedVals;
 
 	public HistogramSnapshotImpl(final long[] vals) {
-		if(0 == vals.length) {
-			throw new IllegalArgumentException("Empty snapshot creation attempt");
-		}
 		this.sortedVals = vals;
 		Arrays.sort(this.sortedVals);
 	}
