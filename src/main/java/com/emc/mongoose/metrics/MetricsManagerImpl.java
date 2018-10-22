@@ -104,7 +104,7 @@ implements MetricsManager {
 	}
 
 	public void startIfNotStarted() {
-		if(! isStarted()) {
+		if(!isStarted()) {
 			super.start();
 			Loggers.MSG.debug("Started the metrics manager fiber");
 		}
