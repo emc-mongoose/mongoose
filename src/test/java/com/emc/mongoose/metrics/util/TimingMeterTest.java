@@ -1,5 +1,8 @@
 package com.emc.mongoose.metrics.util;
 
+import com.emc.mongoose.metrics.type.HistogramImpl;
+import com.emc.mongoose.metrics.type.TimingMeter;
+import com.emc.mongoose.metrics.type.TimingMeterImpl;
 import org.junit.Assert;
 import org.junit.Test;
 

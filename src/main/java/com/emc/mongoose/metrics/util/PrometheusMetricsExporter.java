@@ -1,9 +1,12 @@
 package com.emc.mongoose.metrics.util;
 
 import com.emc.mongoose.logging.Loggers;
-import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
-
+import com.emc.mongoose.metrics.snapshot.HistogramSnapshot;
+import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.SingleMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import io.prometheus.client.Collector;
 
 import static com.emc.mongoose.Constants.METRIC_NAME_TIME;

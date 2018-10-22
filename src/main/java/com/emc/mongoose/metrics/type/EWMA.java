@@ -1,4 +1,4 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.type;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;

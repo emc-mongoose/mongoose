@@ -1,4 +1,4 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.snapshot;
 
 import java.util.Arrays;
 import java.util.List;
@@ -11,6 +11,8 @@ import java.util.stream.LongStream;
 public class HistogramSnapshotImpl
 implements HistogramSnapshot {
 
+	private static final HistogramSnapshotImpl EMPTY = new HistogramSnapshotImpl(new long[0]);
+
 	private final long[] sortedVals;
 
 	public HistogramSnapshotImpl(final long[] vals) {
@@ -19,7 +21,9 @@ implements HistogramSnapshot {
 	}
 
 	public static HistogramSnapshot aggregate(final List<HistogramSnapshot> snapshots) {
-		if(1 == snapshots.size()) {
+		if(0 == snapshots.size()) {
+			return EMPTY;
+		} else if(1 == snapshots.size()) {
 			return snapshots.get(0);
 		} else {
 			final SortedSet<Long> sortedVals = new TreeSet<>();
@@ -33,12 +37,10 @@ implements HistogramSnapshot {
 
 	@Override
 	public long quantile(final double quantile) {
-		if(quantile >= 0.0 || quantile < 1.0) {
-			if(sortedVals.length == 0) {
-				return 0;
-			} else {
-				return sortedVals[(int) (quantile * sortedVals.length)];
-			}
+		if(0 == sortedVals.length) {
+			return 0;
+		} else if(quantile >= 0.0 || quantile < 1.0) {
+			return sortedVals[(int) (quantile * sortedVals.length)];
 		} else {
 			throw new IllegalArgumentException(quantile + " is not in range [0..1)");
 		}

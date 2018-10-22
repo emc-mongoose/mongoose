@@ -1,4 +1,7 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.type;
+
+import com.emc.mongoose.metrics.snapshot.SingleMetricSnapshot;
+import com.emc.mongoose.metrics.util.Meter;
 
 /**
  @author veronika K. on 10.10.18 */
@@ -14,6 +17,4 @@ extends Meter<S> {
 	double mean();
 
 	void update(final long value);
-
-	void update(final int value);
 }

@@ -1,7 +1,7 @@
-package com.emc.mongoose.metrics;
+package com.emc.mongoose.metrics.snapshot;
 
-import com.emc.mongoose.metrics.util.RateMetricSnapshot;
-import com.emc.mongoose.metrics.util.TimingMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 
 import java.io.Serializable;
 

@@ -1,8 +1,8 @@
 package com.emc.mongoose.logging;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
-import com.emc.mongoose.metrics.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.DistributedMetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import org.apache.logging.log4j.message.AsynchronouslyFormattable;
 

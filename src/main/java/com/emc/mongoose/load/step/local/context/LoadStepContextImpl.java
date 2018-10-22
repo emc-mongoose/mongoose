@@ -15,7 +15,7 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.logging.OperationTraceCsvBatchLogMessage;
 import com.emc.mongoose.logging.OperationTraceCsvLogMessage;
-import com.emc.mongoose.metrics.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.github.akurilov.commons.io.Output;
@@ -276,7 +276,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 					generator.recycle(opResult);
 				} else if(opsResultsOutput != null) {
 					try {
-						if(! opsResultsOutput.put(opResult)) {
+						if(!opsResultsOutput.put(opResult)) {
 							Loggers.ERR.warn("Failed to output the I/O result");
 						}
 					} catch(final EOFException e) {
@@ -292,7 +292,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 			if(recycleFlag) {
 				latestSuccOpResultByItem.remove(opResult.item());
 			}
-			if(! Status.INTERRUPTED.equals(status)) {
+			if(!Status.INTERRUPTED.equals(status)) {
 				if(retryFlag) {
 					generator.recycle(opResult);
 				} else {

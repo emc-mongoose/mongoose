@@ -1,7 +1,7 @@
 package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.metrics.DistributedMetricsListener;
-import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.DistributedMetricsSnapshot;
 
 public interface DistributedMetricsContext<S extends DistributedMetricsSnapshot>
 extends MetricsContext<S> {

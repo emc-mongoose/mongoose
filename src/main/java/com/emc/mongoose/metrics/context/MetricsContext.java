@@ -1,7 +1,8 @@
 package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
+import com.emc.mongoose.metrics.util.LongReservoir;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 /**
@@ -11,7 +12,7 @@ public interface MetricsContext<S extends MetricsSnapshot>
 	extends AutoCloseable, Comparable<MetricsContext<S>> {
 
 	int DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
-	int DEFAULT_RESERVOIR_SIZE = 0x10_00;
+	int DEFAULT_RESERVOIR_SIZE = 1028;
 
 	// these are useful as labels/tags
 	String id();

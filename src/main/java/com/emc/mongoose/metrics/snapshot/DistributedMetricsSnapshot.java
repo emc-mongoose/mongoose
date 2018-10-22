@@ -1,4 +1,4 @@
-package com.emc.mongoose.metrics;
+package com.emc.mongoose.metrics.snapshot;
 
 /**
  @author veronika K. */

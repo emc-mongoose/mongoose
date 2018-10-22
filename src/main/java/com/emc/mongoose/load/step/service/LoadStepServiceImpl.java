@@ -3,7 +3,7 @@ package com.emc.mongoose.load.step.service;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.metrics.MetricsManager;
-import com.emc.mongoose.metrics.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
 import com.emc.mongoose.svc.ServiceBase;
 import com.emc.mongoose.load.step.LoadStep;
 import com.emc.mongoose.load.step.LoadStepFactory;

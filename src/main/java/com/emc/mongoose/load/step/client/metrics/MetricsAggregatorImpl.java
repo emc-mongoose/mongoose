@@ -4,7 +4,7 @@ import com.emc.mongoose.load.step.LoadStep;
 import com.emc.mongoose.logging.LogUtil;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import com.emc.mongoose.metrics.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 

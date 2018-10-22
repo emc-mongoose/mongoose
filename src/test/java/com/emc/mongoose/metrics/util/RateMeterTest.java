@@ -1,5 +1,6 @@
 package com.emc.mongoose.metrics.util;
 
+import com.emc.mongoose.metrics.type.RateMeterImpl;
 import org.junit.Assert;
 import org.junit.Test;
 

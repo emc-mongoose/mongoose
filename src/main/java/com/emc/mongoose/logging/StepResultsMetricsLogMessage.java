@@ -1,7 +1,7 @@
 package com.emc.mongoose.logging;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.DistributedMetricsSnapshot;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.github.akurilov.commons.system.SizeInBytes;
 import org.apache.logging.log4j.message.AsynchronouslyFormattable;

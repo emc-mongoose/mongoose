@@ -1,4 +1,4 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.snapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +31,6 @@ implements TimingMetricSnapshot {
 
 	public static TimingMetricSnapshot aggregate(final List<TimingMetricSnapshot> snapshots) {
 		final int snapshotCount = snapshots.size();
-		if(snapshotCount == 0) {
-			return new TimingMetricSnapshotImpl(0, 0, 0, 0, 0, null, "");
-		}
 		if(snapshotCount == 1) {
 			return snapshots.get(0);
 		}
