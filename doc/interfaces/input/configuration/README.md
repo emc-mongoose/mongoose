@@ -1,12 +1,11 @@
 # Configuration
 
 1. [Overview](#1-overview)<br/>
-1.1. [CLI](#11-cli)<br/>
-1.2. [Reference Table](#12-reference-table)<br/>
-1.3. [Specific Types](#13-specific-types)<br/>
-1.3.1. [Time](#131-time)<br/>
-1.3.2. [Size](#132-size)<br/>
-1.3.3. [Dictionary](#133-dictionary)<br/>
+1.1. [Reference Table](#11-reference-table)<br/>
+1.2. [Specific Types](#12-specific-types)<br/>
+1.2.1. [Time](#121-time)<br/>
+1.2.2. [Size](#122-size)<br/>
+1.2.3. [Dictionary](#123-dictionary)<br/>
 2. [Parameterization](#2-parameterization)<br/>
 2.1. [Symchronous Supply](#21-synchronous-supply)<br/>
 2.2. [Asynchronous Supply](#22-asynchronous-supply)<br/>
@@ -28,24 +27,7 @@ in the file ```<MONGOOSE_DIR>/config/defaults.json```. The file contains
 the comments so it's quite self-descriptive and may be used as quick
 reference.
 
-### 1.1. CLI
-
-GNU style command line arguments are used:
-
-```bash
-java -jar mongoose-<VERSION>.jar \
-    --read \
-    --item-input-file=items.csv \
-    --load-step-limit-concurrency=10 \
-    --storage-auth-uid=user1 \
-    --storage-auth-secret=ChangeIt \
-    --storage-net-node-addrs=10.20.30.40,10.20.30.41
-```
-
-The command-line options are directly mapped to the configuration items. For example the configuration option
-`item-data-size` corresponds to the CLI argument `--item-data-size`.
-
-### 1.2. Reference Table
+### 1.1. Reference Table
 
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
@@ -108,9 +90,9 @@ The command-line options are directly mapped to the configuration items. For exa
 | storage-driver-threads                         | Integer >= 0 | 0 | The count of the shared/global I/O executor threads. 0 means automatic value (CPU cores/threads count)
 | storage-driver-type                            | String | s3 | The identifier pointing to the one of the registered storage driver implementations to use
 
-#### 1.3. Specific Types
+#### 1.2. Specific Types
 
-##### 1.3.1. Time
+##### 1.2.1. Time
 
 The configuration parameters supporting the time type:
 * item-output-delay
@@ -130,7 +112,7 @@ The configuration parameters supporting the time type:
 | "6M"  | Invalid value
 | "7y"  | Invalid value
 
-##### 1.3.2. Size
+##### 1.2.2. Size
 
 The configuration parameters supporting the time type:
 
@@ -154,7 +136,7 @@ The configuration parameters supporting the time type:
 | "6EB"   | 6EB (exobytes)
 | "7YB"   | Invalid Value
 
-##### 1.3.3. Dictionary
+##### 1.2.3. Dictionary
 
 Some configuration values support the dictionary type. Don't use the command line arguments for the dictionary values
 setting.
