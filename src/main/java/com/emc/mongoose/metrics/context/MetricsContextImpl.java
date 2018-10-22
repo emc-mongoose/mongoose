@@ -2,14 +2,14 @@ package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.snapshot.MetricsSnapshotImpl;
-import com.emc.mongoose.metrics.util.ConcurrentSlidingWindowLongReservoir;
+import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import com.emc.mongoose.metrics.type.HistogramImpl;
 import com.emc.mongoose.metrics.type.RateMeter;
 import com.emc.mongoose.metrics.type.RateMeterImpl;
-import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import com.emc.mongoose.metrics.type.TimingMeter;
 import com.emc.mongoose.metrics.type.TimingMeterImpl;
-import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
+import com.emc.mongoose.metrics.util.ConcurrentSlidingWindowLongReservoir;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.time.Clock;
@@ -27,8 +27,8 @@ import static com.emc.mongoose.Constants.METRIC_NAME_LAT;
 import static com.emc.mongoose.Constants.METRIC_NAME_SUCC;
 
 public class MetricsContextImpl<S extends MetricsSnapshotImpl>
-extends MetricsContextBase<S>
-implements MetricsContext<S> {
+	extends MetricsContextBase<S>
+	implements MetricsContext<S> {
 
 	private final Clock clock = Clock.systemDefaultZone();
 	private final TimingMeter<TimingMetricSnapshot> reqDuration, respLatency, actualConcurrency;
@@ -136,8 +136,7 @@ implements MetricsContext<S> {
 		}
 	}
 
-	private void updateTimings(final long latencyMicros, final long durationMicros)
-	throws IllegalArgumentException {
+	private void updateTimings(final long latencyMicros, final long durationMicros) {
 		if(latencyMicros > 0 && durationMicros > latencyMicros) {
 			timingLockUpdate.lock();
 			try {
@@ -146,10 +145,6 @@ implements MetricsContext<S> {
 			} finally {
 				timingLockUpdate.unlock();
 			}
-		} else {
-			throw new IllegalArgumentException(
-				"Latency (" + latencyMicros + ") should be more than 0 and less than duration (" + durationMicros + ")"
-			);
 		}
 	}
 
