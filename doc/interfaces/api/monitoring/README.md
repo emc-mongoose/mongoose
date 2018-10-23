@@ -31,7 +31,7 @@ and 2 Types: Timing and Rate. Depends on the type of metric, which indicators ar
         <tr>
             <td>Duration</td>
             <td rowspan=3>Timing</td>
-            <td rowspan=3> <ul><li>count<li>sum<li>mean<li>min<li>max<li>quntile_'value' (configured)<ul> </td>
+            <td rowspan=3> <ul><li>count<li>sum<li>mean<li>min<li>max<li>quntile_'value' [(configured)]()<ul> </td>
         </tr>
         <tr>
             <td>Latency</td>
@@ -57,6 +57,9 @@ and 2 Types: Timing and Rate. Depends on the type of metric, which indicators ar
         </tr>
     </tbody>
 </table>
+
+#### Quantiles
+To specify the value of the required quantiles, use the `--output-metrics-quantiles` parameter. By default `--output-metrics-quantiles=0.25,0.75`. *This feature affects the output on the server and does not affect the logs and console.*
 
 In braces exported load step parameters: `STEP_ID`,`OP_TYPE`,`CONCURRENCY` (limit value), `NODE_COUNT` and `ITEM_DATA_SIZE`.
 
