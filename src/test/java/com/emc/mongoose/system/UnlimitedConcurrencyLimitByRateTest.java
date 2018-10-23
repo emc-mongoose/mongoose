@@ -9,8 +9,8 @@ import com.emc.mongoose.params.RunMode;
 import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
-import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
+import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -41,9 +41,9 @@ import static com.emc.mongoose.item.op.OpType.CREATE;
 import static com.emc.mongoose.params.StorageType.FS;
 import static com.emc.mongoose.util.LogValidationUtil.getMetricsLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.getMetricsTotalLogRecords;
+import static com.emc.mongoose.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.util.LogValidationUtil.testMetricsLogRecords;
 import static com.emc.mongoose.util.LogValidationUtil.testMetricsTableStdout;
-import static com.emc.mongoose.util.LogValidationUtil.testFinalMetricsStdout;
 import static com.emc.mongoose.util.LogValidationUtil.testTotalMetricsLogRecord;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
@@ -85,7 +85,8 @@ import static org.junit.Assert.assertTrue;
 
 	public UnlimitedConcurrencyLimitByRateTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
-	) throws Exception {
+	)
+	throws Exception {
 		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
 			APP_NAME, Thread.currentThread().getContextClassLoader()
 		);
@@ -115,6 +116,7 @@ import static org.junit.Assert.assertTrue;
 			.map(e -> e.getKey() + "=" + e.getValue())
 			.collect(Collectors.toList());
 		final List<String> args = new ArrayList<>();
+		args.add("--run-port=" + 1234);
 		switch(storageType) {
 			case ATMOS:
 			case S3:

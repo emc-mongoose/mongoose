@@ -10,6 +10,7 @@ import com.emc.mongoose.logging.StepResultsMetricsLogMessage;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.metrics.util.PrometheusMetricsExporter;
+import com.emc.mongoose.metrics.util.PrometheusMetricsExporterImpl;
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FibersExecutor;
@@ -38,8 +39,8 @@ import static org.apache.logging.log4j.CloseableThreadContext.put;
  Created by kurila on 18.05.17.
  */
 public class MetricsManagerImpl
-extends ExclusiveFiberBase
-implements MetricsManager {
+	extends ExclusiveFiberBase
+	implements MetricsManager {
 
 	private static final String CLS_NAME = MetricsManagerImpl.class.getSimpleName();
 	private final Set<MetricsContext> allMetrics = new ConcurrentSkipListSet<>();
@@ -90,7 +91,7 @@ implements MetricsManager {
 					}
 				}
 				// console output
-				if(!selectedMetrics.isEmpty()) {
+				if(! selectedMetrics.isEmpty()) {
 					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
 					selectedMetrics.clear();
 				}
@@ -104,7 +105,7 @@ implements MetricsManager {
 	}
 
 	public void startIfNotStarted() {
-		if(!isStarted()) {
+		if(! isStarted()) {
 			super.start();
 			Loggers.MSG.debug("Started the metrics manager fiber");
 		}
@@ -126,8 +127,9 @@ implements MetricsManager {
 				};
 				distributedMetrics.put(
 					distributedMetricsCtx,
-					new PrometheusMetricsExporter(distributedMetricsCtx)
+					new PrometheusMetricsExporterImpl(distributedMetricsCtx)
 						.labels(METRIC_LABELS, labelValues)
+						.quantiles(distributedMetricsCtx.quantileValues())
 						.register()
 				);
 			}
@@ -149,7 +151,7 @@ implements MetricsManager {
 		) {
 			if(allMetrics.remove(metricsCtx)) {
 				try {
-					if(!outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
+					if(! outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 						Loggers.ERR.warn(
 							"Acquire lock timeout while unregistering the metrics context \"{}\"", metricsCtx
 						);
@@ -175,7 +177,7 @@ implements MetricsManager {
 						Loggers.METRICS_STD_OUT.info(new StepResultsMetricsLogMessage(distributedMetricsCtx));
 						final PrometheusMetricsExporter exporter = distributedMetrics.remove(distributedMetricsCtx);
 						if(exporter != null) {
-							CollectorRegistry.defaultRegistry.unregister(exporter);
+							CollectorRegistry.defaultRegistry.unregister((PrometheusMetricsExporterImpl) exporter);
 						}
 					}
 				} catch(final InterruptedException e) {

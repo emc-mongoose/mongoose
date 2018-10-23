@@ -5,11 +5,11 @@ import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsManagerImpl;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.context.DistributedMetricsContextImpl;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.metrics.context.MetricsContextImpl;
+import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
 import com.emc.mongoose.params.ItemSize;
 import com.github.akurilov.commons.system.SizeInBytes;
 import io.prometheus.client.exporter.MetricsServlet;
@@ -71,14 +71,17 @@ public class ExposedMetricsTest {
 		server.start();
 		//
 		metricsContext = new MetricsContextImpl<>(
-			STEP_ID, OP_TYPE, () -> 1, concurrencyLimit, concurrencyThreshold, ITEM_DATA_SIZE, UPDATE_INTERVAL_SEC, true
+			STEP_ID, OP_TYPE, () -> 1, concurrencyLimit, concurrencyThreshold, ITEM_DATA_SIZE, UPDATE_INTERVAL_SEC,
+			true,
+			new double[] {}
 		);
 		snapshotsSupplier = () -> Arrays.asList(metricsContext.lastSnapshot());
 		metricsContext.start();
 		//
 		distributedMetricsContext = new DistributedMetricsContextImpl(
 			STEP_ID, OP_TYPE, nodeCountSupplier, concurrencyLimit, concurrencyThreshold, ITEM_DATA_SIZE,
-			UPDATE_INTERVAL_SEC, true, true, true, true, snapshotsSupplier
+			UPDATE_INTERVAL_SEC, true, true, true, true, snapshotsSupplier,
+			new double[] {}
 		);
 		distributedMetricsContext.start();
 	}

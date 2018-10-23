@@ -90,7 +90,8 @@
 			"trace": {
 				"persist": "boolean"
 			},
-			"threshold": "float64"
+			"threshold": "float64",
+			"quantiles": "list"
 		}
 	},
 	"run": {
