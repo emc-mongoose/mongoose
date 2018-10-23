@@ -31,7 +31,7 @@ and 2 Types: Timing and Rate. Depends on the type of metric, which indicators ar
         <tr>
             <td>Duration</td>
             <td rowspan=3>Timing</td>
-            <td rowspan=3> <ul><li>count<li>sum<li>mean<li>min<li>max<li>quntile_'value' (configured*)<ul> </td>
+            <td rowspan=3> <ul><li>count<li>sum<li>mean<li>min<li>max<li>quntile_'value' <a href="https://github.com/emc-mongoose/mongoose/blob/BASE-1271-move-namespace-option/doc/interfaces/api/monitoring/README.md#quantiles"> (configured)<ul> </td>
         </tr>
         <tr>
             <td>Latency</td>
