@@ -127,8 +127,10 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 			Loggers.ERR.warn("{}: done due to \"BAD\" state", id);
 			return true;
 		}
-		if(! recycleFlag && allOperationsCompleted()) {
-			Loggers.MSG.debug("{}: done due to all load operations have been completed", id);
+		if(!recycleFlag && allOperationsCompleted()) {
+			Loggers.MSG.debug(
+				"{}: done due to all {} load operations have been completed", id, generator.generatedOpCount()
+			);
 			return true;
 		}
 		// issue SLTM-938 fix

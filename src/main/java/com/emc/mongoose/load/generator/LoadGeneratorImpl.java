@@ -128,6 +128,10 @@ implements LoadGenerator<I, O> {
 								final List<I> items = getItems(itemInput, n);
 								if(items == null) {
 									itemInputFinishFlag = true;
+									Loggers.MSG.debug(
+										"End of items input \"{}\", generated op count: {}", itemInput.toString(),
+										generatedOpCount()
+									);
 								} else {
 									n = items.size();
 									if(n > 0) {
@@ -226,13 +230,10 @@ implements LoadGenerator<I, O> {
 
 	private static <I extends Item> List<I> getItems(final Input<I> itemInput, final int n)
 	throws InterruptRunException, IOException {
-		// prepare the items buffer
-		final List<I> items = new ArrayList<>(n);
+		final List<I> items = new ArrayList<>(n); // prepare the items buffer
 		try {
-			// get the items from the input
-			itemInput.get(items, n);
+			itemInput.get(items, n); // get the items from the input
 		} catch(final EOFException e) {
-			Loggers.MSG.debug("End of items input \"{}\"", itemInput.toString());
 			return null;
 		}
 		return items;

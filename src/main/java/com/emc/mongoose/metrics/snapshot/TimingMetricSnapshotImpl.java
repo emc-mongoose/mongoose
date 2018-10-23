@@ -52,9 +52,10 @@ implements TimingMetricSnapshot {
 			newMin = 0;
 			newMax = 0;
 		}
+		final double newMean = countSum > 0 ? ((double) sumOfSums) / countSum : 0;
 		return new TimingMetricSnapshotImpl(
-			sumOfSums, countSum, newMin, newMax, ((double) sumOfSums) / countSum,
-			HistogramSnapshotImpl.aggregate(histogramSnapshots), snapshots.get(0).name()
+			sumOfSums, countSum, newMin, newMax, newMean, HistogramSnapshotImpl.aggregate(histogramSnapshots),
+			snapshots.get(0).name()
 		);
 	}
 
