@@ -58,6 +58,8 @@ and 2 Types: Timing and Rate. Depends on the type of metric, which indicators ar
     </tbody>
 </table>
 
+In braces exported load step parameters: `STEP_ID`,`OP_TYPE`,`CONCURRENCY` (limit value), `NODE_COUNT` and `ITEM_DATA_SIZE`.
+
 #### Example:
 
 ````````````````````````````````
