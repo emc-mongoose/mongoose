@@ -407,8 +407,8 @@ implements LoadStepContext<I, O> {
 			final Instance ctx = CloseableThreadContext.put(KEY_STEP_ID, id)
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
-			generator.shutdown();
-			Loggers.MSG.debug("{}: load generator \"{}\" shutdown", id, generator.toString());
+			generator.stop();
+			Loggers.MSG.debug("{}: load generator \"{}\" stopped", id, generator.toString());
 		} catch(final RemoteException ignored) {
 		}
 		try(

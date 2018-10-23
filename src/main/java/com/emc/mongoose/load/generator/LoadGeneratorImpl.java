@@ -287,9 +287,9 @@ implements LoadGenerator<I, O> {
 	}
 
 	@Override
-	protected final void doShutdown()
+	protected final void doStop()
 	throws IllegalStateException {
-		stop();
+		super.doStop();
 		Loggers.MSG.debug(
 			"{}: generated {}, recycled {}, output {} operations",
 			LoadGeneratorImpl.this.toString(), builtTasksCounter.sum(), recycledOpCounter.sum(), outputOpCounter.sum()
