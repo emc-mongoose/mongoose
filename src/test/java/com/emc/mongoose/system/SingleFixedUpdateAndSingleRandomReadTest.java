@@ -52,7 +52,8 @@ import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
 import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.systemTestContainerScenarioPath;
 import static org.junit.Assert.assertEquals;
 
-@RunWith(Parameterized.class) public class SingleFixedUpdateAndSingleRandomReadTest {
+@RunWith(Parameterized.class)
+public class SingleFixedUpdateAndSingleRandomReadTest {
 
 	@Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
 	public static List<Object[]> envParams() {
