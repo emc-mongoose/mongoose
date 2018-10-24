@@ -72,7 +72,7 @@ In braces exported load step parameters:
 |`OP_TYPE`|load-op-type|string, [takes one of these values](https://github.com/emc-mongoose/mongoose/tree/master/doc/usage/load/operations/types#load-operation-types)|
 |`CONCURRENCY`|driver-limit-concurrency|integer|
 |`NODE_COUNT`|*count of addrs in* load-step-node-addrs|integer|
-|`ITEM_DATA_SIZE`|item-data-size|string ending in units (like KB,MB...)|
+|`ITEM_DATA_SIZE`|item-data-size|string with the unit suffix (KB, MB, ...)|
 
 #### Example:
 
