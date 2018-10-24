@@ -14,6 +14,7 @@ import com.emc.mongoose.metrics.util.PrometheusMetricsExporterImpl;
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FibersExecutor;
+import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
@@ -177,7 +178,7 @@ public class MetricsManagerImpl
 						Loggers.METRICS_STD_OUT.info(new StepResultsMetricsLogMessage(distributedMetricsCtx));
 						final PrometheusMetricsExporter exporter = distributedMetrics.remove(distributedMetricsCtx);
 						if(exporter != null) {
-							CollectorRegistry.defaultRegistry.unregister((PrometheusMetricsExporterImpl) exporter);
+							CollectorRegistry.defaultRegistry.unregister((Collector) exporter);
 						}
 					}
 				} catch(final InterruptedException e) {

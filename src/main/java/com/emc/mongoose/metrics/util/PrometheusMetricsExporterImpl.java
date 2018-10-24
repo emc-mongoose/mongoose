@@ -35,7 +35,7 @@ public class PrometheusMetricsExporterImpl
 
 	@Override
 	public PrometheusMetricsExporterImpl quantile(final double value) {
-		if(value <= 1.0 && value >= 0.0) {
+		if(value < 1.0 && value >= 0.0) {
 			quantileValues.add(value);
 		} else {
 			throw new IllegalArgumentException("Invalid quantiele value : " + value);
