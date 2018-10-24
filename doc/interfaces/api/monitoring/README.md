@@ -3,7 +3,7 @@ For real-time monitoring, a [Jetty-server](https://github.com/eclipse/jetty.proj
 ### Configuring port
 To configure the port for the server, the parameter `--run-port` is used. By default `--run-port=9999`.
 ### Output format
-Information about new metric start with
+Information about new metric starts with
 `````
 # HELP <metric name>
 # TYPE <metric name> gauge
@@ -12,19 +12,19 @@ There are 7 metrics:
 - duration, 
 - latency, 
 - concurrency, 
-- successful op-s, 
-- faild op-s, 
+- successful operation count, 
+- faild operation count, 
 - transfered size in bytes (BYTES)
 - elapsed time.
 
-and 2 Types: Timing and Rate. Depends on the type of metric, which indicators are exported. The table below provides a description:
+and 2 Primitive Types: Timing and Rate. Depends on the type of metric, which aggregation types are exported. The table below provides a description:
   
   <table>
     <thead>
         <tr>
             <th>Metric name</th>
-            <th>Type</th>
-            <th>Indicator names</th>
+            <th>Primitive type</th>
+            <th>Aggregation types</th>
         </tr>
     </thead>
     <tbody>
@@ -52,7 +52,7 @@ and 2 Types: Timing and Rate. Depends on the type of metric, which indicators ar
         </tr>
         <tr>
             <td>Elapsed time</td>
-            <td>-</td>
+            <td>Gauge</td>
             <td>value</td>
         </tr>
     </tbody>
@@ -61,7 +61,7 @@ and 2 Types: Timing and Rate. Depends on the type of metric, which indicators ar
 #### Quantiles
 To specify the value of the required quantiles, use the `--output-metrics-quantiles` parameter. By default `--output-metrics-quantiles=0.25,0.75`. *This feature affects the output on the server and does not affect the logs and console.*
 
-#### Lables
+#### Labels
 In braces exported load step parameters: `STEP_ID`,`OP_TYPE`,`CONCURRENCY` (limit value), `NODE_COUNT` and `ITEM_DATA_SIZE`.
 
 #### Example:
