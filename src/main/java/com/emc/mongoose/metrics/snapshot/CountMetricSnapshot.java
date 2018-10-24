@@ -4,12 +4,12 @@ import java.io.Serializable;
 
 /**
  @author veronika K. on 12.10.18 */
-public interface SingleMetricSnapshot
+public interface LongMetricSnapshot
 extends Serializable {
 
 	String name();
 
-	double mean();
-
 	long count();
+
+	double mean();
 }
