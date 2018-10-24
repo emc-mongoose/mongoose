@@ -37,9 +37,11 @@
 &nbsp;&nbsp;&nbsp;&nbsp;3.3.4. [Swift](storage/driver/coop/netty/http/swift)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.3.5. [FS](storage/driver/coop/nio/fs)<br/>
 &nbsp;&nbsp;3.4. [Dependencies](doc/dependencies)<br/>
-&nbsp;&nbsp;3.5. [Input](doc/interfaces/input)<br/>
-&nbsp;&nbsp;3.6. [Output](doc/interfaces/output)<br/>
-&nbsp;&nbsp;3.7. Design<br/>
+&nbsp;&nbsp;3.5. [Interfaces](doc/interfaces#interfaces)<br/>
+&nbsp;&nbsp;&nbsp;3.5.1 [Input](doc/interfaces/input)<br/>
+&nbsp;&nbsp;&nbsp;3.5.2 [Output](doc/interfaces/output)<br/>
+&nbsp;&nbsp;&nbsp;3.5.3 API<br/>
+&nbsp;&nbsp;3.6. Design<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.1. [Architecture](doc/design/architecture)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.2. [Distributed Mode](doc/design/distributed_mode)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.3. [Installer](src/main/java/com/emc/mongoose/env)<br/>
