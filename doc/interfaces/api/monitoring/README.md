@@ -8,6 +8,8 @@ Information about new metric starts with
 # HELP <metric name>
 # TYPE <metric name> gauge
 `````
+*where `TYPE <metric name> gauge` is the prometheus type of metrics.*
+
 There are 7 metrics: 
 - duration, 
 - latency, 
