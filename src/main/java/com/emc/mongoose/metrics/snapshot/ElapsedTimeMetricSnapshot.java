@@ -1,5 +1,9 @@
 package com.emc.mongoose.metrics.snapshot;
 
-public interface ElapsedTimeMetricSnapshot {
+import java.io.Serializable;
 
+public interface ElapsedTimeMetricSnapshot
+extends Serializable {
+
+	long elapsedTimeMillis();
 }

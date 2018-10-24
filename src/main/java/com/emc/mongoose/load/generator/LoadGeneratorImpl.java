@@ -280,8 +280,7 @@ implements LoadGenerator<I, O> {
 		return recycleQueue.isEmpty();
 	}
 
-	@Override
-	public final boolean isFinished() {
+	private boolean isFinished() {
 		return outputFinishFlag
 			|| itemInputFinishFlag && opInputFinishFlag && generatedOpCount() == outputOpCounter.sum();
 	}

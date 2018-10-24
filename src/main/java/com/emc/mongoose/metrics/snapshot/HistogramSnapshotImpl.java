@@ -47,46 +47,8 @@ implements HistogramSnapshot {
 	}
 
 	@Override
-	public int count() {
-		return sortedVals.length;
-	}
-
-	@Override
-	public long[] values() {
+	public final long[] values() {
 		return sortedVals;
-	}
-
-	@Override
-	public long max() {
-		if(sortedVals.length == 0) {
-			return 0;
-		}
-		return sortedVals[sortedVals.length - 1];
-	}
-
-	@Override
-	public long min() {
-		if(sortedVals.length == 0) {
-			return 0;
-		}
-		return sortedVals[0];
-	}
-
-	@Override
-	public long mean() {
-		if(sortedVals.length == 0) {
-			return 0;
-		}
-		return sum() / sortedVals.length;
-	}
-
-	@Override
-	public long sum() {
-		long sum = 0;
-		for(int i = 0; i < sortedVals.length; ++ i) {
-			sum += sortedVals[i];
-		}
-		return sum;
 	}
 
 	@Override

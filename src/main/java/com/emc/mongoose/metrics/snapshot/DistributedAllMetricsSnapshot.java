@@ -2,8 +2,8 @@ package com.emc.mongoose.metrics.snapshot;
 
 /**
  @author veronika K. */
-public interface DistributedMetricsSnapshot
-extends MetricsSnapshot {
+public interface DistributedAllMetricsSnapshot
+extends AllMetricsSnapshot {
 
 	/**
 	 @return values in microseconds

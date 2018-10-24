@@ -2,16 +2,16 @@ package com.emc.mongoose.metrics.snapshot;
 
 /**
  @author veronika K. */
-public final class DistributedMetricsSnapshotImpl
-extends MetricsSnapshotImpl
-implements DistributedMetricsSnapshot {
+public final class DistributedAllMetricsSnapshotImpl
+extends AllMetricsSnapshotImpl
+implements DistributedAllMetricsSnapshot {
 
 	private final int nodeCount;
 
-	public DistributedMetricsSnapshotImpl(
+	public DistributedAllMetricsSnapshotImpl(
 		final TimingMetricSnapshot durSnapshot,
 		final TimingMetricSnapshot latSnapshot,
-		final TimingMetricSnapshot actualConcurrencySnapshot,
+		final ConcurrencyMetricSnapshot actualConcurrencySnapshot,
 		final RateMetricSnapshot failsSnapshot,
 		final RateMetricSnapshot successSnapshot,
 		final RateMetricSnapshot bytesSnapshot,

@@ -9,13 +9,23 @@ import com.emc.mongoose.logging.MetricsCsvLogMessage;
 import com.emc.mongoose.logging.StepResultsMetricsLogMessage;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.context.MetricsContext;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
 import com.emc.mongoose.metrics.util.PrometheusMetricsExporter;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_LABELS;
+
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FibersExecutor;
+
 import io.prometheus.client.CollectorRegistry;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
@@ -27,12 +37,6 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static com.emc.mongoose.Constants.METRIC_LABELS;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 /**
  Created by kurila on 18.05.17.
@@ -55,14 +59,20 @@ implements MetricsManager {
 	@Override
 	protected final void invokeTimedExclusively(final long startTimeNanos) {
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
-		int actualConcurrency;
+		int actualConcurrency = 0;
 		int nextConcurrencyThreshold;
 		if(outputLock.tryLock()) {
 			try {
 				for(final MetricsContext metricsCtx : allMetrics) {
 					ThreadContext.put(KEY_STEP_ID, metricsCtx.id());
 					metricsCtx.refreshLastSnapshot();
-					actualConcurrency = new Double(metricsCtx.lastSnapshot().concurrencySnapshot().mean()).intValue();
+					final AllMetricsSnapshot snapshot = metricsCtx.lastSnapshot();
+					if(snapshot != null) {
+						final ConcurrencyMetricSnapshot concurrencySnapshot = snapshot.concurrencySnapshot();
+						if(concurrencySnapshot != null) {
+							actualConcurrency = (int) concurrencySnapshot.last();
+						}
+					}
 					// threshold load state checks
 					nextConcurrencyThreshold = metricsCtx.concurrencyThreshold();
 					if(nextConcurrencyThreshold > 0 && actualConcurrency >= nextConcurrencyThreshold) {
@@ -97,6 +107,7 @@ implements MetricsManager {
 			} catch(final ConcurrentModificationException ignored) {
 			} catch(final Throwable cause) {
 				LogUtil.exception(Level.DEBUG, cause, "Metrics manager failure");
+				cause.printStackTrace();
 			} finally {
 				outputLock.unlock();
 			}

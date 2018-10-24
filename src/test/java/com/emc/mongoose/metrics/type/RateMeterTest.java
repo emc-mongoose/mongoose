@@ -1,6 +1,6 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.type;
 
-import com.emc.mongoose.metrics.type.RateMeterImpl;
+import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -19,23 +19,26 @@ public class RateMeterTest {
 	@Test
 	public void test()
 	throws InterruptedException {
-		final RateMeterImpl meter = new RateMeterImpl(Clock.systemDefaultZone(), PERIOD_SEC, "SOME_RATE");
+		final RateMeter<RateMetricSnapshot> meter = new RateMeterImpl(
+			Clock.systemDefaultZone(), PERIOD_SEC, "SOME_RATE"
+		);
 		for(int i = 0; i < INTERVALS; ++ i) {
-			meter.mark(); //mark(n), n = 1;
+			meter.update(1);
 			TimeUnit.MILLISECONDS.sleep(SLEEP_MILLISEC);
 		}
 		//
-		Assert.assertEquals(meter.count(), INTERVALS);
-		//
+		RateMetricSnapshot snapshot = meter.snapshot();
+		Assert.assertEquals(snapshot.count(), INTERVALS);
 		//meter return rates per sec
 		final double expectedRate = ((double) INTERVALS / TimeUnit.MILLISECONDS.toSeconds(ELAPSED_TIME));
-		Assert.assertEquals(meter.meanRate(), expectedRate, expectedRate * 0.1);
-		Assert.assertEquals(meter.lastRate(), expectedRate, expectedRate * 0.1);
+		Assert.assertEquals(snapshot.mean(), expectedRate, expectedRate * 0.1);
+		Assert.assertEquals(snapshot.last(), expectedRate, expectedRate * 0.1);
 		//
-		Assert.assertEquals(meter.elapsedTimeMillis() > ELAPSED_TIME, true);
-		Assert.assertEquals(meter.elapsedTimeMillis(), ELAPSED_TIME, ELAPSED_TIME * 0.2);
+		Assert.assertEquals(snapshot.elapsedTimeMillis() > ELAPSED_TIME, true);
+		Assert.assertEquals(snapshot.elapsedTimeMillis(), ELAPSED_TIME, ELAPSED_TIME * 0.2);
 		//
 		meter.resetStartTime();
-		Assert.assertEquals(meter.elapsedTimeMillis(), 0);
+		snapshot = meter.snapshot();
+		Assert.assertEquals(snapshot.elapsedTimeMillis(), 0);
 	}
 }

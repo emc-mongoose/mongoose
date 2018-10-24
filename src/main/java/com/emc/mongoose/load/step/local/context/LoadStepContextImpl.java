@@ -15,7 +15,7 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.logging.OperationTraceCsvBatchLogMessage;
 import com.emc.mongoose.logging.OperationTraceCsvLogMessage;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.github.akurilov.commons.io.Output;
@@ -31,7 +31,6 @@ import org.apache.logging.log4j.ThreadContext;
 import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -150,7 +149,7 @@ implements LoadStepContext<I, O> {
 				);
 				return true;
 			}
-			final MetricsSnapshot lastStats = metricsCtx.lastSnapshot();
+			final AllMetricsSnapshot lastStats = metricsCtx.lastSnapshot();
 			final long succCountSum = lastStats.successSnapshot().count();
 			final long failCountSum = lastStats.failsSnapshot().count();
 			if(succCountSum + failCountSum >= countLimit) {
@@ -202,10 +201,10 @@ implements LoadStepContext<I, O> {
 	 false otherwise
 	 */
 	private boolean isFailThresholdReached() {
-		final MetricsSnapshot metricsSnapshot = metricsCtx.lastSnapshot();
-		final long failCountSum = metricsSnapshot.failsSnapshot().count();
-		final double failRateLast = metricsSnapshot.failsSnapshot().last();
-		final double succRateLast = metricsSnapshot.successSnapshot().last();
+		final AllMetricsSnapshot allMetricsSnapshot = metricsCtx.lastSnapshot();
+		final long failCountSum = allMetricsSnapshot.failsSnapshot().count();
+		final double failRateLast = allMetricsSnapshot.failsSnapshot().last();
+		final double succRateLast = allMetricsSnapshot.successSnapshot().last();
 		if(failCountSum > failCountLimit) {
 			Loggers.ERR.warn(
 				"{}: failure count ({}) is more than the configured limit ({}), stopping the step", id, failCountSum,
@@ -426,11 +425,14 @@ implements LoadStepContext<I, O> {
 	throws InterruptRunException, IllegalStateException {
 
 		driver.stop();
-		Loggers.MSG.debug("{}: storage driver {} stopped", id, driver.toString());
-
+		Loggers.MSG.debug(
+			"{}: the storage driver {} stopped, waiting to transfer the remaining results, if any", id, driver.toString()
+		);
 		while(driver.hasRemainingResults()) {
 			LockSupport.parkNanos(1);
 		}
+		Loggers.MSG.debug("{}: no more remaining results @ the storage driver {}", id, driver.toString());
+
 		try {
 			resultsTransferTask.shutdown();
 		} catch(final Exception e) {

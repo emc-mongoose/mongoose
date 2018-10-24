@@ -1,11 +1,11 @@
 package com.emc.mongoose.metrics.snapshot;
 
-public abstract class MetricSnapshotBase
+public abstract class NamedMetricSnapshotBase
 implements NamedMetricSnapshot {
 
 	private final String name;
 
-	protected MetricSnapshotBase(final String name) {
+	protected NamedMetricSnapshotBase(final String name) {
 		this.name = name;
 	}
 

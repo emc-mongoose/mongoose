@@ -10,8 +10,8 @@ import java.util.concurrent.atomic.LongAdder;
 
 import static java.lang.Math.exp;
 
-public class RateMeterImpl<S extends RateMetricSnapshot>
-implements RateMeter<S> {
+public class RateMeterImpl
+implements RateMeter<RateMetricSnapshot> {
 
 	private static final long TICK_INTERVAL = TimeUnit.SECONDS.toMillis(1);
 
@@ -38,18 +38,6 @@ implements RateMeter<S> {
 		lastTick.set(startTime);
 	}
 
-	@Override
-	public void mark() {
-		mark(1);
-	}
-
-	@Override
-	public void mark(final long n) {
-		tickIfNecessary();
-		count.add(n);
-		rateAvg.update(n);
-	}
-
 	private void tickIfNecessary() {
 		final long oldTick = lastTick.get();
 		final long newTick = clock.millis();
@@ -64,30 +52,22 @@ implements RateMeter<S> {
 	}
 
 	@Override
-	public String name() {
-		return metricName;
+	public void update(final long v) {
+		tickIfNecessary();
+		count.add(v);
+		rateAvg.update(v);
 	}
 
 	@Override
-	public long count() {
-		return count.sum();
+	public RateMetricSnapshotImpl snapshot() {
+		return new RateMetricSnapshotImpl(lastRate(), meanRate(), metricName, count.sum(), elapsedTimeMillis());
 	}
 
-	@Override
-	public S snapshot() {
-		return (S) new RateMetricSnapshotImpl(lastRate(), meanRate(), metricName, count());
-	}
-
-	@Override
-	public long elapsedTimeMillis() {
+	long elapsedTimeMillis() {
 		return (clock.millis() - startTime);
 	}
 
-	/**
-	 @return mean rate per sec [.../s]
-	 */
-	@Override
-	public double meanRate() {
+	double meanRate() {
 		if(count.sum() == 0) {
 			return 0.0;
 		} else {
@@ -96,11 +76,7 @@ implements RateMeter<S> {
 		}
 	}
 
-	/**
-	 @return last rate per sec [.../s]
-	 */
-	@Override
-	public double lastRate() {
+	double lastRate() {
 		tickIfNecessary();
 		return rateAvg.rate(TimeUnit.SECONDS);
 	}

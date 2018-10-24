@@ -235,12 +235,12 @@ import static org.junit.Assert.assertEquals;
 		final List<CSVRecord> totalMetrcisLogRecordsUpdate = getMetricsTotalLogRecords(stepIdUpdate);
 		testTotalMetricsLogRecord(
 			totalMetrcisLogRecordsUpdate.get(0), OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
-			expectedUpdateSize, EXPECTED_COUNT, 0
+			expectedUpdateSize, EXPECTED_COUNT, 0, 0
 		);
 		final List<CSVRecord> totalMetrcisLogRecordsRead = getMetricsTotalLogRecords(stepIdRead);
 		testTotalMetricsLogRecord(
 			totalMetrcisLogRecordsRead.get(0), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
-			expectedReadSize, EXPECTED_COUNT, 0
+			expectedReadSize, EXPECTED_COUNT, 0, 0
 		);
 		final List<CSVRecord> updateMetricsRecords = getMetricsLogRecords(stepIdUpdate);
 		final List<CSVRecord> readMetricsRecords = getMetricsLogRecords(stepIdRead);

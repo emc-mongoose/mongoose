@@ -1,15 +1,24 @@
 package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshotImpl;
+import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshotImpl;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
+import com.emc.mongoose.metrics.type.ConcurrencyMeterImpl;
 import com.emc.mongoose.metrics.type.HistogramImpl;
 import com.emc.mongoose.metrics.type.RateMeter;
 import com.emc.mongoose.metrics.type.RateMeterImpl;
-import com.emc.mongoose.metrics.type.TimingMeter;
 import com.emc.mongoose.metrics.type.TimingMeterImpl;
 import com.emc.mongoose.metrics.util.ConcurrentSlidingWindowLongReservoir;
+import com.emc.mongoose.metrics.type.LongMeter;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_BYTE;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_CONC;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_DUR;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_FAIL;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_LAT;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_SUCC;
+
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.time.Clock;
@@ -19,27 +28,20 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntSupplier;
 
-import static com.emc.mongoose.Constants.METRIC_NAME_BYTE;
-import static com.emc.mongoose.Constants.METRIC_NAME_CONC;
-import static com.emc.mongoose.Constants.METRIC_NAME_DUR;
-import static com.emc.mongoose.Constants.METRIC_NAME_FAIL;
-import static com.emc.mongoose.Constants.METRIC_NAME_LAT;
-import static com.emc.mongoose.Constants.METRIC_NAME_SUCC;
-
-public class MetricsContextImpl<S extends MetricsSnapshotImpl>
-	extends MetricsContextBase<S>
-	implements MetricsContext<S> {
+public class MetricsContextImpl<S extends AllMetricsSnapshotImpl>
+extends MetricsContextBase<S>
+implements MetricsContext<S> {
 
 	private final Clock clock = Clock.systemDefaultZone();
-	private final TimingMeter<TimingMetricSnapshot> reqDuration, respLatency, actualConcurrency;
+	private final LongMeter<TimingMetricSnapshot> reqDuration, respLatency;
+	private final LongMeter<ConcurrencyMetricSnapshot> actualConcurrency;
 	private final RateMeter<RateMetricSnapshot> throughputSuccess, throughputFail, reqBytes;
-	private volatile TimingMetricSnapshot reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot;
+	private volatile TimingMetricSnapshot reqDurSnapshot, respLatSnapshot;
+	private volatile ConcurrencyMetricSnapshot actualConcurrencySnapshot;
 	private final IntSupplier actualConcurrencyGauge;
 	private final ReadWriteLock timingLock = new ReentrantReadWriteLock();
 	private final Lock timingLockUpdate = timingLock.readLock();
 	private final Lock timingLockRefresh = timingLock.writeLock();
-	private volatile long lastDurationSum = 0;
-	private volatile long lastLatencySum = 0;
 
 	public MetricsContextImpl(
 		final String id, final OpType opType, final IntSupplier actualConcurrencyGauge, final int concurrencyLimit,
@@ -51,27 +53,25 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 			TimeUnit.SECONDS.toMillis(updateIntervalSec)
 		);
 		//
-		respLatency = new TimingMeterImpl<>(
+		respLatency = new TimingMeterImpl(
 			new HistogramImpl(new ConcurrentSlidingWindowLongReservoir(DEFAULT_RESERVOIR_SIZE)), METRIC_NAME_LAT
 		);
 		respLatSnapshot = respLatency.snapshot();
 		//
-		reqDuration = new TimingMeterImpl<>(
+		reqDuration = new TimingMeterImpl(
 			new HistogramImpl(new ConcurrentSlidingWindowLongReservoir(DEFAULT_RESERVOIR_SIZE)), METRIC_NAME_DUR
 		);
 		reqDurSnapshot = reqDuration.snapshot();
 		//
 		this.actualConcurrencyGauge = actualConcurrencyGauge;
-		actualConcurrency = new TimingMeterImpl<>(
-			new HistogramImpl(new ConcurrentSlidingWindowLongReservoir(DEFAULT_RESERVOIR_SIZE)), METRIC_NAME_CONC
-		);
+		actualConcurrency = new ConcurrencyMeterImpl(METRIC_NAME_CONC);
 		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		//
-		throughputSuccess = new RateMeterImpl<>(clock, updateIntervalSec, METRIC_NAME_SUCC);
+		throughputSuccess = new RateMeterImpl(clock, updateIntervalSec, METRIC_NAME_SUCC);
 		//
-		throughputFail = new RateMeterImpl<>(clock, updateIntervalSec, METRIC_NAME_FAIL);
+		throughputFail = new RateMeterImpl(clock, updateIntervalSec, METRIC_NAME_FAIL);
 		//
-		reqBytes = new RateMeterImpl<>(clock, updateIntervalSec, METRIC_NAME_BYTE);
+		reqBytes = new RateMeterImpl(clock, updateIntervalSec, METRIC_NAME_BYTE);
 	}
 
 	@Override
@@ -84,8 +84,8 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 
 	@Override
 	public final void markSucc(final long bytes, final long duration, final long latency) {
-		throughputSuccess.mark();
-		reqBytes.mark(bytes);
+		throughputSuccess.update(1);
+		reqBytes.update(bytes);
 		updateTimings(latency, duration);
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.markSucc(bytes, duration, latency);
@@ -94,7 +94,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 
 	@Override
 	public final void markPartSucc(final long bytes, final long duration, final long latency) {
-		reqBytes.mark(bytes);
+		reqBytes.update(bytes);
 		updateTimings(latency, duration);
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.markPartSucc(bytes, duration, latency);
@@ -105,8 +105,8 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 	public final void markSucc(
 		final long count, final long bytes, final long durationValues[], final long latencyValues[]
 	) {
-		throughputSuccess.mark(count);
-		reqBytes.mark(bytes);
+		throughputSuccess.update(count);
+		reqBytes.update(bytes);
 		final int timingsLen = Math.min(durationValues.length, latencyValues.length);
 		long duration, latency;
 		for(int i = 0; i < timingsLen; ++ i) {
@@ -123,7 +123,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 	public final void markPartSucc(
 		final long bytes, final long durationValues[], final long latencyValues[]
 	) {
-		reqBytes.mark(bytes);
+		reqBytes.update(bytes);
 		final int timingsLen = Math.min(durationValues.length, latencyValues.length);
 		long duration, latency;
 		for(int i = 0; i < timingsLen; ++ i) {
@@ -150,7 +150,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 
 	@Override
 	public final void markFail() {
-		throughputFail.mark();
+		throughputFail.update(1);
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.markFail();
 		}
@@ -158,7 +158,7 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 
 	@Override
 	public final void markFail(final long count) {
-		throughputFail.mark(count);
+		throughputFail.update(count);
 		if(thresholdMetricsCtx != null) {
 			thresholdMetricsCtx.markFail(count);
 		}
@@ -184,13 +184,11 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 	public void refreshLastSnapshot() {
 		final long currentTimeMillis = System.currentTimeMillis();
 		if(currentTimeMillis - lastOutputTs() > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
-			if(lastDurationSum != reqDuration.sum() || lastLatencySum != respLatency.sum()) {
-				refreshTimings();
-			}
+			refreshTimings();
 			actualConcurrency.update(actualConcurrencyGauge.getAsInt());
 			actualConcurrencySnapshot = actualConcurrency.snapshot();
 		}
-		lastSnapshot = (S) new MetricsSnapshotImpl(
+		lastSnapshot = (S) new AllMetricsSnapshotImpl(
 			reqDurSnapshot, respLatSnapshot, actualConcurrencySnapshot, throughputFail.snapshot(),
 			throughputSuccess.snapshot(), reqBytes.snapshot(), elapsedTimeMillis()
 		);
@@ -206,13 +204,6 @@ public class MetricsContextImpl<S extends MetricsSnapshotImpl>
 				timingLockRefresh.unlock();
 			}
 		}
-		lastLatencySum = respLatency.sum();
-		lastDurationSum = reqDuration.sum();
-	}
-
-	@Override
-	public final long transferSizeSum() {
-		return reqBytes.count();
 	}
 
 	@Override

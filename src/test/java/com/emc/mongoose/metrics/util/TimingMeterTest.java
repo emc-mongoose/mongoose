@@ -1,8 +1,10 @@
 package com.emc.mongoose.metrics.util;
 
+import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import com.emc.mongoose.metrics.type.HistogramImpl;
-import com.emc.mongoose.metrics.type.TimingMeter;
+import com.emc.mongoose.metrics.type.LongMeter;
 import com.emc.mongoose.metrics.type.TimingMeterImpl;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -14,7 +16,7 @@ public class TimingMeterTest {
 
 	@Test
 	public void test() {
-		final TimingMeter meter = new TimingMeterImpl<>(
+		final LongMeter<TimingMetricSnapshot> meter = new TimingMeterImpl(
 			new HistogramImpl(new ConcurrentSlidingWindowLongReservoir()), "SOME_METRIC"
 		);
 		int sum = 0;
@@ -23,11 +25,12 @@ public class TimingMeterTest {
 			sum += i;
 		}
 		//
-		Assert.assertEquals(meter.count(), INTERVALS);
-		Assert.assertEquals(meter.sum(), sum);
-		Assert.assertEquals(meter.min(), 0);
+		final TimingMetricSnapshot snapshot = meter.snapshot();
+		Assert.assertEquals(snapshot.count(), INTERVALS);
+		Assert.assertEquals(snapshot.sum(), sum);
+		Assert.assertEquals(snapshot.min(), 0);
 		final double mean = ((double) sum) / INTERVALS;
-		Assert.assertEquals(meter.mean(), mean, mean * 0.001);
-		Assert.assertEquals(meter.max(), INTERVALS - 1);
+		Assert.assertEquals(snapshot.mean(), mean, mean * 0.001);
+		Assert.assertEquals(snapshot.max(), INTERVALS - 1);
 	}
 }

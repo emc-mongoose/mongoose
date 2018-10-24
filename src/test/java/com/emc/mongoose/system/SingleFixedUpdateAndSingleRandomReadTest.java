@@ -231,12 +231,12 @@ public class SingleFixedUpdateAndSingleRandomReadTest {
 		final List<CSVRecord> totalUpdateMetrcisLogRecords = getMetricsTotalLogRecords(stepIdUpdate);
 		testTotalMetricsLogRecord(
 			totalUpdateMetrcisLogRecords.get(0), UPDATE, concurrency.getValue(), runMode.getNodeCount(),
-			expectedUpdateSize, EXPECTED_COUNT, 0
+			expectedUpdateSize, EXPECTED_COUNT, 0, 0
 		);
 		final List<CSVRecord> totalReadMetrcisLogRecords = getMetricsTotalLogRecords(stepIdRead);
 		testTotalMetricsLogRecord(
 			totalReadMetrcisLogRecords.get(0), READ, concurrency.getValue(), runMode.getNodeCount(),
-			expectedReadSize, EXPECTED_COUNT, 0
+			expectedReadSize, EXPECTED_COUNT, 0, 0
 		);
 		final List<CSVRecord> updateMetricsRecords = getMetricsLogRecords(stepIdUpdate);
 		testMetricsLogRecords(

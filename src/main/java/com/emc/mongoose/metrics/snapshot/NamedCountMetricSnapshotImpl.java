@@ -1,12 +1,12 @@
 package com.emc.mongoose.metrics.snapshot;
 
-public class CountMetricSnapshotImpl
+public class NamedCountMetricSnapshotImpl
 extends NamedMetricSnapshotBase
 implements CountMetricSnapshot, NamedMetricSnapshot {
 
 	protected final long count;
 
-	public CountMetricSnapshotImpl(final String name, final long count) {
+	public NamedCountMetricSnapshotImpl(final String name, final long count) {
 		super(name);
 		this.count = count;
 	}

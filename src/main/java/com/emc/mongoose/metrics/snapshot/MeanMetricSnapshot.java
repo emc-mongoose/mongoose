@@ -1,6 +1,9 @@
 package com.emc.mongoose.metrics.snapshot;
 
-public interface DoubleMeanMetricSnapshot {
+import java.io.Serializable;
+
+public interface MeanMetricSnapshot
+extends Serializable {
 
 	double mean();
 }

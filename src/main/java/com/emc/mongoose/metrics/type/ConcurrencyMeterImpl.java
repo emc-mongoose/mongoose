@@ -5,7 +5,7 @@ import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshotImpl;
 
 import java.util.concurrent.atomic.LongAdder;
 
-public class ActualConcurrencyMeterImpl
+public class ConcurrencyMeterImpl
 implements LongMeter<ConcurrencyMetricSnapshot> {
 
 	private final String name;
@@ -13,7 +13,7 @@ implements LongMeter<ConcurrencyMetricSnapshot> {
 	private final LongAdder sumAdder = new LongAdder();
 	private volatile long last = 0;
 
-	public ActualConcurrencyMeterImpl(final String name) {
+	public ConcurrencyMeterImpl(final String name) {
 		this.name = name;
 	}
 

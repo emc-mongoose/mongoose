@@ -1,10 +1,10 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.type;
 
-import com.emc.mongoose.metrics.snapshot.NamedMetricSnapshot;
+import java.io.Serializable;
 
 /**
  @author veronika K. on 11.10.18 */
-public interface LongMeter<S extends NamedMetricSnapshot> {
+public interface LongMeter<S extends Serializable> {
 
 	void update(final long v);
 

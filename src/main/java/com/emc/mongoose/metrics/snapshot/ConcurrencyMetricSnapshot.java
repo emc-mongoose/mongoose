@@ -1,5 +1,5 @@
 package com.emc.mongoose.metrics.snapshot;
 
-public interface ActualConcurrencyMetricSnapshot
+public interface ConcurrencyMetricSnapshot
 extends LongLastMetricSnapshot, MeanMetricSnapshot, NamedMetricSnapshot {
 }

@@ -6,27 +6,25 @@ import java.util.List;
 /**
  @author veronika K. on 12.10.18 */
 public class TimingMetricSnapshotImpl
+extends NamedCountMetricSnapshotImpl
 implements TimingMetricSnapshot {
 
 	private final long sum;
-	private final long count;
 	private final long min;
 	private final long max;
 	private final double mean;
 	private final HistogramSnapshot histogramSnapshot;
-	private final String metricName;
 
 	public TimingMetricSnapshotImpl(
 		final long sum, final long count, final long min, final long max, final double mean,
 		final HistogramSnapshot histogramSnapshot, final String metricName
 	) {
+		super(metricName, count);
 		this.sum = sum;
-		this.count = count;
 		this.min = min;
 		this.max = max;
 		this.mean = mean;
 		this.histogramSnapshot = histogramSnapshot;
-		this.metricName = metricName;
 	}
 
 	public static TimingMetricSnapshot aggregate(final List<TimingMetricSnapshot> snapshots) {
@@ -60,17 +58,17 @@ implements TimingMetricSnapshot {
 	}
 
 	@Override
-	public long sum() {
+	public final long sum() {
 		return sum;
 	}
 
 	@Override
-	public long min() {
+	public final long min() {
 		return min;
 	}
 
 	@Override
-	public long max() {
+	public final long max() {
 		return max;
 	}
 
@@ -80,22 +78,12 @@ implements TimingMetricSnapshot {
 	}
 
 	@Override
-	public HistogramSnapshot histogramSnapshot() {
+	public final HistogramSnapshot histogramSnapshot() {
 		return histogramSnapshot;
 	}
 
 	@Override
-	public String name() {
-		return metricName;
-	}
-
-	@Override
-	public double mean() {
+	public final double mean() {
 		return mean;
-	}
-
-	@Override
-	public long count() {
-		return count;
 	}
 }

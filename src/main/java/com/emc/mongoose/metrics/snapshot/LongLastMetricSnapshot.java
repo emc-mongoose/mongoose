@@ -1,7 +1,9 @@
 package com.emc.mongoose.metrics.snapshot;
 
-public interface IntLastMetricSnapshot
-extends MetricSnapshot {
+import java.io.Serializable;
 
-	int last();
+public interface LongLastMetricSnapshot
+extends Serializable {
+
+	long last();
 }
