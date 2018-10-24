@@ -1,5 +1,5 @@
 # Monitoring API
-For real-time monitoring, a [Jetty-server](https://github.com/eclipse/jetty.project) is used, to which metrics are exported using [Prometheus](https://github.com/prometheus/client_java).
+For real-time monitoring the metrics are exposed in the [Prometheus's](https://github.com/prometheus/client_java) format.
 ### Configuring port
 To configure the port for the server, the parameter `--run-port` is used. By default `--run-port=9999`.
 ### Output format
@@ -62,7 +62,15 @@ and 2 Primitive Types: Timing and Rate. Depends on the type of metric, which agg
 To specify the value of the required quantiles, use the `--output-metrics-quantiles` parameter. By default `--output-metrics-quantiles=0.25,0.75`. *This feature affects the output on the server and does not affect the logs and console.*
 
 #### Labels
-In braces exported load step parameters: `STEP_ID`,`OP_TYPE`,`CONCURRENCY` (limit value), `NODE_COUNT` and `ITEM_DATA_SIZE`.
+In braces exported load step parameters:
+
+|Label name|Configured param|Type|
+|:---|:---|---|
+|`STEP_ID`|load-step-id|string|
+|`OP_TYPE`|load-op-type|string, [takes one of these values](https://github.com/emc-mongoose/mongoose/tree/master/doc/usage/load/operations/types#load-operation-types)|
+|`CONCURRENCY`|driver-limit-concurrency|integer|
+|`NODE_COUNT`|*count of addrs in* load-step-node-addrs|integer|
+|`ITEM_DATA_SIZE`|item-data-size|string ending in units (like KB,MB...)|
 
 #### Example:
 
