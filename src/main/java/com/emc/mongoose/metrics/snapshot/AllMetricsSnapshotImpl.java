@@ -1,20 +1,20 @@
 package com.emc.mongoose.metrics.snapshot;
 
-public class MetricsSnapshotImpl
-implements MetricsSnapshot {
+public class AllMetricsSnapshotImpl
+implements AllMetricsSnapshot {
 
 	private final TimingMetricSnapshot durSnapshot;
 	private final TimingMetricSnapshot latSnapshot;
-	private final TimingMetricSnapshot actualConcurrencySnapshot;
+	private final ConcurrencyMetricSnapshot actualConcurrencySnapshot;
 	private final RateMetricSnapshot failsSnapshot;
 	private final RateMetricSnapshot successSnapshot;
 	private final RateMetricSnapshot bytesSnapshot;
 	protected final long elapsedTimeMillis;
 
-	public MetricsSnapshotImpl(
+	public AllMetricsSnapshotImpl(
 		final TimingMetricSnapshot durSnapshot,
 		final TimingMetricSnapshot latSnapshot,
-		final TimingMetricSnapshot actualConcurrencySnapshot,
+		final ConcurrencyMetricSnapshot actualConcurrencySnapshot,
 		final RateMetricSnapshot failsSnapshot,
 		final RateMetricSnapshot successSnapshot,
 		final RateMetricSnapshot bytesSnapshot,
@@ -40,7 +40,7 @@ implements MetricsSnapshot {
 	}
 
 	@Override
-	public TimingMetricSnapshot concurrencySnapshot() {
+	public ConcurrencyMetricSnapshot concurrencySnapshot() {
 		return actualConcurrencySnapshot;
 	}
 

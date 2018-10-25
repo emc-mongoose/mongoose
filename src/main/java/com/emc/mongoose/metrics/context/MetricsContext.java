@@ -1,15 +1,14 @@
 package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
-import com.emc.mongoose.metrics.util.LongReservoir;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 /**
  Created by andrey on 14.07.16.
  */
-public interface MetricsContext<S extends MetricsSnapshot>
-	extends AutoCloseable, Comparable<MetricsContext<S>> {
+public interface MetricsContext<S extends AllMetricsSnapshot>
+extends AutoCloseable, Comparable<MetricsContext<S>> {
 
 	int DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
 	int DEFAULT_RESERVOIR_SIZE = 1028;
@@ -46,7 +45,6 @@ public interface MetricsContext<S extends MetricsSnapshot>
 
 	S lastSnapshot();
 
-	long transferSizeSum();
 	// threshold-related accounting methods below
 
 	int concurrencyThreshold();

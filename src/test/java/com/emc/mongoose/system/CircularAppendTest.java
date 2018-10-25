@@ -220,7 +220,7 @@ import java.util.stream.Collectors;
 		assertEquals("There should be 1 total metrics records in the log file", 1, totalMetrcisLogRecords.size());
 		testTotalMetricsLogRecord(
 			totalMetrcisLogRecords.get(0), OpType.UPDATE, concurrency.getValue(), runMode.getNodeCount(),
-			itemSize.getValue(), 0, 0
+			itemSize.getValue(), 0, 0, 0
 		);
 		final String stdOutContent = testContainer.stdOutContent();
 		testFinalMetricsStdout(

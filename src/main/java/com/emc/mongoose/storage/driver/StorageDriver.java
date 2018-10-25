@@ -53,6 +53,8 @@ extends Daemon, Input<O>, Output<O> {
 	@Override
 	int put(final List<O> ops)
 	throws InterruptRunException, EOFException, IOException;
+
+	boolean hasRemainingResults();
 	
 	@Override
 	default void reset() {

@@ -286,18 +286,13 @@ implements NioStorageDriver<I, O> {
 		} catch(final IOException e) {
 			LogUtil.exception(Level.WARN, e, op.toString());
 			op.status(Operation.Status.FAIL_IO);
-		} catch(final NullPointerException e) {
+		} catch(final Throwable e) {
 			if(!isClosed()) { // shared content source may be already closed from the load generator
-				e.printStackTrace(System.out);
+				LogUtil.trace(Loggers.ERR, Level.ERROR, e, "File I/O invocation failure");
 				op.status(Operation.Status.FAIL_UNKNOWN);
 			} else {
-				Loggers.ERR.debug("Load operation caused NPE while being interrupted: {}", op);
+				Loggers.ERR.debug("Load operation caused a failure while being interrupted: {}", op);
 			}
-		} catch(final Throwable e) {
-			// should be Throwable here in order to make the closing block further always reachable
-			// the same effect may be reached using "finally" block after this "catch"
-			e.printStackTrace(System.err);
-			op.status(Operation.Status.FAIL_UNKNOWN);
 		}
 
 		if(!Operation.Status.ACTIVE.equals(op.status())) {

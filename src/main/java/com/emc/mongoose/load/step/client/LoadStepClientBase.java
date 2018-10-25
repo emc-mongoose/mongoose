@@ -1,6 +1,5 @@
 package com.emc.mongoose.load.step.client;
 
-import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.config.AliasingUtil;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.data.DataInput;
@@ -22,7 +21,7 @@ import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.context.DistributedMetricsContextImpl;
 import com.emc.mongoose.metrics.MetricsManager;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
@@ -35,10 +34,9 @@ import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
-import com.github.akurilov.fiber4j.ExclusiveFiberBase;
+
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
-
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -349,7 +347,7 @@ implements LoadStepClient {
 		metricsContexts.add(metricsCtx);
 	}
 
-	private List<MetricsSnapshot> metricsSnapshotsByIndex(final int originIndex) {
+	private List<AllMetricsSnapshot> metricsSnapshotsByIndex(final int originIndex) {
 		return metricsAggregator == null ?
 			Collections.emptyList() :
 			metricsAggregator.metricsSnapshotsByIndex(originIndex);
@@ -391,29 +389,7 @@ implements LoadStepClient {
 			final CountDownLatch awaitCountDown = new CountDownLatch(stepSlices.size());
 			final List<AsyncRunnableBase> awaitTasks = stepSlices
 				.stream()
-				.map(
-					stepSlice -> new ExclusiveFiberBase(ServiceTaskExecutor.INSTANCE) {
-						@Override
-						protected final void invokeTimedExclusively(final long startTimeNanos) {
-							Loggers.MSG.trace("{}: await for the step slice \"{}\" started", id(), stepSlice);
-							try {
-								if(stepSlice.await(SOFT_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
-									awaitCountDown.countDown();
-									stop();
-								}
-							} catch(final RemoteException e) {
-								LogUtil.exception(
-									Level.WARN, e, "Failed to invoke the remote await method on the step slice \"{}\"",
-									stepSlice
-								);
-							} catch(final InterruptedException e) {
-								throw new InterruptRunException(e);
-							} catch(final IllegalStateException e) {
-								LogUtil.exception(Level.WARN, e, "{}: failure in the await method", id());
-							}
-						}
-					}
-				)
+				.map(stepSlice -> new AwaitStepSliceTask(stepSlice, awaitCountDown))
 				.peek(AsyncRunnableBase::start)
 				.collect(Collectors.toList());
 			try {
@@ -451,8 +427,9 @@ implements LoadStepClient {
 					} catch(final InterruptRunException e) {
 						throw e;
 					} catch(final Exception e) {
-						e.printStackTrace();
-						LogUtil.exception(Level.WARN, e, "{}: failed to stop the step slice \"{}\"", id(), stepSlice);
+						LogUtil.trace(
+							Loggers.ERR, Level.WARN, e, "{}: failed to stop the step slice \"{}\"", id(), stepSlice
+						);
 					}
 				}
 			);

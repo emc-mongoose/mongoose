@@ -1,7 +1,7 @@
 package com.emc.mongoose.logging;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import org.apache.commons.lang.text.StrBuilder;
 
@@ -19,19 +19,14 @@ import static org.apache.commons.lang.SystemUtils.LINE_SEPARATOR;
  Not thread safe, relies on the MetricsManager's (caller) exclusive invocation lock
  */
 public class MetricsAsciiTableLogMessage
-	extends LogMessageBase {
+extends LogMessageBase {
 
 	public static final String TABLE_HEADER =
-		"------------------------------------------------------------------------------------------------------------------------" +
-			LINE_SEPARATOR +
-			" Step Id  | Timestamp  |  Op  |     Concurrency     |       Count       | Step  |   Last Rate    |  Mean    |   Mean    " +
-			LINE_SEPARATOR +
-			" (last 10 |            | type |---------------------|-------------------| Time  |----------------| Latency  | Duration  " +
-			LINE_SEPARATOR +
-			" symbols) |yyMMddHHmmss|      | Current  |   Mean   |   Success  |Failed|  [s]  | [op/s] |[MB/s] |  [us]    |   [us]    " +
-			LINE_SEPARATOR +
-			"----------|------------|------|----------|----------|------------|------|-------|--------|-------|----------|-----------" +
-			LINE_SEPARATOR;
+		"------------------------------------------------------------------------------------------------------------------------" + LINE_SEPARATOR +
+		" Step Id  | Timestamp  |  Op  |     Concurrency     |       Count       | Step  |   Last Rate    |  Mean    |   Mean    " + LINE_SEPARATOR +
+		" (last 10 |            | type |---------------------|-------------------| Time  |----------------| Latency  | Duration  " + LINE_SEPARATOR +
+		" symbols) |yyMMddHHmmss|      | Current  |   Mean   |   Success  |Failed|  [s]  | [op/s] |[MB/s] |  [us]    |   [us]    " + LINE_SEPARATOR +
+		"----------|------------|------|----------|----------|------------|------|-------|--------|-------|----------|-----------" + LINE_SEPARATOR;
 	public static final String TABLE_BORDER_VERTICAL = "|";
 	public static final int TABLE_HEADER_PERIOD = 20;
 	private static volatile long ROW_OUTPUT_COUNTER = 0;
@@ -46,7 +41,7 @@ public class MetricsAsciiTableLogMessage
 	public final void formatTo(final StringBuilder buffer) {
 		if(formattedMsg == null) {
 			final StrBuilder strb = new StrBuilder();
-			MetricsSnapshot snapshot;
+			AllMetricsSnapshot snapshot;
 			long succCount;
 			long failCount;
 			OpType opType;
@@ -94,7 +89,7 @@ public class MetricsAsciiTableLogMessage
 				}
 				strb
 					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft(snapshot.concurrencySnapshot().histogramSnapshot().last(), 10, ' ')
+					.appendFixedWidthPadLeft(snapshot.concurrencySnapshot().last(), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)
 					.appendFixedWidthPadRight(formatFixedWidth(snapshot.concurrencySnapshot().mean(), 10), 10, ' ')
 					.append(TABLE_BORDER_VERTICAL)

@@ -15,7 +15,7 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.logging.OperationTraceCsvBatchLogMessage;
 import com.emc.mongoose.logging.OperationTraceCsvLogMessage;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.storage.driver.StorageDriver;
 import com.github.akurilov.commons.io.Output;
@@ -31,12 +31,12 @@ import org.apache.logging.log4j.ThreadContext;
 import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.LockSupport;
 
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
@@ -48,8 +48,8 @@ import static org.apache.logging.log4j.CloseableThreadContext.Instance;
  Created by kurila on 12.07.16.
  */
 public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
-	extends DaemonBase
-	implements LoadStepContext<I, O> {
+extends DaemonBase
+implements LoadStepContext<I, O> {
 
 	private final String id;
 	private final LoadGenerator<I, O> generator;
@@ -111,7 +111,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 
 	@Override
 	public boolean isDone() {
-		if(! STARTED.equals(state()) && ! SHUTDOWN.equals(state())) {
+		if(!STARTED.equals(state()) && !SHUTDOWN.equals(state())) {
 			Loggers.MSG.debug("{}: done due to {} state", id, state());
 			return true;
 		}
@@ -127,8 +127,10 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 			Loggers.ERR.warn("{}: done due to \"BAD\" state", id);
 			return true;
 		}
-		if(! recycleFlag && allOperationsCompleted()) {
-			Loggers.MSG.debug("{}: done due to all load operations have been completed", id);
+		if(!recycleFlag && allOperationsCompleted()) {
+			Loggers.MSG.debug(
+				"{}: done due to all {} load operations have been completed", id, generator.generatedOpCount()
+			);
 			return true;
 		}
 		// issue SLTM-938 fix
@@ -147,7 +149,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 				);
 				return true;
 			}
-			final MetricsSnapshot lastStats = metricsCtx.lastSnapshot();
+			final AllMetricsSnapshot lastStats = metricsCtx.lastSnapshot();
 			final long succCountSum = lastStats.successSnapshot().count();
 			final long failCountSum = lastStats.failsSnapshot().count();
 			if(succCountSum + failCountSum >= countLimit) {
@@ -199,10 +201,10 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 	 false otherwise
 	 */
 	private boolean isFailThresholdReached() {
-		final MetricsSnapshot metricsSnapshot = metricsCtx.lastSnapshot();
-		final long failCountSum = metricsSnapshot.failsSnapshot().count();
-		final double failRateLast = metricsSnapshot.failsSnapshot().last();
-		final double succRateLast = metricsSnapshot.successSnapshot().last();
+		final AllMetricsSnapshot allMetricsSnapshot = metricsCtx.lastSnapshot();
+		final long failCountSum = allMetricsSnapshot.failsSnapshot().count();
+		final double failRateLast = allMetricsSnapshot.failsSnapshot().last();
+		final double succRateLast = allMetricsSnapshot.successSnapshot().last();
 		if(failCountSum > failCountLimit) {
 			Loggers.ERR.warn(
 				"{}: failure count ({}) is more than the configured limit ({}), stopping the step", id, failCountSum,
@@ -212,8 +214,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 		}
 		if(failRateLimitFlag && failRateLast > succRateLast) {
 			Loggers.ERR.warn(
-				"{}: failures rate ({} failures/sec) is more than success rate ({} op/sec), " +
-					"stopping the step",
+				"{}: failures rate ({} failures/sec) is more than success rate ({} op/sec), stopping the step",
 				id, failRateLast, succRateLast
 			);
 			return true;
@@ -224,10 +225,10 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 	private boolean isIdle()
 	throws ConcurrentModificationException {
 		try {
-			if(! generator.isStopped() && ! generator.isClosed()) {
+			if(!generator.isStopped() && !generator.isClosed()) {
 				return false;
 			}
-			if(! driver.isStopped() && ! driver.isClosed() && ! driver.isIdle()) {
+			if(!driver.isStopped() && !driver.isClosed() && !driver.isIdle()) {
 				return false;
 			}
 		} catch(final RemoteException ignored) {
@@ -253,7 +254,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 			Loggers.OP_TRACES.info(new OperationTraceCsvLogMessage<>(opResult));
 		}
 		// account the completed composite ops only
-		if(opResult instanceof CompositeOperation && ! ((CompositeOperation) opResult).allSubOperationsDone()) {
+		if(opResult instanceof CompositeOperation && !((CompositeOperation) opResult).allSubOperationsDone()) {
 			return true;
 		}
 		final Status status = opResult.status();
@@ -321,7 +322,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 		for(i = from; i < to; i++) {
 			opResult = opResults.get(i);
 			// account the completed composite ops only
-			if(opResult instanceof CompositeOperation && ! ((CompositeOperation) opResult).allSubOperationsDone()) {
+			if(opResult instanceof CompositeOperation && !((CompositeOperation) opResult).allSubOperationsDone()) {
 				continue;
 			}
 			status = opResult.status();
@@ -341,7 +342,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 						generator.recycle(opResult);
 					} else if(opsResultsOutput != null) {
 						try {
-							if(! opsResultsOutput.put(opResult)) {
+							if(!opsResultsOutput.put(opResult)) {
 								Loggers.ERR.warn("Failed to output the op result");
 							}
 						} catch(final EOFException e) {
@@ -359,7 +360,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 				if(recycleFlag) {
 					latestSuccOpResultByItem.remove(opResult.item());
 				}
-				if(! Status.INTERRUPTED.equals(status)) {
+				if(!Status.INTERRUPTED.equals(status)) {
 					if(retryFlag) {
 						generator.recycle(opResult);
 					} else {
@@ -403,15 +404,15 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 	protected final void doShutdown() {
 		try(
 			final Instance ctx = CloseableThreadContext.put(KEY_STEP_ID, id)
-													   .put(KEY_CLASS_NAME, getClass().getSimpleName())
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
-			generator.shutdown();
-			Loggers.MSG.debug("{}: load generator \"{}\" shutdown", id, generator.toString());
+			generator.stop();
+			Loggers.MSG.debug("{}: load generator \"{}\" stopped", id, generator.toString());
 		} catch(final RemoteException ignored) {
 		}
 		try(
 			final Instance ctx = CloseableThreadContext.put(KEY_STEP_ID, id)
-													   .put(KEY_CLASS_NAME, getClass().getSimpleName())
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			driver.shutdown();
 			Loggers.MSG.debug("{}: storage driver {} shutdown", id, driver.toString());
@@ -422,38 +423,38 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 	@Override
 	protected final void doStop()
 	throws InterruptRunException, IllegalStateException {
+
 		driver.stop();
-		Loggers.MSG.debug("{}: storage driver {} stopped", id, driver.toString());
-		try(
-			final Instance ctx = CloseableThreadContext.put(KEY_STEP_ID, id)
-													   .put(KEY_CLASS_NAME, getClass().getSimpleName())
-		) {
-			try {
-				final List<O> finalResults = new ArrayList<>(batchSize);
-				int n;
-				Loggers.MSG.debug("{}: final results processing start", id);
-				while(0 < (n = driver.get(finalResults, batchSize))) {
-					for(int i = 0; i < n; i += batchSize) {
-						put(finalResults, i, Math.min(i + batchSize, n));
-					}
-				}
-				Loggers.MSG.debug("{}: final results processing done", id);
-			} catch(final Throwable cause) {
-				LogUtil.exception(
-					Level.WARN, cause, "{}: failed to process the final results for the driver {}", id,
-					driver.toString()
-				);
-			}
+		Loggers.MSG.debug(
+			"{}: the storage driver {} stopped, waiting to transfer the remaining results, if any", id, driver.toString()
+		);
+		while(driver.hasRemainingResults()) {
+			LockSupport.parkNanos(1);
 		}
+		Loggers.MSG.debug("{}: no more remaining results @ the storage driver {}", id, driver.toString());
+
+		try {
+			resultsTransferTask.shutdown();
+		} catch(final Exception e) {
+			LogUtil.exception(Level.WARN, e, "Failed to shutdown the results transfer task");
+		}
+		try {
+			resultsTransferTask.await();
+		} catch(final InterruptedException e) {
+			throw new InterruptRunException(e);
+		} catch(final Exception e) {
+			LogUtil.exception(Level.WARN, e, "Failed to await the results transfer task to finish");
+		}
+
 		if(latestSuccOpResultByItem != null && opsResultsOutput != null) {
 			try {
 				final int ioResultCount = latestSuccOpResultByItem.size();
 				Loggers.MSG.info("{}: please wait while performing {} I/O results output...", id, ioResultCount);
 				for(final O latestOpResult : latestSuccOpResultByItem.values()) {
 					try {
-						if(! opsResultsOutput.put(latestOpResult)) {
+						if(!opsResultsOutput.put(latestOpResult)) {
 							Loggers.ERR.debug("{}: item info output fails to ingest, blocking the closing method", id);
-							while(! opsResultsOutput.put(latestOpResult)) {
+							while(!opsResultsOutput.put(latestOpResult)) {
 								Thread.sleep(1);
 							}
 							Loggers.MSG.debug("{}: closing method unblocked", id);
@@ -469,6 +470,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 			}
 			latestSuccOpResultByItem.clear();
 		}
+
 		if(opsResultsOutput != null) {
 			try {
 				opsResultsOutput.put((O) null);
@@ -481,11 +483,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 				);
 			}
 		}
-		resultsTransferTask.invoke(); // ensure all results are transferred
-		try {
-			resultsTransferTask.stop();
-		} catch(final RemoteException ignored) {
-		}
+
 		Loggers.MSG.debug("{}: interrupted the load step context", id);
 	}
 
@@ -494,7 +492,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 	throws InterruptRunException {
 		try(
 			final Instance logCtx = CloseableThreadContext.put(KEY_STEP_ID, id)
-														  .put(KEY_CLASS_NAME, getClass().getSimpleName())
+				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
 			try {
 				generator.close();

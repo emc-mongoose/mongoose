@@ -311,7 +311,7 @@ public interface LogValidationUtil {
 	static void testTotalMetricsLogRecord(
 		final CSVRecord metrics, final OpType expectedOpType, final int concurrencyLimit,
 		final int expectedNodeCount, final SizeInBytes expectedItemDataSize, final long expectedMaxCount,
-		final int expectedLoadJobTime
+		final long maxFailureCount, final int expectedStepTime
 	) {
 		try {
 			FMT_DATE_ISO8601.parse(metrics.get("DateTimeISO8601"));
@@ -342,7 +342,7 @@ public interface LogValidationUtil {
 		}
 		final long countSucc = Long.parseLong(metrics.get("CountSucc"));
 		if(expectedMaxCount > 0) {
-			if(expectedLoadJobTime > 0) {
+			if(expectedStepTime > 0) {
 				assertTrue(expectedMaxCount > countSucc);
 			} else {
 				assertEquals(expectedMaxCount, countSucc);
@@ -350,7 +350,7 @@ public interface LogValidationUtil {
 			assertTrue(Long.toString(countSucc), countSucc > 0);
 		}
 		final long countFail = Long.parseLong(metrics.get("CountFail"));
-		assertTrue("Failures count: " + Long.toString(countFail), countFail < 1);
+		assertTrue("Failures count: " + Long.toString(countFail), countFail <= maxFailureCount);
 		//use delta = 5%, because sometimes default storage-mock return error (1 missing response)
 		//assertEquals(Long.toString(countFail), 0, countFail, countSucc * 0.05);
 		if(countSucc > 0) {
@@ -366,10 +366,10 @@ public interface LogValidationUtil {
 			}
 		}
 		final double stepDuration = Double.parseDouble(metrics.get("StepDuration[s]"));
-		if(expectedLoadJobTime > 0) {
+		if(expectedStepTime > 0) {
 			assertTrue(
-				"Step duration was " + stepDuration + ", but expected not more than" + expectedLoadJobTime + 5,
-				stepDuration <= expectedLoadJobTime + 5
+				"Step duration was " + stepDuration + ", but expected not more than" + expectedStepTime + 5,
+				stepDuration <= expectedStepTime + 5
 			);
 		}
 		final double durationSum = Double.parseDouble(metrics.get("DurationSum[s]"));

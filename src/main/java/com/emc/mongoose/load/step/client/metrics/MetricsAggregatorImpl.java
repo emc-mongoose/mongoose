@@ -4,7 +4,7 @@ import com.emc.mongoose.load.step.LoadStep;
 import com.emc.mongoose.logging.LogUtil;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 
@@ -35,7 +35,7 @@ implements MetricsAggregator {
 			.collect(Collectors.toMap(Function.identity(), MetricsSnapshotsSupplierTaskImpl::new));
 	}
 
-	public final List<MetricsSnapshot> metricsSnapshotsByIndex(final int originIndex) {
+	public final List<AllMetricsSnapshot> metricsSnapshotsByIndex(final int originIndex) {
 		return snapshotSuppliers
 			.values()
 			.stream()

@@ -2,7 +2,7 @@ package com.emc.mongoose.load.step;
 
 import com.emc.mongoose.concurrent.Daemon;
 import com.emc.mongoose.exception.InterruptRunException;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnable;
 
@@ -23,7 +23,7 @@ extends Daemon {
 	String getTypeName()
 	throws RemoteException;
 
-	List<? extends MetricsSnapshot> metricsSnapshots()
+	List<? extends AllMetricsSnapshot> metricsSnapshots()
 	throws RemoteException;
 
 	@Override

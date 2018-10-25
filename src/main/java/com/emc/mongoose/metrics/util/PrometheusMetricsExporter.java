@@ -1,15 +1,16 @@
 package com.emc.mongoose.metrics.util;
 
 import com.emc.mongoose.logging.Loggers;
-import com.emc.mongoose.metrics.snapshot.DistributedMetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshot;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.snapshot.HistogramSnapshot;
+import com.emc.mongoose.metrics.snapshot.NamedMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
-import com.emc.mongoose.metrics.snapshot.SingleMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import io.prometheus.client.Collector;
 
-import static com.emc.mongoose.Constants.METRIC_NAME_TIME;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_TIME;
 import static io.prometheus.client.Collector.MetricFamilySamples.Sample;
 
 import java.util.ArrayList;
@@ -74,7 +75,7 @@ extends Collector {
 	@Override
 	public List<MetricFamilySamples> collect() {
 		final List<MetricFamilySamples> mfsList = new ArrayList<>();
-		final DistributedMetricsSnapshot snapshot = metricsContext.lastSnapshot();
+		final DistributedAllMetricsSnapshot snapshot = metricsContext.lastSnapshot();
 		if(snapshot != null) {
 			collectSnapshot(snapshot.durationSnapshot(), mfsList);
 			collectSnapshot(snapshot.latencySnapshot(), mfsList);
@@ -94,14 +95,14 @@ extends Collector {
 		return mfsList;
 	}
 
-	private void collectSnapshot(
-		final SingleMetricSnapshot snapshot, final List<MetricFamilySamples> mfsList
-	) {
+	private void collectSnapshot(final NamedMetricSnapshot snapshot, final List<MetricFamilySamples> mfsList) {
 		final List<Sample> samples = new ArrayList<>();
 		if(snapshot instanceof TimingMetricSnapshot) {
 			samples.addAll(collect((TimingMetricSnapshot) snapshot));
 		} else if(snapshot instanceof RateMetricSnapshot) {
 			samples.addAll(collect((RateMetricSnapshot) snapshot));
+		} else if(snapshot instanceof ConcurrencyMetricSnapshot) {
+			samples.addAll(collect((ConcurrencyMetricSnapshot) snapshot));
 		} else {
 			Loggers.ERR.warn("Unexpected metric snapshot type: {}", snapshot.getClass());
 		}
@@ -113,8 +114,8 @@ extends Collector {
 		final String metricName = metric.name();
 		final List<Sample> samples = new ArrayList<>();
 		samples.add(new Sample(metricName + "_count", labelNames, labelValues, metric.count()));
-		samples.add(new Sample(metricName + "_meanRate", labelNames, labelValues, metric.mean()));
-		samples.add(new Sample(metricName + "_lastRate", labelNames, labelValues, metric.last()));
+		samples.add(new Sample(metricName + "_rate_mean", labelNames, labelValues, metric.mean()));
+		samples.add(new Sample(metricName + "_rate_last", labelNames, labelValues, metric.last()));
 		return samples;
 	}
 
@@ -134,6 +135,14 @@ extends Collector {
 			samples.add(sample);
 		}
 		samples.add(new Sample(metricName + "_max", labelNames, labelValues, metric.max()));
+		return samples;
+	}
+
+	private List<Sample> collect(final ConcurrencyMetricSnapshot metric) {
+		final String metricName = metric.name();
+		final List<Sample> samples = new ArrayList<>();
+		samples.add(new Sample(metricName + "_mean", labelNames, labelValues, metric.mean()));
+		samples.add(new Sample(metricName + "_last", labelNames, labelValues, metric.last()));
 		return samples;
 	}
 }

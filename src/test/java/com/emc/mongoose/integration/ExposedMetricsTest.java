@@ -1,11 +1,11 @@
 package com.emc.mongoose.integration;
 
-import com.emc.mongoose.Constants;
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.item.op.OpType;
+import com.emc.mongoose.metrics.MetricsConstants;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsManagerImpl;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.context.DistributedMetricsContextImpl;
 import com.emc.mongoose.metrics.context.MetricsContext;
@@ -45,8 +45,9 @@ public class ExposedMetricsTest {
 	private static final Double RATE_ACCURACY = 0.2;
 	private static final int MARK_DUR = 1_100_000; //dur must be more than lat (dur > lat)
 	private static final int MARK_LAT = 1_000_000;
-	private static final String[] TIMING_METRICS = { "count", "sum", "mean", "min", "max" };
-	private static final String[] RATE_METRICS = { "count", "meanRate", "lastRate" };
+	private static final String[] CONCURRENCY_METRICS = { "mean", "last", };
+	private static final String[] TIMING_METRICS = { "count", "sum", "mean", "min", "max", };
+	private static final String[] RATE_METRICS = { "count", "rate_mean", "rate_last", };
 	private final String STEP_ID = ExposedMetricsTest.class.getSimpleName();
 	private final OpType OP_TYPE = OpType.CREATE;
 	private final IntSupplier nodeCountSupplier = () -> 1;
@@ -54,7 +55,7 @@ public class ExposedMetricsTest {
 	private final int concurrencyThreshold = 0;
 	private final SizeInBytes ITEM_DATA_SIZE = ItemSize.SMALL.getValue();
 	private final int UPDATE_INTERVAL_SEC = (int) TimeUnit.MICROSECONDS.toSeconds(MARK_DUR);
-	private Supplier<List<MetricsSnapshot>> snapshotsSupplier;
+	private Supplier<List<AllMetricsSnapshot>> snapshotsSupplier;
 	private final Server server = new Server(PORT);
 	//
 	private DistributedMetricsContext distributedMetricsContext;
@@ -100,15 +101,15 @@ public class ExposedMetricsTest {
 		final Map tmp = new HashMap();
 		final long elapsedTimeMillis = TimeUnit.MICROSECONDS.toMillis(MARK_DUR * ITERATION_COUNT);
 		tmp.put("value", new Double(elapsedTimeMillis));
-		testMetric(result, Constants.METRIC_NAME_TIME, tmp, RATE_ACCURACY);
+		testMetric(result, MetricsConstants.METRIC_NAME_TIME, tmp, RATE_ACCURACY);
 		//
-		testTimingMetric(result, MARK_DUR, Constants.METRIC_NAME_DUR);
-		testTimingMetric(result, MARK_LAT, Constants.METRIC_NAME_LAT);
-		testTimingMetric(result, nodeCountSupplier.getAsInt(), Constants.METRIC_NAME_CONC);
+		testTimingMetric(result, MARK_DUR, MetricsConstants.METRIC_NAME_DUR);
+		testTimingMetric(result, MARK_LAT, MetricsConstants.METRIC_NAME_LAT);
+		testConcurrencyMetric(result, 1, MetricsConstants.METRIC_NAME_CONC);
 		//
-		testRateMetric(result, ITEM_DATA_SIZE.get(), Constants.METRIC_NAME_BYTE);
-		testRateMetric(result, 1, Constants.METRIC_NAME_FAIL);
-		testRateMetric(result, 1, Constants.METRIC_NAME_SUCC);
+		testRateMetric(result, ITEM_DATA_SIZE.get(), MetricsConstants.METRIC_NAME_BYTE);
+		testRateMetric(result, 1, MetricsConstants.METRIC_NAME_FAIL);
+		testRateMetric(result, 1, MetricsConstants.METRIC_NAME_SUCC);
 		//
 		metricsMgr.close();
 	}
@@ -116,10 +117,8 @@ public class ExposedMetricsTest {
 	private void testTimingMetric(final String stdOut, final double markValue, final String name) {
 		final Map<String, Double> expectedValues = new HashMap<>();
 		// concurrency count != iteration_count, because in the refreshLastSnapshot lat & dur account only after the condition, and concurrency - every time
-		final double count = name.equals(Constants.METRIC_NAME_CONC) ?
-							 ITERATION_COUNT + 1 : ITERATION_COUNT;
-		final double accuracy = name.equals(Constants.METRIC_NAME_CONC) ?
-								RATE_ACCURACY : TIMING_ACCURACY;
+		final double count = ITERATION_COUNT;
+		final double accuracy = TIMING_ACCURACY;
 		final double[] values = { count, markValue * count, markValue, markValue, markValue };
 		for(int i = 0; i < TIMING_METRICS.length; ++ i) {
 			expectedValues.put(TIMING_METRICS[i], values[i]);
@@ -130,7 +129,7 @@ public class ExposedMetricsTest {
 	private void testRateMetric(final String stdOut, final double markValue, final String name) {
 		final Map<String, Double> expectedValues = new HashMap<>();
 		double count = ITERATION_COUNT;
-		if(name.equals(Constants.METRIC_NAME_BYTE)) {
+		if(name.equals(MetricsConstants.METRIC_NAME_BYTE)) {
 			count *= markValue;
 		}
 		final Double[] values = { count, markValue, markValue };
@@ -138,6 +137,16 @@ public class ExposedMetricsTest {
 			expectedValues.put(RATE_METRICS[i], values[i]);
 		}
 		testMetric(stdOut, name, expectedValues, RATE_ACCURACY);
+	}
+
+	private void testConcurrencyMetric(final String stdOut, final double markValue, final String name) {
+		final Map<String, Double> expectedValues = new HashMap<>();
+		final double accuracy = 0;
+		final double[] values = { 1, 1, };
+		for(int i = 0; i < CONCURRENCY_METRICS.length; ++ i) {
+			expectedValues.put(CONCURRENCY_METRICS[i], values[i]);
+		}
+		testMetric(stdOut, name, expectedValues, accuracy);
 	}
 
 	private String resultFromServer(final String urlPath)
@@ -158,7 +167,8 @@ public class ExposedMetricsTest {
 		for(final String key : expectedValues.keySet()) {
 			final Pattern p = Pattern.compile(metricName + "_" + key + "\\{.+\\} .+");
 			final Matcher m = p.matcher(resultOutput);
-			Assert.assertEquals(m.find(), true);
+			final boolean found = m.find();
+			Assert.assertTrue(found);
 			final Double actualValue = Double.valueOf(m.group().split("}")[1]);
 			final Double expectedValue = Double.valueOf(expectedValues.get(key));
 			Assert.assertEquals(
