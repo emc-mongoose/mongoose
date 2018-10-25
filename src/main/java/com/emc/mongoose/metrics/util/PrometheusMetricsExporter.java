@@ -10,7 +10,7 @@ public interface PrometheusMetricsExporter {
 
 	PrometheusMetricsExporter quantiles(final double[] values);
 
-	PrometheusMetricsExporterImpl quantiles(final List<Double> values);
+	PrometheusMetricsExporter quantiles(final List<Double> values);
 
 	PrometheusMetricsExporter label(final String name, final String value);
 
