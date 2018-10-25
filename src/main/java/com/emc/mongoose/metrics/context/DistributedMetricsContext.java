@@ -1,11 +1,10 @@
 package com.emc.mongoose.metrics.context;
 
-import com.emc.mongoose.metrics.DistributedMetricsListener;
-import com.emc.mongoose.metrics.snapshot.DistributedMetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshot;
 
 import java.util.List;
 
-public interface DistributedMetricsContext<S extends DistributedMetricsSnapshot>
+public interface DistributedMetricsContext<S extends DistributedAllMetricsSnapshot>
 extends MetricsContext<S> {
 
 	int nodeCount();
@@ -13,6 +12,4 @@ extends MetricsContext<S> {
 	List<Double> quantileValues();
 
 	S lastSnapshot();
-
-	void metricsListener(final DistributedMetricsListener metricsListener);
 }

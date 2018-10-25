@@ -158,6 +158,11 @@ implements StorageDriver<I,O> {
 	}
 
 	@Override
+	public final boolean hasRemainingResults() {
+		return !opsResultsQueue.isEmpty();
+	}
+
+	@Override
 	public Input<O> getInput() {
 		return this;
 	}

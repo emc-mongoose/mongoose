@@ -99,8 +99,7 @@ public final class Main {
 		} catch(final InterruptedException | InterruptRunException e) {
 			Loggers.MSG.debug("Interrupted", e);
 		} catch(final Exception e) {
-			LogUtil.exception(Level.FATAL, e, "Unexpected failure");
-			e.printStackTrace();
+			LogUtil.trace(Loggers.ERR, Level.FATAL, e, "Unexpected failure");
 		}
 	}
 
@@ -214,7 +213,7 @@ public final class Main {
 		} catch(final InterruptedException | InterruptRunException e) {
 			throw e;
 		} catch(final Throwable cause) {
-			cause.printStackTrace(System.err);
+			LogUtil.trace(Loggers.ERR, Level.FATAL, cause, "Run node failure");
 		}
 	}
 
@@ -243,7 +242,7 @@ public final class Main {
 					.list(scenarioPath.getParent())
 					.forEach(System.out::println);
 			} catch(final IOException ee) {
-				ee.printStackTrace(System.err);
+				LogUtil.trace(Loggers.ERR, Level.ERROR, ee, "Failed to list the scenarios parent directory");
 			}
 		}
 		final String scenarioText = strb.toString();
@@ -263,10 +262,9 @@ public final class Main {
 			try {
 				scriptEngine.eval(scenarioText);
 			} catch(final ScriptException e) {
-				e.printStackTrace();
-				LogUtil.exception(
-					Level.ERROR, e, "\nScenario failed @ file \"{}\", line #{}, column #{}:\n{}", scenarioPath,
-					e.getLineNumber(), e.getColumnNumber(), e.getMessage()
+				LogUtil.trace(
+					Loggers.ERR, Level.ERROR, e, "\nScenario failed @ file \"{}\", line #{}, column #{}:\n{}",
+					scenarioPath, e.getLineNumber(), e.getColumnNumber(), e.getMessage()
 				);
 			}
 		}

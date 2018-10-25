@@ -2,12 +2,15 @@ package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.DistributedMetricsListener;
-import com.emc.mongoose.metrics.snapshot.DistributedMetricsSnapshotImpl;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshotImpl;
+import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshotImpl;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshotImpl;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshotImpl;
+
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.util.ArrayList;
@@ -16,12 +19,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
-public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotImpl>
-	extends MetricsContextBase<S>
-	implements DistributedMetricsContext<S> {
+public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapshotImpl>
+extends MetricsContextBase<S>
+implements DistributedMetricsContext<S> {
 
 	private final IntSupplier nodeCountSupplier;
-	private final Supplier<List<MetricsSnapshot>> snapshotsSupplier;
+	private final Supplier<List<AllMetricsSnapshot>> snapshotsSupplier;
 	private final boolean avgPersistFlag;
 	private final boolean sumPersistFlag;
 	private final boolean perfDbResultsFileFlag;
@@ -32,7 +35,7 @@ public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotI
 		final String id, final OpType opType, final IntSupplier nodeCountSupplier, final int concurrencyLimit,
 		final int concurrencyThreshold, final SizeInBytes itemDataSize, final int updateIntervalSec,
 		final boolean stdOutColorFlag, final boolean avgPersistFlag, final boolean sumPersistFlag,
-		final boolean perfDbResultsFileFlag, final Supplier<List<MetricsSnapshot>> snapshotsSupplier,
+		final boolean perfDbResultsFileFlag, final Supplier<List<AllMetricsSnapshot>> snapshotsSupplier,
 		final List<Double> quantileValues
 	) {
 		super(
@@ -99,32 +102,39 @@ public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotI
 	@Override
 	@SuppressWarnings("unchecked")
 	public void refreshLastSnapshot() {
-		final List<MetricsSnapshot> snapshots = snapshotsSupplier.get();
+
+		final List<AllMetricsSnapshot> snapshots = snapshotsSupplier.get();
 		final int snapshotsCount = snapshots.size();
+
 		if(snapshotsCount > 0) { // do nothing otherwise
+
 			final RateMetricSnapshot successSnapshot;
 			final RateMetricSnapshot failsSnapshot;
 			final RateMetricSnapshot bytesSnapshot;
-			final TimingMetricSnapshot actualConcurrencySnapshot;
+			final ConcurrencyMetricSnapshot actualConcurrencySnapshot;
 			final TimingMetricSnapshot durSnapshot;
 			final TimingMetricSnapshot latSnapshot;
+
 			if(snapshotsCount == 1) { // single
-				final MetricsSnapshot snapshot = snapshots.get(0);
+
+				final AllMetricsSnapshot snapshot = snapshots.get(0);
 				successSnapshot = snapshot.successSnapshot();
 				failsSnapshot = snapshot.failsSnapshot();
 				bytesSnapshot = snapshot.byteSnapshot();
 				actualConcurrencySnapshot = snapshot.concurrencySnapshot();
 				durSnapshot = snapshot.durationSnapshot();
 				latSnapshot = snapshot.latencySnapshot();
+
 			} else { // many
+
 				final List<TimingMetricSnapshot> durSnapshots = new ArrayList<>();
 				final List<TimingMetricSnapshot> latSnapshots = new ArrayList<>();
-				final List<TimingMetricSnapshot> conSnapshots = new ArrayList<>();
+				final List<ConcurrencyMetricSnapshot> conSnapshots = new ArrayList<>();
 				final List<RateMetricSnapshot> succSnapshots = new ArrayList<>();
 				final List<RateMetricSnapshot> failSnapshots = new ArrayList<>();
 				final List<RateMetricSnapshot> byteSnapshots = new ArrayList<>();
-				for(int i = 0; i < snapshotsCount; i++) {
-					final MetricsSnapshot snapshot = snapshots.get(i);
+				for(int i = 0; i < snapshotsCount; i ++) {
+					final AllMetricsSnapshot snapshot = snapshots.get(i);
 					durSnapshots.add(snapshot.durationSnapshot());
 					latSnapshots.add(snapshot.latencySnapshot());
 					succSnapshots.add(snapshot.successSnapshot());
@@ -135,11 +145,13 @@ public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotI
 				successSnapshot = RateMetricSnapshotImpl.aggregate(succSnapshots);
 				failsSnapshot = RateMetricSnapshotImpl.aggregate(failSnapshots);
 				bytesSnapshot = RateMetricSnapshotImpl.aggregate(byteSnapshots);
-				actualConcurrencySnapshot = TimingMetricSnapshotImpl.aggregate(conSnapshots);
+				actualConcurrencySnapshot = ConcurrencyMetricSnapshotImpl.aggregate(conSnapshots);
 				durSnapshot = TimingMetricSnapshotImpl.aggregate(durSnapshots);
 				latSnapshot = TimingMetricSnapshotImpl.aggregate(latSnapshots);
+
 			}
-			lastSnapshot = (S) new DistributedMetricsSnapshotImpl(
+
+			lastSnapshot = (S) new DistributedAllMetricsSnapshotImpl(
 				durSnapshot, latSnapshot, actualConcurrencySnapshot, failsSnapshot, successSnapshot, bytesSnapshot,
 				nodeCountSupplier.getAsInt(), elapsedTimeMillis()
 			);
@@ -159,16 +171,6 @@ public class DistributedMetricsContextImpl<S extends DistributedMetricsSnapshotI
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag, avgPersistFlag,
 			sumPersistFlag, perfDbResultsFileFlag, snapshotsSupplier, quantileValues
 		);
-	}
-
-	@Override
-	public void metricsListener(final DistributedMetricsListener metricsListener) {
-		this.metricsListener = metricsListener;
-	}
-
-	@Override
-	public long transferSizeSum() {
-		return lastSnapshot.byteSnapshot().count();
 	}
 
 	@Override

@@ -3,7 +3,7 @@ package com.emc.mongoose.metrics.snapshot;
 /**
  @author veronika K. on 12.10.18 */
 public interface TimingMetricSnapshot
-extends SingleMetricSnapshot {
+extends CountMetricSnapshot, NamedMetricSnapshot, MeanMetricSnapshot {
 
 	long sum();
 

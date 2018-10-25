@@ -1,6 +1,9 @@
 package com.emc.mongoose.svc;
 
+import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.logging.Loggers;
 import com.github.akurilov.commons.net.FixedPortRmiSocketFactory;
+import org.apache.logging.log4j.Level;
 
 import javax.management.MBeanServer;
 import java.io.IOException;
@@ -148,7 +151,7 @@ public abstract class ServiceUtil {
 						)
 				);
 		} catch(final SocketException e) {
-			e.printStackTrace(System.err);
+			LogUtil.trace(Loggers.ERR, Level.WARN, e, "Failed to list the network interfaces to find the local one");
 		}
 
 		return false;
@@ -207,7 +210,7 @@ public abstract class ServiceUtil {
 					}
 				}
 			} catch(final NotBoundException | URISyntaxException | SocketException e) {
-				e.printStackTrace(System.err);
+				LogUtil.trace(Loggers.ERR, Level.WARN, e, "Failed to close the RMI service");
 			}
 		}
 		return svcUri;
@@ -222,7 +225,7 @@ public abstract class ServiceUtil {
 					try {
 						System.out.println("Service closed: " + close(svc));
 					} catch(final RemoteException | MalformedURLException e) {
-						e.printStackTrace(System.err);
+						LogUtil.trace(Loggers.ERR, Level.WARN, e, "Failed to close the RMI service");
 					}
 				}
 			}

@@ -1,6 +1,6 @@
 package com.emc.mongoose.metrics;
 
-import com.emc.mongoose.metrics.snapshot.DistributedMetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshot;
 
 /**
  Created by andrey on 06.07.17.
@@ -14,5 +14,5 @@ public interface DistributedMetricsListener {
 
 	 @param snapshot the metrics snapshot to update the metrics listener state
 	 */
-	void notify(final DistributedMetricsSnapshot snapshot);
+	void notify(final DistributedAllMetricsSnapshot snapshot);
 }

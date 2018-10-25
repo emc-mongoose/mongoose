@@ -5,20 +5,20 @@ import java.util.List;
 /**
  @author veronika K. on 12.10.18 */
 public class RateMetricSnapshotImpl
+extends NamedCountMetricSnapshotImpl
 implements RateMetricSnapshot {
 
-	private final double lastRate;
-	private final double meanRate;
-	private final String metricName;
-	private final long count;
+	private final double last;
+	private final double mean;
+	private final long elapsedTimeMillis;
 
 	public RateMetricSnapshotImpl(
-		final double lastRate, final double meanRate, final String metricName, final long count
+		final double last, final double mean, final String metricName, final long count, final long elapsedTimeMillis
 	) {
-		this.lastRate = lastRate;
-		this.meanRate = meanRate;
-		this.metricName = metricName;
-		this.count = count;
+		super(metricName, count);
+		this.last = last;
+		this.mean = mean;
+		this.elapsedTimeMillis = elapsedTimeMillis;
 	}
 
 	public static RateMetricSnapshot aggregate(final List<RateMetricSnapshot> snapshots) {
@@ -29,35 +29,33 @@ implements RateMetricSnapshot {
 		double lastRateSum = 0;
 		double meanRateSum = 0;
 		long countSum = 0;
+		long elapsedTimeMillisSum = 0;
 		RateMetricSnapshot nextSnapshot;
 		for(int i = 0; i < snapshotsCount; i++) {
 			nextSnapshot = snapshots.get(i);
 			countSum += nextSnapshot.count();
 			lastRateSum += nextSnapshot.last();
 			meanRateSum += nextSnapshot.mean();
+			elapsedTimeMillisSum += nextSnapshot.elapsedTimeMillis();
 		}
 		return new RateMetricSnapshotImpl(
-			lastRateSum / snapshotsCount, meanRateSum / snapshotsCount, snapshots.get(0).name(), countSum
+			lastRateSum / snapshotsCount, meanRateSum / snapshotsCount, snapshots.get(0).name(), countSum,
+			elapsedTimeMillisSum / snapshotsCount
 		);
 	}
 
 	@Override
-	public double last() {
-		return lastRate;
+	public final double last() {
+		return last;
 	}
 
 	@Override
-	public String name() {
-		return metricName;
+	public final long elapsedTimeMillis() {
+		return elapsedTimeMillis;
 	}
 
 	@Override
-	public double mean() {
-		return meanRate;
-	}
-
-	@Override
-	public long count() {
-		return count;
+	public final double mean() {
+		return mean;
 	}
 }

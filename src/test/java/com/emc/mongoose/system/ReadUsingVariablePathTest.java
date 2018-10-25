@@ -205,7 +205,7 @@ import static org.junit.Assert.assertTrue;
 		);
 		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords(stepId).get(0), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
-			itemSize.getValue(), EXPECTED_COUNT, 0
+			itemSize.getValue(), EXPECTED_COUNT, 0, 0
 		);
 		final String stdOutContent = testContainer.stdOutContent();
 		testFinalMetricsStdout(

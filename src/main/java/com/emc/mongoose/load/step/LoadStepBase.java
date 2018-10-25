@@ -10,7 +10,7 @@ import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.metrics.MetricsManager;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
@@ -39,7 +39,7 @@ implements LoadStep, Runnable {
 	protected final List<Extension> extensions;
 	protected final List<Config> ctxConfigs;
 	protected final MetricsManager metricsMgr;
-	protected final List<MetricsContext<? extends MetricsSnapshot>> metricsContexts = new ArrayList<>();
+	protected final List<MetricsContext<? extends AllMetricsSnapshot>> metricsContexts = new ArrayList<>();
 
 	private volatile long timeLimitSec = Long.MAX_VALUE;
 	private volatile long startTimeSec = -1;
@@ -60,7 +60,7 @@ implements LoadStep, Runnable {
 	}
 
 	@Override
-	public final List<? extends MetricsSnapshot> metricsSnapshots() {
+	public final List<? extends AllMetricsSnapshot> metricsSnapshots() {
 		return metricsContexts
 			.stream()
 			.map(MetricsContext::lastSnapshot)
@@ -91,8 +91,7 @@ implements LoadStep, Runnable {
 			} catch(final InterruptRunException e) {
 				throw e;
 			} catch(final Exception e) {
-				LogUtil.exception(Level.WARN, e, "Failed to close \"{}\"", toString());
-				e.printStackTrace();
+				LogUtil.trace(Loggers.ERR, Level.WARN, e, "Failed to close \"{}\"", toString());
 			}
 		}
 	}

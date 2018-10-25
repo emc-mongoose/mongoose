@@ -201,8 +201,7 @@ implements LoadGenerator<I, O> {
 									Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
 									outputFinishFlag = true;
 								} else {
-									LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
-									e.printStackTrace(System.err);
+									LogUtil.trace(Loggers.ERR, Level.ERROR, cause, "Unexpected failure");
 								}
 							}
 						}
@@ -280,16 +279,15 @@ implements LoadGenerator<I, O> {
 		return recycleQueue.isEmpty();
 	}
 
-	@Override
-	public final boolean isFinished() {
+	private boolean isFinished() {
 		return outputFinishFlag
 			|| itemInputFinishFlag && opInputFinishFlag && generatedOpCount() == outputOpCounter.sum();
 	}
 
 	@Override
-	protected final void doShutdown()
+	protected final void doStop()
 	throws IllegalStateException {
-		stop();
+		super.doStop();
 		Loggers.MSG.debug(
 			"{}: generated {}, recycled {}, output {} operations",
 			LoadGeneratorImpl.this.toString(), builtTasksCounter.sum(), recycledOpCounter.sum(), outputOpCounter.sum()

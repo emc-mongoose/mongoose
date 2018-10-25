@@ -1,11 +1,12 @@
 package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
+
 import com.github.akurilov.commons.system.SizeInBytes;
 
-public abstract class MetricsContextBase<S extends MetricsSnapshot>
-	implements MetricsContext<S> {
+public abstract class MetricsContextBase<S extends AllMetricsSnapshot>
+implements MetricsContext<S> {
 
 	protected final long ts;
 	protected final String id;

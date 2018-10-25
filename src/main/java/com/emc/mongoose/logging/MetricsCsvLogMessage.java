@@ -1,9 +1,9 @@
 package com.emc.mongoose.logging;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.snapshot.DistributedMetricsSnapshot;
-import com.emc.mongoose.metrics.snapshot.MetricsSnapshot;
-import com.emc.mongoose.metrics.context.MetricsContext;
+import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import static com.emc.mongoose.Constants.K;
@@ -21,20 +21,20 @@ import java.util.Date;
 public final class MetricsCsvLogMessage
 extends LogMessageBase {
 
-	private final MetricsSnapshot snapshot;
+	private final AllMetricsSnapshot snapshot;
 	private final OpType opType;
 	private final int concurrencyLimit;
 
-	public MetricsCsvLogMessage(final MetricsContext metricsCtx) {
-		this.opType = metricsCtx.opType();
-		this.snapshot = metricsCtx.lastSnapshot();
-		this.concurrencyLimit = metricsCtx.concurrencyLimit();
+	public MetricsCsvLogMessage(final AllMetricsSnapshot snapshot, final OpType opType, final int concurrencyLimit) {
+		this.snapshot = snapshot;
+		this.opType = opType;
+		this.concurrencyLimit = concurrencyLimit;
 	}
 
 	@Override
 	public final void formatTo(final StringBuilder strb) {
 
-		final TimingMetricSnapshot concurrencySnapshot = snapshot.concurrencySnapshot();
+		final ConcurrencyMetricSnapshot concurrencySnapshot = snapshot.concurrencySnapshot();
 		final TimingMetricSnapshot durationSnapshot = snapshot.durationSnapshot();
 		final RateMetricSnapshot successCountSnapshot = snapshot.successSnapshot();
 		final RateMetricSnapshot byteCountSnapshot = snapshot.byteSnapshot();
@@ -45,10 +45,10 @@ extends LogMessageBase {
 			.append(opType.name()).append(',')
 			.append(concurrencyLimit).append(',')
 			.append(
-				snapshot instanceof DistributedMetricsSnapshot ? ((DistributedMetricsSnapshot) snapshot).nodeCount() : 1
+				snapshot instanceof DistributedAllMetricsSnapshot ? ((DistributedAllMetricsSnapshot) snapshot).nodeCount() : 1
 			)
 			.append(',')
-			.append(concurrencySnapshot.histogramSnapshot().last()).append(',')
+			.append(concurrencySnapshot.last()).append(',')
 			.append(concurrencySnapshot.mean()).append(',')
 			.append(successCountSnapshot.count()).append(',')
 			.append(snapshot.failsSnapshot().count()).append(',')
@@ -61,15 +61,15 @@ extends LogMessageBase {
 			.append(byteCountSnapshot.last()).append(',')
 			.append(durationSnapshot.mean()).append(',')
 			.append(durationSnapshot.min()).append(',')
-			.append(durationSnapshot.quantile(0.25)).append(',')
-			.append(durationSnapshot.quantile(0.5)).append(',')
-			.append(durationSnapshot.quantile(0.75)).append(',')
+			.append(durationSnapshot.histogramSnapshot().quantile(0.25)).append(',')
+			.append(durationSnapshot.histogramSnapshot().quantile(0.5)).append(',')
+			.append(durationSnapshot.histogramSnapshot().quantile(0.75)).append(',')
 			.append(durationSnapshot.max()).append(',')
 			.append(latencySnapshot.mean()).append(',')
 			.append(latencySnapshot.min()).append(',')
-			.append(latencySnapshot.quantile(0.25)).append(',')
-			.append(latencySnapshot.quantile(0.5)).append(',')
-			.append(latencySnapshot.quantile(0.75)).append(',')
+			.append(latencySnapshot.histogramSnapshot().quantile(0.25)).append(',')
+			.append(latencySnapshot.histogramSnapshot().quantile(0.5)).append(',')
+			.append(latencySnapshot.histogramSnapshot().quantile(0.75)).append(',')
 			.append(latencySnapshot.max());
 	}
 }
