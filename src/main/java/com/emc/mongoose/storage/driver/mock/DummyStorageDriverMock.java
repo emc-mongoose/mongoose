@@ -107,6 +107,11 @@ implements StorageDriver<I, O> {
 		return n;
 	}
 
+	@Override
+	public final boolean hasRemainingResults() {
+		return !opsResultsQueue.isEmpty();
+	}
+
 	private void checkStateFor(final O op)
 	throws IOException {
 		op.reset();

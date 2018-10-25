@@ -95,6 +95,7 @@
 	},
 	"run": {
 		"node": "boolean",
+		"port": "int32",
 		"scenario": "string",
 		"version": "string"
 	},

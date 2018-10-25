@@ -1,8 +1,8 @@
 package com.emc.mongoose.logging;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.DistributedMetricsContext;
-import com.emc.mongoose.metrics.DistributedMetricsSnapshot;
+import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshot;
+import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import static com.emc.mongoose.Constants.K;
 import static com.emc.mongoose.Constants.M;
 import static com.emc.mongoose.Constants.MIB;
@@ -20,16 +20,20 @@ extends LogMessageBase {
 
 	private final OpType opType;
 	private final String stepId;
-	private final DistributedMetricsSnapshot snapshot;
+	private final int concurrencyLimit;
+	private final DistributedAllMetricsSnapshot snapshot;
 
 	public StepResultsMetricsLogMessage(final DistributedMetricsContext metricsCtx) {
-		this(metricsCtx.opType(), metricsCtx.id(), metricsCtx.lastSnapshot());
+		this(metricsCtx.opType(), metricsCtx.id(), metricsCtx.concurrencyLimit(), metricsCtx.lastSnapshot());
 	}
 
-	StepResultsMetricsLogMessage(final OpType opType, final String stepId, final DistributedMetricsSnapshot snapshot) {
+	StepResultsMetricsLogMessage(
+		final OpType opType, final String stepId, final int concurrencyLimit, final DistributedAllMetricsSnapshot snapshot
+	) {
 		this.opType = opType;
 		this.stepId = stepId;
 		this.snapshot = snapshot;
+		this.concurrencyLimit = concurrencyLimit;
 	}
 
 	@Override
@@ -42,37 +46,37 @@ extends LogMessageBase {
 			.append("  Operation Type:              ").append(opType).append(lineSep)
 			.append("  Node Count:                  ").append(snapshot.nodeCount()).append(lineSep)
 			.append("  Concurrency:                 ").append(lineSep)
-			.append("    Limit Per Storage Driver:  ").append(snapshot.concurrencyLimit()).append(lineSep)
+			.append("    Limit Per Storage Driver:  ").append(concurrencyLimit).append(lineSep)
 			.append("    Actual:                    ").append(lineSep)
-			.append("      Last:                    ").append(snapshot.actualConcurrencyLast()).append(lineSep)
-			.append("      Mean:                    ").append(snapshot.actualConcurrencyMean()).append(lineSep)
+			.append("      Last:                    ").append(snapshot.concurrencySnapshot().last()).append(lineSep)
+			.append("      Mean:                    ").append(snapshot.concurrencySnapshot().mean()).append(lineSep)
 			.append("  Operations Count:            ").append(lineSep)
-			.append("    Successful:                ").append(snapshot.succCount()).append(lineSep)
-			.append("    Failed:                    ").append(snapshot.failCount()).append(lineSep)
-			.append("  Transfer Size:               ").append(SizeInBytes.formatFixedSize(snapshot.byteCount())).append(lineSep)
+			.append("    Successful:                ").append(snapshot.successSnapshot().count()).append(lineSep)
+			.append("    Failed:                    ").append(snapshot.failsSnapshot().count()).append(lineSep)
+			.append("  Transfer Size:               ").append(SizeInBytes.formatFixedSize(snapshot.byteSnapshot().count())).append(lineSep)
 			.append("  Duration [s]:                ").append(lineSep)
 			.append("    Elapsed:                   ").append(snapshot.elapsedTimeMillis() / K).append(lineSep)
-			.append("    Sum:                       ").append(snapshot.durationSum() / M).append(lineSep)
+			.append("    Sum:                       ").append(snapshot.durationSnapshot().sum() / M).append(lineSep)
 			.append("  Throughput [op/s]:           ").append(lineSep)
-			.append("    Last:                      ").append(snapshot.succRateLast()).append(lineSep)
-			.append("    Mean:                      ").append(snapshot.succRateMean()).append(lineSep)
+			.append("    Last:                      ").append(snapshot.successSnapshot().last()).append(lineSep)
+			.append("    Mean:                      ").append(snapshot.successSnapshot().mean()).append(lineSep)
 			.append("  Bandwidth [MB/s]:            ").append(lineSep)
-			.append("    Last:                      ").append(snapshot.byteRateLast() / MIB).append(lineSep)
-			.append("    Mean:                      ").append(snapshot.byteRateMean() / MIB).append(lineSep)
+			.append("    Last:                      ").append(snapshot.byteSnapshot().last() / MIB).append(lineSep)
+			.append("    Mean:                      ").append(snapshot.byteSnapshot().mean() / MIB).append(lineSep)
 			.append("  Operations Duration [us]:    ").append(lineSep)
-			.append("    Avg:                       ").append(snapshot.durationMean()).append(lineSep)
-			.append("    Min:                       ").append(snapshot.durationMin()).append(lineSep)
-			.append("    LoQ:                       ").append(snapshot.durationLoQ()).append(lineSep)
-			.append("    Med:                       ").append(snapshot.durationMed()).append(lineSep)
-			.append("    HiQ:                       ").append(snapshot.durationHiQ()).append(lineSep)
-			.append("    Max:                       ").append(snapshot.durationMax()).append(lineSep)
+			.append("    Avg:                       ").append(snapshot.durationSnapshot().mean()).append(lineSep)
+			.append("    Min:                       ").append(snapshot.durationSnapshot().min()).append(lineSep)
+			.append("    LoQ:                       ").append(snapshot.durationSnapshot().histogramSnapshot().quantile(0.25)).append(lineSep)
+			.append("    Med:                       ").append(snapshot.durationSnapshot().histogramSnapshot().quantile(0.5)).append(lineSep)
+			.append("    HiQ:                       ").append(snapshot.durationSnapshot().histogramSnapshot().quantile(0.75)).append(lineSep)
+			.append("    Max:                       ").append(snapshot.durationSnapshot().max()).append(lineSep)
 			.append("  Operations Latency [us]:     ").append(lineSep)
-			.append("    Avg:                       ").append(snapshot.latencyMean()).append(lineSep)
-			.append("    Min:                       ").append(snapshot.latencyMin()).append(lineSep)
-			.append("    LoQ:                       ").append(snapshot.latencyLoQ()).append(lineSep)
-			.append("    Med:                       ").append(snapshot.latencyMed()).append(lineSep)
-			.append("    HiQ:                       ").append(snapshot.latencyHiQ()).append(lineSep)
-			.append("    Max:                       ").append(snapshot.latencyMax()).append(lineSep)
+			.append("    Avg:                       ").append(snapshot.latencySnapshot().mean()).append(lineSep)
+			.append("    Min:                       ").append(snapshot.latencySnapshot().min()).append(lineSep)
+			.append("    LoQ:                       ").append(snapshot.latencySnapshot().histogramSnapshot().quantile(0.25)).append(lineSep)
+			.append("    Med:                       ").append(snapshot.latencySnapshot().histogramSnapshot().quantile(0.5)).append(lineSep)
+			.append("    HiQ:                       ").append(snapshot.latencySnapshot().histogramSnapshot().quantile(0.75)).append(lineSep)
+			.append("    Max:                       ").append(snapshot.latencySnapshot().max()).append(lineSep)
 			.append("...").append(lineSep);
 	}
 }

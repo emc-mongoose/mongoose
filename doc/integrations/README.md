@@ -18,6 +18,7 @@ TODO
 ## Approach
 
 Use the [Prometheus client library](https://github.com/prometheus/client_java) for the Mongoose code instrumentation.
+The default metrics export port is 9999.
 
 # Grafana
 
