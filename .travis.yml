@@ -154,15 +154,6 @@ jobs:
       - ITEM_SIZE=medium,huge
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=fs,s3 RUN_MODE=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew systemTest --tests com.emc.mongoose.system.WeightedLoadTest
-    - env:
-      - TEST=WeightedLoadTest
-      - STORAGE_TYPE=fs,s3
-      - RUN_MODE=distributed
-      - CONCURRENCY=single,medium
-      - ITEM_SIZE=empty,small
-      script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
-
     - stage: "Unstable system tests"
     # STORAGE_TYPE=fs,swift RUN_MODE=local,distributed CONCURRENCY=single,high ITEM_SIZE=empty,medium ./gradlew systemTest --tests com.emc.mongoose.system.CircularReadLimitByTimeTest
       env:
@@ -198,6 +189,15 @@ jobs:
       - RUN_MODE=local,distributed
       - CONCURRENCY=unlimited
       - ITEM_SIZE=small,medium,large
+      script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
+
+    # STORAGE_TYPE=fs,s3 RUN_MODE=distributed CONCURRENCY=single,medium ITEM_SIZE=empty,small ./gradlew systemTest --tests com.emc.mongoose.system.WeightedLoadTest
+    - env:
+      - TEST=WeightedLoadTest
+      - STORAGE_TYPE=fs,s3
+      - RUN_MODE=distributed
+      - CONCURRENCY=single,medium
+      - ITEM_SIZE=empty,small
       script: "travis_retry ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
     - stage: "Deploy"
