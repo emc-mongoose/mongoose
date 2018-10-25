@@ -19,7 +19,7 @@ import static org.apache.commons.lang.SystemUtils.LINE_SEPARATOR;
  Not thread safe, relies on the MetricsManager's (caller) exclusive invocation lock
  */
 public class MetricsAsciiTableLogMessage
-	extends LogMessageBase {
+extends LogMessageBase {
 
 	public static final String TABLE_HEADER =
 		"------------------------------------------------------------------------------------------------------------------------" + LINE_SEPARATOR +

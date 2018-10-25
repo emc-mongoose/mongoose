@@ -72,30 +72,34 @@ implements MetricsManager {
 						if(concurrencySnapshot != null) {
 							actualConcurrency = (int) concurrencySnapshot.last();
 						}
-					}
-					// threshold load state checks
-					nextConcurrencyThreshold = metricsCtx.concurrencyThreshold();
-					if(nextConcurrencyThreshold > 0 && actualConcurrency >= nextConcurrencyThreshold) {
-						if(! metricsCtx.thresholdStateEntered() && ! metricsCtx.thresholdStateExited()) {
-							Loggers.MSG.info(
-								"{}: the threshold of {} active load operations count is reached, " +
-									"starting the additional metrics accounting",
-								metricsCtx.toString(), metricsCtx.concurrencyThreshold()
-							);
-							metricsCtx.enterThresholdState();
+						// threshold load state checks
+						nextConcurrencyThreshold = metricsCtx.concurrencyThreshold();
+						if(nextConcurrencyThreshold > 0 && actualConcurrency >= nextConcurrencyThreshold) {
+							if(! metricsCtx.thresholdStateEntered() && ! metricsCtx.thresholdStateExited()) {
+								Loggers.MSG.info(
+									"{}: the threshold of {} active load operations count is reached, " +
+										"starting the additional metrics accounting",
+									metricsCtx.toString(), metricsCtx.concurrencyThreshold()
+								);
+								metricsCtx.enterThresholdState();
+							}
+						} else if(metricsCtx.thresholdStateEntered() && ! metricsCtx.thresholdStateExited()) {
+							exitMetricsThresholdState(metricsCtx);
 						}
-					} else if(metricsCtx.thresholdStateEntered() && ! metricsCtx.thresholdStateExited()) {
-						exitMetricsThresholdState(metricsCtx);
-					}
-					// periodic output
-					final long outputPeriodMillis = metricsCtx.outputPeriodMillis();
-					final long lastOutputTs = metricsCtx.lastOutputTs();
-					final long nextOutputTs = System.currentTimeMillis();
-					if(outputPeriodMillis > 0 && nextOutputTs - lastOutputTs >= outputPeriodMillis) {
-						selectedMetrics.add(metricsCtx);
-						metricsCtx.lastOutputTs(nextOutputTs);
-						if(metricsCtx.avgPersistEnabled()) {
-							Loggers.METRICS_FILE.info(new MetricsCsvLogMessage(metricsCtx));
+						// periodic output
+						final long outputPeriodMillis = metricsCtx.outputPeriodMillis();
+						final long lastOutputTs = metricsCtx.lastOutputTs();
+						final long nextOutputTs = System.currentTimeMillis();
+						if(outputPeriodMillis > 0 && nextOutputTs - lastOutputTs >= outputPeriodMillis) {
+							selectedMetrics.add(metricsCtx);
+							metricsCtx.lastOutputTs(nextOutputTs);
+							if(metricsCtx.avgPersistEnabled()) {
+								Loggers.METRICS_FILE.info(
+									new MetricsCsvLogMessage(
+										snapshot, metricsCtx.opType(), metricsCtx.concurrencyLimit()
+									)
+								);
+							}
 						}
 					}
 				}
@@ -107,7 +111,6 @@ implements MetricsManager {
 			} catch(final ConcurrentModificationException ignored) {
 			} catch(final Throwable cause) {
 				LogUtil.exception(Level.DEBUG, cause, "Metrics manager failure");
-				cause.printStackTrace();
 			} finally {
 				outputLock.unlock();
 			}
@@ -148,7 +151,6 @@ implements MetricsManager {
 				Level.WARN, e, "Failed to register the Prometheus Exporter for the metrics context \"{}\"",
 				metricsCtx.toString()
 			);
-			e.printStackTrace();
 		}
 	}
 
@@ -166,16 +168,24 @@ implements MetricsManager {
 						);
 					}
 					metricsCtx.refreshLastSnapshot(); // one last time
+					final AllMetricsSnapshot snapshot = metricsCtx.lastSnapshot();
 					// check for the metrics threshold state if entered
 					if(metricsCtx.thresholdStateEntered() && ! metricsCtx.thresholdStateExited()) {
 						exitMetricsThresholdState(metricsCtx);
 					}
 					// file output
 					if(metricsCtx.sumPersistEnabled()) {
-						Loggers.METRICS_FILE_TOTAL.info(new MetricsCsvLogMessage(metricsCtx));
+						Loggers.METRICS_FILE_TOTAL.info(
+							new MetricsCsvLogMessage(snapshot, metricsCtx.opType(), metricsCtx.concurrencyLimit())
+						);
 					}
 					if(metricsCtx.perfDbResultsFileEnabled()) {
-						Loggers.METRICS_EXT_RESULTS_FILE.info(new ExtResultsXmlLogMessage(metricsCtx));
+						Loggers.METRICS_EXT_RESULTS_FILE.info(
+							new ExtResultsXmlLogMessage(
+								metricsCtx.id(), snapshot, metricsCtx.startTimeStamp(), metricsCtx.opType(),
+								metricsCtx.concurrencyLimit(), metricsCtx.itemDataSize()
+							)
+						);
 					}
 					// console output
 					if(metricsCtx instanceof DistributedMetricsContext) {
@@ -215,11 +225,19 @@ implements MetricsManager {
 				"accounting", metricsCtx.toString(), metricsCtx.concurrencyThreshold()
 		);
 		final MetricsContext lastThresholdMetrics = metricsCtx.thresholdMetrics();
+		final AllMetricsSnapshot snapshot = lastThresholdMetrics.lastSnapshot();
 		if(lastThresholdMetrics.sumPersistEnabled()) {
-			Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(new MetricsCsvLogMessage(lastThresholdMetrics));
+			Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
+				new MetricsCsvLogMessage(snapshot, metricsCtx.opType(), metricsCtx.concurrencyLimit())
+			);
 		}
 		if(lastThresholdMetrics.perfDbResultsFileEnabled()) {
-			Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(new ExtResultsXmlLogMessage(lastThresholdMetrics));
+			Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
+				new ExtResultsXmlLogMessage(
+					metricsCtx.id(), snapshot, metricsCtx.startTimeStamp(), metricsCtx.opType(),
+					metricsCtx.concurrencyLimit(), metricsCtx.itemDataSize()
+				)
+			);
 		}
 		metricsCtx.exitThresholdState();
 	}

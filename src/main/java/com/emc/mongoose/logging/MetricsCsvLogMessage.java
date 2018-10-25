@@ -4,7 +4,6 @@ import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshot;
 import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
-import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import static com.emc.mongoose.Constants.K;
@@ -26,10 +25,10 @@ extends LogMessageBase {
 	private final OpType opType;
 	private final int concurrencyLimit;
 
-	public MetricsCsvLogMessage(final MetricsContext metricsCtx) {
-		this.opType = metricsCtx.opType();
-		this.snapshot = metricsCtx.lastSnapshot();
-		this.concurrencyLimit = metricsCtx.concurrencyLimit();
+	public MetricsCsvLogMessage(final AllMetricsSnapshot snapshot, final OpType opType, final int concurrencyLimit) {
+		this.snapshot = snapshot;
+		this.opType = opType;
+		this.concurrencyLimit = concurrencyLimit;
 	}
 
 	@Override

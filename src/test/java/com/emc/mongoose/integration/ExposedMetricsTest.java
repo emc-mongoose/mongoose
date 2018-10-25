@@ -47,7 +47,7 @@ public class ExposedMetricsTest {
 	private static final int MARK_LAT = 1_000_000;
 	private static final String[] CONCURRENCY_METRICS = { "mean", "last", };
 	private static final String[] TIMING_METRICS = { "count", "sum", "mean", "min", "max", };
-	private static final String[] RATE_METRICS = { "count", "meanRate", "lastRate", };
+	private static final String[] RATE_METRICS = { "count", "rate_mean", "rate_last", };
 	private final String STEP_ID = ExposedMetricsTest.class.getSimpleName();
 	private final OpType OP_TYPE = OpType.CREATE;
 	private final IntSupplier nodeCountSupplier = () -> 1;
@@ -141,10 +141,8 @@ public class ExposedMetricsTest {
 
 	private void testConcurrencyMetric(final String stdOut, final double markValue, final String name) {
 		final Map<String, Double> expectedValues = new HashMap<>();
-		// concurrency count != iteration_count, because in the refreshLastSnapshot lat & dur account only after the condition, and concurrency - every time
-		final double count = ITERATION_COUNT + 1;
-		final double accuracy = RATE_ACCURACY;
-		final double[] values = { count, markValue * count, markValue, markValue, markValue };
+		final double accuracy = 0;
+		final double[] values = { 1, 1, };
 		for(int i = 0; i < CONCURRENCY_METRICS.length; ++ i) {
 			expectedValues.put(CONCURRENCY_METRICS[i], values[i]);
 		}

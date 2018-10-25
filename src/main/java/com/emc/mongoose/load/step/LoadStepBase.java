@@ -91,8 +91,7 @@ implements LoadStep, Runnable {
 			} catch(final InterruptRunException e) {
 				throw e;
 			} catch(final Exception e) {
-				LogUtil.exception(Level.WARN, e, "Failed to close \"{}\"", toString());
-				e.printStackTrace();
+				LogUtil.trace(Loggers.ERR, Level.WARN, e, "Failed to close \"{}\"", toString());
 			}
 		}
 	}

@@ -201,8 +201,7 @@ implements LoadGenerator<I, O> {
 									Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
 									outputFinishFlag = true;
 								} else {
-									LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
-									e.printStackTrace(System.err);
+									LogUtil.trace(Loggers.ERR, Level.ERROR, cause, "Unexpected failure");
 								}
 							}
 						}

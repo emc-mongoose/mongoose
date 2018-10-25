@@ -427,8 +427,9 @@ implements LoadStepClient {
 					} catch(final InterruptRunException e) {
 						throw e;
 					} catch(final Exception e) {
-						e.printStackTrace();
-						LogUtil.exception(Level.WARN, e, "{}: failed to stop the step slice \"{}\"", id(), stepSlice);
+						LogUtil.trace(
+							Loggers.ERR, Level.WARN, e, "{}: failed to stop the step slice \"{}\"", id(), stepSlice
+						);
 					}
 				}
 			);
