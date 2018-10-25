@@ -81,7 +81,6 @@ extends LoadStepLocalBase {
 		final Config itemConfig = config.configVal("item");
 		final Config dataConfig = itemConfig.configVal("data");
 		final Config dataInputConfig = dataConfig.configVal("input");
-		final Config limitConfig = stepConfig.configVal("limit");
 		final Config dataLayerConfig = dataInputConfig.configVal("layer");
 
 		final String testStepId = stepConfig.stringVal("id");

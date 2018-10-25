@@ -9,8 +9,8 @@ import com.emc.mongoose.load.step.LoadStepBase;
 import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
-import com.emc.mongoose.metrics.MetricsContext;
-import com.emc.mongoose.metrics.MetricsContextImpl;
+import com.emc.mongoose.metrics.context.MetricsContext;
+import com.emc.mongoose.metrics.context.MetricsContextImpl;
 import com.emc.mongoose.metrics.MetricsManager;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 

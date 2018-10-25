@@ -206,7 +206,7 @@ import static org.junit.Assert.assertEquals;
 		testOpTraceLogRecords(stepIdRead, ioTraceReqTestFunc);
 		testTotalMetricsLogRecord(
 			getMetricsTotalLogRecords(stepIdRead).get(0), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
-			itemSize.getValue(), 0, 0
+			itemSize.getValue(), 0, 0, 0
 		);
 		testMetricsLogRecords(
 			getMetricsLogRecords(stepIdRead), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),

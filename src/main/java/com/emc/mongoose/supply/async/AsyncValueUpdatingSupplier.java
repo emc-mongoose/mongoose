@@ -1,5 +1,7 @@
 package com.emc.mongoose.supply.async;
 
+import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.supply.ValueUpdatingSupplier;
 
 import com.github.akurilov.commons.concurrent.InitCallable;
@@ -11,16 +13,14 @@ import com.github.akurilov.fiber4j.FibersExecutor;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.apache.logging.log4j.Level;
 
 /**
  Created by kurila on 10.02.16.
  */
 public class AsyncValueUpdatingSupplier<T>
 extends ValueUpdatingSupplier<T> {
-	
-	private static final Logger LOG = Logger.getLogger(AsyncValueUpdatingSupplier.class.getName());
 	
 	private final Fiber updateTask;
 	
@@ -40,8 +40,7 @@ extends ValueUpdatingSupplier<T> {
 				try {
 					lastValue = updateAction.call();
 				} catch(final Exception e) {
-					LOG.log(Level.WARNING, "Failed to execute the value update action", e);
-					e.printStackTrace(System.err);
+					LogUtil.trace(Loggers.ERR, Level.WARN, e, "Failed to execute the value update action");
 				}
 			}
 

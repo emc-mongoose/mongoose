@@ -160,7 +160,7 @@ implements NioStorageDriver<I, O> {
 		}
 
 		@Override
-		protected final void doClose() {
+		protected final void doStop() {
 			opBuffSize = opBuff.size();
 			Loggers.MSG.debug("Finish {} remaining active load operations finally", opBuffSize);
 			for(int i = 0; i < opBuffSize; i ++) {
@@ -172,6 +172,11 @@ implements NioStorageDriver<I, O> {
 				}
 			}
 			Loggers.MSG.debug("Finish the remaining active load operations done");
+		}
+
+		@Override
+		protected final void doClose() {
+			opBuff.clear();
 		}
 	}
 
@@ -196,8 +201,21 @@ implements NioStorageDriver<I, O> {
 	}
 
 	@Override
+	protected final void doShutdown()
+	throws IllegalStateException {
+		super.doShutdown();
+		for(final Fiber ioFiber: ioFibers) {
+			try {
+				ioFiber.shutdown();
+			} catch(final RemoteException ignored) {
+			}
+		}
+	}
+
+	@Override
 	protected final void doStop()
 	throws IllegalStateException {
+		super.doStop();
 		for(final Fiber ioFiber: ioFibers) {
 			try {
 				ioFiber.stop();
