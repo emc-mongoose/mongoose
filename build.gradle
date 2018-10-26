@@ -150,18 +150,6 @@ allprojects {
 		}
 	}
 
-	task perfTest(type: Test) {
-		include "**/*PerfTest.*"
-		jvmArgs "-XX:MaxDirectMemorySize=2g"
-		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
-		maxHeapSize "2g"
-		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
-			showExceptions = true
-			showStandardStreams = true
-		}
-	}
-
 	// travis deploy stage runs "./gradlew check" again which is unnecessary
 	check.dependsOn -= test
 
