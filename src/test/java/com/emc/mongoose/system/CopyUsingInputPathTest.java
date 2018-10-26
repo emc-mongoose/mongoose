@@ -258,12 +258,12 @@ import java.util.stream.Collectors;
 			// some files may remain not written fully
 			testTotalMetricsLogRecord(
 				totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
-				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0, 0
+				new SizeInBytes(itemSize.getValue().get() / 2, itemSize.getValue().get(), 1), 0, 0, 0
 			);
 		} else {
 			testTotalMetricsLogRecord(
 				totalMetricsLogRecords.get(0), OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
-				itemSize.getValue(), 0, 0
+				itemSize.getValue(), 0, 0, 0
 			);
 		}
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);

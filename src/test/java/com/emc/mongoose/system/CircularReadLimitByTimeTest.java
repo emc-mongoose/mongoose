@@ -230,7 +230,7 @@ import static org.junit.Assert.assertTrue;
 		assertEquals("There should be 1 total metrics records in the log file", 1, totalMetrcisLogRecords.size());
 		testTotalMetricsLogRecord(
 			totalMetrcisLogRecords.get(0), OpType.READ, concurrency.getValue(), runMode.getNodeCount(),
-			itemSize.getValue(), 0, 60
+			itemSize.getValue(), 0, 1, 60
 		);
 		final List<CSVRecord> metricsLogRecords = getMetricsLogRecords(stepId);
 		assertTrue("There should be more than 2 metrics records in the log file", metricsLogRecords.size() > 1);

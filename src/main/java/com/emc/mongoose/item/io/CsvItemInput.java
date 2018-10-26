@@ -4,7 +4,10 @@ import com.emc.mongoose.Constants;
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.ItemFactory;
 
+import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.logging.Loggers;
 import com.github.akurilov.commons.io.Input;
+import org.apache.logging.log4j.Level;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
@@ -63,7 +66,7 @@ implements Input<I> {
 		try {
 			return nextLine == null ? null : itemFactory.getItem(nextLine);
 		} catch(final IllegalArgumentException e) {
-			e.printStackTrace(System.err);
+			LogUtil.trace(Loggers.ERR, Level.WARN, e, "Failed to build the item from the string \"{}\"", nextLine);
 			return null;
 		}
 	}
@@ -72,7 +75,7 @@ implements Input<I> {
 	public int get(final List<I> buffer, final int limit)
 	throws IOException {
 		int i = 0;
-		String nextLine;
+		String nextLine = null;
 		try {
 			while(i < limit) {
 				nextLine = itemsSrc.readLine();
@@ -87,7 +90,7 @@ implements Input<I> {
 				i ++;
 			}
 		} catch(final IllegalArgumentException e) {
-			e.printStackTrace(System.err);
+			LogUtil.trace(Loggers.ERR, Level.WARN, e, "Failed to build the item from the string \"{}\"", nextLine);
 		}
 		return i;
 	}

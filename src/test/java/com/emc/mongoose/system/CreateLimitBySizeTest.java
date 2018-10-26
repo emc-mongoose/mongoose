@@ -34,6 +34,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -110,7 +111,15 @@ import static org.junit.Assert.assertTrue;
 			+ stepId + ".csv";
 		HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + '_' + stepId + ".csv";
 		try {
+			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
+		} catch(final IOException ignore) {
+		}
+		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
+		} catch(final IOException ignored) {
+		}
+		try {
+			FileUtils.deleteDirectory(Paths.get(HOST_SHARE_PATH.toString(), stepId).toFile());
 		} catch(final IOException ignored) {
 		}
 		this.storageType = storageType;
@@ -283,22 +292,26 @@ import static org.junit.Assert.assertTrue;
 			assertEquals("0/0", modLayerAndMask);
 		}
 		assertEquals(items.size(), freq.getUniqueCount());
-		testTotalMetricsLogRecord(getMetricsTotalLogRecords(stepId).get(0), OpType.CREATE, concurrency.getValue(),
-			runMode.getNodeCount(), itemSize.getValue(), 0, 0
+		testTotalMetricsLogRecord(
+			getMetricsTotalLogRecords(stepId).get(0), OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
+			itemSize.getValue(), 0, 1, 0
 		);
-		testMetricsLogRecords(getMetricsLogRecords(stepId), OpType.CREATE, concurrency.getValue(),
-			runMode.getNodeCount(), itemSize.getValue(), 0, 0, averagePeriod
+		testMetricsLogRecords(
+			getMetricsLogRecords(stepId), OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(),
+			itemSize.getValue(), 0, 0, averagePeriod
 		);
 		testFinalMetricsStdout(
 			stdOutContent, OpType.CREATE, concurrency.getValue(), runMode.getNodeCount(), itemSize.getValue(), stepId
 		);
-		testMetricsTableStdout(stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
+		testMetricsTableStdout(
+			stdOutContent, stepId, storageType, runMode.getNodeCount(), 0,
 			new HashMap<OpType, Integer>() {{
 				put(OpType.CREATE, concurrency.getValue());
 			}}
 		);
-		testFinalMetricsTableRowStdout(stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(),
-			concurrency.getValue(), 0, 0, itemSize.getValue()
+		testFinalMetricsTableRowStdout(
+			stdOutContent, stepId, OpType.CREATE, runMode.getNodeCount(), concurrency.getValue(), 0, 0,
+			itemSize.getValue()
 		);
 		assertTrue(duration < TIMEOUT_IN_MILLIS);
 	}

@@ -128,6 +128,10 @@ implements LoadGenerator<I, O> {
 								final List<I> items = getItems(itemInput, n);
 								if(items == null) {
 									itemInputFinishFlag = true;
+									Loggers.MSG.debug(
+										"End of items input \"{}\", generated op count: {}", itemInput.toString(),
+										generatedOpCount()
+									);
 								} else {
 									n = items.size();
 									if(n > 0) {
@@ -197,8 +201,7 @@ implements LoadGenerator<I, O> {
 									Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
 									outputFinishFlag = true;
 								} else {
-									LogUtil.exception(Level.ERROR, cause, "Unexpected failure");
-									e.printStackTrace(System.err);
+									LogUtil.trace(Loggers.ERR, Level.ERROR, cause, "Unexpected failure");
 								}
 							}
 						}
@@ -226,13 +229,10 @@ implements LoadGenerator<I, O> {
 
 	private static <I extends Item> List<I> getItems(final Input<I> itemInput, final int n)
 	throws InterruptRunException, IOException {
-		// prepare the items buffer
-		final List<I> items = new ArrayList<>(n);
+		final List<I> items = new ArrayList<>(n); // prepare the items buffer
 		try {
-			// get the items from the input
-			itemInput.get(items, n);
+			itemInput.get(items, n); // get the items from the input
 		} catch(final EOFException e) {
-			Loggers.MSG.debug("End of items input \"{}\"", itemInput.toString());
 			return null;
 		}
 		return items;
@@ -279,16 +279,15 @@ implements LoadGenerator<I, O> {
 		return recycleQueue.isEmpty();
 	}
 
-	@Override
-	public final boolean isFinished() {
+	private boolean isFinished() {
 		return outputFinishFlag
 			|| itemInputFinishFlag && opInputFinishFlag && generatedOpCount() == outputOpCounter.sum();
 	}
 
 	@Override
-	protected final void doShutdown()
+	protected final void doStop()
 	throws IllegalStateException {
-		stop();
+		super.doStop();
 		Loggers.MSG.debug(
 			"{}: generated {}, recycled {}, output {} operations",
 			LoadGeneratorImpl.this.toString(), builtTasksCounter.sum(), recycledOpCounter.sum(), outputOpCounter.sum()

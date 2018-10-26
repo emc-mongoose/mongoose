@@ -24,7 +24,7 @@ implements Installable {
 		try {
 			Files.createDirectories(dstPath);
 		} catch(final IOException e) {
-			e.printStackTrace(System.err);
+			LogUtil.trace(Loggers.ERR, Level.ERROR, e, "Failed to create directories in the path to {}", dstPath);
 		}
 		resourceFilesToInstall().forEach(resFile -> installResourcesFile(dstPath, resFile));
 		Loggers.MSG.debug("Installer finished: \"{}\"", getClass().getCanonicalName());

@@ -17,17 +17,29 @@ import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsManagerImpl;
 import com.emc.mongoose.svc.Service;
+import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
+import static com.emc.mongoose.Constants.DIR_EXT;
+import static com.emc.mongoose.Constants.PATH_DEFAULTS;
+import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
+import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
+
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
+
+import io.prometheus.client.exporter.MetricsServlet;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.Level;
+
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import javax.script.ScriptEngine;
+import static javax.script.ScriptContext.ENGINE_SCOPE;
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.net.URLClassLoader;
@@ -40,14 +52,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
-import static com.emc.mongoose.Constants.DIR_EXT;
-import static com.emc.mongoose.Constants.PATH_DEFAULTS;
-import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
-import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
-import static javax.script.ScriptContext.ENGINE_SCOPE;
-
 public final class Main {
 
 	public static void main(final String... args)
@@ -57,8 +61,10 @@ public final class Main {
 		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
 		LogUtil.init(appHomePath.toString());
 		try {
+
 			// install the core resources
 			coreResources.install(appHomePath);
+
 			// load the defaults
 			final Config defaultConfig = loadDefaultConfig(appHomePath);
 			// extensions
@@ -67,7 +73,9 @@ public final class Main {
 					Paths.get(appHomePath.toString(), DIR_EXT).toFile()
 				)
 			) {
+
 				final List<Extension> extensions = Extension.load(extClsLoader);
+
 				// install the extensions
 				installExtensions(extensions, appHomePath);
 				final Config configWithArgs;
@@ -226,11 +234,12 @@ public final class Main {
 		// get the scenario file/path
 		final Path scenarioPath;
 		final String scenarioFile = config.stringVal("run-scenario");
-		if(scenarioFile != null && ! scenarioFile.isEmpty()) {
+		if(scenarioFile != null && !scenarioFile.isEmpty()) {
 			scenarioPath = Paths.get(scenarioFile);
 		} else {
 			scenarioPath = Paths.get(appHomePath.toString(), DIR_EXAMPLE_SCENARIO, "js", "default.js");
 		}
+
 		final StringBuilder strb = new StringBuilder();
 		try {
 			Files
@@ -248,6 +257,7 @@ public final class Main {
 		}
 		final String scenarioText = strb.toString();
 		Loggers.SCENARIO.log(Level.INFO, scenarioText);
+
 		final ScriptEngine scriptEngine = ScriptEngineUtil.resolve(scenarioPath, extClsLoader);
 		if(scriptEngine == null) {
 			Loggers.ERR.fatal("Failed to resolve the scenario engine for the file \"{}\"", scenarioPath);

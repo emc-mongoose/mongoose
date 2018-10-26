@@ -48,6 +48,7 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
@@ -403,12 +404,10 @@ implements HttpStorageDriver<I, O> {
 			LogUtil.exception(Level.WARN, e, "Failed to write the data");
 		} catch(final URISyntaxException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to build the request URI");
-		} catch(final Exception e) {
-			if(!isStopped() && !isClosed()) {
-				LogUtil.exception(Level.WARN, e, "Send HTTP request failure");
-			}
 		} catch(final Throwable e) {
-			e.printStackTrace(System.err);
+			if(!isStopped() && !isClosed()) {
+				LogUtil.trace(Loggers.ERR, Level.ERROR, e, "Send HTTP request failure");
+			}
 		}
 		channel.write(LastHttpContent.EMPTY_LAST_CONTENT, channelPromise);
 		channel.flush();
