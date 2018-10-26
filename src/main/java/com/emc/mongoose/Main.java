@@ -5,6 +5,7 @@ import com.emc.mongoose.config.AliasingUtil;
 import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
+import com.emc.mongoose.control.ConfigServlet;
 import com.emc.mongoose.env.CoreResourcesToInstall;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
@@ -25,11 +26,9 @@ import org.apache.logging.log4j.Level;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.glassfish.jersey.servlet.ServletContainer;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-import javax.servlet.Servlet;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -199,10 +198,7 @@ public final class Main {
 		final ServletContextHandler context = new ServletContextHandler();
 		context.setContextPath("/");
 		server.setHandler(context);
-		final ServletHolder serHol = context.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/control/*");
-		//serHol.setInitOrder(0);
-		serHol.setInitParameter("jersey.config.server.provider.packages", "com.emc.mongoose");
-		context.addServlet(serHol, "/control");
+		//context.addServlet(new ServletHolder(new ConfigServlet()), "/config");
 	}
 
 	private static void runNode(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)

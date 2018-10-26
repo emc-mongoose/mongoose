@@ -261,13 +261,7 @@ dependencies {
 		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
 		"org.slf4j:slf4j-api:${depVersion.slf4j}",
 		"org.eclipse.jetty:jetty-server:${depVersion.jetty}",
-		"org.eclipse.jetty:jetty-servlet:${depVersion.jetty}",
-		"org.glassfish.jersey.containers:jersey-container-servlet-core:${depVersion.jersey}",
-		"org.glassfish.jersey.containers:jersey-container-servlet:${depVersion.jersey}",
-		"org.glassfish.jersey.core:jersey-server:${depVersion.jersey}",
-		"org.glassfish.jersey.containers:jersey-container-jetty-http:${depVersion.jersey}",
-		"org.glassfish.jersey.core:jersey-common:${depVersion.jersey}",
-		"org.glassfish.jersey.inject:jersey-hk2:${depVersion.jersey}"
+		"org.eclipse.jetty:jetty-servlet:${depVersion.jetty}"
 	)
 
 	testCompile(
