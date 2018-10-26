@@ -18,6 +18,7 @@ ext {
 		javassist          : "3.23.1-GA",
 		junit              : "[4,)",
 		jetty              : "9.4.12.v20180830",
+		jersey             : "2.27",
 		scala              : "2.12.6",
 		slf4j              : "1.7.25",
 		log4j              : "2.8.2",
@@ -261,6 +262,12 @@ dependencies {
 		"org.slf4j:slf4j-api:${depVersion.slf4j}",
 		"org.eclipse.jetty:jetty-server:${depVersion.jetty}",
 		"org.eclipse.jetty:jetty-servlet:${depVersion.jetty}",
+		"org.glassfish.jersey.containers:jersey-container-servlet-core:${depVersion.jersey}",
+		"org.glassfish.jersey.containers:jersey-container-servlet:${depVersion.jersey}",
+		"org.glassfish.jersey.core:jersey-server:${depVersion.jersey}",
+		"org.glassfish.jersey.containers:jersey-container-jetty-http:${depVersion.jersey}",
+		"org.glassfish.jersey.core:jersey-common:${depVersion.jersey}",
+		"org.glassfish.jersey.inject:jersey-hk2:${depVersion.jersey}"
 	)
 
 	testCompile(

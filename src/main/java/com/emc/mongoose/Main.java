@@ -25,9 +25,11 @@ import org.apache.logging.log4j.Level;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.glassfish.jersey.servlet.ServletContainer;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
+import javax.servlet.Servlet;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -87,6 +89,7 @@ public final class Main {
 					final int port = configWithArgs.intVal("run-port");
 					final Server server = new Server(port);
 					addMetricsService(server);
+					addControlService(server);
 					server.start();
 					try {
 						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
@@ -196,7 +199,10 @@ public final class Main {
 		final ServletContextHandler context = new ServletContextHandler();
 		context.setContextPath("/");
 		server.setHandler(context);
-		//context.addServlet(new ServletHolder(new MetricsServlet()), "/control");
+		final ServletHolder serHol = context.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/control/*");
+		//serHol.setInitOrder(0);
+		serHol.setInitParameter("jersey.config.server.provider.packages", "com.emc.mongoose");
+		context.addServlet(serHol, "/control");
 	}
 
 	private static void runNode(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
