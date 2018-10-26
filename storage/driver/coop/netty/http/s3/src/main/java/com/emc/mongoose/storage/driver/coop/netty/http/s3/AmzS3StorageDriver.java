@@ -551,7 +551,7 @@ extends HttpStorageDriverBase<I, O> {
 		}
 		// x-amz-*
 		String headerName;
-		Map<String, String> sortedHeaders = new TreeMap<>();
+		final Map<String, String> sortedHeaders = new TreeMap<>();
 		if(sharedHeaders != null) {
 			for(final Map.Entry<String, String> header : sharedHeaders) {
 				headerName = header.getKey().toLowerCase();

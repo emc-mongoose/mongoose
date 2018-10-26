@@ -36,6 +36,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -139,9 +140,16 @@ extends AmzS3StorageDriver {
 		return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
 	}
 
+	@Before
+	public void setUp() {
+		start();
+	}
+
 	@After
-	public void tearDown() {
+	public void tearDown()
+	throws Exception {
 		httpRequestsLog.clear();
+		close();
 	}
 
 	@Test

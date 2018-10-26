@@ -205,7 +205,7 @@ import static org.junit.Assert.assertTrue;
 		assertEquals(totalMetricsRecs.size(), 1);
 		final CSVRecord totalMetricsRec = totalMetricsRecs.get(0);
 		testTotalMetricsLogRecord(
-			totalMetricsRec, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), COUNT_LIMIT, TIME_LIMIT_SEC
+			totalMetricsRec, CREATE, 0, runMode.getNodeCount(), itemSize.getValue(), COUNT_LIMIT, 1, TIME_LIMIT_SEC
 		);
 		final double rate = Double.parseDouble(totalMetricsRec.get("TPAvg[op/s]"));
 		assertTrue(rate < RATE_LIMIT + RATE_LIMIT / 2);

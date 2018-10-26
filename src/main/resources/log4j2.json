@@ -46,7 +46,7 @@
 					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
-						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
+						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class_name} | %t | %m%n"
 					}
 				},
 				{
@@ -81,7 +81,7 @@
 					"DirectWriteRolloverStrategy" : {
 					},
 					"PatternLayout" : {
-						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class.name} | %t | %m%n"
+						"pattern" : "%d{ISO8601}{GMT+0} | %p | %X{class_name} | %t | %m%n"
 					},
 					"Filters" : {
 						"Filter" : [
