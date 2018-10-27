@@ -1,11 +1,7 @@
 var sharedConfig = {
-    "storage": {
-        "net": {
-            "http": {
-                "namespace": "ns1"
-            }
-        }
-    }
+	"storage": {
+		"namespace": "ns1"
+	}
 };
 
 PreconditionLoad
