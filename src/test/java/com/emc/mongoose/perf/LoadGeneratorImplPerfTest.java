@@ -1,4 +1,4 @@
-package com.emc.mongoose.load.generator;
+package com.emc.mongoose.perf;
 
 import com.emc.mongoose.load.generator.LoadGenerator;
 import com.emc.mongoose.load.generator.LoadGeneratorImpl;
