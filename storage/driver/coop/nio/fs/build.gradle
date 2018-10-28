@@ -23,6 +23,15 @@ dependencies {
 	)
 }
 
+task fsStorageDriverTest(type: Test) {
+	include "com/emc/mongoose/storage/driver/coop/nio/fs/*"
+	testLogging {
+		events "passed", "skipped", "failed", "standardOut"
+		showExceptions = true
+		showStandardStreams = true
+	}
+}
+
 jar {
 
 	baseName = project.description

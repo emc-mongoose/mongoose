@@ -30,6 +30,18 @@ jobs:
     - stage: "Unit tests"
       script: "./gradlew test"
 
+    - stage: "Filesystem storage driver unit tests"
+      script: "./gradlew fsStorageDriverTest"
+
+    - stage: "Atmos storage driver unit tests"
+      script: "./gradlew atmosStorageDriverTest"
+
+    - stage: "S3 storage driver unit tests"
+      script: "./gradlew s3StorageDriverTest"
+
+    - stage: "Swift storage driver unit tests"
+      script: "./gradlew swiftStorageDriverTest"
+
     - stage: "Integration tests"
       script: "./gradlew integrationTest"
 

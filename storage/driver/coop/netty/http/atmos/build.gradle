@@ -27,6 +27,15 @@ dependencies {
 	)
 }
 
+task atmosStorageDriverTest(type: Test) {
+	include "com/emc/mongoose/storage/driver/coop/netty/http/atmos/*"
+	testLogging {
+		events "passed", "skipped", "failed", "standardOut"
+		showExceptions = true
+		showStandardStreams = true
+	}
+}
+
 jar {
 
 	baseName = project.description

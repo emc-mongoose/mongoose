@@ -49,7 +49,6 @@ public class FileStorageDriverTest {
 	}
 
 	@Test
-	@Ignore // fails @ travis with unclear reason
 	public final void testList()
 	throws Exception {
 
@@ -71,24 +70,18 @@ public class FileStorageDriverTest {
 
 		final Random rnd = new Random();
 		for(int i = 0; i < count; i ++) {
-			new File(TMP_DIR_PATH.toString() + File.separatorChar + Integer.toString(rnd.nextInt()))
-				.createNewFile();
+			new File(TMP_DIR_PATH.toString() + File.separatorChar + Integer.toString(rnd.nextInt())).createNewFile();
 		}
 
 		List<DataItem> items = ListingHelper.list(
-			new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), prefix, 10,
-			new DataItemImpl("yohoho0099", 0, 0), count
+			new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), prefix, 10, new DataItemImpl("yohoho0099", 0, 0), count
 		);
 		assertEquals(Integer.toString(items.size()), 99, items.size());
 
-		items = ListingHelper.list(
-			new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), prefix, 10, null, 100
-		);
+		items = ListingHelper.list(new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), prefix, 10, null, 100);
 		assertEquals(100, items.size());
 
-		items = ListingHelper.list(
-			new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), null, 10, null, 2 * count
-		);
+		items = ListingHelper.list(new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), null, 10, null, 2 * count);
 		assertEquals(2 * count, items.size());
 	}
 }

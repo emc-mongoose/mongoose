@@ -29,6 +29,15 @@ dependencies {
 	)
 }
 
+task swiftStorageDriverTest(type: Test) {
+	include "com/emc/mongoose/storage/driver/coop/netty/http/swift/*"
+	testLogging {
+		events "passed", "skipped", "failed", "standardOut"
+		showExceptions = true
+		showStandardStreams = true
+	}
+}
+
 jar {
 
 	baseName = project.description

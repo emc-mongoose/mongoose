@@ -16,7 +16,9 @@ dependencies {
 	)
 
 	testCompile(
+		files(project(":").sourceSets.test.output.classesDir),
 		"junit:junit:${depVersion.junit}",
+		"com.github.docker-java:docker-java:[3,)",
 	)
 
 	testRuntime(
@@ -24,9 +26,19 @@ dependencies {
 		"com.github.akurilov:confuse-io-json:${depVersion.confuseIoJson}",
 		"com.github.akurilov:fiber4j:${depVersion.fiber4j}",
 		"com.github.akurilov:netty-connection-pool:${depVersion.nettyConnectionPool}",
+		"io.netty:netty-handler:${depVersion.netty}",
 		"com.lmax:disruptor:${depVersion.disruptor}",
 		"io.netty:netty-transport-native-epoll:${depVersion.netty}:linux-x86_64",
 	)
+}
+
+task s3StorageDriverTest(type: Test) {
+	include "com/emc/mongoose/storage/driver/coop/netty/http/s3/*"
+	testLogging {
+		events "passed", "skipped", "failed", "standardOut"
+		showExceptions = true
+		showStandardStreams = true
+	}
 }
 
 jar {

@@ -42,6 +42,7 @@ ext {
 }
 
 allprojects {
+
 	buildscript {
 		repositories {
 			mavenCentral()
@@ -68,6 +69,7 @@ allprojects {
 		testCompile {
 			extendsFrom(compileOnly, provided)
 		}
+		testUtilJar
 	}
 
 	sourceSets {
@@ -91,6 +93,10 @@ allprojects {
 		exclude "com/emc/mongoose/integration/*"
 		exclude "com/emc/mongoose/perf/*"
 		exclude "com/emc/mongoose/system/*"
+		exclude "com/emc/mongoose/storage/driver/coop/netty/http/atmos/*"
+		exclude "com/emc/mongoose/storage/driver/coop/netty/http/s3/*"
+		exclude "com/emc/mongoose/storage/driver/coop/netty/http/swift/*"
+		exclude "com/emc/mongoose/storage/driver/coop/nio/fs/*"
 		exclude "**/TemplateTest.*"
 		exclude "**/*PerfTest.*"
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
@@ -104,9 +110,7 @@ allprojects {
 	}
 
 	task perfTest(type: Test) {
-
 		include "com/emc/mongoose/perf/*"
-
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
@@ -230,6 +234,7 @@ allprojects {
 		}
 	}
 }
+
 String defineVersion() {
 	def configFilePath = [rootDir, "src", "main", "resources", "config", "defaults.json",]
 		.join(File.separator);
@@ -237,6 +242,7 @@ String defineVersion() {
 	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
 	json.run.version
 }
+
 task printVersion {
 	group = "versioning"
 	description = "Prints Mongoose version."
@@ -281,13 +287,16 @@ dependencies {
 		"org.mockito:mockito-core:2.23.0",
 	)
 }
+
 void collectName(Project p, LinkedList<String> names) {
 	names.addFirst p.name
 	if(p.parent != null) {
 		collectName(p.parent, names)
 	}
 }
+
 subprojects {
+
 	task sourcesJar(type: Jar, dependsOn: classes) {
 		LinkedList names = new LinkedList()
 		collectName(project, names)
@@ -314,6 +323,7 @@ subprojects {
 task wrapper(type: Wrapper) {
 	gradleVersion = "4.7"
 }
+
 static def isTestsProject(final Project p) {
 	if(p == null) {
 		return false
@@ -323,6 +333,7 @@ static def isTestsProject(final Project p) {
 		return isTestsProject(p.parent)
 	}
 }
+
 task mergeLog4j2PluginsDat(dependsOn: compileJava) {
 	doLast {
 		byte[] pluginsData
@@ -399,6 +410,14 @@ task dist(type: Jar) {
 	}
 }
 
+task testUtilJar(type: Jar) {
+	dependsOn += compileTestJava
+	dependsOn += compileTestScala
+	classifier = "test-util"
+	from compileTestJava.outputs.files
+	from compileTestScala.outputs.files
+}
+
 task sourcesJar(type: Jar, dependsOn: classes) {
 	classifier = "sources"
 	from sourceSets.main.allSource
@@ -411,6 +430,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 
 artifacts {
 	archives dist
+	testUtilJar testUtilJar
 	archives sourcesJar
 	archives javadocJar
 }
