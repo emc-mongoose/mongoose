@@ -90,7 +90,8 @@
 			"trace": {
 				"persist": "boolean"
 			},
-			"threshold": "float64"
+			"threshold": "float64",
+			"quantiles": "list"
 		}
 	},
 	"run": {
@@ -116,7 +117,8 @@
 			},
 			"threads": "int32",
 			"type": "string"
-		}
+		},
+		"namespace": "string"
 	},
 	"aliasing": "list"
 }
