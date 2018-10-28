@@ -1,0 +1,7 @@
+2018-10-03T12:30:11,622 | DEBUG |  | fibers-executor-#1 | Check for the done state failure on the step context "com.emc.mongoose.load.step.local.context.LoadStepContextImpl@3c722403"
+	CAUSE: java.lang.IllegalStateException: Not allowed to stop while state is "null"
+2018-10-03T12:30:11,630 | DEBUG |  | fibers-executor-#4 | Check for the done state failure on the step context "com.emc.mongoose.load.step.local.context.LoadStepContextImpl@3c722403"
+	CAUSE: java.lang.IllegalStateException: Not allowed to stop while state is "null"
+2018-10-03T12:30:11,638 | DEBUG |  | fibers-executor-#2 | linear_20181003.122949.731: failure in the await method
+	CAUSE: java.lang.IllegalStateException: Not allowed to stop while state is "null"
+2018-10-03T12:30:11,638 | DEBUG |  | main | storage/driver/1/amzs3/1526305386: I/O workers stopping timeout

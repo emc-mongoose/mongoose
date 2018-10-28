@@ -1,0 +1,17 @@
+2018-10-03T12:39:41,860 | DEBUG |  | fibers-executor-#4 | Check for the done state failure on the step context "com.emc.mongoose.load.step.local.context.LoadStepContextImpl@55412c31"
+	CAUSE: java.lang.IllegalStateException: Not allowed to stop while state is "null"
+2018-10-03T12:39:41,865 | DEBUG |  | fibers-executor-#4 | Check for the done state failure on the step context "com.emc.mongoose.load.step.local.context.LoadStepContextImpl@55412c31"
+	CAUSE: java.lang.IllegalStateException: Not allowed to stop while state is "null"
+2018-10-03T12:39:41,866 | DEBUG |  | fibers-executor-#4 | Check for the done state failure on the step context "com.emc.mongoose.load.step.local.context.LoadStepContextImpl@55412c31"
+	CAUSE: java.lang.IllegalStateException: Not allowed to stop while state is "null"
+2018-10-03T12:39:41,868 | DEBUG |  | fibers-executor-#3 | Check for the done state failure on the step context "com.emc.mongoose.load.step.local.context.LoadStepContextImpl@55412c31"
+	CAUSE: java.lang.IllegalStateException: Not allowed to stop while state is "null"
+2018-10-03T12:39:41,869 | DEBUG |  | fibers-executor-#3 | Check for the done state failure on the step context "com.emc.mongoose.load.step.local.context.LoadStepContextImpl@55412c31"
+	CAUSE: java.lang.IllegalStateException: Not allowed to stop while state is "null"
+2018-10-03T12:39:41,871 | DEBUG |  | fibers-executor-#1 | Check for the done state failure on the step context "com.emc.mongoose.load.step.local.context.LoadStepContextImpl@55412c31"
+	CAUSE: java.lang.IllegalStateException: Not allowed to stop while state is "null"
+2018-10-03T12:39:41,875 | DEBUG |  | fibers-executor-#2 | Check for the done state failure on the step context "com.emc.mongoose.load.step.local.context.LoadStepContextImpl@55412c31"
+	CAUSE: java.lang.IllegalStateException: Not allowed to stop while state is "null"
+2018-10-03T12:39:41,910 | DEBUG |  | main | storage/driver/1/amzs3/443110940: I/O workers stopping timeout
+2018-10-03T12:39:41,911 | DEBUG |  | fibers-executor-#2 | linear_20181003.123940.542: failure in the await method
+	CAUSE: java.lang.IllegalStateException: Not allowed to stop while state is "null"

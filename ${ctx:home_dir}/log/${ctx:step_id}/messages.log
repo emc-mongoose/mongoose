@@ -1,0 +1,10 @@
+2018-10-23T09:58:59,011 | DEBUG |  | main | Started the metrics manager fiber
+2018-10-23T09:58:59,032 | DEBUG |  | main | Metrics context "DistributedMetricsContextImpl(CREATE-0x1@ExposedMetricsTest)" registered
+2018-10-28T12:10:00,982 | DEBUG |  | main | Started the metrics manager fiber
+2018-10-28T12:10:00,990 | DEBUG |  | main | Metrics context "DistributedMetricsContextImpl(CREATE-0x1@ExposedMetricsTest)" registered
+2018-10-28T12:28:06,056 | DEBUG |  | main | Started the metrics manager fiber
+2018-10-28T12:28:06,064 | DEBUG |  | main | Metrics context "DistributedMetricsContextImpl(CREATE-0x1@ExposedMetricsTest)" registered
+2018-10-28T12:40:23,634 | DEBUG |  | main | Started the metrics manager fiber
+2018-10-28T12:40:23,640 | DEBUG |  | main | Metrics context "DistributedMetricsContextImpl(CREATE-0x1@ExposedMetricsTest)" registered
+2018-10-28T12:40:59,670 | DEBUG |  | main | Started the metrics manager fiber
+2018-10-28T12:40:59,678 | DEBUG |  | main | Metrics context "DistributedMetricsContextImpl(CREATE-0x1@ExposedMetricsTest)" registered

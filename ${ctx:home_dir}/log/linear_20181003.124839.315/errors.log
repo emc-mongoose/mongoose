@@ -1,0 +1,3 @@
+2018-10-03T12:48:40,632 | DEBUG |  | main | storage/driver/1/amzs3/443110940: I/O workers stopping timeout
+2018-10-03T12:48:40,647 | WARN |  | fibers-executor-#1 | Failed to fetch the metrics snapshots from "com.emc.mongoose.load.step.linear.LinearLoadStepLocal@4362d7df"
+	CAUSE: java.lang.IndexOutOfBoundsException: Index: 0, Size: 0

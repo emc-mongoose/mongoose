@@ -1,0 +1,33 @@
+2018-10-03T12:48:39,353 | INFO |  | main | linear_20181003.124839.315: creating the storage driver instance for the type "s3"
+2018-10-03T12:48:39,458 | INFO |  | main | storage/driver/1/amzs3/1910896157: use 4 I/O workers
+2018-10-03T12:48:39,491 | DEBUG |  | main | storage/driver/1/amzs3/1910896157: closed
+2018-10-03T12:48:39,492 | DEBUG |  | main | linear_20181003.124839.315: item output file aggregator initialized
+2018-10-03T12:48:39,509 | INFO |  | main | linear_20181003.124839.315: creating the storage driver instance for the type "s3"
+2018-10-03T12:48:39,510 | INFO |  | main | storage/driver/1/amzs3/443110940: use 4 I/O workers
+2018-10-03T12:48:39,520 | INFO |  | main | Adjust output buffer size: 1MB
+2018-10-03T12:48:39,818 | DEBUG |  | main | Started the metrics manager fiber
+2018-10-03T12:48:39,818 | DEBUG |  | main | Metrics context "MetricsContextImpl(CREATE-1x1@linear_20181003.124839.315)" registered
+2018-10-03T12:48:39,821 | INFO |  | main | linear_20181003.124839.315: load step client started, additional nodes: []
+2018-10-03T12:48:39,839 | DEBUG |  | main | linear_20181003.124839.315: await for 1 step slices for at most 9223372036854775807 seconds...
+2018-10-03T12:48:39,860 | DEBUG |  | ioWorker#2 | linear_20181003.124839.315: new unpooled connection -1803750192, pipeline: DefaultChannelPipeline{(NettyStorageDriverBase$1#0 = com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverBase$1), (IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:48:39,860 | DEBUG |  | fibers-executor-#3 | linear_20181003.124839.315: execute the HTTP request using the channel -1803750192 w/ pipeline: DefaultChannelPipeline{(IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:48:39,959 | DEBUG |  | ioWorker#3 | linear_20181003.124839.315: new unpooled connection 1114375669, pipeline: DefaultChannelPipeline{(NettyStorageDriverBase$1#0 = com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverBase$1), (IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:48:39,959 | DEBUG |  | fibers-executor-#3 | linear_20181003.124839.315: execute the HTTP request using the channel 1114375669 w/ pipeline: DefaultChannelPipeline{(IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:48:39,972 | DEBUG |  | ioWorker#4 | linear_20181003.124839.315: new unpooled connection -235561387, pipeline: DefaultChannelPipeline{(NettyStorageDriverBase$1#0 = com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverBase$1), (IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:48:39,972 | DEBUG |  | fibers-executor-#3 | linear_20181003.124839.315: execute the HTTP request using the channel -235561387 w/ pipeline: DefaultChannelPipeline{(IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:48:40,624 | DEBUG |  | fibers-executor-#3 | linear_20181003.124839.315: count limit reached, 200 results >= 200 limit
+2018-10-03T12:48:40,624 | INFO |  | fibers-executor-#3 | linear_20181003.124839.315: done due to max count (200) done state
+2018-10-03T12:48:40,629 | DEBUG |  | main | storage/driver/1/amzs3/443110940: shutdown the I/O executor
+2018-10-03T12:48:40,633 | DEBUG |  | main | linear_20181003.124839.315: storage driver storage/driver/1/amzs3/443110940 stopped
+2018-10-03T12:48:40,633 | DEBUG |  | main | linear_20181003.124839.315: final results processing start
+2018-10-03T12:48:40,633 | DEBUG |  | main | linear_20181003.124839.315: final results processing done
+2018-10-03T12:48:40,633 | DEBUG |  | main | linear_20181003.124839.315: poisoned the items output
+2018-10-03T12:48:40,633 | DEBUG |  | main | linear_20181003.124839.315: interrupted the load step context
+2018-10-03T12:48:40,634 | DEBUG |  | main | Metrics context "MetricsContextImpl(CREATE-1x1@linear_20181003.124839.315)" unregistered
+2018-10-03T12:48:40,635 | DEBUG |  | main | Metrics context "DistributedMetricsContextImpl(CREATE-1x1@linear_20181003.124839.315)" unregistered
+2018-10-03T12:48:40,637 | DEBUG |  | main | storage/driver/1/amzs3/443110940: closed
+2018-10-03T12:48:40,637 | DEBUG |  | main | linear_20181003.124839.315: closed the load step context
+2018-10-03T12:48:40,637 | DEBUG |  | main | linear_20181003.124839.315: step slice "com.emc.mongoose.load.step.linear.LinearLoadStepLocal@4362d7df" closed
+2018-10-03T12:48:40,637 | DEBUG |  | main | linear_20181003.124839.315: closed all 1 step slices
+2018-10-03T12:48:40,640 | INFO |  | collectItemOutputFileWorker#2 | "list2.csv" <- transferred 0B of the output items data...
+2018-10-03T12:48:40,642 | INFO |  | main | "list2.csv" <- transferred 0B of the output items data

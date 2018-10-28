@@ -1,0 +1,118 @@
+2018-10-03T12:39:39,863 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/config/defaults.json installed (14050)
+2018-10-03T12:39:39,864 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/content/textexample installed (32112)
+2018-10-03T12:39:39,868 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/content/zerobytes installed (1048576)
+2018-10-03T12:39:39,868 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/groovy/types/additional/copy_load_using_env_vars.groovy installed (549)
+2018-10-03T12:39:39,869 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/groovy/types/additional/load_type.groovy installed (1518)
+2018-10-03T12:39:39,869 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/groovy/types/additional/update_and_read_variants.groovy installed (1550)
+2018-10-03T12:39:39,869 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/groovy/types/pipeline.groovy installed (913)
+2018-10-03T12:39:39,871 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/groovy/types/pipeline_with_delay_using_env_vars.groovy installed (851)
+2018-10-03T12:39:39,871 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/groovy/types/parallel_shell_commands.groovy installed (153)
+2018-10-03T12:39:39,871 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/groovy/types/weighted.groovy installed (2064)
+2018-10-03T12:39:39,872 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/groovy/default.groovy installed (44)
+2018-10-03T12:39:39,872 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/groovy/rampup.groovy installed (4082)
+2018-10-03T12:39:39,872 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/backward_compatibility.js installed (317)
+2018-10-03T12:39:39,873 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/infinite_loop.js installed (141)
+2018-10-03T12:39:39,873 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/types/additional/copy_load_using_env_vars.js installed (512)
+2018-10-03T12:39:39,873 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/types/additional/load_type.js installed (1528)
+2018-10-03T12:39:39,874 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/types/additional/update_and_read_variants.js installed (1536)
+2018-10-03T12:39:39,874 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/types/pipeline.js installed (928)
+2018-10-03T12:39:39,874 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/types/pipeline_with_delay_using_env_vars.js installed (856)
+2018-10-03T12:39:39,875 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/types/parallel_shell_commands.js installed (1155)
+2018-10-03T12:39:39,875 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/types/weighted.js installed (1307)
+2018-10-03T12:39:39,875 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/rampup.js installed (4244)
+2018-10-03T12:39:39,876 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/default.js installed (12)
+2018-10-03T12:39:39,876 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/endurance/infinite_loop_test.js installed (300)
+2018-10-03T12:39:39,876 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/endurance/parallel_pipeline_and_infinite_loop_test.js installed (1000)
+2018-10-03T12:39:39,876 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/endurance/pipeline_test.js installed (697)
+2018-10-03T12:39:39,877 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/circular_append_test.js installed (791)
+2018-10-03T12:39:39,877 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/copy_using_input_path_test.js installed (1152)
+2018-10-03T12:39:39,877 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/read_using_variable_path_test.js installed (669)
+2018-10-03T12:39:39,878 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/circular_read_limit_by_time_test.js installed (711)
+2018-10-03T12:39:39,878 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/chain_with_delay_test.js installed (475)
+2018-10-03T12:39:39,878 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/multipart_create_test.js installed (678)
+2018-10-03T12:39:39,878 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/multiple_fixed_update_and_single_fixed_read_test.js installed (1893)
+2018-10-03T12:39:39,879 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/multiple_random_update_and_multiple_fixed_read_test.js installed (1868)
+2018-10-03T12:39:39,879 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/read_custom_content_verification_fail_test.js installed (1106)
+2018-10-03T12:39:39,879 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/read_verification_after_circular_update_test.js installed (1527)
+2018-10-03T12:39:39,879 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/single_fixed_update_and_single_random_read_test.js installed (1814)
+2018-10-03T12:39:39,880 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/single_random_update_and_multiple_random_read_test.js installed (1803)
+2018-10-03T12:39:39,880 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/unlimited_concurrency_limit_by_rate_test.js installed (302)
+2018-10-03T12:39:39,880 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/js/system/weighted_load_test.js installed (1129)
+2018-10-03T12:39:39,881 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/py/types/additional/copy_load_using_env_vars.py installed (506)
+2018-10-03T12:39:39,881 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/py/types/additional/load_type.py installed (1544)
+2018-10-03T12:39:39,881 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/py/types/additional/update_and_read_variants.py installed (1545)
+2018-10-03T12:39:39,882 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/py/types/pipeline.py installed (870)
+2018-10-03T12:39:39,882 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/py/types/pipeline_with_delay_using_env_vars.py installed (818)
+2018-10-03T12:39:39,882 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/py/types/parallel_shell_commands.py installed (284)
+2018-10-03T12:39:39,882 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/py/types/weighted.py installed (2113)
+2018-10-03T12:39:39,883 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/py/default.py installed (11)
+2018-10-03T12:39:39,883 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/example/scenario/py/rampup.py installed (3991)
+2018-10-03T12:39:39,883 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/ext/mongoose-load-step-linear.jar installed (8762)
+2018-10-03T12:39:39,884 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/ext/mongoose-load-step-pipeline.jar installed (11875)
+2018-10-03T12:39:39,884 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/ext/mongoose-load-step-weighted.jar installed (11897)
+2018-10-03T12:39:39,885 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/ext/mongoose-storage-driver-coop.jar installed (12363)
+2018-10-03T12:39:39,909 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/ext/mongoose-storage-driver-coop-netty.jar installed (6020689)
+2018-10-03T12:39:39,912 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/ext/mongoose-storage-driver-coop-netty-http.jar installed (578796)
+2018-10-03T12:39:39,913 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/ext/mongoose-storage-driver-coop-netty-http-atmos.jar installed (14857)
+2018-10-03T12:39:39,913 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/ext/mongoose-storage-driver-coop-netty-http-s3.jar installed (23878)
+2018-10-03T12:39:39,913 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/ext/mongoose-storage-driver-coop-netty-http-swift.jar installed (19669)
+2018-10-03T12:39:39,914 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/ext/mongoose-storage-driver-coop-nio.jar installed (13662)
+2018-10-03T12:39:39,914 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/ext/mongoose-storage-driver-coop-nio-fs.jar installed (24085)
+2018-10-03T12:39:39,914 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/ext/mongoose-storage-driver-preempt.jar installed (8928)
+2018-10-03T12:39:39,914 | DEBUG |  | main | Installer finished: "com.emc.mongoose.env.CoreResourcesToInstall"
+2018-10-03T12:39:39,939 | DEBUG |  | main | Installer finished: "com.emc.mongoose.storage.driver.mock.DummyStorageDriverMockExtension"
+2018-10-03T12:39:39,939 | DEBUG |  | main | Installer finished: "com.emc.mongoose.storage.driver.coop.nio.fs.FileStorageDriverExtension"
+2018-10-03T12:39:39,939 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/config/defaults-storage-net.json installed (1683)
+2018-10-03T12:39:39,939 | DEBUG |  | main | Installer finished: "com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverExtension"
+2018-10-03T12:39:39,939 | DEBUG |  | main | Installer finished: "com.emc.mongoose.storage.driver.coop.netty.mock.NettyStorageDriverMockExtension"
+2018-10-03T12:39:39,939 | DEBUG |  | main | Installer finished: "com.emc.mongoose.storage.driver.coop.mock.CoopStorageDriverMockExtension"
+2018-10-03T12:39:39,940 | DEBUG |  | main | Installer finished: "com.emc.mongoose.load.step.linear.LinearLoadStepExtension"
+2018-10-03T12:39:39,940 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/config/defaults-item-output-delay.json installed (167)
+2018-10-03T12:39:39,940 | DEBUG |  | main | Installer finished: "com.emc.mongoose.load.step.pipeline.PipelineLoadStepExtension"
+2018-10-03T12:39:39,940 | DEBUG |  | main | Installer finished: "com.emc.mongoose.storage.driver.preempt.mock.PreemptStorageDriverMockExtension"
+2018-10-03T12:39:39,940 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/config/defaults-storage-s3.json installed (233)
+2018-10-03T12:39:39,940 | DEBUG |  | main | Installer finished: "com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3StorageDriverExtension"
+2018-10-03T12:39:39,941 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/config/defaults-storage-atmos.json installed (190)
+2018-10-03T12:39:39,941 | DEBUG |  | main | Installer finished: "com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosStorageDriverExtension"
+2018-10-03T12:39:39,941 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/config/defaults-load-generator-weight.json installed (401)
+2018-10-03T12:39:39,941 | DEBUG |  | main | Installer finished: "com.emc.mongoose.load.step.weighted.WeightedLoadStepExtension"
+2018-10-03T12:39:39,941 | DEBUG |  | main | Installer finished: "com.emc.mongoose.storage.driver.coop.nio.mock.NioStorageDriverMockExtension"
+2018-10-03T12:39:39,942 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/config/defaults-storage-net-http.json installed (454)
+2018-10-03T12:39:39,942 | DEBUG |  | main | Installer finished: "com.emc.mongoose.storage.driver.coop.netty.http.HttpStorageDriverExtension"
+2018-10-03T12:39:39,942 | DEBUG |  | main | The file /home/user/.mongoose/4.1.0/config/defaults-storage-swift.json installed (282)
+2018-10-03T12:39:39,942 | DEBUG |  | main | Installer finished: "com.emc.mongoose.storage.driver.coop.netty.http.swift.SwiftStorageDriverExtension"
+2018-10-03T12:39:39,942 | INFO |  | main | Available/installed extensions:
+	dummy-mock --------------------> com.emc.mongoose.storage.driver.mock.DummyStorageDriverMockExtension
+	fs ----------------------------> com.emc.mongoose.storage.driver.coop.nio.fs.FileStorageDriverExtension
+	net ---------------------------> com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverExtension
+	netty-mock --------------------> com.emc.mongoose.storage.driver.coop.netty.mock.NettyStorageDriverMockExtension
+	coop-mock ---------------------> com.emc.mongoose.storage.driver.coop.mock.CoopStorageDriverMockExtension
+	Load --------------------------> com.emc.mongoose.load.step.linear.LinearLoadStepExtension
+	PipelineLoad ------------------> com.emc.mongoose.load.step.pipeline.PipelineLoadStepExtension
+	preempt-mock ------------------> com.emc.mongoose.storage.driver.preempt.mock.PreemptStorageDriverMockExtension
+	s3 ----------------------------> com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3StorageDriverExtension
+	atmos -------------------------> com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosStorageDriverExtension
+	WeightedLoad ------------------> com.emc.mongoose.load.step.weighted.WeightedLoadStepExtension
+	nio-mock ----------------------> com.emc.mongoose.storage.driver.coop.nio.mock.NioStorageDriverMockExtension
+	http --------------------------> com.emc.mongoose.storage.driver.coop.netty.http.HttpStorageDriverExtension
+	swift -------------------------> com.emc.mongoose.storage.driver.coop.netty.http.swift.SwiftStorageDriverExtension
+
+2018-10-03T12:39:40,347 | INFO |  | main | Using the "Oracle Nashorn" scenario engine
+2018-10-03T12:39:41,903 | DEBUG |  | main | linear_20181003.123940.542: await for 1 step slices done
+2018-10-03T12:39:41,914 | DEBUG |  | main | Stopped the metrics manager fiber
+2018-10-03T12:40:01,639 | DEBUG |  | main | linear_20181003.123941.937: await for 1 step slices done
+2018-10-03T12:40:01,708 | DEBUG |  | main | Stopped the metrics manager fiber
+2018-10-03T12:40:05,128 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices
+2018-10-03T12:40:05,128 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices
+2018-10-03T12:40:05,128 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices
+2018-10-03T12:40:05,128 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices
+2018-10-03T12:40:05,128 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices
+2018-10-03T12:40:05,128 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices
+2018-10-03T12:40:05,128 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices
+2018-10-03T12:40:05,128 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices
+2018-10-03T12:40:05,128 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices
+2018-10-03T12:40:05,128 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices
+2018-10-03T12:40:05,130 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices
+2018-10-03T12:40:05,130 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices
+2018-10-03T12:40:05,130 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices
+2018-10-03T12:40:05,130 | DEBUG |  | logCtxShutDownHook | none-20181003.123939.856: closed all 0 step slices

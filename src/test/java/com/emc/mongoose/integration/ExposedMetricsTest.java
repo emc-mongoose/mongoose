@@ -5,11 +5,11 @@ import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.MetricsConstants;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsManagerImpl;
-import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.context.DistributedMetricsContextImpl;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.metrics.context.MetricsContextImpl;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.params.ItemSize;
 import com.github.akurilov.commons.system.SizeInBytes;
 import io.prometheus.client.exporter.MetricsServlet;
@@ -45,14 +45,16 @@ public class ExposedMetricsTest {
 	private static final Double RATE_ACCURACY = 0.2;
 	private static final int MARK_DUR = 1_100_000; //dur must be more than lat (dur > lat)
 	private static final int MARK_LAT = 1_000_000;
-	private static final String[] CONCURRENCY_METRICS = { "mean", "last", };
-	private static final String[] TIMING_METRICS = { "count", "sum", "mean", "min", "max", };
-	private static final String[] RATE_METRICS = { "count", "rate_mean", "rate_last", };
+	private static final String[] CONCURRENCY_METRICS = { "mean", "last" };
+	private static final String[] TIMING_METRICS =
+		{ "count", "sum", "mean", "min", "max", "quantile_0.25", "quantile_0.5", "quantile_0.75" };
+	private static final String[] RATE_METRICS = { "count", "rate_mean", "rate_last" };
+	private static final Double[] QUANTILE_VALUES = { 0.25, 0.5, 0.75 };
 	private final String STEP_ID = ExposedMetricsTest.class.getSimpleName();
 	private final OpType OP_TYPE = OpType.CREATE;
 	private final IntSupplier nodeCountSupplier = () -> 1;
-	private final int concurrencyLimit = 0;
-	private final int concurrencyThreshold = 0;
+	private final int CONCURRENCY_LIMIT = 0;
+	private final int CONCURRENCY_THRESHOLD = 0;
 	private final SizeInBytes ITEM_DATA_SIZE = ItemSize.SMALL.getValue();
 	private final int UPDATE_INTERVAL_SEC = (int) TimeUnit.MICROSECONDS.toSeconds(MARK_DUR);
 	private Supplier<List<AllMetricsSnapshot>> snapshotsSupplier;
@@ -71,18 +73,16 @@ public class ExposedMetricsTest {
 		context.addServlet(new ServletHolder(new MetricsServlet()), CONTEXT);
 		server.start();
 		//
-		metricsContext = new MetricsContextImpl<>(
-			STEP_ID, OP_TYPE, () -> 1, concurrencyLimit, concurrencyThreshold, ITEM_DATA_SIZE, UPDATE_INTERVAL_SEC,
-			true,
-			new double[] {}
+		metricsContext = new MetricsContextImpl(STEP_ID, OP_TYPE, () -> 1, CONCURRENCY_LIMIT, CONCURRENCY_THRESHOLD,
+			ITEM_DATA_SIZE, UPDATE_INTERVAL_SEC, true
 		);
 		snapshotsSupplier = () -> Arrays.asList(metricsContext.lastSnapshot());
 		metricsContext.start();
 		//
 		distributedMetricsContext = new DistributedMetricsContextImpl(
-			STEP_ID, OP_TYPE, nodeCountSupplier, concurrencyLimit, concurrencyThreshold, ITEM_DATA_SIZE,
+			STEP_ID, OP_TYPE, nodeCountSupplier, CONCURRENCY_LIMIT, CONCURRENCY_THRESHOLD, ITEM_DATA_SIZE,
 			UPDATE_INTERVAL_SEC, true, true, true, true, snapshotsSupplier,
-			new double[] {}
+			Arrays.asList(QUANTILE_VALUES)
 		);
 		distributedMetricsContext.start();
 	}
@@ -122,7 +122,8 @@ public class ExposedMetricsTest {
 		// concurrency count != iteration_count, because in the refreshLastSnapshot lat & dur account only after the condition, and concurrency - every time
 		final double count = ITERATION_COUNT;
 		final double accuracy = TIMING_ACCURACY;
-		final double[] values = { count, markValue * count, markValue, markValue, markValue };
+		final double[] values =
+			{ count, markValue * count, markValue, markValue, markValue, markValue, markValue, markValue };
 		for(int i = 0; i < TIMING_METRICS.length; ++ i) {
 			expectedValues.put(TIMING_METRICS[i], values[i]);
 		}

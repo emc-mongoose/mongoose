@@ -117,7 +117,8 @@
 			},
 			"threads": "int32",
 			"type": "string"
-		}
+		},
+		"namespace": "string"
 	},
 	"aliasing": "list"
 }

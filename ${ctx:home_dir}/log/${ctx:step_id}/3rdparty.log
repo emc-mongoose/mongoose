@@ -1,0 +1,569 @@
+2018-10-02T14:03:30,743 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,744 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,744 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,744 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,745 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,745 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,750 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,750 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,751 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,751 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,751 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,752 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,754 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,754 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,755 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,755 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,756 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,756 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,758 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,758 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,759 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,759 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,759 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,760 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,763 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,763 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,763 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,764 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,764 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,764 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,766 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,767 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,767 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,767 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,768 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,768 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,770 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,770 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,771 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,771 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,772 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,772 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,783 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,783 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,783 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,783 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,783 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,788 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,811 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,811 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,812 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,812 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,812 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,812 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,824 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,824 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,824 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,824 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,824 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,824 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,837 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,837 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,838 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,838 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,838 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,838 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,846 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,846 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,847 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,847 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-02T14:03:30,847 | INFO | o.a.h.i.e.RetryExec | Test worker | I/O exception (org.newsclub.net.unix.AFUNIXSocketException) caught when processing request to {}->unix://localhost:80: Permission denied
+2018-10-02T14:03:30,847 | INFO | o.a.h.i.e.RetryExec | Test worker | Retrying request to {}->unix://localhost:80
+2018-10-03T12:29:47,677 | INFO | o.e.j.u.log | main | Logging initialized @798ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-03T12:29:47,747 | INFO | o.e.j.s.Server | main | jetty-9.4.z-SNAPSHOT; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-03T12:29:47,769 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@5f16132a{HTTP/1.1,[http/1.1]}{0.0.0.0:1234}
+2018-10-03T12:29:47,769 | INFO | o.e.j.s.Server | main | Started @891ms
+2018-10-03T12:36:22,096 | INFO | o.e.j.u.log | main | Logging initialized @887ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-03T12:36:22,191 | INFO | o.e.j.s.Server | main | jetty-9.4.z-SNAPSHOT; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-03T12:36:22,219 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@5f16132a{HTTP/1.1,[http/1.1]}{0.0.0.0:1234}
+2018-10-03T12:36:22,219 | INFO | o.e.j.s.Server | main | Started @1012ms
+2018-10-03T12:39:01,553 | INFO | o.e.j.u.log | main | Logging initialized @1225ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-03T12:39:01,714 | INFO | o.e.j.s.Server | main | jetty-9.4.z-SNAPSHOT; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-03T12:39:01,773 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@3be96dc0{HTTP/1.1,[http/1.1]}{0.0.0.0:1234}
+2018-10-03T12:39:01,773 | INFO | o.e.j.s.Server | main | Started @1447ms
+2018-10-03T12:39:39,689 | INFO | o.e.j.u.log | main | Logging initialized @795ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-03T12:39:39,775 | INFO | o.e.j.s.Server | main | jetty-9.4.z-SNAPSHOT; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-03T12:39:39,800 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@625732{/,null,AVAILABLE}
+2018-10-03T12:39:39,807 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@6bedbc4d{HTTP/1.1,[http/1.1]}{0.0.0.0:1234}
+2018-10-03T12:39:39,808 | INFO | o.e.j.s.Server | main | Started @915ms
+2018-10-03T12:40:31,592 | INFO | o.e.j.u.log | main | Logging initialized @784ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-03T12:40:31,697 | INFO | o.e.j.s.Server | main | jetty-9.4.z-SNAPSHOT; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-03T12:40:31,730 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@625732{/,null,AVAILABLE}
+2018-10-03T12:40:31,739 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@6bedbc4d{HTTP/1.1,[http/1.1]}{0.0.0.0:1234}
+2018-10-03T12:40:31,739 | INFO | o.e.j.s.Server | main | Started @932ms
+2018-10-03T12:40:43,002 | INFO | o.e.j.u.log | main | Logging initialized @833ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-03T12:40:43,087 | INFO | o.e.j.s.Server | main | jetty-9.4.z-SNAPSHOT; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-03T12:40:43,109 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@625732{/,null,AVAILABLE}
+2018-10-03T12:40:43,122 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@6bedbc4d{HTTP/1.1,[http/1.1]}{0.0.0.0:1234}
+2018-10-03T12:40:43,122 | INFO | o.e.j.s.Server | main | Started @953ms
+2018-10-03T12:40:54,220 | INFO | o.e.j.u.log | main | Logging initialized @768ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-03T12:40:54,303 | INFO | o.e.j.s.Server | main | jetty-9.4.z-SNAPSHOT; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-03T12:40:54,327 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@625732{/,null,AVAILABLE}
+2018-10-03T12:40:54,336 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@6bedbc4d{HTTP/1.1,[http/1.1]}{0.0.0.0:1234}
+2018-10-03T12:40:54,336 | INFO | o.e.j.s.Server | main | Started @884ms
+2018-10-03T12:48:11,916 | INFO | o.e.j.u.log | main | Logging initialized @875ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-03T12:48:12,011 | INFO | o.e.j.s.Server | main | jetty-9.4.z-SNAPSHOT; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-03T12:48:12,034 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@625732{/,null,AVAILABLE}
+2018-10-03T12:48:12,042 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@6bedbc4d{HTTP/1.1,[http/1.1]}{0.0.0.0:1234}
+2018-10-03T12:48:12,042 | INFO | o.e.j.s.Server | main | Started @1001ms
+2018-10-03T12:48:38,314 | INFO | o.e.j.u.log | main | Logging initialized @890ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-03T12:48:38,403 | INFO | o.e.j.s.Server | main | jetty-9.4.z-SNAPSHOT; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-03T12:48:38,427 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@625732{/,null,AVAILABLE}
+2018-10-03T12:48:38,435 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@6bedbc4d{HTTP/1.1,[http/1.1]}{0.0.0.0:1234}
+2018-10-03T12:48:38,435 | INFO | o.e.j.s.Server | main | Started @1013ms
+2018-10-03T12:49:02,883 | INFO | o.e.j.s.AbstractConnector | main | Stopped ServerConnector@6bedbc4d{HTTP/1.1,[http/1.1]}{0.0.0.0:1234}
+2018-10-03T12:49:02,886 | INFO | o.e.j.s.h.ContextHandler | main | Stopped o.e.j.s.ServletContextHandler@625732{/,null,UNAVAILABLE}
+2018-10-03T13:05:34,293 | INFO | o.e.j.u.log | main | Logging initialized @823ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-03T13:05:34,405 | INFO | o.e.j.s.Server | main | jetty-9.4.z-SNAPSHOT; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-03T13:05:34,439 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@625732{/,null,AVAILABLE}
+2018-10-03T13:05:34,447 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@6bedbc4d{HTTP/1.1,[http/1.1]}{0.0.0.0:1234}
+2018-10-03T13:05:34,447 | INFO | o.e.j.s.Server | main | Started @979ms
+2018-10-15T12:46:58,049 | INFO | o.e.j.u.log | main | Logging initialized @1873ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T12:46:58,258 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T12:46:58,349 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@5340477f{/,null,AVAILABLE}
+2018-10-15T12:46:58,372 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@3b8b8bd6{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T12:46:58,373 | INFO | o.e.j.s.Server | main | Started @2210ms
+2018-10-15T12:49:44,722 | INFO | o.e.j.u.log | main | Logging initialized @1672ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T12:49:44,868 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T12:49:44,971 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@609e8838{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T12:49:44,973 | INFO | o.e.j.s.Server | main | Started @1924ms
+2018-10-15T12:50:04,666 | INFO | o.e.j.u.log | main | Logging initialized @1720ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T12:50:04,765 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T12:50:04,818 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@609e8838{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T12:50:04,818 | INFO | o.e.j.s.Server | main | Started @1874ms
+2018-10-15T12:50:41,103 | INFO | o.e.j.u.log | main | Logging initialized @1660ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T12:50:41,374 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T12:50:41,503 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@5340477f{/,null,AVAILABLE}
+2018-10-15T12:50:41,520 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@b70d6e5{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T12:50:41,520 | INFO | o.e.j.s.Server | main | Started @2080ms
+2018-10-15T12:55:28,375 | INFO | o.e.j.u.log | main | Logging initialized @1871ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T12:55:28,538 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T12:55:28,628 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@5340477f{/,null,AVAILABLE}
+2018-10-15T12:55:28,641 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@60d51bf3{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T12:55:28,641 | INFO | o.e.j.s.Server | main | Started @2140ms
+2018-10-15T12:56:34,787 | INFO | o.e.j.u.log | main | Logging initialized @1799ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T12:56:34,989 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T12:56:35,049 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@5340477f{/,null,AVAILABLE}
+2018-10-15T12:56:35,070 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@2254127a{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T12:56:35,070 | INFO | o.e.j.s.Server | main | Started @2085ms
+2018-10-15T12:58:50,962 | INFO | o.e.j.u.log | main | Logging initialized @1803ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T12:58:51,097 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T12:58:51,203 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@5340477f{/,null,AVAILABLE}
+2018-10-15T12:58:51,220 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@3519b0ee{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T12:58:51,220 | INFO | o.e.j.s.Server | main | Started @2062ms
+2018-10-15T13:00:16,570 | INFO | o.e.j.u.log | main | Logging initialized @1754ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:00:16,725 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:00:16,788 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:00:16,799 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@1ca460cb{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:00:16,799 | INFO | o.e.j.s.Server | main | Started @1984ms
+2018-10-15T13:01:09,875 | INFO | o.e.j.u.log | main | Logging initialized @1656ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:01:09,986 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:01:10,053 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:01:10,074 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@30201fbc{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:01:10,074 | INFO | o.e.j.s.Server | main | Started @1860ms
+2018-10-15T13:02:27,536 | INFO | o.e.j.u.log | main | Logging initialized @1700ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:02:27,659 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:02:27,723 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:02:27,739 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@6ac55527{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:02:27,740 | INFO | o.e.j.s.Server | main | Started @1904ms
+2018-10-15T13:02:52,903 | INFO | o.e.j.u.log | main | Logging initialized @1557ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:02:53,038 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:02:53,095 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:02:53,111 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@5bf6a17{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:02:53,112 | INFO | o.e.j.s.Server | main | Started @1767ms
+2018-10-15T13:03:16,069 | INFO | o.e.j.u.log | main | Logging initialized @1499ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:03:16,235 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:03:16,316 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:03:16,334 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@6f485070{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:03:16,334 | INFO | o.e.j.s.Server | main | Started @1769ms
+2018-10-15T13:06:07,099 | INFO | o.e.j.u.log | main | Logging initialized @2439ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:06:07,234 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:06:07,289 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@51df223b{/,null,AVAILABLE}
+2018-10-15T13:06:07,307 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@1cb3ec38{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:06:07,307 | INFO | o.e.j.s.Server | main | Started @2648ms
+2018-10-15T13:07:09,113 | INFO | o.e.j.u.log | main | Logging initialized @1799ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:07:09,381 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:07:09,463 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:07:09,504 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@5bf6a17{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:07:09,504 | INFO | o.e.j.s.Server | main | Started @2193ms
+2018-10-15T13:09:38,256 | INFO | o.e.j.u.log | main | Logging initialized @1627ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:09:38,466 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:09:38,545 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:09:38,575 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@7ee8b940{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:09:38,575 | INFO | o.e.j.s.Server | main | Started @1950ms
+2018-10-15T13:10:23,149 | INFO | o.e.j.u.log | main | Logging initialized @1645ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:10:23,341 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:10:23,410 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:10:23,449 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@6ac55527{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:10:23,449 | INFO | o.e.j.s.Server | main | Started @1946ms
+2018-10-15T13:11:14,294 | INFO | o.e.j.u.log | main | Logging initialized @1751ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:11:14,477 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:11:14,557 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:11:14,576 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@4e344095{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:11:14,578 | INFO | o.e.j.s.Server | main | Started @2036ms
+2018-10-15T13:12:09,079 | INFO | o.e.j.u.log | main | Logging initialized @1703ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:12:09,247 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:12:09,316 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:12:09,344 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:12:09,345 | INFO | o.e.j.s.Server | main | Started @1974ms
+2018-10-15T13:15:22,364 | INFO | o.e.j.u.log | main | Logging initialized @1534ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:15:22,564 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:15:22,648 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:15:22,664 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@30201fbc{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:15:22,664 | INFO | o.e.j.s.Server | main | Started @1837ms
+2018-10-15T13:15:52,700 | INFO | o.e.j.u.log | main | Logging initialized @1513ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:15:52,925 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:15:52,985 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:15:53,023 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@7ee8b940{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:15:53,024 | INFO | o.e.j.s.Server | main | Started @1840ms
+2018-10-15T13:18:01,693 | INFO | o.e.j.u.log | main | Logging initialized @1580ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:18:01,824 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:18:01,888 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:18:01,905 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@6f485070{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:18:01,905 | INFO | o.e.j.s.Server | main | Started @1795ms
+2018-10-15T13:20:38,340 | INFO | o.e.j.u.log | main | Logging initialized @1398ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:20:38,498 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:20:38,625 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:20:38,653 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:20:38,658 | INFO | o.e.j.s.Server | main | Started @1718ms
+2018-10-15T13:23:44,606 | INFO | o.e.j.u.log | main | Logging initialized @1591ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:23:44,828 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:23:44,899 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:23:44,915 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@4e344095{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:23:44,915 | INFO | o.e.j.s.Server | main | Started @1902ms
+2018-10-15T13:27:26,918 | INFO | o.e.j.u.log | main | Logging initialized @1434ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:27:27,096 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:27:27,235 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:27:27,267 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:27:27,269 | INFO | o.e.j.s.Server | main | Started @1788ms
+2018-10-15T13:27:48,118 | INFO | o.e.j.u.log | main | Logging initialized @1728ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:27:48,287 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:27:48,401 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:27:48,433 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:27:48,435 | INFO | o.e.j.s.Server | main | Started @2048ms
+2018-10-15T13:28:50,145 | INFO | o.e.j.u.log | main | Logging initialized @1614ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:28:50,289 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:28:50,344 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:28:50,356 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@7ee8b940{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:28:50,356 | INFO | o.e.j.s.Server | main | Started @1828ms
+2018-10-15T13:29:13,697 | INFO | o.e.j.u.log | main | Logging initialized @1837ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:29:13,998 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:29:14,113 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:29:14,136 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@30201fbc{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:29:14,136 | INFO | o.e.j.s.Server | main | Started @2280ms
+2018-10-15T13:30:03,901 | INFO | o.e.j.u.log | main | Logging initialized @1454ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:30:04,091 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:30:04,165 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:30:04,201 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@30d3c19d{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:30:04,201 | INFO | o.e.j.s.Server | main | Started @1753ms
+2018-10-15T13:32:00,497 | INFO | o.e.j.u.log | main | Logging initialized @1575ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:32:00,665 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:32:00,698 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:32:00,710 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@7ee8b940{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:32:00,712 | INFO | o.e.j.s.Server | main | Started @1792ms
+2018-10-15T13:41:43,433 | INFO | o.e.j.u.log | main | Logging initialized @1554ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:41:43,683 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:41:43,750 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:41:43,766 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@1ca460cb{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:41:43,766 | INFO | o.e.j.s.Server | main | Started @1889ms
+2018-10-15T13:42:20,632 | INFO | o.e.j.u.log | main | Logging initialized @1612ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:42:20,802 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:42:20,886 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:42:20,906 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@4e344095{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:42:20,906 | INFO | o.e.j.s.Server | main | Started @1892ms
+2018-10-15T13:43:14,613 | INFO | o.e.j.u.log | main | Logging initialized @1631ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:43:14,778 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:43:14,870 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:43:14,887 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@bce6199{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:43:14,887 | INFO | o.e.j.s.Server | main | Started @1907ms
+2018-10-15T13:44:18,167 | INFO | o.e.j.u.log | main | Logging initialized @1628ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:44:18,359 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:44:18,447 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:44:18,465 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@4972684c{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:44:18,466 | INFO | o.e.j.s.Server | main | Started @1929ms
+2018-10-15T13:44:42,377 | INFO | o.e.j.u.log | main | Logging initialized @1605ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:44:42,568 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:44:42,660 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:44:42,676 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@bce6199{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:44:42,676 | INFO | o.e.j.s.Server | main | Started @1907ms
+2018-10-15T13:49:22,101 | INFO | o.e.j.u.log | main | Logging initialized @1667ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T13:49:22,307 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T13:49:22,405 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T13:49:22,437 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@4972684c{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T13:49:22,437 | INFO | o.e.j.s.Server | main | Started @2005ms
+2018-10-15T14:06:09,750 | INFO | o.e.j.u.log | main | Logging initialized @1615ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T14:06:09,895 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T14:06:09,958 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T14:06:09,972 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T14:06:09,974 | INFO | o.e.j.s.Server | main | Started @1839ms
+2018-10-15T14:06:55,349 | INFO | o.e.j.u.log | main | Logging initialized @1651ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T14:06:55,535 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T14:06:55,594 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T14:06:55,604 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@3b95976{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T14:06:55,604 | INFO | o.e.j.s.Server | main | Started @1914ms
+2018-10-15T14:08:07,926 | INFO | o.e.j.u.log | main | Logging initialized @1626ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T14:08:08,168 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T14:08:08,254 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T14:08:08,283 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T14:08:08,284 | INFO | o.e.j.s.Server | main | Started @1989ms
+2018-10-15T14:09:33,444 | INFO | o.e.j.u.log | main | Logging initialized @1548ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T14:09:33,652 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T14:09:33,718 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@446a1e84{/,null,AVAILABLE}
+2018-10-15T14:09:33,731 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@3d5333d5{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T14:09:33,731 | INFO | o.e.j.s.Server | main | Started @1839ms
+2018-10-15T14:10:35,911 | INFO | o.e.j.u.log | main | Logging initialized @1790ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T14:10:36,117 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T14:10:36,197 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T14:10:36,207 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T14:10:36,207 | INFO | o.e.j.s.Server | main | Started @2090ms
+2018-10-15T14:13:12,011 | INFO | o.e.j.u.log | main | Logging initialized @1488ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T14:13:12,261 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T14:13:12,348 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T14:13:12,370 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T14:13:12,371 | INFO | o.e.j.s.Server | main | Started @1849ms
+2018-10-15T14:13:41,807 | INFO | o.e.j.u.log | main | Logging initialized @1761ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T14:13:41,995 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T14:13:42,087 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T14:13:42,103 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@3b95976{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T14:13:42,104 | INFO | o.e.j.s.Server | main | Started @2059ms
+2018-10-15T14:14:48,114 | INFO | o.e.j.u.log | main | Logging initialized @1596ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T14:14:48,317 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T14:14:48,420 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T14:14:48,445 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T14:14:48,445 | INFO | o.e.j.s.Server | main | Started @1928ms
+2018-10-15T14:15:32,923 | INFO | o.e.j.u.log | main | Logging initialized @1739ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T14:15:33,130 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T14:15:33,201 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T14:15:33,218 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T14:15:33,219 | INFO | o.e.j.s.Server | main | Started @2037ms
+2018-10-15T14:15:51,786 | INFO | o.e.j.u.log | main | Logging initialized @1602ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-15T14:15:52,004 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-15T14:15:52,084 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-15T14:15:52,105 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@349dc8b4{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-15T14:15:52,105 | INFO | o.e.j.s.Server | main | Started @1925ms
+2018-10-16T06:18:03,896 | INFO | o.e.j.u.log | main | Logging initialized @1870ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T06:18:04,053 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T06:18:04,149 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T06:18:04,163 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T06:18:04,163 | INFO | o.e.j.s.Server | main | Started @2139ms
+2018-10-16T06:43:02,878 | INFO | o.e.j.u.log | main | Logging initialized @1783ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T06:43:03,082 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T06:43:03,136 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T06:43:03,162 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@196503da{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T06:43:03,162 | INFO | o.e.j.s.Server | main | Started @2070ms
+2018-10-16T06:46:21,658 | INFO | o.e.j.u.log | main | Logging initialized @1563ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T06:46:21,855 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T06:46:21,962 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T06:46:21,983 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@4a58118f{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T06:46:21,985 | INFO | o.e.j.s.Server | main | Started @1893ms
+2018-10-16T06:49:38,620 | INFO | o.e.j.u.log | main | Logging initialized @1607ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T06:49:38,764 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T06:49:38,843 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T06:49:38,854 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T06:49:38,854 | INFO | o.e.j.s.Server | main | Started @1843ms
+2018-10-16T06:53:31,570 | INFO | o.e.j.u.log | main | Logging initialized @1651ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T06:53:31,727 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T06:53:31,803 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T06:53:31,819 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@73100912{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T06:53:31,819 | INFO | o.e.j.s.Server | main | Started @1904ms
+2018-10-16T06:54:45,712 | INFO | o.e.j.u.log | main | Logging initialized @1621ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T06:54:45,867 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T06:54:45,906 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T06:54:45,925 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T06:54:45,925 | INFO | o.e.j.s.Server | main | Started @1836ms
+2018-10-16T06:56:22,256 | INFO | o.e.j.u.log | main | Logging initialized @1538ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T06:56:22,382 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T06:56:22,453 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T06:56:22,467 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@5aa15099{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T06:56:22,467 | INFO | o.e.j.s.Server | main | Started @1750ms
+2018-10-16T06:57:51,520 | INFO | o.e.j.u.log | main | Logging initialized @1871ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T06:57:51,680 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T06:57:51,737 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T06:57:51,766 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@7768f124{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T06:57:51,768 | INFO | o.e.j.s.Server | main | Started @2119ms
+2018-10-16T07:01:33,408 | INFO | o.e.j.u.log | main | Logging initialized @1582ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:01:33,550 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:01:33,590 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:01:33,606 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@73100912{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:01:33,606 | INFO | o.e.j.s.Server | main | Started @1782ms
+2018-10-16T07:06:44,094 | INFO | o.e.j.u.log | main | Logging initialized @1653ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:06:44,286 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:06:44,362 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:06:44,376 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@73e366af{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:06:44,376 | INFO | o.e.j.s.Server | main | Started @1938ms
+2018-10-16T07:13:36,276 | INFO | o.e.j.u.log | main | Logging initialized @1476ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:13:36,487 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:13:36,586 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:13:36,614 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@5205f0fd{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:13:36,614 | INFO | o.e.j.s.Server | main | Started @1816ms
+2018-10-16T07:15:00,307 | INFO | o.e.j.u.log | main | Logging initialized @1784ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:15:00,461 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:15:00,560 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:15:00,586 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@5aa15099{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:15:00,586 | INFO | o.e.j.s.Server | main | Started @2065ms
+2018-10-16T07:15:44,779 | INFO | o.e.j.u.log | main | Logging initialized @1751ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:15:44,946 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:15:45,063 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:15:45,078 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:15:45,078 | INFO | o.e.j.s.Server | main | Started @2051ms
+2018-10-16T07:16:15,838 | INFO | o.e.j.u.log | main | Logging initialized @1749ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:16:16,030 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:16:16,085 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:16:16,103 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:16:16,103 | INFO | o.e.j.s.Server | main | Started @2017ms
+2018-10-16T07:18:21,133 | INFO | o.e.j.u.log | main | Logging initialized @1794ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:18:21,498 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:18:21,579 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:18:21,608 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@27feec2a{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:18:21,610 | INFO | o.e.j.s.Server | main | Started @2273ms
+2018-10-16T07:20:03,310 | INFO | o.e.j.u.log | main | Logging initialized @2002ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:20:03,429 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:20:03,463 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:20:03,475 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:20:03,475 | INFO | o.e.j.s.Server | main | Started @2168ms
+2018-10-16T07:21:41,543 | INFO | o.e.j.u.log | main | Logging initialized @1578ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:21:41,793 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:21:41,904 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:21:41,935 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@73e366af{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:21:41,935 | INFO | o.e.j.s.Server | main | Started @1973ms
+2018-10-16T07:23:29,445 | INFO | o.e.j.u.log | main | Logging initialized @1569ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:23:29,596 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:23:29,634 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:23:29,649 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:23:29,650 | INFO | o.e.j.s.Server | main | Started @1775ms
+2018-10-16T07:24:40,538 | INFO | o.e.j.u.log | main | Logging initialized @1459ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:24:40,703 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:24:40,788 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:24:40,826 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:24:40,828 | INFO | o.e.j.s.Server | main | Started @1751ms
+2018-10-16T07:27:07,938 | INFO | o.e.j.u.log | main | Logging initialized @1669ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:27:08,158 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:27:08,200 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:27:08,231 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:27:08,231 | INFO | o.e.j.s.Server | main | Started @1964ms
+2018-10-16T07:30:43,674 | INFO | o.e.j.u.log | main | Logging initialized @1550ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:30:43,806 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:30:43,864 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:30:43,879 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:30:43,879 | INFO | o.e.j.s.Server | main | Started @1757ms
+2018-10-16T07:32:09,625 | INFO | o.e.j.u.log | main | Logging initialized @1467ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T07:32:09,815 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T07:32:09,864 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T07:32:09,890 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@233ec3bb{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T07:32:09,890 | INFO | o.e.j.s.Server | main | Started @1735ms
+2018-10-16T14:27:50,196 | INFO | o.e.j.u.log | main | Logging initialized @1617ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T14:27:50,397 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T14:27:50,469 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T14:27:50,487 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@3f62a0f7{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T14:27:50,489 | INFO | o.e.j.s.Server | main | Started @1912ms
+2018-10-16T15:08:30,646 | INFO | o.e.j.u.log | main | Logging initialized @1512ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T15:08:30,839 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T15:08:30,976 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T15:08:30,998 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T15:08:30,998 | INFO | o.e.j.s.Server | main | Started @1865ms
+2018-10-16T15:08:50,551 | INFO | o.e.j.u.log | main | Logging initialized @1489ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-16T15:08:50,760 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-16T15:08:50,843 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-16T15:08:50,870 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@f2f232b{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-16T15:08:50,871 | INFO | o.e.j.s.Server | main | Started @1811ms
+2018-10-17T15:13:57,357 | INFO | o.e.j.u.log | main | Logging initialized @1759ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-17T15:13:57,547 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-17T15:13:57,629 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-17T15:13:57,651 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@2298bd9c{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-17T15:13:57,651 | INFO | o.e.j.s.Server | main | Started @2055ms
+2018-10-17T15:20:31,207 | INFO | o.e.j.u.log | main | Logging initialized @1876ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-17T15:20:31,419 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-17T15:20:31,519 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-17T15:20:31,533 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-17T15:20:31,533 | INFO | o.e.j.s.Server | main | Started @2204ms
+2018-10-17T15:23:21,751 | INFO | o.e.j.u.log | main | Logging initialized @1574ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-17T15:23:21,956 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-17T15:23:22,057 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-17T15:23:22,069 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-17T15:23:22,069 | INFO | o.e.j.s.Server | main | Started @1894ms
+2018-10-17T15:45:51,968 | INFO | o.e.j.u.log | main | Logging initialized @1611ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-17T15:45:52,173 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-17T15:45:52,252 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-17T15:45:52,261 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@2298bd9c{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-17T15:45:52,261 | INFO | o.e.j.s.Server | main | Started @1912ms
+2018-10-17T15:54:20,411 | INFO | o.e.j.u.log | main | Logging initialized @1514ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-17T15:54:20,634 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-17T15:54:20,746 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-17T15:54:20,770 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@20f42195{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-17T15:54:20,770 | INFO | o.e.j.s.Server | main | Started @1880ms
+2018-10-17T15:57:36,933 | INFO | o.e.j.u.log | main | Logging initialized @1656ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-17T15:57:37,081 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-17T15:57:37,120 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-17T15:57:37,140 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@5a8768ee{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-17T15:57:37,140 | INFO | o.e.j.s.Server | main | Started @1867ms
+2018-10-17T15:58:32,670 | INFO | o.e.j.u.log | main | Logging initialized @1691ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-17T15:58:32,834 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-17T15:58:32,909 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-17T15:58:32,929 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-17T15:58:32,929 | INFO | o.e.j.s.Server | main | Started @1951ms
+2018-10-18T10:18:42,423 | INFO | o.e.j.u.log | main | Logging initialized @1820ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-18T10:18:42,554 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-18T10:18:42,599 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-18T10:18:42,612 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-18T10:18:42,613 | INFO | o.e.j.s.Server | main | Started @2012ms
+2018-10-18T10:19:08,345 | INFO | o.e.j.u.log | main | Logging initialized @1752ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-18T10:19:08,511 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-18T10:19:08,612 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-18T10:19:08,630 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-18T10:19:08,631 | INFO | o.e.j.s.Server | main | Started @2039ms
+2018-10-18T10:19:32,766 | INFO | o.e.j.u.log | main | Logging initialized @1734ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-18T10:19:32,923 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-18T10:19:33,018 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@446a1e84{/,null,AVAILABLE}
+2018-10-18T10:19:33,039 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@580eedc9{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-18T10:19:33,039 | INFO | o.e.j.s.Server | main | Started @2009ms
+2018-10-18T10:19:56,384 | INFO | o.e.j.u.log | main | Logging initialized @1693ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-18T10:19:56,600 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-18T10:19:56,659 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-18T10:19:56,673 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@1ab225a5{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-18T10:19:56,673 | INFO | o.e.j.s.Server | main | Started @1984ms
+2018-10-18T10:23:45,067 | INFO | o.e.j.u.log | main | Logging initialized @1717ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-18T10:23:45,206 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-18T10:23:45,284 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-18T10:23:45,299 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-18T10:23:45,299 | INFO | o.e.j.s.Server | main | Started @1951ms
+2018-10-18T10:25:55,228 | INFO | o.e.j.u.log | main | Logging initialized @1514ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-18T10:25:55,449 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-18T10:25:55,505 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-18T10:25:55,531 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-18T10:25:55,531 | INFO | o.e.j.s.Server | main | Started @1814ms
+2018-10-18T11:03:53,148 | INFO | o.e.j.u.log | main | Logging initialized @1705ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-18T11:03:53,297 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-18T11:03:53,383 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-18T11:03:53,396 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-18T11:03:53,398 | INFO | o.e.j.s.Server | main | Started @1956ms
+2018-10-18T11:04:10,228 | INFO | o.e.j.u.log | main | Logging initialized @1650ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-18T11:04:10,382 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-18T11:04:10,464 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-18T11:04:10,492 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@20f42195{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-18T11:04:10,492 | INFO | o.e.j.s.Server | main | Started @1916ms
+2018-10-23T09:58:58,687 | INFO | o.e.j.u.log | main | Logging initialized @1525ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-23T09:58:58,872 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-23T09:58:58,929 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@58e1d9d{/,null,AVAILABLE}
+2018-10-23T09:58:58,945 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@66ea810{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-23T09:58:58,945 | INFO | o.e.j.s.Server | main | Started @1785ms
+2018-10-28T12:10:00,826 | INFO | o.e.j.u.log | main | Logging initialized @1863ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-28T12:10:00,916 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-28T12:10:00,950 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@387a8303{/,null,AVAILABLE}
+2018-10-28T12:10:00,962 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@14bdbc74{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-28T12:10:00,962 | INFO | o.e.j.s.Server | main | Started @2001ms
+2018-10-28T12:28:05,789 | INFO | o.e.j.u.log | main | Logging initialized @1520ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-28T12:28:05,949 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-28T12:28:06,022 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@387a8303{/,null,AVAILABLE}
+2018-10-28T12:28:06,035 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@14bdbc74{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-28T12:28:06,035 | INFO | o.e.j.s.Server | main | Started @1769ms
+2018-10-28T12:40:23,290 | INFO | o.e.j.u.log | main | Logging initialized @1761ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-28T12:40:23,522 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-28T12:40:23,574 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@387a8303{/,null,AVAILABLE}
+2018-10-28T12:40:23,600 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@7b273917{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-28T12:40:23,600 | INFO | o.e.j.s.Server | main | Started @2073ms
+2018-10-28T12:40:59,356 | INFO | o.e.j.u.log | main | Logging initialized @1567ms to org.eclipse.jetty.util.log.Slf4jLog
+2018-10-28T12:40:59,572 | INFO | o.e.j.s.Server | main | jetty-9.4.12.v20180830; built: 2018-08-30T13:59:14.071Z; git: 27208684755d94a92186989f695db2d7b21ebc51; jvm 1.8.0_181-b13
+2018-10-28T12:40:59,630 | INFO | o.e.j.s.h.ContextHandler | main | Started o.e.j.s.ServletContextHandler@387a8303{/,null,AVAILABLE}
+2018-10-28T12:40:59,642 | INFO | o.e.j.s.AbstractConnector | main | Started ServerConnector@14bdbc74{HTTP/1.1,[http/1.1]}{0.0.0.0:1111}
+2018-10-28T12:40:59,642 | INFO | o.e.j.s.Server | main | Started @1856ms

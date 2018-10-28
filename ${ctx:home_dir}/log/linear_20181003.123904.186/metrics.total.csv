@@ -1,0 +1,2 @@
+DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,StepDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]
+"2018-10-03T12:39:15,723",UPDATE,1,1,0,0.0,7669,1,8041529344,11.475,4.760892,668.322440087146,340.94805738097995,7.007868709368192E8,3.575099502163184E8,1162.0,250,1110,757,560,38707,287.0,250,53,97,324,32932

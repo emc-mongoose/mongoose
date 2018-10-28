@@ -1,0 +1,46 @@
+2018-10-03T12:29:49,740 | INFO |  | main | linear_20181003.122949.731: creating the storage driver instance for the type "s3"
+2018-10-03T12:29:49,741 | INFO |  | main | storage/driver/1/amzs3/1886567481: use 4 I/O workers
+2018-10-03T12:29:49,763 | DEBUG |  | main | Using the file "list2.csv" as items input
+2018-10-03T12:29:49,765 | INFO |  | main | linear_20181003.122949.731: scatter the items from the input "DataItemsFromFile(list2.csv)"...
+2018-10-03T12:29:49,768 | INFO |  | main | linear_20181003.122949.731: slice the item input "DataItemsFromFile(list2.csv)"...
+2018-10-03T12:29:49,773 | INFO |  | main | Items input "DataItemsFromFile(list2.csv)": starting to distribute the items among the 1 load step slices
+2018-10-03T12:29:49,817 | INFO |  | main | Items input "DataItemsFromFile(list2.csv)": 200 items was distributed among the 1 load step slices
+2018-10-03T12:29:49,820 | DEBUG |  | main | linear_20181003.122949.731: item input file slicer initialized
+2018-10-03T12:29:49,823 | DEBUG |  | main | storage/driver/1/amzs3/1886567481: closed
+2018-10-03T12:29:49,823 | DEBUG |  | main | linear_20181003.122949.731: item output file aggregator initialized
+2018-10-03T12:29:49,828 | INFO |  | main | linear_20181003.122949.731: creating the storage driver instance for the type "s3"
+2018-10-03T12:29:49,829 | INFO |  | main | storage/driver/1/amzs3/1526305386: use 4 I/O workers
+2018-10-03T12:29:49,843 | DEBUG |  | main | Using the file "/tmp/mongoose/343513246555499" as items input
+2018-10-03T12:29:49,869 | DEBUG |  | main | Started the metrics manager fiber
+2018-10-03T12:29:49,869 | DEBUG |  | main | Metrics context "MetricsContextImpl(UPDATE-1x1@linear_20181003.122949.731)" registered
+2018-10-03T12:29:49,869 | INFO |  | main | linear_20181003.122949.731: load step client started, additional nodes: []
+2018-10-03T12:29:49,869 | DEBUG |  | main | linear_20181003.122949.731: await for 1 step slices for at most 9223372036854775807 seconds...
+2018-10-03T12:29:49,874 | DEBUG |  | ioWorker#2 | linear_20181003.122949.731: new unpooled connection -1039872920, pipeline: DefaultChannelPipeline{(NettyStorageDriverBase$1#0 = com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverBase$1), (IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:29:49,875 | DEBUG |  | fibers-executor-#1 | linear_20181003.122949.731: execute the HTTP request using the channel -1039872920 w/ pipeline: DefaultChannelPipeline{(IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:29:49,881 | DEBUG |  | ioWorker#3 | linear_20181003.122949.731: new unpooled connection 1166739973, pipeline: DefaultChannelPipeline{(NettyStorageDriverBase$1#0 = com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverBase$1), (IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:29:49,881 | DEBUG |  | fibers-executor-#1 | linear_20181003.122949.731: execute the HTTP request using the channel 1166739973 w/ pipeline: DefaultChannelPipeline{(IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:29:49,905 | DEBUG |  | fibers-executor-#1 | End of items input "binFileInput<343513246555499>"
+2018-10-03T12:30:11,622 | DEBUG |  | fibers-executor-#1 | linear_20181003.122949.731: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:30:11,622 | INFO |  | fibers-executor-#1 | linear_20181003.122949.731: done due to max count (20000) done state
+2018-10-03T12:30:11,628 | DEBUG |  | fibers-executor-#1 | linear_20181003.122949.731: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:30:11,628 | INFO |  | fibers-executor-#1 | linear_20181003.122949.731: done due to max count (20000) done state
+2018-10-03T12:30:11,629 | DEBUG |  | fibers-executor-#4 | linear_20181003.122949.731: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:30:11,629 | DEBUG |  | fibers-executor-#1 | linear_20181003.122949.731: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:30:11,629 | INFO |  | fibers-executor-#1 | linear_20181003.122949.731: done due to max count (20000) done state
+2018-10-03T12:30:11,629 | INFO |  | fibers-executor-#4 | linear_20181003.122949.731: done due to max count (20000) done state
+2018-10-03T12:30:11,632 | DEBUG |  | main | storage/driver/1/amzs3/1526305386: shutdown the I/O executor
+2018-10-03T12:30:11,638 | DEBUG |  | main | linear_20181003.122949.731: storage driver storage/driver/1/amzs3/1526305386 stopped
+2018-10-03T12:30:11,638 | DEBUG |  | main | linear_20181003.122949.731: final results processing start
+2018-10-03T12:30:11,638 | DEBUG |  | main | linear_20181003.122949.731: final results processing done
+2018-10-03T12:30:11,638 | INFO |  | main | linear_20181003.122949.731: please wait while performing 200 I/O results output...
+2018-10-03T12:30:11,690 | INFO |  | main | linear_20181003.122949.731: I/O results output done
+2018-10-03T12:30:11,737 | DEBUG |  | main | linear_20181003.122949.731: poisoned the items output
+2018-10-03T12:30:11,741 | DEBUG |  | main | linear_20181003.122949.731: interrupted the load step context
+2018-10-03T12:30:11,743 | DEBUG |  | main | Metrics context "MetricsContextImpl(UPDATE-1x1@linear_20181003.122949.731)" unregistered
+2018-10-03T12:30:11,745 | DEBUG |  | main | Metrics context "DistributedMetricsContextImpl(UPDATE-1x1@linear_20181003.122949.731)" unregistered
+2018-10-03T12:30:11,747 | DEBUG |  | main | storage/driver/1/amzs3/1526305386: closed
+2018-10-03T12:30:11,747 | DEBUG |  | main | linear_20181003.122949.731: closed the load step context
+2018-10-03T12:30:11,747 | DEBUG |  | main | linear_20181003.122949.731: step slice "com.emc.mongoose.load.step.linear.LinearLoadStepLocal@2db2cd5" closed
+2018-10-03T12:30:11,747 | DEBUG |  | main | linear_20181003.122949.731: closed all 1 step slices
+2018-10-03T12:30:11,748 | INFO |  | collectItemOutputFileWorker#2 | "list1.csv" <- transferred 0B of the output items data...
+2018-10-03T12:30:11,748 | INFO |  | main | "list1.csv" <- transferred 0B of the output items data

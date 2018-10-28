@@ -36,7 +36,7 @@ https://docs.openstack.org/swift/latest/overview_large_objects.html#direct-api
 ### 1.2. Configuration
 
 The "***item-data-ranges-threshold***" configuration parameter controls the SSC behavior.
-The value is the [size in bytes](../../../../input/configuration#132-size). Any new generated object is
+The value is the [size in bytes](../../../../interfaces/input/configuration#132-size). Any new generated object is
 treated as "*large*" if its size is more or equal than the configured threshold. *Large* objects are
 being split into the 2 or more parts with the size not more than the configured value above.
 

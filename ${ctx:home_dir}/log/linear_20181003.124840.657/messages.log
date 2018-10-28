@@ -1,0 +1,152 @@
+2018-10-03T12:48:40,692 | INFO |  | main | linear_20181003.124840.657: creating the storage driver instance for the type "s3"
+2018-10-03T12:48:40,702 | INFO |  | main | storage/driver/1/amzs3/710220387: use 4 I/O workers
+2018-10-03T12:48:40,703 | DEBUG |  | main | Using the file "list2.csv" as items input
+2018-10-03T12:48:40,703 | INFO |  | main | linear_20181003.124840.657: scatter the items from the input "DataItemsFromFile(list2.csv)"...
+2018-10-03T12:48:40,703 | INFO |  | main | linear_20181003.124840.657: slice the item input "DataItemsFromFile(list2.csv)"...
+2018-10-03T12:48:40,703 | INFO |  | main | Items input "DataItemsFromFile(list2.csv)": starting to distribute the items among the 1 load step slices
+2018-10-03T12:48:40,729 | INFO |  | main | Items input "DataItemsFromFile(list2.csv)": 200 items was distributed among the 1 load step slices
+2018-10-03T12:48:40,729 | DEBUG |  | main | linear_20181003.124840.657: item input file slicer initialized
+2018-10-03T12:48:40,729 | DEBUG |  | main | storage/driver/1/amzs3/710220387: closed
+2018-10-03T12:48:40,730 | DEBUG |  | main | linear_20181003.124840.657: item output file aggregator initialized
+2018-10-03T12:48:40,736 | INFO |  | main | linear_20181003.124840.657: creating the storage driver instance for the type "s3"
+2018-10-03T12:48:40,740 | INFO |  | main | storage/driver/1/amzs3/1481751887: use 4 I/O workers
+2018-10-03T12:48:40,741 | DEBUG |  | main | Using the file "/tmp/mongoose/344644185474084" as items input
+2018-10-03T12:48:40,779 | DEBUG |  | main | Started the metrics manager fiber
+2018-10-03T12:48:40,779 | DEBUG |  | main | Metrics context "MetricsContextImpl(UPDATE-1x1@linear_20181003.124840.657)" registered
+2018-10-03T12:48:40,779 | INFO |  | main | linear_20181003.124840.657: load step client started, additional nodes: []
+2018-10-03T12:48:40,780 | DEBUG |  | main | linear_20181003.124840.657: await for 1 step slices for at most 9223372036854775807 seconds...
+2018-10-03T12:48:40,784 | DEBUG |  | ioWorker#2 | linear_20181003.124840.657: new unpooled connection -979256794, pipeline: DefaultChannelPipeline{(NettyStorageDriverBase$1#0 = com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverBase$1), (IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:48:40,784 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: execute the HTTP request using the channel -979256794 w/ pipeline: DefaultChannelPipeline{(IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:48:40,798 | DEBUG |  | ioWorker#3 | linear_20181003.124840.657: new unpooled connection 113368335, pipeline: DefaultChannelPipeline{(NettyStorageDriverBase$1#0 = com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverBase$1), (IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:48:40,800 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: execute the HTTP request using the channel 113368335 w/ pipeline: DefaultChannelPipeline{(IdleStateHandler#0 = io.netty.handler.timeout.IdleStateHandler), (HttpClientCodec#0 = io.netty.handler.codec.http.HttpClientCodec), (ChunkedWriteHandler#0 = io.netty.handler.stream.ChunkedWriteHandler), (AmzS3ResponseHandler#0 = com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3ResponseHandler)}
+2018-10-03T12:48:40,823 | DEBUG |  | fibers-executor-#1 | End of items input "binFileInput<344644185474084>"
+2018-10-03T12:49:02,234 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,234 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,242 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,242 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,247 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,247 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,266 | DEBUG |  | fibers-executor-#3 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,269 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,270 | INFO |  | fibers-executor-#4 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,271 | INFO |  | fibers-executor-#3 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,273 | DEBUG |  | fibers-executor-#3 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,278 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,278 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,278 | INFO |  | fibers-executor-#3 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,280 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,280 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,280 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,280 | INFO |  | fibers-executor-#4 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,283 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,283 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,310 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,310 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,320 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,320 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,325 | DEBUG |  | fibers-executor-#3 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,325 | INFO |  | fibers-executor-#3 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,365 | DEBUG |  | fibers-executor-#3 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,366 | INFO |  | fibers-executor-#3 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,384 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,384 | INFO |  | fibers-executor-#4 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,399 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,399 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,415 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,416 | INFO |  | fibers-executor-#4 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,417 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,417 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,421 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,421 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,428 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,428 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,430 | DEBUG |  | fibers-executor-#3 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,430 | INFO |  | fibers-executor-#3 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,466 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,466 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,468 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,468 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,480 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,481 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,500 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,500 | INFO |  | fibers-executor-#4 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,510 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,510 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,516 | DEBUG |  | fibers-executor-#3 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,517 | INFO |  | fibers-executor-#3 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,525 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,525 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,530 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,530 | INFO |  | fibers-executor-#4 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,536 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,536 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,537 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,537 | INFO |  | fibers-executor-#4 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,542 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,543 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,549 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,550 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,552 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,552 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,571 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,571 | INFO |  | fibers-executor-#4 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,579 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,579 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,583 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,583 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,586 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,587 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,593 | DEBUG |  | fibers-executor-#3 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,593 | INFO |  | fibers-executor-#3 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,608 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,608 | INFO |  | fibers-executor-#4 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,634 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,635 | INFO |  | fibers-executor-#4 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,642 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,642 | INFO |  | fibers-executor-#4 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,674 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,674 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,686 | DEBUG |  | fibers-executor-#3 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,686 | INFO |  | fibers-executor-#3 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,689 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,690 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,692 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,692 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,695 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,695 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,700 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,700 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,700 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,700 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,715 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,716 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,745 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,745 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,763 | DEBUG |  | fibers-executor-#4 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,763 | INFO |  | fibers-executor-#4 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,768 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,768 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,789 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,789 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,794 | DEBUG |  | fibers-executor-#2 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,794 | INFO |  | fibers-executor-#2 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,796 | DEBUG |  | fibers-executor-#3 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,796 | INFO |  | fibers-executor-#3 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,797 | DEBUG |  | fibers-executor-#1 | linear_20181003.124840.657: count limit reached, 20000 results >= 20000 limit
+2018-10-03T12:49:02,797 | INFO |  | fibers-executor-#1 | linear_20181003.124840.657: done due to max count (20000) done state
+2018-10-03T12:49:02,800 | DEBUG |  | main | storage/driver/1/amzs3/1481751887: shutdown the I/O executor
+2018-10-03T12:49:02,816 | DEBUG |  | main | linear_20181003.124840.657: storage driver storage/driver/1/amzs3/1481751887 stopped
+2018-10-03T12:49:02,816 | DEBUG |  | main | linear_20181003.124840.657: final results processing start
+2018-10-03T12:49:02,816 | DEBUG |  | main | linear_20181003.124840.657: final results processing done
+2018-10-03T12:49:02,816 | INFO |  | main | linear_20181003.124840.657: please wait while performing 200 I/O results output...
+2018-10-03T12:49:02,846 | INFO |  | main | linear_20181003.124840.657: I/O results output done
+2018-10-03T12:49:02,863 | DEBUG |  | main | linear_20181003.124840.657: poisoned the items output
+2018-10-03T12:49:02,863 | DEBUG |  | main | linear_20181003.124840.657: interrupted the load step context
+2018-10-03T12:49:02,868 | DEBUG |  | main | Metrics context "MetricsContextImpl(UPDATE-1x1@linear_20181003.124840.657)" unregistered
+2018-10-03T12:49:02,871 | DEBUG |  | main | Metrics context "DistributedMetricsContextImpl(UPDATE-1x1@linear_20181003.124840.657)" unregistered
+2018-10-03T12:49:02,872 | DEBUG |  | main | storage/driver/1/amzs3/1481751887: closed
+2018-10-03T12:49:02,875 | DEBUG |  | main | linear_20181003.124840.657: closed the load step context
+2018-10-03T12:49:02,875 | DEBUG |  | main | linear_20181003.124840.657: step slice "com.emc.mongoose.load.step.linear.LinearLoadStepLocal@58a55449" closed
+2018-10-03T12:49:02,875 | DEBUG |  | main | linear_20181003.124840.657: closed all 1 step slices
+2018-10-03T12:49:02,875 | INFO |  | collectItemOutputFileWorker#2 | "list1.csv" <- transferred 0B of the output items data...
+2018-10-03T12:49:02,876 | INFO |  | main | "list1.csv" <- transferred 0B of the output items data
