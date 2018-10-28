@@ -79,7 +79,7 @@ items have been updated (modified).
 java -jar mongoose-<VERSION>.jar --read --item-data-verify --item-input-file=items.csv ...
 ```
 
-An load operation is reported with the [status code](../../../../interfaces/output#232-files) 12 if the content verification fails.
+An load operation is reported with the [status code](../../../../output#232-files) 12 if the content verification fails.
 
 ## 3. Update
 

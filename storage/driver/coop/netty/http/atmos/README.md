@@ -44,6 +44,7 @@ java -jar mongoose-<VERSION>.jar \
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
 | storage-net-http-fsAccess                      | Flag | false | Specifies whether filesystem access is enabled or not
+| storage-net-http-namespace                     | String | null | The HTTP storage namespace.
 
 ### 2.2. Notes
 

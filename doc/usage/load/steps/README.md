@@ -7,7 +7,7 @@ The load step ids are used primarily to distinguish the load step results.
 java -jar mongoose-<VERSION>.jar --load-step-id=custom_test_0 ...
 ```
 
-See also the [output reference](../../../interfaces/output#111-load-step-id)
+See also the [output reference](../../../output#111-load-step-id)
 
 ## 2. Limits
 
