@@ -91,9 +91,24 @@ allprojects {
 
 		exclude "com/emc/mongoose/endurance/*"
 		exclude "com/emc/mongoose/integration/*"
+		exclude "com/emc/mongoose/perf/*"
 		exclude "com/emc/mongoose/system/*"
 		exclude "**/TemplateTest.*"
 		exclude "**/*PerfTest.*"
+		jvmArgs "-XX:MaxDirectMemorySize=2g"
+		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
+		maxHeapSize "2g"
+		testLogging {
+			events "passed", "skipped", "failed", "standardOut"
+			showExceptions = true
+			showStandardStreams = true
+		}
+	}
+
+	task perfTest(type: Test) {
+
+		include "com/emc/mongoose/perf/*"
+
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
@@ -133,18 +148,6 @@ allprojects {
 	task enduranceTest(type: Test) {
 		include "com/emc/mongoose/endurance/*"
 		maxHeapSize "1g"
-		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
-			showExceptions = true
-			showStandardStreams = true
-		}
-	}
-
-	task perfTest(type: Test) {
-		include "**/*PerfTest.*"
-		jvmArgs "-XX:MaxDirectMemorySize=2g"
-		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
-		maxHeapSize "2g"
 		testLogging {
 			events "passed", "skipped", "failed", "standardOut"
 			showExceptions = true
@@ -284,6 +287,7 @@ dependencies {
 		"org.apache.commons:commons-csv:1.1",
 		"com.google.guava:guava:25.1-jre",
 		"org.apache.commons:commons-math3:3.6.1",
+		"org.mockito:mockito-core:2.23.0",
 	)
 }
 

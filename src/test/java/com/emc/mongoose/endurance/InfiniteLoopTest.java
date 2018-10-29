@@ -78,7 +78,7 @@ public class InfiniteLoopTest {
 		final List<String> args = new ArrayList<>();
 		switch(storageType) {
 			case SWIFT:
-				args.add("--storage-net-http-namespace=ns1");
+				args.add("--storage-namespace=ns1");
 			case ATMOS:
 			case S3:
 				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(

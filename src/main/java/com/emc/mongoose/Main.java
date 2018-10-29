@@ -83,10 +83,11 @@ public final class Main {
 				}
 				// init the metrics manager
 				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
+
+				final int port = configWithArgs.intVal("run-port");
 				if(configWithArgs.boolVal("run-node")) {
 					runNode(configWithArgs, extensions, metricsMgr);
 				} else {
-					final int port = configWithArgs.intVal("run-port");
 					final Server server = new Server(port);
 					addServices(server, defaultConfig);
 					server.start();

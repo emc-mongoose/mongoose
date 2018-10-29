@@ -37,9 +37,11 @@
 &nbsp;&nbsp;&nbsp;&nbsp;3.3.4. [Swift](storage/driver/coop/netty/http/swift)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.3.5. [FS](storage/driver/coop/nio/fs)<br/>
 &nbsp;&nbsp;3.4. [Dependencies](doc/dependencies)<br/>
-&nbsp;&nbsp;3.5. [Input](doc/input)<br/>
-&nbsp;&nbsp;3.6. [Output](doc/output)<br/>
-&nbsp;&nbsp;3.7. Design<br/>
+&nbsp;&nbsp;3.5. [Interfaces](doc/interfaces#interfaces)<br/>
+&nbsp;&nbsp;&nbsp;3.5.1 [Input](doc/interfaces/input)<br/>
+&nbsp;&nbsp;&nbsp;3.5.2 [Output](doc/interfaces/output)<br/>
+&nbsp;&nbsp;&nbsp;3.5.3 API<br/>
+&nbsp;&nbsp;3.6. Design<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.1. [Architecture](doc/design/architecture)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.2. [Distributed Mode](doc/design/distributed_mode)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.3. [Installer](src/main/java/com/emc/mongoose/env)<br/>
@@ -49,9 +51,8 @@
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.7. [Copy Mode](doc/design/copy_mode)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.8. [Pipeline Load](load/step/pipeline)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.9. [Weighted Load](load/step/weighted)<br/>
-&nbsp;&nbsp;3.8. [Integrations](doc/integrations)<br/>
-&nbsp;&nbsp;3.9. [Contributing](CONTRIBUTING.md)<br/>
-&nbsp;&nbsp;3.10. [Changelog](doc/changelog)<br/>
+&nbsp;&nbsp;3.8. [Contributing](CONTRIBUTING.md)<br/>
+&nbsp;&nbsp;3.9. [Changelog](doc/changelog)<br/>
 
 # 1. Overview
 
@@ -140,7 +141,7 @@ bottleneck.
 
 ### 2.3.1. Flexible Configuration
 
-Supports the [parameterization](doc/input/configuration#2-parameterization) and extension but remains type-safe and
+Supports the [parameterization](doc/interfaces/input/configuration#2-parameterization) and extension but remains type-safe and
 structure-safe.
 
 ### 2.3.2. Load Generation Patterns
@@ -163,11 +164,11 @@ structure-safe.
 
 * Custom Payload Data
 
-### 2.3.3. [Scenarios](doc/input/scenarios)
+### 2.3.3. [Scenarios](doc/interfaces/input/scenarios)
 
 Scenaruis allow to organize the load steps in the required order and reuse the complex performance tests
 
-### 2.3.4. [Metrics Reporting](doc/output#2-metrics)
+### 2.3.4. [Metrics Reporting](doc/interfaces/output#2-metrics)
 
 The metrics reported by Mongoose are designed to be most useful for the performance analysis. The following metrics are
 available:
