@@ -138,7 +138,7 @@ extends ContainerBase {
 				}
 				break;
 			case SWIFT:
-				args.add("--storage-namespace=ns1");
+				args.add("--storage-net-http-namespace=ns1");
 				break;
 		}
 	}

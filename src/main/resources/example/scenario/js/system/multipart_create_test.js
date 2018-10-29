@@ -17,7 +17,11 @@ Load
         }
       },
       "storage" : {
-        "namespace" : "ns1"
+        "net" : {
+          "http" : {
+            "namespace" : "ns1"
+          }
+        }
       },
       "load" : {
         "batch" : {

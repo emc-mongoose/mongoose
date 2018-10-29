@@ -2,6 +2,9 @@
 	"storage": {
 		"net": {
 			"http": {
+				// The storage namespace.
+				// WARNING: the default value (null) will not work in the case of Swift API
+				"namespace": null,
 				// Specifies whether the versioning storage feature is used or not
 				"versioning": false
 			}

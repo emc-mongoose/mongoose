@@ -94,7 +94,7 @@ extends AtmosStorageDriver {
 			config.val("storage-net-node-addrs", Collections.singletonList("127.0.0.1"));
 			config.val("storage-net-node-port", 9024);
 			config.val("storage-net-node-connAttemptsLimit", 0);
-			config.val("storage-namespace", NS);
+			config.val("storage-net-http-namespace", NS);
 			config.val("storage-net-http-fsAccess", false);
 			config.val("storage-net-http-headers", Collections.EMPTY_MAP);
 			config.val("storage-net-http-uri-args", Collections.EMPTY_MAP);
