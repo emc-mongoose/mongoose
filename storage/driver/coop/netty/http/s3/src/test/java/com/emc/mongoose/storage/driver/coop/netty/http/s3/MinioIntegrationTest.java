@@ -108,6 +108,7 @@ public class MinioIntegrationTest {
 		storageDriver = new AmzS3StorageDriver<>(
 			"test-storage-driver-s3", dataInput, config.configVal("storage"), false, 4096
 		);
+		storageDriver.start();
 	}
 
 	@AfterClass
@@ -125,7 +126,6 @@ public class MinioIntegrationTest {
 		final DataOperation<DataItem> createObjOp = new DataOperationImpl<>(
 			0, CREATE, object, null, "/play/test_object", CREDENTIAL, null, 0
 		);
-		storageDriver.start();
 		assertTrue(storageDriver.put(createObjOp));
 		while(!storageDriver.hasRemainingResults()) {
 			LockSupport.parkNanos(1);
