@@ -47,7 +47,7 @@ implements RateMeter<RateMetricSnapshot> {
 		final long oldTick = lastTick.get();
 		final long newTick = clock.millis();
 		final long ageMillis = newTick - oldTick;
-		if(ageMillis > TICK_INTERVAL_MILLIS ) {
+		if(ageMillis > TICK_INTERVAL_MILLIS) {
 			final long newIntervalStartTick = newTick - ageMillis % TICK_INTERVAL_MILLIS;
 			if(lastTick.compareAndSet(oldTick, newIntervalStartTick)) {
 				final long requiredTicks = ageMillis / TICK_INTERVAL_MILLIS;

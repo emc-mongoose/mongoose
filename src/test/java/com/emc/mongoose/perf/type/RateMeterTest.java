@@ -21,9 +21,7 @@ public class RateMeterTest {
 	@Test
 	public void test()
 	throws InterruptedException {
-		final RateMeter<RateMetricSnapshot> meter = new RateMeterImpl(
-			Clock.systemDefaultZone(), PERIOD_SEC, "SOME_RATE"
-		);
+		final RateMeter<RateMetricSnapshot> meter = new RateMeterImpl(Clock.systemUTC(), "SOME_RATE");
 		for(int i = 0; i < INTERVALS; ++ i) {
 			meter.update(1);
 			TimeUnit.MILLISECONDS.sleep(SLEEP_MILLISEC);
@@ -42,5 +40,11 @@ public class RateMeterTest {
 		meter.resetStartTime();
 		snapshot = meter.snapshot();
 		Assert.assertEquals(snapshot.elapsedTimeMillis(), 0);
+	}
+
+	@Test
+	public void test2()
+	throws Exception {
+
 	}
 }
