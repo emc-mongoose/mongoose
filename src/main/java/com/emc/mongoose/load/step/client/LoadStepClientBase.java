@@ -171,9 +171,9 @@ public abstract class LoadStepClientBase
 				Loggers.MSG.debug("{}: item input file slicer initialized", id());
 			}
 		} catch(final IOException e) {
-			LogUtil.exception(Level.WARN, e, "{}: failed to close the item input");
+			LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", id());
 		} catch(final OmgShootMyFootException e) {
-			LogUtil.exception(Level.ERROR, e, "{}: failed to init the storage driver");
+			LogUtil.exception(Level.ERROR, e, "{}: failed to init the storage driver", id());
 		} catch(final InterruptedException e) {
 			throw new InterruptRunException(e);
 		}
@@ -337,9 +337,9 @@ public abstract class LoadStepClientBase
 		final boolean metricsSumPersistFlag = metricsConfig.boolVal("summary-persist");
 		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
 		final List<Double> quantileValues = metricsConfig.listVal("quantiles")
-														 .stream()
-														 .map(v -> Double.valueOf(v.toString()))
-														 .collect(Collectors.toList());
+			.stream()
+			.map(v -> Double.valueOf(v.toString()))
+			.collect(Collectors.toList());
 		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
 		// further usage
 		final DistributedMetricsContext metricsCtx = new DistributedMetricsContextImpl<>(

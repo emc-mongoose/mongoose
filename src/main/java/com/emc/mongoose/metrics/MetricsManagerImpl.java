@@ -11,6 +11,7 @@ import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshot;
 import com.emc.mongoose.metrics.util.PrometheusMetricsExporter;
 import com.emc.mongoose.metrics.util.PrometheusMetricsExporterImpl;
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
@@ -104,7 +105,7 @@ public class MetricsManagerImpl
 					}
 				}
 				// console output
-				if(! selectedMetrics.isEmpty()) {
+				if(!selectedMetrics.isEmpty()) {
 					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
 					selectedMetrics.clear();
 				}
@@ -163,7 +164,7 @@ public class MetricsManagerImpl
 		) {
 			if(allMetrics.remove(metricsCtx)) {
 				try {
-					if(! outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
+					if(!outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 						Loggers.ERR.warn(
 							"Acquire lock timeout while unregistering the metrics context \"{}\"", metricsCtx
 						);
@@ -174,19 +175,21 @@ public class MetricsManagerImpl
 					if(metricsCtx.thresholdStateEntered() && ! metricsCtx.thresholdStateExited()) {
 						exitMetricsThresholdState(metricsCtx);
 					}
-					// file output
-					if(metricsCtx.sumPersistEnabled()) {
-						Loggers.METRICS_FILE_TOTAL.info(
-							new MetricsCsvLogMessage(snapshot, metricsCtx.opType(), metricsCtx.concurrencyLimit())
-						);
-					}
-					if(metricsCtx.perfDbResultsFileEnabled()) {
-						Loggers.METRICS_EXT_RESULTS_FILE.info(
-							new ExtResultsXmlLogMessage(
-								metricsCtx.id(), snapshot, metricsCtx.startTimeStamp(), metricsCtx.opType(),
-								metricsCtx.concurrencyLimit(), metricsCtx.itemDataSize()
-							)
-						);
+					if(snapshot != null) {
+						// file output
+						if(metricsCtx.sumPersistEnabled()) {
+							Loggers.METRICS_FILE_TOTAL.info(
+								new MetricsCsvLogMessage(snapshot, metricsCtx.opType(), metricsCtx.concurrencyLimit())
+							);
+						}
+						if(metricsCtx.perfDbResultsFileEnabled()) {
+							Loggers.METRICS_EXT_RESULTS_FILE.info(
+								new ExtResultsXmlLogMessage(
+									metricsCtx.id(), snapshot, metricsCtx.startTimeStamp(), metricsCtx.opType(),
+									metricsCtx.concurrencyLimit(), metricsCtx.itemDataSize()
+								)
+							);
+						}
 					}
 					// console output
 					if(metricsCtx instanceof DistributedMetricsContext) {
@@ -194,7 +197,14 @@ public class MetricsManagerImpl
 						Loggers.METRICS_STD_OUT.info(
 							new MetricsAsciiTableLogMessage(Collections.singleton(metricsCtx))
 						);
-						Loggers.METRICS_STD_OUT.info(new StepResultsMetricsLogMessage(distributedMetricsCtx));
+						final DistributedAllMetricsSnapshot aggregSnapshot = (DistributedAllMetricsSnapshot) snapshot;
+						if(aggregSnapshot != null) {
+							Loggers.METRICS_STD_OUT.info(
+								new StepResultsMetricsLogMessage(
+									metricsCtx.opType(), metricsCtx.id(), metricsCtx.concurrencyLimit(), aggregSnapshot
+								)
+							);
+						}
 						final PrometheusMetricsExporter exporter = distributedMetrics.remove(distributedMetricsCtx);
 						if(exporter != null) {
 							CollectorRegistry.defaultRegistry.unregister((Collector) exporter);
