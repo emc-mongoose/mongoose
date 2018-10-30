@@ -19,7 +19,7 @@ There are 7 metrics:
 - transfered size in bytes (BYTES)
 - elapsed time.
 
-and 2 Primitive Types: Timing and Rate. Depends on the type of metric, which aggregation types are exported. The table below provides a description:
+and 3 Primitive Types: Timing, Rate, Concurrency. Depends on the type of metric, which aggregation types are exported. The table below provides a description:
   
   <table>
     <thead>
@@ -32,14 +32,16 @@ and 2 Primitive Types: Timing and Rate. Depends on the type of metric, which agg
     <tbody>
         <tr>
             <td>Duration</td>
-            <td rowspan=3>Timing</td>
-            <td rowspan=3> <ul><li>count<li>sum<li>mean<li>min<li>max<li>quntile_'value' <a href="https://github.com/emc-mongoose/mongoose/blob/BASE-1271-move-namespace-option/doc/interfaces/api/monitoring/README.md#quantiles"> (configured)<ul> </td>
+            <td rowspan=2>Timing</td>
+            <td rowspan=2> <ul><li>count<li>sum<li>mean<li>min<li>max<li>quntile_'value' <a href="https://github.com/emc-mongoose/mongoose/blob/BASE-1271-move-namespace-option/doc/interfaces/api/monitoring/README.md#quantiles"> (configured)<ul> </td>
         </tr>
         <tr>
             <td>Latency</td>
         </tr>
         <tr>
             <td>Concurrency</td>
+            <td>Concurrency</td>
+            <td><ul><li>mean<li>last</td>
         </tr>
         <tr>
             <td>Bytes</td>
@@ -68,23 +70,29 @@ In braces exported load step parameters:
 
 |Label name|Configured param|Type|
 |:---|:---|---|
-|`STEP_ID`|load-step-id|string|
-|`OP_TYPE`|load-op-type|string, [takes one of these values](https://github.com/emc-mongoose/mongoose/tree/master/doc/usage/load/operations/types#load-operation-types)|
-|`CONCURRENCY`|driver-limit-concurrency|integer|
-|`NODE_COUNT`|*count of addrs in* load-step-node-addrs|integer|
-|`ITEM_DATA_SIZE`|item-data-size|string with the unit suffix (KB, MB, ...)|
+|`load_step_id`|load-step-id|string|
+|`load_op_type`|load-op-type|string, [takes one of these values](https://github.com/emc-mongoose/mongoose/tree/master/doc/usage/load/operations/types#load-operation-types)|
+|`storage_driver_limit_concurrency`|storage-driver-limit-concurrency|integer|
+|`node_count`|*count of addrs in* load-step-node-addrs|integer|
+|`item_data_sizw`|item-data-size|string with the unit suffix (KB, MB, ...)|
+
+### Usage
+
+To view the metrics you need to start Mongoose and go to the `localhost:<run-port>`.
 
 #### Example:
 
 ````````````````````````````````
 # HELP DURATION 
 # TYPE DURATION gauge
-DURATION_count{STEP_ID="ExposedMetricsTest",OP_TYPE="CREATE",CONCURRENCY="0",NODE_COUNT="1",ITEM_DATA_SIZE="10KB",} 10.0
-DURATION_sum{STEP_ID="ExposedMetricsTest",OP_TYPE="CREATE",CONCURRENCY="0",NODE_COUNT="1",ITEM_DATA_SIZE="10KB",} 1.1E7
-DURATION_mean{STEP_ID="ExposedMetricsTest",OP_TYPE="CREATE",CONCURRENCY="0",NODE_COUNT="1",ITEM_DATA_SIZE="10KB",} 1100000.0
-DURATION_min{STEP_ID="ExposedMetricsTest",OP_TYPE="CREATE",CONCURRENCY="0",NODE_COUNT="1",ITEM_DATA_SIZE="10KB",} 1100000.0
-DURATION_max{STEP_ID="ExposedMetricsTest",OP_TYPE="CREATE",CONCURRENCY="0",NODE_COUNT="1",ITEM_DATA_SIZE="10KB",} 1100000.0
-# HELP ELAPSED_TIME 
+duration_count{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 10.0
+duration_sum{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.1E7
+duration_mean{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1100000.0
+duration_min{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1100000.0
+duration_quantile_0.25{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1100000.0
+duration_quantile_0.5{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1100000.0
+duration_quantile_0.75{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1100000.0
+duration_max{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1100000.0# HELP ELAPSED_TIME 
 # TYPE ELAPSED_TIME gauge
 ELAPSED_TIME_value{STEP_ID="ExposedMetricsTest",OP_TYPE="CREATE",CONCURRENCY="0",NODE_COUNT="1",ITEM_DATA_SIZE="10KB",} 11155.0
 ...

@@ -3,7 +3,9 @@
 		"net": {
 			"http": {
 				// Specifies whether filesystem access is enabled or not
-				"fsAccess": false
+				"fsAccess": false,
+				// The storage namespace.
+				"namespace": null
 			}
 		}
 	}

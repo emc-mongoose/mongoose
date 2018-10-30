@@ -18,15 +18,11 @@ import com.emc.mongoose.load.step.client.metrics.MetricsAggregatorImpl;
 import com.emc.mongoose.load.step.file.FileManager;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.context.DistributedMetricsContextImpl;
-import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.storage.driver.StorageDriver;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static com.emc.mongoose.config.ConfigUtil.flatten;
-
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.net.NetUtil;
@@ -34,9 +30,6 @@ import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
-
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
 import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
@@ -52,9 +45,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.config.ConfigUtil.flatten;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
+
 public abstract class LoadStepClientBase
-extends LoadStepBase
-implements LoadStepClient {
+	extends LoadStepBase
+	implements LoadStepClient {
 
 	private final List<LoadStep> stepSlices = new ArrayList<>();
 	private final List<FileManager> fileMgrs = new ArrayList<>();
@@ -118,11 +117,11 @@ implements LoadStepClient {
 		final int nodePort = nodeConfig.intVal("port");
 		final List<String> nodeAddrs = nodeConfig.listVal("addrs");
 		return nodeAddrs == null || nodeAddrs.isEmpty() ?
-			Collections.EMPTY_LIST :
-			nodeAddrs
-				.stream()
-				.map(addr -> NetUtil.addPortIfMissing(addr, nodePort))
-				.collect(Collectors.toList());
+			   Collections.EMPTY_LIST :
+			   nodeAddrs
+				   .stream()
+				   .map(addr -> NetUtil.addPortIfMissing(addr, nodePort))
+				   .collect(Collectors.toList());
 	}
 
 	private static void initFileManagers(final List<String> nodeAddrs, final List<FileManager> fileMgrsDst) {
@@ -172,14 +171,14 @@ implements LoadStepClient {
 				Loggers.MSG.debug("{}: item input file slicer initialized", id());
 			}
 		} catch(final IOException e) {
-			LogUtil.exception(Level.WARN, e, "{}: failed to close the item input");
+			LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", id());
 		} catch(final OmgShootMyFootException e) {
-			LogUtil.exception(Level.ERROR, e, "{}: failed to init the storage driver");
+			LogUtil.exception(Level.ERROR, e, "{}: failed to init the storage driver", id());
 		} catch(final InterruptedException e) {
 			throw new InterruptRunException(e);
 		}
 		final String itemOutputFile = config.stringVal("item-output-file");
-		if(itemOutputFile != null && !itemOutputFile.isEmpty()) {
+		if(itemOutputFile != null && ! itemOutputFile.isEmpty()) {
 			itemOutputFileAggregators.add(new ItemOutputFileAggregator(id(), fileMgrs, configSlices, itemOutputFile));
 			Loggers.MSG.debug("{}: item output file aggregator initialized", id());
 		}
@@ -337,20 +336,24 @@ implements LoadStepClient {
 		final boolean metricsAvgPersistFlag = metricsConfig.boolVal("average-persist");
 		final boolean metricsSumPersistFlag = metricsConfig.boolVal("summary-persist");
 		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
+		final List<Double> quantileValues = metricsConfig.listVal("quantiles")
+			.stream()
+			.map(v -> Double.valueOf(v.toString()))
+			.collect(Collectors.toList());
 		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
 		// further usage
 		final DistributedMetricsContext metricsCtx = new DistributedMetricsContextImpl<>(
 			id(), opType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
 			outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
-			() -> metricsSnapshotsByIndex(originIndex)
+			() -> metricsSnapshotsByIndex(originIndex), quantileValues
 		);
 		metricsContexts.add(metricsCtx);
 	}
 
 	private List<AllMetricsSnapshot> metricsSnapshotsByIndex(final int originIndex) {
 		return metricsAggregator == null ?
-			Collections.emptyList() :
-			metricsAggregator.metricsSnapshotsByIndex(originIndex);
+			   Collections.emptyList() :
+			   metricsAggregator.metricsSnapshotsByIndex(originIndex);
 	}
 
 	@Override
@@ -445,19 +448,15 @@ implements LoadStepClient {
 	@Override
 	protected final void doClose()
 	throws InterruptRunException, IOException {
-
 		try(
 			final Instance logCtx = put(KEY_STEP_ID, id())
 				.put(KEY_CLASS_NAME, getClass().getSimpleName())
 		) {
-
 			super.doClose();
-
 			if(null != metricsAggregator) {
 				metricsAggregator.close();
 				metricsAggregator = null;
 			}
-
 			stepSlices
 				.parallelStream()
 				.forEach(
@@ -476,7 +475,6 @@ implements LoadStepClient {
 				);
 			Loggers.MSG.debug("{}: closed all {} step slices", id(), stepSlices.size());
 			stepSlices.clear();
-
 			itemDataInputFileSlicers.forEach(
 				itemDataInputFileSlicer -> {
 					try {
@@ -492,7 +490,6 @@ implements LoadStepClient {
 				}
 			);
 			itemDataInputFileSlicers.clear();
-
 			itemInputFileSlicers.forEach(
 				itemInputFileSlicer -> {
 					try {
@@ -508,7 +505,6 @@ implements LoadStepClient {
 				}
 			);
 			itemInputFileSlicers.clear();
-
 			itemOutputFileAggregators
 				.parallelStream()
 				.forEach(
@@ -526,7 +522,6 @@ implements LoadStepClient {
 					}
 				);
 			itemOutputFileAggregators.clear();
-
 			opTraceLogFileAggregators
 				.parallelStream()
 				.forEach(
@@ -544,7 +539,6 @@ implements LoadStepClient {
 					}
 				);
 			opTraceLogFileAggregators.clear();
-
 			storageAuthFileSlicers.forEach(
 				storageAuthFileSlicer -> {
 					try {

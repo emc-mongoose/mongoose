@@ -3,16 +3,16 @@ package com.emc.mongoose.logging;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.context.MetricsContext;
-import org.apache.commons.lang.text.StrBuilder;
-
-import java.util.Date;
-import java.util.Set;
-
 import static com.emc.mongoose.Constants.MIB;
 import static com.emc.mongoose.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static com.emc.mongoose.logging.LogUtil.RESET;
 import static com.emc.mongoose.logging.LogUtil.getFailureRatioAnsiColorCode;
+
+import org.apache.commons.lang.text.StrBuilder;
 import static org.apache.commons.lang.SystemUtils.LINE_SEPARATOR;
+
+import java.util.Date;
+import java.util.Set;
 
 /**
  Created by kurila on 18.05.17.
@@ -48,71 +48,73 @@ extends LogMessageBase {
 			boolean stdOutColorFlag;
 			for(final MetricsContext metricsCtx : metrics) {
 				snapshot = metricsCtx.lastSnapshot();
-				succCount = snapshot.successSnapshot().count();
-				failCount = snapshot.failsSnapshot().count();
-				opType = metricsCtx.opType();
-				stdOutColorFlag = metricsCtx.stdOutColorEnabled();
-				if(0 == ROW_OUTPUT_COUNTER % TABLE_HEADER_PERIOD) {
-					strb.append(TABLE_HEADER);
-				}
-				ROW_OUTPUT_COUNTER++;
-				strb
-					.appendFixedWidthPadLeft(metricsCtx.id(), 10, ' ')
-					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft(FMT_DATE_METRICS_TABLE.format(new Date()), 12, ' ')
-					.append(TABLE_BORDER_VERTICAL);
-				if(stdOutColorFlag) {
-					switch(opType) {
-						case NOOP:
-							strb.append(LogUtil.NOOP_COLOR);
-							break;
-						case CREATE:
-							strb.append(LogUtil.CREATE_COLOR);
-							break;
-						case READ:
-							strb.append(LogUtil.READ_COLOR);
-							break;
-						case UPDATE:
-							strb.append(LogUtil.UPDATE_COLOR);
-							break;
-						case DELETE:
-							strb.append(LogUtil.DELETE_COLOR);
-							break;
-						case LIST:
-							strb.append(LogUtil.LIST_COLOR);
-							break;
+				if(snapshot != null) {
+					succCount = snapshot.successSnapshot().count();
+					failCount = snapshot.failsSnapshot().count();
+					opType = metricsCtx.opType();
+					stdOutColorFlag = metricsCtx.stdOutColorEnabled();
+					if(0 == ROW_OUTPUT_COUNTER % TABLE_HEADER_PERIOD) {
+						strb.append(TABLE_HEADER);
 					}
+					ROW_OUTPUT_COUNTER ++;
+					strb
+						.appendFixedWidthPadLeft(metricsCtx.id(), 10, ' ')
+						.append(TABLE_BORDER_VERTICAL)
+						.appendFixedWidthPadLeft(FMT_DATE_METRICS_TABLE.format(new Date()), 12, ' ')
+						.append(TABLE_BORDER_VERTICAL);
+					if(stdOutColorFlag) {
+						switch(opType) {
+							case NOOP:
+								strb.append(LogUtil.NOOP_COLOR);
+								break;
+							case CREATE:
+								strb.append(LogUtil.CREATE_COLOR);
+								break;
+							case READ:
+								strb.append(LogUtil.READ_COLOR);
+								break;
+							case UPDATE:
+								strb.append(LogUtil.UPDATE_COLOR);
+								break;
+							case DELETE:
+								strb.append(LogUtil.DELETE_COLOR);
+								break;
+							case LIST:
+								strb.append(LogUtil.LIST_COLOR);
+								break;
+						}
+					}
+					strb.appendFixedWidthPadRight(metricsCtx.opType().name(), 6, ' ');
+					if(stdOutColorFlag) {
+						strb.append(RESET);
+					}
+					strb
+						.append(TABLE_BORDER_VERTICAL)
+						.appendFixedWidthPadLeft(snapshot.concurrencySnapshot().last(), 10, ' ')
+						.append(TABLE_BORDER_VERTICAL)
+						.appendFixedWidthPadRight(formatFixedWidth(snapshot.concurrencySnapshot().mean(), 10), 10, ' ')
+						.append(TABLE_BORDER_VERTICAL)
+						.appendFixedWidthPadLeft(succCount, 12, ' ').append(TABLE_BORDER_VERTICAL);
+					if(stdOutColorFlag) {
+						strb.append(getFailureRatioAnsiColorCode(succCount, failCount));
+					}
+					strb.appendFixedWidthPadLeft(failCount, 6, ' ');
+					if(stdOutColorFlag) {
+						strb.append(RESET);
+					}
+					strb
+						.append(TABLE_BORDER_VERTICAL)
+						.appendFixedWidthPadRight((double) snapshot.elapsedTimeMillis() / 1000, 7, ' ')
+						.append(TABLE_BORDER_VERTICAL)
+						.appendFixedWidthPadRight(formatFixedWidth(snapshot.successSnapshot().last(), 8), 8, ' ')
+						.append(TABLE_BORDER_VERTICAL)
+						.appendFixedWidthPadRight(formatFixedWidth(snapshot.byteSnapshot().last() / MIB, 7), 7, ' ')
+						.append(TABLE_BORDER_VERTICAL)
+						.appendFixedWidthPadLeft((long) snapshot.latencySnapshot().mean(), 10, ' ')
+						.append(TABLE_BORDER_VERTICAL)
+						.appendFixedWidthPadLeft((long) snapshot.durationSnapshot().mean(), 11, ' ')
+						.appendNewLine();
 				}
-				strb.appendFixedWidthPadRight(metricsCtx.opType().name(), 6, ' ');
-				if(stdOutColorFlag) {
-					strb.append(RESET);
-				}
-				strb
-					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft(snapshot.concurrencySnapshot().last(), 10, ' ')
-					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight(formatFixedWidth(snapshot.concurrencySnapshot().mean(), 10), 10, ' ')
-					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft(succCount, 12, ' ').append(TABLE_BORDER_VERTICAL);
-				if(stdOutColorFlag) {
-					strb.append(getFailureRatioAnsiColorCode(succCount, failCount));
-				}
-				strb.appendFixedWidthPadLeft(failCount, 6, ' ');
-				if(stdOutColorFlag) {
-					strb.append(RESET);
-				}
-				strb
-					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight((double) snapshot.elapsedTimeMillis() / 1000, 7, ' ')
-					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight(formatFixedWidth(snapshot.successSnapshot().last(), 8), 8, ' ')
-					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadRight(formatFixedWidth(snapshot.byteSnapshot().last() / MIB, 7), 7, ' ')
-					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft((long) snapshot.latencySnapshot().mean(), 10, ' ')
-					.append(TABLE_BORDER_VERTICAL)
-					.appendFixedWidthPadLeft((long) snapshot.durationSnapshot().mean(), 11, ' ')
-					.appendNewLine();
 			}
 			formattedMsg = strb.toString();
 		}
