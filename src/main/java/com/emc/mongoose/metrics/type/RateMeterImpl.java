@@ -2,8 +2,8 @@ package com.emc.mongoose.metrics.type;
 
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshotImpl;
-import com.emc.mongoose.metrics.util.Clock;
 
+import java.time.Clock;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
@@ -21,7 +21,11 @@ implements RateMeter<RateMetricSnapshot> {
 	private final AtomicLong lastTick = new AtomicLong();
 	private long startTimeMillis;
 
-	public RateMeterImpl(final Clock clock, final int period, final String name)
+	public RateMeterImpl(final Clock clock, final String name) {
+		this(clock, DEFAULT_PERIOD_SECONDS, name);
+	}
+
+	protected RateMeterImpl(final Clock clock, final int period, final String name)
 	throws IllegalArgumentException {
 		if(period <= 0) {
 			throw new IllegalArgumentException("Period should be more than 0 [s]");
@@ -35,13 +39,13 @@ implements RateMeter<RateMetricSnapshot> {
 
 	@Override
 	public void resetStartTime() {
-		startTimeMillis = clock.getTick();
+		startTimeMillis = clock.millis();
 		lastTick.set(startTimeMillis);
 	}
 
 	private void tickIfNecessary() {
 		final long oldTick = lastTick.get();
-		final long newTick = clock.getTick();
+		final long newTick = clock.millis();
 		final long ageMillis = newTick - oldTick;
 		final long newIntervalStartTick = newTick - ageMillis % TICK_INTERVAL_MILLIS;
 		if(ageMillis > TICK_INTERVAL_MILLIS & lastTick.compareAndSet(oldTick, newIntervalStartTick)) {
@@ -65,14 +69,14 @@ implements RateMeter<RateMetricSnapshot> {
 	}
 
 	long elapsedTimeMillis() {
-		return (clock.getTick() - startTimeMillis);
+		return (clock.millis() - startTimeMillis);
 	}
 
 	double meanRate() {
 		if(count.sum() == 0) {
 			return 0.0;
 		} else {
-			final double elapsed = TimeUnit.MILLISECONDS.toSeconds(clock.getTick() - startTimeMillis);
+			final double elapsed = TimeUnit.MILLISECONDS.toSeconds(clock.millis() - startTimeMillis);
 			return (elapsed == 0) ? 0 : count.sum() / elapsed;
 		}
 	}

@@ -10,7 +10,6 @@ import com.emc.mongoose.metrics.type.HistogramImpl;
 import com.emc.mongoose.metrics.type.RateMeter;
 import com.emc.mongoose.metrics.type.RateMeterImpl;
 import com.emc.mongoose.metrics.type.TimingMeterImpl;
-import com.emc.mongoose.metrics.util.Clock;
 import com.emc.mongoose.metrics.util.ConcurrentSlidingWindowLongReservoir;
 import com.emc.mongoose.metrics.type.LongMeter;
 import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_BYTE;
@@ -22,6 +21,7 @@ import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_SUCC;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 
+import java.time.Clock;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -66,12 +66,13 @@ implements MetricsContext<S> {
 		actualConcurrency = new ConcurrencyMeterImpl(METRIC_NAME_CONC);
 		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		//
-		final Clock clock = Clock.defaultClock();
-		throughputSuccess = new RateMeterImpl(clock, updateIntervalSec, METRIC_NAME_SUCC);
+		final Clock clock = Clock.systemUTC();
 		//
-		throughputFail = new RateMeterImpl(clock, updateIntervalSec, METRIC_NAME_FAIL);
+		throughputSuccess = new RateMeterImpl(clock, METRIC_NAME_SUCC);
 		//
-		reqBytes = new RateMeterImpl(clock, updateIntervalSec, METRIC_NAME_BYTE);
+		throughputFail = new RateMeterImpl(clock, METRIC_NAME_FAIL);
+		//
+		reqBytes = new RateMeterImpl(clock, METRIC_NAME_BYTE);
 	}
 
 	@Override
