@@ -1,6 +1,8 @@
-package com.emc.mongoose.metrics.type;
+package com.emc.mongoose.perf.type;
 
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
+import com.emc.mongoose.metrics.type.RateMeter;
+import com.emc.mongoose.metrics.type.RateMeterImpl;
 import org.junit.Assert;
 import org.junit.Test;
 
