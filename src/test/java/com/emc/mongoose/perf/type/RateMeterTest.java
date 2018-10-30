@@ -15,8 +15,8 @@ public class RateMeterTest {
 
 	final private static int PERIOD_SEC = 1;
 	final private static int INTERVALS = 100;
+	final private static int COUNT_UPDATE = 1000;
 	final private static int SLEEP_MILLISEC = 100;
-	final private static int ELAPSED_TIME = SLEEP_MILLISEC * INTERVALS;
 
 	@Test
 	public void test()
@@ -25,18 +25,20 @@ public class RateMeterTest {
 			Clock.systemDefaultZone(), PERIOD_SEC, "SOME_RATE"
 		);
 		for(int i = 0; i < INTERVALS; ++ i) {
-			meter.update(1);
+			meter.update(COUNT_UPDATE);
 			TimeUnit.MILLISECONDS.sleep(SLEEP_MILLISEC);
 		}
 		//
 		RateMetricSnapshot snapshot = meter.snapshot();
-		Assert.assertEquals(snapshot.count(), INTERVALS);
+		final int N = INTERVALS * COUNT_UPDATE;
+		Assert.assertEquals(snapshot.count(), N);
 		//meter return rates per sec
-		final double expectedRate = ((double) INTERVALS / TimeUnit.MILLISECONDS.toSeconds(ELAPSED_TIME));
+		final long ELAPSED_TIME = SLEEP_MILLISEC * INTERVALS;
+		final double expectedRate = ((double) N / TimeUnit.MILLISECONDS.toSeconds(ELAPSED_TIME));
 		Assert.assertEquals(snapshot.mean(), expectedRate, expectedRate * 0.1);
 		Assert.assertEquals(snapshot.last(), expectedRate, expectedRate * 0.1);
 		//
-		Assert.assertEquals(snapshot.elapsedTimeMillis() > ELAPSED_TIME, true);
+		Assert.assertEquals(snapshot.elapsedTimeMillis() >= ELAPSED_TIME, true);
 		Assert.assertEquals(snapshot.elapsedTimeMillis(), ELAPSED_TIME, ELAPSED_TIME * 0.2);
 		//
 		meter.resetStartTime();
