@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
  @author veronika K. on 16.10.18 */
 public class RateMeterTest {
 
-	final private static int PERIOD_SEC = 1;
 	final private static int INTERVALS = 100;
 	final private static int SLEEP_MILLISEC = 100;
 	final private static int ELAPSED_TIME = SLEEP_MILLISEC * INTERVALS;
@@ -40,11 +39,5 @@ public class RateMeterTest {
 		meter.resetStartTime();
 		snapshot = meter.snapshot();
 		Assert.assertEquals(snapshot.elapsedTimeMillis(), 0);
-	}
-
-	@Test
-	public void test2()
-	throws Exception {
-
 	}
 }
