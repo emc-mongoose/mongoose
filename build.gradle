@@ -267,6 +267,7 @@ dependencies {
 		"org.slf4j:slf4j-api:${depVersion.slf4j}",
 		"org.eclipse.jetty:jetty-server:${depVersion.jetty}",
 		"org.eclipse.jetty:jetty-servlet:${depVersion.jetty}",
+		"io.dropwizard.metrics:metrics-core:4.0.3",
 	)
 
 	testCompile(
