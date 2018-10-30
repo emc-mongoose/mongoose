@@ -1,6 +1,10 @@
 var parentConfig_1 = {
   "storage" : {
-    "namespace" : "ns1"
+    "net" : {
+      "http" : {
+        "namespace" : "ns1"
+      }
+    }
   }
 };
 

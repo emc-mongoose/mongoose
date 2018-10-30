@@ -7,7 +7,6 @@ import java.time.Clock;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
-
 import static java.lang.Math.exp;
 
 public class RateMeterImpl
@@ -25,7 +24,7 @@ implements RateMeter<RateMetricSnapshot> {
 	public RateMeterImpl(final Clock clock, final int periodSec, final String name) {
 		final double ps = periodSec > 0 ? periodSec : 10;
 		final int intervalSecs = 1;
-		rateAvg = new EWMA(1 - exp(- intervalSecs / ps), intervalSecs, TimeUnit.SECONDS);
+		rateAvg = new EWMA(1 - exp(-intervalSecs / ps), intervalSecs, TimeUnit.SECONDS);
 		this.clock = clock;
 		startTime = clock.millis();
 		lastTick.set(startTime);

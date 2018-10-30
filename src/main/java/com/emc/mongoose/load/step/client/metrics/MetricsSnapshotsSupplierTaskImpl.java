@@ -33,7 +33,7 @@ implements MetricsSnapshotsSupplierTask {
 		try {
 			snapshotsByOrigin = loadStep.metricsSnapshots();
 		} catch(final Exception e) {
-			LogUtil.exception(Level.WARN, e, "Failed to fetch the metrics snapshots from \"{}\"", loadStep);
+			LogUtil.exception(Level.DEBUG, e, "Failed to fetch the metrics snapshots from \"{}\"", loadStep);
 		}
 	}
 

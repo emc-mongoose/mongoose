@@ -2,7 +2,8 @@
 	"storage": {
 		"net": {
 			"http": {
-				"fsAccess": "boolean"
+				"fsAccess": "boolean",
+				"namespace": "string"
 			}
 		}
 	}
