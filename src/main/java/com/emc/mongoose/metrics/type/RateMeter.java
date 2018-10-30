@@ -7,5 +7,7 @@ import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 public interface RateMeter<S extends RateMetricSnapshot>
 extends LongMeter<S> {
 
+	int DEFAULT_PERIOD_SECONDS = 1;
+
 	void resetStartTime();
 }

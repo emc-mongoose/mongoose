@@ -32,7 +32,6 @@ public class MetricsContextImpl<S extends AllMetricsSnapshotImpl>
 extends MetricsContextBase<S>
 implements MetricsContext<S> {
 
-	private final Clock clock = Clock.systemDefaultZone();
 	private final LongMeter<TimingMetricSnapshot> reqDuration, respLatency;
 	private final LongMeter<ConcurrencyMetricSnapshot> actualConcurrency;
 	private final RateMeter<RateMetricSnapshot> throughputSuccess, throughputFail, reqBytes;
@@ -67,11 +66,13 @@ implements MetricsContext<S> {
 		actualConcurrency = new ConcurrencyMeterImpl(METRIC_NAME_CONC);
 		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		//
-		throughputSuccess = new RateMeterImpl(clock, updateIntervalSec, METRIC_NAME_SUCC);
+		final Clock clock = Clock.systemUTC();
 		//
-		throughputFail = new RateMeterImpl(clock, updateIntervalSec, METRIC_NAME_FAIL);
+		throughputSuccess = new RateMeterImpl(clock, METRIC_NAME_SUCC);
 		//
-		reqBytes = new RateMeterImpl(clock, updateIntervalSec, METRIC_NAME_BYTE);
+		throughputFail = new RateMeterImpl(clock, METRIC_NAME_FAIL);
+		//
+		reqBytes = new RateMeterImpl(clock, METRIC_NAME_BYTE);
 	}
 
 	@Override

@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
+ * Copied from dropwizard metrics library 4.0.3
  @author veronika K. on 26.09.18 */
 public final class EWMA
 implements LoadAverage {
