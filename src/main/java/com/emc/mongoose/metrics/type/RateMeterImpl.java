@@ -41,11 +41,13 @@ implements RateMeter<RateMetricSnapshot> {
 		final long oldTick = lastTick.get();
 		final long newTick = clock.millis();
 		final long age = newTick - oldTick;
-		final long newIntervalStartTick = newTick - age % TICK_INTERVAL;
-		if(age > TICK_INTERVAL & lastTick.compareAndSet(oldTick, newIntervalStartTick)) {
-			final long requiredTicks = age / TICK_INTERVAL;
-			for(long i = 0; i < requiredTicks; ++ i) {
-				rateAvg.tick();
+		if(age > TICK_INTERVAL) {
+			final long newIntervalStartTick = newTick - age % TICK_INTERVAL;
+			if(lastTick.compareAndSet(oldTick, newIntervalStartTick)) {
+				final long requiredTicks = age / TICK_INTERVAL;
+				for(long i = 0; i < requiredTicks; i ++) {
+					rateAvg.tick();
+				}
 			}
 		}
 	}
