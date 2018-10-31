@@ -60,7 +60,12 @@
 
 ### Functional
 
-#### 1. Prometheus Integration
+#### 1. [Prometheus](https://prometheus.io/) Integration
+
+Mongoose exposes the performance metrics for a Prometheus TSDB. This feature is named *Monitoring API* and intended for
+future use to develop a full-featured Mongoose GUI service.
+[See the corresponding documentation entry](https://github.com/emc-mongoose/mongoose/tree/4.1.0/doc/interfaces/api/monitoring)
+ for details.
 
 ### Non-Functional
 
