@@ -1,6 +1,7 @@
 # Contents
 
 ## 2018
+* [4.1.0](#410) 2018-11-01
 * [4.0.1](#401) 2018-10-08
 * [4.0.0](#400) 2018-10-01
 * [3.6.2](#362) 08/08/18
@@ -52,6 +53,30 @@
 * [0.1.5](#015) 09/22/14
 * [0.1.4](#014) 09/17/14
 * [0.1.3](#013) 08/15/14
+
+# 4.1.0
+
+## New Features and Enhancements
+
+### Functional
+
+#### 1. Prometheus Integration
+
+### Non-Functional
+
+#### 1. Configuration Layout Changes
+
+| Old parameter name (v < 4.1.0)  | New parameter name (v >= 4.1.0)
+|---------------------------------|--------------------------------
+| N/A                             | output-metrics-quantiles
+| N/A                             | run-port
+| storage-net-http-namespace      | storage-namespace
+
+## Fixed Bugs
+
+| Id | Short Description |
+|----|-------------------|
+| [BASE-1282](https://mongoose-issues.atlassian.net/browse/BASE-1282) | Few load operations results are lost sometimes
 
 # 4.0.1
 
