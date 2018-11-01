@@ -29,18 +29,19 @@ implements RateMetricSnapshot {
 		double lastRateSum = 0;
 		double meanRateSum = 0;
 		long countSum = 0;
-		long elapsedTimeMillisSum = 0;
+		long maxElapsedTimeMillis = Long.MIN_VALUE;
 		RateMetricSnapshot nextSnapshot;
 		for(int i = 0; i < snapshotsCount; i++) {
 			nextSnapshot = snapshots.get(i);
 			countSum += nextSnapshot.count();
 			lastRateSum += nextSnapshot.last();
 			meanRateSum += nextSnapshot.mean();
-			elapsedTimeMillisSum += nextSnapshot.elapsedTimeMillis();
+			if(nextSnapshot.elapsedTimeMillis() > maxElapsedTimeMillis) {
+				maxElapsedTimeMillis = nextSnapshot.elapsedTimeMillis();
+			}
 		}
 		return new RateMetricSnapshotImpl(
-			lastRateSum / snapshotsCount, meanRateSum / snapshotsCount, snapshots.get(0).name(), countSum,
-			elapsedTimeMillisSum / snapshotsCount
+			lastRateSum, meanRateSum, snapshots.get(0).name(), countSum, maxElapsedTimeMillis
 		);
 	}
 

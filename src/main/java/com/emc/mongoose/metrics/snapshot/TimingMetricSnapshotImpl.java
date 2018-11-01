@@ -36,7 +36,7 @@ implements TimingMetricSnapshot {
 		long sumOfSums = 0;
 		long newMax = Long.MIN_VALUE;
 		long newMin = Long.MAX_VALUE;
-		final List<HistogramSnapshot> histogramSnapshots = new ArrayList<>();
+		final List<HistogramSnapshot> histogramSnapshots = new ArrayList<>(snapshotCount);
 		TimingMetricSnapshot nextSnapshot;
 		for(int i = 0; i < snapshotCount; ++ i) {
 			nextSnapshot = snapshots.get(i);

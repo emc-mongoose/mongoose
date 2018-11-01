@@ -188,7 +188,7 @@ extends HttpStorageDriverBase<I, O> {
 			return null;
 		}
 		final boolean versioningEnabled;
-		if(! HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
+		if(!HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
 			Loggers.ERR.warn(
 				"The bucket versioning checking response is: {}", getBucketVersioningResp.status().toString()
 			);
@@ -254,7 +254,7 @@ extends HttpStorageDriverBase<I, O> {
 		final StringBuilder queryBuilder = BUCKET_LIST_QUERY.get();
 		queryBuilder.setLength(0);
 		queryBuilder.append(path).append('?');
-		if(prefix != null && ! prefix.isEmpty()) {
+		if(prefix != null && !prefix.isEmpty()) {
 			queryBuilder.append("prefix=").append(prefix);
 		}
 		if(lastPrevItem != null) {
@@ -299,7 +299,7 @@ extends HttpStorageDriverBase<I, O> {
 			if(buff.size() == 0) {
 				throw new EOFException();
 			}
-			if(! listingHandler.isTruncated()) {
+			if(!listingHandler.isTruncated()) {
 				buff.add(null); // poison
 			}
 		} catch(final InterruptedException e) {
@@ -383,7 +383,7 @@ extends HttpStorageDriverBase<I, O> {
 	private HttpRequest getInitMpuRequest(final O op, final String nodeAddr) {
 		final I item = op.item();
 		final String srcPath = op.srcPath();
-		if(srcPath != null && ! srcPath.isEmpty()) {
+		if(srcPath != null && !srcPath.isEmpty()) {
 			throw new AssertionError(
 				"Multipart copy operation is not implemented yet"
 			);
