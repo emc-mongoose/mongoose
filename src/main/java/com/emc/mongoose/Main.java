@@ -72,11 +72,12 @@ public final class Main {
 				// install the extensions
 				installExtensions(extensions, appHomePath);
 				final Config configWithArgs;
+				final Config fullDefaultConfig;
 				try {
 					// apply the extensions defaults
-					final Config config = collectDefaults(extensions, defaultConfig, appHomePath);
+					fullDefaultConfig = collectDefaults(extensions, defaultConfig, appHomePath);
 					// parse the CLI args and apply them to the config instance
-					configWithArgs = applyArgsToConfig(args, config, initialStepId);
+					configWithArgs = applyArgsToConfig(args, fullDefaultConfig, initialStepId);
 				} catch(final Exception e) {
 					LogUtil.exception(Level.ERROR, e, "Failed to load the defaults");
 					throw e;
@@ -88,7 +89,7 @@ public final class Main {
 					runNode(configWithArgs, extensions, metricsMgr);
 				} else {
 					final Server server = new Server(port);
-					addServices(server, configWithArgs);
+					addServices(server, fullDefaultConfig);
 					server.start();
 					try {
 						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
