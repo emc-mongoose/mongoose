@@ -88,7 +88,7 @@ public final class Main {
 					runNode(configWithArgs, extensions, metricsMgr);
 				} else {
 					final Server server = new Server(port);
-					addServices(server, defaultConfig);
+					addServices(server, configWithArgs);
 					server.start();
 					try {
 						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
