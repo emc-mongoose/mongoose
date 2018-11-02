@@ -43,11 +43,13 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.config.ConfigUtil.flatten;
+import static com.github.akurilov.fiber4j.Fiber.SOFT_DURATION_LIMIT_NANOS;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
@@ -389,27 +391,21 @@ public abstract class LoadStepClientBase
 				"{}: await for {} step slices for at most {} {}...", id(), stepSliceCount, timeout,
 				timeUnit.name().toLowerCase()
 			);
-			final CountDownLatch awaitCountDown = new CountDownLatch(stepSlices.size());
-			final List<AsyncRunnableBase> awaitTasks = stepSlices
-				.stream()
-				.map(stepSlice -> new AwaitStepSliceTask(stepSlice, awaitCountDown))
-				.peek(AsyncRunnableBase::start)
-				.collect(Collectors.toList());
-			try {
-				return awaitCountDown.await(timeout, timeUnit);
-			} finally {
-				awaitTasks.forEach(
-					awaitTask -> {
+			return stepSlices
+				.parallelStream()
+				.map(
+					stepSlice -> {
 						try {
-							awaitTask.close();
-						} catch(final InterruptRunException e) {
-							throw e;
-						} catch(final Exception e) {
-							LogUtil.exception(Level.WARN, e, "{}: await task closing failure", id());
+							return stepSlice.await(timeout, timeUnit);
+						} catch(final InterruptedException e) {
+							throw new InterruptRunException(e);
+						} catch(final RemoteException e) {
+							return false;
 						}
 					}
-				);
-			}
+				)
+				.reduce((flag1, flag2) -> flag1 && flag2)
+				.orElse(false);
 		} finally {
 			Loggers.MSG.info("{}: await for {} step slices done", id(), stepSliceCount);
 		}
