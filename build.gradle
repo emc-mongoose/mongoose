@@ -11,7 +11,7 @@ ext {
 
 	depVersion = [
 		confuse            : "1.1.4",
-		confuseIoJson      : "1.0.3",
+		confuseIoJson      : "1.0.4",
 		commonsCodec       : "1.11",
 		commonsLang        : "2.6",
 		disruptor          : "3.4.2",
@@ -54,6 +54,12 @@ allprojects {
 
 	repositories {
 		mavenCentral()
+		maven {
+			url "https://oss.sonatype.org/service/local/repositories/releases/content"
+		}
+		maven {
+			url "https://oss.sonatype.org/content/repositories/comgithubakurilov-1143"
+		}
 	}
 
 	apply plugin: "java"
