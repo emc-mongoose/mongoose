@@ -4,7 +4,7 @@
 			"input": {
 				"file": "string",
 				"layer": {
-					"cache": "int32",
+					"cache": "int",
 					"size": "any"
 				},
 				"seed": "string"
@@ -12,7 +12,7 @@
 			"ranges": {
 				"concat": "string",
 				"fixed": "list",
-				"random": "int32",
+				"random": "int",
 				"threshold": "any"
 			},
 			"size": "any",
@@ -25,10 +25,10 @@
 		"naming": {
 			"type": "string",
 			"prefix": "string",
-			"radix": "int32",
-			"step": "int32",
-			"offset": "int64",
-			"length": "int32"
+			"radix": "int",
+			"step": "int",
+			"offset": "long",
+			"length": "int"
 		},
 		"output": {
 			"file": "string",
@@ -38,7 +38,7 @@
 	},
 	"load": {
 		"batch": {
-			"size": "int32"
+			"size": "int"
 		},
 		"step": {
 			"id": "string",
@@ -49,21 +49,21 @@
 			},
 			"node": {
 				"addrs": "list",
-				"port": "int32"
+				"port": "int"
 			}
 		},
 		"service": {
-			"threads": "int32"
+			"threads": "int"
 		},
 		"op": {
 			"limit": {
-				"count": "int64",
+				"count": "long",
 				"fail": {
-					"count": "int64",
+					"count": "long",
 					"rate": "boolean"
 				},
-				"rate": "float64",
-				"recycle": "int32"
+				"rate": "double",
+				"recycle": "int"
 			},
 			"recycle": "boolean",
 			"retry": "boolean",
@@ -79,7 +79,7 @@
 				"persist": "boolean",
 				"table": {
 					"header": {
-						"period": "int32"
+						"period": "int"
 					}
 				}
 			},
@@ -90,13 +90,13 @@
 			"trace": {
 				"persist": "boolean"
 			},
-			"threshold": "float64",
+			"threshold": "double",
 			"quantiles": "list"
 		}
 	},
 	"run": {
 		"node": "boolean",
-		"port": "int32",
+		"port": "int",
 		"scenario": "string",
 		"version": "string"
 	},
@@ -109,13 +109,13 @@
 		},
 		"driver": {
 			"limit": {
-				"concurrency": "int32",
+				"concurrency": "int",
 				"queue": {
-					"input": "int32",
-					"output": "int32"
+					"input": "int",
+					"output": "int"
 				}
 			},
-			"threads": "int32",
+			"threads": "int",
 			"type": "string"
 		},
 		"namespace": "string"

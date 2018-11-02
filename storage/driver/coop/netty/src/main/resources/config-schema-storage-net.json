@@ -1,22 +1,22 @@
 {
 	"storage": {
 		"net": {
-			"bindBacklogSize": "int32",
+			"bindBacklogSize": "int",
 			"interestOpQueued": "boolean",
 			"keepAlive": "boolean",
-			"linger": "int32",
+			"linger": "int",
 			"reuseAddr": "boolean",
-			"rcvBuf": "int32",
-			"sndBuf": "int32",
+			"rcvBuf": "int",
+			"sndBuf": "int",
 			"tcpNoDelay": "boolean",
-			"timeoutMilliSec": "int32",
-			"ioRatio": "int32",
+			"timeoutMilliSec": "int",
+			"ioRatio": "int",
 			"transport": "string",
 			"ssl": "boolean",
 			"node": {
 				"addrs": "list",
-				"connAttemptsLimit": "int32",
-				"port": "int32",
+				"connAttemptsLimit": "int",
+				"port": "int",
 				"slice": "boolean"
 			}
 		}
