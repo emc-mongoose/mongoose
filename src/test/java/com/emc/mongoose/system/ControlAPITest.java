@@ -1,4 +1,4 @@
-package com.emc.mongoose.integration;
+package com.emc.mongoose.system;
 
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.params.Concurrency;
@@ -7,7 +7,6 @@ import com.emc.mongoose.params.RunMode;
 import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.DirWithManyFilesDeleter;
 import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
-import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.io.json.JsonSchemaProviderBase;
 import org.apache.commons.io.FileUtils;
@@ -34,7 +33,7 @@ import java.util.stream.Collectors;
 
 /**
  @author veronika K. on 01.11.18 */
-public class ControlsTest {
+public class ControlAPITest {
 
 	private final String HOST = "http://localhost:9999";
 	private final String SCENARIO_PATH = null; //default
@@ -52,7 +51,7 @@ public class ControlsTest {
 	private final Concurrency concurrency = Concurrency.SINGLE;
 	private final ItemSize itemSize = ItemSize.SMALL;
 
-	public ControlsTest()
+	public ControlAPITest()
 	throws Exception {
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
@@ -62,15 +61,14 @@ public class ControlsTest {
 			System.getenv().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
 		final List<String> args = new ArrayList<>();
 		// for FS
-		//if(storageType.equals(StorageType.FS)) {
 		args.add("--item-output-path=" + containerItemOutputPath);
 		try {
+			// for FS
 			DirWithManyFilesDeleter.deleteExternal(hostItemOutputPath);
 			DirWithManyFilesDeleter.deleteExternal(MongooseEntryNodeContainer.APP_HOME_DIR);
 		} catch(final Exception e) {
 			e.printStackTrace(System.err);
 		}
-		//}
 		//use default scenario
 		testContainer = new MongooseEntryNodeContainer(
 			stepId, storageType, runMode, concurrency, itemSize.getValue(), SCENARIO_PATH, env, args
@@ -107,7 +105,6 @@ public class ControlsTest {
 	private void testSchema()
 	throws Exception {
 		final String schemaStr = resultFromServer(HOST + "/config/schema");
-		System.out.println(schemaStr);
 		final SchemaProvider schemaProvider = new JsonSchemaProviderBase() {
 			@Override
 			public String id() {
@@ -122,7 +119,7 @@ public class ControlsTest {
 		};
 		final Map schema = schemaProvider.schema();
 		try {
-			final Config config = ConfigUtil.loadConfig(loadDefaultConfigFile(), schema);
+			ConfigUtil.loadConfig(loadDefaultConfigFile(), schema);
 		} catch(final Exception e) {
 			e.printStackTrace();
 			throw new AssertionError("Schema is wrong");
@@ -137,12 +134,10 @@ public class ControlsTest {
 
 	private String resultFromServer(final String urlPath)
 	throws Exception {
-		final StringBuilder stringBuilder = new StringBuilder();
 		final String result;
 		final URL url = new URL(urlPath);
 		final URLConnection conn = url.openConnection();
 		try(final BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-//			br.lines().forEach(l -> stringBuilder.append(l).append("\n"));
 			result = br.lines().collect(Collectors.joining("\n"));
 		}
 		return result;
