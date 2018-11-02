@@ -27,7 +27,7 @@ implements LongMeter<ConcurrencyMetricSnapshot> {
 	@Override
 	public final ConcurrencyMetricSnapshotImpl snapshot() {
 		final long count = counter.sum();
-		final long mean = count > 0 ? sumAdder.sum() / count : 0;
+		final double mean = count > 0 ? ((double) sumAdder.sum()) / count : 0;
 		return new ConcurrencyMetricSnapshotImpl(name, last, mean);
 	}
 }

@@ -163,6 +163,7 @@ extends HttpStorageDriverBase<I, O> {
 			}
 			putBucketResp.release();
 		}
+
 		// check the bucket versioning state
 		final String bucketVersioningReqUri = bucketUri + "?" + AmzS3Api.URL_ARG_VERSIONING;
 		reqHeaders = new DefaultHttpHeaders();
@@ -177,60 +178,64 @@ extends HttpStorageDriverBase<I, O> {
 		final FullHttpResponse getBucketVersioningResp;
 		try {
 			getBucketVersioningResp = executeHttpRequest(getBucketVersioningReq);
+			if(getBucketVersioningResp == null) {
+				Loggers.ERR.warn("Response timeout");
+			} else {
+				getBucketVersioningResp.release();
+				handleCheckBucketVersioningResponse(getBucketVersioningResp, nodeAddr, bucketVersioningReqUri);
+			}
 		} catch(final InterruptedException e) {
 			throw new InterruptRunException(e);
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
-			return null;
 		}
-		if(getBucketVersioningResp == null) {
-			Loggers.ERR.warn("Response timeout");
-			return null;
-		}
-		final boolean versioningEnabled;
+		return path;
+	}
+
+	protected void handleCheckBucketVersioningResponse(
+		final FullHttpResponse getBucketVersioningResp, final String nodeAddr, final String bucketVersioningReqUri
+	) {
+		boolean versioningEnabled = false;
 		if(!HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
 			Loggers.ERR.warn(
 				"The bucket versioning checking response is: {}", getBucketVersioningResp.status().toString()
 			);
-			return null;
 		} else {
 			final String content = getBucketVersioningResp
 				.content()
 				.toString(StandardCharsets.US_ASCII);
 			versioningEnabled = content.contains("Enabled");
 		}
-		getBucketVersioningResp.release();
 		if(versioning && !versioningEnabled) {
-			// enable bucket versioning
-			reqHeaders = new DefaultHttpHeaders();
-			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-			reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
-			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, AmzS3Api.VERSIONING_ENABLE_CONTENT.length);
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
-			final FullHttpRequest putBucketVersioningReq = new DefaultFullHttpRequest(
-				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
-				Unpooled.wrappedBuffer(AmzS3Api.VERSIONING_ENABLE_CONTENT).retain(), reqHeaders,
-				EmptyHttpHeaders.INSTANCE
-			);
-			final FullHttpResponse putBucketVersioningResp;
-			try {
-				putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
-			} catch(final InterruptedException e) {
-				throw new InterruptRunException(e);
-			} catch(final ConnectException e) {
-				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
-				return null;
-			}
+			enableBucketVersioning(nodeAddr, bucketVersioningReqUri);
+		}
+	}
+
+	protected void enableBucketVersioning(final String nodeAddr, final String bucketVersioningReqUri) {
+		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
+		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
+		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, AmzS3Api.VERSIONING_ENABLE_CONTENT.length);
+		applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
+		final FullHttpRequest putBucketVersioningReq = new DefaultFullHttpRequest(
+			HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
+			Unpooled.wrappedBuffer(AmzS3Api.VERSIONING_ENABLE_CONTENT).retain(), reqHeaders,
+			EmptyHttpHeaders.INSTANCE
+		);
+		final FullHttpResponse putBucketVersioningResp;
+		try {
+			putBucketVersioningResp = executeHttpRequest(putBucketVersioningReq);
 			if(!HttpStatusClass.SUCCESS.equals(putBucketVersioningResp.status().codeClass())) {
 				Loggers.ERR.warn(
 					"The bucket versioning setting response is: {}", putBucketVersioningResp.status().toString()
 				);
-				putBucketVersioningResp.release();
-				return null;
 			}
 			putBucketVersioningResp.release();
+		} catch(final InterruptedException e) {
+			throw new InterruptRunException(e);
+		} catch(final ConnectException e) {
+			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}
-		return path;
 	}
 
 	@Override
@@ -480,9 +485,9 @@ extends HttpStorageDriverBase<I, O> {
 			final CompositeDataOperation compositeOp = (CompositeDataOperation) op;
 			if(compositeOp.allSubOperationsDone()) {
 				Loggers.MULTIPART.info(
-					"{},{},{}", compositeOp.item().name(),
-					compositeOp.get(AmzS3Api.KEY_UPLOAD_ID), compositeOp.latency()
-									  );
+					"{},{},{}", compositeOp.item().name(), compositeOp.get(AmzS3Api.KEY_UPLOAD_ID),
+					compositeOp.latency()
+				);
 			} else {
 				final String uploadId = channel.attr(AmzS3Api.KEY_ATTR_UPLOAD_ID).get();
 				if(uploadId == null) {
