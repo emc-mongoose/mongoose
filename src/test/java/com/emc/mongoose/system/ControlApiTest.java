@@ -33,9 +33,9 @@ import java.util.stream.Collectors;
 
 /**
  @author veronika K. on 01.11.18 */
-public class ControlAPITest {
+public class ControlApiTest {
 
-	private final String HOST = "http://localhost:9999";
+	private final String HOST = "http://localhost:" + MongooseEntryNodeContainer.BUNDLED_DEFAULTS.val("run-port");
 	private final String SCENARIO_PATH = null; //default
 	private final String containerItemOutputPath = MongooseEntryNodeContainer.getContainerItemOutputPath(
 		getClass().getSimpleName()
@@ -51,7 +51,7 @@ public class ControlAPITest {
 	private final Concurrency concurrency = Concurrency.SINGLE;
 	private final ItemSize itemSize = ItemSize.SMALL;
 
-	public ControlAPITest()
+	public ControlApiTest()
 	throws Exception {
 		try {
 			FileUtils.deleteDirectory(Paths.get(MongooseEntryNodeContainer.HOST_LOG_PATH.toString(), stepId).toFile());
