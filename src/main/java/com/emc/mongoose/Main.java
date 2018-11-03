@@ -5,6 +5,7 @@ import com.emc.mongoose.config.AliasingUtil;
 import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
+import com.emc.mongoose.control.ConfigServlet;
 import com.emc.mongoose.env.CoreResourcesToInstall;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
@@ -81,11 +82,12 @@ public final class Main {
 				// install the extensions
 				installExtensions(extensions, appHomePath);
 				final Config configWithArgs;
+				final Config fullDefaultConfig;
 				try {
 					// apply the extensions defaults
-					final Config config = collectDefaults(extensions, defaultConfig, appHomePath);
+					fullDefaultConfig = collectDefaults(extensions, defaultConfig, appHomePath);
 					// parse the CLI args and apply them to the config instance
-					configWithArgs = applyArgsToConfig(args, config, initialStepId);
+					configWithArgs = applyArgsToConfig(args, fullDefaultConfig, initialStepId);
 				} catch(final Exception e) {
 					LogUtil.exception(Level.ERROR, e, "Failed to load the defaults");
 					throw e;
@@ -101,7 +103,7 @@ public final class Main {
 					final ServerConnector connector = new ServerConnector(server);
 					connector.setPort(port);
 					server.setConnectors(new Connector[] {connector});
-					addMetricsService(server);
+					addServices(server, fullDefaultConfig);
 					server.start();
 					try {
 						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
@@ -115,6 +117,14 @@ public final class Main {
 		} catch(final Exception e) {
 			LogUtil.trace(Loggers.ERR, Level.FATAL, e, "Unexpected failure");
 		}
+	}
+
+	private static void addServices(final Server server, final Config defaultConfig) {
+		final ServletContextHandler context = new ServletContextHandler();
+		context.setContextPath("/");
+		server.setHandler(context);
+		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+		context.addServlet(new ServletHolder(new ConfigServlet(defaultConfig)), "/config/*");
 	}
 
 	private static Config loadDefaultConfig(final Path appHomePath)
@@ -198,20 +208,6 @@ public final class Main {
 		final Map<String, String> parsedArgs = CliArgUtil.parseArgs(args);
 		final List<Map<String, Object>> aliasingConfig = config.listVal("aliasing");
 		return AliasingUtil.apply(parsedArgs, aliasingConfig);
-	}
-
-	private static void addMetricsService(final Server server) {
-		final ServletContextHandler context = new ServletContextHandler();
-		context.setContextPath("/");
-		server.setHandler(context);
-		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
-	}
-
-	private static void addControlService(final Server server) {
-		final ServletContextHandler context = new ServletContextHandler();
-		context.setContextPath("/");
-		server.setHandler(context);
-		//context.addServlet(new ServletHolder(new MetricsServlet()), "/control");
 	}
 
 	private static void runNode(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
