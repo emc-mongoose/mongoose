@@ -43,7 +43,7 @@ public class ControlApiTest {
 	private final String hostItemOutputPath = MongooseEntryNodeContainer.getHostItemOutputPath(
 		getClass().getSimpleName()
 	);
-	private static final int TIMEOUT_IN_MILLIS = 10_000;
+	private static final int TIMEOUT_IN_MILLIS = 5_000;
 	private final MongooseEntryNodeContainer testContainer;
 	private final String stepId = "CONTROLS_TEST";
 	private final StorageType storageType = StorageType.ATMOS;
