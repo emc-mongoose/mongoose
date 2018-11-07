@@ -23,8 +23,8 @@ public class RateMeterTest {
 		TimeUnit.MILLISECONDS.sleep(SLEEP_MILLISEC);
 		final long t1 = System.currentTimeMillis();
 		final RateMetricSnapshot snapshot1 = meter.snapshot();
-		assertEquals(1000.0 * 1234 / (t1 - t0), snapshot1.mean(), 1.0);
-		assertEquals(1000.0 * 1234 / (t1 - t0), snapshot1.last(), 1.0);
+		assertEquals(1000.0 * 1234 / (t1 - t0), snapshot1.mean(), 2.0);
+		assertEquals(1000.0 * 1234 / (t1 - t0), snapshot1.last(), 2.0);
 		meter.update(567);
 		TimeUnit.MILLISECONDS.sleep(SLEEP_MILLISEC);
 		final long t2 = System.currentTimeMillis();
