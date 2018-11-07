@@ -3,6 +3,7 @@ package com.emc.mongoose.control;
 import com.emc.mongoose.config.ConfigUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.io.json.TypeNames;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -41,10 +42,15 @@ public class ConfigServlet
 
 	private void getSchema(final HttpServletResponse resp)
 	throws IOException {
-		resp.setStatus(STATUS_OK);
-		resp.getWriter().print(new ObjectMapper()
+		String schemaStr = new ObjectMapper()
 			.writerWithDefaultPrettyPrinter()
-			.writeValueAsString(config.schema()));
+			.writeValueAsString(config.schema());
+		for(final String k : TypeNames.MAP.keySet()) {
+			final String v = TypeNames.MAP.get(k).getTypeName();
+			schemaStr = schemaStr.replaceAll(v, k);
+		}
+		resp.setStatus(STATUS_OK);
+		resp.getWriter().print(schemaStr);
 	}
 
 	private void getConfig(final HttpServletResponse resp)
