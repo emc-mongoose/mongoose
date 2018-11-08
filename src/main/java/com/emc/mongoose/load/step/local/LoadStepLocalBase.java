@@ -9,15 +9,21 @@ import com.emc.mongoose.load.step.LoadStepBase;
 import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
-import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.metrics.context.MetricsContextImpl;
+import com.emc.mongoose.metrics.MetricsManager;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
+
 import org.apache.logging.log4j.Level;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -28,13 +34,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
-
 public abstract class LoadStepLocalBase
-	extends LoadStepBase {
+extends LoadStepBase {
 
 	protected final List<LoadStepContext> stepContexts = new ArrayList<>();
 
@@ -72,14 +73,9 @@ public abstract class LoadStepLocalBase
 			metricsAvgPeriod = TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
 		}
 		final int index = metricsContexts.size();
-		final List<Double> quantileValues = metricsConfig.listVal("quantiles")
-														 .stream()
-														 .map(v -> Double.valueOf(v.toString()))
-														 .collect(Collectors.toList());
 		final MetricsContext metricsCtx = new MetricsContextImpl(
 			id(), opType, () -> stepContexts.get(index).activeOpCount(), concurrency,
-			(int) (concurrency * metricsConfig.doubleVal("threshold")), itemDataSize, metricsAvgPeriod, outputColorFlag,
-			quantileValues
+			(int) (concurrency * metricsConfig.doubleVal("threshold")), itemDataSize, metricsAvgPeriod, outputColorFlag
 		);
 		metricsContexts.add(metricsCtx);
 	}
@@ -113,7 +109,7 @@ public abstract class LoadStepLocalBase
 						try {
 							if(stepCtx.isDone()) {
 								awaitCountDown.countDown();
-								if(! stepCtx.isStopped()) {
+								if(!stepCtx.isStopped()) {
 									stop();
 								}
 							}
