@@ -5,9 +5,9 @@ When you launch the Mongoose, a server set up that accepts control requests (Con
 ### REST API
 ## Documentation for API Endpoints
 
-All URIs are relative to *https://virtserver.swaggerhub.com/veronikaKochugova/Mongoose-Control-API/0.0.1*
+All URIs are relative to https://app.swaggerhub.com/apis/veronikaKochugova/Mongoose-Control-API/0.0.1
 
-![doc](mongoose/doc/interfaces/api/control/controlAPI.png)
+![](controlAPI.png)
 
 ## Documentation for Authorization
 
