@@ -1,9 +1,9 @@
 package com.emc.mongoose.metrics.util;
 
 import com.emc.mongoose.logging.Loggers;
-import com.emc.mongoose.metrics.context.MetricsContext;
-import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
+import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshot;
 import com.emc.mongoose.metrics.snapshot.HistogramSnapshot;
 import com.emc.mongoose.metrics.snapshot.NamedMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
@@ -26,11 +26,11 @@ public class PrometheusMetricsExporterImpl
 
 	private final List<String> labelValues = new ArrayList<>();
 	private final List<String> labelNames = new ArrayList<>();
-	private final MetricsContext metricsContext;
+	private final DistributedMetricsContext metricsContext;
 	private final List<Double> quantileValues = new ArrayList<>();
 	private String help = "";
 
-	public PrometheusMetricsExporterImpl(final MetricsContext context) {
+	public PrometheusMetricsExporterImpl(final DistributedMetricsContext context) {
 		this.metricsContext = context;
 	}
 
@@ -89,7 +89,7 @@ public class PrometheusMetricsExporterImpl
 	@Override
 	public List<MetricFamilySamples> collect() {
 		final List<MetricFamilySamples> mfsList = new ArrayList<>();
-		final AllMetricsSnapshot snapshot = metricsContext.lastSnapshot();
+		final DistributedAllMetricsSnapshot snapshot = metricsContext.lastSnapshot();
 		if(snapshot != null) {
 			collectSnapshot(snapshot.durationSnapshot(), mfsList);
 			collectSnapshot(snapshot.latencySnapshot(), mfsList);

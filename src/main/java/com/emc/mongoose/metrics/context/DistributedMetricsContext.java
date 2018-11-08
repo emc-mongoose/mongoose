@@ -9,5 +9,7 @@ extends MetricsContext<S> {
 
 	int nodeCount();
 
+	List<Double> quantileValues();
+
 	S lastSnapshot();
 }

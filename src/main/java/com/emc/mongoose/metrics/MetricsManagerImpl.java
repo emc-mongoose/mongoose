@@ -48,7 +48,8 @@ public class MetricsManagerImpl
 
 	private static final String CLS_NAME = MetricsManagerImpl.class.getSimpleName();
 	private final Set<MetricsContext> allMetrics = new ConcurrentSkipListSet<>();
-	private final Map<MetricsContext, PrometheusMetricsExporter> exportedMetrics = new ConcurrentHashMap<>();
+	private final Map<DistributedMetricsContext, PrometheusMetricsExporter> distributedMetrics =
+		new ConcurrentHashMap<>();
 	private final Set<MetricsContext> selectedMetrics = new TreeSet<>();
 	private final Lock outputLock = new ReentrantLock();
 
@@ -104,7 +105,7 @@ public class MetricsManagerImpl
 					}
 				}
 				// console output
-				if(! selectedMetrics.isEmpty()) {
+				if(!selectedMetrics.isEmpty()) {
 					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
 					selectedMetrics.clear();
 				}
@@ -129,22 +130,23 @@ public class MetricsManagerImpl
 		try {
 			startIfNotStarted();
 			allMetrics.add(metricsCtx);
-			final String[] labelValues = {
-				metricsCtx.id(),
-				metricsCtx.opType().name(),
-				String.valueOf(metricsCtx.concurrencyLimit()),
-				String.valueOf((metricsCtx instanceof DistributedMetricsContext)
-							   ? ((DistributedMetricsContext) metricsCtx).nodeCount()
-							   : 1),
-				metricsCtx.itemDataSize().toString()
-			};
-			exportedMetrics.put(
-				metricsCtx,
-				new PrometheusMetricsExporterImpl(metricsCtx)
-					.labels(METRIC_LABELS, labelValues)
-					.quantiles(metricsCtx.quantileValues())
-					.register()
-			);
+			if(metricsCtx instanceof DistributedMetricsContext) {
+				final DistributedMetricsContext distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
+				final String[] labelValues = {
+					metricsCtx.id(),
+					metricsCtx.opType().name(),
+					String.valueOf(metricsCtx.concurrencyLimit()),
+					String.valueOf(((DistributedMetricsContext) metricsCtx).nodeCount()),
+					metricsCtx.itemDataSize().toString()
+				};
+				distributedMetrics.put(
+					distributedMetricsCtx,
+					new PrometheusMetricsExporterImpl(distributedMetricsCtx)
+						.labels(METRIC_LABELS, labelValues)
+						.quantiles(distributedMetricsCtx.quantileValues())
+						.register()
+				);
+			}
 			Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
 		} catch(final Exception e) {
 			LogUtil.exception(
@@ -162,7 +164,7 @@ public class MetricsManagerImpl
 		) {
 			if(allMetrics.remove(metricsCtx)) {
 				try {
-					if(! outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
+					if(!outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 						Loggers.ERR.warn(
 							"Acquire lock timeout while unregistering the metrics context \"{}\"", metricsCtx
 						);
@@ -203,10 +205,10 @@ public class MetricsManagerImpl
 								)
 							);
 						}
-					}
-					final PrometheusMetricsExporter exporter = exportedMetrics.remove(metricsCtx);
-					if(exporter != null) {
-						CollectorRegistry.defaultRegistry.unregister((Collector) exporter);
+						final PrometheusMetricsExporter exporter = distributedMetrics.remove(distributedMetricsCtx);
+						if(exporter != null) {
+							CollectorRegistry.defaultRegistry.unregister((Collector) exporter);
+						}
 					}
 				} catch(final InterruptedException e) {
 					throw new InterruptRunException(e);
@@ -255,6 +257,6 @@ public class MetricsManagerImpl
 	protected final void doClose() {
 		allMetrics.forEach(MetricsContext::close);
 		allMetrics.clear();
-		exportedMetrics.clear();
+		distributedMetrics.clear();
 	}
 }
