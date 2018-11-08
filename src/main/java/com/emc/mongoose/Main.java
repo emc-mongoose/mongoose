@@ -88,7 +88,7 @@ public final class Main {
 				server.start();
 				try {
 					if(configWithArgs.boolVal("run-node")) {
-						runNode(configWithArgs, extensions, metricsMgr);
+						Node.run(configWithArgs, extensions, metricsMgr);
 					} else {
 						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
 					}
