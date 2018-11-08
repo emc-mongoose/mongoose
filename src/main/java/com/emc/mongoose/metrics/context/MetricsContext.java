@@ -4,6 +4,8 @@ import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.github.akurilov.commons.system.SizeInBytes;
 
+import java.util.List;
+
 /**
  Created by andrey on 14.07.16.
  */
@@ -22,6 +24,8 @@ extends AutoCloseable, Comparable<MetricsContext<S>> {
 
 	SizeInBytes itemDataSize();
 	// metrics accounting methods
+
+	List<Double> quantileValues();
 
 	void markSucc(final long bytes, final long duration, final long latency);
 

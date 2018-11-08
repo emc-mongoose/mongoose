@@ -5,6 +5,8 @@ import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 
 import com.github.akurilov.commons.system.SizeInBytes;
 
+import java.util.List;
+
 public abstract class MetricsContextBase<S extends AllMetricsSnapshot>
 implements MetricsContext<S> {
 
@@ -21,11 +23,12 @@ implements MetricsContext<S> {
 	private volatile boolean thresholdStateExitedFlag = false;
 	protected volatile MetricsContextBase thresholdMetricsCtx = null;
 	protected volatile S lastSnapshot = null;
+	protected final List<Double> quantileValues;
 
 	protected MetricsContextBase(
 		final String id, final OpType opType, final int concurrencyLimit, final int nodeCount,
 		final int concurrencyThreshold, final SizeInBytes itemDataSize, final boolean stdOutColorFlag,
-		final long outputPeriodMillis
+		final long outputPeriodMillis, final List<Double> quantileValues
 	) {
 		ts = System.nanoTime();
 		this.id = id;
@@ -35,6 +38,7 @@ implements MetricsContext<S> {
 		this.itemDataSize = itemDataSize;
 		this.stdOutColorFlag = stdOutColorFlag;
 		this.outputPeriodMillis = outputPeriodMillis;
+		this.quantileValues = quantileValues;
 	}
 
 	@Override
@@ -175,5 +179,10 @@ implements MetricsContext<S> {
 
 	public long elapsedTimeMillis() {
 		return (System.currentTimeMillis() - tsStart);
+	}
+
+	@Override
+	public List<Double> quantileValues() {
+		return quantileValues;
 	}
 }
