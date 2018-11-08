@@ -10,13 +10,10 @@ import com.emc.mongoose.env.CoreResourcesToInstall;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.step.ScriptEngineUtil;
-import com.emc.mongoose.load.step.service.LoadStepManagerServiceImpl;
-import com.emc.mongoose.load.step.service.file.FileManagerServiceImpl;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsManagerImpl;
-import com.emc.mongoose.svc.Service;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
@@ -90,7 +87,7 @@ public final class Main {
 				server.start();
 				try {
 					if(configWithArgs.boolVal("run-node")) {
-						Node.run(configWithArgs, extensions, metricsMgr);
+						new NodeImpl().run(configWithArgs, extensions, metricsMgr);
 					} else {
 						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
 					}
@@ -194,23 +191,6 @@ public final class Main {
 		final Map<String, String> parsedArgs = CliArgUtil.parseArgs(args);
 		final List<Map<String, Object>> aliasingConfig = config.listVal("aliasing");
 		return AliasingUtil.apply(parsedArgs, aliasingConfig);
-	}
-
-	private static void runNode(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
-	throws InterruptRunException, InterruptedException {
-		final int listenPort = config.intVal("load-step-node-port");
-		try(
-			final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
-			final Service scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions, metricsMgr)
-		) {
-			fileMgrSvc.start();
-			scenarioStepSvc.start();
-			scenarioStepSvc.await();
-		} catch(final InterruptedException | InterruptRunException e) {
-			throw e;
-		} catch(final Throwable cause) {
-			LogUtil.trace(Loggers.ERR, Level.FATAL, cause, "Run node failure");
-		}
 	}
 
 	@SuppressWarnings("StringBufferWithoutInitialCapacity")
