@@ -33,7 +33,7 @@ public class ConfigServletTest {
 
 	private static final Config config = new BasicConfig("-", schema);
 	private static final String configStr = "{\n\t\"key\" : \"value\"\n}";
-	private static final String schemaStr = "{\n  \"key\" : \"java.lang.Object\"\n}";
+	private static final String schemaStr = "{\n  \"key\" : \"any\"\n}";
 
 	static {
 		config.val("key", "value");
