@@ -11,5 +11,3 @@
     * Pravega
     * JDBC
         Required to prove that Mongoose is abstract enough to work against any kind of data storage
-    * Kafka
-        Required to compare with the Pravega performance
