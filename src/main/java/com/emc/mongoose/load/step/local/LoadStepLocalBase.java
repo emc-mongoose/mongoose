@@ -112,15 +112,17 @@ extends LoadStepBase {
 					break;
 				}
 				stepCtx = stepContextsCopy[i];
-				try {
-					if(stepCtx != null && stepCtx.await(Fiber.SOFT_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
-						stepContextsCopy[i] = null; // exclude
-						countDown --;
-						break;
+				if(stepCtx != null) {
+					try {
+						if(stepCtx.isDone() || stepCtx.await(Fiber.SOFT_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
+							stepContextsCopy[i] = null; // exclude
+							countDown --;
+							break;
+						}
+					} catch(final InterruptedException e) {
+						throw new InterruptRunException(e);
+					} catch(final RemoteException ignored) {
 					}
-				} catch(final InterruptedException e) {
-					throw new InterruptRunException(e);
-				} catch(final RemoteException ignored) {
 				}
 			}
 		}

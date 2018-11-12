@@ -181,8 +181,11 @@ extends HttpStorageDriverBase<I, O> {
 			if(getBucketVersioningResp == null) {
 				Loggers.ERR.warn("Response timeout");
 			} else {
-				getBucketVersioningResp.release();
-				handleCheckBucketVersioningResponse(getBucketVersioningResp, nodeAddr, bucketVersioningReqUri);
+				try {
+					handleCheckBucketVersioningResponse(getBucketVersioningResp, nodeAddr, bucketVersioningReqUri);
+				} finally {
+					getBucketVersioningResp.release();
+				}
 			}
 		} catch(final InterruptedException e) {
 			throw new InterruptRunException(e);
@@ -283,29 +286,31 @@ extends HttpStorageDriverBase<I, O> {
 			EmptyHttpHeaders.INSTANCE
 		);
 		final List<I> buff = new ArrayList<>(countLimit);
-		final FullHttpResponse listResp;
 		try {
-			listResp = executeHttpRequest(checkBucketReq);
-			final ByteBuf listRespContent = listResp.content();
-			SAXParser listRespParser = THREAD_LOCAL_XML_PARSER.get();
-			if(listRespParser == null) {
-				listRespParser = SAXParserFactory.newInstance().newSAXParser();
-				THREAD_LOCAL_XML_PARSER.set(listRespParser);
-			} else {
-				listRespParser.reset();
-			}
-			final BucketXmlListingHandler<I> listingHandler = new BucketXmlListingHandler<>(
-				buff, path, itemFactory, idRadix
-			);
-			try(final InputStream contentStream = new ByteBufInputStream(listRespContent)) {
-				listRespParser.parse(contentStream, listingHandler);
-			}
-			listRespContent.release();
-			if(buff.size() == 0) {
-				throw new EOFException();
-			}
-			if(!listingHandler.isTruncated()) {
-				buff.add(null); // poison
+			final FullHttpResponse listResp = executeHttpRequest(checkBucketReq);
+			try {
+				final ByteBuf listRespContent = listResp.content();
+				SAXParser listRespParser = THREAD_LOCAL_XML_PARSER.get();
+				if(listRespParser == null) {
+					listRespParser = SAXParserFactory.newInstance().newSAXParser();
+					THREAD_LOCAL_XML_PARSER.set(listRespParser);
+				} else {
+					listRespParser.reset();
+				}
+				final BucketXmlListingHandler<I> listingHandler = new BucketXmlListingHandler<>(
+					buff, path, itemFactory, idRadix
+				);
+				try(final InputStream contentStream = new ByteBufInputStream(listRespContent)) {
+					listRespParser.parse(contentStream, listingHandler);
+				}
+				if(buff.size() == 0) {
+					throw new EOFException();
+				}
+				if(!listingHandler.isTruncated()) {
+					buff.add(null); // poison
+				}
+			} finally {
+				listResp.release();
 			}
 		} catch(final InterruptedException e) {
 			throw new InterruptRunException(e);
