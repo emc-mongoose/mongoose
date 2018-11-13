@@ -39,7 +39,7 @@ implements LongMeter<TimingMetricSnapshot> {
 	@Override
 	public TimingMetricSnapshotImpl snapshot() {
 		if(count.sum() == 0) {
-			return new TimingMetricSnapshotImpl(0, 0, 0, 0, 0, histogram.snapshot(), "");
+			return new TimingMetricSnapshotImpl(0, 0, 0, 0, 0, histogram.snapshot(), metricName);
 		}
 		return new TimingMetricSnapshotImpl(
 			sum.sum(), count.sum(), min, max, ((double) sum.sum()) / count.sum(), histogram.snapshot(), metricName

@@ -99,7 +99,7 @@ public class PrometheusMetricsExporterImpl
 			collectSnapshot(snapshot.failsSnapshot(), mfsList);
 			mfsList.add(
 				new MetricFamilySamples(
-					METRIC_NAME_TIME, Type.GAUGE, help,
+					"" + this.hashCode(), Type.GAUGE, help,
 					Collections.singletonList(
 						new Sample(METRIC_NAME_TIME + "_value", labelNames, labelValues, snapshot.elapsedTimeMillis())
 					)
@@ -120,7 +120,7 @@ public class PrometheusMetricsExporterImpl
 		} else {
 			Loggers.ERR.warn("Unexpected metric snapshot type: {}", snapshot.getClass());
 		}
-		final MetricFamilySamples mfs = new MetricFamilySamples(snapshot.name(), Type.GAUGE, help, samples);
+		final MetricFamilySamples mfs = new MetricFamilySamples("" + this.hashCode(), Type.GAUGE, help, samples);
 		mfsList.add(mfs);
 	}
 
