@@ -26,7 +26,8 @@ public class RunServlet
 	protected void doHead(final HttpServletRequest req, final HttpServletResponse resp)
 	throws ServletException, IOException {
 		resp.setStatus(STATUS_OK);
-		resp.getWriter().print(node.status());
+		resp.getWriter().print("STATUS: " + node.status());
+		resp.getWriter().print("START TIME: " + node.startTime());
 		super.doHead(req, resp);
 	}
 }
