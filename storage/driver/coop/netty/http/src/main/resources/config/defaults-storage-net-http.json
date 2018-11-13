@@ -6,7 +6,7 @@
 				// An user may place here a key-value pair which will be used as HTTP header.
 				"headers": {
 					"Connection": "Keep-Alive",
-					"User-Agent": "mongoose/4.1.0"
+					"User-Agent": "mongoose/4.0.2"
 				},
 				"uri": {
 					// Custom URI query arguments according http://www.ietf.org/rfc/rfc2396.txt
