@@ -154,7 +154,7 @@ public class PrometheusMetricsExporterImpl
 		samples.add(new Sample(metricName + "_min_seconds", labelNames, labelValues, metric.min()));
 		for(int i = 0; i < quantileValues.size(); ++ i) {
 			final Sample sample = new Sample(
-				metricName + "_quantile" + quantileValues.get(i) + "_seconds", labelNames, labelValues,
+				metricName + "_quantile_" + quantileValues.get(i) + "_seconds", labelNames, labelValues,
 				snapshot.quantile(quantileValues.get(i))
 			);
 			samples.add(sample);

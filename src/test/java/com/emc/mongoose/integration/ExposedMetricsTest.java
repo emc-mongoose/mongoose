@@ -45,10 +45,17 @@ public class ExposedMetricsTest {
 	private static final Double RATE_ACCURACY = 0.2;
 	private static final int MARK_DUR = 1_100_000; //dur must be more than lat (dur > lat)
 	private static final int MARK_LAT = 1_000_000;
-	private static final String[] CONCURRENCY_METRICS = { "mean", "last" };
+	private static final String[] CONCURRENCY_METRICS = { "mongoose_mean_total", "mongoose_last_total" };
 	private static final String[] TIMING_METRICS =
-		{ "count", "sum", "mean", "min", "max", "quantile_0.25", "quantile_0.5", "quantile_0.75" };
-	private static final String[] RATE_METRICS = { "count", "rate_mean", "rate_last" };
+		{
+			"mongoose_count_total", "mongoose_sum_seconds", "mongoose_mean_seconds", "mongoose_min_seconds",
+			"mongoose_max_seconds", "mongoose_quantile_0.25_seconds", "mongoose_quantile_0.5_seconds",
+			"mongoose_quantile_0.75_seconds"
+		};
+	private static final String[] OPS_METRICS =
+		{ "mongoose_count_total", "mongoose_rate_mean_ops_per_second", "mongoose_rate_last_ops_per_second" };
+	private static final String[] BYTES_METRICS =
+		{ "mongoose_count_total", "mongoose_rate_mean_bytes_per_second", "mongoose_rate_last_bytes_per_second" };
 	private static final Double[] QUANTILE_VALUES = { 0.25, 0.5, 0.75 };
 	private final String STEP_ID = ExposedMetricsTest.class.getSimpleName();
 	private final OpType OP_TYPE = OpType.CREATE;
