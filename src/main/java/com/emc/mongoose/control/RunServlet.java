@@ -25,9 +25,18 @@ public class RunServlet
 	@Override
 	protected void doHead(final HttpServletRequest req, final HttpServletResponse resp)
 	throws ServletException, IOException {
+		resp.addHeader("Status of node", node.status().toString());
+		resp.setHeader("Status of node", node.status().toString());
 		resp.setStatus(STATUS_OK);
 		resp.getWriter().print("STATUS: " + node.status());
 		resp.getWriter().print("START TIME: " + node.startTime());
-		super.doHead(req, resp);
+		resp.getWriter().print("\nHEAD\n");
+		System.out.println("\n\nHEAD\n\n");
+	}
+
+	@Override
+	protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
+	throws ServletException, IOException {
+		super.doGet(req, resp);
 	}
 }

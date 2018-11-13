@@ -6,6 +6,7 @@ import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.control.ConfigServlet;
+import com.emc.mongoose.control.RunServlet;
 import com.emc.mongoose.env.CoreResourcesToInstall;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
@@ -83,11 +84,12 @@ public final class Main {
 				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
 				final int port = configWithArgs.intVal("run-port");
 				final Server server = new Server(port);
-				addServices(server, fullDefaultConfig);
+				final Node node = new NodeImpl();
+				addServices(server, fullDefaultConfig, node);
 				server.start();
 				try {
 					if(configWithArgs.boolVal("run-node")) {
-						new NodeImpl().run(configWithArgs, extensions, metricsMgr);
+						node.run(configWithArgs, extensions, metricsMgr);
 					} else {
 						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
 					}
@@ -102,12 +104,13 @@ public final class Main {
 		}
 	}
 
-	private static void addServices(final Server server, final Config defaultConfig) {
+	private static void addServices(final Server server, final Config defaultConfig, final Node node) {
 		final ServletContextHandler context = new ServletContextHandler();
 		context.setContextPath("/");
 		server.setHandler(context);
 		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
 		context.addServlet(new ServletHolder(new ConfigServlet(defaultConfig)), "/config/*");
+		context.addServlet(new ServletHolder(new RunServlet(node)), "/run");
 	}
 
 	private static Config loadDefaultConfig(final Path appHomePath)
