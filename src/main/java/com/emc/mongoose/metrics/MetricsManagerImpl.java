@@ -139,17 +139,13 @@ public class MetricsManagerImpl
 					String.valueOf(((DistributedMetricsContext) metricsCtx).nodeCount()),
 					metricsCtx.itemDataSize().toString()
 				};
-				try {
-					distributedMetrics.put(
-						distributedMetricsCtx,
-						new PrometheusMetricsExporterImpl(distributedMetricsCtx)
-							.labels(METRIC_LABELS, labelValues)
-							.quantiles(distributedMetricsCtx.quantileValues())
-							.register()
-					);
-				} catch(final Exception e){
-					e.printStackTrace();
-				}
+				distributedMetrics.put(
+					distributedMetricsCtx,
+					new PrometheusMetricsExporterImpl(distributedMetricsCtx)
+						.labels(METRIC_LABELS, labelValues)
+						.quantiles(distributedMetricsCtx.quantileValues())
+						.register()
+				);
 			}
 			Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
 		} catch(final Exception e) {

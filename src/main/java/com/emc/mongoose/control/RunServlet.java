@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 
 /**
  @author veronika K. on 08.11.18 */
@@ -23,20 +24,12 @@ public class RunServlet
 	}
 
 	@Override
-	protected void doHead(final HttpServletRequest req, final HttpServletResponse resp)
-	throws ServletException, IOException {
-		resp.addHeader("Status of node", node.status().toString());
-		resp.setHeader("Status of node", node.status().toString());
-		resp.setStatus(STATUS_OK);
-		resp.getWriter().print("STATUS: " + node.status());
-		resp.getWriter().print("START TIME: " + node.startTime());
-		resp.getWriter().print("\nHEAD\n");
-		System.out.println("\n\nHEAD\n\n");
-	}
-
-	@Override
 	protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
 	throws ServletException, IOException {
-		super.doGet(req, resp);
+		resp.addHeader("Node status", node.status());
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+		resp.addHeader("Node start time", dtf.format(node.startTime()));
+		resp.setStatus(STATUS_OK);
+		//TODO: add content
 	}
 }

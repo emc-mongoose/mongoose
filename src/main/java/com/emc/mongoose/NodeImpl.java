@@ -11,16 +11,20 @@ import com.emc.mongoose.svc.Service;
 import com.github.akurilov.confuse.Config;
 import org.apache.logging.log4j.Level;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  @author veronika K. on 08.11.18 */
 public class NodeImpl
 	implements Node {
 
-	private final ConcurrentMap metaData = new ConcurrentHashMap();
+	private final LocalDateTime startTime;
+	private final String status = "RUN";
+
+	public NodeImpl() {
+		this.startTime = LocalDateTime.now();
+	}
 
 	@Override
 	public void run(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
@@ -42,11 +46,12 @@ public class NodeImpl
 	}
 
 	@Override
-	public Object startTime() {
-		return metaData.get("startTime");
+	public LocalDateTime startTime() {
+		return startTime;
 	}
 
-	public Object status() {
-		return metaData.get("status");
+	@Override
+	public String status() {
+		return status;
 	}
 }

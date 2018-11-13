@@ -5,6 +5,7 @@ import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.github.akurilov.confuse.Config;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -14,7 +15,7 @@ public interface Node {
 	void run(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
 	throws InterruptRunException, InterruptedException;
 
-	Object startTime();
+	LocalDateTime startTime();
 
-	Object status();
+	String status();
 }
