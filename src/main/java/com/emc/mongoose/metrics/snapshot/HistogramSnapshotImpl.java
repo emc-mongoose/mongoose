@@ -26,12 +26,21 @@ implements HistogramSnapshot {
 		} else if(1 == snapshots.size()) {
 			return snapshots.get(0);
 		} else {
-			final SortedSet<Long> sortedVals = new TreeSet<>();
-			snapshots
-				.stream()
-				.map(HistogramSnapshot::values)
-				.forEach(values -> LongStream.of(values).forEach(sortedVals::add));
-			return new HistogramSnapshotImpl(sortedVals.stream().mapToLong(x -> x).toArray());
+			int sizeSum = 0;
+			for(int i = 0; i < snapshots.size(); i ++) {
+				sizeSum += snapshots.get(i).values().length;
+			}
+			final long[] valuesToAggregate = new long[sizeSum];
+			int k = 0;
+			long[] values;
+			for(int i = 0; i < snapshots.size(); i ++) {
+				values = snapshots.get(i).values();
+				for(int j = 0; j < values.length; j ++) {
+					valuesToAggregate[k] = values[j];
+					k ++;
+				}
+			}
+			return new HistogramSnapshotImpl(valuesToAggregate);
 		}
 	}
 

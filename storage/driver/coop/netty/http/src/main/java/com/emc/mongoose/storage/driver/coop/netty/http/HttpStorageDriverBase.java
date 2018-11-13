@@ -147,7 +147,7 @@ implements HttpStorageDriver<I, O> {
 						}
 					}
 				}
-							);
+			);
 			channel.writeAndFlush(request).sync();
 			if(null == (resp = fullRespSync.poll(netTimeoutMilliSec, TimeUnit.MILLISECONDS))) {
 				Loggers.MSG.warn("{}: Response timeout \n Request: {}", stepId, request);

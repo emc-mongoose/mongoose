@@ -5,6 +5,7 @@ import com.emc.mongoose.config.AliasingUtil;
 import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
+import com.emc.mongoose.control.ConfigServlet;
 import com.emc.mongoose.env.CoreResourcesToInstall;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
@@ -16,16 +17,31 @@ import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsManagerImpl;
 import com.emc.mongoose.svc.Service;
+import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
+import static com.emc.mongoose.Constants.DIR_EXT;
+import static com.emc.mongoose.Constants.PATH_DEFAULTS;
+import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
+import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
+
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
+
 import io.prometheus.client.exporter.MetricsServlet;
+
 import org.apache.commons.lang.StringUtils;
+
 import org.apache.logging.log4j.Level;
+
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.ThreadPool;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -39,16 +55,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
-import static com.emc.mongoose.Constants.DIR_EXT;
-import static com.emc.mongoose.Constants.PATH_DEFAULTS;
-import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
-import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
 import static javax.script.ScriptContext.ENGINE_SCOPE;
 
 public final class Main {
+
+	private static final int JETTY_THREAD_COUNT = 4;
 
 	public static void main(final String... args)
 	throws Exception {
@@ -71,11 +82,12 @@ public final class Main {
 				// install the extensions
 				installExtensions(extensions, appHomePath);
 				final Config configWithArgs;
+				final Config fullDefaultConfig;
 				try {
 					// apply the extensions defaults
-					final Config config = collectDefaults(extensions, defaultConfig, appHomePath);
+					fullDefaultConfig = collectDefaults(extensions, defaultConfig, appHomePath);
 					// parse the CLI args and apply them to the config instance
-					configWithArgs = applyArgsToConfig(args, config, initialStepId);
+					configWithArgs = applyArgsToConfig(args, fullDefaultConfig, initialStepId);
 				} catch(final Exception e) {
 					LogUtil.exception(Level.ERROR, e, "Failed to load the defaults");
 					throw e;
@@ -86,8 +98,12 @@ public final class Main {
 				if(configWithArgs.boolVal("run-node")) {
 					runNode(configWithArgs, extensions, metricsMgr);
 				} else {
-					final Server server = new Server(port);
-					addMetricsService(server);
+					final ThreadPool tp = new QueuedThreadPool(JETTY_THREAD_COUNT, 1);
+					final Server server = new Server(tp);
+					final ServerConnector connector = new ServerConnector(server);
+					connector.setPort(port);
+					server.setConnectors(new Connector[] {connector});
+					addServices(server, fullDefaultConfig);
 					server.start();
 					try {
 						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
@@ -101,6 +117,14 @@ public final class Main {
 		} catch(final Exception e) {
 			LogUtil.trace(Loggers.ERR, Level.FATAL, e, "Unexpected failure");
 		}
+	}
+
+	private static void addServices(final Server server, final Config defaultConfig) {
+		final ServletContextHandler context = new ServletContextHandler();
+		context.setContextPath("/");
+		server.setHandler(context);
+		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+		context.addServlet(new ServletHolder(new ConfigServlet(defaultConfig)), "/config/*");
 	}
 
 	private static Config loadDefaultConfig(final Path appHomePath)
@@ -184,20 +208,6 @@ public final class Main {
 		final Map<String, String> parsedArgs = CliArgUtil.parseArgs(args);
 		final List<Map<String, Object>> aliasingConfig = config.listVal("aliasing");
 		return AliasingUtil.apply(parsedArgs, aliasingConfig);
-	}
-
-	private static void addMetricsService(final Server server) {
-		final ServletContextHandler context = new ServletContextHandler();
-		context.setContextPath("/");
-		server.setHandler(context);
-		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
-	}
-
-	private static void addControlService(final Server server) {
-		final ServletContextHandler context = new ServletContextHandler();
-		context.setContextPath("/");
-		server.setHandler(context);
-		//context.addServlet(new ServletHolder(new MetricsServlet()), "/control");
 	}
 
 	private static void runNode(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)

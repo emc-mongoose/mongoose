@@ -9,7 +9,7 @@ implements ConcurrencyMetricSnapshot {
 	private final long last;
 	private final double mean;
 
-	public ConcurrencyMetricSnapshotImpl(final String name, final long last, final long mean) {
+	public ConcurrencyMetricSnapshotImpl(final String name, final long last, final double mean) {
 		super(name);
 		this.last = last;
 		this.mean = mean;
@@ -20,7 +20,7 @@ implements ConcurrencyMetricSnapshot {
 		if(snapshotsCount == 1) {
 			return snapshots.get(0);
 		}
-		double lastSum = 0;
+		long lastSum = 0;
 		double meanSum = 0;
 		ConcurrencyMetricSnapshot nextSnapshot;
 		for(int i = 0; i < snapshotsCount; i++) {
@@ -28,9 +28,7 @@ implements ConcurrencyMetricSnapshot {
 			lastSum = nextSnapshot.last();
 			meanSum += nextSnapshot.mean();
 		}
-		return new ConcurrencyMetricSnapshotImpl(
-			snapshots.get(0).name(), (long) (lastSum / snapshotsCount), (long) (meanSum / snapshotsCount)
-		);
+		return new ConcurrencyMetricSnapshotImpl(snapshots.get(0).name(), lastSum, meanSum);
 	}
 
 	@Override
