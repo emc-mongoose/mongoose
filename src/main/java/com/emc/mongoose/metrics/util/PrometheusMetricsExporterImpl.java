@@ -103,7 +103,10 @@ public class PrometheusMetricsExporterImpl
 				new MetricFamilySamples(
 					"" + this.hashCode(), Type.GAUGE, help,
 					Collections.singletonList(
-						new Sample(METRIC_NAME_TIME + "_value", labelNames, labelValues, snapshot.elapsedTimeMillis())
+						new Sample(
+							Constants.APP_NAME + "_" + METRIC_NAME_TIME + "_value", labelNames, labelValues,
+							snapshot.elapsedTimeMillis()
+						)
 					)
 				)
 			);
@@ -131,7 +134,7 @@ public class PrometheusMetricsExporterImpl
 		final List<Sample> samples = new ArrayList<>();
 		samples.add(new Sample(metricName + "_count_total", labelNames, labelValues, metric.count()));
 		final String unitSuffix;
-		if(metricName.equals(METRIC_NAME_BYTE)) {
+		if( metric.name().equals(METRIC_NAME_BYTE)) {
 			unitSuffix = "bytes";
 		} else {
 			unitSuffix = "ops";
@@ -140,7 +143,7 @@ public class PrometheusMetricsExporterImpl
 			metric.mean()
 		));
 		samples.add(
-			new Sample(metricName + "_rate_last" + unitSuffix + "_per_second", labelNames, labelValues, metric.last()));
+			new Sample(metricName + "_rate_last_" + unitSuffix + "_per_second", labelNames, labelValues, metric.last()));
 		return samples;
 	}
 

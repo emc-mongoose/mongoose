@@ -1,5 +1,6 @@
 package com.emc.mongoose.integration;
 
+import com.emc.mongoose.Constants;
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.MetricsConstants;
@@ -45,17 +46,17 @@ public class ExposedMetricsTest {
 	private static final Double RATE_ACCURACY = 0.2;
 	private static final int MARK_DUR = 1_100_000; //dur must be more than lat (dur > lat)
 	private static final int MARK_LAT = 1_000_000;
-	private static final String[] CONCURRENCY_METRICS = { "mongoose_mean_total", "mongoose_last_total" };
+	private static final String[] CONCURRENCY_METRICS = { "mean_total", "last_total" };
 	private static final String[] TIMING_METRICS =
 		{
-			"mongoose_count_total", "mongoose_sum_seconds", "mongoose_mean_seconds", "mongoose_min_seconds",
-			"mongoose_max_seconds", "mongoose_quantile_0.25_seconds", "mongoose_quantile_0.5_seconds",
-			"mongoose_quantile_0.75_seconds"
+			"count_total", "sum_seconds", "mean_seconds", "min_seconds",
+			"max_seconds", "quantile_0.25_seconds", "quantile_0.5_seconds",
+			"quantile_0.75_seconds"
 		};
 	private static final String[] OPS_METRICS =
-		{ "mongoose_count_total", "mongoose_rate_mean_ops_per_second", "mongoose_rate_last_ops_per_second" };
+		{ "count_total", "rate_mean_ops_per_second", "rate_last_ops_per_second" };
 	private static final String[] BYTES_METRICS =
-		{ "mongoose_count_total", "mongoose_rate_mean_bytes_per_second", "mongoose_rate_last_bytes_per_second" };
+		{ "count_total", "rate_mean_bytes_per_second", "rate_last_bytes_per_second" };
 	private static final Double[] QUANTILE_VALUES = { 0.25, 0.5, 0.75 };
 	private final String STEP_ID = ExposedMetricsTest.class.getSimpleName();
 	private final OpType OP_TYPE = OpType.CREATE;
@@ -140,12 +141,14 @@ public class ExposedMetricsTest {
 	private void testRateMetric(final String stdOut, final double markValue, final String name) {
 		final Map<String, Double> expectedValues = new HashMap<>();
 		double count = ITERATION_COUNT;
+		String[] rateMetrics = OPS_METRICS;
 		if(name.equals(MetricsConstants.METRIC_NAME_BYTE)) {
 			count *= markValue;
+			rateMetrics = BYTES_METRICS;
 		}
 		final Double[] values = { count, markValue, markValue };
-		for(int i = 0; i < RATE_METRICS.length; ++ i) {
-			expectedValues.put(RATE_METRICS[i], values[i]);
+		for(int i = 0; i < rateMetrics.length; ++ i) {
+			expectedValues.put(rateMetrics[i], values[i]);
 		}
 		testMetric(stdOut, name, expectedValues, RATE_ACCURACY);
 	}
@@ -176,7 +179,7 @@ public class ExposedMetricsTest {
 		final double accuracy
 	) {
 		for(final String key : expectedValues.keySet()) {
-			final Pattern p = Pattern.compile(metricName + "_" + key + "\\{.+\\} .+");
+			final Pattern p = Pattern.compile(Constants.APP_NAME + "_" + metricName + "_" + key + "\\{.+\\} .+");
 			final Matcher m = p.matcher(resultOutput);
 			final boolean found = m.find();
 			Assert.assertTrue(found);
