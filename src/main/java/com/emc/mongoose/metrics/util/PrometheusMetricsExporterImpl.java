@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_BYTE;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_FORMAT;
 import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_TIME;
 import static io.prometheus.client.Collector.MetricFamilySamples.Sample;
 
@@ -104,8 +104,8 @@ public class PrometheusMetricsExporterImpl
 					"" + this.hashCode(), Type.GAUGE, help,
 					Collections.singletonList(
 						new Sample(
-							Constants.APP_NAME + "_" + METRIC_NAME_TIME + "_value", labelNames, labelValues,
-							snapshot.elapsedTimeMillis()
+							String.format(METRIC_FORMAT, METRIC_NAME_TIME, "value"), labelNames, labelValues,
+							snapshot.elapsedTimeMillis() / Constants.K
 						)
 					)
 				)
@@ -130,47 +130,67 @@ public class PrometheusMetricsExporterImpl
 	}
 
 	private List<Sample> collect(final RateMetricSnapshot metric) {
-		final String metricName = Constants.APP_NAME + "_" + metric.name();
+		final String metricName = metric.name();
 		final List<Sample> samples = new ArrayList<>();
-		samples.add(new Sample(metricName + "_count_total", labelNames, labelValues, metric.count()));
-		final String unitSuffix;
-		if( metric.name().equals(METRIC_NAME_BYTE)) {
-			unitSuffix = "bytes";
-		} else {
-			unitSuffix = "ops";
-		}
-		samples.add(new Sample(metricName + "_rate_mean_" + unitSuffix + "_per_second", labelNames, labelValues,
-			metric.mean()
+		samples.add(new Sample(String.format(METRIC_FORMAT, metricName, "count"), labelNames, labelValues,
+			metric.count()
 		));
 		samples.add(
-			new Sample(metricName + "_rate_last_" + unitSuffix + "_per_second", labelNames, labelValues, metric.last()));
+			new Sample(String.format(METRIC_FORMAT, metricName, "rate_mean"), labelNames, labelValues,
+				metric.mean()
+			));
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "rate_last"), labelNames, labelValues,
+				metric.last()
+			));
 		return samples;
 	}
 
 	private List<Sample> collect(final TimingMetricSnapshot metric) {
 		final List<Sample> samples = new ArrayList<>();
 		final HistogramSnapshot snapshot = metric.histogramSnapshot(); //for quantiles
-		final String metricName = Constants.APP_NAME + "_" + metric.name();
-		samples.add(new Sample(metricName + "_count_total", labelNames, labelValues, metric.count()));
-		samples.add(new Sample(metricName + "_sum_seconds", labelNames, labelValues, metric.sum()));
-		samples.add(new Sample(metricName + "_mean_seconds", labelNames, labelValues, metric.mean()));
-		samples.add(new Sample(metricName + "_min_seconds", labelNames, labelValues, metric.min()));
+		final String metricName = metric.name();
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "count"), labelNames, labelValues, metric.count()));
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "sum"), labelNames, labelValues,
+				metric.sum() / Constants.M
+			));
+		samples.add(new Sample(String.format(METRIC_FORMAT, metricName, "mean"), labelNames, labelValues,
+			metric.mean() / Constants.M
+		));
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "min"), labelNames, labelValues,
+				metric.min() / Constants.M
+			));
 		for(int i = 0; i < quantileValues.size(); ++ i) {
 			final Sample sample = new Sample(
-				metricName + "_quantile_" + quantileValues.get(i) + "_seconds", labelNames, labelValues,
-				snapshot.quantile(quantileValues.get(i))
+				String.format(METRIC_FORMAT, metricName, "quantile_" + quantileValues.get(i)), labelNames,
+				labelValues, snapshot.quantile(quantileValues.get(i)) / Constants.M
 			);
 			samples.add(sample);
 		}
-		samples.add(new Sample(metricName + "_max_seconds", labelNames, labelValues, metric.max()));
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "max"), labelNames, labelValues,
+				metric.max() / Constants.M
+			));
 		return samples;
 	}
 
 	private List<Sample> collect(final ConcurrencyMetricSnapshot metric) {
-		final String metricName = Constants.APP_NAME + "_" + metric.name();
+		final String metricName = metric.name();
 		final List<Sample> samples = new ArrayList<>();
-		samples.add(new Sample(metricName + "_mean_total", labelNames, labelValues, metric.mean()));
-		samples.add(new Sample(metricName + "_last_total", labelNames, labelValues, metric.last()));
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "mean"), labelNames, labelValues, metric.mean()));
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "last"), labelNames, labelValues, metric.last()));
 		return samples;
 	}
 }
