@@ -2,6 +2,7 @@ package com.emc.mongoose;
 
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
+import com.emc.mongoose.load.step.LoadStepManagerService;
 import com.emc.mongoose.load.step.service.LoadStepManagerServiceImpl;
 import com.emc.mongoose.load.step.service.file.FileManagerServiceImpl;
 import com.emc.mongoose.logging.LogUtil;
@@ -11,8 +12,12 @@ import com.emc.mongoose.svc.Service;
 import com.github.akurilov.confuse.Config;
 import org.apache.logging.log4j.Level;
 
+import java.rmi.RemoteException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.function.Supplier;
+
+import static com.github.akurilov.commons.concurrent.AsyncRunnable.State;
 
 /**
  @author veronika K. on 08.11.18 */
@@ -20,7 +25,7 @@ public class NodeImpl
 	implements Node {
 
 	private final LocalDateTime startTime;
-	private final String status = "RUN";
+	private Supplier<State> stateSupplier = () -> State.STOPPED;
 
 	public NodeImpl() {
 		this.startTime = LocalDateTime.now();
@@ -30,11 +35,20 @@ public class NodeImpl
 	public void run(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
 	throws InterruptRunException, InterruptedException {
 		final int listenPort = config.intVal("load-step-node-port");
-		//TODO: put data to metaData map
 		try(
 			final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
-			final Service scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions, metricsMgr)
+			final LoadStepManagerService scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions,
+				metricsMgr
+			)
 		) {
+			stateSupplier = () -> {
+				try {
+					return scenarioStepSvc.state();
+				} catch(RemoteException e) {
+					e.printStackTrace();
+				}
+				return stateSupplier.get();
+			};
 			fileMgrSvc.start();
 			scenarioStepSvc.start();
 			scenarioStepSvc.await();
@@ -51,7 +65,7 @@ public class NodeImpl
 	}
 
 	@Override
-	public String status() {
-		return status;
+	public State status() {
+		return stateSupplier.get();
 	}
 }

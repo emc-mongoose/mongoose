@@ -26,7 +26,7 @@ public class RunServlet
 	@Override
 	protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
 	throws ServletException, IOException {
-		resp.addHeader("Node status", node.status());
+		resp.addHeader("Node status", node.status().name());
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 		resp.addHeader("Node start time", dtf.format(node.startTime()));
 		resp.setStatus(STATUS_OK);
