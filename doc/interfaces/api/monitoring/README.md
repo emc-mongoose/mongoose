@@ -5,10 +5,12 @@ To configure the port for the server, the parameter `--run-port` is used. By def
 ### Output format
 Information about new metric starts with
 `````
-# HELP <metric name>
-# TYPE <metric name> gauge
+# HELP <hash code>
+# TYPE <hash code> gauge
 `````
-*where `TYPE <metric name> gauge` is the prometheus type of metrics.*
+*where `gauge` is the prometheus type of metrics.*
+
+Format of the metric name : `<app name>_<metric name>_<agrigation type>`. All metrics are given in the [SI](https://prometheus.io/docs/practices/naming/#base-units).
 
 There are 7 metrics: 
 - duration, 
@@ -16,7 +18,7 @@ There are 7 metrics:
 - concurrency, 
 - successful operation count, 
 - faild operation count, 
-- transfered size in bytes (BYTES)
+- transfered size in bytes (BYTE)
 - elapsed time.
 
 and 3 Primitive Types: Timing, Rate, Concurrency. Depends on the type of metric, which aggregation types are exported. The table below provides a description:
@@ -83,46 +85,46 @@ To view the metrics you need to start Mongoose and go to the `localhost:<run-por
 #### Example:
 
 ````````````````````````````````
-# HELP duration
-# TYPE duration gauge
-duration_count{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 10.0
-duration_sum{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.1E7
-duration_mean{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1100000.0
-duration_min{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1100000.0
-duration_quantile_0.25{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1100000.0
-duration_quantile_0.5{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1100000.0
-duration_quantile_0.75{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1100000.0
-duration_max{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1100000.0
-# HELP latency
-# TYPE latency gauge
-latency_count{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 10.0
-latency_sum{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0E7
-latency_mean{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1000000.0
-latency_min{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1000000.0
-latency_quantile_0.25{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1000000.0
-latency_quantile_0.5{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1000000.0
-latency_quantile_0.75{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1000000.0
-latency_max{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1000000.0
-# HELP concurrency
-# TYPE concurrency gauge
-concurrency_mean{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
-concurrency_last{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
-# HELP transferred_bytes
-# TYPE transferred_bytes gauge
-transferred_bytes_count{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 102400.0
-transferred_bytes_rate_mean{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 11377.777777777777
-transferred_bytes_rate_last{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 10240.0
-# HELP operations_successful
-# TYPE operations_successful gauge
-operations_successful_count{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 10.0
-operations_successful_rate_mean{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.1111111111111112
-operations_successful_rate_last{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
-# HELP operations_failed
-# TYPE operations_failed gauge
-operations_failed_count{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 10.0
-operations_failed_rate_mean{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.1111111111111112
-operations_failed_rate_last{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
-# HELP elapsed_time
-# TYPE elapsed_time gauge
-elapsed_time_value{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 11544.0
+# HELP 379303133 
+# TYPE 379303133 gauge
+mongoose_duration_count{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 10.0
+mongoose_duration_sum{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 11.0
+mongoose_duration_mean{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.1
+mongoose_duration_min{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.1
+mongoose_duration_quantile_0.25{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.1
+mongoose_duration_quantile_0.5{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.1
+mongoose_duration_quantile_0.75{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.1
+mongoose_duration_max{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.1
+# HELP 379303133 
+# TYPE 379303133 gauge
+mongoose_latency_count{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 10.0
+mongoose_latency_sum{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 10.0
+mongoose_latency_mean{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
+mongoose_latency_min{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
+mongoose_latency_quantile_0.25{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
+mongoose_latency_quantile_0.5{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
+mongoose_latency_quantile_0.75{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
+mongoose_latency_max{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
+# HELP 379303133 
+# TYPE 379303133 gauge
+mongoose_concurrency_mean{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
+mongoose_concurrency_last{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
+# HELP 379303133 
+# TYPE 379303133 gauge
+mongoose_byte_count{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 102400.0
+mongoose_byte_rate_mean{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 11377.777777777777
+mongoose_byte_rate_last{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 10240.0
+# HELP 379303133 
+# TYPE 379303133 gauge
+mongoose_success_op_count{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 10.0
+mongoose_success_op_rate_mean{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.1111111111111112
+mongoose_success_op_rate_last{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
+# HELP 379303133 
+# TYPE 379303133 gauge
+mongoose_failed_op_count{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 10.0
+mongoose_failed_op_rate_mean{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.1111111111111112
+mongoose_failed_op_rate_last{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 1.0
+# HELP 379303133 
+# TYPE 379303133 gauge
+mongoose_elapsed_time_value{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 11.134
 ``````````````````````````````````````````````````
