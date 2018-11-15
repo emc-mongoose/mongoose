@@ -32,4 +32,11 @@ public class RunServlet
 		resp.setStatus(STATUS_OK);
 		//TODO: add content
 	}
+
+	@Override
+	protected void doPut(final HttpServletRequest req, final HttpServletResponse resp)
+	throws ServletException, IOException {
+		//TODO: start node
+		//node.run();
+	}
 }
