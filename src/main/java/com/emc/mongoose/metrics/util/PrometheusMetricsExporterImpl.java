@@ -102,8 +102,7 @@ public class PrometheusMetricsExporterImpl
 			mfsList.add(
 				new MetricFamilySamples(
 					"" + this.hashCode(), Type.GAUGE, help,
-					Collections.singletonList(
-						new Sample(
+					Collections.singletonList(new Sample(
 							String.format(METRIC_FORMAT, METRIC_NAME_TIME, "value"), labelNames, labelValues,
 							snapshot.elapsedTimeMillis() / Constants.K
 						)
@@ -135,15 +134,12 @@ public class PrometheusMetricsExporterImpl
 		samples.add(new Sample(String.format(METRIC_FORMAT, metricName, "count"), labelNames, labelValues,
 			metric.count()
 		));
-		samples.add(
-			new Sample(String.format(METRIC_FORMAT, metricName, "rate_mean"), labelNames, labelValues,
-				metric.mean()
-			));
-		samples.add(
-			new Sample(
-				String.format(METRIC_FORMAT, metricName, "rate_last"), labelNames, labelValues,
-				metric.last()
-			));
+		samples.add(new Sample(String.format(METRIC_FORMAT, metricName, "rate_mean"), labelNames, labelValues,
+			metric.mean()
+		));
+		samples.add(new Sample(
+			String.format(METRIC_FORMAT, metricName, "rate_last"), labelNames, labelValues, metric.last()
+		));
 		return samples;
 	}
 
@@ -151,22 +147,17 @@ public class PrometheusMetricsExporterImpl
 		final List<Sample> samples = new ArrayList<>();
 		final HistogramSnapshot snapshot = metric.histogramSnapshot(); //for quantiles
 		final String metricName = metric.name();
-		samples.add(
-			new Sample(
-				String.format(METRIC_FORMAT, metricName, "count"), labelNames, labelValues, metric.count()));
-		samples.add(
-			new Sample(
-				String.format(METRIC_FORMAT, metricName, "sum"), labelNames, labelValues,
-				metric.sum() / Constants.M
-			));
+		samples.add(new Sample(
+			String.format(METRIC_FORMAT, metricName, "count"), labelNames, labelValues, metric.count()));
+		samples.add(new Sample(
+			String.format(METRIC_FORMAT, metricName, "sum"), labelNames, labelValues, metric.sum() / Constants.M
+		));
 		samples.add(new Sample(String.format(METRIC_FORMAT, metricName, "mean"), labelNames, labelValues,
 			metric.mean() / Constants.M
 		));
-		samples.add(
-			new Sample(
-				String.format(METRIC_FORMAT, metricName, "min"), labelNames, labelValues,
-				metric.min() / Constants.M
-			));
+		samples.add(new Sample(
+			String.format(METRIC_FORMAT, metricName, "min"), labelNames, labelValues, metric.min() / Constants.M
+		));
 		for(int i = 0; i < quantileValues.size(); ++ i) {
 			final Sample sample = new Sample(
 				String.format(METRIC_FORMAT, metricName, "quantile_" + quantileValues.get(i)), labelNames,
@@ -174,11 +165,9 @@ public class PrometheusMetricsExporterImpl
 			);
 			samples.add(sample);
 		}
-		samples.add(
-			new Sample(
-				String.format(METRIC_FORMAT, metricName, "max"), labelNames, labelValues,
-				metric.max() / Constants.M
-			));
+		samples.add(new Sample(
+			String.format(METRIC_FORMAT, metricName, "max"), labelNames, labelValues, metric.max() / Constants.M
+		));
 		return samples;
 	}
 
