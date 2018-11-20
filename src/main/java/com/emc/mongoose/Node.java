@@ -16,10 +16,9 @@ import static com.github.akurilov.commons.concurrent.AsyncRunnable.*;
  @author veronika K. on 08.11.18 */
 public interface Node {
 
-	void run(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
-	throws InterruptRunException, InterruptedException;
+	void run() throws InterruptRunException, InterruptedException;
 
 	LocalDateTime startTime();
 
-	State status();
+	State state();
 }

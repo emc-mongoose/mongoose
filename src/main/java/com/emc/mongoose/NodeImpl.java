@@ -26,19 +26,26 @@ public class NodeImpl
 
 	private final LocalDateTime startTime;
 	private Supplier<State> stateSupplier = () -> State.STOPPED;
+	private Config config;
+	private List<Extension> extensions;
+	private MetricsManager metricsManager;
 
-	public NodeImpl() {
+	public NodeImpl(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr) {
+		this.config = config;
+		this.extensions = extensions;
+		this.metricsManager = metricsMgr;
 		this.startTime = LocalDateTime.now();
+
 	}
 
 	@Override
-	public void run(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
+	public void run()
 	throws InterruptRunException, InterruptedException {
 		final int listenPort = config.intVal("load-step-node-port");
 		try(
 			final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
 			final LoadStepManagerService scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions,
-				metricsMgr
+				metricsManager
 			)
 		) {
 			stateSupplier = () -> {
@@ -65,7 +72,7 @@ public class NodeImpl
 	}
 
 	@Override
-	public State status() {
+	public State state() {
 		return stateSupplier.get();
 	}
 }

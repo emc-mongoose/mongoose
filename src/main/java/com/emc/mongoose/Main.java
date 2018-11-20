@@ -84,12 +84,12 @@ public final class Main {
 				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
 				final int port = configWithArgs.intVal("run-port");
 				final Server server = new Server(port);
-				final Node node = new NodeImpl();
+				final Node node = new NodeImpl(configWithArgs, extensions, metricsMgr);
 				addServices(server, fullDefaultConfig, node);
 				server.start();
 				try {
 					if(configWithArgs.boolVal("run-node")) {
-						node.run(configWithArgs, extensions, metricsMgr);
+						node.run();
 					} else {
 						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
 					}
