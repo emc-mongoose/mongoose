@@ -1,7 +1,6 @@
 package com.emc.mongoose;
 
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.step.LoadStepManagerService;
 import com.emc.mongoose.load.step.service.LoadStepManagerServiceImpl;
 import com.emc.mongoose.load.step.service.file.FileManagerServiceImpl;
@@ -9,57 +8,44 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.svc.Service;
+import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.confuse.Config;
 import org.apache.logging.log4j.Level;
 
-import java.rmi.RemoteException;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.function.Supplier;
-
-import static com.github.akurilov.commons.concurrent.AsyncRunnable.State;
 
 /**
  @author veronika K. on 08.11.18 */
 public class NodeImpl
+	extends AsyncRunnableBase
 	implements Node {
 
 	private final LocalDateTime startTime;
-	private Supplier<State> stateSupplier = () -> State.STOPPED;
-	private Config config;
-	private List<Extension> extensions;
-	private MetricsManager metricsManager;
+	private State state = State.STOPPED;
+	private final MetricsManager metricsManager;
+	private final LoadStepManagerService stepSvc;
+	private final Service fileMgrSvc;
+	private final int listenPort;
 
 	public NodeImpl(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr) {
-		this.config = config;
-		this.extensions = extensions;
 		this.metricsManager = metricsMgr;
 		this.startTime = LocalDateTime.now();
-
+		this.listenPort = config.intVal("load-step-node-port");
+		this.stepSvc = new LoadStepManagerServiceImpl(listenPort, extensions, metricsManager);
+		this.fileMgrSvc = new FileManagerServiceImpl(listenPort);
 	}
 
 	@Override
 	public void run()
-	throws InterruptRunException, InterruptedException {
-		final int listenPort = config.intVal("load-step-node-port");
-		try(
-			final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
-			final LoadStepManagerService scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions,
-				metricsManager
-			)
-		) {
-			stateSupplier = () -> {
-				try {
-					return scenarioStepSvc.state();
-				} catch(RemoteException e) {
-					e.printStackTrace();
-				}
-				return stateSupplier.get();
-			};
+	throws InterruptedException {
+		super.start(); //??????
+		try {
 			fileMgrSvc.start();
-			scenarioStepSvc.start();
-			scenarioStepSvc.await();
-		} catch(final InterruptedException | InterruptRunException e) {
+			stepSvc.start();
+			stepSvc.await();
+		} catch(final InterruptedException e) {
 			throw e;
 		} catch(final Throwable cause) {
 			LogUtil.trace(Loggers.ERR, Level.FATAL, cause, "Run node failure");
@@ -72,7 +58,9 @@ public class NodeImpl
 	}
 
 	@Override
-	public State state() {
-		return stateSupplier.get();
+	protected void doClose()
+	throws IOException {
+		fileMgrSvc.close();
+		stepSvc.close();
 	}
 }

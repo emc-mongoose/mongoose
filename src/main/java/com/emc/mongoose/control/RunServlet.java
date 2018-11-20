@@ -1,13 +1,14 @@
 package com.emc.mongoose.control;
 
 import com.emc.mongoose.Node;
+import com.emc.mongoose.env.DateUtil;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.format.DateTimeFormatter;
+import java.text.DateFormat;
 
 /**
  @author veronika K. on 08.11.18 */
@@ -27,7 +28,7 @@ public class RunServlet
 	protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
 	throws ServletException, IOException {
 		resp.addHeader("Node state", node.state().name());
-		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+		final DateFormat dtf = DateUtil.FMT_DATE_ISO8601;
 		resp.addHeader("Node start time", dtf.format(node.startTime()));
 		resp.setStatus(STATUS_OK);
 		//TODO: add content
