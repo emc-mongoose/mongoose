@@ -54,8 +54,9 @@ jobs:
       - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-jython -t $REPO:$COMMIT .
       - docker push emcmongoose/mongoose-scripting-jython:$COMMIT
 
+    - stage: "System tests"
     # STORAGE_TYPE=atmos,s3,fs RUN_MODE=local,distributed CONCURRENCY=low,medium ITEM_SIZE=small ./gradlew systemTest --tests com.emc.mongoose.system.CircularAppendTest
-    - env:
+      env:
       - TEST=CircularAppendTest
       - STORAGE_TYPE=atmos,s3,fs
       - RUN_MODE=local,distributed
@@ -90,9 +91,8 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    - stage: "System tests"
-      # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew systemTest --tests com.emc.mongoose.system.PipelineWithDelayTest
-      env:
+    # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew systemTest --tests com.emc.mongoose.system.PipelineWithDelayTest
+    - env:
       - TEST=PipelineWithDelayTest
       - STORAGE_TYPE=atmos,s3
       - RUN_MODE=local,distributed
