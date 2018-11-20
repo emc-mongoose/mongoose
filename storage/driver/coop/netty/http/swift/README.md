@@ -43,6 +43,7 @@
 ```bash
 java -jar mongoose-<VERSION>.jar \
     --storage-driver-type=swift \
+    --storage-namespace=ns1 \
     ...
 ```
 
@@ -50,10 +51,10 @@ java -jar mongoose-<VERSION>.jar \
 
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
-| storage-net-http-namespace                     | String | null | The HTTP storage namespace. WARNING: the default value (null) will not work in the case of Swift API
 | storage-net-http-versioning                    | Flag | false | Specifies whether the versioning storage feature is used or not
 
 ### 2.2. Notes
 
 * A **container** may be specified with `item-input-path` either `item-output-path` configuration option
+* The default storage namespace value (`null`) won't work, specify the correct value explicitly
 * DLO creation should be enabled using the `item-data-ranges-threshold` configuration option

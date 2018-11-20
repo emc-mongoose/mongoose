@@ -47,6 +47,8 @@ implements Message, StringBuilderFormattable {
 			if(t.length() > count) {
 				if(t.startsWith("0.") || value >= 1) {
 					result = t.substring(0, count);
+				} else if(value < 1.e-99) {
+					result = "0";
 				} else {
 					result = t.substring(0, count - 3) + t.substring(t.length() - 3);
 				}
