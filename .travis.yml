@@ -145,12 +145,12 @@ jobs:
       - ITEM_SIZE=small,medium
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
-    # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,small ITEM_SIZE=empty,medium ./gradlew systemTest --tests com.emc.mongoose.system.TlsReadUsingInputFileTest
+    # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,low ITEM_SIZE=empty,medium ./gradlew systemTest --tests com.emc.mongoose.system.TlsReadUsingInputFileTest
     - env:
       - TEST=TlsReadUsingInputFileTest
       - STORAGE_TYPE=atmos,s3
       - RUN_MODE=local,distributed
-      - CONCURRENCY=single,small
+      - CONCURRENCY=single,low
       - ITEM_SIZE=empty,medium
       script: "./gradlew systemTest --tests com.emc.mongoose.system.${TEST}"
 
