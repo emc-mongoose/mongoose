@@ -50,6 +50,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -159,14 +160,14 @@ public final class Main {
 
 	private static Config collectDefaults(
 		final List<Extension> extensions, final Config mainDefaults, final Path appHomePath
-	)
-	throws Exception {
-		final List<Config> allDefaults = extensions
+	) throws Exception {
+		final List<Config> allDefaults = new ArrayList<>(extensions.size() + 1);
+		allDefaults.add(mainDefaults); // should be 1st in the resulting list in order to allow to override its values
+		extensions
 			.stream()
 			.map(ext -> ext.defaults(appHomePath))
 			.filter(Objects::nonNull)
-			.collect(Collectors.toList());
-		allDefaults.add(mainDefaults);
+			.forEach(allDefaults::add);
 		return ConfigUtil.merge(mainDefaults.pathSep(), allDefaults);
 	}
 
