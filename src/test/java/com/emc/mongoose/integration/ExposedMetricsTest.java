@@ -25,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -83,11 +84,21 @@ public class ExposedMetricsTest {
 		snapshotsSupplier = () -> Arrays.asList(metricsContext.lastSnapshot());
 		metricsContext.start();
 		//
-		distributedMetricsContext = new DistributedMetricsContextImpl(
-			STEP_ID, OP_TYPE, nodeCountSupplier, CONCURRENCY_LIMIT, CONCURRENCY_THRESHOLD, ITEM_DATA_SIZE,
-			UPDATE_INTERVAL_SEC, true, true, true, true, snapshotsSupplier,
-			Arrays.asList(QUANTILE_VALUES)
-		);
+		distributedMetricsContext = new DistributedMetricsContextImpl.Builder()
+			.id(STEP_ID)
+			.opType(OP_TYPE)
+			.nodeCountSupplier(nodeCountSupplier)
+			.concurrencyLimit(CONCURRENCY_LIMIT)
+			.concurrencyThreshold(CONCURRENCY_THRESHOLD)
+			.itemDataSize(ITEM_DATA_SIZE)
+			.outputPeriodSec(UPDATE_INTERVAL_SEC)
+			.stdOutColorFlag(true)
+			.avgPersistFlag(true)
+			.sumPersistFlag(true)
+			.snapshotsSupplier(snapshotsSupplier)
+			.quantileValues(Arrays.asList(QUANTILE_VALUES))
+			.nodeAddrs(new ArrayList<>())
+			.build();
 		distributedMetricsContext.start();
 	}
 

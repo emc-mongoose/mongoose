@@ -2,15 +2,14 @@ package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.DistributedMetricsListener;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshotImpl;
 import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshotImpl;
-import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshotImpl;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshotImpl;
-
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.util.ArrayList;
@@ -20,8 +19,8 @@ import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapshotImpl>
-extends MetricsContextBase<S>
-implements DistributedMetricsContext<S> {
+	extends MetricsContextBase<S>
+	implements DistributedMetricsContext<S> {
 
 	private final IntSupplier nodeCountSupplier;
 	private final Supplier<List<AllMetricsSnapshot>> snapshotsSupplier;
@@ -77,7 +76,7 @@ implements DistributedMetricsContext<S> {
 	}
 
 	@Override
-	public List<String> nodeAddrs(){
+	public List<String> nodeAddrs() {
 		return nodeAddrs;
 	}
 
@@ -109,21 +108,16 @@ implements DistributedMetricsContext<S> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public void refreshLastSnapshot() {
-
 		final List<AllMetricsSnapshot> snapshots = snapshotsSupplier.get();
 		final int snapshotsCount = snapshots.size();
-
 		if(snapshotsCount > 0) { // do nothing otherwise
-
 			final RateMetricSnapshot successSnapshot;
 			final RateMetricSnapshot failsSnapshot;
 			final RateMetricSnapshot bytesSnapshot;
 			final ConcurrencyMetricSnapshot actualConcurrencySnapshot;
 			final TimingMetricSnapshot durSnapshot;
 			final TimingMetricSnapshot latSnapshot;
-
 			if(snapshotsCount == 1) { // single
-
 				final AllMetricsSnapshot snapshot = snapshots.get(0);
 				successSnapshot = snapshot.successSnapshot();
 				failsSnapshot = snapshot.failsSnapshot();
@@ -131,16 +125,14 @@ implements DistributedMetricsContext<S> {
 				actualConcurrencySnapshot = snapshot.concurrencySnapshot();
 				durSnapshot = snapshot.durationSnapshot();
 				latSnapshot = snapshot.latencySnapshot();
-
 			} else { // many
-
 				final List<TimingMetricSnapshot> durSnapshots = new ArrayList<>();
 				final List<TimingMetricSnapshot> latSnapshots = new ArrayList<>();
 				final List<ConcurrencyMetricSnapshot> conSnapshots = new ArrayList<>();
 				final List<RateMetricSnapshot> succSnapshots = new ArrayList<>();
 				final List<RateMetricSnapshot> failSnapshots = new ArrayList<>();
 				final List<RateMetricSnapshot> byteSnapshots = new ArrayList<>();
-				for(int i = 0; i < snapshotsCount; i ++) {
+				for(int i = 0; i < snapshotsCount; i++) {
 					final AllMetricsSnapshot snapshot = snapshots.get(i);
 					durSnapshots.add(snapshot.durationSnapshot());
 					latSnapshots.add(snapshot.latencySnapshot());
@@ -155,9 +147,7 @@ implements DistributedMetricsContext<S> {
 				actualConcurrencySnapshot = ConcurrencyMetricSnapshotImpl.aggregate(conSnapshots);
 				durSnapshot = TimingMetricSnapshotImpl.aggregate(durSnapshots);
 				latSnapshot = TimingMetricSnapshotImpl.aggregate(latSnapshots);
-
 			}
-
 			lastSnapshot = (S) new DistributedAllMetricsSnapshotImpl(
 				durSnapshot, latSnapshot, actualConcurrencySnapshot, failsSnapshot, successSnapshot, bytesSnapshot,
 				nodeCountSupplier.getAsInt(), elapsedTimeMillis()
@@ -173,11 +163,21 @@ implements DistributedMetricsContext<S> {
 
 	@Override
 	protected DistributedMetricsContextImpl<S> newThresholdMetricsContext() {
-		return new DistributedMetricsContextImpl<>(
-			id, opType, nodeCountSupplier, concurrencyLimit, 0, itemDataSize,
-			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag, avgPersistFlag,
-			sumPersistFlag, perfDbResultsFileFlag, snapshotsSupplier, quantileValues, nodeAddrs
-		);
+		return new DistributedMetricsContextImpl.Builder()
+			.id(id)
+			.opType(opType)
+			.nodeCountSupplier(nodeCountSupplier)
+			.concurrencyLimit(concurrencyLimit)
+			.concurrencyThreshold(concurrencyThreshold)
+			.itemDataSize(itemDataSize)
+			.outputPeriodSec((int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis))
+			.stdOutColorFlag(stdOutColorFlag)
+			.avgPersistFlag(avgPersistFlag)
+			.sumPersistFlag(sumPersistFlag)
+			.snapshotsSupplier(snapshotsSupplier)
+			.quantileValues(quantileValues)
+			.nodeAddrs(nodeAddrs)
+			.build();
 	}
 
 	@Override
@@ -201,5 +201,100 @@ implements DistributedMetricsContext<S> {
 	@Override
 	public final void close() {
 		super.close();
+	}
+
+	public static class Builder {
+
+		private IntSupplier nodeCountSupplier;
+		private Supplier<List<AllMetricsSnapshot>> snapshotsSupplier;
+		private boolean avgPersistFlag;
+		private boolean sumPersistFlag;
+		private boolean perfDbResultsFileFlag;
+		private List<Double> quantileValues;
+		private List<String> nodeAddrs;
+		private String id;
+		private OpType opType;
+		private int concurrencyLimit;
+		private int concurrencyThreshold;
+		private SizeInBytes itemDataSize;
+		private boolean stdOutColorFlag;
+		private int outputPeriodSec;
+
+		public DistributedMetricsContextImpl build() {
+			return new DistributedMetricsContextImpl(id, opType, nodeCountSupplier, concurrencyLimit,
+				concurrencyThreshold, itemDataSize, outputPeriodSec, stdOutColorFlag, avgPersistFlag, sumPersistFlag,
+				perfDbResultsFileFlag, snapshotsSupplier, quantileValues, nodeAddrs
+			);
+		}
+
+		public Builder id(final String id) {
+			this.id = id;
+			return this;
+		}
+
+		public Builder opType(final OpType opType) {
+			this.opType = opType;
+			return this;
+		}
+
+		public Builder concurrencyLimit(final int concurrencyLimit) {
+			this.concurrencyLimit = concurrencyLimit;
+			return this;
+		}
+
+		public Builder concurrencyThreshold(final int concurrencyThreshold) {
+			this.concurrencyThreshold = concurrencyThreshold;
+			return this;
+		}
+
+		public Builder itemDataSize(final SizeInBytes itemDataSize) {
+			this.itemDataSize = itemDataSize;
+			return this;
+		}
+
+		public Builder stdOutColorFlag(final boolean stdOutColorFlag) {
+			this.stdOutColorFlag = stdOutColorFlag;
+			return this;
+		}
+
+		public Builder outputPeriodSec(final int outputPeriodSec) {
+			this.outputPeriodSec = outputPeriodSec;
+			return this;
+		}
+
+		public Builder avgPersistFlag(final boolean avgPersistFlag) {
+			this.avgPersistFlag = avgPersistFlag;
+			return this;
+		}
+
+		public Builder sumPersistFlag(final boolean sumPersistFlag) {
+			this.sumPersistFlag = sumPersistFlag;
+			return this;
+		}
+
+		public Builder perfDbResultsFileFlag(final boolean perfDbResultsFileFlag) {
+			this.perfDbResultsFileFlag = perfDbResultsFileFlag;
+			return this;
+		}
+
+		public Builder quantileValues(final List<Double> quantileValues) {
+			this.quantileValues = quantileValues;
+			return this;
+		}
+
+		public Builder nodeAddrs(final List<String> nodeAddrs) {
+			this.nodeAddrs = nodeAddrs;
+			return this;
+		}
+
+		public Builder nodeCountSupplier(final IntSupplier nodeCountSupplier) {
+			this.nodeCountSupplier = nodeCountSupplier;
+			return this;
+		}
+
+		public Builder snapshotsSupplier(final Supplier<List<AllMetricsSnapshot>> snapshotsSupplier) {
+			this.snapshotsSupplier = snapshotsSupplier;
+			return this;
+		}
 	}
 }

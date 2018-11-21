@@ -23,7 +23,6 @@ import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.context.DistributedMetricsContextImpl;
 import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.storage.driver.StorageDriver;
-import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.reflection.TypeUtil;
@@ -41,15 +40,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.config.ConfigUtil.flatten;
-import static com.github.akurilov.fiber4j.Fiber.SOFT_DURATION_LIMIT_NANOS;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
@@ -344,11 +340,21 @@ public abstract class LoadStepClientBase
 			.collect(Collectors.toList());
 		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
 		// further usage
-		final DistributedMetricsContext metricsCtx = new DistributedMetricsContextImpl<>(
-			id(), opType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
-			outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
-			() -> metricsSnapshotsByIndex(originIndex), quantileValues, remoteNodeAddrs(config)
-		);
+		final DistributedMetricsContext metricsCtx = new DistributedMetricsContextImpl.Builder()
+			.id(id())
+			.opType(opType)
+			.nodeCountSupplier(this::sliceCount)
+			.concurrencyLimit(concurrencyLimit)
+			.concurrencyThreshold(concurrencyThreshold)
+			.itemDataSize(itemDataSize)
+			.outputPeriodSec(metricsAvgPeriod)
+			.stdOutColorFlag(outputColorFlag)
+			.avgPersistFlag(metricsAvgPersistFlag)
+			.sumPersistFlag(metricsSumPersistFlag)
+			.snapshotsSupplier(() -> metricsSnapshotsByIndex(originIndex))
+			.quantileValues(quantileValues)
+			.nodeAddrs(remoteNodeAddrs(config))
+			.build();
 		metricsContexts.add(metricsCtx);
 	}
 
