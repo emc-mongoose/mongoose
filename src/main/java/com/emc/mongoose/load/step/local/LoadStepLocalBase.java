@@ -68,7 +68,7 @@ public abstract class LoadStepLocalBase
 			metricsAvgPeriod = TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
 		}
 		final int index = metricsContexts.size();
-		final MetricsContext metricsCtx = new MetricsContextImpl.Builder()
+		final MetricsContext metricsCtx = MetricsContextImpl.builder()
 			.id(id())
 			.opType(opType)
 			.actualConcurrencyGauge(() -> stepContexts.get(index).activeOpCount())
