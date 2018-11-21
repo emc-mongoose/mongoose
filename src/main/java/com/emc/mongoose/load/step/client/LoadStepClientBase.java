@@ -340,7 +340,7 @@ public abstract class LoadStepClientBase
 			.collect(Collectors.toList());
 		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
 		// further usage
-		final DistributedMetricsContext metricsCtx = new DistributedMetricsContextImpl.Builder()
+		final DistributedMetricsContext metricsCtx = DistributedMetricsContextImpl.builder()
 			.id(id())
 			.opType(opType)
 			.nodeCountSupplier(this::sliceCount)

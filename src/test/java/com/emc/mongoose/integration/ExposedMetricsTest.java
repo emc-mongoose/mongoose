@@ -78,13 +78,20 @@ public class ExposedMetricsTest {
 		context.addServlet(new ServletHolder(new MetricsServlet()), CONTEXT);
 		server.start();
 		//
-		metricsContext = new MetricsContextImpl(STEP_ID, OP_TYPE, () -> 1, CONCURRENCY_LIMIT, CONCURRENCY_THRESHOLD,
-			ITEM_DATA_SIZE, UPDATE_INTERVAL_SEC, true
-		);
+		metricsContext = MetricsContextImpl.builder()
+			.id(STEP_ID)
+			.opType(OP_TYPE)
+			.actualConcurrencyGauge(() -> 1)
+			.concurrencyLimit(CONCURRENCY_LIMIT)
+			.concurrencyThreshold(CONCURRENCY_THRESHOLD)
+			.itemDataSize(ITEM_DATA_SIZE)
+			.outputPeriodSec(UPDATE_INTERVAL_SEC)
+			.stdOutColorFlag(true)
+			.build();
 		snapshotsSupplier = () -> Arrays.asList(metricsContext.lastSnapshot());
 		metricsContext.start();
 		//
-		distributedMetricsContext = new DistributedMetricsContextImpl.Builder()
+		distributedMetricsContext = DistributedMetricsContextImpl.builder()
 			.id(STEP_ID)
 			.opType(OP_TYPE)
 			.nodeCountSupplier(nodeCountSupplier)

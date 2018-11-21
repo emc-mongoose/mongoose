@@ -8,20 +8,14 @@ import com.emc.mongoose.load.step.LoadStepBase;
 import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.metrics.context.MetricsContextImpl;
-import com.emc.mongoose.metrics.MetricsManager;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-
-import com.github.akurilov.commons.concurrent.AsyncRunnable;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.fiber4j.Fiber;
 import org.apache.logging.log4j.Level;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -29,10 +23,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
+
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 public abstract class LoadStepLocalBase
-extends LoadStepBase {
+	extends LoadStepBase {
 
 	protected final List<LoadStepContext> stepContexts = new ArrayList<>();
 
@@ -70,10 +68,16 @@ extends LoadStepBase {
 			metricsAvgPeriod = TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
 		}
 		final int index = metricsContexts.size();
-		final MetricsContext metricsCtx = new MetricsContextImpl(
-			id(), opType, () -> stepContexts.get(index).activeOpCount(), concurrency,
-			(int) (concurrency * metricsConfig.doubleVal("threshold")), itemDataSize, metricsAvgPeriod, outputColorFlag
-		);
+		final MetricsContext metricsCtx = new MetricsContextImpl.Builder()
+			.id(id())
+			.opType(opType)
+			.actualConcurrencyGauge(() -> stepContexts.get(index).activeOpCount())
+			.concurrencyLimit(concurrency)
+			.concurrencyThreshold((int) (concurrency * metricsConfig.doubleVal("threshold")))
+			.itemDataSize(itemDataSize)
+			.outputPeriodSec(metricsAvgPeriod)
+			.stdOutColorFlag(outputColorFlag)
+			.build();
 		metricsContexts.add(metricsCtx);
 	}
 
@@ -96,7 +100,6 @@ extends LoadStepBase {
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptRunException, IllegalStateException {
-
 		final long timeoutMillis = timeout > 0 ? timeUnit.toMillis(timeout) : Long.MAX_VALUE;
 		final long startTimeMillis = System.currentTimeMillis();
 		final int stepCtxCount = stepContexts.size();
@@ -104,9 +107,8 @@ extends LoadStepBase {
 		int countDown = stepCtxCount;
 		LoadStepContext stepCtx;
 		boolean timeIsOut = false;
-
-		while(countDown > 0 && !timeIsOut) {
-			for(int i = 0; i < stepCtxCount; i ++) {
+		while(countDown > 0 && ! timeIsOut) {
+			for(int i = 0; i < stepCtxCount; i++) {
 				if(timeoutMillis <= System.currentTimeMillis() - startTimeMillis) {
 					timeIsOut = true;
 					break;
@@ -116,7 +118,7 @@ extends LoadStepBase {
 					try {
 						if(stepCtx.isDone() || stepCtx.await(Fiber.SOFT_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 							stepContextsCopy[i] = null; // exclude
-							countDown --;
+							countDown--;
 							break;
 						}
 					} catch(final InterruptedException e) {
@@ -126,7 +128,6 @@ extends LoadStepBase {
 				}
 			}
 		}
-
 		return 0 == countDown;
 	}
 

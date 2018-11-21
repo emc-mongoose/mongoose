@@ -1,17 +1,27 @@
 package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshotImpl;
+import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import com.emc.mongoose.metrics.type.ConcurrencyMeterImpl;
 import com.emc.mongoose.metrics.type.HistogramImpl;
+import com.emc.mongoose.metrics.type.LongMeter;
 import com.emc.mongoose.metrics.type.RateMeter;
 import com.emc.mongoose.metrics.type.RateMeterImpl;
 import com.emc.mongoose.metrics.type.TimingMeterImpl;
 import com.emc.mongoose.metrics.util.ConcurrentSlidingWindowLongReservoir;
-import com.emc.mongoose.metrics.type.LongMeter;
+import com.github.akurilov.commons.system.SizeInBytes;
+
+import java.time.Clock;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.IntSupplier;
+
 import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_BYTE;
 import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_CONC;
 import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_DUR;
@@ -19,18 +29,9 @@ import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_FAIL;
 import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_LAT;
 import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_SUCC;
 
-import com.github.akurilov.commons.system.SizeInBytes;
-
-import java.time.Clock;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.IntSupplier;
-
 public class MetricsContextImpl<S extends AllMetricsSnapshotImpl>
-extends MetricsContextBase<S>
-implements MetricsContext<S> {
+	extends MetricsContextBase<S>
+	implements MetricsContext<S> {
 
 	private final LongMeter<TimingMetricSnapshot> reqDuration, respLatency;
 	private final LongMeter<ConcurrencyMetricSnapshot> actualConcurrency;
@@ -209,10 +210,16 @@ implements MetricsContext<S> {
 
 	@Override
 	protected MetricsContextImpl<S> newThresholdMetricsContext() {
-		return new MetricsContextImpl<>(
-			id, opType, actualConcurrencyGauge, concurrencyLimit, 0, itemDataSize,
-			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag
-		);
+		return new ContextBuilderImpl()
+			.id(id())
+			.opType(opType)
+			.actualConcurrencyGauge(actualConcurrencyGauge)
+			.concurrencyLimit(concurrencyLimit)
+			.concurrencyThreshold(0)
+			.itemDataSize(itemDataSize)
+			.outputPeriodSec((int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis))
+			.stdOutColorFlag(stdOutColorFlag)
+			.build();
 	}
 
 	@Override
@@ -236,5 +243,77 @@ implements MetricsContext<S> {
 	@Override
 	public final void close() {
 		super.close();
+	}
+
+	public static ContextBuilder builder() {
+		return new ContextBuilderImpl();
+	}
+
+	private static class ContextBuilderImpl
+		implements ContextBuilder<ContextBuilder, MetricsContextImpl> {
+
+		private IntSupplier actualConcurrencyGauge;
+		private String id;
+		private OpType opType;
+		private int concurrencyLimit;
+		private int concurrencyThreshold;
+		private SizeInBytes itemDataSize;
+		private boolean stdOutColorFlag;
+		private int outputPeriodSec;
+
+		public MetricsContextImpl build() {
+			Arrays.asList(this.getClass().getDeclaredFields()).forEach(field -> {
+				try {
+					if(field.get(this) == null) {
+						throw new AssertionError("Field " + field.getName() + " is null");
+					}
+				} catch(IllegalAccessException e) {
+					e.printStackTrace();
+				}
+			});
+			return new MetricsContextImpl(id, opType, actualConcurrencyGauge, concurrencyLimit,
+				concurrencyThreshold, itemDataSize, outputPeriodSec, stdOutColorFlag
+			);
+		}
+
+		public ContextBuilderImpl id(final String id) {
+			this.id = id;
+			return this;
+		}
+
+		public ContextBuilderImpl opType(final OpType opType) {
+			this.opType = opType;
+			return this;
+		}
+
+		public ContextBuilderImpl concurrencyLimit(final int concurrencyLimit) {
+			this.concurrencyLimit = concurrencyLimit;
+			return this;
+		}
+
+		public ContextBuilderImpl concurrencyThreshold(final int concurrencyThreshold) {
+			this.concurrencyThreshold = concurrencyThreshold;
+			return this;
+		}
+
+		public ContextBuilderImpl itemDataSize(final SizeInBytes itemDataSize) {
+			this.itemDataSize = itemDataSize;
+			return this;
+		}
+
+		public ContextBuilderImpl stdOutColorFlag(final boolean stdOutColorFlag) {
+			this.stdOutColorFlag = stdOutColorFlag;
+			return this;
+		}
+
+		public ContextBuilderImpl outputPeriodSec(final int outputPeriodSec) {
+			this.outputPeriodSec = outputPeriodSec;
+			return this;
+		}
+
+		public ContextBuilderImpl actualConcurrencyGauge(final IntSupplier actualConcurrencyGauge) {
+			this.actualConcurrencyGauge = actualConcurrencyGauge;
+			return this;
+		}
 	}
 }

@@ -5,6 +5,7 @@ import com.emc.mongoose.metrics.DistributedMetricsListener;
 import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshotImpl;
+import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshot;
 import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshotImpl;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshotImpl;
@@ -19,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
-public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapshotImpl>
+public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapshot>
 	extends MetricsContextBase<S>
 	implements DistributedMetricsContext<S> {
 
@@ -164,7 +165,7 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 
 	@Override
 	protected DistributedMetricsContextImpl<S> newThresholdMetricsContext() {
-		return new DistributedMetricsContextImpl.Builder()
+		return new DistributedContextBuilderImpl()
 			.id(id)
 			.opType(opType)
 			.nodeCountSupplier(nodeCountSupplier)
@@ -204,7 +205,12 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 		super.close();
 	}
 
-	public static class Builder {
+	public static DistributedContextBuilder builder() {
+		return new DistributedContextBuilderImpl();
+	}
+
+	private static class DistributedContextBuilderImpl
+		implements DistributedContextBuilder {
 
 		private IntSupplier nodeCountSupplier;
 		private Supplier<List<AllMetricsSnapshot>> snapshotsSupplier;
@@ -220,6 +226,7 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 		private SizeInBytes itemDataSize;
 		private boolean stdOutColorFlag;
 		private int outputPeriodSec;
+		private IntSupplier actualConcurrencyGauge = () -> 1; //TODO: How to correctly define for distributed mode
 
 		public DistributedMetricsContextImpl build() {
 			Arrays.asList(this.getClass().getDeclaredFields()).forEach(field -> {
@@ -237,72 +244,77 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 			);
 		}
 
-		public Builder id(final String id) {
+		public DistributedContextBuilder id(final String id) {
 			this.id = id;
 			return this;
 		}
 
-		public Builder opType(final OpType opType) {
+		public DistributedContextBuilder opType(final OpType opType) {
 			this.opType = opType;
 			return this;
 		}
 
-		public Builder concurrencyLimit(final int concurrencyLimit) {
+		public DistributedContextBuilder concurrencyLimit(final int concurrencyLimit) {
 			this.concurrencyLimit = concurrencyLimit;
 			return this;
 		}
 
-		public Builder concurrencyThreshold(final int concurrencyThreshold) {
+		public DistributedContextBuilder concurrencyThreshold(final int concurrencyThreshold) {
 			this.concurrencyThreshold = concurrencyThreshold;
 			return this;
 		}
 
-		public Builder itemDataSize(final SizeInBytes itemDataSize) {
+		public DistributedContextBuilder itemDataSize(final SizeInBytes itemDataSize) {
 			this.itemDataSize = itemDataSize;
 			return this;
 		}
 
-		public Builder stdOutColorFlag(final boolean stdOutColorFlag) {
+		public DistributedContextBuilder stdOutColorFlag(final boolean stdOutColorFlag) {
 			this.stdOutColorFlag = stdOutColorFlag;
 			return this;
 		}
 
-		public Builder outputPeriodSec(final int outputPeriodSec) {
+		public DistributedContextBuilder outputPeriodSec(final int outputPeriodSec) {
 			this.outputPeriodSec = outputPeriodSec;
 			return this;
 		}
 
-		public Builder avgPersistFlag(final boolean avgPersistFlag) {
+		public DistributedContextBuilder actualConcurrencyGauge(final IntSupplier actualConcurrencyGauge) {
+			this.actualConcurrencyGauge = actualConcurrencyGauge;
+			return this;
+		}
+
+		public DistributedContextBuilder avgPersistFlag(final boolean avgPersistFlag) {
 			this.avgPersistFlag = avgPersistFlag;
 			return this;
 		}
 
-		public Builder sumPersistFlag(final boolean sumPersistFlag) {
+		public DistributedContextBuilder sumPersistFlag(final boolean sumPersistFlag) {
 			this.sumPersistFlag = sumPersistFlag;
 			return this;
 		}
 
-		public Builder perfDbResultsFileFlag(final boolean perfDbResultsFileFlag) {
+		public DistributedContextBuilder perfDbResultsFileFlag(final boolean perfDbResultsFileFlag) {
 			this.perfDbResultsFileFlag = perfDbResultsFileFlag;
 			return this;
 		}
 
-		public Builder quantileValues(final List<Double> quantileValues) {
+		public DistributedContextBuilder quantileValues(final List<Double> quantileValues) {
 			this.quantileValues = quantileValues;
 			return this;
 		}
 
-		public Builder nodeAddrs(final List<String> nodeAddrs) {
+		public DistributedContextBuilder nodeAddrs(final List<String> nodeAddrs) {
 			this.nodeAddrs = nodeAddrs;
 			return this;
 		}
 
-		public Builder nodeCountSupplier(final IntSupplier nodeCountSupplier) {
+		public DistributedContextBuilder nodeCountSupplier(final IntSupplier nodeCountSupplier) {
 			this.nodeCountSupplier = nodeCountSupplier;
 			return this;
 		}
 
-		public Builder snapshotsSupplier(final Supplier<List<AllMetricsSnapshot>> snapshotsSupplier) {
+		public DistributedContextBuilder snapshotsSupplier(final Supplier<List<AllMetricsSnapshot>> snapshotsSupplier) {
 			this.snapshotsSupplier = snapshotsSupplier;
 			return this;
 		}
