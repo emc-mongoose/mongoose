@@ -56,12 +56,7 @@ public class TlsReadUsingInputFileTest {
 
 	@Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
 	public static List<Object[]> envParams() {
-		try {
-			return EnvParams.PARAMS;
-		} catch(final Exception e) {
-			e.printStackTrace();
-			throw e;
-		}
+		return EnvParams.PARAMS;
 	}
 
 	private static final String SCENARIO_PATH = systemTestContainerScenarioPath(TlsReadUsingInputFileTest.class);
