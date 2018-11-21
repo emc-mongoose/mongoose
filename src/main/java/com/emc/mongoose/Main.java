@@ -6,15 +6,17 @@ import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.control.ConfigServlet;
-import com.emc.mongoose.control.RunServlet;
 import com.emc.mongoose.env.CoreResourcesToInstall;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.load.step.ScriptEngineUtil;
+import com.emc.mongoose.load.step.service.LoadStepManagerServiceImpl;
+import com.emc.mongoose.load.step.service.file.FileManagerServiceImpl;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsManagerImpl;
+import com.emc.mongoose.svc.Service;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
@@ -84,12 +86,11 @@ public final class Main {
 				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
 				final int port = configWithArgs.intVal("run-port");
 				final Server server = new Server(port);
-				final Node node = new NodeImpl(configWithArgs, extensions, metricsMgr);
-				addServices(server, fullDefaultConfig, node);
+				addServices(server, fullDefaultConfig);
 				server.start();
 				try {
 					if(configWithArgs.boolVal("run-node")) {
-						node.run();
+						runNode(configWithArgs, extensions, metricsMgr);
 					} else {
 						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
 					}
@@ -104,13 +105,12 @@ public final class Main {
 		}
 	}
 
-	private static void addServices(final Server server, final Config defaultConfig, final Node node) {
+	private static void addServices(final Server server, final Config defaultConfig) {
 		final ServletContextHandler context = new ServletContextHandler();
 		context.setContextPath("/");
 		server.setHandler(context);
 		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
 		context.addServlet(new ServletHolder(new ConfigServlet(defaultConfig)), "/config/*");
-		context.addServlet(new ServletHolder(new RunServlet(node)), "/run");
 	}
 
 	private static Config loadDefaultConfig(final Path appHomePath)
@@ -194,6 +194,23 @@ public final class Main {
 		final Map<String, String> parsedArgs = CliArgUtil.parseArgs(args);
 		final List<Map<String, Object>> aliasingConfig = config.listVal("aliasing");
 		return AliasingUtil.apply(parsedArgs, aliasingConfig);
+	}
+
+	private static void runNode(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
+	throws InterruptRunException, InterruptedException {
+		final int listenPort = config.intVal("load-step-node-port");
+		try(
+			final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
+			final Service scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions, metricsMgr)
+		) {
+			fileMgrSvc.start();
+			scenarioStepSvc.start();
+			scenarioStepSvc.await();
+		} catch(final InterruptedException | InterruptRunException e) {
+			throw e;
+		} catch(final Throwable cause) {
+			LogUtil.trace(Loggers.ERR, Level.FATAL, cause, "Run node failure");
+		}
 	}
 
 	@SuppressWarnings("StringBufferWithoutInitialCapacity")
