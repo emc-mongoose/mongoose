@@ -13,6 +13,7 @@ import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshotImpl;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
@@ -221,6 +222,15 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 		private int outputPeriodSec;
 
 		public DistributedMetricsContextImpl build() {
+			Arrays.asList(this.getClass().getDeclaredFields()).forEach(field -> {
+				try {
+					if(field.get(this) == null) {
+						throw new AssertionError("Field " + field.getName() + " is null");
+					}
+				} catch(IllegalAccessException e) {
+					e.printStackTrace();
+				}
+			});
 			return new DistributedMetricsContextImpl(id, opType, nodeCountSupplier, concurrencyLimit,
 				concurrencyThreshold, itemDataSize, outputPeriodSec, stdOutColorFlag, avgPersistFlag, sumPersistFlag,
 				perfDbResultsFileFlag, snapshotsSupplier, quantileValues, nodeAddrs
