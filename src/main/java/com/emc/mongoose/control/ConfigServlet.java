@@ -18,8 +18,6 @@ public class ConfigServlet
 
 	private static final String SCHEMA_PATH = "schema";
 	private static final String CONTEXT_SEP = "/";
-	private static final int STATUS_OK = 200;
-	private static final int STATUS_ERROR = 400;
 	private final Config config;
 
 	public ConfigServlet(final Config config) {
@@ -35,7 +33,7 @@ public class ConfigServlet
 		} else if(contexts[2].equals(SCHEMA_PATH)) {
 			getSchema(resp);
 		} else {
-			resp.setStatus(STATUS_ERROR);
+			resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			resp.getWriter().print("<ERROR> Such URI not found : " + req.getRequestURI());
 		}
 	}
@@ -49,13 +47,13 @@ public class ConfigServlet
 			final String v = TypeNames.MAP.get(k).getTypeName();
 			schemaStr = schemaStr.replaceAll(v, k);
 		}
-		resp.setStatus(STATUS_OK);
+		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.getWriter().print(schemaStr);
 	}
 
 	private void getConfig(final HttpServletResponse resp)
 	throws IOException {
-		resp.setStatus(STATUS_OK);
+		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.getWriter().print(ConfigUtil.toString(config));
 	}
 }
