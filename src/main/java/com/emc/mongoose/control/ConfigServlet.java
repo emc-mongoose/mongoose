@@ -14,10 +14,11 @@ import java.io.IOException;
 /**
  @author veronika K. on 26.10.18 */
 public class ConfigServlet
-	extends HttpServlet {
+extends HttpServlet {
 
 	private static final String SCHEMA_PATH = "schema";
 	private static final String CONTEXT_SEP = "/";
+
 	private final Config config;
 
 	public ConfigServlet(final Config config) {
