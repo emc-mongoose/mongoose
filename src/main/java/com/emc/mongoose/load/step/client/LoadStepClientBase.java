@@ -347,7 +347,7 @@ public abstract class LoadStepClientBase
 		final DistributedMetricsContext metricsCtx = new DistributedMetricsContextImpl<>(
 			id(), opType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
 			outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
-			() -> metricsSnapshotsByIndex(originIndex), quantileValues
+			() -> metricsSnapshotsByIndex(originIndex), quantileValues, remoteNodeAddrs(config)
 		);
 		metricsContexts.add(metricsCtx);
 	}

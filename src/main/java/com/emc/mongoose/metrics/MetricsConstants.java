@@ -15,8 +15,10 @@ public interface MetricsConstants {
 		"load_step_id",
 		"load_op_type",
 		"storage_driver_limit_concurrency",
-		"node_count",
 		"item_data_size",
+		"start_time",
+		"node_list",
+		"user_comment"
 	};
 	String METRIC_FORMAT = Constants.APP_NAME + "_%s_%s"; // appName_metricName_aggregationType
 }

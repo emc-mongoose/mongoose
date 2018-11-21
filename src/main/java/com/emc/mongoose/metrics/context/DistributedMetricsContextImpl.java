@@ -30,13 +30,14 @@ implements DistributedMetricsContext<S> {
 	private final boolean perfDbResultsFileFlag;
 	private volatile DistributedMetricsListener metricsListener = null;
 	private final List<Double> quantileValues;
+	private final List<String> nodeAddrs;
 
 	public DistributedMetricsContextImpl(
 		final String id, final OpType opType, final IntSupplier nodeCountSupplier, final int concurrencyLimit,
 		final int concurrencyThreshold, final SizeInBytes itemDataSize, final int updateIntervalSec,
 		final boolean stdOutColorFlag, final boolean avgPersistFlag, final boolean sumPersistFlag,
 		final boolean perfDbResultsFileFlag, final Supplier<List<AllMetricsSnapshot>> snapshotsSupplier,
-		final List<Double> quantileValues
+		final List<Double> quantileValues, final List<String> nodeAddrs
 	) {
 		super(
 			id, opType, concurrencyLimit, nodeCountSupplier.getAsInt(), concurrencyThreshold, itemDataSize,
@@ -48,6 +49,7 @@ implements DistributedMetricsContext<S> {
 		this.sumPersistFlag = sumPersistFlag;
 		this.perfDbResultsFileFlag = perfDbResultsFileFlag;
 		this.quantileValues = quantileValues;
+		this.nodeAddrs = nodeAddrs;
 	}
 
 	@Override
@@ -72,6 +74,11 @@ implements DistributedMetricsContext<S> {
 
 	@Override
 	public void markFail(final long count) {
+	}
+
+	@Override
+	public List<String> nodeAddrs(){
+		return nodeAddrs;
 	}
 
 	@Override
@@ -169,7 +176,7 @@ implements DistributedMetricsContext<S> {
 		return new DistributedMetricsContextImpl<>(
 			id, opType, nodeCountSupplier, concurrencyLimit, 0, itemDataSize,
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag, avgPersistFlag,
-			sumPersistFlag, perfDbResultsFileFlag, snapshotsSupplier, quantileValues
+			sumPersistFlag, perfDbResultsFileFlag, snapshotsSupplier, quantileValues, nodeAddrs
 		);
 	}
 

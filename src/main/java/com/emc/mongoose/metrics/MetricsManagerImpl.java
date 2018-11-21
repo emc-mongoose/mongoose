@@ -105,7 +105,7 @@ public class MetricsManagerImpl
 					}
 				}
 				// console output
-				if(!selectedMetrics.isEmpty()) {
+				if(! selectedMetrics.isEmpty()) {
 					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
 					selectedMetrics.clear();
 				}
@@ -136,8 +136,10 @@ public class MetricsManagerImpl
 					metricsCtx.id(),
 					metricsCtx.opType().name(),
 					String.valueOf(metricsCtx.concurrencyLimit()),
-					String.valueOf(((DistributedMetricsContext) metricsCtx).nodeCount()),
-					metricsCtx.itemDataSize().toString()
+					metricsCtx.itemDataSize().toString(),
+					"" + metricsCtx.startTimeStamp(),
+					((DistributedMetricsContext) metricsCtx).nodeAddrs().toString(),
+					"SOME COMMENT"
 				};
 				distributedMetrics.put(
 					distributedMetricsCtx,
@@ -164,7 +166,7 @@ public class MetricsManagerImpl
 		) {
 			if(allMetrics.remove(metricsCtx)) {
 				try {
-					if(!outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
+					if(! outputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 						Loggers.ERR.warn(
 							"Acquire lock timeout while unregistering the metrics context \"{}\"", metricsCtx
 						);
