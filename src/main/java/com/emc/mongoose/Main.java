@@ -6,6 +6,7 @@ import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.control.ConfigServlet;
+import com.emc.mongoose.control.run.RunServlet;
 import com.emc.mongoose.env.CoreResourcesToInstall;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
@@ -89,7 +90,12 @@ public final class Main {
 				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
 				final int port = configWithArgs.intVal("run-port");
 				final Server server = new Server(port);
-				addServices(server, fullDefaultConfig);
+				final ServletContextHandler context = new ServletContextHandler();
+				context.setContextPath("/");
+				server.setHandler(context);
+				context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+				context.addServlet(new ServletHolder(new ConfigServlet(defaultConfig)), "/config/*");
+				context.addServlet(new ServletHolder(new RunServlet(extClsLoader, extensions, metricsMgr)), "/run/*");
 				server.start();
 				try {
 					if(configWithArgs.boolVal("run-node")) {
@@ -106,14 +112,6 @@ public final class Main {
 		} catch(final Exception e) {
 			LogUtil.trace(Loggers.ERR, Level.FATAL, e, "Unexpected failure");
 		}
-	}
-
-	private static void addServices(final Server server, final Config defaultConfig) {
-		final ServletContextHandler context = new ServletContextHandler();
-		context.setContextPath("/");
-		server.setHandler(context);
-		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
-		context.addServlet(new ServletHolder(new ConfigServlet(defaultConfig)), "/config/*");
 	}
 
 	private static Config loadDefaultConfig(final Path appHomePath)
@@ -246,7 +244,7 @@ public final class Main {
 		}
 		final String scenarioText = strb.toString();
 		Loggers.SCENARIO.log(Level.INFO, scenarioText);
-		final ScriptEngine scriptEngine = ScriptEngineUtil.resolve(scenarioPath, extClsLoader);
+		final ScriptEngine scriptEngine = ScriptEngineUtil.scriptEngineByFilePath(scenarioPath, extClsLoader);
 		if(scriptEngine == null) {
 			Loggers.ERR.fatal("Failed to resolve the scenario engine for the file \"{}\"", scenarioPath);
 		} else {

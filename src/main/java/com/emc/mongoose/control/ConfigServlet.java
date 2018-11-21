@@ -26,7 +26,7 @@ extends HttpServlet {
 	}
 
 	@Override
-	protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
+	protected final void doGet(final HttpServletRequest req, final HttpServletResponse resp)
 	throws ServletException, IOException {
 		final String[] contexts = req.getRequestURI().split(CONTEXT_SEP);
 		if(contexts.length == 2) {

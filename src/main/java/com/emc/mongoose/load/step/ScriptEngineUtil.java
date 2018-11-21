@@ -26,17 +26,27 @@ import java.util.stream.Collectors;
  */
 public interface ScriptEngineUtil {
 
+	String DEFAULT_LANG = "js";
+
+	static ScriptEngineManager scriptEngineManager(final ClassLoader clsLoader) {
+		return new ScriptEngineManager(clsLoader);
+	}
+
+	static ScriptEngine defaultScriptEngine(final ScriptEngineManager sem) {
+		return sem.getEngineByName(DEFAULT_LANG);
+	}
+
 	/**
 	 Tries to instantiate the script engine for the given script file
 	 @param scenarioPath the path to the script
 	 @return the script engine resolved either <code>null</code>
 	 */
-	static ScriptEngine resolve(final Path scenarioPath, final ClassLoader clsLoader) {
+	static ScriptEngine scriptEngineByFilePath(final Path scenarioPath, final ClassLoader clsLoader) {
 
 		ScriptEngine se = null;
 
 		// init the available external script engines
-		final ScriptEngineManager sem = new ScriptEngineManager(clsLoader);
+		final ScriptEngineManager sem = scriptEngineManager(clsLoader);
 
 		// 1st try to determine the scenario type by the scenario file extension
 		final String scenarioFileName = scenarioPath.getFileName().toString();
@@ -76,10 +86,14 @@ public interface ScriptEngineUtil {
 				);
 			}
 			// 3rd: treat the scenario file as a Javascript file
-			se = sem.getEngineByName("js");
+			se = defaultScriptEngine(sem);
 		}
 
 		return se;
+	}
+
+	static ScriptEngine scriptEngineByDefault(final ClassLoader clsLoader) {
+		return defaultScriptEngine(scriptEngineManager(clsLoader));
 	}
 
 	/**
