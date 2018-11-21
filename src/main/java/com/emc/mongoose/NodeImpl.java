@@ -23,7 +23,6 @@ public class NodeImpl
 	implements Node {
 
 	private final LocalDateTime startTime;
-	private State state = State.STOPPED;
 	private final MetricsManager metricsManager;
 	private final LoadStepManagerService stepSvc;
 	private final Service fileMgrSvc;
