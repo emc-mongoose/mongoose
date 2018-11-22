@@ -340,6 +340,7 @@ public abstract class LoadStepClientBase
 			.collect(Collectors.toList());
 		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
 		// further usage
+		final String userComment = config.stringVal("run-comment");
 		final DistributedMetricsContext metricsCtx = DistributedMetricsContextImpl.builder()
 			.id(id())
 			.opType(opType)
@@ -354,6 +355,7 @@ public abstract class LoadStepClientBase
 			.snapshotsSupplier(() -> metricsSnapshotsByIndex(originIndex))
 			.quantileValues(quantileValues)
 			.nodeAddrs(remoteNodeAddrs(config))
+			.comment(userComment)
 			.build();
 		metricsContexts.add(metricsCtx);
 	}

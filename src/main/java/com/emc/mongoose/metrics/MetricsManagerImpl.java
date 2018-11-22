@@ -139,7 +139,7 @@ public class MetricsManagerImpl
 					metricsCtx.itemDataSize().toString(),
 					"" + metricsCtx.startTimeStamp(),
 					((DistributedMetricsContext) metricsCtx).nodeAddrs().toString(),
-					"SOME COMMENT"
+					metricsCtx.comment()
 				};
 				distributedMetrics.put(
 					distributedMetricsCtx,

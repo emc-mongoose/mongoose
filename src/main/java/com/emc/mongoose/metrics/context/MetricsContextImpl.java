@@ -46,11 +46,11 @@ public class MetricsContextImpl<S extends AllMetricsSnapshotImpl>
 	public MetricsContextImpl(
 		final String id, final OpType opType, final IntSupplier actualConcurrencyGauge, final int concurrencyLimit,
 		final int concurrencyThreshold, final SizeInBytes itemDataSize, final int updateIntervalSec,
-		final boolean stdOutColorFlag
+		final boolean stdOutColorFlag, final String comment
 	) {
 		super(
 			id, opType, concurrencyLimit, 1, concurrencyThreshold, itemDataSize, stdOutColorFlag,
-			TimeUnit.SECONDS.toMillis(updateIntervalSec)
+			TimeUnit.SECONDS.toMillis(updateIntervalSec), comment
 		);
 		//
 		respLatency = new TimingMeterImpl(
@@ -260,6 +260,7 @@ public class MetricsContextImpl<S extends AllMetricsSnapshotImpl>
 		private SizeInBytes itemDataSize;
 		private boolean stdOutColorFlag;
 		private int outputPeriodSec;
+		private String comment;
 
 		public MetricsContextImpl build() {
 			Arrays.asList(this.getClass().getDeclaredFields()).forEach(field -> {
@@ -272,12 +273,18 @@ public class MetricsContextImpl<S extends AllMetricsSnapshotImpl>
 				}
 			});
 			return new MetricsContextImpl(id, opType, actualConcurrencyGauge, concurrencyLimit,
-				concurrencyThreshold, itemDataSize, outputPeriodSec, stdOutColorFlag
+				concurrencyThreshold, itemDataSize, outputPeriodSec, stdOutColorFlag, comment
 			);
 		}
 
 		public ContextBuilderImpl id(final String id) {
 			this.id = id;
+			return this;
+		}
+
+		@Override
+		public ContextBuilder comment(final String comment) {
+			this.comment = comment;
 			return this;
 		}
 

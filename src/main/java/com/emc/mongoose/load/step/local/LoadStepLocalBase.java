@@ -68,6 +68,7 @@ public abstract class LoadStepLocalBase
 			metricsAvgPeriod = TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
 		}
 		final int index = metricsContexts.size();
+		final String userComment = config.stringVal("run-comment");
 		final MetricsContext metricsCtx = MetricsContextImpl.builder()
 			.id(id())
 			.opType(opType)
@@ -77,6 +78,7 @@ public abstract class LoadStepLocalBase
 			.itemDataSize(itemDataSize)
 			.outputPeriodSec(metricsAvgPeriod)
 			.stdOutColorFlag(outputColorFlag)
+			.comment(userComment)
 			.build();
 		metricsContexts.add(metricsCtx);
 	}

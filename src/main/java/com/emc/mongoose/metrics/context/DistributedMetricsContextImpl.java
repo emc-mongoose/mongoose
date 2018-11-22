@@ -38,11 +38,11 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 		final int concurrencyThreshold, final SizeInBytes itemDataSize, final int updateIntervalSec,
 		final boolean stdOutColorFlag, final boolean avgPersistFlag, final boolean sumPersistFlag,
 		final boolean perfDbResultsFileFlag, final Supplier<List<AllMetricsSnapshot>> snapshotsSupplier,
-		final List<Double> quantileValues, final List<String> nodeAddrs
+		final List<Double> quantileValues, final List<String> nodeAddrs, final String comment
 	) {
 		super(
 			id, opType, concurrencyLimit, nodeCountSupplier.getAsInt(), concurrencyThreshold, itemDataSize,
-			stdOutColorFlag, TimeUnit.SECONDS.toMillis(updateIntervalSec)
+			stdOutColorFlag, TimeUnit.SECONDS.toMillis(updateIntervalSec), comment
 		);
 		this.nodeCountSupplier = nodeCountSupplier;
 		this.snapshotsSupplier = snapshotsSupplier;
@@ -227,6 +227,7 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 		private boolean stdOutColorFlag;
 		private int outputPeriodSec;
 		private IntSupplier actualConcurrencyGauge = () -> 1; //TODO: How to correctly define for distributed mode
+		private String comment;
 
 		public DistributedMetricsContextImpl build() {
 			Arrays.asList(this.getClass().getDeclaredFields()).forEach(field -> {
@@ -240,12 +241,18 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 			});
 			return new DistributedMetricsContextImpl(id, opType, nodeCountSupplier, concurrencyLimit,
 				concurrencyThreshold, itemDataSize, outputPeriodSec, stdOutColorFlag, avgPersistFlag, sumPersistFlag,
-				perfDbResultsFileFlag, snapshotsSupplier, quantileValues, nodeAddrs
+				perfDbResultsFileFlag, snapshotsSupplier, quantileValues, nodeAddrs, comment
 			);
 		}
 
 		public DistributedContextBuilder id(final String id) {
 			this.id = id;
+			return this;
+		}
+
+		@Override
+		public DistributedContextBuilder comment(final String comment) {
+			this.comment = comment;
 			return this;
 		}
 

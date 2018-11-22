@@ -16,17 +16,17 @@ implements MetricsContext<S> {
 	protected final SizeInBytes itemDataSize;
 	protected final boolean stdOutColorFlag;
 	protected final long outputPeriodMillis;
+	protected final String comment;
 	private volatile long tsStart = - 1;
 	private volatile long lastOutputTs = 0;
 	private volatile boolean thresholdStateExitedFlag = false;
 	protected volatile MetricsContextBase thresholdMetricsCtx = null;
 	protected volatile S lastSnapshot = null;
-	protected volatile String comment;
 
 	protected MetricsContextBase(
 		final String id, final OpType opType, final int concurrencyLimit, final int nodeCount,
 		final int concurrencyThreshold, final SizeInBytes itemDataSize, final boolean stdOutColorFlag,
-		final long outputPeriodMillis
+		final long outputPeriodMillis, final String comment
 	) {
 		ts = System.nanoTime();
 		this.id = id;
@@ -36,6 +36,7 @@ implements MetricsContext<S> {
 		this.itemDataSize = itemDataSize;
 		this.stdOutColorFlag = stdOutColorFlag;
 		this.outputPeriodMillis = outputPeriodMillis;
+		this.comment = comment;
 	}
 
 	@Override
@@ -176,10 +177,6 @@ implements MetricsContext<S> {
 
 	public long elapsedTimeMillis() {
 		return (System.currentTimeMillis() - tsStart);
-	}
-
-	public void comment(final String comment) {
-		this.comment = comment;
 	}
 
 	public String comment(){
