@@ -13,6 +13,8 @@ public interface ContextBuilder<B extends ContextBuilder, C extends MetricsConte
 
 	B id(final String id);
 
+	B comment(final String comment);
+
 	B opType(final OpType opType);
 
 	B concurrencyLimit(final int concurrencyLimit);

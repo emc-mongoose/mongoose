@@ -21,6 +21,7 @@ implements MetricsContext<S> {
 	private volatile boolean thresholdStateExitedFlag = false;
 	protected volatile MetricsContextBase thresholdMetricsCtx = null;
 	protected volatile S lastSnapshot = null;
+	protected volatile String comment;
 
 	protected MetricsContextBase(
 		final String id, final OpType opType, final int concurrencyLimit, final int nodeCount,
@@ -175,5 +176,13 @@ implements MetricsContext<S> {
 
 	public long elapsedTimeMillis() {
 		return (System.currentTimeMillis() - tsStart);
+	}
+
+	public void comment(final String comment) {
+		this.comment = comment;
+	}
+
+	public String comment(){
+		return this.comment;
 	}
 }
