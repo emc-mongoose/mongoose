@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 public class RunServlet
 extends HttpServlet {
 
-	private static final String PART_KEY_COMMENT = "comment";
 	private static final String PART_KEY_DEFAULTS = "defaults";
 	private static final String PART_KEY_SCENARIO = "scenario";
 
@@ -54,14 +53,6 @@ extends HttpServlet {
 	@Override
 	protected final void doPost(final HttpServletRequest req, final HttpServletResponse resp)
 	throws IOException, ServletException {
-
-		final String comment;
-		try(
-			final InputStream in = req.getPart(PART_KEY_COMMENT).getInputStream();
-			final BufferedReader br = new BufferedReader(new InputStreamReader(in))
-		) {
-			comment = br.lines().collect(Collectors.joining("\n"));
-		}
 
 		final String rawDefaultsData;
 		try(
@@ -90,7 +81,7 @@ extends HttpServlet {
 		// expose the received configuration and the step types
 		ScriptEngineUtil.configure(scriptEngine, extensions, defaults, metricsMgr);
 		//
-		final Run run = new RunImpl(comment, scenario, scriptEngine);
+		final Run run = new RunImpl(defaults.stringVal("run-comment"), scenario, scriptEngine);
 		try {
 			scenarioExecutor.execute(run);
 			resp.setStatus(HttpServletResponse.SC_ACCEPTED);

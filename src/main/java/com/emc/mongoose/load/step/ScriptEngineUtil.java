@@ -5,6 +5,7 @@ import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
+import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
@@ -20,8 +21,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
 import static javax.script.ScriptContext.ENGINE_SCOPE;
 
 /**
