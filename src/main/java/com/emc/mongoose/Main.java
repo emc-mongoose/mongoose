@@ -6,6 +6,7 @@ import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.control.ConfigServlet;
+import com.emc.mongoose.control.run.RunImpl;
 import com.emc.mongoose.control.run.RunServlet;
 import com.emc.mongoose.env.CoreResourcesToInstall;
 import com.emc.mongoose.env.Extension;
@@ -23,7 +24,6 @@ import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.Constants.DIR_EXT;
 import static com.emc.mongoose.Constants.PATH_DEFAULTS;
 import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
-import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
@@ -33,6 +33,7 @@ import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
 import io.prometheus.client.exporter.MetricsServlet;
 
 import org.apache.commons.lang.StringUtils;
+
 import org.apache.logging.log4j.Level;
 
 import org.eclipse.jetty.server.Server;
@@ -40,7 +41,6 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -51,7 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import static javax.script.ScriptContext.ENGINE_SCOPE;
 
 public final class Main {
 
@@ -88,6 +87,7 @@ public final class Main {
 				}
 				// init the metrics manager
 				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
+				// init the API server
 				final int port = configWithArgs.intVal("run-port");
 				final Server server = new Server(port);
 				final ServletContextHandler context = new ServletContextHandler();
@@ -95,8 +95,12 @@ public final class Main {
 				server.setHandler(context);
 				context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
 				context.addServlet(new ServletHolder(new ConfigServlet(defaultConfig)), "/config/*");
-				context.addServlet(new ServletHolder(new RunServlet(extClsLoader, extensions, metricsMgr)), "/run/*");
+				context.addServlet(
+					new ServletHolder(new RunServlet(extClsLoader, extensions, metricsMgr, fullDefaultConfig.schema())),
+					"/run/*"
+				);
 				server.start();
+				// go on
 				try {
 					if(configWithArgs.boolVal("run-node")) {
 						runNode(configWithArgs, extensions, metricsMgr);
@@ -227,6 +231,13 @@ public final class Main {
 		} else {
 			scenarioPath = Paths.get(appHomePath.toString(), DIR_EXAMPLE_SCENARIO, "js", "default.js");
 		}
+		runScenarioFile(config, extensions, extClsLoader, metricsMgr, scenarioPath);
+	}
+
+	private static void runScenarioFile(
+		final Config config, final List<Extension> extensions, final ClassLoader extClsLoader,
+		final MetricsManager metricsMgr, final Path scenarioPath
+	) {
 		final StringBuilder strb = new StringBuilder();
 		try {
 			Files
@@ -243,7 +254,6 @@ public final class Main {
 			}
 		}
 		final String scenarioText = strb.toString();
-		Loggers.SCENARIO.log(Level.INFO, scenarioText);
 		final ScriptEngine scriptEngine = ScriptEngineUtil.scriptEngineByFilePath(scenarioPath, extClsLoader);
 		if(scriptEngine == null) {
 			Loggers.ERR.fatal("Failed to resolve the scenario engine for the file \"{}\"", scenarioPath);
@@ -251,19 +261,10 @@ public final class Main {
 			Loggers.MSG.info("Using the \"{}\" scenario engine", scriptEngine.getFactory().getEngineName());
 			// expose the environment values
 			System.getenv().forEach(scriptEngine::put);
-			// expose the loaded configuration
-			scriptEngine.getContext().setAttribute(ATTR_CONFIG, config, ENGINE_SCOPE);
-			// expose the step types
-			ScriptEngineUtil.registerStepTypes(scriptEngine, extensions, config, metricsMgr);
+			// expose the loaded configuration and the step types
+			ScriptEngineUtil.configure(scriptEngine, extensions, config, metricsMgr);
 			// go
-			try {
-				scriptEngine.eval(scenarioText);
-			} catch(final ScriptException e) {
-				LogUtil.trace(
-					Loggers.ERR, Level.ERROR, e, "\nScenario failed @ file \"{}\", line #{}, column #{}:\n{}",
-					scenarioPath, e.getLineNumber(), e.getColumnNumber(), e.getMessage()
-				);
-			}
+			new RunImpl("", scenarioText, scriptEngine).run();
 		}
 	}
 }

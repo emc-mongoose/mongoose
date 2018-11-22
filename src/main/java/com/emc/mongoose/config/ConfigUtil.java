@@ -71,6 +71,11 @@ public interface ConfigUtil {
 		return readConfigMapper(schema).readValue(file, BasicConfig.class);
 	}
 
+	static Config loadConfig(final String content, final Map<String, Object> schema)
+	throws NoSuchMethodException, IOException {
+		return readConfigMapper(schema).readValue(content, BasicConfig.class);
+	}
+
 	static Config merge(final String pathSep, final List<Config> configs) {
 		final Map<String, Object> schema = configs
 			.stream()

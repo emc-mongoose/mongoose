@@ -21,6 +21,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
+import static javax.script.ScriptContext.ENGINE_SCOPE;
+
 /**
  Created by andrey on 19.09.17.
  */
@@ -96,6 +99,10 @@ public interface ScriptEngineUtil {
 		return defaultScriptEngine(scriptEngineManager(clsLoader));
 	}
 
+	static void registerScenarioDefaults(final ScriptEngine scriptEngine, final Config defaults) {
+		scriptEngine.getContext().setAttribute(ATTR_CONFIG, defaults, ENGINE_SCOPE);
+	}
+
 	/**
 	 Expose the step types to the given script engine using the given configuration
 	 @param se the script engine
@@ -161,5 +168,12 @@ public interface ScriptEngineUtil {
 		specificConfig.val("load-op-type", OpType.UPDATE.name().toLowerCase());
 		specificConfig.val("item-data-ranges-random", 1);
 		se.put("UpdateRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions, metricsMgr));
+	}
+
+	static void configure(
+		final ScriptEngine se, final List<Extension> extensions, final Config config, final MetricsManager metricsMgr
+	) {
+		registerScenarioDefaults(se, config);
+		registerStepTypes(se, extensions, config, metricsMgr);
 	}
 }

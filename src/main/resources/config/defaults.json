@@ -166,6 +166,7 @@
 		}
 	},
 	"run": {
+		"comment": "",
 		// start in the node service node
 		"node": false,
 		// the port to expose the metrics & control API

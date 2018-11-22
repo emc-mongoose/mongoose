@@ -95,6 +95,7 @@
 		}
 	},
 	"run": {
+		"comment": "string",
 		"node": "boolean",
 		"port": "int",
 		"scenario": "string",

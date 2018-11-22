@@ -11,25 +11,21 @@ import javax.script.ScriptException;
 public final class RunImpl
 implements Run {
 
-	private long startTimeMillis = -1;
-
 	private final String comment;
 	private final String scenario;
 	private final ScriptEngine scriptEngine;
+	private final long timestamp;
 
 	public RunImpl(final String comment, final String scenario, final ScriptEngine scriptEngine) {
 		this.comment = comment;
 		this.scenario = scenario;
 		this.scriptEngine = scriptEngine;
+		this.timestamp = System.currentTimeMillis();
 	}
 
 	@Override
-	public final long startTimeMillis() {
-		if(startTimeMillis > 0) {
-			return startTimeMillis;
-		} else {
-			throw new IllegalStateException("Not started yet");
-		}
+	public final long timestamp() {
+		return timestamp;
 	}
 
 	@Override
@@ -39,7 +35,6 @@ implements Run {
 
 	@Override
 	public final void run() {
-		startTimeMillis = System.currentTimeMillis();
 		Loggers.SCENARIO.log(Level.INFO, scenario);
 		try {
 			scriptEngine.eval(scenario);

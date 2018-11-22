@@ -42,7 +42,9 @@ implements Runnable, SingleTaskExecutor {
 		Runnable task;
 		while(true) {
 			task = taskRef.get();
-			if(null != task) {
+			if(null == task) {
+				LockSupport.parkNanos(1);
+			} else {
 				try {
 					task.run();
 				} catch(final InterruptRunException e) {
@@ -52,8 +54,6 @@ implements Runnable, SingleTaskExecutor {
 				} finally {
 					taskRef.set(null);
 				}
-			} else {
-				LockSupport.parkNanos(1);
 			}
 		}
 	}
@@ -61,7 +61,7 @@ implements Runnable, SingleTaskExecutor {
 	@Override
 	public final void execute(final Runnable task)
 	throws RejectedExecutionException {
-		if(! taskRef.compareAndSet(null, task)) {
+		if(!taskRef.compareAndSet(null, task)) {
 			throw new RejectedExecutionException();
 		}
 	}
