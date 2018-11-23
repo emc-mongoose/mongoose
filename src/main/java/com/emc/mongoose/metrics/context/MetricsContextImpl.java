@@ -15,7 +15,6 @@ import com.emc.mongoose.metrics.util.ConcurrentSlidingWindowLongReservoir;
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.time.Clock;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -263,15 +262,6 @@ public class MetricsContextImpl<S extends AllMetricsSnapshotImpl>
 		private String comment;
 
 		public MetricsContextImpl build() {
-			Arrays.asList(this.getClass().getDeclaredFields()).forEach(field -> {
-				try {
-					if(field.get(this) == null) {
-						throw new AssertionError("Field " + field.getName() + " is null");
-					}
-				} catch(IllegalAccessException e) {
-					e.printStackTrace();
-				}
-			});
 			return new MetricsContextImpl(id, opType, actualConcurrencyGauge, concurrencyLimit,
 				concurrencyThreshold, itemDataSize, outputPeriodSec, stdOutColorFlag, comment
 			);
