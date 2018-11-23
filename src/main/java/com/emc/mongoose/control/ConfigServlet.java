@@ -3,6 +3,8 @@ package com.emc.mongoose.control;
 import com.emc.mongoose.config.ConfigUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.io.json.TypeNames;
+import org.eclipse.jetty.http.HttpStatus;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -17,8 +19,7 @@ public class ConfigServlet
 
 	private static final String SCHEMA_PATH = "schema";
 	private static final String CONTEXT_SEP = "/";
-	private static final int STATUS_OK = 200;
-	private static final int STATUS_ERROR = 400;
+
 	private final Config config;
 
 	public ConfigServlet(final Config config) {
@@ -34,22 +35,27 @@ public class ConfigServlet
 		} else if(contexts[2].equals(SCHEMA_PATH)) {
 			getSchema(resp);
 		} else {
-			resp.setStatus(STATUS_ERROR);
+			resp.setStatus(HttpStatus.BAD_REQUEST_400);
 			resp.getWriter().print("<ERROR> Such URI not found : " + req.getRequestURI());
 		}
 	}
 
 	private void getSchema(final HttpServletResponse resp)
 	throws IOException {
-		resp.setStatus(STATUS_OK);
-		resp.getWriter().print(new ObjectMapper()
+		String schemaStr = new ObjectMapper()
 			.writerWithDefaultPrettyPrinter()
-			.writeValueAsString(config.schema()));
+			.writeValueAsString(config.schema());
+		for(final String k : TypeNames.MAP.keySet()) {
+			final String v = TypeNames.MAP.get(k).getTypeName();
+			schemaStr = schemaStr.replaceAll(v, k);
+		}
+		resp.setStatus(HttpStatus.OK_200);
+		resp.getWriter().print(schemaStr);
 	}
 
 	private void getConfig(final HttpServletResponse resp)
 	throws IOException {
-		resp.setStatus(STATUS_OK);
+		resp.setStatus(HttpStatus.OK_200);
 		resp.getWriter().print(ConfigUtil.toString(config));
 	}
 }
