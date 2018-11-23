@@ -445,7 +445,7 @@ import com.bmuschko.gradle.docker.tasks.image.*
 import com.bmuschko.gradle.docker.tasks.container.*
 
 task buildImage(type: DockerBuildImage, dependsOn: dist) {
-	inputDir = project.file(".")
+	inputDir = rootProject.projectDir
 	dockerFile = project.file("docker${File.separator}Dockerfile")
 	imageId = "emcmongoose/mongoose"
 	tags = [
@@ -464,21 +464,20 @@ task pushTestingImage(type: DockerPushImage, dependsOn: buildImage) {
 	tag = "emcmongoose/mongoose:${version}".toString()
 }
 
-task pullRobotImage(type: DockerPullImage) {
-	repository = "danielwhatmuff/robot-docker"
+task buildRobotestImage(type: DockerBuildImage) {
+	inputDir = rootProject.projectDir
+	dockerFile = project.file("docker${File.separator}Dockerfile.robotest")
+	imageId = "emcmongoose/mongoose-robotest"
+	tags = [
+		"emcmongoose/mongoose:${version}",
+	]
 }
 
-task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage, pullRobotImage]) {
+task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage, buildRobotestImage]) {
 	attachStderr = true
 	attachStdout = true
 	//autoRemove = true
-	envVars = [
-		"ROBOT_TESTS": "/root/test/robot",
-	]
-	imageId = pullRobotImage.getImageId()
-	binds = [
-		"${rootProject.projectDir}/src/test/robot": "/root/test/robot",
-	]
+	imageId = buildRobotestImage.getImageId()
 }
 
 task startRobotestContainer(type: DockerStartContainer, dependsOn: createRobotestContainer) {
