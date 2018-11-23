@@ -356,15 +356,6 @@ public abstract class LoadStepClientBase
 							.collect(Collectors.toList());
 	}
 
-	private int avgPeriod(final Config metricsConfig) {
-		final Object metricsAvgPeriodRaw = metricsConfig.val("average-period");
-		if(metricsAvgPeriodRaw instanceof String) {
-			return (int) TimeUtil.getTimeInSeconds((String) metricsAvgPeriodRaw);
-		} else {
-			return TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
-		}
-	}
-
 	private List<AllMetricsSnapshot> metricsSnapshotsByIndex(final int originIndex) {
 		return metricsAggregator == null ?
 			   Collections.emptyList() :

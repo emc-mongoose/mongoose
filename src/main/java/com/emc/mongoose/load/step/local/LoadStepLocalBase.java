@@ -76,15 +76,6 @@ public abstract class LoadStepLocalBase
 		metricsContexts.add(metricsCtx);
 	}
 
-	private int avgPeriod(final Config metricsConfig) {
-		final Object metricsAvgPeriodRaw = metricsConfig.val("average-period");
-		if(metricsAvgPeriodRaw instanceof String) {
-			return (int) TimeUtil.getTimeInSeconds((String) metricsAvgPeriodRaw);
-		} else {
-			return TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
-		}
-	}
-
 	@Override
 	protected final void doShutdown() {
 		stepContexts.forEach(
