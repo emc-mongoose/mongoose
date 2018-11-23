@@ -28,7 +28,7 @@ Run Docker Container
     Run  docker run --network host ${image_name}:${image_version} ${container_args}
 
 Query Defaults
-    ${std_out} =  Get Request  alias=0  uri=http://localhost:${MONGOOSE_REMOTE_API_DEFAULT_PORT}/${MONGOOSE_CONFIG_API_PATH}
+    ${std_out} =  Get Request  alias=session0  uri=http://localhost:${MONGOOSE_REMOTE_API_DEFAULT_PORT}/${MONGOOSE_CONFIG_API_PATH}
     [Return]  ${std_out}
 
 Validate Defaults
