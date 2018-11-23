@@ -46,13 +46,13 @@ jobs:
       - export REPO=emcmongoose/mongoose-scripting-groovy
       - docker login -u $DOCKER_USER -p $DOCKER_PASS
       - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-groovy -t $REPO:$COMMIT .
-      - docker push emcmongoose/mongoose-scripting-groovy:$COMMIT
+      - docker push $REPO:$COMMIT
 
     - script:
       - export REPO=emcmongoose/mongoose-scripting-jython
       - docker login -u $DOCKER_USER -p $DOCKER_PASS
       - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-jython -t $REPO:$COMMIT .
-      - docker push emcmongoose/mongoose-scripting-jython:$COMMIT
+      - docker push $REPO:$COMMIT
 
     - stage: "System tests"
     # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew systemTest --tests com.emc.mongoose.system.ChainWithDelayTest

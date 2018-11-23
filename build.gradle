@@ -6,7 +6,7 @@ import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 
 plugins {
-	id "org.roboscratch.robot" version "0.1.3"
+	id "com.bmuschko.docker-remote-api" version "4.0.5"
 }
 
 description = "Mongoose is a high-load storage performance testing tool"
@@ -58,10 +58,8 @@ allprojects {
 	}
 
 	repositories {
+		jcenter()
 		mavenCentral()
-		maven {
-			url "https://oss.sonatype.org/service/local/repositories/releases/content"
-		}
 	}
 
 	apply plugin: "java"
@@ -332,7 +330,7 @@ subprojects {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "4.7"
+	gradleVersion = "4.8"
 }
 
 static def isTestsProject(final Project p) {
@@ -441,4 +439,53 @@ artifacts {
 
 assemble.dependsOn += dist
 
-runrobot.data_sources = "src/test/robot"
+// Docker tasks ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+import com.bmuschko.gradle.docker.tasks.image.*
+import com.bmuschko.gradle.docker.tasks.container.*
+
+task buildImage(type: DockerBuildImage, dependsOn: dist) {
+	inputDir = project.file(".")
+	dockerFile = project.file("docker${File.separator}Dockerfile")
+	imageId = "emcmongoose/mongoose"
+	tags = [
+		"emcmongoose/mongoose:${version}".toString(),
+		"emcmongoose/mongoose:testing",
+	]
+}
+
+task pushProductionImage(type: DockerPushImage, dependsOn: buildImage) {
+	imageName = "emcmongoose/mongoose"
+	tag = "emcmongoose/mongoose:${version}".toString()
+}
+
+task pushTestingImage(type: DockerPushImage, dependsOn: buildImage) {
+	imageName = "emcmongoose/mongoose"
+	tag = "emcmongoose/mongoose:${version}".toString()
+}
+
+task pullRobotImage(type: DockerPullImage) {
+	repository = "danielwhatmuff/robot-docker"
+}
+
+task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage, pullRobotImage]) {
+	attachStderr = true
+	attachStdout = true
+	//autoRemove = true
+	envVars = [
+		"ROBOT_TESTS": "/root/test/robot",
+	]
+	imageId = pullRobotImage.getImageId()
+	binds = [
+		"${rootProject.projectDir}/src/test/robot": "/root/test/robot",
+	]
+}
+
+task startRobotestContainer(type: DockerStartContainer, dependsOn: createRobotestContainer) {
+	targetContainerId createRobotestContainer.getContainerId()
+}
+
+task robotest(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
+	targetContainerId createRobotestContainer.getContainerId()
+	timeout = 1000
+}
