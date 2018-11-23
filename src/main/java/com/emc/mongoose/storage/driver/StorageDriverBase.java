@@ -39,6 +39,7 @@ implements StorageDriver<I,O> {
 	private final BlockingQueue<O> opsResultsQueue;
 	protected final int concurrencyLimit;
 	protected final int ioWorkerCount;
+	protected final String namespace;
 	protected final Credential credential;
 	protected final boolean verifyFlag;
 
@@ -60,6 +61,7 @@ implements StorageDriver<I,O> {
 		final int outputQueueCapacity = limitConfig.intVal("queue-output");
 		this.opsResultsQueue = new ArrayBlockingQueue<>(outputQueueCapacity);
 		this.stepId = stepId;
+		this.namespace = storageConfig.stringVal("namespace");
 		final Config authConfig = storageConfig.configVal("auth");
 		this.credential = Credential.getInstance(
 			authConfig.stringVal("uid"), authConfig.stringVal("secret")

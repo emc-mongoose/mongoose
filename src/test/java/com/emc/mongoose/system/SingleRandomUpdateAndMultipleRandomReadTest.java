@@ -52,7 +52,8 @@ import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
 import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.systemTestContainerScenarioPath;
 import static org.junit.Assert.assertEquals;
 
-@RunWith(Parameterized.class) public class SingleRandomUpdateAndMultipleRandomReadTest {
+@RunWith(Parameterized.class)
+public class SingleRandomUpdateAndMultipleRandomReadTest {
 
 	@Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
 	public static List<Object[]> envParams() {
@@ -63,7 +64,7 @@ import static org.junit.Assert.assertEquals;
 	private final long EXPECTED_COUNT = 2_000;
 	private static final int READ_RANDOM_RANGES_COUNT = 12;
 	private final String ITEM_DATA_INPUT_FILE = CONTAINER_HOME_PATH + "/example/content/textexample";
-	private final int TIMEOUT_IN_MILLIS = 1000_000;
+	private final int TIMEOUT_IN_MILLIS = 1_000_000;
 	private final String containerItemOutputPath = MongooseEntryNodeContainer.getContainerItemOutputPath(
 		getClass().getSimpleName()
 	);
@@ -116,10 +117,10 @@ import static org.junit.Assert.assertEquals;
 		} catch(final Exception ignored) {
 		}
 		final List<String> env = System.getenv()
-				  .entrySet()
-				  .stream()
-				  .map(e -> e.getKey() + "=" + e.getValue())
-				  .collect(Collectors.toList());
+			.entrySet()
+			.stream()
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.toList());
 		env.add("COUNT_LIMIT=" + EXPECTED_COUNT);
 		env.add("STEP_ID_UPDATE=" + stepIdUpdate);
 		env.add("STEP_ID_READ=" + stepIdRead);

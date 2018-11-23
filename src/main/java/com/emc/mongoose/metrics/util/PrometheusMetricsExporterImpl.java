@@ -1,5 +1,6 @@
 package com.emc.mongoose.metrics.util;
 
+import com.emc.mongoose.Constants;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_FORMAT;
 import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_TIME;
 import static io.prometheus.client.Collector.MetricFamilySamples.Sample;
 
@@ -101,7 +103,10 @@ public class PrometheusMetricsExporterImpl
 				new MetricFamilySamples(
 					"" + this.hashCode(), Type.GAUGE, help,
 					Collections.singletonList(
-						new Sample(METRIC_NAME_TIME + "_value", labelNames, labelValues, snapshot.elapsedTimeMillis())
+						new Sample(
+							String.format(METRIC_FORMAT, METRIC_NAME_TIME, "value"), labelNames, labelValues,
+							snapshot.elapsedTimeMillis() / Constants.K
+						)
 					)
 				)
 			);
@@ -127,9 +132,18 @@ public class PrometheusMetricsExporterImpl
 	private List<Sample> collect(final RateMetricSnapshot metric) {
 		final String metricName = metric.name();
 		final List<Sample> samples = new ArrayList<>();
-		samples.add(new Sample(metricName + "_count", labelNames, labelValues, metric.count()));
-		samples.add(new Sample(metricName + "_rate_mean", labelNames, labelValues, metric.mean()));
-		samples.add(new Sample(metricName + "_rate_last", labelNames, labelValues, metric.last()));
+		samples.add(new Sample(String.format(METRIC_FORMAT, metricName, "count"), labelNames, labelValues,
+			metric.count()
+		));
+		samples.add(
+			new Sample(String.format(METRIC_FORMAT, metricName, "rate_mean"), labelNames, labelValues,
+				metric.mean()
+			));
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "rate_last"), labelNames, labelValues,
+				metric.last()
+			));
 		return samples;
 	}
 
@@ -137,26 +151,46 @@ public class PrometheusMetricsExporterImpl
 		final List<Sample> samples = new ArrayList<>();
 		final HistogramSnapshot snapshot = metric.histogramSnapshot(); //for quantiles
 		final String metricName = metric.name();
-		samples.add(new Sample(metricName + "_count", labelNames, labelValues, metric.count()));
-		samples.add(new Sample(metricName + "_sum", labelNames, labelValues, metric.sum()));
-		samples.add(new Sample(metricName + "_mean", labelNames, labelValues, metric.mean()));
-		samples.add(new Sample(metricName + "_min", labelNames, labelValues, metric.min()));
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "count"), labelNames, labelValues, metric.count()));
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "sum"), labelNames, labelValues,
+				metric.sum() / Constants.M
+			));
+		samples.add(new Sample(String.format(METRIC_FORMAT, metricName, "mean"), labelNames, labelValues,
+			metric.mean() / Constants.M
+		));
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "min"), labelNames, labelValues,
+				metric.min() / Constants.M
+			));
 		for(int i = 0; i < quantileValues.size(); ++ i) {
 			final Sample sample = new Sample(
-				metricName + "_quantile_" + quantileValues.get(i), labelNames, labelValues,
-				snapshot.quantile(quantileValues.get(i))
+				String.format(METRIC_FORMAT, metricName, "quantile_" + quantileValues.get(i)), labelNames,
+				labelValues, snapshot.quantile(quantileValues.get(i)) / Constants.M
 			);
 			samples.add(sample);
 		}
-		samples.add(new Sample(metricName + "_max", labelNames, labelValues, metric.max()));
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "max"), labelNames, labelValues,
+				metric.max() / Constants.M
+			));
 		return samples;
 	}
 
 	private List<Sample> collect(final ConcurrencyMetricSnapshot metric) {
 		final String metricName = metric.name();
 		final List<Sample> samples = new ArrayList<>();
-		samples.add(new Sample(metricName + "_mean", labelNames, labelValues, metric.mean()));
-		samples.add(new Sample(metricName + "_last", labelNames, labelValues, metric.last()));
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "mean"), labelNames, labelValues, metric.mean()));
+		samples.add(
+			new Sample(
+				String.format(METRIC_FORMAT, metricName, "last"), labelNames, labelValues, metric.last()));
 		return samples;
 	}
 }

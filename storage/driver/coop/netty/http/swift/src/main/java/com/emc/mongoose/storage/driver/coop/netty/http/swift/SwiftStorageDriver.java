@@ -71,7 +71,6 @@ extends HttpStorageDriverBase<I, O> {
 	private static final ThreadLocal<StringBuilder>
 		CONTAINER_LIST_QUERY = ThreadLocal.withInitial(StringBuilder::new);
 
-	protected final String namespace;
 	protected final boolean versioning;
 
 	private final String namespacePath;
@@ -82,7 +81,6 @@ extends HttpStorageDriverBase<I, O> {
 	) throws OmgShootMyFootException, InterruptedException {
 		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 		final Config httpConfig = storageConfig.configVal("net-http");
-		namespace = httpConfig.stringVal("namespace");
 		versioning = httpConfig.boolVal("versioning");
 		if(namespace == null) {
 			throw new IllegalArgumentNameException("Namespace is not set");
@@ -126,14 +124,10 @@ extends HttpStorageDriverBase<I, O> {
 		} else if(HttpStatusClass.SUCCESS.equals(checkContainerRespStatus.codeClass())) {
 			Loggers.MSG.info("Container \"{}\" already exists", path);
 			containerExists = true;
-			final String versionsLocation = checkContainerResp
-				.headers()
-				.get(KEY_X_VERSIONS_LOCATION);
+			final String versionsLocation = checkContainerResp.headers().get(KEY_X_VERSIONS_LOCATION);
 			versioningEnabled = versionsLocation != null && !versionsLocation.isEmpty();
 		} else {
-			Loggers.ERR.warn(
-				"Unexpected container checking response: {}", checkContainerRespStatus.toString()
-			);
+			Loggers.ERR.warn("Unexpected container checking response: {}", checkContainerRespStatus.toString());
 			checkContainerResp.release();
 			return null;
 		}
@@ -157,24 +151,23 @@ extends HttpStorageDriverBase<I, O> {
 			final FullHttpResponse putContainerResp;
 			try {
 				putContainerResp = executeHttpRequest(putContainerReq);
+				try {
+					final HttpResponseStatus putContainerRespStatus = putContainerResp.status();
+					if(HttpStatusClass.SUCCESS.equals(putContainerRespStatus.codeClass())) {
+						Loggers.MSG.info("Container \"{}\" created", path);
+					} else {
+						Loggers.ERR.warn("Create/update container response: {}", putContainerRespStatus.toString());
+						return null;
+					}
+				} finally {
+					putContainerResp.release();
+				}
 			} catch(final InterruptedException e) {
 				throw new InterruptRunException(e);
 			} catch(final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
 			}
-
-			final HttpResponseStatus putContainerRespStatus = putContainerResp.status();
-			if(HttpStatusClass.SUCCESS.equals(putContainerRespStatus.codeClass())) {
-				Loggers.MSG.info("Container \"{}\" created", path);
-			} else {
-				Loggers.ERR.warn(
-					"Create/update container response: {}", putContainerRespStatus.toString()
-				);
-				putContainerResp.release();
-				return null;
-			}
-			putContainerResp.release();
 		}
 
 		return path;
@@ -214,7 +207,6 @@ extends HttpStorageDriverBase<I, O> {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
 		}
-
 		final String authTokenValue = getAuthTokenResp.headers().get(KEY_X_AUTH_TOKEN);
 		getAuthTokenResp.release();
 		
@@ -261,23 +253,24 @@ extends HttpStorageDriverBase<I, O> {
 			EmptyHttpHeaders.INSTANCE
 		);
 		final List<I> buff = new ArrayList<>(countLimit);
-		FullHttpResponse listResp = null;
 		try {
-			listResp = executeHttpRequest(checkBucketReq);
-			final HttpResponseStatus respStatus = listResp.status();
-			if(HttpStatusClass.SUCCESS.equals(respStatus.codeClass())) {
-				if(HttpResponseStatus.NO_CONTENT.equals(respStatus)) {
-					throw new EOFException();
-				} else {
-					final ByteBuf listRespContent = listResp.content();
-					try(final InputStream contentStream = new ByteBufInputStream(listRespContent)) {
-						parseContainerListing(buff, contentStream, path, itemFactory, idRadix);
-					} finally {
-						listRespContent.release();
+			final FullHttpResponse listResp = executeHttpRequest(checkBucketReq);
+			try {
+				final HttpResponseStatus respStatus = listResp.status();
+				if(HttpStatusClass.SUCCESS.equals(respStatus.codeClass())) {
+					if(HttpResponseStatus.NO_CONTENT.equals(respStatus)) {
+						throw new EOFException();
+					} else {
+						final ByteBuf listRespContent = listResp.content();
+						try(final InputStream contentStream = new ByteBufInputStream(listRespContent)) {
+							parseContainerListing(buff, contentStream, path, itemFactory, idRadix);
+						}
 					}
+				} else {
+					Loggers.ERR.warn("Failed to get the container listing, response: \"{}\"", respStatus);
 				}
-			} else {
-				Loggers.ERR.warn("Failed to get the container listing, response: \"{}\"", respStatus);
+			} finally {
+				listResp.release();
 			}
 		} catch(final InterruptedException e) {
 			throw new InterruptRunException(e);
