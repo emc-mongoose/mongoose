@@ -240,7 +240,6 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 			return this;
 		}
 
-		@Override
 		public DistributedContextBuilder comment(final String comment) {
 			this.comment = comment;
 			return this;

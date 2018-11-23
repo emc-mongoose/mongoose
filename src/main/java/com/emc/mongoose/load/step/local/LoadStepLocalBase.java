@@ -60,15 +60,7 @@ public abstract class LoadStepLocalBase
 		final int originIndex, final OpType opType, final int concurrency, final Config metricsConfig,
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
-		final int metricsAvgPeriod;
-		final Object metricsAvgPeriodRaw = metricsConfig.val("average-period");
-		if(metricsAvgPeriodRaw instanceof String) {
-			metricsAvgPeriod = (int) TimeUtil.getTimeInSeconds((String) metricsAvgPeriodRaw);
-		} else {
-			metricsAvgPeriod = TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
-		}
 		final int index = metricsContexts.size();
-		final String userComment = config.stringVal("run-comment");
 		final MetricsContext metricsCtx = MetricsContextImpl
 			.builder()
 			.id(id())
@@ -77,11 +69,20 @@ public abstract class LoadStepLocalBase
 			.concurrencyLimit(concurrency)
 			.concurrencyThreshold((int) (concurrency * metricsConfig.doubleVal("threshold")))
 			.itemDataSize(itemDataSize)
-			.outputPeriodSec(metricsAvgPeriod)
+			.outputPeriodSec(avgPeriod(metricsConfig))
 			.stdOutColorFlag(outputColorFlag)
-			.comment(userComment)
+			.comment(config.stringVal("run-comment"))
 			.build();
 		metricsContexts.add(metricsCtx);
+	}
+
+	private int avgPeriod(final Config metricsConfig) {
+		final Object metricsAvgPeriodRaw = metricsConfig.val("average-period");
+		if(metricsAvgPeriodRaw instanceof String) {
+			return (int) TimeUtil.getTimeInSeconds((String) metricsAvgPeriodRaw);
+		} else {
+			return TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
+		}
 	}
 
 	@Override
