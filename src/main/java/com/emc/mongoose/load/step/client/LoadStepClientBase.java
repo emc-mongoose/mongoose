@@ -324,23 +324,11 @@ public abstract class LoadStepClientBase
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
 		final int concurrencyThreshold = (int) (concurrencyLimit * metricsConfig.doubleVal("threshold"));
-		final int metricsAvgPeriod;
-		final Object metricsAvgPeriodRaw = metricsConfig.val("average-period");
-		if(metricsAvgPeriodRaw instanceof String) {
-			metricsAvgPeriod = (int) TimeUtil.getTimeInSeconds((String) metricsAvgPeriodRaw);
-		} else {
-			metricsAvgPeriod = TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
-		}
 		final boolean metricsAvgPersistFlag = metricsConfig.boolVal("average-persist");
 		final boolean metricsSumPersistFlag = metricsConfig.boolVal("summary-persist");
 		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
-		final List<Double> quantileValues = metricsConfig.listVal("quantiles")
-														 .stream()
-														 .map(v -> Double.valueOf(v.toString()))
-														 .collect(Collectors.toList());
 		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
 		// further usage
-		final String userComment = config.stringVal("run-comment");
 		final DistributedMetricsContext metricsCtx = DistributedMetricsContextImpl
 			.builder()
 			.id(id())
@@ -349,16 +337,32 @@ public abstract class LoadStepClientBase
 			.concurrencyLimit(concurrencyLimit)
 			.concurrencyThreshold(concurrencyThreshold)
 			.itemDataSize(itemDataSize)
-			.outputPeriodSec(metricsAvgPeriod)
+			.outputPeriodSec(avgPeriod(metricsConfig))
 			.stdOutColorFlag(outputColorFlag)
 			.avgPersistFlag(metricsAvgPersistFlag)
 			.sumPersistFlag(metricsSumPersistFlag)
 			.snapshotsSupplier(() -> metricsSnapshotsByIndex(originIndex))
-			.quantileValues(quantileValues)
+			.quantileValues(quantiles(metricsConfig))
 			.nodeAddrs(remoteNodeAddrs(config))
-			.comment(userComment)
+			.comment(config.stringVal("run-comment"))
 			.build();
 		metricsContexts.add(metricsCtx);
+	}
+
+	private List<Double> quantiles(final Config metricsConfig) {
+		return metricsConfig.listVal("quantiles")
+							.stream()
+							.map(v -> Double.valueOf(v.toString()))
+							.collect(Collectors.toList());
+	}
+
+	private int avgPeriod(final Config metricsConfig) {
+		final Object metricsAvgPeriodRaw = metricsConfig.val("average-period");
+		if(metricsAvgPeriodRaw instanceof String) {
+			return (int) TimeUtil.getTimeInSeconds((String) metricsAvgPeriodRaw);
+		} else {
+			return TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
+		}
 	}
 
 	private List<AllMetricsSnapshot> metricsSnapshotsByIndex(final int originIndex) {
