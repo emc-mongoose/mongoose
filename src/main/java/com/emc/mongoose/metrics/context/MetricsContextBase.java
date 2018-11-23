@@ -2,11 +2,10 @@ package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
-
 import com.github.akurilov.commons.system.SizeInBytes;
 
 public abstract class MetricsContextBase<S extends AllMetricsSnapshot>
-implements MetricsContext<S> {
+	implements MetricsContext<S> {
 
 	protected final long ts;
 	protected final String id;
@@ -179,7 +178,7 @@ implements MetricsContext<S> {
 		return (System.currentTimeMillis() - tsStart);
 	}
 
-	public String comment(){
+	public String comment() {
 		return this.comment;
 	}
 }
