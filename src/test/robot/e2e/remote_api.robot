@@ -2,6 +2,8 @@
 Documentation  End-to-end tests for the Mongoose Remote API
 Library  OperatingSystem
 Library  RequestsLibrary
+Test Setup  Start Mongoose Node
+Test Teardown  Stop Mongoose Node
 
 *** Variables ***
 ${MONGOOSE_IMAGE_NAME} =  emcmongoose/mongoose
@@ -12,23 +14,26 @@ ${MONGOOSE_CONFIG_API_PATH} =  /config
 *** Test Cases ***
 Config Defaults
     [Tags]  DEBUG
-    Run Mongoose Node
     ${defaults} =  Query Defaults
     Validate Defaults  ${defaults}
 
 *** Keywords ***
-Run Mongoose Node
-    Run Mongoose Container
+Start Mongoose Node
+    Run  docker run
+    ...  --name=mongoose
+    ...  -d
+    ...  -p ${MONGOOSE_REMOTE_API_DEFAULT_PORT}:${MONGOOSE_REMOTE_API_DEFAULT_PORT}
+    ...  ${MONGOOSE_IMAGE_NAME}:${MONGOOSE_IMAGE_VERSION}
+    ...  --run-node
 
-Run Mongoose Container
-    Run Docker Container  ${MONGOOSE_IMAGE_NAME}  --run-node  ${MONGOOSE_IMAGE_VERSION}
-
-Run Docker Container
-    [Arguments]  ${image_name}  ${container_args}  ${image_version}=latest
-    Run  docker run --network host ${image_name}:${image_version} ${container_args}
+Stop Mongoose Node
+    Run  docker stop
+    ...  mongoose
 
 Query Defaults
-    ${std_out} =  Get Request  alias=session0  uri=http://localhost:${MONGOOSE_REMOTE_API_DEFAULT_PORT}/${MONGOOSE_CONFIG_API_PATH}
+    Create Session  localhost  http://localhost:${MONGOOSE_REMOTE_API_DEFAULT_PORT}
+    ...  debug=1
+    ${std_out} =  Get Request  localhost  ${MONGOOSE_CONFIG_API_PATH}
     [Return]  ${std_out}
 
 Validate Defaults

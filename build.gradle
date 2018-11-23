@@ -477,7 +477,12 @@ task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage
 	attachStderr = true
 	attachStdout = true
 	//autoRemove = true
+	binds = [
+		"${rootProject.buildDir}": "/root/mongoose/build",
+	]
 	imageId = buildRobotestImage.getImageId()
+	network = "host"
+	tty = true
 }
 
 task startRobotestContainer(type: DockerStartContainer, dependsOn: createRobotestContainer) {
