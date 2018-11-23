@@ -69,7 +69,8 @@ public abstract class LoadStepLocalBase
 		}
 		final int index = metricsContexts.size();
 		final String userComment = config.stringVal("run-comment");
-		final MetricsContext metricsCtx = MetricsContextImpl.builder()
+		final MetricsContext metricsCtx = MetricsContextImpl
+			.builder()
 			.id(id())
 			.opType(opType)
 			.actualConcurrencyGauge(() -> stepContexts.get(index).activeOpCount())

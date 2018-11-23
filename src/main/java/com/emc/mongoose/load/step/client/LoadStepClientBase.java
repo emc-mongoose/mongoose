@@ -335,13 +335,14 @@ public abstract class LoadStepClientBase
 		final boolean metricsSumPersistFlag = metricsConfig.boolVal("summary-persist");
 		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
 		final List<Double> quantileValues = metricsConfig.listVal("quantiles")
-			.stream()
-			.map(v -> Double.valueOf(v.toString()))
-			.collect(Collectors.toList());
+														 .stream()
+														 .map(v -> Double.valueOf(v.toString()))
+														 .collect(Collectors.toList());
 		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
 		// further usage
 		final String userComment = config.stringVal("run-comment");
-		final DistributedMetricsContext metricsCtx = DistributedMetricsContextImpl.builder()
+		final DistributedMetricsContext metricsCtx = DistributedMetricsContextImpl
+			.builder()
 			.id(id())
 			.opType(opType)
 			.nodeCountSupplier(this::sliceCount)

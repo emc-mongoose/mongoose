@@ -78,7 +78,8 @@ public class ExposedMetricsTest {
 		context.addServlet(new ServletHolder(new MetricsServlet()), CONTEXT);
 		server.start();
 		//
-		metricsContext = MetricsContextImpl.builder()
+		metricsContext = MetricsContextImpl
+			.builder()
 			.id(STEP_ID)
 			.opType(OP_TYPE)
 			.actualConcurrencyGauge(() -> 1)
@@ -91,7 +92,8 @@ public class ExposedMetricsTest {
 		snapshotsSupplier = () -> Arrays.asList(metricsContext.lastSnapshot());
 		metricsContext.start();
 		//
-		distributedMetricsContext = DistributedMetricsContextImpl.builder()
+		distributedMetricsContext = DistributedMetricsContextImpl
+			.builder()
 			.id(STEP_ID)
 			.opType(OP_TYPE)
 			.nodeCountSupplier(nodeCountSupplier)

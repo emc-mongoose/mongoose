@@ -1,7 +1,6 @@
 package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
-import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshot;
 
 import java.util.List;
 import java.util.function.IntSupplier;
