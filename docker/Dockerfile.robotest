@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-alpine
+FROM alpine
 
 ADD docker /root/mongoose/docker
 ADD gradle /root/mongoose/gradle
@@ -10,7 +10,7 @@ ADD gradlew /root/mongoose/gradlew
 ADD settings.gradle /root/mongoose/settings.gradle
 
 RUN chmod ugo+x /root/mongoose/docker/entrypoint_robotest.sh \
-    && apk add --update python py-pip \
+    && apk add --update docker python py-pip \
     && pip install -U virtualenv \
     && pip install -U requests \
     && pip install -U robotframework-requests \

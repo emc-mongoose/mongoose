@@ -469,7 +469,7 @@ task buildRobotestImage(type: DockerBuildImage) {
 	dockerFile = project.file("docker${File.separator}Dockerfile.robotest")
 	imageId = "emcmongoose/mongoose-robotest"
 	tags = [
-		"emcmongoose/mongoose:${version}",
+		"emcmongoose/mongoose-robotest:${version}",
 	]
 }
 
@@ -479,6 +479,7 @@ task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage
 	//autoRemove = true
 	binds = [
 		"${rootProject.buildDir}": "/root/mongoose/build",
+		"/var/run/docker.sock": "/var/run/docker.sock",
 	]
 	imageId = buildRobotestImage.getImageId()
 	network = "host"

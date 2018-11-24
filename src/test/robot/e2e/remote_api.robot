@@ -3,13 +3,13 @@ Documentation  End-to-end tests for the Mongoose Remote API
 Library  OperatingSystem
 Library  RequestsLibrary
 Test Setup  Start Mongoose Node
-Test Teardown  Stop Mongoose Node
+Test Teardown  Remove Mongoose Node
 
 *** Variables ***
 ${MONGOOSE_IMAGE_NAME} =  emcmongoose/mongoose
 ${MONGOOSE_IMAGE_VERSION} =  testing
-${MONGOOSE_REMOTE_API_DEFAULT_PORT} =  9999
 ${MONGOOSE_CONFIG_API_PATH} =  /config
+${MONGOOSE_NODE_PORT} =  9999
 
 *** Test Cases ***
 Config Defaults
@@ -19,22 +19,18 @@ Config Defaults
 
 *** Keywords ***
 Start Mongoose Node
-    Run  docker run
-    ...  --name=mongoose
-    ...  -d
-    ...  -p ${MONGOOSE_REMOTE_API_DEFAULT_PORT}:${MONGOOSE_REMOTE_API_DEFAULT_PORT}
-    ...  ${MONGOOSE_IMAGE_NAME}:${MONGOOSE_IMAGE_VERSION}
-    ...  --run-node
+    ${std_out} =  Run  docker run -d --name mongoose_node --network host ${MONGOOSE_IMAGE_NAME}:${MONGOOSE_IMAGE_VERSION} --run-node
+    Log  ${std_out}
 
-Stop Mongoose Node
-    Run  docker stop
-    ...  mongoose
+Remove Mongoose Node
+    Run  docker stop mongoose_node
+    Run  docker rm mongoose_node
 
 Query Defaults
-    Create Session  localhost  http://localhost:${MONGOOSE_REMOTE_API_DEFAULT_PORT}
-    ...  debug=1
-    ${std_out} =  Get Request  localhost  ${MONGOOSE_CONFIG_API_PATH}
-    [Return]  ${std_out}
+    Create Session  local_mongoose_node  http://localhost:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
+    ${resp} =  Get Request  local_mongoose_node  ${MONGOOSE_CONFIG_API_PATH}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    Log  ${resp.json()}
 
 Validate Defaults
     [Arguments]  ${defaults}
