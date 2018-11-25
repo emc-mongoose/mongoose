@@ -55,8 +55,10 @@ jobs:
       - docker push $REPO:$COMMIT
 
     - stage: "System tests"
+      script: "./gradlew robotest"
+
     # STORAGE_TYPE=atmos,s3 RUN_MODE=local,distributed CONCURRENCY=single,medium ITEM_SIZE=medium ./gradlew systemTest --tests com.emc.mongoose.system.ChainWithDelayTest
-      env:
+    - env:
       - TEST=ChainWithDelayTest
       - STORAGE_TYPE=atmos,s3
       - RUN_MODE=local,distributed
