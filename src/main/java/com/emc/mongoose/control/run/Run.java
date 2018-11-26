@@ -5,7 +5,7 @@ extends Runnable {
 
 	/**
 	 @return the count of the milliseconds since 1970-01-01 and the start
-	 @throws if not started yet
+	 @throws IllegalStateException if not started yet
 	 */
 	long timestamp()
 	throws IllegalStateException;
