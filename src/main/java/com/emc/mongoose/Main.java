@@ -35,10 +35,13 @@ import io.prometheus.client.exporter.MetricsServlet;
 import org.apache.commons.lang.StringUtils;
 
 import org.apache.logging.log4j.Level;
-
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.ThreadPool;
 
 import javax.script.ScriptEngine;
 import java.io.IOException;
@@ -53,6 +56,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class Main {
+
+	private static final int JETTY_THREAD_COUNT = 4;
 
 	public static void main(final String... args)
 	throws Exception {
@@ -89,7 +94,11 @@ public final class Main {
 				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
 				// init the API server
 				final int port = configWithArgs.intVal("run-port");
-				final Server server = new Server(port);
+				final ThreadPool tp = new QueuedThreadPool(JETTY_THREAD_COUNT, 1);
+				final Server server = new Server(tp);
+				final ServerConnector connector = new ServerConnector(server);
+				connector.setPort(port);
+				server.setConnectors(new Connector[] { connector });
 				final ServletContextHandler context = new ServletContextHandler();
 				context.setContextPath("/");
 				server.setHandler(context);

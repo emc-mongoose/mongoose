@@ -118,7 +118,7 @@ public class MetricsManagerImpl
 		}
 	}
 
-	public void startIfNotStarted() {
+	private void startIfNotStarted() {
 		if(! isStarted()) {
 			super.start();
 			Loggers.MSG.debug("Started the metrics manager fiber");

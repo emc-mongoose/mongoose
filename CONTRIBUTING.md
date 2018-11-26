@@ -96,9 +96,9 @@ Tracker link: https://mongoose-issues.atlassian.net/projects/BASE
 | DEFERRED    | Owners have approved the issue to be processed after the next major/minor (non-patch) version is released.
 | ACCEPTED    | Owners approved the issue to be processed before the next major/minor (non-patch) version is released.
 | ESCALATED   | Critical defect which interrupts all *DEFERRED*/*ACCEPTED* issues processing. Causes the new *patch* version release ASAP.
-| IN PROGRESS | The issue is in progress currently
-| RESOLVED    | Issue is done and the corresponding changes are merged into the `integration` branch.
-| CLOSED      | Issue is done and the corresponding changes are merged into the `master` branch (= version release, availability for the user).
+| IN PROGRESS | The issue is in progress currently either initially done and the corresponding merge request to the `master` branch is created
+| RESOLVED    | Issue is done and the corresponding changes are merged into the `master` branch
+| CLOSED      | The new version is released containing the corresponding changes
 
 **Note**:
 > The corresponding impact probability/frequency is not taken into account in the process currently. For example, all

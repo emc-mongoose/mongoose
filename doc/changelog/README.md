@@ -1,7 +1,7 @@
 # Contents
 
 ## 2018
-* [4.1.0](#410) 2018-11-01
+* [4.0.2](#401) 2018-11-13
 * [4.0.1](#401) 2018-10-08
 * [4.0.0](#400) 2018-10-01
 * [3.6.2](#362) 08/08/18
@@ -54,27 +54,14 @@
 * [0.1.4](#014) 09/17/14
 * [0.1.3](#013) 08/15/14
 
-# 4.1.0
+# 4.0.2
 
 ## New Features and Enhancements
 
-### Functional
-
-#### 1. [Prometheus](https://prometheus.io/) Integration
-
-Mongoose exposes the performance metrics for a Prometheus TSDB. This feature is named *Monitoring API* and intended for
-future use to develop a full-featured Mongoose GUI service.
-[See the corresponding documentation entry](https://github.com/emc-mongoose/mongoose/tree/4.1.0/doc/interfaces/api/monitoring)
- for details.
-
-### Non-Functional
-
 #### 1. Configuration Layout Changes
 
-| Old parameter name (v < 4.1.0)  | New parameter name (v >= 4.1.0)
+| Old parameter name (v < 4.0.2)  | New parameter name (v >= 4.0.2)
 |---------------------------------|--------------------------------
-| N/A                             | output-metrics-quantiles
-| N/A                             | run-port
 | storage-net-http-namespace      | storage-namespace
 
 ## Fixed Bugs

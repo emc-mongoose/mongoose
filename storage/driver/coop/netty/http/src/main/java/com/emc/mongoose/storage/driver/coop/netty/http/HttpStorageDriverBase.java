@@ -48,7 +48,6 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
@@ -147,7 +146,7 @@ implements HttpStorageDriver<I, O> {
 						}
 					}
 				}
-							);
+			);
 			channel.writeAndFlush(request).sync();
 			if(null == (resp = fullRespSync.poll(netTimeoutMilliSec, TimeUnit.MILLISECONDS))) {
 				Loggers.MSG.warn("{}: Response timeout \n Request: {}", stepId, request);

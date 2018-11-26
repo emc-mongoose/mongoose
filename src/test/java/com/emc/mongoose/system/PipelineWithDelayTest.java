@@ -44,7 +44,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@RunWith(Parameterized.class) public class ChainWithDelayTest {
+@RunWith(Parameterized.class) public class PipelineWithDelayTest {
 
 	@Parameterized.Parameters(name = "{0}, {1}, {2}, {3}")
 	public static List<Object[]> envParams() {
@@ -68,7 +68,7 @@ import static org.junit.Assert.fail;
 	private int containerExitCode;
 	private String stdOutContent = null;
 
-	public ChainWithDelayTest(
+	public PipelineWithDelayTest(
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
 	) throws Exception {
 		final Map<String, Object> schema = SchemaProvider.resolveAndReduce(
@@ -103,7 +103,7 @@ import static org.junit.Assert.fail;
 		env.add("ZONE1_ADDRS=" + zone1Addr + ":" + HttpStorageMockContainer.DEFAULT_PORT);
 		env.add("ZONE2_ADDRS=" + zone2Addr + ":" + HttpStorageMockContainer.DEFAULT_PORT);
 		final List<String> args = new ArrayList<>();
-		args.add("--storage-net-http-namespace=ns1");
+		args.add("--storage-namespace=ns1");
 		args.add("--load-step-limit-time=" + TIME_LIMIT);
 		switch(storageType) {
 			case ATMOS:

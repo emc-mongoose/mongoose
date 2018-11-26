@@ -1,5 +1,6 @@
 package com.emc.mongoose.integration;
 
+import com.emc.mongoose.Constants;
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.MetricsConstants;
@@ -34,6 +35,8 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_FORMAT;
+
 /**
  @author veronika K. on 15.10.18 */
 public class ExposedMetricsTest {
@@ -48,7 +51,8 @@ public class ExposedMetricsTest {
 	private static final String[] CONCURRENCY_METRICS = { "mean", "last" };
 	private static final String[] TIMING_METRICS =
 		{ "count", "sum", "mean", "min", "max", "quantile_0.25", "quantile_0.5", "quantile_0.75" };
-	private static final String[] RATE_METRICS = { "count", "rate_mean", "rate_last" };
+	private static final String[] OPS_METRICS = { "count", "rate_mean", "rate_last" };
+	private static final String[] BYTES_METRICS = { "count", "rate_mean", "rate_last" };
 	private static final Double[] QUANTILE_VALUES = { 0.25, 0.5, 0.75 };
 	private final String STEP_ID = ExposedMetricsTest.class.getSimpleName();
 	private final OpType OP_TYPE = OpType.CREATE;
@@ -102,7 +106,7 @@ public class ExposedMetricsTest {
 		System.out.println(result);
 		//
 		final Map tmp = new HashMap();
-		final long elapsedTimeMillis = TimeUnit.MICROSECONDS.toMillis(MARK_DUR * ITERATION_COUNT);
+		final long elapsedTimeMillis = TimeUnit.MICROSECONDS.toSeconds(MARK_DUR * ITERATION_COUNT);
 		tmp.put("value", new Double(elapsedTimeMillis));
 		testMetric(result, MetricsConstants.METRIC_NAME_TIME, tmp, RATE_ACCURACY);
 		//
@@ -122,8 +126,12 @@ public class ExposedMetricsTest {
 		// concurrency count != iteration_count, because in the refreshLastSnapshot lat & dur account only after the condition, and concurrency - every time
 		final double count = ITERATION_COUNT;
 		final double accuracy = TIMING_ACCURACY;
+		final double markValueInSec = markValue / Constants.M;
 		final double[] values =
-			{ count, markValue * count, markValue, markValue, markValue, markValue, markValue, markValue };
+			{
+				count, markValueInSec * count, markValueInSec, markValueInSec, markValueInSec, markValueInSec,
+				markValueInSec, markValueInSec
+			};
 		for(int i = 0; i < TIMING_METRICS.length; ++ i) {
 			expectedValues.put(TIMING_METRICS[i], values[i]);
 		}
@@ -133,12 +141,14 @@ public class ExposedMetricsTest {
 	private void testRateMetric(final String stdOut, final double markValue, final String name) {
 		final Map<String, Double> expectedValues = new HashMap<>();
 		double count = ITERATION_COUNT;
+		String[] rateMetrics = OPS_METRICS;
 		if(name.equals(MetricsConstants.METRIC_NAME_BYTE)) {
 			count *= markValue;
+			rateMetrics = BYTES_METRICS;
 		}
 		final Double[] values = { count, markValue, markValue };
-		for(int i = 0; i < RATE_METRICS.length; ++ i) {
-			expectedValues.put(RATE_METRICS[i], values[i]);
+		for(int i = 0; i < rateMetrics.length; ++ i) {
+			expectedValues.put(rateMetrics[i], values[i]);
 		}
 		testMetric(stdOut, name, expectedValues, RATE_ACCURACY);
 	}
@@ -169,7 +179,7 @@ public class ExposedMetricsTest {
 		final double accuracy
 	) {
 		for(final String key : expectedValues.keySet()) {
-			final Pattern p = Pattern.compile(metricName + "_" + key + "\\{.+\\} .+");
+			final Pattern p = Pattern.compile(String.format(METRIC_FORMAT, metricName, key) + "\\{.+\\} .+");
 			final Matcher m = p.matcher(resultOutput);
 			final boolean found = m.find();
 			Assert.assertTrue(found);
