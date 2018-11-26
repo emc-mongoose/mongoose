@@ -59,8 +59,6 @@ import static javax.script.ScriptContext.ENGINE_SCOPE;
 
 public final class Main {
 
-	private static final int JETTY_THREAD_COUNT = 4;
-
 	public static void main(final String... args)
 	throws Exception {
 		final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
@@ -98,11 +96,7 @@ public final class Main {
 				if(configWithArgs.boolVal("run-node")) {
 					runNode(configWithArgs, extensions, metricsMgr);
 				} else {
-					final ThreadPool tp = new QueuedThreadPool(JETTY_THREAD_COUNT, 1);
-					final Server server = new Server(tp);
-					final ServerConnector connector = new ServerConnector(server);
-					connector.setPort(port);
-					server.setConnectors(new Connector[] {connector});
+					final Server server = new Server(port);
 					addServices(server, fullDefaultConfig);
 					server.start();
 					try {
