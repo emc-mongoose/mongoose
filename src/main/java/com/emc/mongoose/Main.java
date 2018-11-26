@@ -35,13 +35,9 @@ import org.apache.commons.lang.StringUtils;
 
 import org.apache.logging.log4j.Level;
 
-import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.util.thread.ThreadPool;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
