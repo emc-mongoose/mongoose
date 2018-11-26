@@ -31,7 +31,7 @@ implements Runnable, SingleTaskExecutor {
 	}
 
 	private void stopWorker() {
-		final Thread worker = workerRef.get();
+		final Thread worker = workerRef.getAndSet(null);
 		if(null != worker) {
 			worker.interrupt();
 		}

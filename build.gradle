@@ -473,7 +473,7 @@ task buildRobotestImage(type: DockerBuildImage) {
 task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage, buildRobotestImage]) {
 	attachStderr = true
 	attachStdout = true
-	//autoRemove = true
+	autoRemove = true
 	binds = [
 		"${rootProject.buildDir}": "/root/mongoose/build",
 		"/var/run/docker.sock": "/var/run/docker.sock",
@@ -487,7 +487,15 @@ task startRobotestContainer(type: DockerStartContainer, dependsOn: createRobotes
 	targetContainerId createRobotestContainer.getContainerId()
 }
 
-task robotest(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
+task waitRobotestContainer(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
 	targetContainerId createRobotestContainer.getContainerId()
 	timeout = 1000
+}
+
+task robotest(type: DockerWaitContainer, dependsOn: waitRobotestContainer) {
+	doLast {
+		if(0 != waitRobotestContainer.exitCode) {
+			logger.error("Robot tests FAILED")
+		}
+	}
 }

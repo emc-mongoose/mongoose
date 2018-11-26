@@ -22,6 +22,7 @@ import com.emc.mongoose.svc.Service;
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.Constants.DIR_EXT;
+import static com.emc.mongoose.Constants.MIB;
 import static com.emc.mongoose.Constants.PATH_DEFAULTS;
 import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
 
@@ -44,6 +45,7 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ThreadPool;
 
 import javax.script.ScriptEngine;
+import javax.servlet.MultipartConfigElement;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -104,10 +106,15 @@ public final class Main {
 				server.setHandler(context);
 				context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
 				context.addServlet(new ServletHolder(new ConfigServlet(defaultConfig)), "/config/*");
-				context.addServlet(
-					new ServletHolder(new RunServlet(extClsLoader, extensions, metricsMgr, fullDefaultConfig.schema())),
-					"/run/*"
+				final ServletHolder runServletHolder = new ServletHolder(
+					new RunServlet(extClsLoader, extensions, metricsMgr, fullDefaultConfig.schema())
 				);
+				runServletHolder
+					.getRegistration()
+					.setMultipartConfig(
+						new MultipartConfigElement("", 16 * MIB, 16 * MIB, 16 * MIB)
+					);
+				context.addServlet(runServletHolder, "/run/*");
 				server.start();
 				// go on
 				try {

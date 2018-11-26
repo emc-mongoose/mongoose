@@ -21,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
@@ -96,9 +97,15 @@ extends HttpServlet {
 		final Runnable activeTask = scenarioExecutor.task();
 		if(null == activeTask) {
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
-		} if(activeTask instanceof Run) {
+		} else if(activeTask instanceof Run) {
 			final Run activeRun = (Run) activeTask;
-			final String reqTimestampRawValue = req.getHeader(HttpHeader.IF_MATCH.name());
+			final String reqTimestampRawValue = Collections.list(req.getHeaderNames())
+				.stream()
+				.map(String::toLowerCase)
+				.filter(HttpHeader.IF_MATCH.asString()::equalsIgnoreCase)
+				.findAny()
+				.map(req::getHeader)
+				.orElse(null);
 			if(null == reqTimestampRawValue) {
 				resp.setStatus(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
 			} else {
@@ -120,19 +127,24 @@ extends HttpServlet {
 	}
 
 	@Override
-	protected final void doDelete(final HttpServletRequest req, final HttpServletResponse resp)
-	throws IOException {
+	protected final void doDelete(final HttpServletRequest req, final HttpServletResponse resp) {
 		final Runnable activeTask = scenarioExecutor.task();
 		if(null == activeTask) {
 			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-		} if(activeTask instanceof Run) {
+		} else if(activeTask instanceof Run) {
 			final Run activeRun = (Run) activeTask;
-			final String reqTimestampValue = req.getHeader(HttpHeader.IF_MATCH.name());
-			if(null == reqTimestampValue) {
+			final String reqTimestampRawValue = Collections.list(req.getHeaderNames())
+				.stream()
+				.map(String::toLowerCase)
+				.filter(HttpHeader.IF_MATCH.asString()::equalsIgnoreCase)
+				.findAny()
+				.map(req::getHeader)
+				.orElse(null);
+			if(null == reqTimestampRawValue) {
 				resp.setStatus(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
 			} else {
 				try {
-					final long reqTimestamp = Long.parseLong(reqTimestampValue, 0x10);
+					final long reqTimestamp = Long.parseLong(reqTimestampRawValue, 0x10);
 					if(activeRun.timestamp() == reqTimestamp) {
 						scenarioExecutor.stop(activeRun);
 						resp.setStatus(HttpServletResponse.SC_OK);
@@ -140,7 +152,7 @@ extends HttpServlet {
 						resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
 					}
 				} catch(final NumberFormatException e) {
-					resp.setStatus(HttpServletResponse.SC_BAD_REQUEST, "Invalid start time: " + reqTimestampValue);
+					resp.setStatus(HttpServletResponse.SC_BAD_REQUEST, "Invalid start time: " + reqTimestampRawValue);
 				}
 			}
 		} else {
