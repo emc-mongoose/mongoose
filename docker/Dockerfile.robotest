@@ -1,4 +1,4 @@
-FROM alpine
+FROM emcmongoose/mongoose-robotest-base
 
 ADD docker /root/mongoose/docker
 ADD gradle /root/mongoose/gradle
@@ -9,15 +9,8 @@ ADD build.gradle /root/mongoose/build.gradle
 ADD gradlew /root/mongoose/gradlew
 ADD settings.gradle /root/mongoose/settings.gradle
 
-RUN chmod ugo+x /root/mongoose/docker/entrypoint_robotest.sh \
-    && apk add --update docker python py-pip \
-    && pip install -U virtualenv \
-    && pip install -U requests \
-    && pip install -U robotframework-requests \
-    && rm -rf /var/cache/apk/*
+RUN chmod ugo+x /root/mongoose/docker/entrypoint_robotest.sh
 
 WORKDIR /root/mongoose
-
-ENV PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/site-packages
 
 ENTRYPOINT ["/root/mongoose/docker/entrypoint_robotest.sh"]

@@ -1,0 +1,9 @@
+FROM alpine
+
+RUN apk add --update docker python py-pip \
+    && pip install -U virtualenv \
+    && pip install -U requests \
+    && pip install -U robotframework-requests \
+    && rm -rf /var/cache/apk/*
+
+ENV PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/site-packages

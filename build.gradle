@@ -487,15 +487,14 @@ task startRobotestContainer(type: DockerStartContainer, dependsOn: createRobotes
 	targetContainerId createRobotestContainer.getContainerId()
 }
 
-task waitRobotestContainer(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
+task robotest(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
 	targetContainerId createRobotestContainer.getContainerId()
 	timeout = 1000
-}
-
-task robotest(type: DockerWaitContainer, dependsOn: waitRobotestContainer) {
 	doLast {
-		if(0 != waitRobotestContainer.exitCode) {
-			logger.error("Robot tests FAILED")
+		if(0 != exitCode) {
+			throw new GradleException("${exitCode} robotests FAILED")
+		} else {
+			println "All robotests PASSED"
 		}
 	}
 }

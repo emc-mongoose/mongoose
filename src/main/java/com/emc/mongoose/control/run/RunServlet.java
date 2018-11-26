@@ -5,11 +5,12 @@ import com.emc.mongoose.concurrent.SingleTaskExecutorImpl;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.load.step.ScriptEngineUtil;
+import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
 
 import com.github.akurilov.confuse.Config;
-
+import org.apache.logging.log4j.Level;
 import org.eclipse.jetty.http.HttpHeader;
 
 import javax.script.ScriptEngine;
@@ -63,37 +64,40 @@ extends HttpServlet {
 			rawDefaultsData = br.lines().collect(Collectors.joining("\n"));
 		}
 		Loggers.CONFIG.info(rawDefaultsData);
-		final Config defaults;
+		Config defaults =  null;
 		try {
 			defaults = ConfigUtil.loadConfig(rawDefaultsData, configSchema);
-		} catch(final NoSuchMethodException e) {
-			resp.setStatus(HttpServletResponse.SC_BAD_REQUEST, "Failed to parse the defaults");
-			throw new ServletException(e);
+		} catch(final Throwable cause) {
+			LogUtil.exception(Level.ERROR, cause, "Failed to parse the defaults");
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to parse the defaults");
 		}
 
-		final String scenario;
-		try(
-			final InputStream in = req.getPart(PART_KEY_SCENARIO).getInputStream();
-			final BufferedReader br = new BufferedReader(new InputStreamReader(in))
-		) {
-			scenario = br.lines().collect(Collectors.joining("\n"));
-		}
+		if(defaults != null) {
+			final String scenario;
+			try(
+				final InputStream in = req.getPart(PART_KEY_SCENARIO).getInputStream();
+				final BufferedReader br = new BufferedReader(new InputStreamReader(in))
+			) {
+				scenario = br.lines().collect(Collectors.joining("\n"));
+			}
 
-		// expose the received configuration and the step types
-		ScriptEngineUtil.configure(scriptEngine, extensions, defaults, metricsMgr);
-		//
-		final Run run = new RunImpl(defaults.stringVal("run-comment"), scenario, scriptEngine);
-		try {
-			scenarioExecutor.execute(run);
-			resp.setStatus(HttpServletResponse.SC_ACCEPTED);
-			resp.setHeader(HttpHeader.ETAG.name(), Long.toString(run.timestamp(), 0x10));
-		} catch(final RejectedExecutionException e) {
-			resp.setStatus(HttpServletResponse.SC_CONFLICT);
+			// expose the received configuration and the step types
+			ScriptEngineUtil.configure(scriptEngine, extensions, defaults, metricsMgr);
+			//
+			final Run run = new RunImpl(defaults.stringVal("run-comment"), scenario, scriptEngine);
+			try {
+				scenarioExecutor.execute(run);
+				resp.setStatus(HttpServletResponse.SC_ACCEPTED);
+				resp.setHeader(HttpHeader.ETAG.name(), Long.toString(run.timestamp(), 0x10));
+			} catch(final RejectedExecutionException e) {
+				resp.setStatus(HttpServletResponse.SC_CONFLICT);
+			}
 		}
 	}
 
 	@Override
-	protected final void doHead(final HttpServletRequest req, final HttpServletResponse resp) {
+	protected final void doHead(final HttpServletRequest req, final HttpServletResponse resp)
+	throws IOException {
 		final Runnable activeTask = scenarioExecutor.task();
 		if(null == activeTask) {
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
@@ -107,7 +111,7 @@ extends HttpServlet {
 				.map(req::getHeader)
 				.orElse(null);
 			if(null == reqTimestampRawValue) {
-				resp.setStatus(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
 			} else {
 				try {
 					final long reqTimestamp = Long.parseLong(reqTimestampRawValue, 0x10);
@@ -117,7 +121,7 @@ extends HttpServlet {
 						resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 					}
 				} catch(final NumberFormatException e) {
-					resp.setStatus(HttpServletResponse.SC_BAD_REQUEST, "Invalid start time: " + reqTimestampRawValue);
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid start time: " + reqTimestampRawValue);
 				}
 			}
 		} else {
@@ -127,7 +131,8 @@ extends HttpServlet {
 	}
 
 	@Override
-	protected final void doDelete(final HttpServletRequest req, final HttpServletResponse resp) {
+	protected final void doDelete(final HttpServletRequest req, final HttpServletResponse resp)
+	throws IOException {
 		final Runnable activeTask = scenarioExecutor.task();
 		if(null == activeTask) {
 			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -141,18 +146,21 @@ extends HttpServlet {
 				.map(req::getHeader)
 				.orElse(null);
 			if(null == reqTimestampRawValue) {
-				resp.setStatus(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
 			} else {
 				try {
 					final long reqTimestamp = Long.parseLong(reqTimestampRawValue, 0x10);
 					if(activeRun.timestamp() == reqTimestamp) {
 						scenarioExecutor.stop(activeRun);
+						if(null != scenarioExecutor.task()) {
+							throw new AssertionError("Run stopping failure");
+						}
 						resp.setStatus(HttpServletResponse.SC_OK);
 					} else {
 						resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
 					}
 				} catch(final NumberFormatException e) {
-					resp.setStatus(HttpServletResponse.SC_BAD_REQUEST, "Invalid start time: " + reqTimestampRawValue);
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid start time: " + reqTimestampRawValue);
 				}
 			}
 		} else {
