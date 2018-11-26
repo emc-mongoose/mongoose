@@ -88,6 +88,7 @@ public class ExposedMetricsTest {
 			.itemDataSize(ITEM_DATA_SIZE)
 			.outputPeriodSec(UPDATE_INTERVAL_SEC)
 			.stdOutColorFlag(true)
+			.comment("")
 			.build();
 		snapshotsSupplier = () -> Arrays.asList(metricsContext.lastSnapshot());
 		metricsContext.start();
@@ -107,6 +108,7 @@ public class ExposedMetricsTest {
 			.snapshotsSupplier(snapshotsSupplier)
 			.quantileValues(Arrays.asList(QUANTILE_VALUES))
 			.nodeAddrs(new ArrayList<>())
+			.comment("")
 			.build();
 		distributedMetricsContext.start();
 	}
