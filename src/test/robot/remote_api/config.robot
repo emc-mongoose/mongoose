@@ -5,8 +5,8 @@ Library  RequestsLibrary
 
 *** Variables ***
 ${DATA_DIR} =  src/test/robot/data
-${MONGOOSE_CONFIG_SCHEMA_URI_PATH}=  ${MONGOOSE_CONFIG_URI_PATH}/schema
 ${MONGOOSE_CONFIG_URI_PATH}=  /config
+${MONGOOSE_CONFIG_SCHEMA_URI_PATH}=  ${MONGOOSE_CONFIG_URI_PATH}/schema
 
 *** Test Cases ***
 Should Return Aggregated Defaults
