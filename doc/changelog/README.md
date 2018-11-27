@@ -54,6 +54,14 @@
 * [0.1.4](#014) 09/17/14
 * [0.1.3](#013) 08/15/14
 
+# 4.0.3
+
+## Fixed Bugs
+
+| Id | Short Description |
+|----|-------------------|
+| SLTM-1223 | Insufficient configured threads
+
 # 4.0.2
 
 ## New Features and Enhancements
