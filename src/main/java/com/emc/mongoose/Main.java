@@ -74,6 +74,7 @@ public final class Main {
         installExtensions(extensions, appHomePath);
         final Config configWithArgs;
         final Config fullDefaultConfig;
+
         try {
           // apply the extensions defaults
           fullDefaultConfig = collectDefaults(extensions, defaultConfig, appHomePath);
