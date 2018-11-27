@@ -1,13 +1,7 @@
 FROM emcmongoose/mongoose-robotest-base
 
-ADD docker /root/mongoose/docker
-ADD gradle /root/mongoose/gradle
-ADD load /root/mongoose/load
-ADD src /root/mongoose/src
-ADD storage /root/mongoose/storage
-ADD build.gradle /root/mongoose/build.gradle
-ADD gradlew /root/mongoose/gradlew
-ADD settings.gradle /root/mongoose/settings.gradle
+ADD src/test/robot /root/mongoose/src/test/robot
+ADD docker/entrypoint_robotest.sh /root/mongoose/docker/entrypoint_robotest.sh
 
 RUN chmod ugo+x /root/mongoose/docker/entrypoint_robotest.sh
 

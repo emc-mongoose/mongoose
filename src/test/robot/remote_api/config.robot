@@ -1,5 +1,6 @@
 *** Settings ***
 Documentation  Mongoose Config API tests
+Force Tags  Config API
 Library  OperatingSystem
 Library  RequestsLibrary
 

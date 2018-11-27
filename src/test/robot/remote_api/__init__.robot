@@ -1,9 +1,10 @@
 *** Settings ***
 Documentation  Mongoose remote API tests suite
-Suite Setup  Start Mongoose Node
-Suite Teardown  Remove Mongoose Node
+Force Tags  Remote API
 Library  OperatingSystem
 Library  RequestsLibrary
+Suite Setup  Start Mongoose Node
+Suite Teardown  Remove Mongoose Node
 
 *** Variables ***
 ${MONGOOSE_IMAGE_NAME} =  emcmongoose/mongoose

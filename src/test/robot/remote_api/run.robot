@@ -1,5 +1,6 @@
 *** Settings ***
 Documentation  Mongoose Run API tests
+Force Tags  Run API
 Library  Collections
 Library  OperatingSystem
 Library  RequestsLibrary

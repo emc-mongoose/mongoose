@@ -478,9 +478,16 @@ task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage
 		"${rootProject.buildDir}": "/root/mongoose/build",
 		"/var/run/docker.sock": "/var/run/docker.sock",
 	]
+	cmd = [
+		System.getenv("SUITE"),
+		System.getenv("TEST")
+	]
 	imageId = buildRobotestImage.getImageId()
 	network = "host"
 	tty = true
+	doLast {
+		println "Created the container for the $System.env.SUITE/$System.env.TEST test"
+	}
 }
 
 task startRobotestContainer(type: DockerStartContainer, dependsOn: createRobotestContainer) {
@@ -489,12 +496,12 @@ task startRobotestContainer(type: DockerStartContainer, dependsOn: createRobotes
 
 task robotest(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
 	targetContainerId createRobotestContainer.getContainerId()
-	timeout = 1000
+	timeout = 600 // 10 min w/o output -> fail on Travis CI
 	doLast {
 		if(0 != exitCode) {
-			throw new GradleException("${exitCode} robotests FAILED")
+			throw new GradleException("Some robotests FAILED")
 		} else {
-			println "All robotests PASSED"
+			println "Robotests PASSED"
 		}
 	}
 }
