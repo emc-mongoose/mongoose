@@ -2,23 +2,20 @@ package com.emc.mongoose.metrics.snapshot;
 
 import java.io.Serializable;
 
-public interface AllMetricsSnapshot
-extends Serializable {
+public interface AllMetricsSnapshot extends Serializable {
 
-	TimingMetricSnapshot durationSnapshot();
+  TimingMetricSnapshot durationSnapshot();
 
-	TimingMetricSnapshot latencySnapshot();
+  TimingMetricSnapshot latencySnapshot();
 
-	ConcurrencyMetricSnapshot concurrencySnapshot();
+  ConcurrencyMetricSnapshot concurrencySnapshot();
 
-	RateMetricSnapshot byteSnapshot();
+  RateMetricSnapshot byteSnapshot();
 
-	RateMetricSnapshot successSnapshot();
+  RateMetricSnapshot successSnapshot();
 
-	RateMetricSnapshot failsSnapshot();
+  RateMetricSnapshot failsSnapshot();
 
-	/**
-	 @return value in milliseconds
-	 */
-	long elapsedTimeMillis();
+  /** @return value in milliseconds */
+  long elapsedTimeMillis();
 }

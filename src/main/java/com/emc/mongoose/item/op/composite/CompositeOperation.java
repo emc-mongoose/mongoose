@@ -1,29 +1,24 @@
 package com.emc.mongoose.item.op.composite;
 
+import com.emc.mongoose.item.Item;
 import com.emc.mongoose.item.op.Operation;
 import com.emc.mongoose.item.op.partial.PartialOperation;
-import com.emc.mongoose.item.Item;
-
 import java.util.List;
 
-/**
- Created by andrey on 25.11.16.
- Marker interface
- */
-public interface CompositeOperation<I extends Item>
-extends Operation<I> {
-	
-	@Override
-	I item();
-	
-	String get(final String key);
+/** Created by andrey on 25.11.16. Marker interface */
+public interface CompositeOperation<I extends Item> extends Operation<I> {
 
-	void put(final String key, final String value);
+  @Override
+  I item();
 
-	List<? extends PartialOperation> subOperations();
+  String get(final String key);
 
-	/** Should be invoked only after subOperations() **/
-	void markSubTaskCompleted();
+  void put(final String key, final String value);
 
-	boolean allSubOperationsDone();
+  List<? extends PartialOperation> subOperations();
+
+  /** Should be invoked only after subOperations() * */
+  void markSubTaskCompleted();
+
+  boolean allSubOperationsDone();
 }
