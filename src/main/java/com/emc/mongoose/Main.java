@@ -108,6 +108,7 @@ public final class Main {
 						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
 					}
 				} finally {
+
 					server.stop();
 				}
 			}
