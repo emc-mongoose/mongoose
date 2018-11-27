@@ -10,7 +10,9 @@ import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
 
 import com.github.akurilov.confuse.Config;
+
 import org.apache.logging.log4j.Level;
+
 import org.eclipse.jetty.http.HttpHeader;
 
 import javax.script.ScriptEngine;

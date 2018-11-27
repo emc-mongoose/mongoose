@@ -14,7 +14,7 @@ import java.io.IOException;
 /**
  @author veronika K. on 26.10.18 */
 public class ConfigServlet
-	extends HttpServlet {
+extends HttpServlet {
 
 	private static final String SCHEMA_PATH = "schema";
 	private static final String CONTEXT_SEP = "/";
@@ -27,7 +27,7 @@ public class ConfigServlet
 
 	@Override
 	protected final void doGet(final HttpServletRequest req, final HttpServletResponse resp)
-	throws ServletException, IOException {
+	throws IOException {
 		final String[] contexts = req.getRequestURI().split(CONTEXT_SEP);
 		if(contexts.length == 2) {
 			getConfig(resp);
