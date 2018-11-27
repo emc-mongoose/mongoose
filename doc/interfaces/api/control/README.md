@@ -66,4 +66,23 @@ curl -v -X DELETE -H "If-Match: 167514e6082" http://localhost:9999/run
 
 ## Logs
 
-TODO
+### Get The Log File Page From The Beginning
+
+```bash
+curl http://localhost:9999/logs/123/com.emc.mongoose.logging.Messages
+```
+
+### Get The Specified Log File Part
+
+```bash
+curl -H "Range: bytes=100-200" http://localhost:9999/logs/123/com.emc.mongoose.logging.Messages
+r the type "dummy-mock"
+2018-11-27T16:19:34,982 | DEBUG | LinearLoadStepClient | main | com.emc.mongoose.storage.driver.mock.DummyStorageDriverMock@6aecbb8d: shut down
+2018-11-27T16:19:34,982 | DEBUG |
+```
+
+### Delete Log File
+
+```bash
+curl -X DELETE http://localhost:9999/logs/123/com.emc.mongoose.logging.Messages
+```

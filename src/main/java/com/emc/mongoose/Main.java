@@ -6,7 +6,7 @@ import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.control.ConfigServlet;
-import com.emc.mongoose.control.LogServlet;
+import com.emc.mongoose.control.logs.LogServlet;
 import com.emc.mongoose.control.run.RunImpl;
 import com.emc.mongoose.control.run.RunServlet;
 import com.emc.mongoose.env.CoreResourcesToInstall;
@@ -107,10 +107,10 @@ public final class Main {
 				server.setHandler(context);
 				context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
 				context.addServlet(new ServletHolder(new ConfigServlet(defaultConfig)), "/config/*");
+				context.addServlet(new ServletHolder(new LogServlet()), "/logs/*");
 				final ServletHolder runServletHolder = new ServletHolder(
 					new RunServlet(extClsLoader, extensions, metricsMgr, fullDefaultConfig.schema())
 				);
-				context.addServlet(new ServletHolder(new LogServlet()), "/logs/*");
 				runServletHolder
 					.getRegistration()
 					.setMultipartConfig(

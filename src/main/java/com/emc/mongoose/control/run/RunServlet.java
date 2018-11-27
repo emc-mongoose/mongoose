@@ -105,10 +105,8 @@ extends HttpServlet {
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		} else if(activeTask instanceof Run) {
 			final Run activeRun = (Run) activeTask;
-			final String reqTimestampRawValue = Collections.list(req.getHeaderNames())
+			final String reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.asString()))
 				.stream()
-				.map(String::toLowerCase)
-				.filter(HttpHeader.IF_MATCH.asString()::equalsIgnoreCase)
 				.findAny()
 				.map(req::getHeader)
 				.orElse(null);
@@ -140,10 +138,8 @@ extends HttpServlet {
 			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
 		} else if(activeTask instanceof Run) {
 			final Run activeRun = (Run) activeTask;
-			final String reqTimestampRawValue = Collections.list(req.getHeaderNames())
+			final String reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.asString()))
 				.stream()
-				.map(String::toLowerCase)
-				.filter(HttpHeader.IF_MATCH.asString()::equalsIgnoreCase)
 				.findAny()
 				.map(req::getHeader)
 				.orElse(null);
