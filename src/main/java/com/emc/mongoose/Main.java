@@ -258,6 +258,7 @@ public final class Main {
       Loggers.MSG.info(
           "Using the \"{}\" scenario engine", scriptEngine.getFactory().getEngineName());
       // expose the environment values
+      // hook test
       System.getenv().forEach(scriptEngine::put);
       // expose the loaded configuration
       scriptEngine.getContext().setAttribute(ATTR_CONFIG, config, ENGINE_SCOPE);
