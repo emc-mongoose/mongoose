@@ -84,6 +84,7 @@ public final class Main {
           LogUtil.exception(Level.ERROR, e, "Failed to load the defaults");
           throw e;
         }
+
         // init the metrics manager
         final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
         final int port = configWithArgs.intVal("run-port");
