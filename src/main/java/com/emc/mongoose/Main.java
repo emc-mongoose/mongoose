@@ -128,7 +128,6 @@ public final class Main {
             .findFirst()
             .orElseThrow(IllegalStateException::new);
     // load the defaults
-    // hook test
     return ConfigUtil.loadConfig(
         Paths.get(appHomePath.toString(), PATH_DEFAULTS).toFile(), mainConfigSchema);
   }
