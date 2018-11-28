@@ -34,13 +34,10 @@ import io.prometheus.client.exporter.MetricsServlet;
 import org.apache.commons.lang.StringUtils;
 
 import org.apache.logging.log4j.Level;
-import org.eclipse.jetty.server.Connector;
+
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.util.thread.ThreadPool;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -57,8 +54,6 @@ import java.util.stream.Collectors;
 import static javax.script.ScriptContext.ENGINE_SCOPE;
 
 public final class Main {
-
-	private static final int JETTY_THREAD_COUNT = 4;
 
 	public static void main(final String... args)
 	throws Exception {
@@ -94,21 +89,17 @@ public final class Main {
 				// init the metrics manager
 				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
 				final int port = configWithArgs.intVal("run-port");
-				final ThreadPool tp = new QueuedThreadPool(JETTY_THREAD_COUNT, 1);
-				final Server server = new Server(tp);
-				final ServerConnector connector = new ServerConnector(server);
-				connector.setPort(port);
-				server.setConnectors(new Connector[] { connector });
-				addServices(server, fullDefaultConfig);
-				server.start();
-				try {
-					if(configWithArgs.boolVal("run-node")) {
-						runNode(configWithArgs, extensions, metricsMgr);
-					} else {
+				if(configWithArgs.boolVal("run-node")) {
+					runNode(configWithArgs, extensions, metricsMgr);
+				} else {
+					final Server server = new Server(port);
+					addServices(server, fullDefaultConfig);
+					server.start();
+					try {
 						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
+					} finally {
+						server.stop();
 					}
-				} finally {
-					server.stop();
 				}
 			}
 		} catch(final InterruptedException | InterruptRunException e) {
