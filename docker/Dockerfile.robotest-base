@@ -3,6 +3,7 @@ FROM alpine
 RUN apk add --update docker python py-pip \
     && pip install -U virtualenv \
     && pip install -U requests \
+    && pip install -U robotframework \
     && pip install -U robotframework-requests \
     && rm -rf /var/cache/apk/*
 

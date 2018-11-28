@@ -1,23 +1,28 @@
+var sharedConfig = {
+	"load": {
+		"step": {
+			"limit": {
+				"time": "3m"
+			}
+		}
+	}
+}
+
 PreconditionLoad
+	.config(sharedConfig)
 	.config(
 		{
 			"item": {
 				"output": {
 					"path": ITEM_SRC_PATH
 				}
-			},
-			"load": {
-				"op": {
-					"limit": {
-						"count": 10000
-					}
-				},
 			}
 		}
 	)
 	.run();
 
 Load
+	.config(sharedConfig)
 	.config(
 		{
 			"item": {

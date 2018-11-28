@@ -1,12 +1,12 @@
 *** Settings ***
 Documentation  Mongoose Run API tests
-Force Tags  Run API
+Force Tags  Run
 Library  Collections
 Library  OperatingSystem
 Library  RequestsLibrary
 
 *** Variables ***
-${DATA_DIR} =  src/test/robot/remote_api/data
+${DATA_DIR} =  src/test/robot/api/remote/data
 ${HEADER_ETAG} =  ETag
 ${HEADER_IF_MATCH} =  If-Match
 ${MONGOOSE_RUN_URI_PATH}=  /run

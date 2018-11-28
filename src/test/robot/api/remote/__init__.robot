@@ -1,9 +1,10 @@
 *** Settings ***
-Documentation  Mongoose remote API tests suite
+Documentation  Mongoose Remote API suite
 Force Tags  Remote API
 Library  OperatingSystem
 Library  RequestsLibrary
-Test Setup  Execute Mongoose Scenario
+Suite Setup  Start Mongoose Node
+Suite Teardown  Remove Mongoose Node
 
 *** Variables ***
 ${MONGOOSE_IMAGE_NAME} =  emcmongoose/mongoose
@@ -12,7 +13,13 @@ ${MONGOOSE_NODE_PORT} =  9999
 
 *** Keywords ***
 Start Mongoose Node
-    ${std_out} =  Run  docker run -d --name mongoose_node --network host ${MONGOOSE_IMAGE_NAME}:${MONGOOSE_IMAGE_VERSION} --run-node
+    ${version} =  Get Environment Variable  MONGOOSE_VERSION
+    ${cmd} =  Catenate  SEPARATOR= \\\n\t
+    ...  docker run -d --network host
+    ...  --name mongoose_node
+    ...  ${MONGOOSE_IMAGE_NAME}:${version}
+    ...  --run-node
+    ${std_out} =  Run  ${cmd}
     Log  ${std_out}
     Create Session  mongoose_node  http://localhost:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
 

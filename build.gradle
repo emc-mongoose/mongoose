@@ -478,15 +478,17 @@ task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage
 		"${rootProject.buildDir}": "/root/mongoose/build",
 		"/var/run/docker.sock": "/var/run/docker.sock",
 	]
-	cmd = [
-		System.getenv("SUITE"),
-		System.getenv("TEST")
+	envVars = [
+		"HOST_WORKING_DIR": rootProject.projectDir.absolutePath,
+		"MONGOOSE_VERSION": version,
+		"SUITE": System.getenv("SUITE"),
+		"TEST": System.getenv("TEST"),
 	]
 	imageId = buildRobotestImage.getImageId()
 	network = "host"
 	tty = true
 	doLast {
-		println "Created the container for the $System.env.SUITE/$System.env.TEST test"
+		println "Created the container for the ${System.env.SUITE}.${System.env.TEST} test"
 	}
 }
 

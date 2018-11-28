@@ -1,11 +1,11 @@
 *** Settings ***
 Documentation  Mongoose Config API tests
-Force Tags  Config API
+Force Tags  Config
 Library  OperatingSystem
 Library  RequestsLibrary
 
 *** Variables ***
-${DATA_DIR} =  src/test/robot/remote_api/data
+${DATA_DIR} =  src/test/robot/api/remote/data
 ${MONGOOSE_CONFIG_URI_PATH}=  /config
 ${MONGOOSE_CONFIG_SCHEMA_URI_PATH}=  ${MONGOOSE_CONFIG_URI_PATH}/schema
 
