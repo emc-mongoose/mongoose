@@ -85,7 +85,6 @@ extends HttpStorageDriverBase<I, O> {
 		return null;
 	};
 
-	protected final String namespace;
 	protected final boolean fsAccess;
 
 	public AtmosStorageDriver(
@@ -93,7 +92,6 @@ extends HttpStorageDriverBase<I, O> {
 		final int batchSize
 	) throws OmgShootMyFootException, InterruptedException {
 		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
-		namespace = storageConfig.stringVal("namespace");
 		final Config httpConfig = storageConfig.configVal("net-http");
 		fsAccess = httpConfig.boolVal("fsAccess");
 		if(namespace != null && !namespace.isEmpty()) {
@@ -128,25 +126,26 @@ extends HttpStorageDriverBase<I, O> {
 			HttpVersion.HTTP_1_1, HttpMethod.PUT, SUBTENANT_URI_BASE, Unpooled.EMPTY_BUFFER, reqHeaders,
 			EmptyHttpHeaders.INSTANCE
 		);
+
+		String subtenantId = null;
 		
 		final FullHttpResponse getSubtenantResp;
 		try {
 			getSubtenantResp = executeHttpRequest(getSubtenantReq);
+			try {
+				if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
+					subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
+				} else {
+					Loggers.ERR.warn("Creating the subtenant: got response {}", getSubtenantResp.status().toString());
+				}
+			} finally {
+				getSubtenantResp.release();
+			}
 		} catch(final InterruptedException e) {
 			throw new InterruptRunException(e);
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
-			return null;
 		}
-		
-		final String subtenantId;
-		if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
-			subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
-		} else {
-			Loggers.ERR.warn("Creating the subtenant: got response {}", getSubtenantResp.status().toString());
-			return null;
-		}
-		getSubtenantResp.release();
 		
 		return subtenantId;
 	}

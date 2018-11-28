@@ -41,6 +41,8 @@
 &nbsp;&nbsp;&nbsp;3.5.1 [Input](doc/interfaces/input)<br/>
 &nbsp;&nbsp;&nbsp;3.5.2 [Output](doc/interfaces/output)<br/>
 &nbsp;&nbsp;&nbsp;3.5.3 API<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.5.3.1 [Monitoring](doc/interfaces/api/monitoring#monitoring-api)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.5.3.2 [Control](doc/interfaces/api/control)<br/>
 &nbsp;&nbsp;3.6. Design<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.1. [Architecture](doc/design/architecture)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.2. [Distributed Mode](doc/design/distributed_mode)<br/>

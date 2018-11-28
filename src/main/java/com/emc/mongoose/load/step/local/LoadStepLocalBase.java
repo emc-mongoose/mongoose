@@ -1,6 +1,5 @@
 package com.emc.mongoose.load.step.local;
 
-import com.emc.mongoose.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
@@ -15,12 +14,11 @@ import com.emc.mongoose.metrics.MetricsManager;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
-import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
+import com.github.akurilov.commons.concurrent.AsyncRunnable;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
-import com.github.akurilov.fiber4j.ExclusiveFiberBase;
-
+import com.github.akurilov.fiber4j.Fiber;
 import org.apache.logging.log4j.Level;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
@@ -30,9 +28,8 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.concurrent.locks.LockSupport;
 
 public abstract class LoadStepLocalBase
 extends LoadStepBase {
@@ -99,45 +96,38 @@ extends LoadStepBase {
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptRunException, IllegalStateException {
-		final CountDownLatch awaitCountDown = new CountDownLatch(stepContexts.size());
-		final List<AutoCloseable> awaitTasks = stepContexts
-			.stream()
-			.map(
-				stepCtx -> new ExclusiveFiberBase(ServiceTaskExecutor.INSTANCE) {
-					@Override
-					protected final void invokeTimedExclusively(final long startTimeNanos) {
-						try {
-							if(stepCtx.isDone()) {
-								awaitCountDown.countDown();
-								if(!stepCtx.isStopped()) {
-									stop();
-								}
-							}
-						} catch(final Exception e) {
-							LogUtil.exception(
-								Level.DEBUG, e, "Check for the done state failure on the step context \"{}\"", stepCtx
-							);
-						}
-					}
+
+		final long timeoutMillis = timeout > 0 ? timeUnit.toMillis(timeout) : Long.MAX_VALUE;
+		final long startTimeMillis = System.currentTimeMillis();
+		final int stepCtxCount = stepContexts.size();
+		final LoadStepContext[] stepContextsCopy = stepContexts.toArray(new LoadStepContext[stepCtxCount]);
+		int countDown = stepCtxCount;
+		LoadStepContext stepCtx;
+		boolean timeIsOut = false;
+
+		while(countDown > 0 && !timeIsOut) {
+			for(int i = 0; i < stepCtxCount; i ++) {
+				if(timeoutMillis <= System.currentTimeMillis() - startTimeMillis) {
+					timeIsOut = true;
+					break;
 				}
-			)
-			.peek(AsyncRunnableBase::start)
-			.collect(Collectors.toList());
-		try {
-			return awaitCountDown.await(timeout, timeUnit);
-		} catch(final InterruptedException e) {
-			LogUtil.exception(Level.ERROR, e, "");
-			throw new InterruptRunException(e);
-		} finally {
-			awaitTasks.forEach(
-				awaitTask -> {
+				stepCtx = stepContextsCopy[i];
+				if(stepCtx != null) {
 					try {
-						awaitTask.close();
-					} catch(final Exception ignored) {
+						if(stepCtx.isDone() || stepCtx.await(Fiber.SOFT_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
+							stepContextsCopy[i] = null; // exclude
+							countDown --;
+							break;
+						}
+					} catch(final InterruptedException e) {
+						throw new InterruptRunException(e);
+					} catch(final RemoteException ignored) {
 					}
 				}
-			);
+			}
 		}
+
+		return 0 == countDown;
 	}
 
 	@Override

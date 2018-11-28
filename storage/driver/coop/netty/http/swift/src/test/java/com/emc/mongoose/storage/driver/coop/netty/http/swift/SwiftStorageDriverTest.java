@@ -86,6 +86,7 @@ extends SwiftStorageDriver {
 			final Config config = new BasicConfig("-", configSchema);
 			config.val("load-batch-size", 4096);
 			config.val("storage-driver-limit-concurrency", 0);
+			config.val("storage-namespace", NS);
 			config.val("storage-net-transport", "epoll");
 			config.val("storage-net-reuseAddr", true);
 			config.val("storage-net-bindBacklogSize", 0);
@@ -101,7 +102,6 @@ extends SwiftStorageDriver {
 			config.val("storage-net-node-addrs", Collections.singletonList("127.0.0.1"));
 			config.val("storage-net-node-port", 9024);
 			config.val("storage-net-node-connAttemptsLimit", 0);
-			config.val("storage-namespace", NS);
 			config.val("storage-net-http-versioning", true);
 			config.val("storage-net-http-headers", Collections.EMPTY_MAP);
 			config.val("storage-net-http-uri-args", Collections.EMPTY_MAP);

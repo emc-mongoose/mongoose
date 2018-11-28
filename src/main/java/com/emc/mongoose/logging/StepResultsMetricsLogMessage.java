@@ -23,12 +23,9 @@ extends LogMessageBase {
 	private final int concurrencyLimit;
 	private final DistributedAllMetricsSnapshot snapshot;
 
-	public StepResultsMetricsLogMessage(final DistributedMetricsContext metricsCtx) {
-		this(metricsCtx.opType(), metricsCtx.id(), metricsCtx.concurrencyLimit(), metricsCtx.lastSnapshot());
-	}
-
-	StepResultsMetricsLogMessage(
-		final OpType opType, final String stepId, final int concurrencyLimit, final DistributedAllMetricsSnapshot snapshot
+	public StepResultsMetricsLogMessage(
+		final OpType opType, final String stepId, final int concurrencyLimit,
+		final DistributedAllMetricsSnapshot snapshot
 	) {
 		this.opType = opType;
 		this.stepId = stepId;

@@ -1,10 +1,7 @@
-package com.emc.mongoose.metrics.util;
+package com.emc.mongoose.metrics.type;
 
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
-import com.emc.mongoose.metrics.type.HistogramImpl;
-import com.emc.mongoose.metrics.type.LongMeter;
-import com.emc.mongoose.metrics.type.TimingMeterImpl;
-
+import com.emc.mongoose.metrics.util.ConcurrentSlidingWindowLongReservoir;
 import org.junit.Assert;
 import org.junit.Test;
 

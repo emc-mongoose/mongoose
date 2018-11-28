@@ -43,6 +43,7 @@
 ```bash
 java -jar mongoose-<VERSION>.jar \
     --storage-driver-type=swift \
+    --storage-namespace=ns1 \
     ...
 ```
 
@@ -54,6 +55,6 @@ java -jar mongoose-<VERSION>.jar \
 
 ### 2.2. Notes
 
-* The default `storage-namespace` value (null) will not work in the case of Swift API
 * A **container** may be specified with `item-input-path` either `item-output-path` configuration option
+* The default storage namespace value (`null`) won't work, specify the correct value explicitly
 * DLO creation should be enabled using the `item-data-ranges-threshold` configuration option

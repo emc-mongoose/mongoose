@@ -1,6 +1,8 @@
 # Contents
 
 ## 2018
+* [4.0.3](#403) 2018-11-28
+* [4.0.2](#402) 2018-11-13
 * [4.0.1](#401) 2018-10-08
 * [4.0.0](#400) 2018-10-01
 * [3.6.2](#362) 08/08/18
@@ -52,6 +54,30 @@
 * [0.1.5](#015) 09/22/14
 * [0.1.4](#014) 09/17/14
 * [0.1.3](#013) 08/15/14
+
+# 4.0.3
+
+## Fixed Bugs
+
+| Id | Short Description |
+|----|-------------------|
+| SLTM-1223 | Insufficient configured threads
+
+# 4.0.2
+
+## New Features and Enhancements
+
+#### 1. Configuration Layout Changes
+
+| Old parameter name (v < 4.0.2)  | New parameter name (v >= 4.0.2)
+|---------------------------------|--------------------------------
+| storage-net-http-namespace      | storage-namespace
+
+## Fixed Bugs
+
+| Id | Short Description |
+|----|-------------------|
+| [BASE-1282](https://mongoose-issues.atlassian.net/browse/BASE-1282) | Few load operations results are lost sometimes
 
 # 4.0.1
 

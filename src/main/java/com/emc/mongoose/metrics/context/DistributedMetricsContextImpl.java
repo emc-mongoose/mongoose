@@ -10,6 +10,7 @@ import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshotImpl;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshotImpl;
+
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.util.ArrayList;
@@ -28,12 +29,14 @@ implements DistributedMetricsContext<S> {
 	private final boolean sumPersistFlag;
 	private final boolean perfDbResultsFileFlag;
 	private volatile DistributedMetricsListener metricsListener = null;
+	private final List<Double> quantileValues;
 
 	public DistributedMetricsContextImpl(
 		final String id, final OpType opType, final IntSupplier nodeCountSupplier, final int concurrencyLimit,
 		final int concurrencyThreshold, final SizeInBytes itemDataSize, final int updateIntervalSec,
 		final boolean stdOutColorFlag, final boolean avgPersistFlag, final boolean sumPersistFlag,
-		final boolean perfDbResultsFileFlag, final Supplier<List<AllMetricsSnapshot>> snapshotsSupplier
+		final boolean perfDbResultsFileFlag, final Supplier<List<AllMetricsSnapshot>> snapshotsSupplier,
+		final List<Double> quantileValues
 	) {
 		super(
 			id, opType, concurrencyLimit, nodeCountSupplier.getAsInt(), concurrencyThreshold, itemDataSize,
@@ -44,6 +47,7 @@ implements DistributedMetricsContext<S> {
 		this.avgPersistFlag = avgPersistFlag;
 		this.sumPersistFlag = sumPersistFlag;
 		this.perfDbResultsFileFlag = perfDbResultsFileFlag;
+		this.quantileValues = quantileValues;
 	}
 
 	@Override
@@ -73,6 +77,11 @@ implements DistributedMetricsContext<S> {
 	@Override
 	public int nodeCount() {
 		return nodeCountSupplier.getAsInt();
+	}
+
+	@Override
+	public List<Double> quantileValues() {
+		return quantileValues;
 	}
 
 	@Override
@@ -160,7 +169,7 @@ implements DistributedMetricsContext<S> {
 		return new DistributedMetricsContextImpl<>(
 			id, opType, nodeCountSupplier, concurrencyLimit, 0, itemDataSize,
 			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag, avgPersistFlag,
-			sumPersistFlag, perfDbResultsFileFlag, snapshotsSupplier
+			sumPersistFlag, perfDbResultsFileFlag, snapshotsSupplier, quantileValues
 		);
 	}
 

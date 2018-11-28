@@ -7,6 +7,7 @@ class LogMessageBaseTest {
 	
 	@Test @throws[Exception]
 	def testFormatFixedWidth(): Unit = {
+		assertEquals("0", LogMessageBase formatFixedWidth(1.234e-100, 8))
 		assertEquals("1.234E-7", LogMessageBase formatFixedWidth(0.000000123456789, 8))
 		assertEquals("1.234E-6", LogMessageBase formatFixedWidth(0.00000123456789, 8))
 		assertEquals("1.234E-5", LogMessageBase formatFixedWidth(0.0000123456789, 8))
