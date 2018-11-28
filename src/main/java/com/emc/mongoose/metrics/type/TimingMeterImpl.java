@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  @author veronika K. on 10.10.18 */
 public class TimingMeterImpl
-implements LongMeter<TimingMetricSnapshot> {
+	implements LongMeter<TimingMetricSnapshot> {
 
 	private final LongMeter<HistogramSnapshot> histogram;
 	private final LongAdder count = new LongAdder();

@@ -343,7 +343,7 @@ public interface LogValidationUtil {
 		final long countSucc = Long.parseLong(metrics.get("CountSucc"));
 		if(expectedMaxCount > 0) {
 			if(expectedStepTime > 0) {
-				assertTrue(expectedMaxCount > countSucc);
+				assertTrue(expectedMaxCount >= countSucc);
 			} else {
 				assertEquals(expectedMaxCount, countSucc);
 			}

@@ -85,7 +85,6 @@ extends HttpStorageDriverBase<I, O> {
 		return null;
 	};
 
-	protected final String namespace;
 	protected final boolean fsAccess;
 
 	public AtmosStorageDriver(
@@ -94,7 +93,6 @@ extends HttpStorageDriverBase<I, O> {
 	) throws OmgShootMyFootException, InterruptedException {
 		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 		final Config httpConfig = storageConfig.configVal("net-http");
-		namespace = httpConfig.stringVal("namespace");
 		fsAccess = httpConfig.boolVal("fsAccess");
 		if(namespace != null && !namespace.isEmpty()) {
 			sharedHeaders.set(KEY_X_EMC_NAMESPACE, namespace);

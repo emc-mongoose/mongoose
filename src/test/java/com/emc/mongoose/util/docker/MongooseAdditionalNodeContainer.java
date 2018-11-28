@@ -1,22 +1,22 @@
 package com.emc.mongoose.util.docker;
 
-import static com.emc.mongoose.util.docker.MongooseContainer.ENTRYPOINT;
-import static com.emc.mongoose.util.docker.MongooseContainer.ENTRYPOINT_LIMIT_HEAP_1GB;
-import static com.emc.mongoose.util.docker.MongooseContainer.IMAGE_NAME;
-import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
-import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
-
-import static java.util.Collections.emptyList;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
+import static com.emc.mongoose.util.docker.MongooseContainer.ENTRYPOINT_LIMIT_HEAP_1GB;
+import static com.emc.mongoose.util.docker.MongooseContainer.HOST_SHARE_PATH;
+import static com.emc.mongoose.util.docker.MongooseContainer.IMAGE_NAME;
+import static java.util.Collections.emptyList;
+
 public final class MongooseAdditionalNodeContainer
-extends ContainerBase {
+	extends ContainerBase {
 
 	public static final int DEFAULT_PORT = 10000;
+	public static final int ADDITIONAL_PORT = 9998; //for Jetty
 	private static final Map<String, Path> VOLUME_BINDS = new HashMap<String, Path>() {{
 		put(CONTAINER_SHARE_PATH, HOST_SHARE_PATH);
 	}};
@@ -51,7 +51,8 @@ extends ContainerBase {
 		return Arrays.asList(
 			"--run-node",
 			// ports[0] contains the svcPort constructor arg value
-			"--load-step-node-port=" + ports[0]
+			"--load-step-node-port=" + ports[0],
+			"--run-port=" + ADDITIONAL_PORT
 		);
 	}
 

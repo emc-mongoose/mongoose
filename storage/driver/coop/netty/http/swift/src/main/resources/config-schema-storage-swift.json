@@ -2,7 +2,6 @@
 	"storage": {
 		"net": {
 			"http": {
-				"namespace": "string",
 				"versioning": "boolean"
 			}
 		}

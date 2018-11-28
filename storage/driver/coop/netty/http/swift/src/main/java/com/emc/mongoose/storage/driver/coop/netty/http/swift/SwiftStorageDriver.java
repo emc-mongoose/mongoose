@@ -71,7 +71,6 @@ extends HttpStorageDriverBase<I, O> {
 	private static final ThreadLocal<StringBuilder>
 		CONTAINER_LIST_QUERY = ThreadLocal.withInitial(StringBuilder::new);
 
-	protected final String namespace;
 	protected final boolean versioning;
 
 	private final String namespacePath;
@@ -82,7 +81,6 @@ extends HttpStorageDriverBase<I, O> {
 	) throws OmgShootMyFootException, InterruptedException {
 		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 		final Config httpConfig = storageConfig.configVal("net-http");
-		namespace = httpConfig.stringVal("namespace");
 		versioning = httpConfig.boolVal("versioning");
 		if(namespace == null) {
 			throw new IllegalArgumentNameException("Namespace is not set");
