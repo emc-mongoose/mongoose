@@ -15,3 +15,4 @@ Control API is divided into 3 categories:
 |Logs API|<li>get logs<li>delete logs|Allows you to manage logs of runs|
 
 See the details [here](https://app.swaggerhub.com/apis-docs/veronikaKochugova/Mongoose/4.1.0)
+
