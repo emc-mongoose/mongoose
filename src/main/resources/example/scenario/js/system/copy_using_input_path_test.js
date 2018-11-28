@@ -1,10 +1,6 @@
 var sharedConfig = {
     "storage": {
-        "net": {
-            "http": {
-                "namespace": "ns1"
-            }
-        }
+        "namespace": "ns1"
     }
 };
 
