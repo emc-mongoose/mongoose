@@ -3,8 +3,7 @@ Documentation  Mongoose remote API tests suite
 Force Tags  Remote API
 Library  OperatingSystem
 Library  RequestsLibrary
-Suite Setup  Start Mongoose Node
-Suite Teardown  Remove Mongoose Node
+Test Setup  Execute Mongoose Scenario
 
 *** Variables ***
 ${MONGOOSE_IMAGE_NAME} =  emcmongoose/mongoose

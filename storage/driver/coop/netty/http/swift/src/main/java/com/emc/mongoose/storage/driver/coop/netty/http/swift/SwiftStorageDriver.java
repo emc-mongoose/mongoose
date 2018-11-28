@@ -118,14 +118,14 @@ extends HttpStorageDriverBase<I, O> {
 
 		final boolean containerExists, versioningEnabled;
 		final HttpResponseStatus checkContainerRespStatus = checkContainerResp.status();
-		if(HttpResponseStatus.NOT_FOUND.equals(checkContainerRespStatus)) {
-			containerExists = false;
-			versioningEnabled = false;
-		} else if(HttpStatusClass.SUCCESS.equals(checkContainerRespStatus.codeClass())) {
+		if(HttpStatusClass.SUCCESS.equals(checkContainerRespStatus.codeClass())) {
 			Loggers.MSG.info("Container \"{}\" already exists", path);
 			containerExists = true;
 			final String versionsLocation = checkContainerResp.headers().get(KEY_X_VERSIONS_LOCATION);
-			versioningEnabled = versionsLocation != null && !versionsLocation.isEmpty();
+			versioningEnabled = versionsLocation != null && ! versionsLocation.isEmpty();
+		} else if(HttpResponseStatus.NOT_FOUND.equals(checkContainerRespStatus)) {
+			containerExists = false;
+			versioningEnabled = false;
 		} else {
 			Loggers.ERR.warn("Unexpected container checking response: {}", checkContainerRespStatus.toString());
 			checkContainerResp.release();

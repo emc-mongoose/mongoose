@@ -6,7 +6,7 @@ Library  OperatingSystem
 Library  RequestsLibrary
 
 *** Variables ***
-${DATA_DIR} =  src/test/robot/data
+${DATA_DIR} =  src/test/robot/remote_api/data
 ${HEADER_ETAG} =  ETag
 ${HEADER_IF_MATCH} =  If-Match
 ${MONGOOSE_RUN_URI_PATH}=  /run

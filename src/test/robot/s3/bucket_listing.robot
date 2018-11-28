@@ -1,13 +1,10 @@
 *** Settings ***
-Documentation  Mongoose Config API tests
-Force Tags  Config API
+Documentation  Bucket Listing Tests
+Force Tags  S3  Bucket Listing
 Library  OperatingSystem
-Library  RequestsLibrary
 
 *** Variables ***
-${DATA_DIR} =  src/test/robot/remote_api/data
-${MONGOOSE_CONFIG_URI_PATH}=  /config
-${MONGOOSE_CONFIG_SCHEMA_URI_PATH}=  ${MONGOOSE_CONFIG_URI_PATH}/schema
+${DATA_DIR} =  src/test/robot/s3/data
 
 *** Test Cases ***
 Should Return Aggregated Defaults
