@@ -1,4 +1,4 @@
-image: docker:stable
+image: npalm:dind-java
 
 variables:
   # When using dind service we need to instruct docker, to talk with the
@@ -34,7 +34,6 @@ stages:
   - deploy
 
 build_jar:
-  image: java:8
   stage: build
   script: ./gradlew clean dist
   artifacts:
@@ -42,17 +41,14 @@ build_jar:
       - build/libs/mongoose-*.jar
 
 test_unit:
-  image: java:8
   stage: test_unit
   script: ./gradlew test
 
 test_integration:
-  image: java:8
   stage: test_integration
   script: ./gradlew integrationTest
 
 build_images:
-  image: java:8
   stage: build
   script:
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
@@ -60,7 +56,6 @@ build_images:
   - docker push $MONGOOSE_DOCKER_IMAGE
 
 test_api_remote_config:
-  image: java:8
   stage: test_functional
   variables:
     SUITE: api.remote
@@ -68,7 +63,6 @@ test_api_remote_config:
   script: ./gradlew robotest
 
 test_api_remote_run:
-  image: java:8
   stage: test_functional
   variables:
     SUITE: api.remote
@@ -76,7 +70,6 @@ test_api_remote_run:
   script: ./gradlew robotest
 
 test_api_storage_s3:
-  image: java:8
   stage: test_functional
   variables:
     SUITE: api.storage
@@ -84,7 +77,6 @@ test_api_storage_s3:
   script: ./gradlew robotest
 
 test_circular_append:
-  image: java:8
   stage: test_functional_legacy
   variables:
     STORAGE_TYPE: atmos,s3,fs
@@ -95,7 +87,6 @@ test_circular_append:
   script: ./gradlew systemTest --tests com.emc.mongoose.system.$TEST
 
 test_read_verification_after_circular_update:
-  image: java:8
   stage: test_functional_legacy
   variables:
     STORAGE_TYPE: fs,s3
