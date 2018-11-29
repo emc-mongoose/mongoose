@@ -1,4 +1,4 @@
-image: java:8
+image: docker:stable
 
 variables:
   MONGOOSE_VERSION: $CI_COMMIT_SHA
@@ -6,6 +6,10 @@ variables:
 
 services:
   - docker:dind
+
+before_script:
+  - apt-get install default-jre default-jdk openjdk-8-jre openjdk-8-jdk
+  - java -version
 
 stages:
   - build
