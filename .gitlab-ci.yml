@@ -26,6 +26,7 @@ build:
 deploy_testing_image:
   stage: deploy_testing_image
   script:
+    - echo $ENV_1
     - docker login -u $DOCKER_USER -p $DOCKER_PASS
     - docker build -f docker/Dockerfile -t $MONGOOSE_DOCKER_IMAGE .
     - docker push $MONGOOSE_DOCKER_IMAGE
