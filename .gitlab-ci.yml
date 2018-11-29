@@ -1,21 +1,6 @@
-image: npalm:dind-java
+image: java:8
 
 variables:
-  # When using dind service we need to instruct docker, to talk with the
-  # daemon started inside of the service. The daemon is available with
-  # a network connection instead of the default /var/run/docker.sock socket.
-  #
-  # The 'docker' hostname is the alias of the service container as described at
-  # https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#accessing-the-services
-  #
-  # Note that if you're using Kubernetes executor, the variable should be set to
-  # tcp://localhost:2375 because of how Kubernetes executor connects services
-  # to the job container
-  DOCKER_HOST: tcp://docker:2375/
-  # When using dind, it's wise to use the overlayfs driver for
-  # improved performance.
-  DOCKER_DRIVER: overlay2
-  # Mongoose
   MONGOOSE_VERSION: $CI_COMMIT_SHA
   MONGOOSE_DOCKER_IMAGE: emcmongoose/mongoose:$MONGOOSE_VERSION
 
@@ -23,14 +8,15 @@ services:
   - docker:dind
 
 before_script:
-  - docker info
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - sudo apt-get update
+  - sudo apt-get -y install docker-ce
 
 stages:
   - build
-  - test_unit
-  - test_integration
-  - test_functional
-  - test_functional_legacy
+  - test
+  - test_e2e
   - deploy
 
 build:
@@ -45,36 +31,36 @@ build:
       - build/libs/mongoose-*.jar
 
 test_unit:
-  stage: test_unit
+  stage: test
   script: ./gradlew test
 
 test_integration:
-  stage: test_integration
+  stage: test
   script: ./gradlew integrationTest
 
 test_api_remote_config:
-  stage: test_functional
+  stage: test_e2e
   variables:
     SUITE: api.remote
     TEST: config
   script: ./gradlew robotest
 
 test_api_remote_run:
-  stage: test_functional
+  stage: test_e2e
   variables:
     SUITE: api.remote
     TEST: run
   script: ./gradlew robotest
 
 test_api_storage_s3:
-  stage: test_functional
+  stage: test_e2e
   variables:
     SUITE: api.storage
     TEST: s3
   script: ./gradlew robotest
 
-test_circular_append:
-  stage: test_functional_legacy
+test_legacy_circular_append:
+  stage: test_e2e
   variables:
     STORAGE_TYPE: atmos,s3,fs
     RUN_MODE: local,distributed
@@ -83,8 +69,8 @@ test_circular_append:
     TEST: CircularAppendTest
   script: ./gradlew systemTest --tests com.emc.mongoose.system.$TEST
 
-test_read_verification_after_circular_update:
-  stage: test_functional_legacy
+test_legacy_read_verification_after_circular_update:
+  stage: test_e2e
   variables:
     STORAGE_TYPE: fs,s3
     RUN_MODE: local
