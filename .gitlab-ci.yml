@@ -29,10 +29,12 @@ build:
       - build/libs/mongoose-*.jar
 
 test_unit:
+  image: openjdk:8-jdk-alpine
   stage: test
   script: ./gradlew test
 
 test_integration:
+  image: openjdk:8-jdk-alpine
   stage: test
   script: ./gradlew integrationTest
 
