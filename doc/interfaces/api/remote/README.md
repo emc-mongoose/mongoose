@@ -1,15 +1,15 @@
 # Contents
 
-[Configuring the port](#configuring-the-port)<br/>
-[REST](#rest)<br/>
-&nbsp;&nbsp;[Control API](#control-api)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;[Config](#config)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;[Run](#run)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;[Logs](#logs)<br/>
-&nbsp;&nbsp;[Monitoring API](#monitoring-api)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;[Output format](#output-format)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;[Example](#example)<br/>
-[Usage](#usage)<br/>
+1.[Configuring the port](#configuring-the-port)<br/>
+2.[REST](#rest)<br/>
+&nbsp;&nbsp;2.1.[Control API](#control-api)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2.1.1.[Config](#config)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2.1.2.[Run](#run)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2.1.3.[Logs](#logs)<br/>
+&nbsp;&nbsp;2.2.[Monitoring API](#monitoring-api)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2.2.1.[Output format](#output-format)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2.2.2.[Example](#example)<br/>
+3.[Usage](#usage)<br/>
 
 # Configuring the port
 
@@ -233,4 +233,4 @@ mongoose_elapsed_time_value{load_step_id="ExposedMetricsTest",load_op_type="CREA
 
 # Usage
 
-To use the remote API you need to start Mongoose and go to the `localhost:<run-port>` or use `curl <...> http://localhost:<run-port>/<...>`.
+To use the remote API you need to start Mongoose and go to the `localhost:<run-port>` or use `curl <...> http://localhost:<run-port>/<...>`. For details, see the examples above.
