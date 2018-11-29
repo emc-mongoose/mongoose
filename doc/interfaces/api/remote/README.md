@@ -37,7 +37,17 @@ Control API is divided into 3 categories:
 
 ### Config
 
-TODO
+Get config from node:
+```bash
+curl GET http://localhost:9999/config
+```
+> More about configuration [here](https://github.com/emc-mongoose/mongoose/tree/GOOSE-1298-formating-hook/doc/interfaces/input/configuration#configuration)
+
+Get schema from node:
+```bash
+curl GET http://localhost:9999/config/schema
+```
+> The schema relates configuration parameters to the required types.
 
 ### Run
 
