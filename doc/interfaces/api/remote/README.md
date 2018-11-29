@@ -2,8 +2,9 @@
 
 [Configuring the port](#configuring-the-port)<br/>
 [REST](#rest)<br/>
+&nbsp;&nbsp;[Control API](#control-api)<br/>
 &nbsp;&nbsp;[Monitoring API](#monitoring-api)<br/>
-&nbsp;&nbsp;[Control API]()<br/>
+[Usage](#usage)<br/>
 
 # Configuring the port
 
@@ -28,8 +29,7 @@ Control API is divided into 3 categories:
 
 ## Monitoring API
 For real-time monitoring the metrics are exposed in the [Prometheus's](https://github.com/prometheus/client_java) format.
-### Configuring port
-To configure the port for the server, the parameter `--run-port` is used. By default `--run-port=9999`.
+
 ### Output format
 Information about new metric starts with
 `````
@@ -106,10 +106,6 @@ In braces exported load step parameters:
 |`node_count`|*count of addrs in* load-step-node-addrs|integer|
 |`item_data_sizw`|item-data-size|string with the unit suffix (KB, MB, ...)|
 
-### Usage
-
-To view the metrics you need to start Mongoose and go to the `localhost:<run-port>`.
-
 #### Example:
 
 ````````````````````````````````
@@ -157,3 +153,6 @@ mongoose_failed_op_rate_last{load_step_id="ExposedMetricsTest",load_op_type="CRE
 mongoose_elapsed_time_value{load_step_id="ExposedMetricsTest",load_op_type="CREATE",storage_driver_limit_concurrency="0",node_count="1",item_data_size="10KB",} 11.134
 ``````````````````````````````````````````````````
 
+# Usage
+
+To use the remote API you need to start Mongoose and go to the `localhost:<run-port>`.
