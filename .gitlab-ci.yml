@@ -9,51 +9,62 @@ services:
 
 stages:
   - build
+  - deploy_testing_image
   - test # simple unit/integration tests
   - test_e2e # functional containerized tests
   - deploy
 
 build:
+  image: openjdk:8-jdk-alpine
   stage: build
   script:
     - ./gradlew clean dist
-    - docker login -u $DOCKER_USER -p $DOCKER_PASS
-    - docker build -f docker/Dockerfile -t $MONGOOSE_DOCKER_IMAGE .
-    - docker push $MONGOOSE_DOCKER_IMAGE
   artifacts:
     paths:
       - build/libs/mongoose-*.jar
 
+deploy_testing_image:
+  stage: deploy_testing_image
+  script:
+    - docker login -u $DOCKER_USER -p $DOCKER_PASS
+    - docker build -f docker/Dockerfile -t $MONGOOSE_DOCKER_IMAGE .
+    - docker push $MONGOOSE_DOCKER_IMAGE
+
 test_unit:
   image: openjdk:8-jdk-alpine
   stage: test
-  script: ./gradlew test
+  script:
+    - ./gradlew test
 
 test_integration:
   image: openjdk:8-jdk-alpine
   stage: test
-  script: ./gradlew integrationTest
+  script:
+    - ./gradlew integrationTest
 
 test_api_remote_config:
   stage: test_e2e
   variables:
     SUITE: api.remote
     TEST: config
-  script: ./gradlew robotest
+  script:
+    - ./gradlew robotest
 
 test_api_remote_run:
   stage: test_e2e
   variables:
     SUITE: api.remote
     TEST: run
-  script: ./gradlew robotest
+  script:
+    - ./gradlew robotest
 
 test_api_storage_s3:
   stage: test_e2e
   variables:
     SUITE: api.storage
     TEST: s3
-  script: ./gradlew robotest
+  script:
+    - ./gradlew robotest
 
 test_legacy_circular_append:
   stage: test_e2e
@@ -63,7 +74,8 @@ test_legacy_circular_append:
     CONCURRENCY: low,medium
     ITEM_SIZE: small
     TEST: CircularAppendTest
-  script: ./gradlew systemTest --tests com.emc.mongoose.system.$TEST
+  script:
+    - ./gradlew systemTest --tests com.emc.mongoose.system.$TEST
 
 test_legacy_read_verification_after_circular_update:
   stage: test_e2e
@@ -73,7 +85,8 @@ test_legacy_read_verification_after_circular_update:
     CONCURRENCY: low,medium
     ITEM_SIZE: small
     TEST: ReadVerificationAfterCircularUpdateTest
-  script: ./gradlew systemTest --tests com.emc.mongoose.system.$TEST
+  script:
+    - ./gradlew systemTest --tests com.emc.mongoose.system.$TEST
   retry: 2
 
 #CI_COMMIT_REF_NAME: branch/tag name
