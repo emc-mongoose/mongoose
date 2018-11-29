@@ -55,6 +55,7 @@ public class ExposedMetricsTest {
 	private static final String[] OPS_METRICS = { "count", "rate_mean", "rate_last" };
 	private static final String[] BYTES_METRICS = { "count", "rate_mean", "rate_last" };
 	private static final Double[] QUANTILE_VALUES = { 0.25, 0.5, 0.75 };
+	private static final List<String> nodeList = Arrays.asList("127.0.0.1:1099");
 	private final String STEP_ID = ExposedMetricsTest.class.getSimpleName();
 	private final OpType OP_TYPE = OpType.CREATE;
 	private final IntSupplier nodeCountSupplier = () -> 1;
@@ -107,7 +108,7 @@ public class ExposedMetricsTest {
 			.sumPersistFlag(true)
 			.snapshotsSupplier(snapshotsSupplier)
 			.quantileValues(Arrays.asList(QUANTILE_VALUES))
-			.nodeAddrs(new ArrayList<>())
+			.nodeAddrs(nodeList)
 			.comment("")
 			.build();
 		distributedMetricsContext.start();
@@ -140,7 +141,19 @@ public class ExposedMetricsTest {
 		testRateMetric(result, 1, MetricsConstants.METRIC_NAME_FAIL);
 		testRateMetric(result, 1, MetricsConstants.METRIC_NAME_SUCC);
 		//
+		testLables(result);
 		metricsMgr.close();
+	}
+
+	private void testLabel(final String result, final String labelName, final String expectedValue) {
+		final Pattern p = Pattern.compile("\\{.+" + labelName +"\\} .+");
+		final Matcher m = p.matcher(resultOutput);
+		final boolean found = m.find();
+		Assert.assertTrue(found);
+		final Double actualValue = Double.valueOf(m.group().split("}")[1]);
+		final Double expectedValue = Double.valueOf(expectedValues.get(key));
+		Assert.assertEquals(" : " + metricName + "_" + key, expectedValue, actualValue, expectedValue * accuracy
+			);
 	}
 
 	private void testTimingMetric(final String stdOut, final double markValue, final String name) {
@@ -212,4 +225,5 @@ public class ExposedMetricsTest {
 			);
 		}
 	}
+
 }
