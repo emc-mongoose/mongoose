@@ -8,7 +8,7 @@ services:
   - docker:dind
 
 before_script:
-  - apt-get install default-jre default-jdk openjdk-8-jre openjdk-8-jdk
+  - apk-add add --update openjdk8-jre
   - java -version
 
 stages:
