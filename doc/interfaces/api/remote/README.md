@@ -4,6 +4,8 @@
 [REST](#rest)<br/>
 &nbsp;&nbsp;[Control API](#control-api)<br/>
 &nbsp;&nbsp;[Monitoring API](#monitoring-api)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[Output format](#output-format)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[Example](#example)<br/>
 [Usage](#usage)<br/>
 
 # Configuring the port
@@ -14,7 +16,11 @@ By default `--run-port=9999`.
 
 # REST
 
-See the details [here](https://app.swaggerhub.com/apis-docs/veronikaKochugova/Mongoose/4.1.0)
+Available requests:
+
+![image](remoteAPI.png)
+
+See the full documentation [here](https://app.swaggerhub.com/apis-docs/veronikaKochugova/Mongoose/4.1.0)
 
 ## Control API
 
@@ -23,7 +29,7 @@ Control API is divided into 3 categories:
 |Category|Requests|Description|
 |---|---|---|
 |Config API|<li>get config<li>get schema|Allows you to get the full configuration and scheme for this node|
-|Runs API|<li>get list of runs<li>start new run<li>get status of run<li>stop run|Allows you to manage runs|
+|Runs API|<li>start new run<li>get status of run<li>stop run|Allows you to manage runs|
 |Logs API|<li>get logs<li>delete logs|Allows you to manage logs of runs|
 
 
@@ -63,7 +69,7 @@ and 3 Primitive Types: Timing, Rate, Concurrency. Depends on the type of metric,
         <tr>
             <td>Duration</td>
             <td rowspan=2>Timing</td>
-            <td rowspan=2> <ul><li>count<li>sum<li>mean<li>min<li>max<li>quntile_'value' ([configured](#quantiles))<ul> </td>
+            <td rowspan=2> <ul><li>count<li>sum<li>mean<li>min<li>max<li>quntile_'value' (<a href="#quantiles">configured</a>)<ul> </td>
         </tr>
         <tr>
             <td>Latency</td>
