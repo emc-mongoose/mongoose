@@ -1,8 +1,8 @@
 image: docker:stable
 
 variables:
-  MONGOOSE_VERSION: $CI_COMMIT_SHA
-  MONGOOSE_DOCKER_IMAGE: emcmongoose/mongoose:$MONGOOSE_VERSION
+  MONGOOSE_VERSION: ${CI_COMMIT_SHA}
+  MONGOOSE_DOCKER_IMAGE: emcmongoose/mongoose:${MONGOOSE_VERSION}
 
 services:
   - docker:dind
@@ -26,10 +26,9 @@ build:
 deploy_testing_image:
   stage: deploy_testing_image
   script:
-    - echo $ENV_1
-    - docker login -u $DOCKER_USER -p $DOCKER_PASS
-    - docker build -f docker/Dockerfile -t $MONGOOSE_DOCKER_IMAGE .
-    - docker push $MONGOOSE_DOCKER_IMAGE
+    - docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+    - docker build -f docker/Dockerfile -t ${MONGOOSE_DOCKER_IMAGE} .
+    - docker push ${MONGOOSE_DOCKER_IMAGE}
 
 test_unit:
   image: openjdk:8-jdk-alpine
@@ -76,7 +75,7 @@ test_legacy_circular_append:
     ITEM_SIZE: small
     TEST: CircularAppendTest
   script:
-    - ./gradlew systemTest --tests com.emc.mongoose.system.$TEST
+    - ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}
 
 test_legacy_read_verification_after_circular_update:
   stage: test_e2e
@@ -87,7 +86,7 @@ test_legacy_read_verification_after_circular_update:
     ITEM_SIZE: small
     TEST: ReadVerificationAfterCircularUpdateTest
   script:
-    - ./gradlew systemTest --tests com.emc.mongoose.system.$TEST
+    - ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}
   retry: 2
 
 #CI_COMMIT_REF_NAME: branch/tag name
