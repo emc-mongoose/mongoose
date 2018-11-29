@@ -1,8 +1,7 @@
 image: docker:stable
 
 variables:
-  MONGOOSE_VERSION: ${CI_COMMIT_SHA}
-  MONGOOSE_DOCKER_IMAGE: emcmongoose/mongoose:${MONGOOSE_VERSION}
+  MONGOOSE_DOCKER_IMAGE_NAME: emcmongoose/mongoose
 
 services:
   - docker:dind
@@ -26,11 +25,9 @@ build:
 deploy_testing_image:
   stage: deploy_testing_image
   script:
-    - echo $CI_COMMIT_SHA
-    - echo ${CI_COMMIT_SHA}
     - docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-    - docker build -f docker/Dockerfile -t ${MONGOOSE_DOCKER_IMAGE} .
-    - docker push ${MONGOOSE_DOCKER_IMAGE}
+    - docker build -f docker/Dockerfile -t ${MONGOOSE_DOCKER_IMAGE_NAME}:${CI_COMMIT_SHA} .
+    - docker push ${MONGOOSE_DOCKER_IMAGE_NAME}:${CI_COMMIT_SHA}
 
 test_unit:
   image: openjdk:8-jdk-alpine
