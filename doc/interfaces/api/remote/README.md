@@ -1,8 +1,8 @@
 # Contents
 
-[Configuring the port](configuring-the-port)
-[REST](rest)<br/>
-&nbsp;&nbsp;[Monitoring API](monitoring-api)<br/>
+[Configuring the port](#configuring-the-port)<br/>
+[REST](#rest)<br/>
+&nbsp;&nbsp;[Monitoring API](#monitoring-api)<br/>
 &nbsp;&nbsp;[Control API]()<br/>
 
 # Configuring the port
