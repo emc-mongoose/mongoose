@@ -7,11 +7,15 @@
 
 # Configuring the port
 
-When you launch the Mongoose, a server set up that accepts control requests (Control API) and exports metrics
-([Monitoring API](doc/interfaces/api/monitoring)). To configure the server port, the parameter `--run-port` is used.
+When you launch the Mongoose, a server set up that accepts control requests ([Control API](#control-api)) and exports metrics
+([Monitoring API](#monitoring-api)). To configure the server port, the parameter `--run-port` is used.
 By default `--run-port=9999`.
 
 # REST
+
+See the details [here](https://app.swaggerhub.com/apis-docs/veronikaKochugova/Mongoose/4.1.0)
+
+## Control API
 
 Control API is divided into 3 categories:
 
@@ -21,10 +25,8 @@ Control API is divided into 3 categories:
 |Runs API|<li>get list of runs<li>start new run<li>get status of run<li>stop run|Allows you to manage runs|
 |Logs API|<li>get logs<li>delete logs|Allows you to manage logs of runs|
 
-See the details [here](https://app.swaggerhub.com/apis-docs/veronikaKochugova/Mongoose/4.1.0)
 
-
-# Monitoring API
+## Monitoring API
 For real-time monitoring the metrics are exposed in the [Prometheus's](https://github.com/prometheus/client_java) format.
 ### Configuring port
 To configure the port for the server, the parameter `--run-port` is used. By default `--run-port=9999`.
