@@ -1,3 +1,10 @@
+# Contents
+
+[Configuring the port](configuring-the-port)
+[REST](rest)<br/>
+&nbsp;&nbsp;[Monitoring API](monitoring-api)<br/>
+&nbsp;&nbsp;[Control API]()<br/>
+
 # Configuring the port
 
 When you launch the Mongoose, a server set up that accepts control requests (Control API) and exports metrics
