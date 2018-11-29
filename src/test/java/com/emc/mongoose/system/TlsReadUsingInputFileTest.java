@@ -12,7 +12,8 @@ import static com.emc.mongoose.util.TestCaseUtil.snakeCaseName;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
 import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.systemTestContainerScenarioPath;
-import static org.junit.Assert.assertEquals;
+
+import static org.junit.Assert.assertTrue;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.config.TimeUtil;
@@ -199,12 +200,7 @@ public class TlsReadUsingInputFileTest {
         msgCount++;
       }
     }
-    // 2 steps + additional bucket checking/creating connections
-    assertEquals(
-        Integer.toString(msgCount),
-        2 * runMode.getNodeCount() * concurrency.getValue(),
-        msgCount,
-        msgCount / 10.0);
+    assertTrue(msgCount >= runMode.getNodeCount() * concurrency.getValue());
 
     // I/O traces
     final LongAdder ioTraceRecCount = new LongAdder();
