@@ -63,7 +63,7 @@ and 3 Primitive Types: Timing, Rate, Concurrency. Depends on the type of metric,
         <tr>
             <td>Duration</td>
             <td rowspan=2>Timing</td>
-            <td rowspan=2> <ul><li>count<li>sum<li>mean<li>min<li>max<li>quntile_'value' <a href="https://github.com/emc-mongoose/mongoose/blob/BASE-1271-move-namespace-option/doc/interfaces/api/monitoring/README.md#quantiles"> (configured)<ul> </td>
+            <td rowspan=2> <ul><li>count<li>sum<li>mean<li>min<li>max<li>quntile_'value' ([configured](#quantiles))<ul> </td>
         </tr>
         <tr>
             <td>Latency</td>
