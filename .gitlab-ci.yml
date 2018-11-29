@@ -33,9 +33,13 @@ stages:
   - test_functional_legacy
   - deploy
 
-build_jar:
+build:
   stage: build
-  script: ./gradlew clean dist
+  script:
+    - ./gradlew clean dist
+    - docker login -u $DOCKER_USER -p $DOCKER_PASS
+    - docker build -f docker/Dockerfile -t $MONGOOSE_DOCKER_IMAGE .
+    - docker push $MONGOOSE_DOCKER_IMAGE
   artifacts:
     paths:
       - build/libs/mongoose-*.jar
@@ -47,13 +51,6 @@ test_unit:
 test_integration:
   stage: test_integration
   script: ./gradlew integrationTest
-
-build_images:
-  stage: build
-  script:
-  - docker login -u $DOCKER_USER -p $DOCKER_PASS
-  - docker build -f docker/Dockerfile -t $MONGOOSE_DOCKER_IMAGE .
-  - docker push $MONGOOSE_DOCKER_IMAGE
 
 test_api_remote_config:
   stage: test_functional
