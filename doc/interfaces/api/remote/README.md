@@ -2,19 +2,15 @@
 
 1. [Configuring the port](#configuring-the-port)<br/>
 2. [REST](#rest)<br/>
-&nbsp;&nbsp;2.1. [Control API](#control-api)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.1.1. [Config](#config)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.1.2. [Run](#run)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.1.3. [Logs](#logs)<br/>
-&nbsp;&nbsp;2.2. [Monitoring API](#monitoring-api)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.2.1. [Output format](#output-format)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.2.2. [Example](#example)<br/>
+&nbsp;&nbsp;2.1. [Config](#config)<br/>
+&nbsp;&nbsp;2.2. [Run](#run)<br/>
+&nbsp;&nbsp;2.3. [Logs](#logs)<br/>
+&nbsp;&nbsp;2.4. [Metrics](#metrics)<br/>
 3. [Usage](#usage)<br/>
 
 # Configuring the port
 
-When you launch the Mongoose, a server set up that accepts control requests ([Control API](#control-api)) and exports metrics
-([Monitoring API](#monitoring-api)). To configure the server port, the parameter `--run-port` is used.
+When you launch the Mongoose, a server set up that accepts control requests and exports metrics. To configure the server port, the parameter `--run-port` is used.
 By default `--run-port=9999`.
 
 # REST
@@ -23,19 +19,19 @@ Available requests:
 
 ![image](remoteAPI.png)
 
-See the full documentation [here](https://app.swaggerhub.com/apis-docs/veronikaKochugova/Mongoose/4.1.0)
+> See the full documentation [here](https://app.swaggerhub.com/apis-docs/veronikaKochugova/Mongoose/4.1.0)
 
-## Control API
-
-Control API is divided into 3 categories:
+For control are used 3 categories of api:
 
 |Category|Requests|Description|
 |---|---|---|
-|Config API|<li>get config<li>get schema|Allows you to get the full configuration and scheme for this node|
-|Runs API|<li>start new run<li>get status of run<li>stop run|Allows you to manage runs|
-|Logs API|<li>get logs<li>delete logs|Allows you to manage logs of runs|
+|[Config API](#config)|<li>get config<li>get schema|Allows you to get the full configuration and scheme for this node|
+|[Runs API](#run)|<li>start new run<li>get status of run<li>stop run|Allows you to manage runs|
+|[Logs API](#logs)|<li>get logs<li>delete logs|Allows you to manage logs of runs|
+    
+To monitor metrics is used [Metrics API](#metrics).
 
-### Config
+## Config
 
 Get config from node:
 ```bash
@@ -49,7 +45,7 @@ curl GET http://localhost:9999/config/schema
 ```
 > The schema relates configuration parameters to the required types.
 
-### Run
+## Run
 
 Start a new scenario run:
 ```bash
@@ -91,7 +87,7 @@ curl -v -X DELETE -H "If-Match: 167514e6082" http://localhost:9999/run
 < Content-Length: 0
 ```
 
-### Logs
+## Logs
 
 #### Get The Log File Page From The Beginning
 
@@ -114,11 +110,10 @@ r the type "dummy-mock"
 curl -X DELETE http://localhost:9999/logs/123/com.emc.mongoose.logging.Messages
 ```
 
-
-## Monitoring API
+## Metrics
 For real-time monitoring the metrics are exposed in the [Prometheus's](https://github.com/prometheus/client_java) format.
 
-### Output format
+#### Output format
 Information about new metric starts with
 `````
 # HELP <hash code>
@@ -180,10 +175,10 @@ and 3 Primitive Types: Timing, Rate, Concurrency. Depends on the type of metric,
     </tbody>
 </table>
 
-#### Quantiles
+##### Quantiles
 To specify the value of the required quantiles, use the `--output-metrics-quantiles` parameter. By default `--output-metrics-quantiles=0.25,0.75`. *This feature affects the output on the server and does not affect the logs and console.*
 
-#### Labels
+##### Labels
 In braces exported load step parameters:
 
 |Label name|Configured param|Type|
@@ -194,7 +189,7 @@ In braces exported load step parameters:
 |`node_count`|*count of addrs in* load-step-node-addrs|integer|
 |`item_data_sizw`|item-data-size|string with the unit suffix (KB, MB, ...)|
 
-#### Example:
+##### Example:
 
 ````````````````````````````````
 # HELP 379303133 
