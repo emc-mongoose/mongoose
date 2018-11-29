@@ -1,15 +1,15 @@
 # Contents
 
-1.[Configuring the port](#configuring-the-port)<br/>
-2.[REST](#rest)<br/>
-&nbsp;&nbsp;2.1.[Control API](#control-api)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.1.1.[Config](#config)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.1.2.[Run](#run)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.1.3.[Logs](#logs)<br/>
-&nbsp;&nbsp;2.2.[Monitoring API](#monitoring-api)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.2.1.[Output format](#output-format)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.2.2.[Example](#example)<br/>
-3.[Usage](#usage)<br/>
+1. [Configuring the port](#configuring-the-port)<br/>
+2. [REST](#rest)<br/>
+&nbsp;&nbsp;2.1. [Control API](#control-api)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2.1.1. [Config](#config)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2.1.2. [Run](#run)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2.1.3. [Logs](#logs)<br/>
+&nbsp;&nbsp;2.2. [Monitoring API](#monitoring-api)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2.2.1. [Output format](#output-format)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2.2.2. [Example](#example)<br/>
+3. [Usage](#usage)<br/>
 
 # Configuring the port
 
