@@ -11,7 +11,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Frame;
-import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.PullImageResultCallback;
@@ -129,7 +128,9 @@ implements Docker.Container {
 		final CreateContainerCmd createContainerCmd = Docker.CLIENT
 			.createContainerCmd(imageNameWithVer)
 			.withName(imageName().replace('/', '_') + '_' + this.hashCode())
+			.withNetworkMode("host")
 			.withExposedPorts(exposedPorts)
+			.withMemory(memoryLimit)
 			.withCmd(args);
 		if(env != null && !env.isEmpty()) {
 			createContainerCmd.withEnv(env);
@@ -139,9 +140,6 @@ implements Docker.Container {
 				.withAttachStdout(attachOutputFlag)
 				.withAttachStderr(attachOutputFlag);
 		}
-		final HostConfig hostConfig = HostConfig.newHostConfig()
-			.withNetworkMode("host")
-			.withMemory(memoryLimit);
 		if(volumeBinds != null && !volumeBinds.isEmpty()) {
 			final List<Volume> volumes = new ArrayList<>(volumeBinds.size());
 			final List<Bind> binds = new ArrayList<>(volumeBinds.size());
@@ -154,9 +152,8 @@ implements Docker.Container {
 				}
 			);
 			createContainerCmd.withVolumes(volumes);
-			hostConfig.withBinds(binds);
+			createContainerCmd.withBinds(binds);
 		}
-		createContainerCmd.withHostConfig(hostConfig);
 		final String entrypoint = entrypoint();
 		if(entrypoint != null && !entrypoint.isEmpty()) {
 			createContainerCmd.withEntrypoint(entrypoint);

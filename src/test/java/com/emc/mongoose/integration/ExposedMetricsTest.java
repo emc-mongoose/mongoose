@@ -141,19 +141,22 @@ public class ExposedMetricsTest {
 		testRateMetric(result, 1, MetricsConstants.METRIC_NAME_FAIL);
 		testRateMetric(result, 1, MetricsConstants.METRIC_NAME_SUCC);
 		//
-		testLables(result);
+		testLabels(result);
 		metricsMgr.close();
 	}
 
+	private void testLabels(final String result) {
+		testLabel(result,"node_list",nodeList.toString());
+		testLabel(result,"user_comment","");
+	}
+
 	private void testLabel(final String result, final String labelName, final String expectedValue) {
-		final Pattern p = Pattern.compile("\\{.+" + labelName +"\\} .+");
-		final Matcher m = p.matcher(resultOutput);
+		final Pattern p = Pattern.compile("\\{.*" + labelName + "=[^,]*");
+		final Matcher m = p.matcher(result);
 		final boolean found = m.find();
 		Assert.assertTrue(found);
-		final Double actualValue = Double.valueOf(m.group().split("}")[1]);
-		final Double expectedValue = Double.valueOf(expectedValues.get(key));
-		Assert.assertEquals(" : " + metricName + "_" + key, expectedValue, actualValue, expectedValue * accuracy
-			);
+		final String actualValue = m.group().split(labelName + "=")[1].replaceAll("\"","");
+		Assert.assertEquals("label : " + labelName , expectedValue, actualValue);
 	}
 
 	private void testTimingMetric(final String stdOut, final double markValue, final String name) {
