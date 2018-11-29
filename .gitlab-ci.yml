@@ -33,23 +33,13 @@ stages:
   - test_functional_legacy
   - deploy
 
-dist_jar:
+build_jar:
   image: java:8
   stage: build
   script: ./gradlew clean dist
   artifacts:
     paths:
       - build/libs/mongoose-*.jar
-
-docker_images:
-  image: java:8
-  stage: build
-  script:
-    - docker login -u $DOCKER_USER -p $DOCKER_PASS
-    - docker build -f docker/Dockerfile -t $MONGOOSE_DOCKER_IMAGE .
-    - docker push $MONGOOSE_DOCKER_IMAGE
-  dependencies:
-    - dist_jar
 
 test_unit:
   image: java:8
@@ -60,6 +50,14 @@ test_integration:
   image: java:8
   stage: test_integration
   script: ./gradlew integrationTest
+
+build_images:
+  image: java:8
+  stage: build
+  script:
+  - docker login -u $DOCKER_USER -p $DOCKER_PASS
+  - docker build -f docker/Dockerfile -t $MONGOOSE_DOCKER_IMAGE .
+  - docker push $MONGOOSE_DOCKER_IMAGE
 
 test_api_remote_config:
   image: java:8
@@ -95,8 +93,6 @@ test_circular_append:
     ITEM_SIZE: small
     TEST: CircularAppendTest
   script: ./gradlew systemTest --tests com.emc.mongoose.system.$TEST
-  dependencies:
-    - docker_images
 
 test_read_verification_after_circular_update:
   image: java:8
@@ -109,8 +105,6 @@ test_read_verification_after_circular_update:
     TEST: ReadVerificationAfterCircularUpdateTest
   script: ./gradlew systemTest --tests com.emc.mongoose.system.$TEST
   retry: 2
-  dependencies:
-    - docker_images
 
 #CI_COMMIT_REF_NAME: branch/tag name
 #CI_COMMIT_SHA: commit revision #
