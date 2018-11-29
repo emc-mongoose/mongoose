@@ -41,8 +41,10 @@
 &nbsp;&nbsp;&nbsp;3.5.1 [Input](doc/interfaces/input)<br/>
 &nbsp;&nbsp;&nbsp;3.5.2 [Output](doc/interfaces/output)<br/>
 &nbsp;&nbsp;&nbsp;3.5.3 [Remote API](doc/interfaces/api/remote)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.5.3.1 [Monitoring](doc/interfaces/api/remote#monitoring-api)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.5.3.2 [Control](doc/interfaces/api/remote#control-api)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.5.3.1 [Config API](doc/interfaces/api/remote#config)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.5.3.2 [Runs API](doc/interfaces/api/remote#run)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.5.3.3 [Logs API](doc/interfaces/api/remote#logs)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.5.3.4 [Metrics API](doc/interfaces/api/remote#metrics)<br/>
 &nbsp;&nbsp;&nbsp;3.5.4 Extentions <br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.5.4.1 [Load Step Types](doc/interfaces/api/extensions/load_step)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.5.4.2 [Storage Drivers](doc/interfaces/api/extensions/storage_driver)<br/>
