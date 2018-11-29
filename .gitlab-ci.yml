@@ -1,0 +1,74 @@
+image: java:8
+
+variables:
+  MONGOOSE_VERSION: $CI_COMMIT_SHA
+  MONGOOSE_DOCKER_IMAGE: emcmongoose/mongoose:$MONGOOSE_VERSION
+
+stages:
+  - build
+  - test_unit
+  - test_integration
+  - test_functional
+  - test_functional_legacy
+  - deploy
+
+docker_images:
+  stage: build
+  script:
+  - docker login -u $DOCKER_USER -p $DOCKER_PASS
+  - docker build -f docker/Dockerfile -t $MONGOOSE_DOCKER_IMAGE .
+  - docker push $MONGOOSE_DOCKER_IMAGE
+
+test_unit:
+  stage: test_unit
+  script: ./gradlew test
+
+test_integration:
+  stage: test_integration
+  script: ./gradlew integrationTest
+
+test_api_remote_config:
+  stage: test_functional
+  variables:
+    SUITE: api.remote
+    TEST: config
+  script: ./gradlew robotest
+
+test_api_remote_run:
+  stage: test_functional
+  variables:
+    SUITE: api.remote
+    TEST: run
+  script: ./gradlew robotest
+
+test_api_storage_s3:
+  stage: test_functional
+  variables:
+    SUITE: api.storage
+    TEST: s3
+  script: ./gradlew robotest
+
+test_circular_append:
+  stage: test_functional_legacy
+  variables:
+    STORAGE_TYPE: atmos,s3,fs
+    RUN_MODE: local,distributed
+    CONCURRENCY: low,medium
+    ITEM_SIZE: small
+    TEST: CircularAppendTest
+  script: ./gradlew systemTest --tests com.emc.mongoose.system.$TEST
+
+test_read_verification_after_circular_update:
+  stage: test_functional_legacy
+  variables:
+    STORAGE_TYPE: fs,s3
+    RUN_MODE: local
+    CONCURRENCY: low,medium
+    ITEM_SIZE: small
+    TEST: ReadVerificationAfterCircularUpdateTest
+  script: ./gradlew systemTest --tests com.emc.mongoose.system.$TEST
+  retry: 2
+
+#CI_COMMIT_REF_NAME: branch/tag name
+#CI_COMMIT_SHA: commit revision #
+#CI_COMMIT_TAG: tag
