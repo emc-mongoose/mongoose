@@ -1,16 +1,19 @@
 image: docker:stable
 
 variables:
-  MONGOOSE_DOCKER_IMAGE_NAME: emcmongoose/mongoose
+  MONGOOSE_IMAGE_NAME: emcmongoose/mongoose
+  ROBOTEST_IMAGE_NAME: emcmongoose/mongoose-robotest
+  ROBOTEST_CONTAINER_WORKING_DIR: /root/mongoose
 
 services:
   - docker:dind
 
 stages:
   - build
-  - deploy_testing_image
   - test # simple unit/integration tests
-  - test_e2e # functional containerized tests
+  - deploy_mongoose_image
+  - deploy_robotest_image
+  - test_functional # functional containerized tests
   - deploy
 
 build:
@@ -22,51 +25,70 @@ build:
     paths:
       - build/libs/mongoose-*.jar
 
-deploy_testing_image:
-  stage: deploy_testing_image
-  script:
-    - docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-    - docker build -f docker/Dockerfile -t ${MONGOOSE_DOCKER_IMAGE_NAME}:${CI_COMMIT_SHA} .
-    - docker push ${MONGOOSE_DOCKER_IMAGE_NAME}:${CI_COMMIT_SHA}
-
 test_unit:
   image: openjdk:8-jdk-alpine
   stage: test
   script:
-    - ./gradlew test
+  - ./gradlew test
 
 test_integration:
   image: openjdk:8-jdk-alpine
   stage: test
   script:
-    - ./gradlew integrationTest
+  - ./gradlew integrationTest
+
+deploy_mongoose_image:
+  stage: deploy_mongoose_image
+  script:
+    - docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+    - docker build -f docker/Dockerfile -t ${MONGOOSE_IMAGE_NAME}:${CI_COMMIT_SHA} .
+    - docker push ${MONGOOSE_IMAGE_NAME}:${CI_COMMIT_SHA}
+
+deploy_robotest_image:
+  stage: deploy_robotest_image
+  script:
+    - docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+    - docker build -f docker/Dockerfile.robotest -t ${ROBOTEST_IMAGE_NAME}:${CI_COMMIT_SHA} .
+    - docker push ${ROBOTEST_IMAGE_NAME}:${CI_COMMIT_SHA}
 
 test_api_remote_config:
-  stage: test_e2e
+  image: ${ROBOTEST_IMAGE_NAME}:${CI_COMMIT_SHA}
+  stage: test_functional
   variables:
+    HOST_WORKING_DRI: ${CI_PROJECT_DIR}
+    MONGOOSE_VERSION: ${CI_COMMIT_SHA}
     SUITE: api.remote
     TEST: config
   script:
-    - ./gradlew robotest
+    - robot --outputdir ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest --suite ${SUITE} --include ${TEST} ${ROBOTEST_CONTAINER_WORKING_DIR}/src/test/robot
+    - rebot ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/output.xml
 
 test_api_remote_run:
-  stage: test_e2e
+  image: ${ROBOTEST_IMAGE_NAME}:${CI_COMMIT_SHA}
+  stage: test_functional
   variables:
+    HOST_WORKING_DRI: ${CI_PROJECT_DIR}
+    MONGOOSE_VERSION: ${CI_COMMIT_SHA}
     SUITE: api.remote
     TEST: run
   script:
-    - ./gradlew robotest
+  - robot --outputdir ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest --suite ${SUITE} --include ${TEST} ${ROBOTEST_CONTAINER_WORKING_DIR}/src/test/robot
+  - rebot ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/output.xml
 
 test_api_storage_s3:
-  stage: test_e2e
+  image: ${ROBOTEST_IMAGE_NAME}:${CI_COMMIT_SHA}
+  stage: test_functional
   variables:
+    HOST_WORKING_DRI: ${CI_PROJECT_DIR}
+    MONGOOSE_VERSION: ${CI_COMMIT_SHA}
     SUITE: api.storage
     TEST: s3
   script:
-    - ./gradlew robotest
+  - robot --outputdir ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest --suite ${SUITE} --include ${TEST} ${ROBOTEST_CONTAINER_WORKING_DIR}/src/test/robot
+  - rebot ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/output.xml
 
 test_legacy_circular_append:
-  stage: test_e2e
+  stage: test_functional
   variables:
     STORAGE_TYPE: atmos,s3,fs
     RUN_MODE: local,distributed
@@ -77,7 +99,7 @@ test_legacy_circular_append:
     - ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}
 
 test_legacy_read_verification_after_circular_update:
-  stage: test_e2e
+  stage: test_functional
   variables:
     STORAGE_TYPE: fs,s3
     RUN_MODE: local
