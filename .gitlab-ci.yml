@@ -79,6 +79,7 @@ deploy_robotest_image:
   artifacts:
     paths:
       - ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/*
+    when: on_failure
 
 test_api_remote_config:
   extends: .test_robot
