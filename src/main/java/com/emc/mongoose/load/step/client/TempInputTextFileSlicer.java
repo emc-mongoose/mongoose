@@ -262,8 +262,9 @@ implements AutoCloseable {
 
 		@Override
 		protected final void invokeTimedExclusively(final long startTimeNanos) {
+			System.out.print(hashCode() + ": get new lines... ");
 			final int n = lineQueue.drainTo(lines, batchSize);
-			System.out.println("Write new " + n + " lines");
+			System.out.println(hashCode() + ": write new " + n + " lines");
 			if(n == 0 && inputFinishFlag.get()) {
 				stop();
 			} else {
@@ -274,7 +275,7 @@ implements AutoCloseable {
 					}
 					linesWriter.flush();
 					fileMgr.writeToFile(dstFileName, linesByteBuff.toByteArray());
-					System.out.println("Total written line count: " + lineCount);
+					System.out.println(hashCode() + ": total written line count: " + lineCount);
 					lineCount += n;
 				} catch(final IOException e) {
 					LogUtil.exception(
@@ -286,11 +287,13 @@ implements AutoCloseable {
 				linesByteBuff.reset();
 				lines.clear();
 			}
+			System.out.println(hashCode() + ": invocation exit");
 		}
 
 		@Override
 		protected final void doStop() {
 			writeFinishCountDown.countDown();
+			System.out.println(hashCode() + ": stopped, count down: " + writeFinishCountDown.getCount());
 			Loggers.MSG.debug(
 				"Write task finish, written line count: {}, destination file name: \"{}\", file manager: \"{}\"",
 				lineCount, dstFileName, fileMgr
