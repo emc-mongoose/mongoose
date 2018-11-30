@@ -91,29 +91,7 @@ public final class Main {
 				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
 				// go on
 				if(configWithArgs.boolVal("run-node")) {
-					// init the API server
-					final int port = configWithArgs.intVal("run-port");
-					final Server server = new Server(port);
-					final ServletContextHandler context = new ServletContextHandler();
-					context.setContextPath("/");
-					server.setHandler(context);
-					context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
-					context.addServlet(new ServletHolder(new ConfigServlet(defaultConfig)), "/config/*");
-					final ServletHolder runServletHolder = new ServletHolder(
-						new RunServlet(extClsLoader, extensions, metricsMgr, fullDefaultConfig.schema())
-					);
-					runServletHolder
-						.getRegistration()
-						.setMultipartConfig(
-							new MultipartConfigElement("", 16 * MIB, 16 * MIB, 16 * MIB)
-						);
-					context.addServlet(runServletHolder, "/run/*");
-					try {
-						server.start();
-						runNode(configWithArgs, extensions, metricsMgr);
-					} finally {
-						server.stop();
-					}
+					runNode(fullDefaultConfig, configWithArgs, extClsLoader, extensions, metricsMgr);
 				} else {
 					runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
 				}
@@ -208,20 +186,45 @@ public final class Main {
 		return AliasingUtil.apply(parsedArgs, aliasingConfig);
 	}
 
-	private static void runNode(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
-	throws InterruptRunException, InterruptedException {
-		final int listenPort = config.intVal("load-step-node-port");
-		try(
-			final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
-			final Service scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions, metricsMgr)
-		) {
-			fileMgrSvc.start();
-			scenarioStepSvc.start();
-			scenarioStepSvc.await();
-		} catch(final InterruptedException | InterruptRunException e) {
-			throw e;
-		} catch(final Throwable cause) {
-			LogUtil.trace(Loggers.ERR, Level.FATAL, cause, "Run node failure");
+	private static void runNode(
+		final Config fullDefaultConfig, final Config configWithArgs, final ClassLoader extClsLoader,
+		final List<Extension> extensions, final MetricsManager metricsMgr
+	) throws Exception {
+
+		// init the API server
+		final int port = configWithArgs.intVal("run-port");
+		final Server server = new Server(port);
+		final ServletContextHandler context = new ServletContextHandler();
+		context.setContextPath("/");
+		server.setHandler(context);
+		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+		context.addServlet(new ServletHolder(new ConfigServlet(fullDefaultConfig)), "/config/*");
+		final ServletHolder runServletHolder = new ServletHolder(
+			new RunServlet(extClsLoader, extensions, metricsMgr, fullDefaultConfig.schema())
+		);
+		runServletHolder
+			.getRegistration()
+			.setMultipartConfig(
+				new MultipartConfigElement("", 16 * MIB, 16 * MIB, 16 * MIB)
+			);
+		context.addServlet(runServletHolder, "/run/*");
+		try {
+			server.start();
+			final int listenPort = configWithArgs.intVal("load-step-node-port");
+			try(
+				final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
+				final Service scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions, metricsMgr)
+			) {
+				fileMgrSvc.start();
+				scenarioStepSvc.start();
+				scenarioStepSvc.await();
+			} catch(final InterruptedException | InterruptRunException e) {
+				throw e;
+			} catch(final Throwable cause) {
+				LogUtil.trace(Loggers.ERR, Level.FATAL, cause, "Run node failure");
+			}
+		} finally {
+			server.stop();
 		}
 	}
 
