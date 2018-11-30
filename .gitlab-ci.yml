@@ -32,7 +32,7 @@ build:
 test_unit:
   extends: .test_java
   script:
-  - ./gradlew test
+  - ./gradlew test -PexcludeTests=**/TempInputFileSlicer*
 
 test_integration:
   extends: .test_java
