@@ -17,12 +17,22 @@ import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsManagerImpl;
 import com.emc.mongoose.svc.Service;
+import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
+import static com.emc.mongoose.Constants.DIR_EXT;
+import static com.emc.mongoose.Constants.PATH_DEFAULTS;
+import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
+import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
+
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
+
 import io.prometheus.client.exporter.MetricsServlet;
+
 import org.apache.commons.lang.StringUtils;
+
 import org.apache.logging.log4j.Level;
 
 import org.eclipse.jetty.server.Server;
@@ -41,13 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
-import static com.emc.mongoose.Constants.DIR_EXT;
-import static com.emc.mongoose.Constants.PATH_DEFAULTS;
-import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
-import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
 import static javax.script.ScriptContext.ENGINE_SCOPE;
 
 public final class Main {

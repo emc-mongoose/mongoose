@@ -1,19 +1,5 @@
 package com.emc.mongoose.storage.driver.coop.netty.http.atmos;
 
-import static com.emc.mongoose.item.op.OpType.CREATE;
-import static com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED;
-import static com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants.KEY_X_EMC_NAMESPACE;
-import static com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants.KEY_X_EMC_SIGNATURE;
-import static com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants.KEY_X_EMC_UID;
-import static com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants.PREFIX_KEY_X_EMC;
-import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.HEADERS_CANONICAL;
-import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.KEY_SUBTENANT_ID;
-import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.NS_URI_BASE;
-import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.OBJ_URI_BASE;
-import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.SIGN_METHOD;
-import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.SUBTENANT_URI_BASE;
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import com.emc.mongoose.data.DataInput;
 import com.emc.mongoose.exception.InterruptRunException;
 import com.emc.mongoose.exception.OmgShootMyFootException;
@@ -39,6 +25,10 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
+import org.apache.logging.log4j.Level;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
@@ -50,9 +40,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import org.apache.logging.log4j.Level;
+
+import static com.emc.mongoose.item.op.OpType.CREATE;
+import static com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED;
+import static com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants.KEY_X_EMC_NAMESPACE;
+import static com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants.KEY_X_EMC_SIGNATURE;
+import static com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants.KEY_X_EMC_UID;
+import static com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants.PREFIX_KEY_X_EMC;
+import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.HEADERS_CANONICAL;
+import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.KEY_SUBTENANT_ID;
+import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.NS_URI_BASE;
+import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.OBJ_URI_BASE;
+import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.SIGN_METHOD;
+import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.SUBTENANT_URI_BASE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /** Created by kurila on 11.11.16. */
 public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
