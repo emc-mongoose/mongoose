@@ -1,4 +1,4 @@
-FROM openjdk/8-alpine
+FROM java:8
 
 RUN apk add --no-cache --update docker
 
