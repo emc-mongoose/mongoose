@@ -8,14 +8,20 @@ import com.emc.mongoose.load.step.LoadStepBase;
 import com.emc.mongoose.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
-import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.metrics.context.MetricsContextImpl;
+import com.emc.mongoose.metrics.MetricsManager;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+
+import com.github.akurilov.commons.concurrent.AsyncRunnable;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.fiber4j.Fiber;
 import org.apache.logging.log4j.Level;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -23,14 +29,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
-import static org.apache.logging.log4j.CloseableThreadContext.put;
+import java.util.concurrent.locks.LockSupport;
 
 public abstract class LoadStepLocalBase
-	extends LoadStepBase {
+extends LoadStepBase {
 
 	protected final List<LoadStepContext> stepContexts = new ArrayList<>();
 
@@ -95,6 +97,7 @@ public abstract class LoadStepLocalBase
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptRunException, IllegalStateException {
+
 		final long timeoutMillis = timeout > 0 ? timeUnit.toMillis(timeout) : Long.MAX_VALUE;
 		final long startTimeMillis = System.currentTimeMillis();
 		final int stepCtxCount = stepContexts.size();
@@ -102,8 +105,9 @@ public abstract class LoadStepLocalBase
 		int countDown = stepCtxCount;
 		LoadStepContext stepCtx;
 		boolean timeIsOut = false;
-		while(countDown > 0 && ! timeIsOut) {
-			for(int i = 0; i < stepCtxCount; i++) {
+
+		while(countDown > 0 && !timeIsOut) {
+			for(int i = 0; i < stepCtxCount; i ++) {
 				if(timeoutMillis <= System.currentTimeMillis() - startTimeMillis) {
 					timeIsOut = true;
 					break;
@@ -113,7 +117,7 @@ public abstract class LoadStepLocalBase
 					try {
 						if(stepCtx.isDone() || stepCtx.await(Fiber.SOFT_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 							stepContextsCopy[i] = null; // exclude
-							countDown--;
+							countDown --;
 							break;
 						}
 					} catch(final InterruptedException e) {
@@ -123,6 +127,7 @@ public abstract class LoadStepLocalBase
 				}
 			}
 		}
+
 		return 0 == countDown;
 	}
 

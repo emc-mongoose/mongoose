@@ -1,17 +1,24 @@
 package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshotImpl;
 import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshotImpl;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import com.emc.mongoose.metrics.type.ConcurrencyMeterImpl;
 import com.emc.mongoose.metrics.type.HistogramImpl;
-import com.emc.mongoose.metrics.type.LongMeter;
 import com.emc.mongoose.metrics.type.RateMeter;
 import com.emc.mongoose.metrics.type.RateMeterImpl;
 import com.emc.mongoose.metrics.type.TimingMeterImpl;
 import com.emc.mongoose.metrics.util.ConcurrentSlidingWindowLongReservoir;
+import com.emc.mongoose.metrics.type.LongMeter;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_BYTE;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_CONC;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_DUR;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_FAIL;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_LAT;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_SUCC;
+
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.time.Clock;
@@ -21,16 +28,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntSupplier;
 
-import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_BYTE;
-import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_CONC;
-import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_DUR;
-import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_FAIL;
-import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_LAT;
-import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_SUCC;
-
 public class MetricsContextImpl<S extends AllMetricsSnapshotImpl>
-	extends MetricsContextBase<S>
-	implements MetricsContext<S> {
+extends MetricsContextBase<S>
+implements MetricsContext<S> {
 
 	private final LongMeter<TimingMetricSnapshot> reqDuration, respLatency;
 	private final LongMeter<ConcurrencyMetricSnapshot> actualConcurrency;

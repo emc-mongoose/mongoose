@@ -19,9 +19,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
-public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapshot>
-	extends MetricsContextBase<S>
-	implements DistributedMetricsContext<S> {
+public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapshotImpl>
+extends MetricsContextBase<S>
+implements DistributedMetricsContext<S> {
 
 	private final IntSupplier nodeCountSupplier;
 	private final Supplier<List<AllMetricsSnapshot>> snapshotsSupplier;
@@ -109,16 +109,21 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 	@Override
 	@SuppressWarnings("unchecked")
 	public void refreshLastSnapshot() {
+
 		final List<AllMetricsSnapshot> snapshots = snapshotsSupplier.get();
 		final int snapshotsCount = snapshots.size();
+
 		if(snapshotsCount > 0) { // do nothing otherwise
+
 			final RateMetricSnapshot successSnapshot;
 			final RateMetricSnapshot failsSnapshot;
 			final RateMetricSnapshot bytesSnapshot;
 			final ConcurrencyMetricSnapshot actualConcurrencySnapshot;
 			final TimingMetricSnapshot durSnapshot;
 			final TimingMetricSnapshot latSnapshot;
+
 			if(snapshotsCount == 1) { // single
+
 				final AllMetricsSnapshot snapshot = snapshots.get(0);
 				successSnapshot = snapshot.successSnapshot();
 				failsSnapshot = snapshot.failsSnapshot();
@@ -126,14 +131,16 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 				actualConcurrencySnapshot = snapshot.concurrencySnapshot();
 				durSnapshot = snapshot.durationSnapshot();
 				latSnapshot = snapshot.latencySnapshot();
+
 			} else { // many
+
 				final List<TimingMetricSnapshot> durSnapshots = new ArrayList<>();
 				final List<TimingMetricSnapshot> latSnapshots = new ArrayList<>();
 				final List<ConcurrencyMetricSnapshot> conSnapshots = new ArrayList<>();
 				final List<RateMetricSnapshot> succSnapshots = new ArrayList<>();
 				final List<RateMetricSnapshot> failSnapshots = new ArrayList<>();
 				final List<RateMetricSnapshot> byteSnapshots = new ArrayList<>();
-				for(int i = 0; i < snapshotsCount; i++) {
+				for(int i = 0; i < snapshotsCount; i ++) {
 					final AllMetricsSnapshot snapshot = snapshots.get(i);
 					durSnapshots.add(snapshot.durationSnapshot());
 					latSnapshots.add(snapshot.latencySnapshot());
@@ -148,7 +155,9 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 				actualConcurrencySnapshot = ConcurrencyMetricSnapshotImpl.aggregate(conSnapshots);
 				durSnapshot = TimingMetricSnapshotImpl.aggregate(durSnapshots);
 				latSnapshot = TimingMetricSnapshotImpl.aggregate(latSnapshots);
+
 			}
+
 			lastSnapshot = (S) new DistributedAllMetricsSnapshotImpl(
 				durSnapshot, latSnapshot, actualConcurrencySnapshot, failsSnapshot, successSnapshot, bytesSnapshot,
 				nodeCountSupplier.getAsInt(), elapsedTimeMillis()
