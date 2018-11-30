@@ -179,11 +179,10 @@ implements AutoCloseable {
 		@Override
 		protected final void invokeTimedExclusively(final long startTimeNanos) {
 			System.out.println(hashCode() + ": read task invocation enter");
-			final long startTimeMillis = System.currentTimeMillis();
 			try {
 				String line;
 
-				while(System.currentTimeMillis() - startTimeMillis < 10) {
+				while(System.nanoTime() - startTimeNanos < SOFT_DURATION_LIMIT_NANOS) {
 
 					if(System.currentTimeMillis() - lastProgressOutputTimeMillis > OUTPUT_PROGRESS_PERIOD_MILLIS) {
 						System.out.println(
@@ -197,11 +196,14 @@ implements AutoCloseable {
 					}
 
 					line = lineReader.readLine();
+					System.out.println(line);
 					if(line == null) {
 						stop();
 						break;
 					} else {
+						System.out.println(0);
 						lineQueues.get((int) (lineCount % sliceCount)).put(line);
+						System.out.println(1);
 						lineCount ++;
 					}
 				}
