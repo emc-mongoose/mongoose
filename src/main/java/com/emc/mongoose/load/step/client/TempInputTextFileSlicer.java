@@ -199,7 +199,7 @@ implements AutoCloseable {
 						lineQueues.get((int) (lineCount % sliceCount)).put(line);
 						lineCount ++;
 					}
-					System.out.println(lineCount);
+					Loggers.MSG.trace(lineCount);
 				}
 
 			} catch(final IOException e) {
