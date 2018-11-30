@@ -511,6 +511,8 @@ task robotest(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
 	timeout = 600 // 10 min w/o output -> fail on Travis CI
 	doLast {
 		if(0 != exitCode) {
+			final String outputXmlContent = new File("${rootProject.buildDir}${File.separator}robotest${File.separator}output.xml").text
+			println outputXmlContent
 			throw new GradleException("Some robotests FAILED")
 		} else {
 			println "Robotests PASSED"

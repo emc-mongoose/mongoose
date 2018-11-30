@@ -50,7 +50,7 @@ jobs:
       - docker build --build-arg MONGOOSE_VERSION=$MONGOOSE_VERSION -f docker/Dockerfile.scripting-jython -t $REPO:$COMMIT .
       - docker push $REPO:$COMMIT
 
-    - stage: "End-to-end tests"
+    - stage: "System tests"
       env:
       - SUITE=api.remote
       - TEST=config
