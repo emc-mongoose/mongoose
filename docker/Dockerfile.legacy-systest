@@ -1,7 +1,7 @@
 FROM java:8
 
 RUN apt-get update \
-    && apt-get install docker -y \
+    && apt-get install apt-utils docker -y \
     && rm -rf /var/lib/apt/lists/*
 
 ADD docker /root/mongoose/docker

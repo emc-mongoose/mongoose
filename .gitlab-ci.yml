@@ -32,7 +32,7 @@ build:
 test_unit:
   extends: .test_java
   script:
-  - ./gradlew test -PexcludeTests=**/TempInputFileSlicer*
+  - ./gradlew test
 
 test_integration:
   extends: .test_java
@@ -78,7 +78,7 @@ deploy_robotest_image:
     - rebot ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/output.xml
   artifacts:
     paths:
-      - ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/*
+      - ${ROBOTEST_CONTAINER_WORKING_DIR}/*.html
     when: on_failure
 
 test_api_remote_config:
@@ -107,6 +107,7 @@ test_api_storage_s3:
   variables:
     MONGOOSE_VERSION: ${CI_COMMIT_SHA}
   script:
+    - docker --version
     - ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}
 
 .test_system_legacy_unstable:
