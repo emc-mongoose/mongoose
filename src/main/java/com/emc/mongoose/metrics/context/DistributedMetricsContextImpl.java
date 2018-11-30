@@ -2,15 +2,15 @@ package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.DistributedMetricsListener;
-import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.ConcurrencyMetricSnapshotImpl;
-import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshot;
 import com.emc.mongoose.metrics.snapshot.DistributedAllMetricsSnapshotImpl;
+import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshotImpl;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshotImpl;
+
 import com.github.akurilov.commons.system.SizeInBytes;
 
 import java.util.ArrayList;

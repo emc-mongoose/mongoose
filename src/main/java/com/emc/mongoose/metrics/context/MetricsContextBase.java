@@ -2,6 +2,7 @@ package com.emc.mongoose.metrics.context;
 
 import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
+
 import com.github.akurilov.commons.system.SizeInBytes;
 
 public abstract class MetricsContextBase<S extends AllMetricsSnapshot>
