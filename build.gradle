@@ -103,7 +103,7 @@ allprojects {
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
 		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
+			events "standardOut", "skipped", "started", "failed"
 			showExceptions = true
 			showStandardStreams = true
 		}
