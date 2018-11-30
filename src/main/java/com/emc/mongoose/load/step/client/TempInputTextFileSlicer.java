@@ -184,9 +184,6 @@ implements AutoCloseable {
 				while(System.nanoTime() - startTimeNanos < SOFT_DURATION_LIMIT_NANOS) {
 
 					if(System.currentTimeMillis() - lastProgressOutputTimeMillis > OUTPUT_PROGRESS_PERIOD_MILLIS) {
-						System.out.println(
-							"Read task progress: scattered " + lineCount +" lines from the input file " + srcFileName
-						);
 						Loggers.MSG.info(
 							"Read task progress: scattered {} lines from the input file \"{}\"...", lineCount,
 							srcFileName
@@ -202,7 +199,6 @@ implements AutoCloseable {
 						lineQueues.get((int) (lineCount % sliceCount)).put(line);
 						lineCount ++;
 					}
-					System.out.println(lineCount);
 				}
 
 			} catch(final IOException e) {
@@ -216,7 +212,6 @@ implements AutoCloseable {
 
 		@Override
 		protected final void doStop() {
-			System.out.println(hashCode() + ": read task stop");
 			super.doStop();
 			inputFinishFlag.set(true);
 			Loggers.MSG.info("Read task finish: scattered {} lines from the input file \"{}\"", lineCount, srcFileName);
@@ -225,7 +220,6 @@ implements AutoCloseable {
 		@Override
 		protected final void doClose()
 		throws IOException {
-			System.out.println(hashCode() + ": read task close");
 			super.doClose();
 			lineReader.close();
 		}
@@ -267,9 +261,7 @@ implements AutoCloseable {
 
 		@Override
 		protected final void invokeTimedExclusively(final long startTimeNanos) {
-			//System.out.print(hashCode() + ": get new lines... ");
 			final int n = lineQueue.drainTo(lines, batchSize);
-			System.out.println(hashCode() + ": write new " + n + " lines");
 			if(n == 0 && inputFinishFlag.get()) {
 				stop();
 			} else {
@@ -280,7 +272,6 @@ implements AutoCloseable {
 					}
 					linesWriter.flush();
 					fileMgr.writeToFile(dstFileName, linesByteBuff.toByteArray());
-					//System.out.println(hashCode() + ": total written line count: " + lineCount);
 					lineCount += n;
 				} catch(final IOException e) {
 					LogUtil.exception(
@@ -292,14 +283,11 @@ implements AutoCloseable {
 				linesByteBuff.reset();
 				lines.clear();
 			}
-			System.out.println(hashCode() + ": write task invocation exit");
 		}
 
 		@Override
 		protected final void doStop() {
-			System.out.println(hashCode() + ": write task stop");
 			writeFinishCountDown.countDown();
-			System.out.println(hashCode() + ": stopped, count down: " + writeFinishCountDown.getCount());
 			Loggers.MSG.debug(
 				"Write task finish, written line count: {}, destination file name: \"{}\", file manager: \"{}\"",
 				lineCount, dstFileName, fileMgr
@@ -309,7 +297,6 @@ implements AutoCloseable {
 		@Override
 		protected final void doClose()
 		throws IOException {
-			System.out.println(hashCode() + ": write task close");
 			super.doClose();
 			lines.clear();
 			linesByteBuff.close();

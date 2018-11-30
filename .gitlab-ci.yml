@@ -66,6 +66,9 @@ deploy_robotest_image:
   script:
     - robot --outputdir ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest --suite ${SUITE} --include ${TEST} ${ROBOTEST_CONTAINER_WORKING_DIR}/src/test/robot
     - rebot ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/output.xml
+  artifacts:
+    paths:
+    - ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/*
 
 test_api_remote_config:
   extends: .test_robot
