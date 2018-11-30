@@ -11,5 +11,8 @@
 &nbsp;&nbsp;3.1. Extensions<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.1.1. [Load Step Types](api/extensions/load_step)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.1.2. [Storage Drivers](api/extensions/storage_driver)<br/>
-&nbsp;&nbsp;3.2. [Control](api/control)<br/>
-&nbsp;&nbsp;3.3. [Monitoring](api/monitoring)<br/>
+&nbsp;&nbsp;3.2. [Remote API](api/remote)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.2.1 [Config API](api/remote#config)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.2.2 [Runs API](api/remote#run)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.2.2 [Logs API](api/remote#logs)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.2.2 [Metrics API](api/remote#metrics)<br/>
