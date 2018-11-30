@@ -1,4 +1,4 @@
-FROM alpine
+FROM docker:dind
 
 RUN apk add --update docker python py-pip \
     && pip install -U virtualenv \
