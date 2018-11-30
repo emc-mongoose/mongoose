@@ -1,6 +1,7 @@
 image: docker:stable
 
 variables:
+  LEGACY_SYSTEST_IMAGE_NAME: emcmongoose/mongoose-legacy-systest
   MONGOOSE_IMAGE_NAME: emcmongoose/mongoose
   ROBOTEST_IMAGE_NAME: emcmongoose/mongoose-robotest
   ROBOTEST_CONTAINER_WORKING_DIR: /root/mongoose
@@ -45,6 +46,12 @@ test_integration:
   - docker build -f docker/${DOCKERFILE} -t ${IMAGE_NAME}:${CI_COMMIT_SHA} .
   - docker push ${IMAGE_NAME}:${CI_COMMIT_SHA}
 
+deploy_legacy_systest_image:
+  extends: .deploy_docker_image
+  variables:
+    DOCKERFILE: Dockerfile.legacy_systest
+    IMAGE_NAME: ${LEGACY_SYSTEST_IMAGE_NAME}
+
 deploy_mongoose_image:
   extends: .deploy_docker_image
   variables:
@@ -88,28 +95,35 @@ test_api_storage_s3:
     SUITE: api.storage
     TEST: s3
 
-test_legacy_circular_append:
+.test_system_legacy:
+  image: ${LEGACY_SYSTEST_IMAGE_NAME}:${CI_COMMIT_SHA}
   stage: test_functional
+  variables:
+    MONGOOSE_VERSION: ${CI_COMMIT_SHA}
+  script:
+  - ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}
+
+.test_system_legacy_unstable:
+  extends: .test_system_legacy
+  retry: 2
+
+test_legacy_circular_append:
+  extends: .test_system_legacy
   variables:
     STORAGE_TYPE: atmos,s3,fs
     RUN_MODE: local,distributed
     CONCURRENCY: low,medium
     ITEM_SIZE: small
     TEST: CircularAppendTest
-  script:
-    - ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}
 
 test_legacy_read_verification_after_circular_update:
-  stage: test_functional
+  extends: .test_system_legacy_unstable
   variables:
     STORAGE_TYPE: fs,s3
     RUN_MODE: local
     CONCURRENCY: low,medium
     ITEM_SIZE: small
     TEST: ReadVerificationAfterCircularUpdateTest
-  script:
-    - ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}
-  retry: 2
 
 #CI_COMMIT_REF_NAME: branch/tag name
 #CI_COMMIT_SHA: commit revision #
