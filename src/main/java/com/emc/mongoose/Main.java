@@ -24,6 +24,7 @@ import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
 import io.prometheus.client.exporter.MetricsServlet;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.Level;
+
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;

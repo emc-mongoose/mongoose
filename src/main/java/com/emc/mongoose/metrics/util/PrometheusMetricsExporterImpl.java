@@ -1,5 +1,9 @@
 package com.emc.mongoose.metrics.util;
 
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_FORMAT;
+import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_TIME;
+import static io.prometheus.client.Collector.MetricFamilySamples.Sample;
+
 import com.emc.mongoose.Constants;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.context.DistributedMetricsContext;
@@ -10,64 +14,56 @@ import com.emc.mongoose.metrics.snapshot.NamedMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.RateMetricSnapshot;
 import com.emc.mongoose.metrics.snapshot.TimingMetricSnapshot;
 import io.prometheus.client.Collector;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.emc.mongoose.metrics.MetricsConstants.METRIC_FORMAT;
-import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_TIME;
-import static io.prometheus.client.Collector.MetricFamilySamples.Sample;
+/** @author veronika K. on 10.10.18 */
+public class PrometheusMetricsExporterImpl extends Collector implements PrometheusMetricsExporter {
 
-/**
- @author veronika K. on 10.10.18 */
-public class PrometheusMetricsExporterImpl
-	extends Collector
-	implements PrometheusMetricsExporter {
+  private final List<String> labelValues = new ArrayList<>();
+  private final List<String> labelNames = new ArrayList<>();
+  private final DistributedMetricsContext metricsContext;
+  private final List<Double> quantileValues = new ArrayList<>();
+  private String help = "";
 
-	private final List<String> labelValues = new ArrayList<>();
-	private final List<String> labelNames = new ArrayList<>();
-	private final DistributedMetricsContext metricsContext;
-	private final List<Double> quantileValues = new ArrayList<>();
-	private String help = "";
+  public PrometheusMetricsExporterImpl(final DistributedMetricsContext context) {
+    this.metricsContext = context;
+  }
 
-	public PrometheusMetricsExporterImpl(final DistributedMetricsContext context) {
-		this.metricsContext = context;
-	}
+  @Override
+  public PrometheusMetricsExporterImpl quantile(final double value) {
+    if (value < 1.0 && value >= 0.0) {
+      quantileValues.add(value);
+    } else {
+      throw new IllegalArgumentException("Invalid quantiele value : " + value);
+    }
+    return this;
+  }
 
-	@Override
-	public PrometheusMetricsExporterImpl quantile(final double value) {
-		if(value < 1.0 && value >= 0.0) {
-			quantileValues.add(value);
-		} else {
-			throw new IllegalArgumentException("Invalid quantiele value : " + value);
-		}
-		return this;
-	}
+  @Override
+  public PrometheusMetricsExporterImpl quantiles(final double[] values) {
+    for (int i = 0; i < values.length; ++i) {
+      quantile(values[i]);
+    }
+    return this;
+  }
 
-	@Override
-	public PrometheusMetricsExporterImpl quantiles(final double[] values) {
-		for(int i = 0; i < values.length; ++ i) {
-			quantile(values[i]);
-		}
-		return this;
-	}
+  @Override
+  public PrometheusMetricsExporterImpl quantiles(final List<Double> values) {
+    for (int i = 0; i < values.size(); ++i) {
+      quantile(values.get(i));
+    }
+    return this;
+  }
 
-	@Override
-	public PrometheusMetricsExporterImpl quantiles(final List<Double> values) {
-		for(int i = 0; i < values.size(); ++ i) {
-			quantile(values.get(i));
-		}
-		return this;
-	}
-
-	@Override
-	public PrometheusMetricsExporterImpl label(final String name, final String value) {
-		this.labelNames.add(name);
-		this.labelValues.add(value);
-		return this;
-	}
+  @Override
+  public PrometheusMetricsExporterImpl label(final String name, final String value) {
+    this.labelNames.add(name);
+    this.labelValues.add(value);
+    return this;
+  }
 
 	@Override
 	public PrometheusMetricsExporterImpl labels(final String[] names, final String[] values) {
@@ -84,11 +80,11 @@ public class PrometheusMetricsExporterImpl
 		return this;
 	}
 
-	@Override
-	public PrometheusMetricsExporterImpl help(final String helpInfo) {
-		help = helpInfo;
-		return this;
-	}
+  @Override
+  public PrometheusMetricsExporterImpl help(final String helpInfo) {
+    help = helpInfo;
+    return this;
+  }
 
 	@Override
 	public List<MetricFamilySamples> collect() {
