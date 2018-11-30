@@ -57,19 +57,23 @@ public final class TempInputTextFileSlicerTest {
 	@Before
 	public final void beforeTest()
 	throws Exception {
+		System.out.println(0);
 		try(final BufferedWriter srcFileWriter = Files.newBufferedWriter(Paths.get(SRC_FILE_NAME))) {
 			for(int i = 0; i < SRC_LINE_COUNT; i ++) {
 				srcFileWriter.write(Long.toString(System.nanoTime()));
 				srcFileWriter.newLine();
 			}
 		}
+		System.out.println(1);
 		TempInputTextFileSlicer.scatterLines(SRC_FILE_NAME, SLICE_COUNT, FILE_MGRS, FILE_SLICES, BATCH_SIZE);
+		System.out.println(2);
 	}
 
 	@Test
 	public final void test()
 	throws Exception {
 		final LongAdder slicedLineCount = new LongAdder();
+		System.out.println(3);
 		FILE_SLICES
 			.values()
 			.parallelStream()
@@ -79,11 +83,13 @@ public final class TempInputTextFileSlicerTest {
 						while(null != dstFileReader.readLine()) {
 							slicedLineCount.increment();
 						}
+						System.out.println(4);
 					} catch(final IOException e) {
 						fail(e.getMessage());
 					}
 				}
 			);
+		System.out.println(5);
 		assertEquals(SRC_LINE_COUNT, slicedLineCount.sum());
 	}
 }

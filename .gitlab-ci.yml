@@ -61,7 +61,7 @@ deploy_robotest_image:
   image: ${ROBOTEST_IMAGE_NAME}:${CI_COMMIT_SHA}
   stage: test_functional
   variables:
-    HOST_WORKING_DRI: ${CI_PROJECT_DIR}
+    HOST_WORKING_DIR: ${CI_PROJECT_DIR}
     MONGOOSE_VERSION: ${CI_COMMIT_SHA}
   script:
     - robot --outputdir ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest --suite ${SUITE} --include ${TEST} ${ROBOTEST_CONTAINER_WORKING_DIR}/src/test/robot
