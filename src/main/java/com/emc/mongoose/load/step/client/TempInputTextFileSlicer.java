@@ -178,7 +178,6 @@ implements AutoCloseable {
 
 		@Override
 		protected final void invokeTimedExclusively(final long startTimeNanos) {
-			System.out.println(hashCode() + ": read task invocation enter");
 			try {
 				String line;
 
@@ -196,16 +195,14 @@ implements AutoCloseable {
 					}
 
 					line = lineReader.readLine();
-					System.out.println(line);
 					if(line == null) {
 						stop();
 						break;
 					} else {
-						System.out.println(0);
 						lineQueues.get((int) (lineCount % sliceCount)).put(line);
-						System.out.println(1);
 						lineCount ++;
 					}
+					System.out.println(lineCount);
 				}
 
 			} catch(final IOException e) {
@@ -215,7 +212,6 @@ implements AutoCloseable {
 				stop();
 				throw new InterruptRunException(e);
 			}
-			System.out.println(hashCode() + ": read task invocation exit");
 		}
 
 		@Override
