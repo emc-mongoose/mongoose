@@ -31,10 +31,22 @@ Should Copy Objects Using Bucket Listing
     ...  --storage-driver-limit-concurrency=10
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/copy_using_input_path.js
     &{env_params} =  Create Dictionary  ITEM_SRC_PATH=/bucket0  ITEM_DST_PATH=/bucket1
-	${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
+    ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
     # TODO validate stdout
     Log  ${std_out}
     Validate Metrics Total Log File  ${step_id}  CREATE  1000  0  10240000
+
+Should Create Objects Using Multipart Upload
+    Pass Execution
+
+Should Create Objects Using Multiple Buckets And Users
+    Pass Execution
+
+Should Read Multiple Random Byte Ranges
+    Pass Execution
+
+Should Update Multiple Random Byte Ranges
+    Pass Execution
 
 *** Keywords ***
 Start S3 Server
