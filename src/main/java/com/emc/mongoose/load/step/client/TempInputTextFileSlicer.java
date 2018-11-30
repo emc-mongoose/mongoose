@@ -179,10 +179,11 @@ implements AutoCloseable {
 		@Override
 		protected final void invokeTimedExclusively(final long startTimeNanos) {
 			System.out.println(hashCode() + ": read task invocation enter");
+			final long startTimeMillis = System.currentTimeMillis();
 			try {
 				String line;
 
-				while(System.nanoTime() - startTimeNanos < SOFT_DURATION_LIMIT_NANOS) {
+				while(System.currentTimeMillis() - startTimeMillis < 10) {
 
 					if(System.currentTimeMillis() - lastProgressOutputTimeMillis > OUTPUT_PROGRESS_PERIOD_MILLIS) {
 						System.out.println(
