@@ -80,6 +80,7 @@ public final class Main {
 				final Config configWithArgs;
 				final Config fullDefaultConfig;
 				try {
+
 					// apply the extensions defaults
 					fullDefaultConfig = collectDefaults(extensions, defaultConfig, appHomePath);
 					// parse the CLI args and apply them to the config instance

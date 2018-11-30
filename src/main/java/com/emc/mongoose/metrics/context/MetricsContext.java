@@ -78,6 +78,8 @@ extends AutoCloseable, Comparable<MetricsContext<S>> {
 
 	long elapsedTimeMillis();
 
+	String comment();
+
 	@Override
 	void close();
 }
