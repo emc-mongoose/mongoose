@@ -166,6 +166,7 @@
 		}
 	},
 	"run": {
+		"comment": "",
 		// start in the node service node
 		"node": false,
 		// the port to expose the metrics & control API
@@ -173,7 +174,7 @@
 		// The scenario file to run, null means invoking the default.js scenario bundled into the distribution
 		"scenario": null,
 		// The Mongoose version
-		"version": "4.0.3"
+		"version": "4.1.0"
 	},
 	"storage": {
 		"auth": {

@@ -55,6 +55,7 @@ public class ExposedMetricsTest {
 	private static final String[] OPS_METRICS = { "count", "rate_mean", "rate_last" };
 	private static final String[] BYTES_METRICS = { "count", "rate_mean", "rate_last" };
 	private static final Double[] QUANTILE_VALUES = { 0.25, 0.5, 0.75 };
+	private static final List<String> nodeList = Arrays.asList("127.0.0.1:1099");
 	private final String STEP_ID = ExposedMetricsTest.class.getSimpleName();
 	private final OpType OP_TYPE = OpType.CREATE;
 	private final IntSupplier nodeCountSupplier = () -> 1;
@@ -78,36 +79,38 @@ public class ExposedMetricsTest {
 		context.addServlet(new ServletHolder(new MetricsServlet()), CONTEXT);
 		server.start();
 		//
-		metricsContext =
-			new MetricsContextImpl(
-				STEP_ID,
-				OP_TYPE,
-				() -> 1,
-				CONCURRENCY_LIMIT,
-				CONCURRENCY_THRESHOLD,
-				ITEM_DATA_SIZE,
-				UPDATE_INTERVAL_SEC,
-				true
-			);
+		metricsContext = MetricsContextImpl
+			.builder()
+			.id(STEP_ID)
+			.opType(OP_TYPE)
+			.actualConcurrencyGauge(() -> 1)
+			.concurrencyLimit(CONCURRENCY_LIMIT)
+			.concurrencyThreshold(CONCURRENCY_THRESHOLD)
+			.itemDataSize(ITEM_DATA_SIZE)
+			.outputPeriodSec(UPDATE_INTERVAL_SEC)
+			.stdOutColorFlag(true)
+			.comment("")
+			.build();
 		snapshotsSupplier = () -> Arrays.asList(metricsContext.lastSnapshot());
 		metricsContext.start();
 		//
-		distributedMetricsContext =
-			new DistributedMetricsContextImpl(
-				STEP_ID,
-				OP_TYPE,
-				nodeCountSupplier,
-				CONCURRENCY_LIMIT,
-				CONCURRENCY_THRESHOLD,
-				ITEM_DATA_SIZE,
-				UPDATE_INTERVAL_SEC,
-				true,
-				true,
-				true,
-				true,
-				snapshotsSupplier,
-				Arrays.asList(QUANTILE_VALUES)
-			);
+		distributedMetricsContext = DistributedMetricsContextImpl
+			.builder()
+			.id(STEP_ID)
+			.opType(OP_TYPE)
+			.nodeCountSupplier(nodeCountSupplier)
+			.concurrencyLimit(CONCURRENCY_LIMIT)
+			.concurrencyThreshold(CONCURRENCY_THRESHOLD)
+			.itemDataSize(ITEM_DATA_SIZE)
+			.outputPeriodSec(UPDATE_INTERVAL_SEC)
+			.stdOutColorFlag(true)
+			.avgPersistFlag(true)
+			.sumPersistFlag(true)
+			.snapshotsSupplier(snapshotsSupplier)
+			.quantileValues(Arrays.asList(QUANTILE_VALUES))
+			.nodeAddrs(nodeList)
+			.comment("")
+			.build();
 		distributedMetricsContext.start();
 	}
 
@@ -138,7 +141,22 @@ public class ExposedMetricsTest {
 		testRateMetric(result, 1, MetricsConstants.METRIC_NAME_FAIL);
 		testRateMetric(result, 1, MetricsConstants.METRIC_NAME_SUCC);
 		//
+		testLabels(result);
 		metricsMgr.close();
+	}
+
+	private void testLabels(final String result) {
+		testLabel(result, "node_list", nodeList.toString());
+		testLabel(result, "user_comment", "");
+	}
+
+	private void testLabel(final String result, final String labelName, final String expectedValue) {
+		final Pattern p = Pattern.compile("\\{.*" + labelName + "=[^,]*");
+		final Matcher m = p.matcher(result);
+		final boolean found = m.find();
+		Assert.assertTrue(found);
+		final String actualValue = m.group().split(labelName + "=")[1].replaceAll("\"", "");
+		Assert.assertEquals("label : " + labelName, expectedValue, actualValue);
 	}
 
 	private void testTimingMetric(final String stdOut, final double markValue, final String name) {
