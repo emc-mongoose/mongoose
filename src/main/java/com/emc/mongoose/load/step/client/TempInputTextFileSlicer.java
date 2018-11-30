@@ -191,8 +191,9 @@ implements AutoCloseable {
 						);
 						lastProgressOutputTimeMillis = System.currentTimeMillis();
 					}
-
+					System.out.println(hashCode() + ": read task checkpoint 0");
 					line = lineReader.readLine();
+					System.out.println(hashCode() + ": read task checkpoint 1");
 					if(line == null) {
 						stop();
 						break;
@@ -200,6 +201,7 @@ implements AutoCloseable {
 						lineQueues.get((int) (lineCount % sliceCount)).put(line);
 						lineCount ++;
 					}
+					System.out.println(hashCode() + ": read task checkpoint 2");
 				}
 
 			} catch(final IOException e) {
