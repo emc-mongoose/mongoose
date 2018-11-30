@@ -185,15 +185,17 @@ implements AutoCloseable {
 				while(System.nanoTime() - startTimeNanos < SOFT_DURATION_LIMIT_NANOS) {
 
 					if(System.currentTimeMillis() - lastProgressOutputTimeMillis > OUTPUT_PROGRESS_PERIOD_MILLIS) {
+						System.out.println(
+							"Read task progress: scattered " + lineCount +" lines from the input file " + srcFileName
+						);
 						Loggers.MSG.info(
 							"Read task progress: scattered {} lines from the input file \"{}\"...", lineCount,
 							srcFileName
 						);
 						lastProgressOutputTimeMillis = System.currentTimeMillis();
 					}
-					System.out.println(hashCode() + ": read task checkpoint 0");
+
 					line = lineReader.readLine();
-					System.out.println(hashCode() + ": read task checkpoint 1");
 					if(line == null) {
 						stop();
 						break;
@@ -201,7 +203,6 @@ implements AutoCloseable {
 						lineQueues.get((int) (lineCount % sliceCount)).put(line);
 						lineCount ++;
 					}
-					System.out.println(hashCode() + ": read task checkpoint 2");
 				}
 
 			} catch(final IOException e) {
