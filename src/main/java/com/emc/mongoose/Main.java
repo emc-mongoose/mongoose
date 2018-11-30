@@ -37,13 +37,10 @@ import io.prometheus.client.exporter.MetricsServlet;
 import org.apache.commons.lang.StringUtils;
 
 import org.apache.logging.log4j.Level;
-import org.eclipse.jetty.server.Connector;
+
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.util.thread.ThreadPool;
 
 import javax.script.ScriptEngine;
 import javax.servlet.MultipartConfigElement;
@@ -59,8 +56,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class Main {
-
-	private static final int JETTY_THREAD_COUNT = 4;
 
 	public static void main(final String... args)
 	throws Exception {
@@ -95,38 +90,11 @@ public final class Main {
 				}
 				// init the metrics manager
 				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
-				// init the API server
-				final int port = configWithArgs.intVal("run-port");
-				final ThreadPool tp = new QueuedThreadPool(JETTY_THREAD_COUNT, 1);
-				final Server server = new Server(tp);
-				final ServerConnector connector = new ServerConnector(server);
-				connector.setPort(port);
-				server.setConnectors(new Connector[] { connector });
-				final ServletContextHandler context = new ServletContextHandler();
-				context.setContextPath("/");
-				server.setHandler(context);
-				context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
-				context.addServlet(new ServletHolder(new ConfigServlet(defaultConfig)), "/config/*");
-				context.addServlet(new ServletHolder(new LogServlet()), "/logs/*");
-				final ServletHolder runServletHolder = new ServletHolder(
-					new RunServlet(extClsLoader, extensions, metricsMgr, fullDefaultConfig.schema())
-				);
-				runServletHolder
-					.getRegistration()
-					.setMultipartConfig(
-						new MultipartConfigElement("", 16 * MIB, 16 * MIB, 16 * MIB)
-					);
-				context.addServlet(runServletHolder, "/run/*");
-				server.start();
 				// go on
-				try {
-					if(configWithArgs.boolVal("run-node")) {
-						runNode(configWithArgs, extensions, metricsMgr);
-					} else {
-						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
-					}
-				} finally {
-					server.stop();
+				if(configWithArgs.boolVal("run-node")) {
+					runNode(fullDefaultConfig, configWithArgs, extClsLoader, extensions, metricsMgr);
+				} else {
+					runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
 				}
 			}
 		} catch(final InterruptedException | InterruptRunException e) {
@@ -219,20 +187,46 @@ public final class Main {
 		return AliasingUtil.apply(parsedArgs, aliasingConfig);
 	}
 
-	private static void runNode(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
-	throws InterruptRunException, InterruptedException {
-		final int listenPort = config.intVal("load-step-node-port");
-		try(
-			final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
-			final Service scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions, metricsMgr)
-		) {
-			fileMgrSvc.start();
-			scenarioStepSvc.start();
-			scenarioStepSvc.await();
-		} catch(final InterruptedException | InterruptRunException e) {
-			throw e;
-		} catch(final Throwable cause) {
-			LogUtil.trace(Loggers.ERR, Level.FATAL, cause, "Run node failure");
+	private static void runNode(
+		final Config fullDefaultConfig, final Config configWithArgs, final ClassLoader extClsLoader,
+		final List<Extension> extensions, final MetricsManager metricsMgr
+	) throws Exception {
+
+		// init the API server
+		final int port = configWithArgs.intVal("run-port");
+		final Server server = new Server(port);
+		final ServletContextHandler context = new ServletContextHandler();
+		context.setContextPath("/");
+		server.setHandler(context);
+		context.addServlet(new ServletHolder(new ConfigServlet(fullDefaultConfig)), "/config/*");
+		context.addServlet(new ServletHolder(new LogServlet()), "/logs/*");
+		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+		final ServletHolder runServletHolder = new ServletHolder(
+			new RunServlet(extClsLoader, extensions, metricsMgr, fullDefaultConfig.schema())
+		);
+		runServletHolder
+			.getRegistration()
+			.setMultipartConfig(
+				new MultipartConfigElement("", 16 * MIB, 16 * MIB, 16 * MIB)
+			);
+		context.addServlet(runServletHolder, "/run/*");
+		try {
+			server.start();
+			final int listenPort = configWithArgs.intVal("load-step-node-port");
+			try(
+				final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
+				final Service scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions, metricsMgr)
+			) {
+				fileMgrSvc.start();
+				scenarioStepSvc.start();
+				scenarioStepSvc.await();
+			} catch(final InterruptedException | InterruptRunException e) {
+				throw e;
+			} catch(final Throwable cause) {
+				LogUtil.trace(Loggers.ERR, Level.FATAL, cause, "Run node failure");
+			}
+		} finally {
+			server.stop();
 		}
 	}
 
