@@ -109,10 +109,10 @@ implements AutoCloseable {
 		for(int i = 0; i < sliceCount; i ++) {
 			lineQueues.add(new ArrayBlockingQueue<>(batchSize));
 		}
-		System.out.println("00");
+
 		final List<AsyncRunnable> tasks = new ArrayList<>(sliceCount + 1);
 		tasks.add(new ReadTask(inputFinishFlag, lineQueues, srcFileName, sliceCount));
-		System.out.println("01");
+
 		final CountDownLatch writeFinishCountDown = new CountDownLatch(sliceCount);
 		for(int i = 0; i < sliceCount; i ++) {
 			final BlockingQueue<String> lineQueue = lineQueues.get(i);
@@ -120,7 +120,7 @@ implements AutoCloseable {
 			final String dstFileName = fileSlices.get(fileMgr);
 			tasks.add(new WriteTask(inputFinishFlag, writeFinishCountDown, lineQueue, fileMgr, dstFileName, batchSize));
 		}
-		System.out.println("02");
+
 		tasks
 			.forEach(
 				task -> {
@@ -130,10 +130,9 @@ implements AutoCloseable {
 					}
 				}
 			);
-		System.out.println("03");
+
 		try {
 			writeFinishCountDown.await();
-			System.out.println("04");
 		} catch(final InterruptedException e) {
 			throw new InterruptRunException(e);
 		} finally {
@@ -147,7 +146,6 @@ implements AutoCloseable {
 					}
 				);
 			tasks.clear();
-			System.out.println("05");
 		}
 	}
 
@@ -264,9 +262,8 @@ implements AutoCloseable {
 
 		@Override
 		protected final void invokeTimedExclusively(final long startTimeNanos) {
-			System.out.println("000");
 			final int n = lineQueue.drainTo(lines, batchSize);
-			System.out.println("001");
+			System.out.println("Write new " + n + " lines");
 			if(n == 0 && inputFinishFlag.get()) {
 				stop();
 			} else {
@@ -275,11 +272,9 @@ implements AutoCloseable {
 						linesWriter.write(lines.get(i));
 						linesWriter.newLine();
 					}
-					System.out.println("002");
 					linesWriter.flush();
-					System.out.println("003");
 					fileMgr.writeToFile(dstFileName, linesByteBuff.toByteArray());
-					System.out.println("004");
+					System.out.println("Total written line count: " + lineCount);
 					lineCount += n;
 				} catch(final IOException e) {
 					LogUtil.exception(
