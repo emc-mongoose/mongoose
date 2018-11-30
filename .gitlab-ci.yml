@@ -10,9 +10,9 @@ services:
 
 stages:
   - build
+  - test # simple unit/integration tests
   - deploy_docker_images
   - test_functional # functional containerized tests
-  - test # simple unit/integration tests
   - deploy
 
 build:
