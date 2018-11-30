@@ -21,7 +21,8 @@ import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_TIME;
 import static io.prometheus.client.Collector.MetricFamilySamples.Sample;
 
 /**
- @author veronika K. on 10.10.18 */
+ @author veronika K. on 10.10.18
+ */
 public class PrometheusMetricsExporterImpl
 	extends Collector
 	implements PrometheusMetricsExporter {
