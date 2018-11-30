@@ -160,6 +160,7 @@ implements AutoCloseable {
 
 		private long lineCount = 0;
 		private long lastProgressOutputTimeMillis = System.currentTimeMillis();
+		private volatile String pendingLine = null;
 
 		public ReadTask(
 			final AtomicBoolean inputFinishFlag, final List<BlockingQueue<String>> lineQueues, final String srcFileName,
@@ -192,22 +193,31 @@ implements AutoCloseable {
 						lastProgressOutputTimeMillis = System.currentTimeMillis();
 					}
 
-					line = lineReader.readLine();
+					if(pendingLine == null) {
+						line = lineReader.readLine();
+					} else {
+						line = pendingLine;
+						pendingLine = null;
+					}
+
 					if(line == null) {
 						stop();
 						break;
 					} else {
-						lineQueues.get((int) (lineCount % sliceCount)).put(line);
-						lineCount ++;
+						// shouldn't block because it may be the only available thread for the fibers execution
+						// otherwise it may hang
+						if(lineQueues.get((int) (lineCount % sliceCount)).offer(line)) {
+							lineCount ++;
+						} else {
+							pendingLine = line;
+							break;
+						}
 					}
 				}
 
 			} catch(final IOException e) {
 				LogUtil.exception(Level.WARN, e, "Read task failure, source file name: \"{}\"", srcFileName);
 				stop();
-			} catch(final InterruptedException e) {
-				stop();
-				throw new InterruptRunException(e);
 			}
 		}
 
