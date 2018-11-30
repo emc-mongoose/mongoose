@@ -25,7 +25,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -146,8 +145,8 @@ public class ExposedMetricsTest {
 	}
 
 	private void testLabels(final String result) {
-		testLabel(result,"node_list",nodeList.toString());
-		testLabel(result,"user_comment","");
+		testLabel(result, "node_list", nodeList.toString());
+		testLabel(result, "user_comment", "");
 	}
 
 	private void testLabel(final String result, final String labelName, final String expectedValue) {
@@ -155,8 +154,8 @@ public class ExposedMetricsTest {
 		final Matcher m = p.matcher(result);
 		final boolean found = m.find();
 		Assert.assertTrue(found);
-		final String actualValue = m.group().split(labelName + "=")[1].replaceAll("\"","");
-		Assert.assertEquals("label : " + labelName , expectedValue, actualValue);
+		final String actualValue = m.group().split(labelName + "=")[1].replaceAll("\"", "");
+		Assert.assertEquals("label : " + labelName, expectedValue, actualValue);
 	}
 
 	private void testTimingMetric(final String stdOut, final double markValue, final String name) {
@@ -228,5 +227,4 @@ public class ExposedMetricsTest {
 			);
 		}
 	}
-
 }
