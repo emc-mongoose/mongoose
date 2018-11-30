@@ -1,6 +1,8 @@
 FROM java:8
 
-RUN apk add --no-cache --update docker
+RUN apt-get update \
+    && apt-get install docker -y \
+    && rm -rf /var/lib/apt/lists/*
 
 ADD docker /root/mongoose/docker
 ADD gradle /root/mongoose/gradle
