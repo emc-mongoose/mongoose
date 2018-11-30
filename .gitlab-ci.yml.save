@@ -1,10 +1,13 @@
-image: docker:dind
+image: docker:stable
 
 variables:
   LEGACY_SYSTEST_IMAGE_NAME: emcmongoose/mongoose-legacy-systest
   MONGOOSE_IMAGE_NAME: emcmongoose/mongoose
   ROBOTEST_IMAGE_NAME: emcmongoose/mongoose-robotest
   ROBOTEST_CONTAINER_WORKING_DIR: /root/mongoose
+
+services:
+  - docker:dind
 
 stages:
   - build
