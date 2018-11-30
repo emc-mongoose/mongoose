@@ -1,10 +1,13 @@
-image: docker:dind
+image: docker:stable
 
 variables:
   LEGACY_SYSTEST_IMAGE_NAME: emcmongoose/mongoose-legacy-systest
   MONGOOSE_IMAGE_NAME: emcmongoose/mongoose
   ROBOTEST_IMAGE_NAME: emcmongoose/mongoose-robotest
   ROBOTEST_CONTAINER_WORKING_DIR: /root/mongoose
+
+services:
+  - docker:dind
 
 stages:
   - build
@@ -63,6 +66,8 @@ deploy_robotest_image:
 
 .test_robot:
   image: ${ROBOTEST_IMAGE_NAME}:${CI_COMMIT_SHA}
+  services:
+  - docker:dind
   stage: test_functional
   variables:
     HOST_WORKING_DIR: ${CI_PROJECT_DIR}
@@ -94,6 +99,8 @@ test_api_storage_s3:
 
 .test_system_legacy:
   image: ${LEGACY_SYSTEST_IMAGE_NAME}:${CI_COMMIT_SHA}
+  services:
+  - docker:dind
   stage: test_functional
   variables:
     MONGOOSE_VERSION: ${CI_COMMIT_SHA}
