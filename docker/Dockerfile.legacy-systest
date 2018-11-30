@@ -1,4 +1,6 @@
-FROM npalm/dind-java
+FROM openjdk/8-alpine
+
+RUN apk add --no-cache --update docker
 
 ADD docker /root/mongoose/docker
 ADD gradle /root/mongoose/gradle

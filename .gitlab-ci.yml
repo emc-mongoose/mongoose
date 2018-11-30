@@ -49,7 +49,7 @@ test_integration:
 deploy_legacy_systest_image:
   extends: .deploy_docker_image
   variables:
-    DOCKERFILE: Dockerfile.legacy_systest
+    DOCKERFILE: Dockerfile.legacy-systest
     IMAGE_NAME: ${LEGACY_SYSTEST_IMAGE_NAME}
 
 deploy_mongoose_image:
@@ -67,17 +67,18 @@ deploy_robotest_image:
 .test_robot:
   image: ${ROBOTEST_IMAGE_NAME}:${CI_COMMIT_SHA}
   services:
-  - docker:dind
+    - docker:dind
   stage: test_functional
   variables:
     HOST_WORKING_DIR: ${CI_PROJECT_DIR}
     MONGOOSE_VERSION: ${CI_COMMIT_SHA}
   script:
+    - docker --version
     - robot --outputdir ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest --suite ${SUITE} --include ${TEST} ${ROBOTEST_CONTAINER_WORKING_DIR}/src/test/robot
     - rebot ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/output.xml
   artifacts:
     paths:
-    - ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/*
+      - ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/*
 
 test_api_remote_config:
   extends: .test_robot
@@ -100,12 +101,12 @@ test_api_storage_s3:
 .test_system_legacy:
   image: ${LEGACY_SYSTEST_IMAGE_NAME}:${CI_COMMIT_SHA}
   services:
-  - docker:dind
+    - docker:dind
   stage: test_functional
   variables:
     MONGOOSE_VERSION: ${CI_COMMIT_SHA}
   script:
-  - ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}
+    - ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}
 
 .test_system_legacy_unstable:
   extends: .test_system_legacy
