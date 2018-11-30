@@ -264,7 +264,9 @@ implements AutoCloseable {
 
 		@Override
 		protected final void invokeTimedExclusively(final long startTimeNanos) {
+			System.out.println("000");
 			final int n = lineQueue.drainTo(lines, batchSize);
+			System.out.println("001");
 			if(n == 0 && inputFinishFlag.get()) {
 				stop();
 			} else {
@@ -273,8 +275,11 @@ implements AutoCloseable {
 						linesWriter.write(lines.get(i));
 						linesWriter.newLine();
 					}
+					System.out.println("002");
 					linesWriter.flush();
+					System.out.println("003");
 					fileMgr.writeToFile(dstFileName, linesByteBuff.toByteArray());
+					System.out.println("004");
 					lineCount += n;
 				} catch(final IOException e) {
 					LogUtil.exception(
