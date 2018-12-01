@@ -1,8 +1,6 @@
 FROM docker:dind
 
-RUN apt-get update \
-    && apt-get install openjdk8 -y \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache --update openjdk8
 
 ADD docker /root/mongoose/docker
 ADD gradle /root/mongoose/gradle
