@@ -76,7 +76,7 @@ deploy_robotest_image:
     - docker --version
   artifacts:
     paths:
-      - ${ROBOTEST_CONTAINER_WORKING_DIR}/*.html
+      - ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/*.html
     when: on_failure
 
 test_api_remote_config:
