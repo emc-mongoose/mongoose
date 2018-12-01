@@ -74,8 +74,8 @@ deploy_robotest_image:
     MONGOOSE_VERSION: ${CI_COMMIT_SHA}
   script:
     - docker --version
-    - robot --outputdir ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest --suite ${SUITE} --include ${TEST} ${ROBOTEST_CONTAINER_WORKING_DIR}/src/test/robot
-    - rebot ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/output.xml
+#    - robot --outputdir ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest --suite ${SUITE} --include ${TEST} ${ROBOTEST_CONTAINER_WORKING_DIR}/src/test/robot
+#    - rebot ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/output.xml
   artifacts:
     paths:
       - ${ROBOTEST_CONTAINER_WORKING_DIR}/*.html
@@ -108,7 +108,7 @@ test_api_storage_s3:
     MONGOOSE_VERSION: ${CI_COMMIT_SHA}
   script:
     - docker --version
-    - ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}
+#    - ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}
 
 .test_system_legacy_unstable:
   extends: .test_system_legacy
