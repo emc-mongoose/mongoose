@@ -1,7 +1,7 @@
-FROM java:8
+FROM docker:dind
 
 RUN apt-get update \
-    && apt-get install apt-utils docker -y \
+    && apt-get install openjdk8 -y \
     && rm -rf /var/lib/apt/lists/*
 
 ADD docker /root/mongoose/docker

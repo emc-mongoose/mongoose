@@ -1,4 +1,4 @@
-FROM docker:stable
+FROM docker:dind
 
 RUN apk add --no-cache --update python py-pip \
     && pip install -U virtualenv \
