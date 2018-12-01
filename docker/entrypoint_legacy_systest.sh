@@ -1,5 +1,6 @@
 #!/bin/sh
 umask 0000
+docker --version
 echo Mongoose Version: ${MONGOOSE_VERSION}
 echo Storage Type: ${STORAGE_TYPE}
 echo Run Mode: ${RUN_MODE}

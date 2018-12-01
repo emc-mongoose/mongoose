@@ -72,8 +72,6 @@ deploy_robotest_image:
   variables:
     HOST_WORKING_DIR: ${CI_PROJECT_DIR}
     MONGOOSE_VERSION: ${CI_COMMIT_SHA}
-  script:
-    - docker --version
   artifacts:
     paths:
       - ${ROBOTEST_CONTAINER_WORKING_DIR}/*.html
@@ -104,8 +102,6 @@ test_api_storage_s3:
   stage: test_functional
   variables:
     MONGOOSE_VERSION: ${CI_COMMIT_SHA}
-  script:
-    - docker --version
 
 .test_system_legacy_unstable:
   extends: .test_system_legacy
