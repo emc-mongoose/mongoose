@@ -6,4 +6,4 @@ echo Run Mode: ${RUN_MODE}
 echo Concurrency Limit: ${CONCURRENCY}
 echo Item Size: ${ITEM_SIZE}
 echo Test: ${TEST}
-./gradlew clean systemTest --tests com.emc.mongoose.system.${TEST}
+#./gradlew clean systemTest --tests com.emc.mongoose.system.${TEST}
