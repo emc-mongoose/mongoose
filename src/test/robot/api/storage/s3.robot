@@ -37,16 +37,16 @@ Should Copy Objects Using Bucket Listing
     Validate Metrics Total Log File  ${step_id}  CREATE  1000  0  10240000
 
 Should Create Objects Using Multipart Upload
-    Pass Execution
+    Pass Execution "TODO"
 
 Should Create Objects Using Multiple Buckets And Users
-    Pass Execution
+    Pass Execution "TODO"
 
 Should Read Multiple Random Byte Ranges
-    Pass Execution
+    Pass Execution "TODO"
 
 Should Update Multiple Random Byte Ranges
-    Pass Execution
+    Pass Execution "TODO"
 
 *** Keywords ***
 Start S3 Server
