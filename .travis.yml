@@ -36,7 +36,7 @@ jobs:
     - stage: "Docker images"
       script:
       - docker login -u $DOCKER_USER -p $DOCKER_PASS
-      ./gradlew pushTestingImage
+      - ./gradlew pushTestingImage
 
     - script:
       - export REPO=emcmongoose/mongoose-scripting-groovy
