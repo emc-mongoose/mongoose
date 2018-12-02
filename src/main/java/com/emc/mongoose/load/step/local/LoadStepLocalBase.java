@@ -62,18 +62,19 @@ extends LoadStepBase {
 		final int originIndex, final OpType opType, final int concurrency, final Config metricsConfig,
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
-		final int metricsAvgPeriod;
-		final Object metricsAvgPeriodRaw = metricsConfig.val("average-period");
-		if(metricsAvgPeriodRaw instanceof String) {
-			metricsAvgPeriod = (int) TimeUtil.getTimeInSeconds((String) metricsAvgPeriodRaw);
-		} else {
-			metricsAvgPeriod = TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
-		}
 		final int index = metricsContexts.size();
-		final MetricsContext metricsCtx = new MetricsContextImpl(
-			id(), opType, () -> stepContexts.get(index).activeOpCount(), concurrency,
-			(int) (concurrency * metricsConfig.doubleVal("threshold")), itemDataSize, metricsAvgPeriod, outputColorFlag
-		);
+		final MetricsContext metricsCtx = MetricsContextImpl
+			.builder()
+			.id(id())
+			.opType(opType)
+			.actualConcurrencyGauge(() -> stepContexts.get(index).activeOpCount())
+			.concurrencyLimit(concurrency)
+			.concurrencyThreshold((int) (concurrency * metricsConfig.doubleVal("threshold")))
+			.itemDataSize(itemDataSize)
+			.outputPeriodSec(avgPeriod(metricsConfig))
+			.stdOutColorFlag(outputColorFlag)
+			.comment(config.stringVal("run-comment"))
+			.build();
 		metricsContexts.add(metricsCtx);
 	}
 

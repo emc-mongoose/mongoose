@@ -173,4 +173,13 @@ implements LoadStep, Runnable {
 	throws IOException {
 		metricsContexts.forEach(MetricsContext::close);
 	}
+
+	protected int avgPeriod(final Config metricsConfig) {
+		final Object metricsAvgPeriodRaw = metricsConfig.val("average-period");
+		if(metricsAvgPeriodRaw instanceof String) {
+			return (int) TimeUtil.getTimeInSeconds((String) metricsAvgPeriodRaw);
+		} else {
+			return TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
+		}
+	}
 }

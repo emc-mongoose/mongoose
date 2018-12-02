@@ -328,28 +328,36 @@ public abstract class LoadStepClientBase
 		final SizeInBytes itemDataSize, final boolean outputColorFlag
 	) {
 		final int concurrencyThreshold = (int) (concurrencyLimit * metricsConfig.doubleVal("threshold"));
-		final int metricsAvgPeriod;
-		final Object metricsAvgPeriodRaw = metricsConfig.val("average-period");
-		if(metricsAvgPeriodRaw instanceof String) {
-			metricsAvgPeriod = (int) TimeUtil.getTimeInSeconds((String) metricsAvgPeriodRaw);
-		} else {
-			metricsAvgPeriod = TypeUtil.typeConvert(metricsAvgPeriodRaw, int.class);
-		}
 		final boolean metricsAvgPersistFlag = metricsConfig.boolVal("average-persist");
 		final boolean metricsSumPersistFlag = metricsConfig.boolVal("summary-persist");
 		final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
-		final List<Double> quantileValues = metricsConfig.listVal("quantiles")
-			.stream()
-			.map(v -> Double.valueOf(v.toString()))
-			.collect(Collectors.toList());
 		// it's not known yet how many nodes are involved, so passing the function "this::sliceCount" reference for
 		// further usage
-		final DistributedMetricsContext metricsCtx = new DistributedMetricsContextImpl<>(
-			id(), opType, this::sliceCount, concurrencyLimit, concurrencyThreshold, itemDataSize, metricsAvgPeriod,
-			outputColorFlag, metricsAvgPersistFlag, metricsSumPersistFlag, metricsSumPerfDbOutputFlag,
-			() -> metricsSnapshotsByIndex(originIndex), quantileValues
-		);
+		final DistributedMetricsContext metricsCtx = DistributedMetricsContextImpl
+			.builder()
+			.id(id())
+			.opType(opType)
+			.nodeCountSupplier(this::sliceCount)
+			.concurrencyLimit(concurrencyLimit)
+			.concurrencyThreshold(concurrencyThreshold)
+			.itemDataSize(itemDataSize)
+			.outputPeriodSec(avgPeriod(metricsConfig))
+			.stdOutColorFlag(outputColorFlag)
+			.avgPersistFlag(metricsAvgPersistFlag)
+			.sumPersistFlag(metricsSumPersistFlag)
+			.snapshotsSupplier(() -> metricsSnapshotsByIndex(originIndex))
+			.quantileValues(quantiles(metricsConfig))
+			.nodeAddrs(remoteNodeAddrs(config))
+			.comment(config.stringVal("run-comment"))
+			.build();
 		metricsContexts.add(metricsCtx);
+	}
+
+	private List<Double> quantiles(final Config metricsConfig) {
+		return metricsConfig.listVal("quantiles")
+							.stream()
+							.map(v -> Double.valueOf(v.toString()))
+							.collect(Collectors.toList());
 	}
 
 	private List<AllMetricsSnapshot> metricsSnapshotsByIndex(final int originIndex) {

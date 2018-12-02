@@ -136,8 +136,10 @@ public class MetricsManagerImpl
 					metricsCtx.id(),
 					metricsCtx.opType().name(),
 					String.valueOf(metricsCtx.concurrencyLimit()),
-					String.valueOf(((DistributedMetricsContext) metricsCtx).nodeCount()),
-					metricsCtx.itemDataSize().toString()
+					metricsCtx.itemDataSize().toString(),
+					"" + metricsCtx.startTimeStamp(),
+					((DistributedMetricsContext) metricsCtx).nodeAddrs().toString(),
+					metricsCtx.comment()
 				};
 				distributedMetrics.put(
 					distributedMetricsCtx,

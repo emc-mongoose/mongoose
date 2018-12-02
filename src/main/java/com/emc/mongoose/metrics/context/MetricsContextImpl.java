@@ -45,11 +45,11 @@ implements MetricsContext<S> {
 	public MetricsContextImpl(
 		final String id, final OpType opType, final IntSupplier actualConcurrencyGauge, final int concurrencyLimit,
 		final int concurrencyThreshold, final SizeInBytes itemDataSize, final int updateIntervalSec,
-		final boolean stdOutColorFlag
+		final boolean stdOutColorFlag, final String comment
 	) {
 		super(
 			id, opType, concurrencyLimit, 1, concurrencyThreshold, itemDataSize, stdOutColorFlag,
-			TimeUnit.SECONDS.toMillis(updateIntervalSec)
+			TimeUnit.SECONDS.toMillis(updateIntervalSec), comment
 		);
 		//
 		respLatency = new TimingMeterImpl(
@@ -209,10 +209,16 @@ implements MetricsContext<S> {
 
 	@Override
 	protected MetricsContextImpl<S> newThresholdMetricsContext() {
-		return new MetricsContextImpl<>(
-			id, opType, actualConcurrencyGauge, concurrencyLimit, 0, itemDataSize,
-			(int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis), stdOutColorFlag
-		);
+		return new ContextBuilderImpl()
+			.id(id())
+			.opType(opType)
+			.actualConcurrencyGauge(actualConcurrencyGauge)
+			.concurrencyLimit(concurrencyLimit)
+			.concurrencyThreshold(0)
+			.itemDataSize(itemDataSize)
+			.outputPeriodSec((int) TimeUnit.MILLISECONDS.toSeconds(outputPeriodMillis))
+			.stdOutColorFlag(stdOutColorFlag)
+			.build();
 	}
 
 	@Override
@@ -236,5 +242,75 @@ implements MetricsContext<S> {
 	@Override
 	public final void close() {
 		super.close();
+	}
+
+	public static ContextBuilder builder() {
+		return new ContextBuilderImpl();
+	}
+
+	private static class ContextBuilderImpl
+		implements ContextBuilder<ContextBuilder, MetricsContextImpl> {
+
+		private IntSupplier actualConcurrencyGauge;
+		private String id;
+		private OpType opType;
+		private int concurrencyLimit;
+		private int concurrencyThreshold;
+		private SizeInBytes itemDataSize;
+		private boolean stdOutColorFlag;
+		private int outputPeriodSec;
+		private String comment;
+
+		public MetricsContextImpl build() {
+			return new MetricsContextImpl(id, opType, actualConcurrencyGauge, concurrencyLimit,
+				concurrencyThreshold, itemDataSize, outputPeriodSec, stdOutColorFlag, comment
+			);
+		}
+
+		public ContextBuilderImpl id(final String id) {
+			this.id = id;
+			return this;
+		}
+
+		@Override
+		public ContextBuilder comment(final String comment) {
+			this.comment = comment;
+			return this;
+		}
+
+		public ContextBuilderImpl opType(final OpType opType) {
+			this.opType = opType;
+			return this;
+		}
+
+		public ContextBuilderImpl concurrencyLimit(final int concurrencyLimit) {
+			this.concurrencyLimit = concurrencyLimit;
+			return this;
+		}
+
+		public ContextBuilderImpl concurrencyThreshold(final int concurrencyThreshold) {
+			this.concurrencyThreshold = concurrencyThreshold;
+			return this;
+		}
+
+		public ContextBuilderImpl itemDataSize(final SizeInBytes itemDataSize) {
+			this.itemDataSize = itemDataSize;
+			return this;
+		}
+
+		public ContextBuilderImpl stdOutColorFlag(final boolean stdOutColorFlag) {
+			this.stdOutColorFlag = stdOutColorFlag;
+			return this;
+		}
+
+		public ContextBuilderImpl outputPeriodSec(final int outputPeriodSec) {
+			this.outputPeriodSec = outputPeriodSec;
+			return this;
+		}
+
+		public ContextBuilderImpl actualConcurrencyGauge(final IntSupplier actualConcurrencyGauge) {
+			this.actualConcurrencyGauge = actualConcurrencyGauge;
+			return this;
+		}
 	}
 }
