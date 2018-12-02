@@ -78,7 +78,7 @@ deploy_robotest_image:
     - docker --version
   artifacts:
     paths:
-      - ${ROBOTEST_CONTAINER_WORKING_DIR}/build/robotest/*.html
+      - build/robotest/*.html
     when: on_failure
 
 test_api_remote_config:
@@ -108,6 +108,10 @@ test_api_storage_s3:
     MONGOOSE_VERSION: ${CI_COMMIT_SHA}
   script:
     - docker --version
+  artifacts:
+    paths:
+      - build/reports/tests/systemTest/*
+    when: on_failure
 
 .test_system_legacy_unstable:
   extends: .test_system_legacy
