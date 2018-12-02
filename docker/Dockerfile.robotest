@@ -1,4 +1,14 @@
-FROM emcmongoose/mongoose-robotest-base
+FROM docker:dind
+
+RUN apk add --update docker python py-pip \
+    && pip install -U virtualenv \
+    && pip install -U requests \
+    && pip install -U robotframework \
+    && pip install -U robotframework-requests \
+    && pip install -U robotframework-csvlibrary \
+    && rm -rf /var/cache/apk/*
+
+ENV PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/site-packages
 
 ADD build /root/mongoose/build
 ADD docker/entrypoint_robotest.sh /root/mongoose/docker/entrypoint_robotest.sh

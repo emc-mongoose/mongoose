@@ -103,7 +103,9 @@ allprojects {
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
 		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
+			events = [
+				"standardOut", "skipped", "started", "failed",
+			]
 			showExceptions = true
 			showStandardStreams = true
 		}
@@ -117,7 +119,9 @@ allprojects {
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
 		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
+			events = [
+				"standardOut", "skipped", "started", "failed",
+			]
 			showExceptions = true
 			showStandardStreams = true
 		}
@@ -130,7 +134,9 @@ allprojects {
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
 		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
+			events = [
+				"standardOut", "skipped", "started", "failed",
+			]
 			showExceptions = true
 			showStandardStreams = true
 		}
@@ -142,7 +148,9 @@ allprojects {
 
 		maxHeapSize "1g"
 		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
+			events = [
+				"standardOut", "skipped", "started", "failed",
+			]
 			showExceptions = true
 			showStandardStreams = true
 		}
@@ -152,7 +160,9 @@ allprojects {
 		include "com/emc/mongoose/endurance/*"
 		maxHeapSize "1g"
 		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
+			events = [
+				"standardOut", "skipped", "started", "failed",
+			]
 			showExceptions = true
 			showStandardStreams = true
 		}
@@ -501,8 +511,6 @@ task robotest(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
 	timeout = 600 // 10 min w/o output -> fail on Travis CI
 	doLast {
 		if(0 != exitCode) {
-			final String outputXmlContent = new File("${rootProject.buildDir}${File.separator}robotest${File.separator}output.xml").text
-			println outputXmlContent
 			throw new GradleException("Some robotests FAILED")
 		} else {
 			println "Robotests PASSED"
