@@ -9,6 +9,8 @@ extends MetricsContext<S> {
 
 	int nodeCount();
 
+	List<String> nodeAddrs();
+
 	List<Double> quantileValues();
 
 	S lastSnapshot();
