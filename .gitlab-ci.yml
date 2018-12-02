@@ -39,18 +39,15 @@ test_integration:
   script:
   - ./gradlew integrationTest
 
-.deploy_docker_image:
-  stage: deploy_docker_images
+deploy_mongoose_image:
+  stage: deploy_docker_image
+  variables:
+    DOCKERFILE: Dockerfile
+    IMAGE_NAME: ${MONGOOSE_IMAGE_NAME}
   script:
   - docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
   - docker build -f docker/${DOCKERFILE} -t ${IMAGE_NAME}:${CI_COMMIT_SHA} .
   - docker push ${IMAGE_NAME}:${CI_COMMIT_SHA}
-
-deploy_mongoose_image:
-  extends: .deploy_docker_image
-  variables:
-    DOCKERFILE: Dockerfile
-    IMAGE_NAME: ${MONGOOSE_IMAGE_NAME}
 
 .test_robot:
   services:
