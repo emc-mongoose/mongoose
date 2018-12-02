@@ -15,11 +15,12 @@ stages:
   - build
   - deploy_docker_image
   - test_functional # functional containerized tests
+  - test_functional_legacy
   - test # unit/integration tests
   - deploy
 
 before_script:
-  - RUN apk add --no-cache --update openjdk8
+  - apk add --no-cache --update openjdk8
 
 build:
   stage: build
@@ -94,7 +95,7 @@ test_api_storage_s3:
 .test_system_legacy:
   services:
     - docker:dind
-  stage: test_functional
+  stage: test_functional_legacy
   variables:
     MONGOOSE_VERSION: ${CI_COMMIT_SHA}
   script:
