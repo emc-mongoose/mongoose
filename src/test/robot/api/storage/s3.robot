@@ -24,12 +24,14 @@ ${MONGOOSE_SHARED_ARGS} =  --storage-driver-type=s3 --storage-net-node-port=${S3
 Should Copy Objects Using Bucket Listing
     ${step_id} =  Set Variable  copy_objects_using_bucket_listing
     Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
+    ${version} =  Get Environment Variable  MONGOOSE_VERSION
     ${args} =  Catenate  SEPARATOR= \\\n\t
     ...  --item-data-size=10KB
     ...  --load-op-limit-count=1000
     ...  --load-step-id=${step_id}
     ...  --storage-driver-limit-concurrency=10
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/copy_using_input_path.js
+    ...  --run-version=${MONGOOSE_VERSION}
     &{env_params} =  Create Dictionary  ITEM_SRC_PATH=/bucket0  ITEM_DST_PATH=/bucket1
     ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
     # TODO validate stdout
@@ -37,16 +39,16 @@ Should Copy Objects Using Bucket Listing
     Validate Metrics Total Log File  ${step_id}  CREATE  1000  0  10240000
 
 Should Create Objects Using Multipart Upload
-    Pass Execution "TODO"
+    Pass Execution  "TODO"
 
 Should Create Objects Using Multiple Buckets And Users
-    Pass Execution "TODO"
+    Pass Execution  "TODO"
 
 Should Read Multiple Random Byte Ranges
-    Pass Execution "TODO"
+    Pass Execution  "TODO"
 
 Should Update Multiple Random Byte Ranges
-    Pass Execution "TODO"
+    Pass Execution  "TODO"
 
 *** Keywords ***
 Start S3 Server
@@ -81,6 +83,8 @@ Execute Mongoose Scenario
     ...  ${MONGOOSE_IMAGE_NAME}:${version}
     ...  ${MONGOOSE_SHARED_ARGS} ${args}
     ${std_out} =  Run  ${cmd}
+    ${docker_inspect_out} =  Run  docker inspect mongoose
+    Log  ${docker_inspect_out}
     [Return]  ${std_out}
 
 Remove Mongoose Container

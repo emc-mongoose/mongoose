@@ -50,8 +50,6 @@ deploy_mongoose_image:
   - docker push ${IMAGE_NAME}:${CI_COMMIT_SHA}
 
 .test_robot:
-  services:
-    - docker:dind
   stage: test_functional
   variables:
     HOST_WORKING_DIR: ${CI_PROJECT_DIR}
@@ -92,8 +90,6 @@ test_api_storage_s3:
     TEST: s3
 
 .test_system_legacy:
-  services:
-    - docker:dind
   stage: test_functional
   variables:
     MONGOOSE_VERSION: ${CI_COMMIT_SHA}
