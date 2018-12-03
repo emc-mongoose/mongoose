@@ -132,9 +132,7 @@ extends HttpServlet {
 	) throws IOException, MultipleByteRangesException, NoLogFileException {
 		if(Files.exists(filePath)) {
 			final Enumeration<String> rangeHeaders = req.getHeaders(HttpHeader.RANGE.asString());
-			final List<InclusiveByteRange> byteRanges = satisfiableRanges(
-				rangeHeaders, Files.size(filePath)
-			);
+			final List<InclusiveByteRange> byteRanges = satisfiableRanges(rangeHeaders, Files.size(filePath));
 			final long offset;
 			final long size;
 			if(byteRanges == null || 0 == byteRanges.size()) {

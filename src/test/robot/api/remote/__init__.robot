@@ -17,7 +17,7 @@ Start Mongoose Node
     ...  docker run -d --network host
     ...  --name mongoose_node
     ...  ${MONGOOSE_IMAGE_NAME}:${image_version}
-    ...  --run-node
+    ...  --run-node --load-step-id=robotest
     ${std_out} =  Run  ${cmd}
     Log  ${std_out}
     Create Session  mongoose_node  http://localhost:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=100
