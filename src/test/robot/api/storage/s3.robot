@@ -31,7 +31,7 @@ Should Copy Objects Using Bucket Listing
     ...  --load-step-id=${step_id}
     ...  --storage-driver-limit-concurrency=10
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/copy_using_input_path.js
-    ...  --run-version=${MONGOOSE_VERSION}
+    ...  --run-version=${version}
     &{env_params} =  Create Dictionary  ITEM_SRC_PATH=/bucket0  ITEM_DST_PATH=/bucket1
     ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
     # TODO validate stdout
