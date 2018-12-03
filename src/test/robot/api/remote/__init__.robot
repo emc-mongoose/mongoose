@@ -8,16 +8,15 @@ Suite Teardown  Remove Mongoose Node
 
 *** Variables ***
 ${MONGOOSE_IMAGE_NAME} =  emcmongoose/mongoose
-${MONGOOSE_IMAGE_VERSION} =  testing
 ${MONGOOSE_NODE_PORT} =  9999
 
 *** Keywords ***
 Start Mongoose Node
-    ${version} =  Get Environment Variable  MONGOOSE_VERSION
+    ${image_version} =  Get Environment Variable  MONGOOSE_IMAGE_VERSION
     ${cmd} =  Catenate  SEPARATOR= \\\n\t
     ...  docker run -d --network host
     ...  --name mongoose_node
-    ...  ${MONGOOSE_IMAGE_NAME}:${version}
+    ...  ${MONGOOSE_IMAGE_NAME}:${image_version}
     ...  --run-node
     ${std_out} =  Run  ${cmd}
     Log  ${std_out}

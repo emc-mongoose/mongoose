@@ -258,10 +258,10 @@ String defineVersion() {
 	json.run.version
 }
 
-task printVersion {
+task mongooseVersion {
 	group = "versioning"
 	description = "Prints Mongoose version."
-	doLast { logger.quiet "Mongoose version: $version" }
+	doLast { logger.quiet version }
 }
 
 dependencies {
@@ -491,6 +491,7 @@ task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage
 	envVars = [
 		"HOST_WORKING_DIR": rootProject.projectDir.absolutePath,
 		"MONGOOSE_VERSION": version,
+		"MONGOOSE_IMAGE_VERSION": version,
 		"SUITE": System.getenv("SUITE"),
 		"TEST": System.getenv("TEST"),
 	]

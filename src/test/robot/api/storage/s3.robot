@@ -24,14 +24,13 @@ ${MONGOOSE_SHARED_ARGS} =  --storage-driver-type=s3 --storage-net-node-port=${S3
 Should Copy Objects Using Bucket Listing
     ${step_id} =  Set Variable  copy_objects_using_bucket_listing
     Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
-    ${version} =  Get Environment Variable  MONGOOSE_VERSION
+    ${image_version} =  Get Environment Variable  MONGOOSE_IMAGE_VERSION
     ${args} =  Catenate  SEPARATOR= \\\n\t
     ...  --item-data-size=10KB
     ...  --load-op-limit-count=1000
     ...  --load-step-id=${step_id}
     ...  --storage-driver-limit-concurrency=10
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/copy_using_input_path.js
-    ...  --run-version=${version}
     &{env_params} =  Create Dictionary  ITEM_SRC_PATH=/bucket0  ITEM_DST_PATH=/bucket1
     ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
     # TODO validate stdout
@@ -72,19 +71,18 @@ Execute Mongoose Scenario
     [Arguments]  ${env}  ${args}
     ${docker_env_vars} =  Evaluate  ' '.join(['-e %s=%s' % (key, value) for (key, value) in ${env}.items()])
     ${host_working_dir} =  Get Environment Variable  HOST_WORKING_DIR
-    ${version} =  Get Environment Variable  MONGOOSE_VERSION
+    ${mongoose_version} =  Get Environment Variable  MONGOOSE_VERSION
+    ${image_version} =  Get Environment Variable  MONGOOSE_IMAGE_VERSION
     ${cmd} =  Catenate  SEPARATOR= \\\n\t
     ...  docker run
     ...  --name mongoose
     ...  --network host
     ...  ${docker_env_vars}
     ...  --volume ${host_working_dir}/${DATA_DIR}:${MONGOOSE_CONTAINER_DATA_DIR}
-    ...  --volume ${host_working_dir}/${LOG_DIR}:/root/.mongoose/${version}/log
-    ...  ${MONGOOSE_IMAGE_NAME}:${version}
+    ...  --volume ${host_working_dir}/${LOG_DIR}:/root/.mongoose/${mongoose_version}/log
+    ...  ${MONGOOSE_IMAGE_NAME}:${image_version}
     ...  ${MONGOOSE_SHARED_ARGS} ${args}
     ${std_out} =  Run  ${cmd}
-    ${docker_inspect_out} =  Run  docker inspect mongoose
-    Log  ${docker_inspect_out}
     [Return]  ${std_out}
 
 Remove Mongoose Container

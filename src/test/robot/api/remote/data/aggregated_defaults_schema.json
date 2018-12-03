@@ -25,6 +25,7 @@
   "item" : {
     "output" : {
       "path" : "string",
+      "delay" : "any",
       "file" : "string"
     },
     "input" : {
@@ -67,6 +68,35 @@
     "version" : "string"
   },
   "storage" : {
+    "namespace" : "string",
+    "net" : {
+      "keepAlive" : "boolean",
+      "bindBacklogSize" : "int",
+      "linger" : "int",
+      "transport" : "string",
+      "interestOpQueued" : "boolean",
+      "ioRatio" : "int",
+      "ssl" : "boolean",
+      "reuseAddr" : "boolean",
+      "node" : {
+        "connAttemptsLimit" : "int",
+        "port" : "int",
+        "slice" : "boolean",
+        "addrs" : "list"
+      },
+      "timeoutMilliSec" : "int",
+      "sndBuf" : "int",
+      "http" : {
+        "fsAccess" : "boolean",
+        "headers" : "map",
+        "versioning" : "boolean",
+        "uri" : {
+          "args" : "map"
+        }
+      },
+      "rcvBuf" : "int",
+      "tcpNoDelay" : "boolean"
+    },
     "driver" : {
       "limit" : {
         "queue" : {
@@ -78,7 +108,6 @@
       "type" : "string",
       "threads" : "int"
     },
-    "namespace" : "string",
     "auth" : {
       "uid" : "string",
       "file" : "string",
@@ -101,6 +130,7 @@
         "rate" : "double"
       },
       "recycle" : "boolean",
+      "weight" : "int",
       "shuffle" : "boolean",
       "type" : "string",
       "retry" : "boolean"

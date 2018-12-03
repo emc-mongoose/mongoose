@@ -23,5 +23,4 @@ Should Return Json
     ${expected_json_data} =  To Json  ${file_content}
     ${resp} =  Get Request  mongoose_node  ${uri_path}
     Should Be Equal As Strings  ${resp.status_code}  200
-    Log  ${resp.json()}
     Should Be Equal  ${expected_json_data}  ${resp.json()}
