@@ -17,7 +17,7 @@ Start Mongoose Node
     ...  docker run
     ...  --detach
     ...  --name mongoose_node
-    ...  --port ${MONGOOSE_NODE_PORT}:${MONGOOSE_NODE_PORT}
+    ...  --publish ${MONGOOSE_NODE_PORT}:${MONGOOSE_NODE_PORT}
     ...  ${MONGOOSE_IMAGE_NAME}:${image_version}
     ...  --run-node --load-step-id=robotest
     ${std_out} =  Run  ${cmd}
