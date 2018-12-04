@@ -207,12 +207,11 @@ public final class Main {
 		);
 		runServletHolder
 			.getRegistration()
-			.setMultipartConfig(
-				new MultipartConfigElement("", 16 * MIB, 16 * MIB, 16 * MIB)
-			);
+			.setMultipartConfig(new MultipartConfigElement("", 16 * MIB, 16 * MIB, 16 * MIB));
 		context.addServlet(runServletHolder, "/run/*");
 		try {
 			server.start();
+			Loggers.MSG.info("Started to serve the remote API @ port # " + port);
 			final int listenPort = configWithArgs.intVal("load-step-node-port");
 			try(
 				final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
