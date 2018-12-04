@@ -492,6 +492,7 @@ task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage
 		"HOST_WORKING_DIR": rootProject.projectDir.absolutePath,
 		"MONGOOSE_VERSION": version,
 		"MONGOOSE_IMAGE_VERSION": version,
+		"SERVICE_HOST": "localhost",
 		"SUITE": System.getenv("SUITE"),
 		"TEST": System.getenv("TEST"),
 	]

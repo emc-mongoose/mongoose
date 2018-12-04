@@ -14,8 +14,9 @@ services:
 stages:
   - build
   - deploy_docker_image
-  - test_functional # functional containerized tests
+  - test_functional_legacy
   - test # unit/integration tests
+  - test_functional # functional containerized tests
   - deploy
 
 before_script:
@@ -55,6 +56,7 @@ deploy_mongoose_image:
     HOST_WORKING_DIR: ${CI_PROJECT_DIR}
     MONGOOSE_IMAGE_VERSION: ${CI_COMMIT_SHA}
     PYTHONPATH: ${PYTHONPATH}:/usr/lib/python2.7/site-packages
+    SERVICE_HOST: docker # should be used instead of the "localhost" in GL CI
   before_script:
     - apk add --no-cache --update python py-pip
     - pip install -U virtualenv
@@ -91,8 +93,9 @@ test_api_storage_s3:
     TEST: s3
 
 .test_system_legacy:
-  stage: test_functional
+  stage: test_functional_legacy
   variables:
+    HOST_WORKING_DIR: ${CI_PROJECT_DIR}
     MONGOOSE_IMAGE_VERSION: ${CI_COMMIT_SHA}
   script:
     - ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}
