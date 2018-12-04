@@ -52,6 +52,8 @@ deploy_mongoose_image:
 .test_robot:
   stage: test_functional
   variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_DRIVER: overlay2
     HOST_WORKING_DIR: ${CI_PROJECT_DIR}
     MONGOOSE_IMAGE_VERSION: ${CI_COMMIT_SHA}
     PYTHONPATH: ${PYTHONPATH}:/usr/lib/python2.7/site-packages
