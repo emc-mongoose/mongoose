@@ -12,6 +12,6 @@ public interface MongooseContainer {
 	String ENTRYPOINT_LIMIT_HEAP_1GB = "/opt/mongoose/entrypoint_limit_heap_1GB.sh";
 	String CONTAINER_SHARE_PATH = MongooseEntryNodeContainer.CONTAINER_HOME_PATH + "/share";
 	Path HOST_SHARE_PATH = Paths.get(MongooseEntryNodeContainer.APP_HOME_DIR, "share");
-	String IMAGE_VERSION = System.getenv("MONGOOSE_VERSION");
+	String IMAGE_VERSION = System.getenv("MONGOOSE_IMAGE_VERSION");
 	long ENDURANCE_TEST_MEMORY_LIMIT = SizeInBytes.toFixedSize("3GB");
 }
