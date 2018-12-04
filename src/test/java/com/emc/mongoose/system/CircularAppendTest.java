@@ -123,7 +123,7 @@ import java.util.stream.Collectors;
 						HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
 						HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
 					);
-					final String addr = Docker.Container.serviceHost() + HttpStorageMockContainer.DEFAULT_PORT;
+					final String addr = Docker.Container.serviceHost() + ":" + HttpStorageMockContainer.DEFAULT_PORT;
 					storageMocks.put(addr, storageMock);
 				} catch(final Throwable cause) {
 					cause.printStackTrace();
@@ -143,7 +143,7 @@ import java.util.stream.Collectors;
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
 					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
 					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
-					final String addr = Docker.Container.serviceHost() + port;
+					final String addr = Docker.Container.serviceHost() + ":" + port;
 					additionalNodes.put(addr, nodeSvc);
 				}
 				args.add(
