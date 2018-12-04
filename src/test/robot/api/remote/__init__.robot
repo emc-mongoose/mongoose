@@ -17,16 +17,16 @@ Start Mongoose Node
     ...  docker run
     ...  --detach
     ...  --name mongoose_node
-    ...  --network host
+    ...  --publish ${MONGOOSE_NODE_PORT}:${MONGOOSE_NODE_PORT}
     ...  ${MONGOOSE_IMAGE_NAME}:${image_version}
     ...  --run-node --load-step-id=robotest
     ${std_out} =  Run  ${cmd}
     Log  ${std_out}
-    ${debug_out_0} =  Run  docker ps --no-trunc
-    Log  ${debug_out_0}
-    ${debug_out_1} =  Run  netstat -an
-    Log  ${debug_out_1}
-    Create Session  mongoose_node  http://localhost:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
+    ${debug_0} =  Run  docker port mongoose_node
+    Log  ${debug_0}
+    ${debug_1} =  Run  ip a
+    Log  ${debug_1}
+    Create Session  mongoose_node  http://172.17.0.1:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
 
 Remove Mongoose Node
     Delete All Sessions
