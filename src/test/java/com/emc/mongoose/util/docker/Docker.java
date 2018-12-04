@@ -20,5 +20,14 @@ public interface Docker {
 		String stdOutContent();
 
 		String stdErrContent();
+
+		static String serviceHost() {
+			final String serviceHost = System.getenv("SERVICE_HOST");
+			if(null == serviceHost || serviceHost.isEmpty()) {
+				return "127.0.0.1";
+			} else {
+				return serviceHost;
+			}
+		}
 	}
 }
