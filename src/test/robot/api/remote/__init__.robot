@@ -23,9 +23,9 @@ Start Mongoose Node
     ${std_out} =  Run  ${cmd}
     Run  sleep 10
     Log  ${std_out}
-    ${debug_0} =  Run  ps alx | grep java
+    ${debug_0} =  Run  "ps alx | grep java"
     Log  ${debug_0|
-    ${debug_1} =  Run  sleep 1 | telnet 127.0.0.1 9999
+    ${debug_1} =  Run  "sleep 1 | telnet 127.0.0.1 9999"
     Log  ${debug_1|
     Create Session  mongoose_node  http://127.0.0.1:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
 
