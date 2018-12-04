@@ -8,7 +8,7 @@ Suite Teardown  Remove Mongoose Node
 
 *** Variables ***
 ${MONGOOSE_IMAGE_NAME} =  emcmongoose/mongoose
-${MONGOOSE_NODE_PORT} =  9999
+${MONGOOSE_NODE_PORT} =  9000
 
 *** Keywords ***
 Start Mongoose Node
@@ -19,14 +19,14 @@ Start Mongoose Node
     ...  --name mongoose_node
     ...  --publish ${MONGOOSE_NODE_PORT}:${MONGOOSE_NODE_PORT}
     ...  ${MONGOOSE_IMAGE_NAME}:${image_version}
-    ...  --run-node --load-step-id=robotest
+    ...  --load-step-id=robotest --run-node --run-port=${MONGOOSE_NODE_PORT}
     ${std_out} =  Run  ${cmd}
     Log  ${std_out}
     ${debug_0} =  Run  docker port mongoose_node
     Log  ${debug_0}
     ${debug_1} =  Run  ip a
     Log  ${debug_1}
-    Create Session  mongoose_node  http://172.17.0.1:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
+    Create Session  mongoose_node  http://localhost:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
 
 Remove Mongoose Node
     Delete All Sessions
