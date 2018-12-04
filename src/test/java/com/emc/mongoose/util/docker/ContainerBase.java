@@ -11,6 +11,7 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public abstract class ContainerBase
 extends AsyncRunnableBase
@@ -37,6 +39,7 @@ implements Docker.Container {
 	private final List<String> env;
 	private final Map<String, Path> volumeBinds;
 	private final boolean attachOutputFlag;
+	protected final int[] ports;
 	private final StringBuilder stdOutBuff;
 	private final StringBuilder stdErrBuff;
 	private final ResultCallback<Frame> streamsCallback;
@@ -46,14 +49,14 @@ implements Docker.Container {
 
 	protected ContainerBase(
 		final String version, final List<String> env, final Map<String, Path> volumeBinds,
-		final boolean attachOutputFlag, final boolean collectOutputFlag
+		final boolean attachOutputFlag, final boolean collectOutputFlag, final int... ports
 	) throws InterruptedException {
-		this(version, env, volumeBinds, attachOutputFlag, collectOutputFlag, DEFAULT_MEMORY_LIMIT);
+		this(version, env, volumeBinds, attachOutputFlag, collectOutputFlag, DEFAULT_MEMORY_LIMIT, ports);
 	}
 
 	protected ContainerBase(
 		final String version, final List<String> env, final Map<String, Path> volumeBinds,
-		final boolean attachOutputFlag, final boolean collectOutputFlag, final long memoryLimit
+		final boolean attachOutputFlag, final boolean collectOutputFlag, final long memoryLimit, final int... ports
 	) throws InterruptedException {
 		this.version = (version == null || version.isEmpty()) ? DEFAULT_IMAGE_VERSION : version;
 		this.env = env;
@@ -68,6 +71,7 @@ implements Docker.Container {
 		}
 		streamsCallback = new ContainerOutputCallback(stdOutBuff, stdErrBuff);
 		this.memoryLimit = memoryLimit;
+		this.ports = ports;
 		final String imageNameWithVer = imageName() + ":" + this.version;
 		try {
 			Docker.CLIENT.inspectImageCmd(imageNameWithVer).exec();
@@ -118,9 +122,14 @@ implements Docker.Container {
 		final String imageNameWithVer = imageName() + ":" + this.version;
 		final List<String> args = containerArgs();
 		LOG.info("Docker container args: " + Arrays.toString(args.toArray(new String[]{})));
+		final List<ExposedPort> exposedPorts = Arrays
+			.stream(ports)
+			.mapToObj(ExposedPort::new)
+			.collect(Collectors.toList());
 		final CreateContainerCmd createContainerCmd = Docker.CLIENT
 			.createContainerCmd(imageNameWithVer)
 			.withName(imageName().replace('/', '_') + '_' + this.hashCode())
+			.withExposedPorts(exposedPorts)
 			.withCmd(args);
 		if(env != null && !env.isEmpty()) {
 			createContainerCmd.withEnv(env);
@@ -131,7 +140,7 @@ implements Docker.Container {
 				.withAttachStderr(attachOutputFlag);
 		}
 		final HostConfig hostConfig = HostConfig.newHostConfig()
-			.withPublishAllPorts(true)
+			.withNetworkMode("host")
 			.withMemory(memoryLimit);
 		if(volumeBinds != null && !volumeBinds.isEmpty()) {
 			final List<Volume> volumes = new ArrayList<>(volumeBinds.size());

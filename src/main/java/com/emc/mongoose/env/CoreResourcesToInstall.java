@@ -107,7 +107,6 @@ public final class CoreResourcesToInstall extends InstallableJarResources {
     final String pad = StringUtils.repeat("#", (120 - msg.length()) / 2);
     System.out.println(pad + msg + pad);
     appHomePath = Paths.get(USER_HOME, "." + APP_NAME, appVersion);
-    System.out.println("Home: " + appHomePath);
   }
 
   public final Path appHomePath() {

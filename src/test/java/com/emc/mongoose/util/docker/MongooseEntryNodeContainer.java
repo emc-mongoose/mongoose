@@ -5,6 +5,8 @@ import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.Constants.USER_HOME;
 import static com.emc.mongoose.config.CliArgUtil.ARG_PATH_SEP;
 import static com.emc.mongoose.util.TestCaseUtil.snakeCaseName;
+import static com.emc.mongoose.util.docker.MongooseContainer.PORT_DEBUG;
+import static com.emc.mongoose.util.docker.MongooseContainer.PORT_JMX;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
 import com.emc.mongoose.params.Concurrency;
@@ -194,7 +196,9 @@ public final class MongooseEntryNodeContainer extends ContainerBase {
         VOLUME_BINDS,
         attachOutputFlag,
         collectOutputFlag,
-        memoryLimit);
+        memoryLimit,
+        PORT_DEBUG,
+        PORT_JMX);
     this.args = args;
     this.args.add("--load-step-id=" + stepId);
     this.args.add("--storage-driver-limit-concurrency=" + concurrency.getValue());
