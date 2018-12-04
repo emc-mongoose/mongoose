@@ -40,7 +40,7 @@ Start Mongoose Node
         ...  server /data
     ${std_out1} =  Run  ${cmd1}
     Log  ${std_out1}
-    Create Session  s3server  http://127.0.0.1:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
+    Create Session  s3server  http://127.0.0.1:9999  debug=1  timeout=1000  max_retries=10
 
 Remove Mongoose Node
     Delete All Sessions
