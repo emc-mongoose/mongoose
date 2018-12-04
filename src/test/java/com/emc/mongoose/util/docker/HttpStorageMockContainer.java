@@ -29,6 +29,7 @@ extends ContainerBase {
 	private final int failResponsesEvery;
 	private final boolean sslFlag;
 	private final double rateLimit;
+	private final int port;
 
 	public HttpStorageMockContainer(
 		final int port, final boolean sslFlag, final String itemInputFile,
@@ -36,7 +37,7 @@ extends ContainerBase {
 		final int capacity, final int containerCountLimit, final int containerCapacity,
 		final int failConnectEvery, final int failResponsesEvery, final double rateLimit
 	) throws Exception {
-		super(DEFAULT_IMAGE_VERSION, emptyList(), emptyMap(), false, false, port);
+		super(DEFAULT_IMAGE_VERSION, emptyList(), emptyMap(), false, false);
 		this.itemInputFile = itemInputFile;
 		this.itemNamingPrefix = itemNamingPrefix;
 		this.itemNamingRadix = itemNamingRadix;
@@ -47,6 +48,7 @@ extends ContainerBase {
 		this.failResponsesEvery = failResponsesEvery;
 		this.sslFlag = sslFlag;
 		this.rateLimit = rateLimit;
+		this.port = port;
 	}
 
 	@Override
@@ -71,7 +73,7 @@ extends ContainerBase {
 		cmd.add("--storage-mock-container-countLimit=" + containerCountLimit);
 		cmd.add("--storage-mock-fail-connections=" + failConnectEvery);
 		cmd.add("--storage-mock-fail-responses=" + failResponsesEvery);
-		cmd.add("--storage-net-node-port=" + ports[0]);
+		cmd.add("--storage-net-node-port=" + port);
 		cmd.add("--storage-net-ssl=" + sslFlag);
 		cmd.add("--test-step-limit-rate=" + rateLimit);
 		return cmd;

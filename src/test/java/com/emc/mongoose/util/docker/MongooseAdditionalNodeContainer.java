@@ -23,6 +23,8 @@ public final class MongooseAdditionalNodeContainer extends ContainerBase {
         }
       };
 
+  private final int port;
+
   public MongooseAdditionalNodeContainer() throws InterruptedException {
     this(MongooseContainer.IMAGE_VERSION, DEFAULT_PORT);
   }
@@ -38,7 +40,8 @@ public final class MongooseAdditionalNodeContainer extends ContainerBase {
 
   public MongooseAdditionalNodeContainer(
       final String version, final int svcPort, final long memoryLimit) throws InterruptedException {
-    super(version, emptyList(), VOLUME_BINDS, false, false, memoryLimit, svcPort);
+    super(version, emptyList(), VOLUME_BINDS, false, false, memoryLimit);
+    this.port = svcPort;
   }
 
   @Override
@@ -51,7 +54,7 @@ public final class MongooseAdditionalNodeContainer extends ContainerBase {
     return Arrays.asList(
         "--run-node",
         // ports[0] contains the svcPort constructor arg value
-        "--load-step-node-port=" + ports[0],
+        "--load-step-node-port=" + port,
         "--run-port=" + ADDITIONAL_PORT);
   }
 

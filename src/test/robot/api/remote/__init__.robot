@@ -13,6 +13,8 @@ ${MONGOOSE_NODE_PORT} =  9999
 *** Keywords ***
 Start Mongoose Node
     ${image_version} =  Get Environment Variable  MONGOOSE_IMAGE_VERSION
+    # ${service_host} should be used instead of the "localhost" in GL CI
+    ${service_host} =  Get Environment Variable  SERVICE_HOST
     ${cmd} =  Catenate  SEPARATOR= \\\n\t
     ...  docker run
     ...  --detach
@@ -22,11 +24,9 @@ Start Mongoose Node
     ...  --load-step-id=robotest --run-node
     ${std_out} =  Run  ${cmd}
     Log  ${std_out}
-    Create Session  mongoose_node  http://docker:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
+    Create Session  mongoose_node  http://${service_host}:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
 
 Remove Mongoose Node
     Delete All Sessions
     Run  docker stop mongoose_node
-    ${std_out} =  Run  docker logs mongoose_node
-    Log  ${std_out}
     Run  docker rm mongoose_node
