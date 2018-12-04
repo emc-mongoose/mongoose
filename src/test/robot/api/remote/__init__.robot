@@ -22,10 +22,6 @@ Start Mongoose Node
     ...  --load-step-id=robotest --run-node
     ${std_out} =  Run  ${cmd}
     Log  ${std_out}
-    ${debug_tmp_0} =  Run  ip a
-    Log  ${debug_tmp_0}
-    ${debug_tmp_1} =  Run  cat /etc/hosts
-    Log  ${debug_tmp_1}
     Create Session  mongoose_node  http://docker:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
 
 Remove Mongoose Node
