@@ -22,7 +22,7 @@ Start Mongoose Node
     ...  --load-step-id=robotest --run-node
     ${std_out} =  Run  ${cmd}
     Log  ${std_out}
-    Create Session  mongoose_node  http://172.17.0.4:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
+    Create Session  mongoose_node  http://127.0.0.1:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
 
 Remove Mongoose Node
     Delete All Sessions
