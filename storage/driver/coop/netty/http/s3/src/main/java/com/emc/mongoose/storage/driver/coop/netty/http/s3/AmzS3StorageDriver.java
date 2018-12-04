@@ -130,7 +130,7 @@ extends HttpStorageDriverBase<I, O> {
 		boolean bucketExistedBefore = true;
 		if(checkBucketResp != null) {
 			if(!HttpStatusClass.SUCCESS.equals(checkBucketResp.status().codeClass())) {
-				Loggers.ERR.warn("The bucket checking response is: {}", checkBucketResp.status().toString());
+				Loggers.MSG.info("The bucket checking response is: {}", checkBucketResp.status().toString());
 				bucketExistedBefore = false;
 			}
 			checkBucketResp.release();
