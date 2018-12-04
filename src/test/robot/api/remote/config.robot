@@ -11,7 +11,7 @@ ${MONGOOSE_CONFIG_SCHEMA_URI_PATH}=  ${MONGOOSE_CONFIG_URI_PATH}/schema
 
 *** Test Cases ***
 Should Do Something
-    ${resp} =  Get Request  nginx0  /
+    ${resp} =  Get Request  s3server  /
     Should Be Equal As Strings  ${resp.status_code}  200
 
 Should Return Aggregated Defaults
