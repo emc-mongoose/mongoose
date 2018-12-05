@@ -4,6 +4,7 @@ Force Tags  S3
 Library  Collections
 Library  CSVLibrary
 Library  OperatingSystem
+Library  Validation
 Test Setup  Start S3 Server
 Test Teardown  Remove Containers
 
@@ -24,7 +25,6 @@ ${MONGOOSE_SHARED_ARGS} =  --storage-driver-type=s3 --storage-net-node-port=${S3
 Should Copy Objects Using Bucket Listing
     ${step_id} =  Set Variable  copy_objects_using_bucket_listing
     Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
-    ${image_version} =  Get Environment Variable  MONGOOSE_IMAGE_VERSION
     ${args} =  Catenate  SEPARATOR= \\\n\t
     ...  --item-data-size=10KB
     ...  --load-op-limit-count=1000
@@ -33,12 +33,30 @@ Should Copy Objects Using Bucket Listing
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/copy_using_input_path.js
     &{env_params} =  Create Dictionary  ITEM_SRC_PATH=/bucket0  ITEM_DST_PATH=/bucket1
     ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
-    # TODO validate stdout
     Log  ${std_out}
-    Validate Metrics Total Log File  ${step_id}  CREATE  1000  0  10240000
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=1000  count_succ_max=1000  count_fail_max=0
+    ...  transfer_size=10240000
 
 Should Create Objects Using Multipart Upload
-    Pass Execution  "TODO"
+    ${step_id} =  Set Variable  create_objects_using_multipart_upload
+    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
+    Remove File  ${DATA_DIR}/${step_id}.csv
+    ${args} =  Catenate  SEPARATOR= \\\n\t
+    ...  --item-data-ranges-threshold=100MB
+    ...  --item-data-size=256MB-1GB
+    ...  --item-output-file=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv
+    ...  --item-output-path=mpu
+    ...  --load-batch-size=1
+    ...  --load-step-limit-size=25GB
+    ...  --load-step-id=${step_id}
+    ...  --storage-driver-limit-concurrency=10
+    &{env_params} =  Create Dictionary
+    ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
+    Log  ${std_out}
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=25  count_succ_max=100  count_fail_max=0
+    ...  transfer_size=26843545600  transfer_size_delta=10000000
+    Validate Item Output File  item_output_file_name=${DATA_DIR}/${step_id}.csv  item_output_path=mpu
+    ...  item_size_min=268435456  item_size_max=1073741824
 
 Should Create Objects Using Multiple Buckets And Users
     Pass Execution  "TODO"
@@ -92,11 +110,3 @@ Remove Mongoose Container
 Remove Containers
     Remove S3 Server
     Remove Mongoose Container
-
-Validate Metrics Total Log File
-    [Arguments]  ${step_id}  ${op_type}  ${count_succ}  ${count_fail}  ${transfer_size}
-    @{metricsTotal} =  Read CSV File To Associative  ${LOG_DIR}/${step_id}/metrics.total.csv
-    Should Be Equal As Strings  &{metricsTotal[0]}[OpType]  ${op_type}
-    Should Be Equal As Strings  &{metricsTotal[0]}[CountSucc]  ${count_succ}
-    Should Be Equal As Strings  &{metricsTotal[0]}[CountFail]  ${count_fail}
-    Should Be Equal As Strings  &{metricsTotal[0]}[Size]  ${transfer_size}

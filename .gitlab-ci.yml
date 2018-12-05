@@ -53,7 +53,7 @@ deploy_mongoose_image:
   variables:
     HOST_WORKING_DIR: ${CI_PROJECT_DIR}
     MONGOOSE_IMAGE_VERSION: ${CI_COMMIT_SHA}
-    PYTHONPATH: ${PYTHONPATH}:/usr/lib/python2.7/site-packages
+    PYTHONPATH: ${PYTHONPATH}:/usr/lib/python2.7/site-packages:src/test/robot/lib
   before_script:
     - apk add --no-cache --update python py-pip
     - pip install -U virtualenv
