@@ -97,6 +97,7 @@ test_api_storage_s3:
   variables:
     HOST_WORKING_DIR: ${CI_PROJECT_DIR}
     MONGOOSE_IMAGE_VERSION: ${CI_COMMIT_SHA}
+    SERVICE_HOST: 127.0.0.1
   script:
     - ./gradlew systemTest --tests com.emc.mongoose.system.${TEST}
   artifacts:
