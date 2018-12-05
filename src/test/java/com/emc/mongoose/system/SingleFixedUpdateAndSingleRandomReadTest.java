@@ -8,7 +8,6 @@ import com.emc.mongoose.params.ItemSize;
 import com.emc.mongoose.params.RunMode;
 import com.emc.mongoose.params.StorageType;
 import com.emc.mongoose.util.DirWithManyFilesDeleter;
-import com.emc.mongoose.util.docker.Docker;
 import com.emc.mongoose.util.docker.HttpStorageMockContainer;
 import com.emc.mongoose.util.docker.MongooseEntryNodeContainer;
 import com.emc.mongoose.util.docker.MongooseAdditionalNodeContainer;
@@ -137,7 +136,7 @@ public class SingleFixedUpdateAndSingleRandomReadTest {
 					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
 					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
 				);
-				final String addr = Docker.Container.serviceHost() + ":" + HttpStorageMockContainer.DEFAULT_PORT;
+				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
 				storageMocks.put(addr, storageMock);
 				args.add("--storage-net-node-addrs=" + String.join(",", storageMocks.keySet()));
 				break;
@@ -154,7 +153,7 @@ public class SingleFixedUpdateAndSingleRandomReadTest {
 				for(int i = 1; i < runMode.getNodeCount(); i++) {
 					final int port = MongooseAdditionalNodeContainer.DEFAULT_PORT + i;
 					final MongooseAdditionalNodeContainer nodeSvc = new MongooseAdditionalNodeContainer(port);
-					final String addr = Docker.Container.serviceHost() + ":" + port;
+					final String addr = "127.0.0.1:" + port;
 					slaveNodes.put(addr, nodeSvc);
 				}
 				args.add("--load-step-node-addrs=" + String.join(",", slaveNodes.keySet()));
