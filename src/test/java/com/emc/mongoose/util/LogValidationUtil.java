@@ -75,6 +75,7 @@ public interface LogValidationUtil {
 	}
 
 	static File getLogFile(final String stepId, final String fileName) {
+		System.out.println("Get log file: + " + Paths.get(APP_HOME_DIR, "log", stepId, fileName).toFile());
 		return Paths.get(APP_HOME_DIR, "log", stepId, fileName).toFile();
 	}
 
@@ -159,9 +160,7 @@ public interface LogValidationUtil {
 		}
 	}
 
-	static void testOpTraceLogRecords(
-		final String stepId, final Consumer<CSVRecord> csvRecordTestFunc
-	)
+	static void testOpTraceLogRecords(final String stepId, final Consumer<CSVRecord> csvRecordTestFunc)
 	throws IOException {
 		final File logFile = getLogFile(stepId, "op.trace.csv");
 		waitLogFile(logFile);

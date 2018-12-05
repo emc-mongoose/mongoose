@@ -27,6 +27,8 @@ import com.github.akurilov.fiber4j.TransferFiber;
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
+import org.apache.logging.log4j.core.async.AsyncLogger;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -50,6 +52,16 @@ import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 public class LoadStepContextImpl<I extends Item, O extends Operation<I>>
 extends DaemonBase
 implements LoadStepContext<I, O> {
+
+	static {
+		((AsyncLogger) Loggers.OP_TRACES)
+			.getAppenders()
+			.values()
+			.stream()
+			.filter(appender -> appender instanceof RollingRandomAccessFileAppender)
+			.map(appender -> ((RollingRandomAccessFileAppender) appender).getFilePattern())
+			.forEach(t -> System.out.println("Logger output file: " + t));
+	}
 
 	private final String id;
 	private final LoadGenerator<I, O> generator;
