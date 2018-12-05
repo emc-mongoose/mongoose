@@ -81,9 +81,10 @@ public interface LogValidationUtil {
 			try {
 				File parent = logFile;
 				while(null != (parent = parent.getParentFile())) {
-					System.out.println(parent + " directory contents:");
-					Files.list(parent.toPath())
-						.forEach(System.out::println);
+					if(parent.exists()) {
+						System.out.println(parent + " directory contents:");
+						Files.list(parent.toPath()).forEach(System.out::println);
+					}
 				}
 			} catch(final IOException e) {
 				e.printStackTrace();
