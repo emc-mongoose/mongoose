@@ -75,7 +75,6 @@ public interface LogValidationUtil {
 	}
 
 	static File getLogFile(final String stepId, final String fileName) {
-		System.out.println("Get log file: + " + Paths.get(APP_HOME_DIR, "log", stepId, fileName).toFile());
 		return Paths.get(APP_HOME_DIR, "log", stepId, fileName).toFile();
 	}
 
