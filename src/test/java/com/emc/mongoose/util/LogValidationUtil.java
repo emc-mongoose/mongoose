@@ -26,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -75,7 +76,20 @@ public interface LogValidationUtil {
 	}
 
 	static File getLogFile(final String stepId, final String fileName) {
-		return Paths.get(APP_HOME_DIR, "log", stepId, fileName).toFile();
+		final File logFile = Paths.get(APP_HOME_DIR, "log", stepId, fileName).toFile();
+		if(!logFile.exists()) {
+			try {
+				File parent = logFile;
+				while(null != (parent = parent.getParentFile())) {
+					System.out.println(parent + " directory contents:");
+					Files.list(parent.toPath())
+						.forEach(System.out::println);
+				}
+			} catch(final IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return logFile;
 	}
 
 	static List<CSVRecord> waitAndGetLogFileCsvRecords(final File logFile)

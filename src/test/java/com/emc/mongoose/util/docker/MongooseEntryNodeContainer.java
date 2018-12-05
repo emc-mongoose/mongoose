@@ -117,7 +117,6 @@ extends ContainerBase {
 		final boolean collectOutputFlag, final boolean outputMetricsTracePersistFlag, final long memoryLimit
 	) throws InterruptedException {
 		super(version, env, VOLUME_BINDS, attachOutputFlag, collectOutputFlag, memoryLimit, PORT_DEBUG, PORT_JMX);
-		VOLUME_BINDS.entrySet().stream().forEach(e -> System.out.println("Bind volume: " + e.getKey() + " <-> " + e.getValue()));
 		this.args = args;
 		this.args.add("--load-step-id=" + stepId);
 		this.args.add("--storage-driver-limit-concurrency=" + concurrency.getValue());
