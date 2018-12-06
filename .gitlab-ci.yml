@@ -12,8 +12,8 @@ services:
 
 stages:
   - build
-  - deploy_docker_image
   - test # unit/integration tests
+  - deploy_docker_image
   - test_functional # functional containerized tests
   - deploy
 

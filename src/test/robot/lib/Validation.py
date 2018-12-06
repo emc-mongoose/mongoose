@@ -19,7 +19,7 @@ def validate_log_file_metrics_total(
 ):
 	log_file_name = '/'.join((log_dir, "metrics.total.csv"))
 	with open(log_file_name, "rb") as metrics_total_file:
-		reader = csv.DictReader(metrics_total_file, delimeter=',')
+		reader = csv.DictReader(metrics_total_file)
 		row_found = False
 		for row in reader:
 			if op_type == row["OpType"]:
