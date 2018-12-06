@@ -39,7 +39,7 @@ test_integration:
   - ./gradlew integrationTest
 
 deploy_mongoose_image:
-  stage: deploy_docker_image
+  stage: deploy_docker_images
   variables:
     DOCKERFILE: Dockerfile
     IMAGE_NAME: ${MONGOOSE_IMAGE_NAME}
