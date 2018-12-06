@@ -2,7 +2,6 @@
 Documentation  Mongoose S3 Storage Driver Tests
 Force Tags  S3
 Library  Collections
-Library  CSVLibrary
 Library  OperatingSystem
 Library  Validation
 Test Setup  Start S3 Server
@@ -16,7 +15,7 @@ ${S3_IMAGE_VERSION} =  latest
 ${S3_PORT} =  9000
 ${S3_UID} =  user1
 ${S3_SECRET_KEY} =  secretKey1
-${S3_STORAGE_CONTAINER_NAME} =  s3storage
+${S3_STORAGE_CONTAINER_NAME} =  s3_server
 ${MONGOOSE_CONTAINER_DATA_DIR} =  /data
 ${MONGOOSE_IMAGE_NAME} =  emcmongoose/mongoose
 ${MONGOOSE_SHARED_ARGS} =  --storage-driver-type=s3 --storage-net-node-port=${S3_PORT} --storage-auth-uid=${S3_UID} --storage-auth-secret=${S3_SECRET_KEY}
@@ -24,18 +23,19 @@ ${MONGOOSE_SHARED_ARGS} =  --storage-driver-type=s3 --storage-net-node-port=${S3
 *** Test Cases ***
 Should Copy Objects Using Bucket Listing
     ${step_id} =  Set Variable  copy_objects_using_bucket_listing
+    ${object_count_limit} =  Convert To Integer  1000
     Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
     ${args} =  Catenate  SEPARATOR= \\\n\t
     ...  --item-data-size=10KB
-    ...  --load-op-limit-count=1000
+    ...  --load-op-limit-count=${object_count_limit}
     ...  --load-step-id=${step_id}
     ...  --storage-driver-limit-concurrency=10
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/copy_using_input_path.js
     &{env_params} =  Create Dictionary  ITEM_SRC_PATH=/bucket0  ITEM_DST_PATH=/bucket1
-    ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
+    ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
-    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${1000}  count_succ_max=${1000}
-    ...  count_fail_max=${0}  transfer_size=${10240000}
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${object_count_limit}
+    ...  count_succ_max=${object_count_limit}  count_fail_max=${0}  transfer_size=${10240000}
 
 Should Create Objects Using Multipart Upload
     ${step_id} =  Set Variable  create_objects_using_multipart_upload
@@ -51,7 +51,7 @@ Should Create Objects Using Multipart Upload
     ...  --load-step-id=${step_id}
     ...  --storage-driver-limit-concurrency=10
     &{env_params} =  Create Dictionary
-    ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
+    ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${10}  count_succ_max=${100}
     ...  count_fail_max=${10}  transfer_size=${2147483648}  transfer_size_delta=${167772160}
@@ -84,28 +84,6 @@ Start S3 Server
 Remove S3 Server
     Run  docker stop ${S3_STORAGE_CONTAINER_NAME}
     Run  docker rm ${S3_STORAGE_CONTAINER_NAME}
-
-Execute Mongoose Scenario
-    [Arguments]  ${env}  ${args}
-    ${docker_env_vars} =  Evaluate  ' '.join(['-e %s=%s' % (key, value) for (key, value) in ${env}.items()])
-    ${host_working_dir} =  Get Environment Variable  HOST_WORKING_DIR
-    ${mongoose_version} =  Get Environment Variable  MONGOOSE_VERSION
-    ${image_version} =  Get Environment Variable  MONGOOSE_IMAGE_VERSION
-    ${cmd} =  Catenate  SEPARATOR= \\\n\t
-    ...  docker run
-    ...  --name mongoose
-    ...  --network host
-    ...  ${docker_env_vars}
-    ...  --volume ${host_working_dir}/${DATA_DIR}:${MONGOOSE_CONTAINER_DATA_DIR}
-    ...  --volume ${host_working_dir}/${LOG_DIR}:/root/.mongoose/${mongoose_version}/log
-    ...  ${MONGOOSE_IMAGE_NAME}:${image_version}
-    ...  ${MONGOOSE_SHARED_ARGS} ${args}
-    ${std_out} =  Run  ${cmd}
-    [Return]  ${std_out}
-
-Remove Mongoose Container
-    ${std_out} =  Run  docker rm mongoose
-    Log  ${std_out}
 
 Remove Containers
     Remove S3 Server
