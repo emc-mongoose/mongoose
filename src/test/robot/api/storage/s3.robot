@@ -47,14 +47,14 @@ Should Create Objects Using Multipart Upload
     ...  --item-output-file=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv
     ...  --item-output-path=mpu
     ...  --load-batch-size=1
-    ...  --load-step-limit-size=1GB
+    ...  --load-step-limit-size=2GB
     ...  --load-step-id=${step_id}
     ...  --storage-driver-limit-concurrency=10
     &{env_params} =  Create Dictionary
     ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
     Log  ${std_out}
-    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${11}  count_succ_max=${51}
-    ...  count_fail_max=${0}  transfer_size=${1073741824}  transfer_size_delta=${10240000}
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${10}  count_succ_max=${100}
+    ...  count_fail_max=${0}  transfer_size=${2147483648}  transfer_size_delta=${167772160}
     Validate Item Output File  item_output_file_name=${DATA_DIR}/${step_id}.csv  item_output_path=mpu
     ...  item_size_min=${20971520}  item_size_max=${104857600}
 
