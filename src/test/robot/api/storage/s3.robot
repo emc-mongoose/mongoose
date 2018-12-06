@@ -54,7 +54,7 @@ Should Create Objects Using Multipart Upload
     ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${10}  count_succ_max=${100}
-    ...  count_fail_max=${0}  transfer_size=${2147483648}  transfer_size_delta=${167772160}
+    ...  count_fail_max=${10}  transfer_size=${2147483648}  transfer_size_delta=${167772160}
     Validate Item Output File  item_output_file_name=${DATA_DIR}/${step_id}.csv  item_output_path=mpu
     ...  item_size_min=${20971520}  item_size_max=${104857600}
 
