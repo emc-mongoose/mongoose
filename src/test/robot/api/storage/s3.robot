@@ -34,8 +34,8 @@ Should Copy Objects Using Bucket Listing
     &{env_params} =  Create Dictionary  ITEM_SRC_PATH=/bucket0  ITEM_DST_PATH=/bucket1
     ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
     Log  ${std_out}
-    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=1000  count_succ_max=1000  count_fail_max=0
-    ...  transfer_size=10240000
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${1000}  count_succ_max=${1000}
+    ...  count_fail_max=${0}  transfer_size=${10240000}
 
 Should Create Objects Using Multipart Upload
     ${step_id} =  Set Variable  create_objects_using_multipart_upload
@@ -53,10 +53,10 @@ Should Create Objects Using Multipart Upload
     &{env_params} =  Create Dictionary
     ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
     Log  ${std_out}
-    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=11  count_succ_max=51  count_fail_max=0
-    ...  transfer_size=1073741824  transfer_size_delta=10240000
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${11}  count_succ_max=${51}
+    ...  count_fail_max=${0}  transfer_size=${1073741824}  transfer_size_delta=${10240000}
     Validate Item Output File  item_output_file_name=${DATA_DIR}/${step_id}.csv  item_output_path=mpu
-    ...  item_size_min=20971520  item_size_max=104857600
+    ...  item_size_min=${20971520}  item_size_max=${104857600}
 
 Should Create Objects Using Multiple Buckets And Users
     Pass Execution  "TODO"
