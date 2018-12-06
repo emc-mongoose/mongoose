@@ -1,6 +1,7 @@
 # Contents
 
 ## 2018
+* [4.1.0](#410) 2018-12-xx
 * [4.0.3](#403) 2018-11-28
 * [4.0.2](#402) 2018-11-13
 * [4.0.1](#401) 2018-10-08
@@ -54,6 +55,49 @@
 * [0.1.5](#015) 09/22/14
 * [0.1.4](#014) 09/17/14
 * [0.1.3](#013) 08/15/14
+
+# 4.1.0
+
+## New Features and Enhancements
+
+### Functional
+
+1. Remote API.
+
+    Implemented for the node mode. The available actions are:
+    1. Get Mongoose node configureation defaults
+    2. Get Mongoose node configureation schema
+    3. Run a scenario
+    4. Check the scenario if it is running
+    5. Stop the scenario if it is running
+    6. Get the specified log messages
+    7. Get the performance metrics for all running load steps in the Prometheus exporter format
+
+    Note that the metrics are being supplied in the [Prometheus exporter format](https://prometheus.io/docs/instrumenting/exposition_formats).
+
+2. Configurable Timing Metrics Quantiles
+
+    It's possible to supply the configurable quantiles for the timing metrics (duration/latency). This will work for all
+    the timing metrics supplied via the Remote API. The legacy metrics output way (standard output and log files) are
+    not affected and will continue to report the fixed set of predefinded quantiles: low quartile (0.25), median (0.5)
+    and high quartile (0.75).
+
+### Non-functional
+
+1. Mongoose source code migrated to Git Lab
+
+    New source code repository location: https://gitlab.com/emcmongoose/mongoose
+
+2. Git Lab CI is used instead of Travis CI
+
+    New CI location: https://gitlab.com/emcmongoose/mongoose/pipelines
+
+## Fixed Bugs
+
+| Id | Short Description |
+|----|-------------------|
+| [GOOSE-1293](https://mongoose-issues.atlassian.net/browse/GOOSE-1293) | Incorrect console rate output |
+| [GOOSE-1301](https://mongoose-issues.atlassian.net/browse/GOOSE-1293) | Auto installer overwrites the manually changed defaults every run
 
 # 4.0.3
 
