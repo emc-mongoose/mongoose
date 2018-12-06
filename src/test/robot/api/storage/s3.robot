@@ -42,21 +42,21 @@ Should Create Objects Using Multipart Upload
     Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
     Remove File  ${DATA_DIR}/${step_id}.csv
     ${args} =  Catenate  SEPARATOR= \\\n\t
-    ...  --item-data-ranges-threshold=100MB
-    ...  --item-data-size=256MB-1GB
+    ...  --item-data-ranges-threshold=16MB
+    ...  --item-data-size=20MB-100MB
     ...  --item-output-file=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv
     ...  --item-output-path=mpu
     ...  --load-batch-size=1
-    ...  --load-step-limit-size=25GB
+    ...  --load-step-limit-size=1GB
     ...  --load-step-id=${step_id}
     ...  --storage-driver-limit-concurrency=10
     &{env_params} =  Create Dictionary
     ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
     Log  ${std_out}
-    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=25  count_succ_max=100  count_fail_max=0
-    ...  transfer_size=26843545600  transfer_size_delta=10000000
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=11  count_succ_max=51  count_fail_max=0
+    ...  transfer_size=1073741824  transfer_size_delta=10240000
     Validate Item Output File  item_output_file_name=${DATA_DIR}/${step_id}.csv  item_output_path=mpu
-    ...  item_size_min=268435456  item_size_max=1073741824
+    ...  item_size_min=20971520  item_size_max=104857600
 
 Should Create Objects Using Multiple Buckets And Users
     Pass Execution  "TODO"
