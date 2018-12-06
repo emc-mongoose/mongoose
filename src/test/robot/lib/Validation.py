@@ -8,10 +8,10 @@ def validate_item_output_file(
 		for row in reader:
 			actual_item_output_path, actual_item_name = row[0].split('/', 1)
 			assert item_output_path == actual_item_output_path, \
-				"Item output path: '%s', expected: '%s'".format(actual_item_output_path, item_output_path)
+				"Item output path: '{}', expected: '{}".format(actual_item_output_path, item_output_path)
 			item_size = long(row[2])
-			assert item_size >= item_size_min, "Item size: %d, expected >= %d".format(item_size, item_size_min)
-			assert item_size <= item_size_max, "Item size: %d, expected <= %d".format(item_size, item_size_max)
+			assert item_size >= item_size_min, "Item size: {}, expected >= {}".format(item_size, item_size_min)
+			assert item_size <= item_size_max, "Item size: {}, expected <= {}".format(item_size, item_size_max)
 
 def validate_log_file_metrics_total(
 	log_dir, op_type="CREATE", count_succ_min=0, count_succ_max=9000000000000000000, count_fail_max=0,
@@ -25,17 +25,17 @@ def validate_log_file_metrics_total(
 			if op_type == row["OpType"]:
 				actual_count_succ = long(row["CountSucc"])
 				assert actual_count_succ <= count_succ_max, \
-					"Successful op count: %d, expected <= %d".format(actual_count_succ, count_succ_max)
+					"Successful op count: {}, expected <= {}".format(actual_count_succ, count_succ_max)
 				assert actual_count_succ >= count_succ_min, \
-					"Successful op count: %d, expected >= %d".format(actual_count_succ, count_succ_min)
+					"Successful op count: {}, expected >= {}".format(actual_count_succ, count_succ_min)
 				actual_count_fail = long(row["CountFail"])
 				assert actual_count_fail <= count_fail_max, \
-					"Failed op count: %d, expected <= %d".format(actual_count_fail, count_fail_max)
+					"Failed op count: {}, expected <= {}".format(actual_count_fail, count_fail_max)
 				actual_transfer_size = long(row["Size"])
 				assert actual_transfer_size <= transfer_size + transfer_size_delta, \
-					"Transfer size: %d, expected <= %d".format(transfer_size + transfer_size_delta)
+					"Transfer size: {}, expected <= {}".format(transfer_size, transfer_size + transfer_size_delta)
 				assert actual_transfer_size >= transfer_size - transfer_size_delta, \
-					"Transfer size: %d, expected >= %d".format(transfer_size - transfer_size_delta)
+					"Transfer size: {}, expected >= {}".format(transfer_sizem, transfer_size - transfer_size_delta)
 				row_found = True
 				break
 		assert row_found, "%s: row containing the record w/ op type '%s' was not found".format(log_file_name, op_type)
