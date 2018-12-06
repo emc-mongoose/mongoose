@@ -1,60 +1,60 @@
 # Contents
 
 ## 2018
-* [4.1.0](#410) 2018-12-xx
-* [4.0.3](#403) 2018-11-28
-* [4.0.2](#402) 2018-11-13
-* [4.0.1](#401) 2018-10-08
-* [4.0.0](#400) 2018-10-01
-* [3.6.2](#362) 08/08/18
-* [3.6.1](#361) 03/26/18
+* [4.1.0](#anchor-410) 2018-12-xx
+* [4.0.3](#anchor-403) 2018-11-28
+* [4.0.2](#anchor-402) 2018-11-13
+* [4.0.1](#anchor-401) 2018-10-08
+* [4.0.0](#anchor-400) 2018-10-01
+* [3.6.2](#anchor-362) 08/08/18
+* [3.6.1](#anchor-361) 03/26/18
 
 ## 2017
-* [3.6.0](#360) 12/24/17
-* [3.5.1](#351) 11/05/17
-* [3.4.2](#342) 08/18/17
-* [3.3.0](#330)
-* [3.2.1](#321)
-* [3.1.0](#310) 01/31/17
-* [3.0.5](#305) 01/16/17
+* [3.6.0](#anchor-360) 12/24/17
+* [3.5.1](#anchor-351) 11/05/17
+* [3.4.2](#anchor-342) 08/18/17
+* [3.3.0](#anchor-330)
+* [3.2.1](#anchor-321)
+* [3.1.0](#anchor-310) 01/31/17
+* [3.0.5](#anchor-305) 01/16/17
 
 ## 2016
-* [2.5.6](#256) 12/21/16
-* [2.4.3](#243) 08/19/16
-* [2.2.0](#220) 06/01/16
-* [2.1.0](#210) 05/13/16
-* [2.0.0](#200) 05/06/16
-* [1.4.1](#141)
-* [1.4.0](#140)
-* [1.3.2](#132) 02/26/16
-* [1.3.0](#130) 02/18/16
-* [1.2.2](#122) 01/21/16
+* [2.5.6](#anchor-256) 12/21/16
+* [2.4.3](#anchor-243) 08/19/16
+* [2.2.0](#anchor-220) 06/01/16
+* [2.1.0](#anchor-210) 05/13/16
+* [2.0.0](#anchor-200) 05/06/16
+* [1.4.1](#anchor-141)
+* [1.4.0](#anchor-140)
+* [1.3.2](#anchor-132) 02/26/16
+* [1.3.0](#anchor-130) 02/18/16
+* [1.2.2](#anchor-122) 01/21/16
 
 ## 2015
-* [1.2.0](#120) 12/19/15
-* [1.1.3](#113) 11/18/15
-* [1.1.2](#112) 11/18/15
-* [1.1.1](#111) 11/13/15
-* [1.1.0](#110)
-* [1.0.2](#102) 10/26/15
-* [1.0.1](#101) 10/15/15
-* [1.0.0](#100) 10/08/15
-* [0.9.0](#090) 08/27/15
-* [0.8.0](#080) 05/15/15
-* [0.7.0](#070) 04/28/15
-* [0.6.4](#064) 03/30/15
-* [0.6.3](#063)
-* [0.6](#06) 03/02/15
-* [0.5](#05) 01/13/15
+* [1.2.0](#anchor-120) 12/19/15
+* [1.1.3](#anchor-113) 11/18/15
+* [1.1.2](#anchor-112) 11/18/15
+* [1.1.1](#anchor-111) 11/13/15
+* [1.1.0](#anchor-110)
+* [1.0.2](#anchor-102) 10/26/15
+* [1.0.1](#anchor-101) 10/15/15
+* [1.0.0](#anchor-100) 10/08/15
+* [0.9.0](#anchor-090) 08/27/15
+* [0.8.0](#anchor-080) 05/15/15
+* [0.7.0](#anchor-070) 04/28/15
+* [0.6.4](#anchor-064) 03/30/15
+* [0.6.3](#anchor-063)
+* [0.6](#anchor-06) 03/02/15
+* [0.5](#anchor-05) 01/13/15
 
 ## 2014
-* [0.4](#04) 11/27/14
-* [0.3](#03) 10/30/14
-* [0.2](#02) 10/10/14
-* [0.1.6](#016) 09/29/14
-* [0.1.5](#015) 09/22/14
-* [0.1.4](#014) 09/17/14
-* [0.1.3](#013) 08/15/14
+* [0.4](#anchor-04) 11/27/14
+* [0.3](#anchor-03) 10/30/14
+* [0.2](#anchor-02) 10/10/14
+* [0.1.6](#anchor-016) 09/29/14
+* [0.1.5](#anchor-015) 09/22/14
+* [0.1.4](#anchor-014) 09/17/14
+* [0.1.3](#anchor-013) 08/15/14
 
 # 4.1.0
 
@@ -62,35 +62,35 @@
 
 ### Functional
 
-1. Remote API.
+#### 1. Remote API.
 
-    Implemented for the node mode. The available actions are:
-    1. Get Mongoose node configureation defaults
-    2. Get Mongoose node configureation schema
-    3. Run a scenario
-    4. Check the scenario if it is running
-    5. Stop the scenario if it is running
-    6. Get the specified log messages
-    7. Get the performance metrics for all running load steps in the Prometheus exporter format
+Implemented for the node mode. The available actions are:
+1. Get Mongoose node configureation defaults
+2. Get Mongoose node configureation schema
+3. Run a scenario
+4. Check the scenario if it is running
+5. Stop the scenario if it is running
+6. Get the specified log messages
+7. Get the performance metrics for all running load steps in the Prometheus exporter format
 
-    Note that the metrics are being supplied in the [Prometheus exporter format](https://prometheus.io/docs/instrumenting/exposition_formats).
+Note that the metrics are being supplied in the [Prometheus exporter format](https://prometheus.io/docs/instrumenting/exposition_formats).
 
-2. Configurable Timing Metrics Quantiles
+#### 2. Configurable Timing Metrics Quantiles
 
-    It's possible to supply the configurable quantiles for the timing metrics (duration/latency). This will work for all
-    the timing metrics supplied via the Remote API. The legacy metrics output way (standard output and log files) are
-    not affected and will continue to report the fixed set of predefinded quantiles: low quartile (0.25), median (0.5)
-    and high quartile (0.75).
+It's possible to supply the configurable quantiles for the timing metrics (duration/latency). This will work for all
+the timing metrics supplied via the Remote API. The legacy metrics output way (standard output and log files) are
+not affected and will continue to report the fixed set of predefinded quantiles: low quartile (0.25), median (0.5)
+and high quartile (0.75).
 
 ### Non-functional
 
-1. Mongoose source code migrated to Git Lab
+#### 1. Mongoose source code migrated to Git Lab
 
-    New source code repository location: https://gitlab.com/emcmongoose/mongoose
+New source code repository location: https://gitlab.com/emcmongoose/mongoose
 
-2. Git Lab CI is used instead of Travis CI
+#### 2. Git Lab CI is used instead of Travis CI
 
-    New CI location: https://gitlab.com/emcmongoose/mongoose/pipelines
+New CI location: https://gitlab.com/emcmongoose/mongoose/pipelines
 
 ## Fixed Bugs
 
