@@ -4,6 +4,7 @@ Force Tags  S3
 Library  Collections
 Library  OperatingSystem
 Library  Validation
+Resource  MongooseContainer.robot
 Test Setup  Start S3 Server
 Test Teardown  Remove Containers
 
@@ -16,8 +17,6 @@ ${S3_PORT} =  9000
 ${S3_UID} =  user1
 ${S3_SECRET_KEY} =  secretKey1
 ${S3_STORAGE_CONTAINER_NAME} =  s3_server
-${MONGOOSE_CONTAINER_DATA_DIR} =  /data
-${MONGOOSE_IMAGE_NAME} =  emcmongoose/mongoose
 ${MONGOOSE_SHARED_ARGS} =  --storage-driver-type=s3 --storage-net-node-port=${S3_PORT} --storage-auth-uid=${S3_UID} --storage-auth-secret=${S3_SECRET_KEY}
 
 *** Test Cases ***
@@ -32,7 +31,7 @@ Should Copy Objects Using Bucket Listing
     ...  --storage-driver-limit-concurrency=10
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/copy_using_input_path.js
     &{env_params} =  Create Dictionary  ITEM_SRC_PATH=/bucket0  ITEM_DST_PATH=/bucket1
-    ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${object_count_limit}
     ...  count_succ_max=${object_count_limit}  count_fail_max=${0}  transfer_size=${10240000}
@@ -51,7 +50,7 @@ Should Create Objects Using Multipart Upload
     ...  --load-step-id=${step_id}
     ...  --storage-driver-limit-concurrency=10
     &{env_params} =  Create Dictionary
-    ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${10}  count_succ_max=${100}
     ...  count_fail_max=${10}  transfer_size=${2147483648}  transfer_size_delta=${167772160}
