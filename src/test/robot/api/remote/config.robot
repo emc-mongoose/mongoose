@@ -1,11 +1,11 @@
 *** Settings ***
 Documentation  Mongoose Config API tests
-Force Tags  Config API
+Force Tags  Config
 Library  OperatingSystem
 Library  RequestsLibrary
 
 *** Variables ***
-${DATA_DIR} =  src/test/robot/data
+${DATA_DIR} =  src/test/robot/api/remote/data
 ${MONGOOSE_CONFIG_URI_PATH}=  /config
 ${MONGOOSE_CONFIG_SCHEMA_URI_PATH}=  ${MONGOOSE_CONFIG_URI_PATH}/schema
 
@@ -23,5 +23,4 @@ Should Return Json
     ${expected_json_data} =  To Json  ${file_content}
     ${resp} =  Get Request  mongoose_node  ${uri_path}
     Should Be Equal As Strings  ${resp.status_code}  200
-    Log  ${resp.json()}
     Should Be Equal  ${expected_json_data}  ${resp.json()}

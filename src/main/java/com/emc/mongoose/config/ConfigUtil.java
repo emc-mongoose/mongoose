@@ -43,19 +43,21 @@ public interface ConfigUtil {
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 	}
 
+	public static ObjectWriter writerWithPrettyPrinter(final ObjectMapper om) {
+		final DefaultPrettyPrinter.Indenter indenter = new DefaultIndenter("  ", DefaultIndenter.SYS_LF);
+		final DefaultPrettyPrinter printer = new DefaultPrettyPrinter();
+		printer.indentObjectsWith(indenter);
+		printer.indentArraysWith(indenter);
+		om.enable(SerializationFeature.INDENT_OUTPUT);
+		return om.writer(printer);
+	}
+
 	static ObjectWriter configWriter() {
 		final JsonSerializer<Config> serializer = new ConfigJsonSerializer(Config.class);
 		final Module module = new SimpleModule().addSerializer(Config.class, serializer);
 		final ObjectMapper mapper = new ObjectMapper()
-			.registerModule(module)
-			.enable(SerializationFeature.INDENT_OUTPUT);
-		final DefaultPrettyPrinter.Indenter indenter = new DefaultIndenter(
-			"\t", DefaultIndenter.SYS_LF
-		);
-		final DefaultPrettyPrinter printer = new DefaultPrettyPrinter();
-		printer.indentObjectsWith(indenter);
-		printer.indentArraysWith(indenter);
-		return mapper.writer(printer);
+			.registerModule(module);
+		return writerWithPrettyPrinter(mapper);
 	}
 
 	static String toString(final Config config) {

@@ -1,6 +1,7 @@
 package com.emc.mongoose.control;
 
 import com.emc.mongoose.config.ConfigUtil;
+import static com.emc.mongoose.config.ConfigUtil.writerWithPrettyPrinter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -8,7 +9,7 @@ import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.io.json.TypeNames;
 
 import java.io.IOException;
-import javax.servlet.ServletException;
+import java.io.PrintWriter;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -43,20 +44,23 @@ extends HttpServlet {
 
 	private void getSchema(final HttpServletResponse resp)
 	throws IOException {
-		String schemaStr = new ObjectMapper()
-			.writerWithDefaultPrettyPrinter()
+		String schemaStr = writerWithPrettyPrinter(new ObjectMapper())
 			.writeValueAsString(config.schema());
 		for(final String k : TypeNames.MAP.keySet()) {
 			final String v = TypeNames.MAP.get(k).getTypeName();
 			schemaStr = schemaStr.replaceAll(v, k);
 		}
 		resp.setStatus(HttpServletResponse.SC_OK);
-		resp.getWriter().print(schemaStr);
+		final PrintWriter respWriter = resp.getWriter();
+		respWriter.print(schemaStr);
+		respWriter.println();
 	}
 
 	private void getConfig(final HttpServletResponse resp)
 	throws IOException {
 		resp.setStatus(HttpServletResponse.SC_OK);
-		resp.getWriter().print(ConfigUtil.toString(config));
+		final PrintWriter respWriter = resp.getWriter();
+		respWriter.print(ConfigUtil.toString(config));
+		respWriter.println();
 	}
 }

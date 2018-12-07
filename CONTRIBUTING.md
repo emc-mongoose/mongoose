@@ -234,6 +234,8 @@ export ITEM_SIZE=large
 ### 4.1.5. Robot Tests
 
 ```bash
+export SUITE=<SUITE>
+export TEST=<TEST>
 ./gradlew robotest
 ```
 

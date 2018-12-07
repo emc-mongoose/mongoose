@@ -18,15 +18,24 @@ import com.emc.mongoose.logging.OperationTraceCsvLogMessage;
 import com.emc.mongoose.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.metrics.context.MetricsContext;
 import com.emc.mongoose.storage.driver.StorageDriver;
+import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
+
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
+import static com.github.akurilov.commons.concurrent.AsyncRunnable.State.SHUTDOWN;
+import static com.github.akurilov.commons.concurrent.AsyncRunnable.State.STARTED;
+
 import com.github.akurilov.confuse.Config;
+
 import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.TransferFiber;
+
 import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
+import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -37,12 +46,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
-
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
-import static com.github.akurilov.commons.concurrent.AsyncRunnable.State.SHUTDOWN;
-import static com.github.akurilov.commons.concurrent.AsyncRunnable.State.STARTED;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 /**
  Created by kurila on 12.07.16.

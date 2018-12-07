@@ -179,7 +179,6 @@ implements AutoCloseable {
 
 		@Override
 		protected final void invokeTimedExclusively(final long startTimeNanos) {
-
 			try {
 				String line;
 

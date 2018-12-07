@@ -108,7 +108,6 @@ extends HttpServlet {
 			final String reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.asString()))
 				.stream()
 				.findAny()
-				.map(req::getHeader)
 				.orElse(null);
 			if(null == reqTimestampRawValue) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
@@ -141,7 +140,6 @@ extends HttpServlet {
 			final String reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.asString()))
 				.stream()
 				.findAny()
-				.map(req::getHeader)
 				.orElse(null);
 			if(null == reqTimestampRawValue) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);

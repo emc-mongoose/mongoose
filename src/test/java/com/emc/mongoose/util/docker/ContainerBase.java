@@ -2,6 +2,8 @@ package com.emc.mongoose.util.docker;
 
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 
+import static com.emc.mongoose.util.docker.Docker.DEFAULT_IMAGE_VERSION;
+
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -26,8 +28,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import static com.emc.mongoose.util.docker.Docker.DEFAULT_IMAGE_VERSION;
 
 public abstract class ContainerBase
 extends AsyncRunnableBase
