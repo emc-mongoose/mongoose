@@ -57,9 +57,10 @@ extends HttpServlet {
 			)
 			.filter(fieldVal -> fieldVal instanceof Logger)
 			.map(o -> (Logger) o)
+			.filter(logger -> logger.getName().startsWith(Loggers.BASE))
 			.collect(
 				Collectors.toMap(
-					Logger::getName,
+					logger -> logger.getName().substring(Loggers.BASE.length()),
 					logger -> ((AsyncLogger) logger)
 						.getAppenders()
 						.values()
