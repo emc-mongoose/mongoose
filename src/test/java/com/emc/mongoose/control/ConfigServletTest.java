@@ -1,6 +1,5 @@
-package com.emc.mongoose.controls;
+package com.emc.mongoose.control;
 
-import com.emc.mongoose.control.ConfigServlet;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
 import java.io.BufferedReader;
@@ -23,18 +22,18 @@ public class ConfigServletTest {
 
   private static final int PORT = 9999;
   private static final String HOST = "http://localhost:" + PORT;
-  private static final Map schema = new HashMap<>();
+  private static final Map<String, Object> SCHEMA = new HashMap<>();
 
   static {
-    schema.put("key", Object.class);
+    SCHEMA.put("key", Object.class);
   }
 
-  private static final Config config = new BasicConfig("-", schema);
-  private static final String configStr = "{\n\t\"key\" : \"value\"\n}";
-  private static final String schemaStr = "{\n  \"key\" : \"any\"\n}";
+  private static final Config CONFIG = new BasicConfig("-", SCHEMA);
+  private static final String EXPECTED_CONFIG_JSON = "{\n  \"key\" : \"value\"\n}";
+  private static final String EXPECTED_SCHEMA_JSON = "{\n  \"key\" : \"any\"\n}";
 
   static {
-    config.val("key", "value");
+    CONFIG.val("key", "value");
   }
 
   private static final Server server = new Server(PORT);
@@ -44,7 +43,7 @@ public class ConfigServletTest {
     final ServletContextHandler context = new ServletContextHandler();
     context.setContextPath("/");
     server.setHandler(context);
-    context.addServlet(new ServletHolder(new ConfigServlet(config)), "/config/*");
+    context.addServlet(new ServletHolder(new ConfigServlet(CONFIG)), "/config/*");
     server.start();
   }
 
@@ -52,8 +51,8 @@ public class ConfigServletTest {
   public void test() throws Exception {
     final String config = resultFromServer(HOST + "/config");
     final String schema = resultFromServer(HOST + "/config/schema");
-    Assert.assertEquals(config, configStr);
-    Assert.assertEquals(schema, schemaStr);
+    Assert.assertEquals(EXPECTED_CONFIG_JSON, config);
+    Assert.assertEquals(EXPECTED_SCHEMA_JSON, schema);
   }
 
   private String resultFromServer(final String urlPath) throws Exception {

@@ -5,6 +5,7 @@ import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
+import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.impl.BasicConfig;
@@ -20,23 +21,34 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import static javax.script.ScriptContext.ENGINE_SCOPE;
 
 /**
  Created by andrey on 19.09.17.
  */
 public interface ScriptEngineUtil {
 
+	String DEFAULT_LANG = "js";
+
+	static ScriptEngineManager scriptEngineManager(final ClassLoader clsLoader) {
+		return new ScriptEngineManager(clsLoader);
+	}
+
+	static ScriptEngine defaultScriptEngine(final ScriptEngineManager sem) {
+		return sem.getEngineByName(DEFAULT_LANG);
+	}
+
 	/**
 	 Tries to instantiate the script engine for the given script file
 	 @param scenarioPath the path to the script
 	 @return the script engine resolved either <code>null</code>
 	 */
-	static ScriptEngine resolve(final Path scenarioPath, final ClassLoader clsLoader) {
+	static ScriptEngine scriptEngineByFilePath(final Path scenarioPath, final ClassLoader clsLoader) {
 
 		ScriptEngine se = null;
 
 		// init the available external script engines
-		final ScriptEngineManager sem = new ScriptEngineManager(clsLoader);
+		final ScriptEngineManager sem = scriptEngineManager(clsLoader);
 
 		// 1st try to determine the scenario type by the scenario file extension
 		final String scenarioFileName = scenarioPath.getFileName().toString();
@@ -76,10 +88,18 @@ public interface ScriptEngineUtil {
 				);
 			}
 			// 3rd: treat the scenario file as a Javascript file
-			se = sem.getEngineByName("js");
+			se = defaultScriptEngine(sem);
 		}
 
 		return se;
+	}
+
+	static ScriptEngine scriptEngineByDefault(final ClassLoader clsLoader) {
+		return defaultScriptEngine(scriptEngineManager(clsLoader));
+	}
+
+	static void registerScenarioDefaults(final ScriptEngine scriptEngine, final Config defaults) {
+		scriptEngine.getContext().setAttribute(ATTR_CONFIG, defaults, ENGINE_SCOPE);
 	}
 
 	/**
@@ -147,5 +167,12 @@ public interface ScriptEngineUtil {
 		specificConfig.val("load-op-type", OpType.UPDATE.name().toLowerCase());
 		specificConfig.val("item-data-ranges-random", 1);
 		se.put("UpdateRandomRangeLoad", baseLoadStepFactory.createClient(specificConfig, extensions, metricsMgr));
+	}
+
+	static void configure(
+		final ScriptEngine se, final List<Extension> extensions, final Config config, final MetricsManager metricsMgr
+	) {
+		registerScenarioDefaults(se, config);
+		registerStepTypes(se, extensions, config, metricsMgr);
 	}
 }

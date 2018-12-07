@@ -2,6 +2,8 @@ package com.emc.mongoose.logging;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
+import org.apache.logging.log4j.core.async.AsyncLogger;
 
 /**
  Created by kurila on 05.05.17.
@@ -20,8 +22,7 @@ public interface Loggers {
 	Logger METRICS_FILE = LogManager.getLogger(BASE_METRICS + "File");
 	Logger METRICS_FILE_TOTAL = LogManager.getLogger(BASE_METRICS + "FileTotal");
 	Logger METRICS_STD_OUT = LogManager.getLogger(BASE_METRICS + "StdOut");
-	Logger METRICS_THRESHOLD_EXT_RESULTS_FILE = LogManager
-		.getLogger(BASE_METRICS_THRESHOLD + "ExtResultsFile");
+	Logger METRICS_THRESHOLD_EXT_RESULTS_FILE = LogManager.getLogger(BASE_METRICS_THRESHOLD + "ExtResultsFile");
 	Logger METRICS_THRESHOLD_FILE_TOTAL = LogManager.getLogger(BASE_METRICS_THRESHOLD + "FileTotal");
 	Logger MSG = LogManager.getLogger(BASE + "Messages");
 	Logger MULTIPART = LogManager.getLogger(BASE + "Multipart");

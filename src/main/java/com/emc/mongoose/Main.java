@@ -6,6 +6,9 @@ import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
 import com.emc.mongoose.control.ConfigServlet;
+import com.emc.mongoose.control.logs.LogServlet;
+import com.emc.mongoose.control.run.RunImpl;
+import com.emc.mongoose.control.run.RunServlet;
 import com.emc.mongoose.env.CoreResourcesToInstall;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
@@ -20,9 +23,9 @@ import com.emc.mongoose.svc.Service;
 import static com.emc.mongoose.Constants.APP_NAME;
 import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.Constants.DIR_EXT;
+import static com.emc.mongoose.Constants.MIB;
 import static com.emc.mongoose.Constants.PATH_DEFAULTS;
 import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
-import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
@@ -40,7 +43,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import javax.script.ScriptEngine;
-import javax.script.ScriptException;
+import javax.servlet.MultipartConfigElement;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -51,7 +54,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import static javax.script.ScriptContext.ENGINE_SCOPE;
 
 public final class Main {
 
@@ -89,18 +91,11 @@ public final class Main {
 				}
 				// init the metrics manager
 				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
-				final int port = configWithArgs.intVal("run-port");
+				// go on
 				if(configWithArgs.boolVal("run-node")) {
-					runNode(configWithArgs, extensions, metricsMgr);
+					runNode(fullDefaultConfig, configWithArgs, extClsLoader, extensions, metricsMgr);
 				} else {
-					final Server server = new Server(port);
-					addServices(server, fullDefaultConfig);
-					server.start();
-					try {
-						runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
-					} finally {
-						server.stop();
-					}
+					runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
 				}
 			}
 		} catch(final InterruptedException | InterruptRunException e) {
@@ -108,14 +103,6 @@ public final class Main {
 		} catch(final Exception e) {
 			LogUtil.trace(Loggers.ERR, Level.FATAL, e, "Unexpected failure");
 		}
-	}
-
-	private static void addServices(final Server server, final Config defaultConfig) {
-		final ServletContextHandler context = new ServletContextHandler();
-		context.setContextPath("/");
-		server.setHandler(context);
-		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
-		context.addServlet(new ServletHolder(new ConfigServlet(defaultConfig)), "/config/*");
 	}
 
 	private static Config loadDefaultConfig(final Path appHomePath)
@@ -201,20 +188,45 @@ public final class Main {
 		return AliasingUtil.apply(parsedArgs, aliasingConfig);
 	}
 
-	private static void runNode(final Config config, final List<Extension> extensions, final MetricsManager metricsMgr)
-	throws InterruptRunException, InterruptedException {
-		final int listenPort = config.intVal("load-step-node-port");
-		try(
-			final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
-			final Service scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions, metricsMgr)
-		) {
-			fileMgrSvc.start();
-			scenarioStepSvc.start();
-			scenarioStepSvc.await();
-		} catch(final InterruptedException | InterruptRunException e) {
-			throw e;
-		} catch(final Throwable cause) {
-			LogUtil.trace(Loggers.ERR, Level.FATAL, cause, "Run node failure");
+	private static void runNode(
+		final Config fullDefaultConfig, final Config configWithArgs, final ClassLoader extClsLoader,
+		final List<Extension> extensions, final MetricsManager metricsMgr
+	) throws Exception {
+
+		// init the API server
+		final int port = configWithArgs.intVal("run-port");
+		final Server server = new Server(port);
+		final ServletContextHandler context = new ServletContextHandler();
+		context.setContextPath("/");
+		server.setHandler(context);
+		context.addServlet(new ServletHolder(new ConfigServlet(fullDefaultConfig)), "/config/*");
+		context.addServlet(new ServletHolder(new LogServlet()), "/logs/*");
+		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+		final ServletHolder runServletHolder = new ServletHolder(
+			new RunServlet(extClsLoader, extensions, metricsMgr, fullDefaultConfig.schema())
+		);
+		runServletHolder
+			.getRegistration()
+			.setMultipartConfig(new MultipartConfigElement("", 16 * MIB, 16 * MIB, 16 * MIB));
+		context.addServlet(runServletHolder, "/run/*");
+		try {
+			server.start();
+			Loggers.MSG.info("Started to serve the remote API @ port # " + port);
+			final int listenPort = configWithArgs.intVal("load-step-node-port");
+			try(
+				final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
+				final Service scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions, metricsMgr)
+			) {
+				fileMgrSvc.start();
+				scenarioStepSvc.start();
+				scenarioStepSvc.await();
+			} catch(final InterruptedException | InterruptRunException e) {
+				throw e;
+			} catch(final Throwable cause) {
+				LogUtil.trace(Loggers.ERR, Level.FATAL, cause, "Run node failure");
+			}
+		} finally {
+			server.stop();
 		}
 	}
 
@@ -231,6 +243,13 @@ public final class Main {
 		} else {
 			scenarioPath = Paths.get(appHomePath.toString(), DIR_EXAMPLE_SCENARIO, "js", "default.js");
 		}
+		runScenarioFile(config, extensions, extClsLoader, metricsMgr, scenarioPath);
+	}
+
+	private static void runScenarioFile(
+		final Config config, final List<Extension> extensions, final ClassLoader extClsLoader,
+		final MetricsManager metricsMgr, final Path scenarioPath
+	) {
 		final StringBuilder strb = new StringBuilder();
 		try {
 			Files
@@ -247,27 +266,17 @@ public final class Main {
 			}
 		}
 		final String scenarioText = strb.toString();
-		Loggers.SCENARIO.log(Level.INFO, scenarioText);
-		final ScriptEngine scriptEngine = ScriptEngineUtil.resolve(scenarioPath, extClsLoader);
+		final ScriptEngine scriptEngine = ScriptEngineUtil.scriptEngineByFilePath(scenarioPath, extClsLoader);
 		if(scriptEngine == null) {
 			Loggers.ERR.fatal("Failed to resolve the scenario engine for the file \"{}\"", scenarioPath);
 		} else {
 			Loggers.MSG.info("Using the \"{}\" scenario engine", scriptEngine.getFactory().getEngineName());
 			// expose the environment values
 			System.getenv().forEach(scriptEngine::put);
-			// expose the loaded configuration
-			scriptEngine.getContext().setAttribute(ATTR_CONFIG, config, ENGINE_SCOPE);
-			// expose the step types
-			ScriptEngineUtil.registerStepTypes(scriptEngine, extensions, config, metricsMgr);
+			// expose the loaded configuration and the step types
+			ScriptEngineUtil.configure(scriptEngine, extensions, config, metricsMgr);
 			// go
-			try {
-				scriptEngine.eval(scenarioText);
-			} catch(final ScriptException e) {
-				LogUtil.trace(
-					Loggers.ERR, Level.ERROR, e, "\nScenario failed @ file \"{}\", line #{}, column #{}:\n{}",
-					scenarioPath, e.getLineNumber(), e.getColumnNumber(), e.getMessage()
-				);
-			}
+			new RunImpl("", scenarioText, scriptEngine).run();
 		}
 	}
 }

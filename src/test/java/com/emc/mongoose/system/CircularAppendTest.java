@@ -113,16 +113,20 @@ import java.util.stream.Collectors;
 			case ATMOS:
 			case S3:
 			case SWIFT:
-				final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
-					HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
-					Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
-					HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
-					HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
-					HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
-					HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
-				);
-				final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
-				storageMocks.put(addr, storageMock);
+				try {
+					final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
+						HttpStorageMockContainer.DEFAULT_PORT, false, null, null,
+						Character.MAX_RADIX, HttpStorageMockContainer.DEFAULT_CAPACITY,
+						HttpStorageMockContainer.DEFAULT_CONTAINER_CAPACITY,
+						HttpStorageMockContainer.DEFAULT_CONTAINER_COUNT_LIMIT,
+						HttpStorageMockContainer.DEFAULT_FAIL_CONNECT_EVERY,
+						HttpStorageMockContainer.DEFAULT_FAIL_RESPONSES_EVERY, 0
+					);
+					final String addr = "127.0.0.1:" + HttpStorageMockContainer.DEFAULT_PORT;
+					storageMocks.put(addr, storageMock);
+				} catch(final Throwable cause) {
+					cause.printStackTrace();
+				}
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:

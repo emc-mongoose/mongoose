@@ -5,6 +5,10 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 
+plugins {
+	id "com.bmuschko.docker-remote-api" version "4.0.5"
+}
+
 description = "Mongoose is a high-load storage performance testing tool"
 
 ext {
@@ -53,6 +57,7 @@ allprojects {
 	}
 
 	repositories {
+		jcenter()
 		mavenCentral()
 	}
 
@@ -98,7 +103,9 @@ allprojects {
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
 		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
+			events = [
+				"standardOut", "skipped", "started", "failed",
+			]
 			showExceptions = true
 			showStandardStreams = true
 		}
@@ -112,7 +119,9 @@ allprojects {
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
 		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
+			events = [
+				"standardOut", "skipped", "started", "failed",
+			]
 			showExceptions = true
 			showStandardStreams = true
 		}
@@ -125,7 +134,9 @@ allprojects {
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
 		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
+			events = [
+				"standardOut", "skipped", "started", "failed",
+			]
 			showExceptions = true
 			showStandardStreams = true
 		}
@@ -137,7 +148,9 @@ allprojects {
 
 		maxHeapSize "1g"
 		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
+			events = [
+				"standardOut", "skipped", "started", "failed",
+			]
 			showExceptions = true
 			showStandardStreams = true
 		}
@@ -147,7 +160,9 @@ allprojects {
 		include "com/emc/mongoose/endurance/*"
 		maxHeapSize "1g"
 		testLogging {
-			events "passed", "skipped", "failed", "standardOut"
+			events = [
+				"standardOut", "skipped", "started", "failed",
+			]
 			showExceptions = true
 			showStandardStreams = true
 		}
@@ -243,10 +258,10 @@ String defineVersion() {
 	json.run.version
 }
 
-task printVersion {
+task mongooseVersion {
 	group = "versioning"
 	description = "Prints Mongoose version."
-	doLast { logger.quiet "Mongoose version: $version" }
+	doLast { logger.quiet version }
 }
 
 dependencies {
@@ -322,7 +337,7 @@ subprojects {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "4.7"
+	gradleVersion = "4.8"
 }
 
 static def isTestsProject(final Project p) {
@@ -430,3 +445,77 @@ artifacts {
 }
 
 assemble.dependsOn += dist
+
+// Docker tasks ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+import com.bmuschko.gradle.docker.tasks.image.*
+import com.bmuschko.gradle.docker.tasks.container.*
+
+task buildImage(type: DockerBuildImage, dependsOn: dist) {
+	inputDir = rootProject.projectDir
+	dockerFile = project.file("docker${File.separator}Dockerfile")
+	imageId = "emcmongoose/mongoose"
+	tags = [
+		"emcmongoose/mongoose:${version}".toString(),
+		"emcmongoose/mongoose:testing",
+	]
+}
+
+task pushProductionImage(type: DockerPushImage, dependsOn: buildImage) {
+	imageName = "emcmongoose/mongoose"
+	tag = "emcmongoose/mongoose:${version}".toString()
+}
+
+task pushTestingImage(type: DockerPushImage, dependsOn: buildImage) {
+	imageName = "emcmongoose/mongoose"
+	tag = "emcmongoose/mongoose:${version}".toString()
+}
+
+task buildRobotestImage(type: DockerBuildImage) {
+	inputDir = rootProject.projectDir
+	dockerFile = project.file("docker${File.separator}Dockerfile.robotest")
+	imageId = "emcmongoose/mongoose-robotest"
+	tags = [
+		"emcmongoose/mongoose-robotest:${version}",
+	]
+}
+
+task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage, buildRobotestImage]) {
+	attachStderr = true
+	attachStdout = true
+	autoRemove = true
+	binds = [
+		"${rootProject.buildDir}": "/root/mongoose/build",
+		"/var/run/docker.sock": "/var/run/docker.sock",
+	]
+	envVars = [
+		"HOST_WORKING_DIR": rootProject.projectDir.absolutePath,
+		"MONGOOSE_VERSION": version,
+		"MONGOOSE_IMAGE_VERSION": version,
+		"SERVICE_HOST": "localhost",
+		"SUITE": System.getenv("SUITE"),
+		"TEST": System.getenv("TEST"),
+	]
+	imageId = buildRobotestImage.getImageId()
+	network = "host"
+	tty = true
+	doLast {
+		println "Created the container for the ${System.env.SUITE}.${System.env.TEST} test"
+	}
+}
+
+task startRobotestContainer(type: DockerStartContainer, dependsOn: createRobotestContainer) {
+	targetContainerId createRobotestContainer.getContainerId()
+}
+
+task robotest(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
+	targetContainerId createRobotestContainer.getContainerId()
+	timeout = 600 // 10 min w/o output -> fail on Travis CI
+	doLast {
+		if(0 != exitCode) {
+			throw new GradleException("Some robotests FAILED")
+		} else {
+			println "Robotests PASSED"
+		}
+	}
+}

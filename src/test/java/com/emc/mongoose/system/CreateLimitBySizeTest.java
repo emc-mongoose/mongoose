@@ -161,6 +161,7 @@ import static org.junit.Assert.assertTrue;
 				args.add("--storage-net-node-addrs=" + storageMocks.keySet().stream().collect(Collectors.joining(",")));
 				break;
 			case FS:
+				args.add("--item-output-path=" + MongooseEntryNodeContainer.getContainerItemOutputPath(stepId));
 				try {
 					DirWithManyFilesDeleter.deleteExternal(MongooseEntryNodeContainer.getHostItemOutputPath(stepId));
 				} catch(final Throwable t) {

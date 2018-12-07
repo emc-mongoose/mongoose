@@ -22,7 +22,7 @@ import java.util.stream.IntStream;
 
 public final class TempInputTextFileSlicerTest {
 
-	private static final int BATCH_SIZE = 1_000;
+	private static final int BATCH_SIZE = 100;
 	private static final String SRC_FILE_NAME;
 	static {
 		try {
@@ -52,7 +52,7 @@ public final class TempInputTextFileSlicerTest {
 				}
 			)
 		);
-	private static final int SRC_LINE_COUNT = 1_000_000;
+	private static final int SRC_LINE_COUNT = 10_000;
 
 	@Before
 	public final void beforeTest()

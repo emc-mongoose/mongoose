@@ -35,7 +35,7 @@ extends ContextAwareThreadFactory {
 			final Runnable task, final String name, final boolean daemonFlag,
 			final UncaughtExceptionHandler exceptionHandler, final Map<String, String> threadContext
 		) {
-			super(task, name, daemonFlag, null, threadContext);
+			super(task, name, daemonFlag, exceptionHandler, threadContext);
 		}
 
 		@Override
