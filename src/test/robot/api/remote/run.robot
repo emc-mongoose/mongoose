@@ -36,12 +36,12 @@ Should Not Stop Not Running Scenario
     ${resp_stop_stopped} =  Stop Mongoose Scenario Run  ${resp_etag_header}
     Should Be Equal As Strings  ${resp_stop_stopped.status_code}  204
 
-Should Return The Valid Running Scenario Id
+Should Return The Node State
     ${resp_start} =  Start Mongoose Scenario  ${DATA_DIR}/aggregated_defaults.json  ${DATA_DIR}/scenario_dummy.js
     ${resp_etag_header} =  Get From Dictionary  ${resp_start.headers}  ${HEADER_ETAG}
     ${resp_status_running} =  Get Mongoose Node Status
     Should Be Equal As Strings  ${resp_status_running.status_code}  200
-    ${resp_status_etag_header} =  Get From Dictionary  ${resp_status.headers}  ${HEADER_ETAG}
+    ${resp_status_etag_header} =  Get From Dictionary  ${resp_status_running.headers}  ${HEADER_ETAG}
     Should Be Equal As Strings  ${resp_etag_header}  ${resp_status_etag_header}
     ${resp_stop} =  Stop Mongoose Scenario Run  ${resp_etag_header}
     Should Be Equal As Strings  ${resp_stop.status_code}  200
