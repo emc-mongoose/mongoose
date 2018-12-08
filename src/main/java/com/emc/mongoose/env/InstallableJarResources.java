@@ -70,7 +70,7 @@ implements Installable {
 				);
 				return;
 			} else {
-				Loggers.MSG.info(
+				Loggers.MSG.warn(
 					"The destination file \"{}\" has the different checksum ({}) than source ({}), replacing", dstPath,
 					Long.toHexString(dstFileChecksum), Long.toHexString(srcFileChecksum)
 				);
