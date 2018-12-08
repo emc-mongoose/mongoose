@@ -34,7 +34,19 @@ Should Not Stop Not Running Scenario
     ${resp_stop_running} =  Stop Mongoose Scenario Run  ${resp_etag_header}
     Should Be Equal As Strings  ${resp_stop_running.status_code}  200
     ${resp_stop_stopped} =  Stop Mongoose Scenario Run  ${resp_etag_header}
-    Should Be Equal As Strings  ${resp_stop_stopped.status_code}  404
+    Should Be Equal As Strings  ${resp_stop_stopped.status_code}  204
+
+Should Return The Valid Running Scenario Id
+    ${resp_start} =  Start Mongoose Scenario  ${DATA_DIR}/aggregated_defaults.json  ${DATA_DIR}/scenario_dummy.js
+    ${resp_etag_header} =  Get From Dictionary  ${resp_start.headers}  ${HEADER_ETAG}
+    ${resp_status_running} =  Get Mongoose Node Status
+    Should Be Equal As Strings  ${resp_status_running.status_code}  200
+    ${resp_status_etag_header} =  Get From Dictionary  ${resp_status.headers}  ${HEADER_ETAG}
+    Should Be Equal As Strings  ${resp_etag_header}  ${resp_status_etag_header}
+    ${resp_stop} =  Stop Mongoose Scenario Run  ${resp_etag_header}
+    Should Be Equal As Strings  ${resp_stop.status_code}  200
+    ${resp_status_stopped} =  Get Mongoose Node Status
+    Should Be Equal As Strings  ${resp_status_stopped.status_code}  204
 
 Should Return Scenario Run State
     ${resp_start} =  Start Mongoose Scenario  ${DATA_DIR}/aggregated_defaults.json  ${DATA_DIR}/scenario_dummy.js
@@ -57,6 +69,11 @@ Should Return Mongoose Scenario Run State
     [Arguments]  ${etag}  ${expected_status_code}
     ${resp_state} =  Get Mongoose Scenario Run State  ${etag}
     Should Be Equal As Strings  ${resp_state.status_code}  ${expected_status_code}
+
+Get Mongoose Node Status
+    ${resp} =  Head Request  mongoose_node  ${MONGOOSE_RUN_URI_PATH}
+    Log  ${resp.status_code}
+	[Return]  ${resp}
 
 Get Mongoose Scenario Run State
     [Arguments]  ${etag}
