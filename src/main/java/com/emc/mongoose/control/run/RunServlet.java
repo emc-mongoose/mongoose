@@ -11,7 +11,6 @@ import com.emc.mongoose.metrics.MetricsManager;
 import com.github.akurilov.confuse.Config;
 
 import org.apache.logging.log4j.Level;
-
 import org.eclipse.jetty.http.HttpHeader;
 
 import javax.script.ScriptEngine;
@@ -105,39 +104,13 @@ extends HttpServlet {
 	@Override
 	protected final void doGet(final HttpServletRequest req, final HttpServletResponse resp)
 	throws IOException {
-		final String reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.asString()))
-			.stream()
-			.findAny()
-			.orElse(null);
-		if(null == reqTimestampRawValue) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
-		} else {
-			try {
-				final long reqTimestamp = Long.parseLong(reqTimestampRawValue, 0x10);
-				applyForActiveRunIfAny(resp, (run, resp_) -> setRunMatchesResponse(run, resp_, reqTimestamp));
-			} catch(final NumberFormatException e) {
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid start time: " + reqTimestampRawValue);
-			}
-		}
+		extractRequestTimestampAndApply(req, resp, RunServlet::setRunMatchesResponse);
 	}
 
 	@Override
 	protected final void doDelete(final HttpServletRequest req, final HttpServletResponse resp)
 	throws IOException {
-		final String reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.asString()))
-			.stream()
-			.findAny()
-			.orElse(null);
-		if(null == reqTimestampRawValue) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
-		} else {
-			try {
-				final long reqTimestamp = Long.parseLong(reqTimestampRawValue, 0x10);
-				applyForActiveRunIfAny(resp, (run, resp_) -> stopRunIfMatchesAndSetResponse(run, resp_, reqTimestamp));
-			} catch(final NumberFormatException e) {
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid start time: " + reqTimestampRawValue);
-			}
-		}
+		extractRequestTimestampAndApply(req, resp, this::stopRunIfMatchesAndSetResponse);
 	}
 
 	static void setRunTimestampHeader(final Run task, final HttpServletResponse resp) {
@@ -154,6 +127,26 @@ extends HttpServlet {
 		} else {
 			Loggers.ERR.warn("The scenario executor runs an alien task: {}", activeTask);
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+		}
+	}
+
+	void extractRequestTimestampAndApply(
+		final HttpServletRequest req, final HttpServletResponse resp,
+		final TriConsumer<Run, HttpServletResponse, Long> runRespTimestampConsumer
+	) throws IOException {
+		final String reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.asString()))
+			.stream()
+			.findAny()
+			.orElse(null);
+		if(null == reqTimestampRawValue) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
+		} else {
+			try {
+				final long reqTimestamp = Long.parseLong(reqTimestampRawValue, 0x10);
+				applyForActiveRunIfAny(resp, (run, resp_) -> runRespTimestampConsumer.accept(run, resp_, reqTimestamp));
+			} catch(final NumberFormatException e) {
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid start time: " + reqTimestampRawValue);
+			}
 		}
 	}
 

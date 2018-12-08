@@ -61,7 +61,7 @@ Should Return Mongoose Scenario Run State
 Get Mongoose Scenario Run State
     [Arguments]  ${etag}
     &{req_headers} =  Create Dictionary  If-Match=${etag}
-    ${resp} =  Head Request  mongoose_node  ${MONGOOSE_RUN_URI_PATH}  headers=${req_headers}
+    ${resp} =  Get Request  mongoose_node  ${MONGOOSE_RUN_URI_PATH}  headers=${req_headers}
     Log  ${resp.status_code}
     [Return]  ${resp}
 
