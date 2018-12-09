@@ -17,8 +17,8 @@
 5. [Configuration](#5-configuration)<br/>
 6. [Output](#6-output)<br/>
 6.1. [Metrics](#61-metrics)<br/>
-6.1.1. [Custom quantiles](#611-custom-quantiles)
-6.1.2. [Labels](#612-labels)
+6.1.1. [Custom quantiles](#611-custom-quantiles)<br/>
+6.1.2. [Labels](#612-labels)<br/>
 
 # 1. Introduction
 
@@ -62,7 +62,7 @@ Get config from node:
 ```bash
 curl GET http://localhost:9999/config
 ```
-> More about configuration [here](https://github.com/emc-mongoose/mongoose/tree/GOOSE-1298-formating-hook/doc/interfaces/input/configuration#configuration)
+> More about configuration [here](../../input/configuration)
 
 Get schema from node:
 ```bash
@@ -298,5 +298,5 @@ Each metric contains also the following labels/tags:
 |`load_step_id`|load-step-id|string|
 |`load_op_type`|load-op-type|string, [takes one of these values](https://github.com/emc-mongoose/mongoose/tree/master/doc/usage/load/operations/types#load-operation-types)|
 |`storage_driver_limit_concurrency`|storage-driver-limit-concurrency|integer|
-|`node_count`|*count of addrs in* load-step-node-addrs|integer|
+|`node_count`|the count of the Mongoose nodes involved into the given load step|integer|
 |`item_data_size`|item-data-size|string with the unit suffix (KB, MB, ...)|
