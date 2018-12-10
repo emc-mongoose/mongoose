@@ -65,12 +65,25 @@ If successful, the response will contain the ETag header with the hexadecimal ti
 ...
 ```
 
-This ETag should be considered as a run id and may be used to check the run state (using HEAD request) either stop it
-(using DELETE request). The `If-Match` header with the hexadecimal run id value should be used also:
+This ETag should be considered as a run id and may be used to check the run state (using HEAD/GET request) either stop
+it (using DELETE request).
+
+Checking if the given node executes a scenario:
+```bash
+curl -v -X HEAD http://localhost:9999/run
+...
+< HTTP/1.1 200 OK
+< Date: Mon, 26 Nov 2018 18:40:10 GMT
+< ETag: 167514e6082
+< Content-Length: 0
+...
+```
+
+The `If-Match` header with the hexadecimal run id value may be used also:
 
 Checking the run state:
 ```bash
-curl -v -X HEAD -H "If-Match: 167514e6082" http://localhost:9999/run
+curl -v -X GET -H "If-Match: 167514e6082" http://localhost:9999/run
 ...
 < HTTP/1.1 200 OK
 < Date: Mon, 26 Nov 2018 18:40:10 GMT
@@ -89,31 +102,46 @@ curl -v -X DELETE -H "If-Match: 167514e6082" http://localhost:9999/run
 
 ## Logs
 
-#### Get The Log File Page From The Beginning
+### Available Log Names
+
+| Log Name | Purpose |
+|:--|:--|
+| Cli | Command line arguments dump
+| Config | Full load step configuration dump
+| Errors | Error messages
+| OpTraces | Load operation traces (transfer byte count, latency, duration, etc)
+| metrics.File | Load step periodic metrics
+| metrics.FileTotal | Load step total metrics log
+| metrics.threshold.File | Load step periodic threshold metrics
+| metrics.threshold.FileTotal | Load step total threshold metrics log
+| Messages | Generic messages
+| Scenario | Scenario dump
+
+### Get The Log File Page From The Beginning
 
 ```bash
-curl http://localhost:9999/logs/123/com.emc.mongoose.logging.Messages
+curl http://localhost:9999/logs/123/Messages
 ```
 
-#### Get The Specified Log File Part
+### Get The Specified Log File Part
 
 ```bash
-curl -H "Range: bytes=100-200" http://localhost:9999/logs/123/com.emc.mongoose.logging.Messages
+curl -H "Range: bytes=100-200" http://localhost:9999/logs/123/Messages
 r the type "dummy-mock"
 2018-11-27T16:19:34,982 | DEBUG | LinearLoadStepClient | main | com.emc.mongoose.storage.driver.mock.DummyStorageDriverMock@6aecbb8d: shut down
 2018-11-27T16:19:34,982 | DEBUG |
 ```
 
-#### Delete Log File
+### Delete Log File
 
 ```bash
-curl -X DELETE http://localhost:9999/logs/123/com.emc.mongoose.logging.Messages
+curl -X DELETE http://localhost:9999/logs/123/Messages
 ```
 
 ## Metrics
 For real-time monitoring the metrics are exposed in the [Prometheus's](https://github.com/prometheus/client_java) format.
 
-#### Output format
+### Output format
 Information about new metric starts with
 `````
 # HELP <hash code>
@@ -175,10 +203,10 @@ and 3 Primitive Types: Timing, Rate, Concurrency. Depends on the type of metric,
     </tbody>
 </table>
 
-##### Quantiles
+#### Quantiles
 To specify the value of the required quantiles, use the `--output-metrics-quantiles` parameter. By default `--output-metrics-quantiles=0.25,0.75`. *This feature affects the output on the server and does not affect the logs and console.*
 
-##### Labels
+#### Labels
 In braces exported load step parameters:
 
 |Label name|Configured param|Type|
@@ -189,7 +217,7 @@ In braces exported load step parameters:
 |`node_count`|*count of addrs in* load-step-node-addrs|integer|
 |`item_data_sizw`|item-data-size|string with the unit suffix (KB, MB, ...)|
 
-##### Example:
+#### Example:
 
 ````````````````````````````````
 # HELP 379303133 

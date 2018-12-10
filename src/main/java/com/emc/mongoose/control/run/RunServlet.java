@@ -8,11 +8,9 @@ import com.emc.mongoose.load.step.ScriptEngineUtil;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
-
 import com.github.akurilov.confuse.Config;
 
 import org.apache.logging.log4j.Level;
-
 import org.eclipse.jetty.http.HttpHeader;
 
 import javax.script.ScriptEngine;
@@ -28,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /**
@@ -90,7 +89,7 @@ extends HttpServlet {
 			try {
 				scenarioExecutor.execute(run);
 				resp.setStatus(HttpServletResponse.SC_ACCEPTED);
-				resp.setHeader(HttpHeader.ETAG.name(), Long.toString(run.timestamp(), 0x10));
+				setRunTimestampHeader(run, resp);
 			} catch(final RejectedExecutionException e) {
 				resp.setStatus(HttpServletResponse.SC_CONFLICT);
 			}
@@ -98,69 +97,80 @@ extends HttpServlet {
 	}
 
 	@Override
-	protected final void doHead(final HttpServletRequest req, final HttpServletResponse resp)
+	protected final void doHead(final HttpServletRequest req, final HttpServletResponse resp) {
+		applyForActiveRunIfAny(resp, RunServlet::setRunExistsResponse);
+	}
+
+	@Override
+	protected final void doGet(final HttpServletRequest req, final HttpServletResponse resp)
 	throws IOException {
+		extractRequestTimestampAndApply(req, resp, RunServlet::setRunMatchesResponse);
+	}
+
+	@Override
+	protected final void doDelete(final HttpServletRequest req, final HttpServletResponse resp)
+	throws IOException {
+		extractRequestTimestampAndApply(req, resp, this::stopRunIfMatchesAndSetResponse);
+	}
+
+	static void setRunTimestampHeader(final Run task, final HttpServletResponse resp) {
+		resp.setHeader(HttpHeader.ETAG.name(), Long.toString(task.timestamp(), 0x10));
+	}
+
+	void applyForActiveRunIfAny(final HttpServletResponse resp, final BiConsumer<Run, HttpServletResponse> action) {
 		final Runnable activeTask = scenarioExecutor.task();
 		if(null == activeTask) {
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		} else if(activeTask instanceof Run) {
 			final Run activeRun = (Run) activeTask;
-			final String reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.asString()))
-				.stream()
-				.findAny()
-				.orElse(null);
-			if(null == reqTimestampRawValue) {
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
-			} else {
-				try {
-					final long reqTimestamp = Long.parseLong(reqTimestampRawValue, 0x10);
-					if(activeRun.timestamp() == reqTimestamp) {
-						resp.setStatus(HttpServletResponse.SC_OK);
-					} else {
-						resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
-					}
-				} catch(final NumberFormatException e) {
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid start time: " + reqTimestampRawValue);
-				}
-			}
+			action.accept(activeRun, resp);
 		} else {
 			Loggers.ERR.warn("The scenario executor runs an alien task: {}", activeTask);
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		}
 	}
 
-	@Override
-	protected final void doDelete(final HttpServletRequest req, final HttpServletResponse resp)
-	throws IOException {
-		final Runnable activeTask = scenarioExecutor.task();
-		if(null == activeTask) {
-			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-		} else if(activeTask instanceof Run) {
-			final Run activeRun = (Run) activeTask;
-			final String reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.asString()))
-				.stream()
-				.findAny()
-				.orElse(null);
-			if(null == reqTimestampRawValue) {
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
-			} else {
-				try {
-					final long reqTimestamp = Long.parseLong(reqTimestampRawValue, 0x10);
-					if(activeRun.timestamp() == reqTimestamp) {
-						scenarioExecutor.stop(activeRun);
-						if(null != scenarioExecutor.task()) {
-							throw new AssertionError("Run stopping failure");
-						}
-						resp.setStatus(HttpServletResponse.SC_OK);
-					} else {
-						resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-					}
-				} catch(final NumberFormatException e) {
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid start time: " + reqTimestampRawValue);
-				}
-			}
+	void extractRequestTimestampAndApply(
+		final HttpServletRequest req, final HttpServletResponse resp,
+		final TriConsumer<Run, HttpServletResponse, Long> runRespTimestampConsumer
+	) throws IOException {
+		final String reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.asString()))
+			.stream()
+			.findAny()
+			.orElse(null);
+		if(null == reqTimestampRawValue) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
 		} else {
-			Loggers.ERR.warn("The scenario executor runs an alien task: {}", activeTask);
+			try {
+				final long reqTimestamp = Long.parseLong(reqTimestampRawValue, 0x10);
+				applyForActiveRunIfAny(resp, (run, resp_) -> runRespTimestampConsumer.accept(run, resp_, reqTimestamp));
+			} catch(final NumberFormatException e) {
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid start time: " + reqTimestampRawValue);
+			}
+		}
+	}
+
+	static void setRunExistsResponse(final Run run, final HttpServletResponse resp) {
+		resp.setStatus(HttpServletResponse.SC_OK);
+		setRunTimestampHeader(run, resp);
+	}
+
+	static void setRunMatchesResponse(final Run run, final HttpServletResponse resp, final long reqTimestamp) {
+		if(run.timestamp() == reqTimestamp) {
+			resp.setStatus(HttpServletResponse.SC_OK);
+		} else {
+			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+		}
+	}
+
+	void stopRunIfMatchesAndSetResponse(final Run run, final HttpServletResponse resp, final long reqTimestamp) {
+		if(run.timestamp() == reqTimestamp) {
+			scenarioExecutor.stop(run);
+			if(null != scenarioExecutor.task()) {
+				throw new AssertionError("Run stopping failure");
+			}
+			resp.setStatus(HttpServletResponse.SC_OK);
+		} else {
 			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
 		}
 	}
