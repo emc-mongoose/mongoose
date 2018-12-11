@@ -101,6 +101,7 @@ Should Create Objects With Custom Headers
     ${args} =  Catenate  SEPARATOR= \\\n\t
     ...  --item-output-path=/bucket2
     ...  --load-op-limit-count=10
+    ...  --load-step-id=${step_id}
     ...  --storage-driver-limit-concurrency=0
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
     &{env_params} =  Create Dictionary
