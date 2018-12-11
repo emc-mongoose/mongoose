@@ -96,6 +96,7 @@ New CI location: https://gitlab.com/emcmongoose/mongoose/pipelines
 
 | Id | Short Description |
 |----|-------------------|
+| [GOOSE-1284](https://mongoose-issues.atlassian.net/browse/GOOSE-1284) | \[S3] Bucket versioning checking request causes 403 response |
 | [GOOSE-1293](https://mongoose-issues.atlassian.net/browse/GOOSE-1293) | Incorrect console rate output |
 | [GOOSE-1301](https://mongoose-issues.atlassian.net/browse/GOOSE-1293) | Auto installer overwrites the manually changed defaults every run
 
