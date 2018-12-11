@@ -2,8 +2,9 @@
 Documentation  Mongoose S3 Storage Driver Tests
 Force Tags  S3
 Library  Collections
-Library  CSVLibrary
 Library  OperatingSystem
+Library  Validation
+Resource  MongooseContainer.robot
 Test Setup  Start S3 Server
 Test Teardown  Remove Containers
 
@@ -15,39 +16,99 @@ ${S3_IMAGE_VERSION} =  latest
 ${S3_PORT} =  9000
 ${S3_UID} =  user1
 ${S3_SECRET_KEY} =  secretKey1
-${S3_STORAGE_CONTAINER_NAME} =  s3storage
-${MONGOOSE_CONTAINER_DATA_DIR} =  /data
-${MONGOOSE_IMAGE_NAME} =  emcmongoose/mongoose
+${S3_STORAGE_CONTAINER_NAME} =  s3_server
 ${MONGOOSE_SHARED_ARGS} =  --storage-driver-type=s3 --storage-net-node-port=${S3_PORT} --storage-auth-uid=${S3_UID} --storage-auth-secret=${S3_SECRET_KEY}
 
 *** Test Cases ***
 Should Copy Objects Using Bucket Listing
     ${step_id} =  Set Variable  copy_objects_using_bucket_listing
+    ${object_count_limit} =  Convert To Integer  1000
     Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
-    ${image_version} =  Get Environment Variable  MONGOOSE_IMAGE_VERSION
     ${args} =  Catenate  SEPARATOR= \\\n\t
     ...  --item-data-size=10KB
-    ...  --load-op-limit-count=1000
+    ...  --load-op-limit-count=${object_count_limit}
     ...  --load-step-id=${step_id}
     ...  --storage-driver-limit-concurrency=10
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/copy_using_input_path.js
     &{env_params} =  Create Dictionary  ITEM_SRC_PATH=/bucket0  ITEM_DST_PATH=/bucket1
-    ${std_out} =  Execute Mongoose Scenario  ${env_params}  ${args}
-    # TODO validate stdout
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
-    Validate Metrics Total Log File  ${step_id}  CREATE  1000  0  10240000
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${object_count_limit}
+    ...  count_succ_max=${object_count_limit}  count_fail_max=${0}  transfer_size=${10240000}
 
 Should Create Objects Using Multipart Upload
-    Pass Execution  "TODO"
+    ${step_id} =  Set Variable  create_objects_using_multipart_upload
+    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
+    Remove File  ${DATA_DIR}/${step_id}.csv
+    ${args} =  Catenate  SEPARATOR= \\\n\t
+    ...  --item-data-ranges-threshold=16MB
+    ...  --item-data-size=20MB-100MB
+    ...  --item-output-file=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv
+    ...  --item-output-path=mpu
+    ...  --load-batch-size=1
+    ...  --load-step-limit-size=2GB
+    ...  --load-step-id=${step_id}
+    ...  --storage-driver-limit-concurrency=10
+    &{env_params} =  Create Dictionary
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    Log  ${std_out}
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${10}  count_succ_max=${100}
+    ...  count_fail_max=${10}  transfer_size=${2147483648}  transfer_size_delta=${167772160}
+    Validate Item Output File  item_output_file_name=${DATA_DIR}/${step_id}.csv  item_output_path=mpu
+    ...  item_size_min=${20971520}  item_size_max=${104857600}
 
 Should Create Objects Using Multiple Buckets And Users
+    ${step_id} =  Set Variable  create_objects_using_multipart_upload
+    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
+    Remove File  ${DATA_DIR}/${step_id}.csv
+    ${args} =  Catenate  SEPARATOR= \\\n\t
+    ...  --item-data-size=1KB
+    ...  --item-output-file=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv
+    ...  --item-output-path=bucket-%d\(314159265\)\{00\}\[0-99\]
+    ...  --load-op-limit-count=1000
+    ...  --storage-auth-file=credentials.csv
+    ...  --storage-auth-uid=user-%d\(314159265\)\{00\}\[0-99\]
+    ...  --storage-driver-limit-concurrency=10
     Pass Execution  "TODO"
 
 Should Read Multiple Random Byte Ranges
+    ${step_id} =  Set Variable  read_multiple_random_byte_ranges
+    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
+    Remove File  ${DATA_DIR}/${step_id}.csv
+    ${args} =  Catenate  SEPARATOR= \\\n\t
+    ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
+    &{env_params} =  Create Dictionary
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    Log  ${std_out}
+    # TODO validation here
     Pass Execution  "TODO"
 
 Should Update Multiple Random Byte Ranges
+    ${step_id} =  Set Variable  update_multiple_random_byte_ranges
+    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
+    Remove File  ${DATA_DIR}/${step_id}.csv
+    ${args} =  Catenate  SEPARATOR= \\\n\t
+    ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
+    &{env_params} =  Create Dictionary
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    Log  ${std_out}
+    # TODO validation here
     Pass Execution  "TODO"
+
+Should Create Objects With Custom Headers
+    ${step_id} =  Set Variable  custom_headers
+    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
+    ${args} =  Catenate  SEPARATOR= \\\n\t
+    ...  --item-output-path=/bucket2
+    ...  --load-op-limit-count=10
+    ...  --load-step-id=${step_id}
+    ...  --storage-driver-limit-concurrency=0
+    ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
+    &{env_params} =  Create Dictionary
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    Log  ${std_out}
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${10}  count_succ_max=${10}
+    ...  count_fail_max=${0}  transfer_size=${10485760}  transfer_size_delta=${0}
 
 *** Keywords ***
 Start S3 Server
@@ -67,36 +128,6 @@ Remove S3 Server
     Run  docker stop ${S3_STORAGE_CONTAINER_NAME}
     Run  docker rm ${S3_STORAGE_CONTAINER_NAME}
 
-Execute Mongoose Scenario
-    [Arguments]  ${env}  ${args}
-    ${docker_env_vars} =  Evaluate  ' '.join(['-e %s=%s' % (key, value) for (key, value) in ${env}.items()])
-    ${host_working_dir} =  Get Environment Variable  HOST_WORKING_DIR
-    ${mongoose_version} =  Get Environment Variable  MONGOOSE_VERSION
-    ${image_version} =  Get Environment Variable  MONGOOSE_IMAGE_VERSION
-    ${cmd} =  Catenate  SEPARATOR= \\\n\t
-    ...  docker run
-    ...  --name mongoose
-    ...  --network host
-    ...  ${docker_env_vars}
-    ...  --volume ${host_working_dir}/${DATA_DIR}:${MONGOOSE_CONTAINER_DATA_DIR}
-    ...  --volume ${host_working_dir}/${LOG_DIR}:/root/.mongoose/${mongoose_version}/log
-    ...  ${MONGOOSE_IMAGE_NAME}:${image_version}
-    ...  ${MONGOOSE_SHARED_ARGS} ${args}
-    ${std_out} =  Run  ${cmd}
-    [Return]  ${std_out}
-
-Remove Mongoose Container
-    ${std_out} =  Run  docker rm mongoose
-    Log  ${std_out}
-
 Remove Containers
     Remove S3 Server
     Remove Mongoose Container
-
-Validate Metrics Total Log File
-    [Arguments]  ${step_id}  ${op_type}  ${count_succ}  ${count_fail}  ${transfer_size}
-    @{metricsTotal} =  Read CSV File To Associative  ${LOG_DIR}/${step_id}/metrics.total.csv
-    Should Be Equal As Strings  &{metricsTotal[0]}[OpType]  ${op_type}
-    Should Be Equal As Strings  &{metricsTotal[0]}[CountSucc]  ${count_succ}
-    Should Be Equal As Strings  &{metricsTotal[0]}[CountFail]  ${count_fail}
-    Should Be Equal As Strings  &{metricsTotal[0]}[Size]  ${transfer_size}
