@@ -136,7 +136,7 @@ Tracker link: https://mongoose-issues.atlassian.net/projects/BASE
 
 # 4. Continuous Integration
 
-https://travis-ci.org/emc-mongoose/mongoose
+https://gitlab.com/emcmongoose/mongoose/pipelines
 
 ## 4.1. Testing
 
@@ -229,10 +229,8 @@ SUITE=api.storage TEST=s3 ./gradlew clean robotest
 
 1. Ensure all tests are OK
 2. Ensure the new version documentation is ready
-3. Create the corresponding version branch `release-v<X>.<Y>.<Z>` and set the version in the configuration to
-   <X>.<Y>.<Z>
-4. Share the testing build with QE and repeat this step until the qualification is OK
-5. Create/replace the corresponding VCS tags:
+3. Share the testing build with QE and repeat this step until the qualification is OK
+4. Create/replace the corresponding VCS tags:
    ```bash
    git tag -d latest
    git push origin :refs/tags/latest
@@ -240,7 +238,9 @@ SUITE=api.storage TEST=s3 ./gradlew clean robotest
    git tag -a latest -m <X>.<Y>.<Z>
    git push --tags --force
    ```
-6. Set the `latest` tag also for the Docker images.
+5. Create the corresponding version branch `release-v<X>.<Y>.<Z>` and set the version in the configuration to
+   <X>.<Y>.<Z>
+6. Deploy docker images, set the `<X>.<Y>.<Z>` and `latest` tags also for the Docker images.
 7. Upload the artifacts to the Central Maven repo:
    1.
     ```bash
