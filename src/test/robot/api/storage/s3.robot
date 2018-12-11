@@ -95,6 +95,20 @@ Should Update Multiple Random Byte Ranges
     # TODO validation here
     Pass Execution  "TODO"
 
+Should Create Objects With Custom Headers
+    ${step_id} =  Set Variable  custom_headers
+    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
+    ${args} =  Catenate  SEPARATOR= \\\n\t
+    ...  --item-output-path=/bucket2
+    ...  --load-op-limit-count=10
+    ...  --storage-driver-limit-concurrency=0
+    ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
+    &{env_params} =  Create Dictionary
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    Log  ${std_out}
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${10}  count_succ_max=${10}
+    ...  count_fail_max=${0}  transfer_size=${10485760}  transfer_size_delta=${0}
+
 *** Keywords ***
 Start S3 Server
     ${cmd} =  Catenate  SEPARATOR= \\\n\t
