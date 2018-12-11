@@ -71,6 +71,12 @@ deploy_mongoose_image:
       - build/robotest/*.html
     when: on_failure
 
+test_api_remote_logs:
+  extends: .test_robot
+  variables:
+    SUITE: api.remote
+    TEST: logs
+
 test_api_remote_config:
   extends: .test_robot
   variables:
