@@ -62,11 +62,11 @@
 
 ### Functional
 
-#### 1. Remote API.
+#### 1. [Remote API](doc/interfaces/api/remote).
 
 Implemented for the node mode. The available actions are:
-1. Get Mongoose node configureation defaults
-2. Get Mongoose node configureation schema
+1. Get Mongoose node configuration defaults
+2. Get Mongoose node configuration schema
 3. Run a scenario
 4. Check the scenario if it is running
 5. Stop the scenario if it is running
@@ -75,7 +75,7 @@ Implemented for the node mode. The available actions are:
 
 Note that the metrics are being supplied in the [Prometheus exporter format](https://prometheus.io/docs/instrumenting/exposition_formats).
 
-#### 2. Configurable Timing Metrics Quantiles
+#### 2. [Configurable Timing Metrics Quantiles](doc/interfaces/api/remote#611-custom-quantiles)
 
 It's possible to supply the configurable quantiles for the timing metrics (duration/latency). This will work for all
 the timing metrics supplied via the Remote API. The legacy metrics output way (standard output and log files) are
