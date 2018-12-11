@@ -58,13 +58,57 @@ Should Create Objects Using Multipart Upload
     ...  item_size_min=${20971520}  item_size_max=${104857600}
 
 Should Create Objects Using Multiple Buckets And Users
+    ${step_id} =  Set Variable  create_objects_using_multipart_upload
+    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
+    Remove File  ${DATA_DIR}/${step_id}.csv
+    ${args} =  Catenate  SEPARATOR= \\\n\t
+    ...  --item-data-size=1KB
+    ...  --item-output-file=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv
+    ...  --item-output-path=bucket-%d\(314159265\)\{00\}\[0-99\]
+    ...  --load-op-limit-count=1000
+    ...  --storage-auth-file=credentials.csv
+    ...  --storage-auth-uid=user-%d\(314159265\)\{00\}\[0-99\]
+    ...  --storage-driver-limit-concurrency=10
     Pass Execution  "TODO"
 
 Should Read Multiple Random Byte Ranges
+    ${step_id} =  Set Variable  read_multiple_random_byte_ranges
+    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
+    Remove File  ${DATA_DIR}/${step_id}.csv
+    ${args} =  Catenate  SEPARATOR= \\\n\t
+    ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
+    &{env_params} =  Create Dictionary
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    Log  ${std_out}
+    # TODO validation here
     Pass Execution  "TODO"
 
 Should Update Multiple Random Byte Ranges
+    ${step_id} =  Set Variable  update_multiple_random_byte_ranges
+    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
+    Remove File  ${DATA_DIR}/${step_id}.csv
+    ${args} =  Catenate  SEPARATOR= \\\n\t
+    ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
+    &{env_params} =  Create Dictionary
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    Log  ${std_out}
+    # TODO validation here
     Pass Execution  "TODO"
+
+Should Create Objects With Custom Headers
+    ${step_id} =  Set Variable  custom_headers
+    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
+    ${args} =  Catenate  SEPARATOR= \\\n\t
+    ...  --item-output-path=/bucket2
+    ...  --load-op-limit-count=10
+    ...  --load-step-id=${step_id}
+    ...  --storage-driver-limit-concurrency=0
+    ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
+    &{env_params} =  Create Dictionary
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    Log  ${std_out}
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${10}  count_succ_max=${10}
+    ...  count_fail_max=${0}  transfer_size=${10485760}  transfer_size_delta=${0}
 
 *** Keywords ***
 Start S3 Server

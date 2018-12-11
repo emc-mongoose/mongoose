@@ -21,7 +21,7 @@ Please, note that all contributors shall follow the Contributor Agreement guidel
 4.1 [Testing](#4-testing)<br/>
 4.1.1. [Unit Tests](#411-unit-tests)<br/>
 4.1.2. [Integration Tests](#412-integration-tests)<br/>
-4.1.3. [System Tests](#413-system-tests)<br/>
+4.1.3. [Legacy System Tests](#413-system-tests)<br/>
 4.1.3.1. [Containerized Tests](#4131-containerized-tests)<br/>
 4.1.4. [Robot Tests](#414-robot-tests)<br/>
 4.2. [Releasing](#42-releasing)<br/>
@@ -152,7 +152,7 @@ https://travis-ci.org/emc-mongoose/mongoose
 ./gradlew clean integrationTest
 ```
 
-### 4.1.3. System Tests
+### 4.1.3. Legacy System Tests
 
 The system tests use the [JUnit parameterization](https://github.com/junit-team/junit4/wiki/Parameterized-tests). The parameter values are taken from the environment. The list of the system tests parameters below:
 
@@ -167,7 +167,7 @@ To run the system tests for the particular case use the commands like
 below:
 
 ```bash
-export MONGOOSE_VERSION=testing
+export MONGOOSE_IMAGE_VERSION=testing
 export STORAGE_TYPE=s3
 export RUN_MODE=distributed
 export CONCURRENCY=medium
@@ -180,39 +180,17 @@ Note that some system tests will not run for some parameter values. The acceptab
 #### 4.1.3.1. Containerized Tests
 
 Since v4.0.0 all system tests are containerized. To run a system test locally it's necessary to
-prepare 3 testing Docker images manually:
+prepare testing Docker image manually:
 
 ```bash
-docker build \
-    -f docker/Dockerfile \
-    -t emcmongoose/mongoose:testing \
-    .
-docker push emcmongoose/mongoose:testing
-```
-
-```bash
-docker build \
-    --build-arg MONGOOSE_VERSION=testing \
-    -f docker/Dockerfile.scripting-groovy \
-    -t emcmongoose/mongoose-scripting-groovy:testing \
-    .
-docker push emcmongoose/mongoose-scripting-groovy:testing
-```
-
-```bash
-docker build \
-    --build-arg MONGOOSE_VERSION=testing \
-    -f docker/Dockerfile.scripting-jython \
-    -t emcmongoose/mongoose-scripting-jython:testing \
-    .
-docker push emcmongoose/mongoose-scripting-jython:testing
+./gradlew buildImage
 ```
 
 Also it's necessary to supply the testing image version to the system
-test via environment variable `MONGOOSE_VERSION`:
+test via environment variable `MONGOOSE_IMAGE_VERSION`:
 
 ```bash
-export MONGOOSE_VERSION=testing
+export MONGOOSE_IMAGE_VERSION=testing
 export STORAGE_TYPE=atmos
 export RUN_MODE=distributed
 export CONCURRENCY=medium
@@ -223,7 +201,7 @@ export ITEM_SIZE=small
 ### 4.1.4. Endurance Tests
 
 ```bash
-export MONGOOSE_VERSION=testing
+export MONGOOSE_IMAGE_VERSION=testing
 export STORAGE_TYPE=swift
 export RUN_MODE=distributed
 export CONCURRENCY=unlimited
@@ -233,10 +211,18 @@ export ITEM_SIZE=large
 
 ### 4.1.5. Robot Tests
 
+*Note*:
+> Currently the Robot tests are failing when being executed locally and passing when being executed on the [Gitlab CI](https://gitlab.com/emcmongoose/mongoose/pipelines)
+
 ```bash
 export SUITE=<SUITE>
 export TEST=<TEST>
 ./gradlew robotest
+```
+
+Example:
+```bash
+SUITE=api.storage TEST=s3 ./gradlew clean robotest
 ```
 
 ## 4.2. Releasing
