@@ -84,7 +84,7 @@ import java.util.stream.Collectors;
 		final StorageType storageType, final RunMode runMode, final Concurrency concurrency, final ItemSize itemSize
 	) throws Exception {
 		partSize = itemSize.getValue();
-		fullItemSize = new SizeInBytes(2 * partSize.get(), 100 * partSize.get(), 3);
+		fullItemSize = new SizeInBytes((long) (1.2 * partSize.get()), 34 * partSize.get(), 2);
 		Loggers.MSG.info("Item size: {}, part size: {}", fullItemSize, partSize);
 		sizeLimit = new SizeInBytes(
 			Math.min(SizeInBytes.toFixedSize("100GB"), 5 * concurrency.getValue() * fullItemSize.getAvg())

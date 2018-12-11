@@ -142,6 +142,8 @@ extends HttpStorageDriverBase<I, O> {
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 			reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 			applyMetaDataHeaders(reqHeaders);
+			applyDynamicHeaders(reqHeaders);
+			applySharedHeaders(reqHeaders);
 			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketUri, credential);
 			final FullHttpRequest putBucketReq = new DefaultFullHttpRequest(
 				HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketUri, Unpooled.EMPTY_BUFFER, reqHeaders,
@@ -169,6 +171,8 @@ extends HttpStorageDriverBase<I, O> {
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
+		applyDynamicHeaders(reqHeaders);
+		applySharedHeaders(reqHeaders);
 		applyAuthHeaders(reqHeaders, HttpMethod.GET, bucketVersioningReqUri, credential);
 		final FullHttpRequest getBucketVersioningReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, bucketVersioningReqUri, Unpooled.EMPTY_BUFFER, reqHeaders,

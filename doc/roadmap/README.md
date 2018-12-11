@@ -9,5 +9,6 @@
 * GUI
 * Storage Drivers Implementation
     * Pravega
+    * Kafka
     * JDBC
         Required to prove that Mongoose is abstract enough to work against any kind of data storage
