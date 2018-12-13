@@ -1,7 +1,7 @@
 # Contents
 
 ## 2018
-* [4.1.0](#anchor-410) 2018-12-xx
+* [4.1.0](#anchor-410) 2018-12-12
 * [4.0.3](#anchor-403) 2018-11-28
 * [4.0.2](#anchor-402) 2018-11-13
 * [4.0.1](#anchor-401) 2018-10-08
@@ -62,11 +62,11 @@
 
 ### Functional
 
-#### 1. Remote API.
+#### 1. [Remote API](doc/interfaces/api/remote).
 
 Implemented for the node mode. The available actions are:
-1. Get Mongoose node configureation defaults
-2. Get Mongoose node configureation schema
+1. Get Mongoose node configuration defaults
+2. Get Mongoose node configuration schema
 3. Run a scenario
 4. Check the scenario if it is running
 5. Stop the scenario if it is running
@@ -75,7 +75,7 @@ Implemented for the node mode. The available actions are:
 
 Note that the metrics are being supplied in the [Prometheus exporter format](https://prometheus.io/docs/instrumenting/exposition_formats).
 
-#### 2. Configurable Timing Metrics Quantiles
+#### 2. [Configurable Timing Metrics Quantiles](doc/interfaces/api/remote#611-custom-quantiles)
 
 It's possible to supply the configurable quantiles for the timing metrics (duration/latency). This will work for all
 the timing metrics supplied via the Remote API. The legacy metrics output way (standard output and log files) are
@@ -96,6 +96,7 @@ New CI location: https://gitlab.com/emcmongoose/mongoose/pipelines
 
 | Id | Short Description |
 |----|-------------------|
+| [GOOSE-1284](https://mongoose-issues.atlassian.net/browse/GOOSE-1284) | \[S3] Bucket versioning checking request causes 403 response |
 | [GOOSE-1293](https://mongoose-issues.atlassian.net/browse/GOOSE-1293) | Incorrect console rate output |
 | [GOOSE-1301](https://mongoose-issues.atlassian.net/browse/GOOSE-1293) | Auto installer overwrites the manually changed defaults every run
 

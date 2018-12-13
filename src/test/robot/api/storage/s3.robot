@@ -57,43 +57,43 @@ Should Create Objects Using Multipart Upload
     Validate Item Output File  item_output_file_name=${DATA_DIR}/${step_id}.csv  item_output_path=mpu
     ...  item_size_min=${20971520}  item_size_max=${104857600}
 
-Should Create Objects Using Multiple Buckets And Users
-    ${step_id} =  Set Variable  create_objects_using_multipart_upload
+Should Read Single Random Byte Ranges
+    ${step_id} =  Set Variable  read_multiple_random_byte_ranges
+    ${object_count_limit} =  Convert To Integer  10000
+    ${random_byte_range_count} =  Convert To Integer  1
+    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
+    Remove File  ${DATA_DIR}/${step_id}.csv
+    ${args} =  Catenate  SEPARATOR= \\\n\t
+    ...  --item-data-size=100KB
+    ...  --load-op-limit-count=${object_count_limit}
+    ...  --load-step-id=${step_id}
+    ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
+    ...  --storage-driver-limit-concurrency=100
+    &{env_params} =  Create Dictionary  ITEM_LIST_FILE=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv  RANDOM_BYTE_RANGE_COUNT=${random_byte_range_count}
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    Log  ${std_out}
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  op_type=READ  count_succ_min=${object_count_limit}
+    ...  count_succ_max=${object_count_limit}  count_fail_max=${0}  transfer_size=${327680000}
+    ...  transfer_size_delta=${32768000}
+
+Should Update Multiple Random Byte Ranges
+    ${step_id} =  Set Variable  update_multiple_random_byte_ranges
+    ${object_count_limit} =  Convert To Integer  100000
+    ${random_byte_range_count} =  Convert To Integer  5
     Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
     Remove File  ${DATA_DIR}/${step_id}.csv
     ${args} =  Catenate  SEPARATOR= \\\n\t
     ...  --item-data-size=1KB
-    ...  --item-output-file=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv
-    ...  --item-output-path=bucket-%d\(314159265\)\{00\}\[0-99\]
-    ...  --load-op-limit-count=1000
-    ...  --storage-auth-file=credentials.csv
-    ...  --storage-auth-uid=user-%d\(314159265\)\{00\}\[0-99\]
-    ...  --storage-driver-limit-concurrency=10
-    Pass Execution  "TODO"
-
-Should Read Multiple Random Byte Ranges
-    ${step_id} =  Set Variable  read_multiple_random_byte_ranges
-    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
-    Remove File  ${DATA_DIR}/${step_id}.csv
-    ${args} =  Catenate  SEPARATOR= \\\n\t
+    ...  --load-op-limit-count=${object_count_limit}
+    ...  --load-step-id=${step_id}
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
-    &{env_params} =  Create Dictionary
+    ...  --storage-driver-limit-concurrency=1000
+    &{env_params} =  Create Dictionary  ITEM_LIST_FILE=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv  RANDOM_BYTE_RANGE_COUNT=${random_byte_range_count}
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
-    # TODO validation here
-    Pass Execution  "TODO"
-
-Should Update Multiple Random Byte Ranges
-    ${step_id} =  Set Variable  update_multiple_random_byte_ranges
-    Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
-    Remove File  ${DATA_DIR}/${step_id}.csv
-    ${args} =  Catenate  SEPARATOR= \\\n\t
-    ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
-    &{env_params} =  Create Dictionary
-    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
-    Log  ${std_out}
-    # TODO validation here
-    Pass Execution  "TODO"
+    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  op_type=UPDATE  count_succ_min=${object_count_limit}
+    ...  count_succ_max=${object_count_limit}  count_fail_max=${0}  transfer_size=${50900000}
+    ...  transfer_size_delta=${5090000}
 
 Should Create Objects With Custom Headers
     ${step_id} =  Set Variable  custom_headers

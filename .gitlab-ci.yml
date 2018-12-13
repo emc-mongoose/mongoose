@@ -3,7 +3,8 @@ image: docker:stable
 variables:
   DOCKER_HOST: tcp://docker:2375
   DOCKER_DRIVER: overlay2
-  MONGOOSE_IMAGE_NAME: emcmongoose/mongoose
+  IMAGE_NAME: emcmongoose/mongoose
+  IMAGE_FILE_NAME: build/mongoose.tar
   ROBOTEST_CONTAINER_WORKING_DIR: /root/mongoose
   SERVICE_HOST: docker # should be used instead of the "localhost"/"127.0.0.1" in GL CI
 
@@ -13,7 +14,7 @@ services:
 stages:
   - build
   - test # unit/integration tests
-  - deploy_docker_images
+  - build_docker_image
   - test_functional # functional containerized tests
   - deploy
 
@@ -31,22 +32,23 @@ build:
 test_unit:
   stage: test
   script:
-  - ./gradlew test
+    - ./gradlew test
 
 test_integration:
   stage: test
   script:
-  - ./gradlew integrationTest
+    - ./gradlew integrationTest
 
-deploy_mongoose_image:
-  stage: deploy_docker_images
+build_docker_image:
+  stage: build_docker_image
   variables:
     DOCKERFILE: Dockerfile
-    IMAGE_NAME: ${MONGOOSE_IMAGE_NAME}
   script:
-  - docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-  - docker build -f docker/${DOCKERFILE} -t ${IMAGE_NAME}:${CI_COMMIT_SHA} .
-  - docker push ${IMAGE_NAME}:${CI_COMMIT_SHA}
+    - docker build -f docker/${DOCKERFILE} -t ${IMAGE_NAME}:${CI_COMMIT_SHA} .
+    - docker save ${IMAGE_NAME}:${CI_COMMIT_SHA} > ${IMAGE_FILE_NAME}
+  artifacts:
+    paths:
+     - ${IMAGE_FILE_NAME}
 
 .test_robot:
   stage: test_functional
@@ -63,6 +65,9 @@ deploy_mongoose_image:
     - pip install -U robotframework-csvlibrary
   script:
     - export MONGOOSE_VERSION=$(cat src/main/resources/config/defaults.json | grep version | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - export MONGOOSE_IMAGE_VERSION=${CI_COMMIT_SHA}
+    - docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+    - docker load < ${IMAGE_FILE_NAME}
     - robot --outputdir build/robotest --suite ${SUITE} --include ${TEST} src/test/robot
   after_script:
     - rebot build/robotest/output.xml
@@ -94,3 +99,28 @@ test_api_storage_s3:
   variables:
     SUITE: api.storage
     TEST: s3
+
+test_api_storage_swift:
+  extends: .test_robot
+  variables:
+    SUITE: api.storage
+    TEST: swift
+
+deploy_to_maven_repo:
+  stage: deploy
+  script: # TODO
+    - echo TODO
+  only:
+    - tags
+
+deploy_to_docker_hub:
+  stage: deploy
+  script:
+    - docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+    - docker load < ${IMAGE_FILE_NAME}
+    - docker tag ${IMAGE_NAME}:${CI_COMMIT_SHA} ${IMAGE_NAME}:${CI_COMMIT_TAG}
+    - docker push ${IMAGE_NAME}:${CI_COMMIT_TAG}
+    - docker tag ${IMAGE_NAME}:${CI_COMMIT_SHA} ${IMAGE_NAME}:latest
+    - docker push ${IMAGE_NAME}:latest
+  only:
+    - tags
