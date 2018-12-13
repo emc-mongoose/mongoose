@@ -100,7 +100,6 @@ deploy_to_maven_repo:
     - echo TODO
   only:
     - tags
-    - master
 
 deploy_to_docker_hub:
   stage: deploy
@@ -113,4 +112,3 @@ deploy_to_docker_hub:
     - docker push ${IMAGE_NAME}:latest
   only:
     - tags
-    - master
