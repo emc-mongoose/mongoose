@@ -69,7 +69,7 @@ Should Read Multiple Random Byte Ranges
     ...  --load-step-id=${step_id}
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
     ...  --storage-driver-limit-concurrency=100
-    &{env_params} =  Create Dictionary  ITEM_LIST_FILE=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js  RANDOM_BYTE_RANGE_COUNT=${random_byte_range_count}
+    &{env_params} =  Create Dictionary  ITEM_LIST_FILE=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv  RANDOM_BYTE_RANGE_COUNT=${random_byte_range_count}
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  op_type=READ  count_succ_min=${object_count_limit}
@@ -88,7 +88,7 @@ Should Update Multiple Random Byte Ranges
     ...  --load-step-id=${step_id}
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
     ...  --storage-driver-limit-concurrency=1000
-    &{env_params} =  Create Dictionary  ITEM_LIST_FILE=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js  RANDOM_BYTE_RANGE_COUNT=${random_byte_range_count}
+    &{env_params} =  Create Dictionary  ITEM_LIST_FILE=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv  RANDOM_BYTE_RANGE_COUNT=${random_byte_range_count}
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  op_type=UPDATE  count_succ_min=${object_count_limit}
