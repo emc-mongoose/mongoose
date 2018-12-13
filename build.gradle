@@ -483,7 +483,7 @@ task buildRobotestImage(type: DockerBuildImage) {
 task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage, buildRobotestImage]) {
 	attachStderr = true
 	attachStdout = true
-	autoRemove = false
+	autoRemove = true
 	binds = [
 		"${rootProject.buildDir}": "/root/mongoose/build",
 		"/var/run/docker.sock": "/var/run/docker.sock",
