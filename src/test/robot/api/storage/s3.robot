@@ -57,10 +57,10 @@ Should Create Objects Using Multipart Upload
     Validate Item Output File  item_output_file_name=${DATA_DIR}/${step_id}.csv  item_output_path=mpu
     ...  item_size_min=${20971520}  item_size_max=${104857600}
 
-Should Read Multiple Random Byte Ranges
+Should Read Single Random Byte Ranges
     ${step_id} =  Set Variable  read_multiple_random_byte_ranges
     ${object_count_limit} =  Convert To Integer  10000
-    ${random_byte_range_count} =  Convert To Integer  10
+    ${random_byte_range_count} =  Convert To Integer  1
     Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
     Remove File  ${DATA_DIR}/${step_id}.csv
     ${args} =  Catenate  SEPARATOR= \\\n\t
@@ -73,8 +73,8 @@ Should Read Multiple Random Byte Ranges
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  op_type=READ  count_succ_min=${object_count_limit}
-    ...  count_succ_max=${object_count_limit}  count_fail_max=${0}  transfer_size=${807625000}
-    ...  transfer_size_delta=${80762500}
+    ...  count_succ_max=${object_count_limit}  count_fail_max=${0}  transfer_size=${327680000}
+    ...  transfer_size_delta=${32768000}
 
 Should Update Multiple Random Byte Ranges
     ${step_id} =  Set Variable  update_multiple_random_byte_ranges
