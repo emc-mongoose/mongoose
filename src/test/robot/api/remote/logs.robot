@@ -9,7 +9,7 @@ Library  RequestsLibrary
 ${DATA_DIR}  src/test/robot/api/remote/data
 ${STEP_ID}  123
 ${MESS_LOGGER_NAME}  Messages
-${LOGGER_NAME}  com.emc.mongoose.logging.Messages
+${LOGGER_NAME}  Messages
 ${MONGOOSE_LOGS_URI_PATH}  /logs/${STEP_ID}
 
 *** Test Cases ***
@@ -18,6 +18,7 @@ Errors test
 
 Messages test
 	${uri_path} =   Catenate    ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
+	Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
 	${resp} =  Get Request  mongoose_node  ${uri_path}
 	Should Be Equal As Strings  ${resp.status_code}  200
 #	Should Have Lines  ${resp.body}
@@ -30,6 +31,11 @@ Should Have Lines
 	[Arguments]  ${result}
 	${lines} =	Get Lines Matching Pattern	${result}	*
 	[Return]  ${lines}
+
+Should Return Status
+	[Arguments]  ${uri_path}  ${expected_status}
+	${resp} =  Get Request  mongoose_node  ${uri_path}
+	Should Be Equal As Strings  ${resp.status_code}  ${expected_status}
 
 #Should Return Logs
 #    [Arguments]  ${expected_json_file_name}  ${uri_path}
