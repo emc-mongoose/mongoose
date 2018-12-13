@@ -66,6 +66,7 @@ Should Read Multiple Random Byte Ranges
     ${args} =  Catenate  SEPARATOR= \\\n\t
     ...  --item-data-size=100KB
     ...  --load-op-limit-count=${object_count_limit}
+    ...  --load-step-id=${step_id}
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
     ...  --storage-driver-limit-concurrency=100
     &{env_params} =  Create Dictionary  ITEM_LIST_FILE=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js  RANDOM_BYTE_RANGE_COUNT=${random_byte_range_count}
@@ -84,6 +85,7 @@ Should Update Multiple Random Byte Ranges
     ${args} =  Catenate  SEPARATOR= \\\n\t
     ...  --item-data-size=1KB
     ...  --load-op-limit-count=${object_count_limit}
+    ...  --load-step-id=${step_id}
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
     ...  --storage-driver-limit-concurrency=1000
     &{env_params} =  Create Dictionary  ITEM_LIST_FILE=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js  RANDOM_BYTE_RANGE_COUNT=${random_byte_range_count}
