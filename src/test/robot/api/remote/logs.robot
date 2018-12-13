@@ -7,7 +7,7 @@ Library  RequestsLibrary
 
 *** Variables ***
 ${DATA_DIR}  src/test/robot/api/remote/data
-${STEP_ID}  123
+${STEP_ID}  robotest
 ${MESS_LOGGER_NAME}  Messages
 ${LOGGER_NAME}  Messages
 ${MONGOOSE_LOGS_URI_PATH}  /logs/${STEP_ID}
@@ -17,7 +17,7 @@ Errors test
 	Should Be Equal As Strings  ${DATA_DIR}  ${DATA_DIR}
 
 Messages test
-	${uri_path} =   Catenate    ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
+	${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
 	Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
 	${resp} =  Get Request  mongoose_node  ${uri_path}
 	Should Be Equal As Strings  ${resp.status_code}  200
