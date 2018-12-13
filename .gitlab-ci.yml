@@ -94,6 +94,12 @@ test_api_storage_s3:
     SUITE: api.storage
     TEST: s3
 
+test_api_storage_swift:
+  extends: .test_robot
+  variables:
+    SUITE: api.storage
+    TEST: swift
+
 deploy_to_maven_repo:
   stage: deploy
   script: # TODO
