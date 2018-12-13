@@ -91,7 +91,7 @@ Should Update Multiple Random Byte Ranges
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  op_type=UPDATE  count_succ_min=${object_count_limit}
-    ...  count_succ_max=${object_count_limit}  transfer_size=${50900000}  transfer_size_delta=${45000000}
+    ...  count_succ_max=${object_count_limit}  transfer_size=${507000}  transfer_size_delta=${100000}
 
 Should Create Objects With Custom Headers
     ${step_id} =  Set Variable  custom_headers
