@@ -15,7 +15,7 @@ ${SWIFT_PORT} =  8080
 ${SWIFT_UID} =  test:tester
 ${SWIFT_SECRET_KEY} =  testing
 ${SWIFT_STORAGE_CONTAINER_NAME} =  swift_server
-${MONGOOSE_SHARED_ARGS} =  --storage-driver-type=swift --storage-net-node-port=${SWIFT_PORT} --storage-auth-uid=${SWIFT_UID} --storage-auth-secret=${SWIFT_SECRET_KEY}
+${MONGOOSE_SHARED_ARGS} =  --storage-driver-type=swift --storage-namespace=ns1 --storage-net-node-port=${SWIFT_PORT} --storage-auth-uid=${SWIFT_UID} --storage-auth-secret=${SWIFT_SECRET_KEY}
 
 *** Test Cases ***
 Should Copy Objects Using Container Listing
