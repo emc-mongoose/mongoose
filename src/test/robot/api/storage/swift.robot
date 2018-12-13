@@ -11,13 +11,12 @@ Test Teardown  Remove Containers
 *** Variables ***
 ${DATA_DIR} =  src/test/robot/api/storage/data
 ${LOG_DIR} =  build/log
-${SWIFT_IMAGE_NAME} =  morrisjobke/docker-swift-onlyone
+${SWIFT_IMAGE_NAME} =  serverascode/swift-onlyone
 ${SWIFT_IMAGE_VERSION} =  latest
 ${SWIFT_PORT} =  8080
 ${SWIFT_UID} =  test:tester
-${SWIFT_SECRET_KEY} =  testing
 ${SWIFT_STORAGE_CONTAINER_NAME} =  swift_server
-${MONGOOSE_SHARED_ARGS} =  --storage-driver-type=swift --storage-namespace=ns1 --storage-net-node-port=${SWIFT_PORT} --storage-auth-uid=${SWIFT_UID} --storage-auth-secret=${SWIFT_SECRET_KEY}
+${MONGOOSE_SHARED_ARGS} =  --storage-driver-type=swift --storage-namespace=AUTH_test --storage-net-node-port=${SWIFT_PORT} --storage-auth-uid=${SWIFT_UID}
 
 *** Test Cases ***
 Should Copy Objects Using Container Listing
@@ -31,7 +30,7 @@ Should Copy Objects Using Container Listing
     ...  --storage-driver-limit-concurrency=10
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/copy_using_input_path.js
     &{env_params} =  Create Dictionary  ITEM_SRC_PATH=/container0  ITEM_DST_PATH=/container1
-    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args} --storage-auth-secret=${SWIFT_SECRET_KEY}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${object_count_limit}
     ...  count_succ_max=${object_count_limit}  transfer_size=${10240000}
@@ -50,7 +49,7 @@ Should Copy Objects Using Container Listing
 #    ...  --load-step-id=${step_id}
 #    ...  --storage-driver-limit-concurrency=10
 #    &{env_params} =  Create Dictionary
-#    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+#    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args} --storage-auth-secret=${SWIFT_SECRET_KEY}
 #    Log  ${std_out}
 #    Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${10}  count_succ_max=${100}
 #    ...  count_fail_max=${10}  transfer_size=${2147483648}  transfer_size_delta=${167772160}
@@ -70,7 +69,7 @@ Should Read Multiple Random Byte Ranges
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
     ...  --storage-driver-limit-concurrency=10
     &{env_params} =  Create Dictionary  ITEM_LIST_FILE=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv  RANDOM_BYTE_RANGE_COUNT=${random_byte_range_count}
-    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args} --storage-auth-secret=${SWIFT_SECRET_KEY}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  op_type=READ  count_succ_min=${object_count_limit}
     ...  count_succ_max=${object_count_limit}  transfer_size=${32768000}  transfer_size_delta=${27680000}
@@ -85,7 +84,7 @@ Should Create Auth Tokens
     ...  --load-step-id=${step_id}
     ...  --storage-driver-limit-concurrency=10
     &{env_params} =  Create Dictionary
-    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
+    ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args} --storage-auth-secret=${SWIFT_SECRET_KEY}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${token_count_limit}
     ...  count_succ_max=${token_count_limit}
@@ -98,8 +97,14 @@ Start Swift Server
     ...  --name ${SWIFT_STORAGE_CONTAINER_NAME}
     ...  --publish ${SWIFT_PORT}:${SWIFT_PORT}
     ...  ${SWIFT_IMAGE_NAME}:${SWIFT_IMAGE_VERSION}
-    ${std_out} =  Run  ${cmd}
+    Sleep  5  Wait until Swift server starts...
+    ${std_out} =  Run  docker logs ${SWIFT_STORAGE_CONTAINER_NAME}
     Log  ${std_out}
+    ${swift_secret_key} =  Get Regexp Matches  ${std_out}  user_test_tester = (\w+) .admin  1
+    Log  ${swift_secret_key}
+    ${swift_secret_key} =  Get From List  ${swift_secret_key}  0
+    Set Test Variable  ${SWIFT_SECRET_KEY}  ${swift_secret_key}
+    Log  ${SWIFT_SECRET_KEY}
 
 Remove Swift Server
     Run  docker stop ${SWIFT_STORAGE_CONTAINER_NAME}
