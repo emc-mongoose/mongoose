@@ -1,5 +1,4 @@
 PreconditionLoad
-    .config(parentConfig)
     .config({
       "item" : {
         "output" : {
@@ -10,7 +9,6 @@ PreconditionLoad
     .run();
 
 UpdateLoad
-    .config(parentConfig)
     .config({
       "item" : {
         "data" : {
