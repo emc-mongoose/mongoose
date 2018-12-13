@@ -73,8 +73,7 @@ Should Read Single Random Byte Ranges
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  op_type=READ  count_succ_min=${object_count_limit}
-    ...  count_succ_max=${object_count_limit}  count_fail_max=${0}  transfer_size=${327680000}
-    ...  transfer_size_delta=${32768000}
+    ...  count_succ_max=${object_count_limit}  transfer_size=${327680000}  transfer_size_delta=${32768000}
 
 Should Update Multiple Random Byte Ranges
     ${step_id} =  Set Variable  update_multiple_random_byte_ranges
@@ -92,8 +91,7 @@ Should Update Multiple Random Byte Ranges
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  op_type=UPDATE  count_succ_min=${object_count_limit}
-    ...  count_succ_max=${object_count_limit}  count_fail_max=${0}  transfer_size=${50900000}
-    ...  transfer_size_delta=${5090000}
+    ...  count_succ_max=${object_count_limit}  transfer_size=${50900000}  transfer_size_delta=${5090000}
 
 Should Create Objects With Custom Headers
     ${step_id} =  Set Variable  custom_headers
@@ -108,7 +106,7 @@ Should Create Objects With Custom Headers
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${10}  count_succ_max=${10}
-    ...  count_fail_max=${0}  transfer_size=${10485760}  transfer_size_delta=${0}
+    ...  transfer_size=${10485760}  transfer_size_delta=${0}
 
 *** Keywords ***
 Start S3 Server
