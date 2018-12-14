@@ -22,6 +22,7 @@ Start Mongoose Node
     ...  --publish ${MONGOOSE_NODE_PORT}:${MONGOOSE_NODE_PORT}
     ...  ${MONGOOSE_IMAGE_NAME}:${image_version}
     ...  --load-step-id=robotest --run-node
+    ...  --output-metrics-trace-persist=true
     ${std_out} =  Run  ${cmd}
     Log  ${std_out}
     Create Session  mongoose_node  http://${service_host}:${MONGOOSE_NODE_PORT}  debug=1  timeout=1000  max_retries=10
