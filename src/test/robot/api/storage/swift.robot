@@ -104,7 +104,7 @@ Start Swift Server
     ${lines} =  Get Lines Containing String  ${std_out}  user_test_tester =
     Log  ${lines}
     ${tokens} =  Split String  ${lines}  ${SPACE}
-    ${swift_secret_key} =  Get From List ${tokens}  2
+    ${swift_secret_key} =  Get From List  ${tokens}  2
     Log  ${swift_secret_key}
     Set Test Variable  ${SWIFT_SECRET_KEY}  ${swift_secret_key}
 
