@@ -100,9 +100,10 @@ Start Swift Server
     ...  ${SWIFT_IMAGE_NAME}:${SWIFT_IMAGE_VERSION}
     Run  ${cmd}
     Sleep  5  Wait 5 sec until Swift server generates passwords...
-    ${std_out} =  Run  docker logs ${SWIFT_STORAGE_CONTAINER_NAME} | grep user_test_tester\ =
-    Log  ${std_out}
-    ${swift_secret_key} =  Get Regexp Matches  ${std_out}  user_test_tester = (\w+) \.admin
+    ${std_out} =  Run  docker logs ${SWIFT_STORAGE_CONTAINER_NAME}
+    ${lines} =  Get Lines Containing String  user_test_tester
+    Log  ${lines}
+    ${swift_secret_key} =  Get Regexp Matches  ${lines[0]}  user_test_tester = (\w+) \.admin
     Log  ${swift_secret_key}
     ${swift_secret_key} =  Get From List  ${swift_secret_key}  1
     Set Test Variable  ${SWIFT_SECRET_KEY}  ${swift_secret_key}

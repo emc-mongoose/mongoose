@@ -13,10 +13,10 @@ services:
 
 stages:
   - build
-  - test # unit/integration tests
+  #- test # unit/integration tests
   - build_docker_image
   - test_functional # functional containerized tests
-  - deploy
+  #- deploy
 
 before_script:
   - apk add --no-cache --update openjdk8
@@ -76,23 +76,23 @@ build_docker_image:
       - build/robotest/*.html
     when: on_failure
 
-test_api_remote_config:
-  extends: .test_robot
-  variables:
-    SUITE: api.remote
-    TEST: config
-
-test_api_remote_run:
-  extends: .test_robot
-  variables:
-    SUITE: api.remote
-    TEST: run
-
-test_api_storage_s3:
-  extends: .test_robot
-  variables:
-    SUITE: api.storage
-    TEST: s3
+#test_api_remote_config:
+#  extends: .test_robot
+#  variables:
+#    SUITE: api.remote
+#    TEST: config
+#
+#test_api_remote_run:
+#  extends: .test_robot
+#  variables:
+#    SUITE: api.remote
+#    TEST: run
+#
+#test_api_storage_s3:
+#  extends: .test_robot
+#  variables:
+#    SUITE: api.storage
+#    TEST: s3
 
 test_api_storage_swift:
   extends: .test_robot
