@@ -73,7 +73,7 @@ Should Return Mongoose Scenario Run State
 Get Mongoose Node Status
     ${resp} =  Head Request  mongoose_node  ${MONGOOSE_RUN_URI_PATH}
     Log  ${resp.status_code}
-	[Return]  ${resp}
+    [Return]  ${resp}
 
 Get Mongoose Scenario Run State
     [Arguments]  ${etag}
