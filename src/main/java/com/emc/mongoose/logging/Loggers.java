@@ -2,8 +2,6 @@ package com.emc.mongoose.logging;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
-import org.apache.logging.log4j.core.async.AsyncLogger;
 
 /**
  Created by kurila on 05.05.17.
