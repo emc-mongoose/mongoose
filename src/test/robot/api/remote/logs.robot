@@ -18,26 +18,33 @@ ${MONGOOSE_LOGS_URI_PATH}  /logs/${STEP_ID}
 *** Test Cases ***
 Messages test
 	${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
-	Wait Until Keyword Succeeds  10x  2s  Should Return Status  ${uri_path}  200
+	Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
 	${resp} =  Get Request  mongoose_node  ${uri_path}
 	Should Be Equal As Strings  ${resp.status_code}  200
-	Should Have Lines  ${resp.text}
+	Should Have Lines  ${resp.text}  *| INFO |*
 
 OpTrace test
 	${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${OP_TRACE_LOGGER_NAME}
-	Wait Until Keyword Succeeds  10x  2s  Start Mongoose Scenario  ${DATA_DIR}/aggregated_defaults.json  ${DATA_DIR}/scenario_dummy.js
-    Wait Until Keyword Succeeds  10x  2s  Should Return Status  ${uri_path}  200
+    Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
     ${resp} =  Get Request  mongoose_node  ${uri_path}
-#    Should Be Equal As Strings  ${resp.status_code}  200
-#    Should Have Lines  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    Should Have Lines  ${resp.text}  *
+
+Delete logs test
+	${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
+#	TODO: stop run
+    Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
+    Delete Request  mongoose_node  ${uri_path}
+    ${resp} =  Get Request  mongoose_node  ${uri_path}
+    Should Be Equal As Strings  ${resp.status_code}  400 #no log's file
 
 *** Keywords ***
 SetUp
-	Wait Until Keyword Succeeds  10x  2s  Start Mongoose Scenario  ${DATA_DIR}/aggregated_defaults.json  ${DATA_DIR}/scenario_dummy.js
+	Wait Until Keyword Succeeds  10x  2s  Start Mongoose Scenario  ${DATA_DIR}/logs_test_defaults.json  ${DATA_DIR}/scenario_dummy.js
 
 Should Have Lines
-	[Arguments]  ${result}
-	${lines} =	Get Lines Matching Pattern	${result}	*| INFO |*
+	[Arguments]  ${result}  ${pattern}
+	${lines} =	Get Lines Matching Pattern	${result}	${pattern}
 	${count} =  Get Line Count  ${lines}
     Should Be True  ${count}>0
 
@@ -55,10 +62,10 @@ Start Mongoose Scenario
     Log  ${resp.status_code}
     [Return]  ${resp}
 
-#Should Return Logs
-#    [Arguments]  ${expected_json_file_name}  ${uri_path}
-#    ${file_content} =  Get File  ${expected_json_file_name}
-#    ${expected_json_data} =  To Json  ${file_content}
-#    ${resp} =  Get Request  mongoose_node  ${uri_path}
-#    Should Be Equal As Strings  ${resp.status_code}  200
-#    Should Be Equal  ${expected_json_data}  ${resp.json()}
+Stop Mongoose Scenario Run
+    [Arguments]  ${etag}
+    &{req_headers} =  Create Dictionary  If-Match=${etag}
+    ${resp} =  Delete Request  mongoose_node  ${MONGOOSE_RUN_URI_PATH}  headers=${req_headers}
+    Log  ${resp.status_code}
+    [Return]  ${resp}
+
