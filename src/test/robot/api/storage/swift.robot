@@ -3,6 +3,7 @@ Documentation  Mongoose Swift Storage Driver Tests
 Force Tags  Swift
 Library  Collections
 Library  OperatingSystem
+Library  String
 Library  Validation
 Resource  MongooseContainer.robot
 Test Setup  Start Swift Server
