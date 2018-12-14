@@ -98,6 +98,7 @@ Start Swift Server
     ...  --name ${SWIFT_STORAGE_CONTAINER_NAME}
     ...  --publish ${SWIFT_PORT}:${SWIFT_PORT}
     ...  ${SWIFT_IMAGE_NAME}:${SWIFT_IMAGE_VERSION}
+    Run  ${cmd}
     Sleep  5  Wait until Swift server starts...
     ${std_out} =  Run  docker logs ${SWIFT_STORAGE_CONTAINER_NAME}
     Log  ${std_out}
