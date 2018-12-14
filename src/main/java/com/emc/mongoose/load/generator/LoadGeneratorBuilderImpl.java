@@ -35,6 +35,7 @@ import static com.emc.mongoose.storage.driver.StorageDriver.BUFF_SIZE_MIN;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.commons.concurrent.throttle.Throttle;
@@ -72,7 +73,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	private ItemType itemType = null;
 	private ItemFactory<I> itemFactory = null;
 	private Config authConfig = null;
-	private StorageDriver<I, O> storageDriver = null;
+	private Output<O> opOutput = null;
 	private Input<I> itemInput = null;
 	private long sizeEstimate = -1;
 	private int batchSize = -1;
@@ -111,8 +112,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 	}
 	
 	@Override
-	public LoadGeneratorBuilderImpl<I, O, T> storageDriver(final StorageDriver<I, O> storageDriver) {
-		this.storageDriver = storageDriver;
+	public LoadGeneratorBuilderImpl<I, O, T> loadOperationsOutput(final Output<O> opOutput) {
+		this.opOutput = opOutput;
 		return this;
 	}
 	
@@ -258,8 +259,8 @@ implements LoadGeneratorBuilder<I, O, T> {
 				(itemInputFile == null || itemInputFile.isEmpty()) && (itemInputPath == null || itemInputPath.isEmpty())
 			) {
 				itemInput = newItemInput();
-			} else {
-				itemInput = ItemInputFactory.createItemInput(itemConfig, batchSize, storageDriver);
+			} else if(opOutput instanceof StorageDriver) {
+				itemInput = ItemInputFactory.createItemInput(itemConfig, batchSize, (StorageDriver<I, O>) opOutput);
 			}
 			if(itemInput == null) {
 				throw new OmgShootMyFootException("No item input available");
@@ -328,11 +329,11 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 
 		// adjust the storage drivers for the estimated transfer size
-		if(storageDriver == null) {
-			throw new OmgShootMyFootException("Storage driver is not set");
+		if(opOutput == null) {
+			throw new OmgShootMyFootException("Load operations output is not set");
 		}
-		if(sizeEstimate > 0 && ItemType.DATA.equals(itemType)) {
-			storageDriver.adjustIoBuffers(sizeEstimate, opType);
+		if(sizeEstimate > 0 && ItemType.DATA.equals(itemType) && opOutput instanceof StorageDriver) {
+			((StorageDriver) opOutput).adjustIoBuffers(sizeEstimate, opType);
 		}
 
 		final boolean recycleFlag = opConfig.boolVal("recycle");
@@ -343,7 +344,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 		}
 
 		return (T) new LoadGeneratorImpl<>(
-			itemInput, opsBuilder, throttles, storageDriver, batchSize, countLimit, recycleLimit,
+			itemInput, opsBuilder, throttles, opOutput, batchSize, countLimit, recycleLimit,
 			(recycleFlag || retryFlag), shuffleFlag
 		);
 	}
@@ -447,9 +448,7 @@ implements LoadGeneratorBuilder<I, O, T> {
 	private Input<I> newItemInput()
 	throws OmgShootMyFootException {
 		final Config namingConfig = itemConfig.configVal("naming");
-		final ItemNamingType namingType = ItemNamingType.valueOf(
-			namingConfig.stringVal("type").toUpperCase()
-		);
+		final ItemNamingType namingType = ItemNamingType.valueOf(namingConfig.stringVal("type").toUpperCase());
 		final String namingPrefix = namingConfig.stringVal("prefix");
 		final int namingLength = namingConfig.intVal("length");
 		final int namingRadix = namingConfig.intVal("radix");

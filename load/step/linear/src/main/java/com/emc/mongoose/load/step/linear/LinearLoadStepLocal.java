@@ -118,7 +118,7 @@ extends LoadStepLocalBase {
 						.loadConfig(loadConfig)
 						.itemType(itemType)
 						.itemFactory((ItemFactory) itemFactory)
-						.storageDriver(driver)
+						.loadOperationsOutput(driver)
 						.authConfig(storageConfig.configVal("auth"))
 						.originIndex(0);
 					if(rateLimit > 0) {

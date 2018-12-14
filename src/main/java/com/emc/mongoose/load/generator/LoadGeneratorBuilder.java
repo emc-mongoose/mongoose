@@ -11,6 +11,7 @@ import com.emc.mongoose.storage.driver.StorageDriver;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.commons.concurrent.throttle.Throttle;
+import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.confuse.Config;
 
 import java.io.IOException;
@@ -30,7 +31,7 @@ public interface LoadGeneratorBuilder<I extends Item, O extends Operation<I>, T 
 	
 	LoadGeneratorBuilder<I, O, T> authConfig(final Config authConfig);
 	
-	LoadGeneratorBuilder<I, O, T> storageDriver(StorageDriver<I, O> storageDriver);
+	LoadGeneratorBuilder<I, O, T> loadOperationsOutput(Output<O> storageDriver);
 	
 	LoadGeneratorBuilder<I, O, T> itemInput(final Input<I> itemInput);
 

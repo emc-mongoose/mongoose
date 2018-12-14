@@ -55,7 +55,6 @@ import java.util.stream.Collectors;
 public class AmzS3StorageDriverTest
 extends AmzS3StorageDriver {
 
-	private static final String NS = "ns1";
 	private static final Credential CREDENTIAL = Credential.getInstance(
 		"user1", "u5QtPuQx+W5nrrQQEg7nArBqSgC8qLiDt2RhQthb"
 	);
