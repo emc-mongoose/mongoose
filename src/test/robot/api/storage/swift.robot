@@ -104,7 +104,7 @@ Start Swift Server
     Log  ${std_out}
     ${swift_secret_key} =  Get Regexp Matches  ${std_out}  user_test_tester = (\w+) \.admin
     Log  ${swift_secret_key}
-    ${swift_secret_key} =  Get From List  ${swift_secret_key}  0
+    ${swift_secret_key} =  Get From List  ${swift_secret_key}  1
     Set Test Variable  ${SWIFT_SECRET_KEY}  ${swift_secret_key}
     Log  ${SWIFT_SECRET_KEY}
 
