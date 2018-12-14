@@ -103,11 +103,10 @@ Start Swift Server
     ${std_out} =  Run  docker logs ${SWIFT_STORAGE_CONTAINER_NAME}
     ${lines} =  Get Lines Containing String  ${std_out}  user_test_tester =
     Log  ${lines}
-    ${swift_secret_key} =  Get Regexp Matches  ${lines}  user_test_tester = (\w+) \.admin
+    ${tokens} =  Split String  ${lines}  ${SPACE}
+    ${swift_secret_key} =  Get From List ${tokens}  2
     Log  ${swift_secret_key}
-    ${swift_secret_key} =  Get From List  ${swift_secret_key}  1
     Set Test Variable  ${SWIFT_SECRET_KEY}  ${swift_secret_key}
-    Log  ${SWIFT_SECRET_KEY}
 
 Remove Swift Server
     Run  docker stop ${SWIFT_STORAGE_CONTAINER_NAME}
