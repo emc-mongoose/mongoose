@@ -36,7 +36,8 @@ Delete logs test
     Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
     Delete Request  mongoose_node  ${uri_path}
     ${resp} =  Get Request  mongoose_node  ${uri_path}
-    Should Be Equal As Strings  ${resp.status_code}  404 # The log file doesn't exist
+    # The log file doesn't exist
+    Should Be Equal As Strings  ${resp.status_code}  404
 
 *** Keywords ***
 SetUp
