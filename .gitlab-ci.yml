@@ -13,10 +13,10 @@ services:
 
 stages:
   - build
-  #- test # unit/integration tests
+  - test # unit/integration tests
   - build_docker_image
   - test_functional # functional containerized tests
-  #- deploy
+  - deploy
 
 before_script:
   - apk add --no-cache --update openjdk8
@@ -29,15 +29,15 @@ build:
     paths:
       - build/libs/mongoose-*.jar
 
-test_unit:
-  stage: test
-  script:
-    - ./gradlew test
-
-test_integration:
-  stage: test
-  script:
-    - ./gradlew integrationTest
+#test_unit:
+#  stage: test
+#  script:
+#    - ./gradlew test
+#
+#test_integration:
+#  stage: test
+#  script:
+#    - ./gradlew integrationTest
 
 build_docker_image:
   stage: build_docker_image
