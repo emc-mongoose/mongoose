@@ -54,7 +54,7 @@ Should Create Dynamic Large Objects
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${10}  count_succ_max=${100}
     ...  count_fail_max=${10}  transfer_size=${2147483648}  transfer_size_delta=${167772160}
-    Validate Item Output File  item_output_file_name=${DATA_DIR}/${step_id}.csv  item_output_path=mpu
+    Validate Item Output File  item_output_file_name=${DATA_DIR}/${step_id}.csv  item_output_path=dlo
     ...  item_size_min=${20971520}  item_size_max=${104857600}
 
 Should Read Multiple Random Byte Ranges
@@ -80,7 +80,7 @@ Should Create Auth Tokens
     ${token_count_limit} =  Convert To Integer  1000
     Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
     ${args} =  Catenate  SEPARATOR= \\\n\t
-    ...  --item-data-type=token
+    ...  --item-type=token
     ...  --load-op-limit-count=${token_count_limit}
     ...  --load-step-id=${step_id}
     ...  --storage-driver-limit-concurrency=10
