@@ -9,6 +9,7 @@ import com.emc.mongoose.storage.driver.coop.netty.http.HttpStorageDriverBase;
 import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.NS_URI_BASE;
 import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.OBJ_URI_BASE;
 
+import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 
@@ -29,7 +30,7 @@ extends HttpResponseHandlerBase<I, O> {
 	}
 	
 	@Override
-	protected final void handleResponseHeaders(final O op, final HttpHeaders respHeaders) {
+	protected final void handleResponseHeaders(final Channel channel, final O op, final HttpHeaders respHeaders) {
 		if(!fsAccess) {
 			final String location = respHeaders.get(HttpHeaderNames.LOCATION);
 			if(location != null && !location.isEmpty()) {

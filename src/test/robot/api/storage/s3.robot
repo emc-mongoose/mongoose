@@ -65,6 +65,7 @@ Should Read Single Random Byte Ranges
     Remove File  ${DATA_DIR}/${step_id}.csv
     ${args} =  Catenate  SEPARATOR= \\\n\t
     ...  --item-data-size=100KB
+    ...  --item-data-verify
     ...  --load-op-limit-count=${object_count_limit}
     ...  --load-step-id=${step_id}
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
