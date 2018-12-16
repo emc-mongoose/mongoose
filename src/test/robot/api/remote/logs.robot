@@ -17,21 +17,21 @@ ${MONGOOSE_LOGS_URI_PATH}  /logs/${STEP_ID}
 
 *** Test Cases ***
 Should Respond Message Logs
-	${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
-	Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
-	${resp} =  Get Request  mongoose_node  ${uri_path}
-	Should Be Equal As Strings  ${resp.status_code}  200
-	Should Have Lines  ${resp.text}  *| INFO |*
+    ${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
+    Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
+    ${resp} =  Get Request  mongoose_node  ${uri_path}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    Should Have Lines  ${resp.text}  *| INFO |*
 
 Should Respond Operation Trace Logs
-	${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${OP_TRACE_LOGGER_NAME}
+    ${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${OP_TRACE_LOGGER_NAME}
     Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
     ${resp} =  Get Request  mongoose_node  ${uri_path}
     Should Be Equal As Strings  ${resp.status_code}  200
     Should Have Lines  ${resp.text}  *
 
 Should Delete logs
-	${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
+    ${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
     Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
     Delete Request  mongoose_node  ${uri_path}
     ${resp} =  Get Request  mongoose_node  ${uri_path}
@@ -40,18 +40,18 @@ Should Delete logs
 
 *** Keywords ***
 SetUp
-	Wait Until Keyword Succeeds  10x  2s  Start Mongoose Scenario  ${DATA_DIR}/logs_test_defaults.json  ${DATA_DIR}/scenario_dummy.js
+    Wait Until Keyword Succeeds  10x  2s  Start Mongoose Scenario  ${DATA_DIR}/logs_test_defaults.json  ${DATA_DIR}/scenario_dummy.js
 
 Should Have Lines
-	[Arguments]  ${result}  ${pattern}
-	${lines} =	Get Lines Matching Pattern	${result}	${pattern}
-	${count} =  Get Line Count  ${lines}
+    [Arguments]  ${result}  ${pattern}
+    ${lines} =    Get Lines Matching Pattern    ${result}    ${pattern}
+    ${count} =  Get Line Count  ${lines}
     Should Be True  ${count}>0
 
 Should Return Status
-	[Arguments]  ${uri_path}  ${expected_status}
-	${resp} =  Get Request  mongoose_node  ${uri_path}
-	Should Be Equal As Strings  ${resp.status_code}  ${expected_status}
+    [Arguments]  ${uri_path}  ${expected_status}
+    ${resp} =  Get Request  mongoose_node  ${uri_path}
+    Should Be Equal As Strings  ${resp.status_code}  ${expected_status}
 
 Start Mongoose Scenario
     [Arguments]  ${defaults_file_name}  ${scenario_file_name}
