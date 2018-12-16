@@ -16,23 +16,22 @@ ${MONGOOSE_RUN_URI_PATH}  /run
 ${MONGOOSE_LOGS_URI_PATH}  /logs/${STEP_ID}
 
 *** Test Cases ***
-Messages test
+Should Respond Message Logs
 	${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
 	Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
 	${resp} =  Get Request  mongoose_node  ${uri_path}
 	Should Be Equal As Strings  ${resp.status_code}  200
 	Should Have Lines  ${resp.text}  *| INFO |*
 
-OpTrace test
+Should Respond Operation Trace Logs
 	${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${OP_TRACE_LOGGER_NAME}
     Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
     ${resp} =  Get Request  mongoose_node  ${uri_path}
     Should Be Equal As Strings  ${resp.status_code}  200
     Should Have Lines  ${resp.text}  *
 
-Delete logs test
+Should Delete logs
 	${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
-#	TODO: stop run
     Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
     Delete Request  mongoose_node  ${uri_path}
     ${resp} =  Get Request  mongoose_node  ${uri_path}
