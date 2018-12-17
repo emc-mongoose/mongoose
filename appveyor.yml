@@ -3,7 +3,7 @@ image:
 
 environment:
   HOME_DIR: C:\projects\mongoose
-  PATH_TO_JAR: build\libs\mongoose-*.jar
+  PATH_TO_JAR: build\libs\mongoose-4.1.0.jar
 
 build: off
 build_script:

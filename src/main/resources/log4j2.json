@@ -39,8 +39,8 @@
 				{
 					"name" : "msgFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}messages.log",
-					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}messages.log",
+					"fileName" : "${ctx:home_dir}/log/${ctx:step_id}/messages.log",
+					"filePattern" : "${ctx:home_dir}/log/$${ctx:step_id}/messages.log",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
@@ -52,8 +52,8 @@
 				{
 					"name" : "3rdPartyFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}3rdparty.log",
-					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}3rdparty.log",
+					"fileName" : "${ctx:home_dir}/log/${ctx:step_id}/3rdparty.log",
+					"filePattern" : "${ctx:home_dir}/log/$${ctx:step_id}/3rdparty.log",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
@@ -74,8 +74,8 @@
 				{
 					"name" : "errFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}errors.log",
-					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}errors.log",
+					"fileName" : "${ctx:home_dir}/log/${ctx:step_id}/errors.log",
+					"filePattern" : "${ctx:home_dir}/log/$${ctx:step_id}/errors.log",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
@@ -96,8 +96,8 @@
 				{
 					"name" : "metricsFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}metrics.csv",
-					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}metrics.csv",
+					"fileName" : "${ctx:home_dir}/log/${ctx:step_id}/metrics.csv",
+					"filePattern" : "${ctx:home_dir}/log/$${ctx:step_id}/metrics.csv",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
@@ -110,8 +110,8 @@
 				{
 					"name" : "metricsThresholdFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}metrics.threshold.csv",
-					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}metrics.threshold.csv",
+					"fileName" : "${ctx:home_dir}/log/${ctx:step_id}/metrics.threshold.csv",
+					"filePattern" : "${ctx:home_dir}/log/$${ctx:step_id}/metrics.threshold.csv",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
@@ -124,8 +124,8 @@
 				{
 					"name" : "metricsFileTotal",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}metrics.total.csv",
-					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}metrics.total.csv",
+					"fileName" : "${ctx:home_dir}/log/${ctx:step_id}/metrics.total.csv",
+					"filePattern" : "${ctx:home_dir}/log/$${ctx:step_id}/metrics.total.csv",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
@@ -138,8 +138,8 @@
 				{
 					"name" : "metricsThresholdFileTotal",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}metrics.threshold.total.csv",
-					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}metrics.threshold.total.csv",
+					"fileName" : "${ctx:home_dir}/log/${ctx:step_id}/metrics.threshold.total.csv",
+					"filePattern" : "${ctx:home_dir}/log/$${ctx:step_id}/metrics.threshold.total.csv",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
@@ -152,8 +152,8 @@
 				{
 					"name" : "opTraceFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}op.trace.csv",
-					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}op.trace.csv",
+					"fileName" : "${ctx:home_dir}/log/${ctx:step_id}/op.trace.csv",
+					"filePattern" : "${ctx:home_dir}/log/$${ctx:step_id}/op.trace.csv",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
@@ -165,8 +165,8 @@
 				{
 					"name" : "cliFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}cli.args.log",
-					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}cli.args.log",
+					"fileName" : "${ctx:home_dir}/log/${ctx:step_id}/cli.args.log",
+					"filePattern" : "${ctx:home_dir}/log/$${ctx:step_id}/cli.args.log",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
@@ -178,8 +178,8 @@
 				{
 					"name" : "cfgFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}config.json",
-					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}config.json",
+					"fileName" : "${ctx:home_dir}/log/${ctx:step_id}/config.json",
+					"filePattern" : "${ctx:home_dir}/log/$${ctx:step_id}/config.json",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
@@ -191,8 +191,8 @@
 				{
 					"name" : "scenarioFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}scenario.txt",
-					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}scenario.txt",
+					"fileName" : "${ctx:home_dir}/log/${ctx:step_id}/scenario.txt",
+					"filePattern" : "${ctx:home_dir}/log/$${ctx:step_id}/scenario.txt",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
@@ -204,8 +204,8 @@
 				{
 					"name" : "partsUploadFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}parts.upload.csv",
-					"filePattern" : "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}parts.upload.csv",
+					"fileName" : "${ctx:home_dir}/log/${ctx:step_id}/parts.upload.csv",
+					"filePattern" : "${ctx:home_dir}/log/$${ctx:step_id}/parts.upload.csv",
 					"StepIdTriggeringPolicy" : {
 					},
 					"DirectWriteRolloverStrategy" : {
