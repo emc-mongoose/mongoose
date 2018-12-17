@@ -59,6 +59,7 @@ public final class Main {
 
 	public static void main(final String... args)
 	throws Exception {
+		System.out.println("\n\n\n\n" + Loggers.BASE + "\n\n\n\n");
 		final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
 		final Path appHomePath = coreResources.appHomePath();
 		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
