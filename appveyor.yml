@@ -26,10 +26,11 @@
 image:
   - Visual Studio 2017
 
+build: off
+
 test_script:
   - cmd: ECHO this is batch
 
-#build: off
 #
 #test_script:
 ## Put your test command here.
