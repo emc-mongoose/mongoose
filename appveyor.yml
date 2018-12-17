@@ -28,7 +28,10 @@ image:
 
 build: off
 
-build_mongoose:
+environment:
+  HOME_DIR: C:\projects\mongoose
+
+build_script:
   - cmd: ECHO this is batch
   - cmd: cd C:\projects\mongoose
   - cmd: gradlew.bat dist
