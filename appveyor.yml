@@ -10,6 +10,15 @@ build_script:
   - cmd: cd %HOME_DIR%
   - cmd: gradlew.bat clean dist
 
+before_test:
+  - ps: apk add --no-cache --update python py-pip
+  - ps: pip install -U virtualenv
+  - ps: pip install -U requests
+  - ps: pip install -U robotframework
+  - ps: pip install -U robotframework-requests
+  - ps: pip install -U robotframework-csvlibrary
+
 test_script:
   - cmd: java -jar build\libs\mongoose-4.1.0.jar --storage-driver-type=dummy-mock --load-step-limit-time=20s
 #   - ps: java -jar $PATH_TO_JAR --storage-driver-type=dummy-mock --load-step-limit-time=20s
+
