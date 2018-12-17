@@ -3,7 +3,7 @@ image:
 
 environment:
   HOME_DIR: C:\projects\mongoose
-  PATH_TO_JAR: build\libs\mongoose-4.1.0.jar
+  PATH_TO_JAR: build\libs\mongoose-*.jar
 
 build: off
 build_script:
@@ -11,5 +11,5 @@ build_script:
   - cmd: gradlew.bat clean dist
 
 test_script:
-#  - cmd: java -jar build\libs\mongoose-4.1.0.jar --storage-driver-type=dummy-mock --load-step-limit-time=20s
-   - cmd: java -jar %PATH_TO_JAR% --storage-driver-type=dummy-mock --load-step-limit-time=20s
+  - cmd: java -jar build\libs\mongoose-4.1.0.jar --storage-driver-type=dummy-mock --load-step-limit-time=20s
+#   - ps: java -jar $PATH_TO_JAR --storage-driver-type=dummy-mock --load-step-limit-time=20s
