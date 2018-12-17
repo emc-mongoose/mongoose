@@ -28,8 +28,10 @@ image:
 
 build: off
 
-test_script:
+build_mongoose:
   - cmd: ECHO this is batch
+  - cmd: cd C:\projects\mongoose
+  - cmd: gradlew.bat dist
 
 #
 #test_script:
