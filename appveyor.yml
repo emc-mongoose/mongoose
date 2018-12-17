@@ -23,6 +23,9 @@
 ## We need wheel installed to build wheels
 #- "%PYTHON%\\python.exe -m pip install wheel"
 
+image:
+  - Visual Studio 2017
+
 test_script:
   - cmd: ECHO this is batch
 
