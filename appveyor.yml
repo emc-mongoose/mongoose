@@ -8,6 +8,7 @@ build: off
 build_script:
   - cmd: cd %HOME_DIR%
   - cmd: gradlew.bat clean dist
+  - cmd: dir /S
 
 test_script:
   - cmd: java -jar build\libs\*.jar --storage-driver-type=dummy-mock --load-step-limit-time=20s
