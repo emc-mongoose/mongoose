@@ -20,28 +20,13 @@ import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsManagerImpl;
 import com.emc.mongoose.svc.Service;
-import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
-import static com.emc.mongoose.Constants.DIR_EXT;
-import static com.emc.mongoose.Constants.MIB;
-import static com.emc.mongoose.Constants.PATH_DEFAULTS;
-import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
-
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
-
 import io.prometheus.client.exporter.MetricsServlet;
-
 import org.apache.commons.lang.StringUtils;
-
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.Logger;
-import org.apache.logging.log4j.core.appender.FileAppender;
-import org.apache.logging.log4j.core.appender.RollingFileAppender;
-import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -59,6 +44,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
+import static com.emc.mongoose.Constants.DIR_EXT;
+import static com.emc.mongoose.Constants.MIB;
+import static com.emc.mongoose.Constants.PATH_DEFAULTS;
+import static com.emc.mongoose.config.CliArgUtil.allCliArgs;
+
 public final class Main {
 
 	public static void main(final String... args)
@@ -66,7 +58,7 @@ public final class Main {
 		final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
 		final Path appHomePath = coreResources.appHomePath();
 		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
-		LogUtil.init(appHomePath.toString());
+		LogUtil.init(appHomePath.toString(), initialStepId);
 		try {
 			// install the core resources
 			coreResources.install(appHomePath);
@@ -84,7 +76,6 @@ public final class Main {
 				final Config configWithArgs;
 				final Config fullDefaultConfig;
 				try {
-
 					// apply the extensions defaults
 					fullDefaultConfig = collectDefaults(extensions, defaultConfig, appHomePath);
 					// parse the CLI args and apply them to the config instance
@@ -195,8 +186,8 @@ public final class Main {
 	private static void runNode(
 		final Config fullDefaultConfig, final Config configWithArgs, final ClassLoader extClsLoader,
 		final List<Extension> extensions, final MetricsManager metricsMgr
-	) throws Exception {
-
+	)
+	throws Exception {
 		// init the API server
 		final int port = configWithArgs.intVal("run-port");
 		final Server server = new Server(port);

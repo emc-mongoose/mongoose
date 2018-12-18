@@ -11,18 +11,7 @@ public interface Loggers {
 	String BASE = Loggers.class.getPackage().getName() + '.';
 	String BASE_METRICS = BASE + "metrics.";
 	String BASE_METRICS_THRESHOLD = BASE_METRICS + "threshold.";
-	Logger CLI = f();
-
-	static Logger f() {
-		Logger l = null;
-		try {
-			l = LogManager.getLogger(BASE + "Cli");
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-		return l;
-	}
-
+	Logger CLI = LogManager.getLogger(BASE + "Cli");
 	Logger CONFIG = LogManager.getLogger(BASE + "Config");
 	Logger ERR = LogManager.getLogger(BASE + "Errors");
 	Logger OP_TRACES = LogManager.getLogger(BASE + "OpTraces");
