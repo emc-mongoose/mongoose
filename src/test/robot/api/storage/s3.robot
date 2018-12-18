@@ -59,12 +59,13 @@ Should Create Objects Using Multipart Upload
 
 Should Read Single Random Byte Ranges
     ${step_id} =  Set Variable  read_multiple_random_byte_ranges
-    ${object_count_limit} =  Convert To Integer  10000
+    ${object_count_limit} =  Convert To Integer  1000
     ${random_byte_range_count} =  Convert To Integer  1
     Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
     Remove File  ${DATA_DIR}/${step_id}.csv
     ${args} =  Catenate  SEPARATOR= \\\n\t
     ...  --item-data-size=100KB
+    ...  --item-data-verify
     ...  --load-op-limit-count=${object_count_limit}
     ...  --load-step-id=${step_id}
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
@@ -73,12 +74,11 @@ Should Read Single Random Byte Ranges
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  op_type=READ  count_succ_min=${object_count_limit}
-    ...  count_succ_max=${object_count_limit}  count_fail_max=${0}  transfer_size=${327680000}
-    ...  transfer_size_delta=${32768000}
+    ...  count_succ_max=${object_count_limit}  transfer_size=${32768000}  transfer_size_delta=${27680000}
 
 Should Update Multiple Random Byte Ranges
     ${step_id} =  Set Variable  update_multiple_random_byte_ranges
-    ${object_count_limit} =  Convert To Integer  100000
+    ${object_count_limit} =  Convert To Integer  1000
     ${random_byte_range_count} =  Convert To Integer  5
     Remove Directory  ${LOG_DIR}/${step_id}  recursive=True
     Remove File  ${DATA_DIR}/${step_id}.csv
@@ -92,8 +92,7 @@ Should Update Multiple Random Byte Ranges
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  op_type=UPDATE  count_succ_min=${object_count_limit}
-    ...  count_succ_max=${object_count_limit}  count_fail_max=${0}  transfer_size=${50900000}
-    ...  transfer_size_delta=${5090000}
+    ...  count_succ_max=${object_count_limit}  transfer_size=${507000}  transfer_size_delta=${100000}
 
 Should Create Objects With Custom Headers
     ${step_id} =  Set Variable  custom_headers
@@ -108,7 +107,7 @@ Should Create Objects With Custom Headers
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
     Validate Log File Metrics Total  ${LOG_DIR}/${step_id}  count_succ_min=${10}  count_succ_max=${10}
-    ...  count_fail_max=${0}  transfer_size=${10485760}  transfer_size_delta=${0}
+    ...  transfer_size=${10485760}  transfer_size_delta=${0}
 
 *** Keywords ***
 Start S3 Server

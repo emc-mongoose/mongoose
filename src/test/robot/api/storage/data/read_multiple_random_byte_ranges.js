@@ -8,7 +8,7 @@ PreconditionLoad
     })
     .run();
 
-ReadVerifyLoad
+ReadLoad
     .config({
       "item" : {
         "data" : {

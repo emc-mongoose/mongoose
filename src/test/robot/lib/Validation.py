@@ -33,9 +33,9 @@ def validate_log_file_metrics_total(
 					"Failed op count: {}, expected <= {}".format(actual_count_fail, count_fail_max)
 				actual_transfer_size = long(row["Size"])
 				assert actual_transfer_size <= transfer_size + transfer_size_delta, \
-					"Transfer size: {}, expected <= {}".format(transfer_size, transfer_size + transfer_size_delta)
+					"Transfer size: {}, expected <= {}".format(actual_transfer_size, transfer_size + transfer_size_delta)
 				assert actual_transfer_size >= transfer_size - transfer_size_delta, \
-					"Transfer size: {}, expected >= {}".format(transfer_size, transfer_size - transfer_size_delta)
+					"Transfer size: {}, expected >= {}".format(actual_transfer_size, transfer_size - transfer_size_delta)
 				row_found = True
 				break
 		assert row_found, "%s: row containing the record w/ op type '%s' was not found".format(log_file_name, op_type)

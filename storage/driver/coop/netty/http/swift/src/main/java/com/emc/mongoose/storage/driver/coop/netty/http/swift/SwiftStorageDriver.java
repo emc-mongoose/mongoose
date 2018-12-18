@@ -127,7 +127,7 @@ extends HttpStorageDriverBase<I, O> {
 		}
 		checkContainerResp.release();
 		// create or update the destination container if it doesn't exists
-		if(! containerExists || (! versioningEnabled && versioning)) {
+		if(!containerExists || (!versioningEnabled && versioning)) {
 			reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
@@ -203,8 +203,7 @@ extends HttpStorageDriverBase<I, O> {
 	public final List<I> list(
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
-	)
-	throws InterruptRunException, IOException {
+	) throws InterruptRunException, IOException {
 		final int countLimit = count < 1 || count > MAX_LIST_LIMIT ? MAX_LIST_LIMIT : count;
 		final String nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
@@ -228,11 +227,11 @@ extends HttpStorageDriverBase<I, O> {
 		}
 		queryBuilder.append("&limit=").append(countLimit);
 		final String query = queryBuilder.toString();
+		authTokens.computeIfAbsent(credential, requestAuthTokenFunc);
 		applyAuthHeaders(reqHeaders, HttpMethod.GET, query, credential);
-		final FullHttpRequest checkBucketReq =
-			new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders,
-				EmptyHttpHeaders.INSTANCE
-			);
+		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
+			HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders, EmptyHttpHeaders.INSTANCE
+		);
 		final List<I> buff = new ArrayList<>(countLimit);
 		try {
 			final FullHttpResponse listResp = executeHttpRequest(checkBucketReq);
@@ -494,10 +493,10 @@ extends HttpStorageDriverBase<I, O> {
 			secret = null;
 		}
 		if(dstUriPath.equals(AUTH_URI)) {
-			if(uid != null && ! uid.isEmpty()) {
+			if(uid != null && !uid.isEmpty()) {
 				httpHeaders.set(KEY_X_AUTH_USER, uid);
 			}
-			if(secret != null && ! secret.isEmpty()) {
+			if(secret != null && !secret.isEmpty()) {
 				httpHeaders.set(KEY_X_AUTH_KEY, secret);
 			}
 		} else if(authToken != null && ! authToken.isEmpty()) {
@@ -508,7 +507,11 @@ extends HttpStorageDriverBase<I, O> {
 	@Override
 	protected final void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 	throws URISyntaxException {
-		httpHeaders.set(KEY_X_COPY_FROM, srcPath);
+		httpHeaders.set(
+			KEY_X_COPY_FROM,
+			srcPath != null && !srcPath.isEmpty() && srcPath.startsWith(namespacePath) ?
+				srcPath.substring(namespacePath.length()) : srcPath
+		);
 	}
 
 	@Override

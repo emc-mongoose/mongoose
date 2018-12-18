@@ -30,6 +30,7 @@ public interface SwiftApi {
 	String URI_BASE = "/v1";
 	String AUTH_URI = "/auth/v1.0";
 	String DEFAULT_VERSIONS_LOCATION = "archive";
+	String VALUE_MULTIPART_BYTERANGES = "multipart/byteranges";
 
 	String KEY_SIZE = "bytes";
 	String KEY_ID = "name";
