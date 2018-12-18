@@ -37,7 +37,11 @@ import io.prometheus.client.exporter.MetricsServlet;
 import org.apache.commons.lang.StringUtils;
 
 import org.apache.logging.log4j.Level;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.appender.RollingFileAppender;
+import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -59,7 +63,6 @@ public final class Main {
 
 	public static void main(final String... args)
 	throws Exception {
-		System.out.println("\n\n\n\n" + Loggers.BASE + "\n\n\n\n");
 		final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
 		final Path appHomePath = coreResources.appHomePath();
 		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();

@@ -2,19 +2,27 @@ package com.emc.mongoose.logging;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
-import org.apache.logging.log4j.core.async.AsyncLogger;
 
 /**
  Created by kurila on 05.05.17.
  */
 public interface Loggers {
-	
+
 	String BASE = Loggers.class.getPackage().getName() + '.';
 	String BASE_METRICS = BASE + "metrics.";
 	String BASE_METRICS_THRESHOLD = BASE_METRICS + "threshold.";
+	Logger CLI = f();
 
-	Logger CLI = LogManager.getLogger(BASE + "Cli");
+	static Logger f() {
+		Logger l = null;
+		try {
+			l = LogManager.getLogger(BASE + "Cli");
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		return l;
+	}
+
 	Logger CONFIG = LogManager.getLogger(BASE + "Config");
 	Logger ERR = LogManager.getLogger(BASE + "Errors");
 	Logger OP_TRACES = LogManager.getLogger(BASE + "OpTraces");
