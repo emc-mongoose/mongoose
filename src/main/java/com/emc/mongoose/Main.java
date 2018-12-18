@@ -62,7 +62,7 @@ public final class Main {
 		final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
 		final Path appHomePath = coreResources.appHomePath();
 		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
-		LogUtil.init(appHomePath.toString());
+		LogUtil.init(appHomePath.toString(), initialStepId);
 		try {
 			// install the core resources
 			coreResources.install(appHomePath);
