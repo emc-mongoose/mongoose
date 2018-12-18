@@ -258,9 +258,7 @@ public class SwiftStorageDriverTest extends SwiftStorageDriver {
     assertEquals(0, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
     final Date reqDate = DateUtil.FMT_DATE_RFC1123.parse(reqHeaders.get(HttpHeaderNames.DATE));
     assertEquals(new Date().getTime(), reqDate.getTime(), 10_000);
-    assertEquals(
-        SwiftApi.URI_BASE + '/' + NS + containerSrcName + '/' + itemId,
-        reqHeaders.get(SwiftApi.KEY_X_COPY_FROM));
+    assertEquals(containerSrcName + '/' + itemId, reqHeaders.get(SwiftApi.KEY_X_COPY_FROM));
     assertEquals(AUTH_TOKEN, reqHeaders.get(SwiftApi.KEY_X_AUTH_TOKEN));
   }
 

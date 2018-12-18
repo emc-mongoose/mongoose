@@ -58,3 +58,5 @@ java -jar mongoose-<VERSION>.jar \
 * A **container** may be specified with `item-input-path` either `item-output-path` configuration option
 * The default storage namespace value (`null`) won't work, specify the correct value explicitly
 * DLO creation should be enabled using the `item-data-ranges-threshold` configuration option
+* [Defect GOOSE-1316](https://mongoose-issues.atlassian.net/browse/GOOSE-1316): unable to verify the response content in
+ the case of multiple byte ranges read

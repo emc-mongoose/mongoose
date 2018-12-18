@@ -44,7 +44,7 @@ extends HttpResponseHandlerBase<I, O> {
 	}
 
 	@Override
-	protected final void handleResponseHeaders(final O op, final HttpHeaders respHeaders) {
+	protected final void handleResponseHeaders(final Channel channel, final O op, final HttpHeaders respHeaders) {
 		if(op instanceof PartialDataOperation) {
 			final PartialDataOperation subTask = (PartialDataOperation) op;
 			final String eTag = respHeaders.get(HttpHeaderNames.ETAG);
@@ -54,9 +54,8 @@ extends HttpResponseHandlerBase<I, O> {
 	}
 
 	@Override
-	protected final void handleResponseContentChunk(
-		final Channel channel, final O op, final ByteBuf contentChunk
-	) throws IOException {
+	protected final void handleResponseContentChunk(final Channel channel, final O op, final ByteBuf contentChunk)
+	throws IOException {
 		if(op instanceof CompositeDataOperation) {
 			handleInitMultipartUploadResponseContentChunk(channel, contentChunk);
 		} else {

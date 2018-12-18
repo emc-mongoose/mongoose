@@ -96,7 +96,7 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 		return false;
 	}
 	
-	protected abstract void handleResponseHeaders(final O op, final HttpHeaders respHeaders);
+	protected abstract void handleResponseHeaders(final Channel channel, final O op, final HttpHeaders respHeaders);
 
 	protected void handleResponseContentChunk(final Channel channel, final O op, final ByteBuf contentChunk)
 	throws IOException {
@@ -167,7 +167,7 @@ extends ResponseHandlerBase<HttpObject, I, O> {
 			}
 			final HttpResponseStatus httpResponseStatus = httpResponse.status();
 			handleResponseStatus(op, httpResponseStatus.codeClass(), httpResponseStatus);
-			handleResponseHeaders(op, httpResponse.headers());
+			handleResponseHeaders(channel, op, httpResponse.headers());
 			if(msg instanceof FullHttpResponse) {
 				final ByteBuf fullRespContent = ((FullHttpResponse) msg).content();
 				handleResponseContentChunk(channel, op, fullRespContent);
