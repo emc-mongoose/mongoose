@@ -54,7 +54,7 @@ To serve the Remote API the following libraries are used:
 
 ## 4.2. API
 
-> See the full documentation [here](https://app.swaggerhub.com/apis-docs/veronikaKochugova/Mongoose/4.1.0)
+> See the full documentation [here](https://app.swaggerhub.com/apis/veronikaKochugova/Mongoose/4.1.1)
 
 ### 4.2.1. Config
 
