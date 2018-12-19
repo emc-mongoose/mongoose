@@ -9,8 +9,11 @@ import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
 
 import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
+import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
 
 import org.eclipse.jetty.http.HttpHeader;
+import static org.eclipse.jetty.http.MimeTypes.Type.MULTIPART_FORM_DATA;
 
 import javax.script.ScriptEngine;
 import javax.servlet.ServletException;
@@ -29,8 +32,6 @@ import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
-
-import static org.eclipse.jetty.http.MimeTypes.Type.MULTIPART_FORM_DATA;
 
 /**
  @author veronika K. on 08.11.18 */
@@ -72,19 +73,23 @@ extends HttpServlet {
 			defaultsPart = null;
 			scenarioPart = null;
 		}
-		final Config defaults = mergeIncomingWithLocalConfig(defaultsPart, resp, aggregatedConfigWithArgs);
-		final String scenario = getIncomingScenarioOrDefault(scenarioPart, appHomePath);
-
-		// expose the base configuration and the step types
-		ScenarioUtil.configure(scriptEngine, extensions, defaults, metricsMgr);
-		//
-		final Run run = new RunImpl(defaults.stringVal("run-comment"), scenario, scriptEngine);
 		try {
-			scenarioExecutor.execute(run);
-			resp.setStatus(HttpServletResponse.SC_ACCEPTED);
-			setRunTimestampHeader(run, resp);
-		} catch(final RejectedExecutionException e) {
-			resp.setStatus(HttpServletResponse.SC_CONFLICT);
+			final Config defaults = mergeIncomingWithLocalConfig(defaultsPart, resp, aggregatedConfigWithArgs);
+			final String scenario = getIncomingScenarioOrDefault(scenarioPart, appHomePath);
+
+			// expose the base configuration and the step types
+			ScenarioUtil.configure(scriptEngine, extensions, defaults, metricsMgr);
+			//
+			final Run run = new RunImpl(defaults.stringVal("run-comment"), scenario, scriptEngine);
+			try {
+				scenarioExecutor.execute(run);
+				resp.setStatus(HttpServletResponse.SC_ACCEPTED);
+				setRunTimestampHeader(run, resp);
+			} catch(final RejectedExecutionException e) {
+				resp.setStatus(HttpServletResponse.SC_CONFLICT);
+			}
+		} catch(final NoSuchMethodException | RuntimeException e) {
+			resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 		}
 	}
 
@@ -174,7 +179,7 @@ extends HttpServlet {
 
 	static Config mergeIncomingWithLocalConfig(
 		final Part defaultsPart, final HttpServletResponse resp, final Config aggregatedConfigWithArgs
-	) throws IOException {
+	) throws IOException, NoSuchMethodException, InvalidValuePathException, InvalidValueTypeException {
 		final Config configResult;
 		if(defaultsPart == null) {
 			configResult = aggregatedConfigWithArgs;
@@ -193,16 +198,12 @@ extends HttpServlet {
 
 	static Config configFromPart(
 		final Part defaultsPart, final HttpServletResponse resp, final Map<String, Object> configSchema
-	) throws IOException {
+	) throws IOException, NoSuchMethodException, InvalidValuePathException, InvalidValueTypeException {
 		final String rawDefaultsData;
 		try(final BufferedReader br = new BufferedReader(new InputStreamReader(defaultsPart.getInputStream()))) {
 			rawDefaultsData = br.lines().collect(Collectors.joining("\n"));
 		}
-		try {
-			return ConfigUtil.loadConfig(rawDefaultsData, configSchema);
-		} catch(final Throwable cause) {
-			throw new IOException("Failed to parse the defaults, raw data:\n" + rawDefaultsData);
-		}
+		return ConfigUtil.loadConfig(rawDefaultsData, configSchema);
 	}
 
 	static String getIncomingScenarioOrDefault(final Part scenarioPart, final Path appHomePath)
