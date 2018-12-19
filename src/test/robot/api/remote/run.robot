@@ -19,11 +19,6 @@ Should Start Scenario
     ${resp_etag_header} =  Get From Dictionary  ${resp_start.headers}  ${HEADER_ETAG}
     ${resp_stop} =  Stop Mongoose Scenario Run  ${resp_etag_header}
 
-Should Not Start Scenario With Invalid Defaults
-    ${data} =  Make Start Request Payload Full
-    ${resp_start} =  Start Mongoose Scenario  ${data}
-    Should Be Equal As Strings  ${resp_start.status_code}  400
-
 Should Start With Implicit Default Scenario
     ${data} =  Make Start Request Payload Without Scenario Part
     ${resp_start} =  Start Mongoose Scenario  ${data}
@@ -54,6 +49,11 @@ Should Not Stop Not Running Scenario
     ${resp_stop_stopped} =  Stop Mongoose Scenario Run  ${resp_etag_header}
     Should Be Equal As Strings  ${resp_stop_stopped.status_code}  204
 
+Should Not Start Scenario With Invalid Defaults
+    ${data} =  Make Start Request Payload Invalid
+    ${resp_start} =  Start Mongoose Scenario  ${data}
+    Should Be Equal As Strings  ${resp_start.status_code}  400
+
 Should Return The Node State
     ${data} =  Make Start Request Payload Full
     ${resp_start} =  Start Mongoose Scenario  ${data}
@@ -78,6 +78,12 @@ Should Return Scenario Run State
 *** Keywords ***
 Make Start Request Payload Full
     ${defaults_data} =  Get Binary File  ${DATA_DIR}/aggregated_defaults.json
+    ${scenario_data} =  Get Binary File  ${DATA_DIR}/scenario_dummy.js
+    &{data} =  Create Dictionary  defaults=${defaults_data}  scenario=${scenario_data}
+    [Return]  ${data}
+
+Make Start Request Payload Invalid
+    ${defaults_data} =  Get Binary File  ${DATA_DIR}/aggregated_defaults_invalid.json
     ${scenario_data} =  Get Binary File  ${DATA_DIR}/scenario_dummy.js
     &{data} =  Create Dictionary  defaults=${defaults_data}  scenario=${scenario_data}
     [Return]  ${data}
