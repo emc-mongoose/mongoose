@@ -5,7 +5,7 @@ import com.emc.mongoose.config.AliasingUtil;
 import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
-import com.emc.mongoose.control.AddCorsHeaderRule;
+import com.emc.mongoose.control.AddCorsHeadersRule;
 import com.emc.mongoose.control.ConfigServlet;
 import com.emc.mongoose.control.logs.LogServlet;
 import com.emc.mongoose.control.run.RunImpl;
@@ -202,7 +202,7 @@ public final class Main {
 		context.setContextPath("/");
 		server.setHandler(context);
 		final RewriteHandler addCorsHeaderHandler = new RewriteHandler();
-		addCorsHeaderHandler.addRule(new AddCorsHeaderRule());
+		addCorsHeaderHandler.addRule(new AddCorsHeadersRule());
 		server.insertHandler(addCorsHeaderHandler);
 		context.addServlet(new ServletHolder(new ConfigServlet(fullDefaultConfig)), "/config/*");
 		context.addServlet(new ServletHolder(new LogServlet()), "/logs/*");
