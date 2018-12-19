@@ -80,6 +80,20 @@ curl -v -X POST \
     http://localhost:9999/run
 ```
 
+It's possible to omit the `defaults` and `scenario` parts (default ones may be used):
+```bash
+curl -v -X POST http://localhost:9999/run
+```
+
+Also, the partial defaults configuration may be supplied too:
+```bash
+curl -v -X POST \
+    -H "Content-Type:multipart/form-data" \
+    -F "defaults={\"storage\":{\"driver\":{\"type\":\"dummy-mock\"}}};type=application/json" \
+    http://localhost:9999/run
+```
+> **Note**: use this example above as the most simple way to start via the remote API.
+
 If successful, the response will contain the ETag header with the hexadecimal timestamp (Unix epoch time):
 ```bash
 ...
