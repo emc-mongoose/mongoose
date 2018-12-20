@@ -1,6 +1,7 @@
 package com.emc.mongoose.logging;
 
 import static com.emc.mongoose.Constants.KEY_HOME_DIR;
+import static com.emc.mongoose.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.env.DateUtil.TZ_UTC;
 import com.emc.mongoose.concurrent.DaemonBase;
@@ -47,8 +48,9 @@ public interface LogUtil {
 		return FMT_DT.format(Calendar.getInstance(TZ_UTC, LOCALE_DEFAULT).getTime());
 	}
 
-	static void init(final String homeDir) {
+	static void init(final String homeDir, final String initialStepId) {
 		ThreadContext.put(KEY_HOME_DIR, homeDir);
+		ThreadContext.put(KEY_STEP_ID, initialStepId);
 		try {
 			Runtime.getRuntime().addShutdownHook(
 				new Thread("logCtxShutDownHook") {

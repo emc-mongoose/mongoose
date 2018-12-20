@@ -4,24 +4,28 @@ import com.emc.mongoose.concurrent.SingleTaskExecutor;
 import com.emc.mongoose.concurrent.SingleTaskExecutorImpl;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.load.step.ScriptEngineUtil;
-import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.load.step.ScenarioUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
-import com.github.akurilov.confuse.Config;
 
-import org.apache.logging.log4j.Level;
+import com.github.akurilov.confuse.Config;
+import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
+import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
+
 import org.eclipse.jetty.http.HttpHeader;
+import static org.eclipse.jetty.http.MimeTypes.Type.MULTIPART_FORM_DATA;
 
 import javax.script.ScriptEngine;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -40,50 +44,41 @@ extends HttpServlet {
 	private final ScriptEngine scriptEngine;
 	private final List<Extension> extensions;
 	private final MetricsManager metricsMgr;
-	private final Map<String, Object> configSchema;
+	private final Config aggregatedConfigWithArgs;
+	private final Path appHomePath;
 	private final SingleTaskExecutor scenarioExecutor = new SingleTaskExecutorImpl();
 
 	public RunServlet(
 		final ClassLoader clsLoader, final List<Extension> extensions, final MetricsManager metricsMgr,
-		final Map<String, Object> configSchema
+		final Config aggregatedConfigWithArgs, final Path appHomePath
 	) {
-		this.scriptEngine = ScriptEngineUtil.scriptEngineByDefault(clsLoader);
+		this.scriptEngine = ScenarioUtil.scriptEngineByDefault(clsLoader);
 		this.extensions = extensions;
 		this.metricsMgr = metricsMgr;
-		this.configSchema = configSchema;
+		this.aggregatedConfigWithArgs = aggregatedConfigWithArgs;
+		this.appHomePath = appHomePath;
 	}
 
 	@Override
 	protected final void doPost(final HttpServletRequest req, final HttpServletResponse resp)
 	throws IOException, ServletException {
 
-		final String rawDefaultsData;
-		try(
-			final InputStream in = req.getPart(PART_KEY_DEFAULTS).getInputStream();
-			final BufferedReader br = new BufferedReader(new InputStreamReader(in))
-		) {
-			rawDefaultsData = br.lines().collect(Collectors.joining("\n"));
+		final Part defaultsPart;
+		final Part scenarioPart;
+		final String contentTypeHeaderValue = req.getHeader(HttpHeader.CONTENT_TYPE.toString());
+		if(contentTypeHeaderValue != null && contentTypeHeaderValue.startsWith(MULTIPART_FORM_DATA.toString())) {
+			defaultsPart = req.getPart(PART_KEY_DEFAULTS);
+			scenarioPart = req.getPart(PART_KEY_SCENARIO);
+		} else {
+			defaultsPart = null;
+			scenarioPart = null;
 		}
-		Loggers.CONFIG.info(rawDefaultsData);
-		Config defaults =  null;
 		try {
-			defaults = ConfigUtil.loadConfig(rawDefaultsData, configSchema);
-		} catch(final Throwable cause) {
-			LogUtil.exception(Level.ERROR, cause, "Failed to parse the defaults");
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to parse the defaults");
-		}
+			final Config defaults = mergeIncomingWithLocalConfig(defaultsPart, resp, aggregatedConfigWithArgs);
+			final String scenario = getIncomingScenarioOrDefault(scenarioPart, appHomePath);
 
-		if(defaults != null) {
-			final String scenario;
-			try(
-				final InputStream in = req.getPart(PART_KEY_SCENARIO).getInputStream();
-				final BufferedReader br = new BufferedReader(new InputStreamReader(in))
-			) {
-				scenario = br.lines().collect(Collectors.joining("\n"));
-			}
-
-			// expose the received configuration and the step types
-			ScriptEngineUtil.configure(scriptEngine, extensions, defaults, metricsMgr);
+			// expose the base configuration and the step types
+			ScenarioUtil.configure(scriptEngine, extensions, defaults, metricsMgr);
 			//
 			final Run run = new RunImpl(defaults.stringVal("run-comment"), scenario, scriptEngine);
 			try {
@@ -93,6 +88,8 @@ extends HttpServlet {
 			} catch(final RejectedExecutionException e) {
 				resp.setStatus(HttpServletResponse.SC_CONFLICT);
 			}
+		} catch(final NoSuchMethodException | RuntimeException e) {
+			resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 		}
 	}
 
@@ -104,13 +101,15 @@ extends HttpServlet {
 	@Override
 	protected final void doGet(final HttpServletRequest req, final HttpServletResponse resp)
 	throws IOException {
-		extractRequestTimestampAndApply(req, resp, RunServlet::setRunMatchesResponse);
+		extractRequestTimestampAndApply(req, resp, (run, timestamp) -> setRunMatchesResponse(run, resp, timestamp));
 	}
 
 	@Override
 	protected final void doDelete(final HttpServletRequest req, final HttpServletResponse resp)
 	throws IOException {
-		extractRequestTimestampAndApply(req, resp, this::stopRunIfMatchesAndSetResponse);
+		extractRequestTimestampAndApply(
+			req, resp, (run, timestamp) -> stopRunIfMatchesAndSetResponse(run, resp, timestamp, scenarioExecutor)
+		);
 	}
 
 	static void setRunTimestampHeader(final Run task, final HttpServletResponse resp) {
@@ -132,9 +131,9 @@ extends HttpServlet {
 
 	void extractRequestTimestampAndApply(
 		final HttpServletRequest req, final HttpServletResponse resp,
-		final TriConsumer<Run, HttpServletResponse, Long> runRespTimestampConsumer
+		final BiConsumer<Run, Long> runRespTimestampConsumer
 	) throws IOException {
-		final String reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.asString()))
+		final String reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.toString()))
 			.stream()
 			.findAny()
 			.orElse(null);
@@ -143,7 +142,7 @@ extends HttpServlet {
 		} else {
 			try {
 				final long reqTimestamp = Long.parseLong(reqTimestampRawValue, 0x10);
-				applyForActiveRunIfAny(resp, (run, resp_) -> runRespTimestampConsumer.accept(run, resp_, reqTimestamp));
+				applyForActiveRunIfAny(resp, (run, resp_) -> runRespTimestampConsumer.accept(run, reqTimestamp));
 			} catch(final NumberFormatException e) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid start time: " + reqTimestampRawValue);
 			}
@@ -163,7 +162,10 @@ extends HttpServlet {
 		}
 	}
 
-	void stopRunIfMatchesAndSetResponse(final Run run, final HttpServletResponse resp, final long reqTimestamp) {
+	static void stopRunIfMatchesAndSetResponse(
+		final Run run, final HttpServletResponse resp, final long reqTimestamp,
+		final SingleTaskExecutor scenarioExecutor
+	) {
 		if(run.timestamp() == reqTimestamp) {
 			scenarioExecutor.stop(run);
 			if(null != scenarioExecutor.task()) {
@@ -173,6 +175,48 @@ extends HttpServlet {
 		} else {
 			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
 		}
+	}
+
+	static Config mergeIncomingWithLocalConfig(
+		final Part defaultsPart, final HttpServletResponse resp, final Config aggregatedConfigWithArgs
+	) throws IOException, NoSuchMethodException, InvalidValuePathException, InvalidValueTypeException {
+		final Config configResult;
+		if(defaultsPart == null) {
+			configResult = aggregatedConfigWithArgs;
+		} else {
+			final Config configIncoming = configFromPart(defaultsPart, resp, aggregatedConfigWithArgs.schema());
+			if(configIncoming == null) {
+				configResult = aggregatedConfigWithArgs;
+			} else {
+				configResult = ConfigUtil.merge(
+					aggregatedConfigWithArgs.pathSep(), Arrays.asList(aggregatedConfigWithArgs, configIncoming)
+				);
+			}
+		}
+		return configResult;
+	}
+
+	static Config configFromPart(
+		final Part defaultsPart, final HttpServletResponse resp, final Map<String, Object> configSchema
+	) throws IOException, NoSuchMethodException, InvalidValuePathException, InvalidValueTypeException {
+		final String rawDefaultsData;
+		try(final BufferedReader br = new BufferedReader(new InputStreamReader(defaultsPart.getInputStream()))) {
+			rawDefaultsData = br.lines().collect(Collectors.joining("\n"));
+		}
+		return ConfigUtil.loadConfig(rawDefaultsData, configSchema);
+	}
+
+	static String getIncomingScenarioOrDefault(final Part scenarioPart, final Path appHomePath)
+	throws IOException {
+		final String scenarioResult;
+		if(scenarioPart == null) {
+			scenarioResult = ScenarioUtil.defaultScenario(appHomePath);
+		} else {
+			try(final BufferedReader br = new BufferedReader(new InputStreamReader(scenarioPart.getInputStream()))) {
+				scenarioResult = br.lines().collect(Collectors.joining("\n"));
+			}
+		}
+		return scenarioResult;
 	}
 
 	@Override

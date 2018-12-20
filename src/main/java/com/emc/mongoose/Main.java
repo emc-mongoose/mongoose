@@ -13,7 +13,7 @@ import com.emc.mongoose.control.run.RunServlet;
 import com.emc.mongoose.env.CoreResourcesToInstall;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
-import com.emc.mongoose.load.step.ScriptEngineUtil;
+import com.emc.mongoose.load.step.ScenarioUtil;
 import com.emc.mongoose.load.step.service.LoadStepManagerServiceImpl;
 import com.emc.mongoose.load.step.service.file.FileManagerServiceImpl;
 import com.emc.mongoose.logging.LogUtil;
@@ -22,7 +22,6 @@ import com.emc.mongoose.metrics.MetricsManager;
 import com.emc.mongoose.metrics.MetricsManagerImpl;
 import com.emc.mongoose.svc.Service;
 import static com.emc.mongoose.Constants.APP_NAME;
-import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.Constants.DIR_EXT;
 import static com.emc.mongoose.Constants.MIB;
 import static com.emc.mongoose.Constants.PATH_DEFAULTS;
@@ -64,7 +63,7 @@ public final class Main {
 		final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
 		final Path appHomePath = coreResources.appHomePath();
 		final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
-		LogUtil.init(appHomePath.toString());
+		LogUtil.init(appHomePath.toString(), initialStepId);
 		try {
 			// install the core resources
 			coreResources.install(appHomePath);
@@ -80,11 +79,9 @@ public final class Main {
 				// install the extensions
 				installExtensions(extensions, appHomePath);
 				final Config configWithArgs;
-				final Config fullDefaultConfig;
 				try {
-
 					// apply the extensions defaults
-					fullDefaultConfig = collectDefaults(extensions, defaultConfig, appHomePath);
+					final Config fullDefaultConfig = collectDefaults(extensions, defaultConfig, appHomePath);
 					// parse the CLI args and apply them to the config instance
 					configWithArgs = applyArgsToConfig(args, fullDefaultConfig, initialStepId);
 				} catch(final Exception e) {
@@ -95,7 +92,7 @@ public final class Main {
 				final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
 				// go on
 				if(configWithArgs.boolVal("run-node")) {
-					runNode(fullDefaultConfig, configWithArgs, extClsLoader, extensions, metricsMgr);
+					runNode(configWithArgs, extClsLoader, extensions, metricsMgr, appHomePath);
 				} else {
 					runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
 				}
@@ -191,12 +188,12 @@ public final class Main {
 	}
 
 	private static void runNode(
-		final Config fullDefaultConfig, final Config configWithArgs, final ClassLoader extClsLoader,
-		final List<Extension> extensions, final MetricsManager metricsMgr
+		final Config aggregatedConfigWithArgs, final ClassLoader extClsLoader, final List<Extension> extensions,
+		final MetricsManager metricsMgr, final Path appHomePath
 	) throws Exception {
 
 		// init the API server
-		final int port = configWithArgs.intVal("run-port");
+		final int port = aggregatedConfigWithArgs.intVal("run-port");
 		final Server server = new Server(port);
 		final ServletContextHandler context = new ServletContextHandler();
 		context.setContextPath("/");
@@ -208,7 +205,7 @@ public final class Main {
 		context.addServlet(new ServletHolder(new LogServlet()), "/logs/*");
 		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
 		final ServletHolder runServletHolder = new ServletHolder(
-			new RunServlet(extClsLoader, extensions, metricsMgr, fullDefaultConfig.schema())
+			new RunServlet(extClsLoader, extensions, metricsMgr, aggregatedConfigWithArgs, appHomePath)
 		);
 		runServletHolder
 			.getRegistration()
@@ -217,7 +214,7 @@ public final class Main {
 		try {
 			server.start();
 			Loggers.MSG.info("Started to serve the remote API @ port # " + port);
-			final int listenPort = configWithArgs.intVal("load-step-node-port");
+			final int listenPort = aggregatedConfigWithArgs.intVal("load-step-node-port");
 			try(
 				final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
 				final Service scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions, metricsMgr)
@@ -235,43 +232,46 @@ public final class Main {
 		}
 	}
 
-	@SuppressWarnings("StringBufferWithoutInitialCapacity")
 	private static void runScenario(
 		final Config config, final List<Extension> extensions, final ClassLoader extClsLoader,
 		final MetricsManager metricsMgr, final Path appHomePath
 	) {
-		// get the scenario file/path
-		final Path scenarioPath;
+		Path scenarioPath = null;
 		final String scenarioFile = config.stringVal("run-scenario");
-		if(scenarioFile != null && ! scenarioFile.isEmpty()) {
+		if(scenarioFile != null && !scenarioFile.isEmpty()) {
 			scenarioPath = Paths.get(scenarioFile);
-		} else {
-			scenarioPath = Paths.get(appHomePath.toString(), DIR_EXAMPLE_SCENARIO, "js", "default.js");
 		}
-		runScenarioFile(config, extensions, extClsLoader, metricsMgr, scenarioPath);
+		runScenarioFile(config, extensions, extClsLoader, metricsMgr, scenarioPath, appHomePath);
 	}
 
 	private static void runScenarioFile(
 		final Config config, final List<Extension> extensions, final ClassLoader extClsLoader,
-		final MetricsManager metricsMgr, final Path scenarioPath
+		final MetricsManager metricsMgr, final Path scenarioPath, final Path appHomePath
 	) {
-		final StringBuilder strb = new StringBuilder();
-		try {
-			Files
-				.lines(scenarioPath)
-				.forEach(line -> strb.append(line).append(System.lineSeparator()));
-		} catch(final IOException e) {
-			LogUtil.exception(Level.FATAL, e, "Failed to read the scenario file \"{}\"", scenarioPath);
+		final ScriptEngine scriptEngine;
+		final String scenarioText;
+		if(scenarioPath == null) {
+			scriptEngine = ScenarioUtil.scriptEngineByDefault(extClsLoader);
+			scenarioText = ScenarioUtil.defaultScenario(appHomePath);
+		} else {
+			scriptEngine = ScenarioUtil.scriptEngineByFilePath(scenarioPath, extClsLoader);
+			final StringBuilder strb = new StringBuilder();
 			try {
 				Files
-					.list(scenarioPath.getParent())
-					.forEach(System.out::println);
-			} catch(final IOException ee) {
-				LogUtil.trace(Loggers.ERR, Level.ERROR, ee, "Failed to list the scenarios parent directory");
+					.lines(scenarioPath)
+					.forEach(line -> strb.append(line).append(System.lineSeparator()));
+			} catch(final IOException e) {
+				LogUtil.exception(Level.FATAL, e, "Failed to read the scenario file \"{}\"", scenarioPath);
+				try {
+					Files
+						.list(scenarioPath.getParent())
+						.forEach(System.out::println);
+				} catch(final IOException ee) {
+					LogUtil.trace(Loggers.ERR, Level.ERROR, ee, "Failed to list the scenarios parent directory");
+				}
 			}
+			scenarioText = strb.toString();
 		}
-		final String scenarioText = strb.toString();
-		final ScriptEngine scriptEngine = ScriptEngineUtil.scriptEngineByFilePath(scenarioPath, extClsLoader);
 		if(scriptEngine == null) {
 			Loggers.ERR.fatal("Failed to resolve the scenario engine for the file \"{}\"", scenarioPath);
 		} else {
@@ -279,7 +279,7 @@ public final class Main {
 			// expose the environment values
 			System.getenv().forEach(scriptEngine::put);
 			// expose the loaded configuration and the step types
-			ScriptEngineUtil.configure(scriptEngine, extensions, config, metricsMgr);
+			ScenarioUtil.configure(scriptEngine, extensions, config, metricsMgr);
 			// go
 			new RunImpl("", scenarioText, scriptEngine).run();
 		}
