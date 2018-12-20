@@ -32,7 +32,7 @@ test_script:
 #artifacts:
 #- path: 'C:\projects\mongoose\build\robotest\*'
 artifacts:
-  - path: %PATH_TO_ARTIFACTS%
+  - path: C:\projects\mongoose\build\robotest\
     name: Output
   - path: C:\projects\mongoose\build\robotest\log.html
     name: Log
