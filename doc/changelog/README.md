@@ -1,6 +1,7 @@
 # Contents
 
 ## 2018
+* [4.1.1](#anchor-411) TBD
 * [4.1.0](#anchor-410) 2018-12-12
 * [4.0.3](#anchor-403) 2018-11-28
 * [4.0.2](#anchor-402) 2018-11-13
@@ -55,6 +56,24 @@
 * [0.1.5](#anchor-015) 09/22/14
 * [0.1.4](#anchor-014) 09/17/14
 * [0.1.3](#anchor-013) 08/15/14
+
+# 4.1.1
+
+## New Features and Enhancements
+
+### Functional
+
+1. Run API improvement: allow to start the new scenario run with the implicit default configuration/scenario
+
+### Non-functional
+
+1. Automated tests for the MS Windows environment
+
+## Fixed Bugs
+
+| Id | Description |
+|----|-------------|
+| [GOOSE-1315](https://mongoose-issues.atlassian.net/browse/GOOSE-1315) | Do not create any log files under the `${ctx:step_id}` directory
 
 # 4.1.0
 
