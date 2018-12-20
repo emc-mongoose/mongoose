@@ -5,6 +5,8 @@ import com.emc.mongoose.item.op.OpType;
 import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.emc.mongoose.metrics.MetricsManager;
+
+import static com.emc.mongoose.Constants.DIR_EXAMPLE_SCENARIO;
 import static com.emc.mongoose.load.step.Constants.ATTR_CONFIG;
 
 import com.github.akurilov.confuse.Config;
@@ -18,6 +20,7 @@ import javax.script.ScriptEngineManager;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,7 +29,7 @@ import static javax.script.ScriptContext.ENGINE_SCOPE;
 /**
  Created by andrey on 19.09.17.
  */
-public interface ScriptEngineUtil {
+public interface ScenarioUtil {
 
 	String DEFAULT_LANG = "js";
 
@@ -174,5 +177,22 @@ public interface ScriptEngineUtil {
 	) {
 		registerScenarioDefaults(se, config);
 		registerStepTypes(se, extensions, config, metricsMgr);
+	}
+
+	static Path defaultScenarioPath(final Path appHomePath) {
+		return Paths.get(appHomePath.toString(), DIR_EXAMPLE_SCENARIO, "js", "default.js");
+	}
+
+	static String defaultScenario(final Path appHomePath) {
+		final Path scenarioPath = defaultScenarioPath(appHomePath);
+		final StringBuilder strb = new StringBuilder();
+		try {
+			Files
+				.lines(scenarioPath)
+				.forEach(line -> strb.append(line).append(System.lineSeparator()));
+		} catch(final IOException e) {
+			throw new AssertionError("Failed to read the scenario file \"" + scenarioPath + "\"");
+		}
+		return strb.toString();
 	}
 }
