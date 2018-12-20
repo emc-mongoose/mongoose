@@ -5,6 +5,7 @@ import com.emc.mongoose.config.AliasingUtil;
 import com.emc.mongoose.config.CliArgUtil;
 import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.IllegalArgumentNameException;
+import com.emc.mongoose.control.AddCorsHeadersRule;
 import com.emc.mongoose.control.ConfigServlet;
 import com.emc.mongoose.control.logs.LogServlet;
 import com.emc.mongoose.control.run.RunImpl;
@@ -37,6 +38,7 @@ import org.apache.commons.lang.StringUtils;
 
 import org.apache.logging.log4j.Level;
 
+import org.eclipse.jetty.rewrite.handler.RewriteHandler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -196,7 +198,10 @@ public final class Main {
 		final ServletContextHandler context = new ServletContextHandler();
 		context.setContextPath("/");
 		server.setHandler(context);
-		context.addServlet(new ServletHolder(new ConfigServlet(aggregatedConfigWithArgs)), "/config/*");
+		final RewriteHandler addCorsHeaderHandler = new RewriteHandler();
+		addCorsHeaderHandler.addRule(new AddCorsHeadersRule());
+		server.insertHandler(addCorsHeaderHandler);
+		context.addServlet(new ServletHolder(new ConfigServlet(fullDefaultConfig)), "/config/*");
 		context.addServlet(new ServletHolder(new LogServlet()), "/logs/*");
 		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
 		final ServletHolder runServletHolder = new ServletHolder(

@@ -285,6 +285,7 @@ dependencies {
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 		"org.eclipse.jetty:jetty-server:${depVersion.jetty}",
 		"org.eclipse.jetty:jetty-servlet:${depVersion.jetty}",
+		"org.eclipse.jetty:jetty-rewrite:${depVersion.jetty}",
 		// actually the deps below are the runtime deps
 		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
