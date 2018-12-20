@@ -19,7 +19,8 @@ ${MONGOOSE_LOGS_URI_PATH}  /logs/${STEP_ID}
 
 *** Test Cases ***
 Should Respond Message Logs
-	${resp_start} =  Start Mongoose Scenario  ${DATA_DIR}/logs_test_defaults.json  ${DATA_DIR}/scenario_dummy.js
+    ${data} =  Make Start Request Payload
+    ${resp_start} =  Start Mongoose Scenario  ${data}
     ${resp_etag_header} =  Get From Dictionary  ${resp_start.headers}  ${HEADER_ETAG}
 	#
     ${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
@@ -31,7 +32,8 @@ Should Respond Message Logs
     ${resp_stop} =  Stop Mongoose Scenario Run  ${resp_etag_header}
 
 Should Respond Operation Trace Logs
-	${resp_start} =  Start Mongoose Scenario  ${DATA_DIR}/logs_test_defaults.json  ${DATA_DIR}/scenario_dummy.js
+    ${data} =  Make Start Request Payload
+    ${resp_start} =  Start Mongoose Scenario  ${data}
     ${resp_etag_header} =  Get From Dictionary  ${resp_start.headers}  ${HEADER_ETAG}
 	#
     ${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${OP_TRACE_LOGGER_NAME}
@@ -43,7 +45,8 @@ Should Respond Operation Trace Logs
     ${resp_stop} =  Stop Mongoose Scenario Run  ${resp_etag_header}
 
 Should Delete logs
-	${resp_start} =  Start Mongoose Scenario  ${DATA_DIR}/logs_test_defaults.json  ${DATA_DIR}/scenario_dummy.js
+    ${data} =  Make Start Request Payload
+    ${resp_start} =  Start Mongoose Scenario  ${data}
     ${resp_etag_header} =  Get From Dictionary  ${resp_start.headers}  ${HEADER_ETAG}
 	#
     ${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
@@ -56,6 +59,11 @@ Should Delete logs
     ${resp_stop} =  Stop Mongoose Scenario Run  ${resp_etag_header}
 
 *** Keywords ***
+Make Start Request Payload
+    ${defaults_data} =  Get Binary File  ${DATA_DIR}/logs_test_defaults.json
+    ${scenario_data} =  Get Binary File  ${DATA_DIR}/scenario_dummy.js
+    &{data} =  Create Dictionary  defaults=${defaults_data}  scenario=${scenario_data}
+    [Return]  ${data}
 
 Should Have Lines
     [Arguments]  ${result}  ${pattern}
