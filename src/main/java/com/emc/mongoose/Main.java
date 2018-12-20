@@ -188,12 +188,12 @@ public final class Main {
 	}
 
 	private static void runNode(
-		final Config aggregatedConfigWithArgs, final ClassLoader extClsLoader, final List<Extension> extensions,
+		final Config fullDefaultConfig, final ClassLoader extClsLoader, final List<Extension> extensions,
 		final MetricsManager metricsMgr, final Path appHomePath
 	) throws Exception {
 
 		// init the API server
-		final int port = aggregatedConfigWithArgs.intVal("run-port");
+		final int port = fullDefaultConfig.intVal("run-port");
 		final Server server = new Server(port);
 		final ServletContextHandler context = new ServletContextHandler();
 		context.setContextPath("/");
@@ -205,7 +205,7 @@ public final class Main {
 		context.addServlet(new ServletHolder(new LogServlet()), "/logs/*");
 		context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
 		final ServletHolder runServletHolder = new ServletHolder(
-			new RunServlet(extClsLoader, extensions, metricsMgr, aggregatedConfigWithArgs, appHomePath)
+			new RunServlet(extClsLoader, extensions, metricsMgr, fullDefaultConfig, appHomePath)
 		);
 		runServletHolder
 			.getRegistration()
@@ -214,7 +214,7 @@ public final class Main {
 		try {
 			server.start();
 			Loggers.MSG.info("Started to serve the remote API @ port # " + port);
-			final int listenPort = aggregatedConfigWithArgs.intVal("load-step-node-port");
+			final int listenPort = fullDefaultConfig.intVal("load-step-node-port");
 			try(
 				final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
 				final Service scenarioStepSvc = new LoadStepManagerServiceImpl(listenPort, extensions, metricsMgr)
