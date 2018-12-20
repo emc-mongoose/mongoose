@@ -1,6 +1,7 @@
 *** Settings ***
 Documentation  Mongoose Run API tests
 Force Tags  Run
+Resource   Common.robot
 Library  Collections
 Library  OperatingSystem
 Library  RequestsLibrary
@@ -56,14 +57,6 @@ Should Return Scenario Run State
     Wait Until Keyword Succeeds  10x  1s  Should Return Mongoose Scenario Run State  ${resp_etag_header}  204
 
 *** Keywords ***
-Start Mongoose Scenario
-    [Arguments]  ${defaults_file_name}  ${scenario_file_name}
-    ${defaults_data} =  Get Binary File  ${defaults_file_name}
-    ${scenario_data} =  Get Binary File  ${scenario_file_name}
-    &{data} =  Create Dictionary  defaults=${defaults_data}  scenario=${scenario_data}
-    ${resp} =  Post Request  mongoose_node  ${MONGOOSE_RUN_URI_PATH}  files=${data}
-    Log  ${resp.status_code}
-    [Return]  ${resp}
 
 Should Return Mongoose Scenario Run State
     [Arguments]  ${etag}  ${expected_status_code}
