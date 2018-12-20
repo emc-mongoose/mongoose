@@ -17,7 +17,7 @@ before_test:
   - ps: pip install -U robotframework
   - ps: pip install -U robotframework-requests
   - ps: pip install -U robotframework-csvlibrary
-  - cmd: set PYTHONPATH=src\test\robot\lib;C:\python27\lib\site-packages
+  - cmd: set PYTHONPATH=%HOME_DIR%\src\test\robot\lib;C:\python27\lib\site-packages
   - cmd: mkdir %PATH_TO_ARTIFACTS%
   - cmd: type nul > %PATH_TO_ARTIFACTS%\report.html
   - cmd: type nul > %PATH_TO_ARTIFACTS%\output.xml
@@ -29,8 +29,14 @@ test_script:
   - cmd: type %PATH_TO_ARTIFACTS%\report.xml
 #   - ps: java -jar $PATH_TO_JAR --storage-driver-type=dummy-mock --load-step-limit-time=20s
 
+#artifacts:
+#- path: 'C:\projects\mongoose\build\robotest\*'
 artifacts:
-  - path: 'C:\projects\mongoose\build\robotest\*'
-
+  - path: %PATH_TO_ARTIFACTS%
+    name: Output
+  - path: C:\projects\mongoose\build\robotest\log.html
+    name: Log
+  - path: 'C:\projects\mongoose\build\robotest\report.html'
+    name: Report
 
 
