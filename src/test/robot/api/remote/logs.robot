@@ -6,7 +6,6 @@ Library        Collections
 Library        OperatingSystem
 Library        RequestsLibrary
 Library        String
-Test Setup     SetUp
 
 
 *** Variables ***
