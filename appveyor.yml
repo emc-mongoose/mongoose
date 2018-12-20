@@ -18,6 +18,6 @@ before_test:
   - ps: pip install -U robotframework-csvlibrary
 
 test_script:
-  - cmd: java -jar build\libs\mongoose-4.1.0.jar --storage-driver-type=dummy-mock --load-step-limit-time=20s
+  - cmd: --outputdir build\robotest --suite api.storage --include "fs win" src\test\robot
 #   - ps: java -jar $PATH_TO_JAR --storage-driver-type=dummy-mock --load-step-limit-time=20s
 
