@@ -1,7 +1,7 @@
 *** Settings ***
 Documentation  Mongoose Logs API tests
 Force Tags     Logs
-Resource       ../Common.robot
+Resource       ../../lib/Common.robot
 Library        Collections
 Library        OperatingSystem
 Library        RequestsLibrary
