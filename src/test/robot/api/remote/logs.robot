@@ -1,12 +1,13 @@
 *** Settings ***
 Documentation  Mongoose Logs API tests
 Force Tags     Logs
-Resource       ../../lib/Common.robot
+Resource       Common.robot
 Library        Collections
 Library        OperatingSystem
 Library        RequestsLibrary
 Library        String
 Test Setup     SetUp
+
 
 *** Variables ***
 ${DATA_DIR}  src/test/robot/api/remote/data
@@ -18,30 +19,43 @@ ${MONGOOSE_LOGS_URI_PATH}  /logs/${STEP_ID}
 
 *** Test Cases ***
 Should Respond Message Logs
+	${resp_start} =  Start Mongoose Scenario  ${DATA_DIR}/logs_test_defaults.json  ${DATA_DIR}/scenario_dummy.js
+    ${resp_etag_header} =  Get From Dictionary  ${resp_start.headers}  ${HEADER_ETAG}
+	#
     ${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
     Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
     ${resp} =  Get Request  mongoose_node  ${uri_path}
     Should Be Equal As Strings  ${resp.status_code}  200
     Should Have Lines  ${resp.text}  *| INFO |*
+    #
+    ${resp_stop} =  Stop Mongoose Scenario Run  ${resp_etag_header}
 
 Should Respond Operation Trace Logs
+	${resp_start} =  Start Mongoose Scenario  ${DATA_DIR}/logs_test_defaults.json  ${DATA_DIR}/scenario_dummy.js
+    ${resp_etag_header} =  Get From Dictionary  ${resp_start.headers}  ${HEADER_ETAG}
+	#
     ${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${OP_TRACE_LOGGER_NAME}
     Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
     ${resp} =  Get Request  mongoose_node  ${uri_path}
     Should Be Equal As Strings  ${resp.status_code}  200
     Should Have Lines  ${resp.text}  *
+    #
+    ${resp_stop} =  Stop Mongoose Scenario Run  ${resp_etag_header}
 
 Should Delete logs
+	${resp_start} =  Start Mongoose Scenario  ${DATA_DIR}/logs_test_defaults.json  ${DATA_DIR}/scenario_dummy.js
+    ${resp_etag_header} =  Get From Dictionary  ${resp_start.headers}  ${HEADER_ETAG}
+	#
     ${uri_path} =  Catenate  ${MONGOOSE_LOGS_URI_PATH}/${MESS_LOGGER_NAME}
     Wait Until Keyword Succeeds  10x  1s  Should Return Status  ${uri_path}  200
     Delete Request  mongoose_node  ${uri_path}
     ${resp} =  Get Request  mongoose_node  ${uri_path}
     # The log file doesn't exist
     Should Be Equal As Strings  ${resp.status_code}  404
+    #
+    ${resp_stop} =  Stop Mongoose Scenario Run  ${resp_etag_header}
 
 *** Keywords ***
-SetUp
-    Wait Until Keyword Succeeds  10x  2s  Start Mongoose Scenario  ${DATA_DIR}/logs_test_defaults.json  ${DATA_DIR}/scenario_dummy.js
 
 Should Have Lines
     [Arguments]  ${result}  ${pattern}

@@ -1,7 +1,7 @@
 *** Settings ***
 Documentation  Mongoose Run API tests
 Force Tags  Run
-Resource   ../../lib/Common.robot
+Resource   Common.robot
 Library  Collections
 Library  OperatingSystem
 Library  RequestsLibrary
@@ -72,12 +72,5 @@ Get Mongoose Scenario Run State
     [Arguments]  ${etag}
     &{req_headers} =  Create Dictionary  If-Match=${etag}
     ${resp} =  Get Request  mongoose_node  ${MONGOOSE_RUN_URI_PATH}  headers=${req_headers}
-    Log  ${resp.status_code}
-    [Return]  ${resp}
-
-Stop Mongoose Scenario Run
-    [Arguments]  ${etag}
-    &{req_headers} =  Create Dictionary  If-Match=${etag}
-    ${resp} =  Delete Request  mongoose_node  ${MONGOOSE_RUN_URI_PATH}  headers=${req_headers}
     Log  ${resp.status_code}
     [Return]  ${resp}
