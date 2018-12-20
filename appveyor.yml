@@ -23,11 +23,7 @@ test_script:
 #   - ps: java -jar $PATH_TO_JAR --storage-driver-type=dummy-mock --load-step-limit-time=20s
 
 artifacts:
-  - path: C:\projects\mongoose\build\robotest
-    name: Output
-  - path: 'C:\projects\mongoose\build\robotest\log.html'
-    name: Log
-  - path: 'C:\projects\mongoose\build\robotest\report.html'
-    name: Report
+  - path: 'C:\projects\mongoose\build\robotest\*'
+
 
 
