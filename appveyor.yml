@@ -22,6 +22,5 @@ test_script:
 #   - ps: java -jar $PATH_TO_JAR --storage-driver-type=dummy-mock --load-step-limit-time=20s
 
 artifacts:
-- path: build\robotest
-  name: robotest
+- path: build\robotest\*
 
