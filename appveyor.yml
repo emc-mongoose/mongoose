@@ -4,6 +4,7 @@ image:
 environment:
   HOME_DIR: C:\projects\mongoose
   PATH_TO_JAR: build\libs\mongoose-*.jar
+  PATH_TO_ARTIFACTS: C:\projects\mongoose\build\robotest
 
 build: off
 build_script:
@@ -18,11 +19,11 @@ before_test:
   - ps: pip install -U robotframework-csvlibrary
 
 test_script:
-  - cmd: robot --outputdir build\robotest --suite api.storage --include "fs win" src\test\robot
+  - cmd: robot --outputdir %PATH_TO_ARTIFACTS% --suite api.storage --include "fs win" src\test\robot
 #   - ps: java -jar $PATH_TO_JAR --storage-driver-type=dummy-mock --load-step-limit-time=20s
 
 artifacts:
-  - path: 'C:\projects\mongoose\build\robotest\output.xml'
+  - path: %PATH_TO_ARTIFACTS%
     name: Output
   - path: 'C:\projects\mongoose\build\robotest\log.html'
     name: Log
