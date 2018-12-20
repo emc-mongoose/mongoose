@@ -15,8 +15,10 @@ ${ITEM_COUNT}
 
 *** Test Cases ***
 
-Foo Test Case
-    [tags]              FooTag
-    [Documentation]     Created by John Doe
-    Do An Action        Argument
-    Do Another Action   ${robotVar}
+Schould Create Files Test
+
+
+*** Keywords ***
+
+Start Mongoose
+	
