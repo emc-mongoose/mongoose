@@ -21,3 +21,7 @@ test_script:
   - cmd: robot --outputdir build\robotest --suite api.storage --include "fs win" src\test\robot
 #   - ps: java -jar $PATH_TO_JAR --storage-driver-type=dummy-mock --load-step-limit-time=20s
 
+artifacts:
+- path: build\robotest
+  name: robotest
+
