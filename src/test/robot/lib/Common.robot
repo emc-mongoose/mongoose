@@ -1,13 +1,3 @@
-*** Settings ***
-
-Resource            ../CommonResource.robot
-Force Tags          MyTag
-
-
-*** Variables ***
-
-${robotVar} =            FooBarBaz
-
 *** Keywords ***
 Start Mongoose Scenario
     [Arguments]  ${defaults_file_name}  ${scenario_file_name}

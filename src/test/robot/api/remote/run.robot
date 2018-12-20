@@ -1,7 +1,7 @@
 *** Settings ***
 Documentation  Mongoose Run API tests
 Force Tags  Run
-Resource   Common.robot
+Resource   ../Common.robot
 Library  Collections
 Library  OperatingSystem
 Library  RequestsLibrary
