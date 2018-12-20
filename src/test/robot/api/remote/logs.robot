@@ -9,11 +9,9 @@ Library        String
 
 
 *** Variables ***
-${DATA_DIR}  src/test/robot/api/remote/data
 ${STEP_ID}  robotest
 ${MESS_LOGGER_NAME}  Messages
 ${OP_TRACE_LOGGER_NAME}  OpTraces
-${MONGOOSE_RUN_URI_PATH}  /run
 ${MONGOOSE_LOGS_URI_PATH}  /logs/${STEP_ID}
 
 *** Test Cases ***
