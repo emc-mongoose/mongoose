@@ -25,10 +25,10 @@ before_test:
 
 test_script:
   - cmd: robot --outputdir %PATH_TO_ARTIFACTS% --suite api.storage --include "fs win" src\test\robot
+#   - ps: java -jar $PATH_TO_JAR --storage-driver-type=dummy-mock --load-step-limit-time=20s
+after_test:
   - cmd: IF EXIST %PATH_TO_ARTIFACTS%  ECHO %PATH_TO_ARTIFACTS% exists.
   - cmd: type %PATH_TO_ARTIFACTS%\report.xml
-#   - ps: java -jar $PATH_TO_JAR --storage-driver-type=dummy-mock --load-step-limit-time=20s
-
 #artifacts:
 #- path: 'C:\projects\mongoose\build\robotest\*'
 artifacts:
