@@ -18,7 +18,7 @@ ${ITEM_COUNT}    10
 *** Test Cases ***
 
 Schould Create Files Test
-	Create Directory  ${ITEM_OUTPUT_PATH}
+#	Create Directory  ${ITEM_OUTPUT_PATH}
 #	Start Mongoose
 
 *** Keywords ***
