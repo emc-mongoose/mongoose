@@ -9,8 +9,9 @@ Test Teardown  Remove Files
 
 *** Variables ***
 
-${MONGOOSE_JAR_PATH}    build\libs\mongoose-4.1.1.jar
-${ITEM_OUTPUT_PATH}     build\fs-results
+${HOME_DIR}   C:\projects\mongoose
+${MONGOOSE_JAR_PATH}    ${HOME_DIR}\build\libs\mongoose-4.1.1.jar
+${ITEM_OUTPUT_PATH}     ${HOME_DIR}\build\fs-results
 ${ITEM_COUNT}    10
 
 
