@@ -10,7 +10,7 @@ Test Teardown  Remove Files
 *** Variables ***
 
 ${MONGOOSE_JAR_PATH}    build\libs\mongoose-4.1.1.jar
-${ITEM_OUTPUT_PATH}     \tmp\fs-results
+${ITEM_OUTPUT_PATH}     build\fs-results
 ${ITEM_COUNT}    10
 
 
@@ -32,4 +32,9 @@ Create Directory
 	${cmd} =  Catenate  mkdir ${path}
 	${std_out} =  Run Process  ${cmd}
     Log  ${std_out}
-	
+
+Remove Directory
+	[Arguments]  ${path}
+#    ${cmd} =  Catenate  mkdir ${path}
+    ${std_out} =  Run Process  ${cmd}
+    Log  ${std_out}
