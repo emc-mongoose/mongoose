@@ -9,8 +9,8 @@ Test Teardown  Remove Files
 
 *** Variables ***
 
-${MONGOOSE_JAR_PATH}    build/libs/mongoose-4.1.0.jar
-${ITEM_OUTPUT_PATH}     /tmp/fs-results
+${MONGOOSE_JAR_PATH}    build\libs\mongoose-4.1.0.jar
+${ITEM_OUTPUT_PATH}     \tmp\fs-results
 ${ITEM_COUNT}    10
 
 
