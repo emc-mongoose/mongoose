@@ -22,7 +22,8 @@ Schould Create Files Test
 *** Keywords ***
 
 Start Mongoose
-	${cmd} =  Catenate  java -jar build\libs\mongoose-4.1.0.jar --storage-driver-type=fs --item-output-path=${ITEM_OUTPUT_PATH} --load-op-limit-count=${ITEM_COUNT}
+#	${cmd} =  Catenate  java -jar build\libs\mongoose-4.1.0.jar --storage-driver-type=fs --item-output-path=${ITEM_OUTPUT_PATH} --load-op-limit-count=${ITEM_COUNT}
+	${cmd} =  ECHO "HI"
 	${std_out} =  Run Process  ${cmd}
     Log  ${std_out}
 	
