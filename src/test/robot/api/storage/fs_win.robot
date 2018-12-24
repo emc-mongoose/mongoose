@@ -20,6 +20,7 @@ ${ITEM_COUNT}    10
 Schould Create Files Test
 #	Create Directory  ${ITEM_OUTPUT_PATH}
 #	Start Mongoose
+	Should Be Equal As Strings  1  1
 
 *** Keywords ***
 
