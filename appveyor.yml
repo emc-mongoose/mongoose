@@ -36,11 +36,10 @@ after_test:
 #artifacts:
 #- path: 'C:\projects\mongoose\build\robotest\*'
 artifacts:
-  - path: C:\projects\mongoose\build\robotest\
-    name: Output
-  - path: C:\projects\mongoose\build\robotest\log.html
-    name: Log
-  - path: 'C:\projects\mongoose\build\robotest\report.html'
-    name: Report
+  - path: build\robotest\
+#  - path: C:\projects\mongoose\build\robotest\log.html
+#    name: Log
+#  - path: 'C:\projects\mongoose\build\robotest\report.html'
+#    name: Report
 
 
