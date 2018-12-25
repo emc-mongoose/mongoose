@@ -18,8 +18,10 @@ ${ITEM_COUNT}    10
 *** Test Cases ***
 
 Schould Create Files Test
-	Create Directory  ${ITEM_OUTPUT_PATH}
+#	Create Directory  ${ITEM_OUTPUT_PATH}
 #	Start Mongoose
+	${cmd} =  Catenate  IF EXIST %PATH_TO_ARTIFACTS%  ECHO %PATH_TO_ARTIFACTS% exists.
+	${std_out} =  Run Process  ${cmd}
 	Should Be Equal As Strings  1  1
 
 *** Keywords ***
