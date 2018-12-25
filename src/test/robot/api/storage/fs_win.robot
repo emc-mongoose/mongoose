@@ -1,7 +1,6 @@
 *** Settings ***
 Documentation  Mongoose FS Storage Driver For Win Tests
 Force Tags  FS WIN
-Library  Process
 Library  Collections
 Library  OperatingSystem
 Library  Validation
@@ -19,23 +18,21 @@ ${ITEM_COUNT}    10
 
 Schould Create Files Test
 	Create Directory  ${ITEM_OUTPUT_PATH}
-#	Start Mongoose
+	Start Mongoose
 	Should Be Equal As Strings  1  1
 
 *** Keywords ***
 
 Start Mongoose
 	${cmd} =  Catenate  java -jar ${MONGOOSE_JAR_PATH} --storage-driver-type=fs --item-output-path=${ITEM_OUTPUT_PATH} --load-op-limit-count=${ITEM_COUNT}
-	${std_out} =  Run Process  ${cmd}
+	${std_out} =  Run   ${cmd}
     Log  ${std_out}
 
 Create Directory
 	[Arguments]  ${path}
 	${cmd} =  Catenate  mkdir ${path}
-#	${cmd} =  Catenate  ECHO "hello world'
-#	${cmd} =  Catenate  IF EXIST %PATH_TO_ARTIFACTS%  ECHO %PATH_TO_ARTIFACTS% exists.
-	Run   ${cmd}
-#    Log  ${std_out}
+	${std_out} =  Run   ${cmd}
+    Log  ${std_out}
 
 Remove Directory
 	[Arguments]  ${path}
