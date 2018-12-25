@@ -14,10 +14,10 @@ def validate_item_output_file(
 			assert item_size <= item_size_max, "Item size: {}, expected <= {}".format(item_size, item_size_max)
 
 def validate_log_file_metrics_total(
-	log_dir, op_type="CREATE", count_succ_min=0, count_succ_max=9000000000000000000, count_fail_max=0,
+	log_dir, file_separator='/', op_type="CREATE", count_succ_min=0, count_succ_max=9000000000000000000, count_fail_max=0,
 	transfer_size=0, transfer_size_delta=0
 ):
-	log_file_name = '/'.join((log_dir, "metrics.total.csv"))
+	log_file_name = file_separator.join((log_dir, "metrics.total.csv"))
 	with open(log_file_name, "rb") as metrics_total_file:
 		reader = csv.DictReader(metrics_total_file)
 		row_found = False
