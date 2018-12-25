@@ -34,7 +34,7 @@ Create Directory
 #	${cmd} =  Catenate  mkdir ${path}
 	${cmd} =  Catenate  ECHO "hello world'
 #	${cmd} =  Catenate  IF EXIST %PATH_TO_ARTIFACTS%  ECHO %PATH_TO_ARTIFACTS% exists.
-	${std_out} =  Run Process  ${cmd}
+	Run Process  ${cmd}
 #    Log  ${std_out}
 
 Remove Directory
