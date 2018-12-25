@@ -33,8 +33,8 @@ Create Directory
 	[Arguments]  ${path}
 	${cmd} =  Catenate  mkdir ${path}
 #	${cmd} =  Catenate  IF EXIST %PATH_TO_ARTIFACTS%  ECHO %PATH_TO_ARTIFACTS% exists.
-	${std_out} =  Run Process  ${cmd}
-    Log  ${std_out}
+#	${std_out} =  Run Process  ${cmd}
+#    Log  ${std_out}
 
 Remove Directory
 	[Arguments]  ${path}
