@@ -31,8 +31,8 @@ Start Mongoose
 
 Create Directory
 	[Arguments]  ${path}
-#	${cmd} =  Catenate  mkdir ${path}
-	${cmd} =  Catenate  ECHO "hello world'
+	${cmd} =  Catenate  mkdir ${path}
+#	${cmd} =  Catenate  ECHO "hello world'
 #	${cmd} =  Catenate  IF EXIST %PATH_TO_ARTIFACTS%  ECHO %PATH_TO_ARTIFACTS% exists.
 	Run   ${cmd}
 #    Log  ${std_out}
