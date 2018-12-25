@@ -32,7 +32,7 @@ test_script:
 #   - ps: java -jar $PATH_TO_JAR --storage-driver-type=dummy-mock --load-step-limit-time=20s
 after_test:
   - cmd: IF EXIST %PATH_TO_ARTIFACTS%  ECHO %PATH_TO_ARTIFACTS% exists.
-  - cmd: type %PATH_TO_ARTIFACTS%\report.xml
+  - cmd: type %PATH_TO_ARTIFACTS%\report.html
 #artifacts:
 #- path: 'C:\projects\mongoose\build\robotest\*'
 artifacts:
