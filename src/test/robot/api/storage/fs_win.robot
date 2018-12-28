@@ -13,7 +13,7 @@ ${MONGOOSE_JAR_PATH}    ${HOME_DIR}\\build\\libs\\mongoose-4.1.1.jar
 ${ITEM_OUTPUT_PATH}     ${HOME_DIR}\\build\\fs-results
 ${ITEM_COUNT}    10
 ${STEP_ID}   win_fs_robotest
-${LOG_DIR}   C:\projects\mongoose\build\log
+${LOG_DIR}   C:\\projects\\mongoose\\build\\log
 
 
 *** Test Cases ***
@@ -21,7 +21,7 @@ ${LOG_DIR}   C:\projects\mongoose\build\log
 Schould Create Files Test
 	Create Directory  ${ITEM_OUTPUT_PATH}
 	Start Mongoose
-	Validate Log File Metrics Total  ${LOG_DIR}\${STEP_ID}  file_separator=\  count_succ_min=${10}  count_succ_max=${10}
+	Validate Log File Metrics Total  """${LOG_DIR}\\${STEP_ID}"""  file_separator=\\  count_succ_min=${10}  count_succ_max=${10}
 
 *** Keywords ***
 
