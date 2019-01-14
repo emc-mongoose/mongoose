@@ -15,7 +15,7 @@ ${ITEM_OUTPUT_PATH}     ${HOME_DIR}\\build\\fs-results
 ${ITEM_COUNT}    10
 ${ITEM_SIZE}    10KB
 ${STEP_ID}   win_fs_robotest
-${LOG_DIR}   C:\\projects\\mongoose\\build\\log
+${LOG_DIR}   %HomeDrive%%HomePath%\\.mongoose\\4.1.1\\log
 #${LOG_DIR}   C:\\Users\\kochuv\\.mongoose\\4.1.1\\log
 
 
