@@ -18,20 +18,20 @@ def validate_log_file_metrics_total(
 	transfer_size=0, transfer_size_delta=0
 ):
 	log_file_name = file_separator.join((log_dir, "metrics.total.csv"))
-	with open(log_file_name, "rb") as metrics_total_file:
+	with open(log_file_name, "r") as metrics_total_file:
 		reader = csv.DictReader(metrics_total_file)
 		row_found = False
 		for row in reader:
 			if op_type == row["OpType"]:
-				actual_count_succ = long(row["CountSucc"])
+				actual_count_succ = int(row["CountSucc"])
 				assert actual_count_succ <= count_succ_max, \
 					"Successful op count: {}, expected <= {}".format(actual_count_succ, count_succ_max)
 				assert actual_count_succ >= count_succ_min, \
 					"Successful op count: {}, expected >= {}".format(actual_count_succ, count_succ_min)
-				actual_count_fail = long(row["CountFail"])
+				actual_count_fail = int(row["CountFail"])
 				assert actual_count_fail <= count_fail_max, \
 					"Failed op count: {}, expected <= {}".format(actual_count_fail, count_fail_max)
-				actual_transfer_size = long(row["Size"])
+				actual_transfer_size = int(row["Size"])
 				assert actual_transfer_size <= transfer_size + transfer_size_delta, \
 					"Transfer size: {}, expected <= {}".format(actual_transfer_size, transfer_size + transfer_size_delta)
 				assert actual_transfer_size >= transfer_size - transfer_size_delta, \
