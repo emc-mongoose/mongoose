@@ -1,12 +1,9 @@
 package com.emc.mongoose.config;
 
-/**
- Created by kurila on 25.08.16.
- */
-public class IllegalArgumentNameException
-extends IllegalArgumentException {
-	
-	public IllegalArgumentNameException(final String name) {
-		super(name);
-	}
+/** Created by kurila on 25.08.16. */
+public class IllegalArgumentNameException extends IllegalArgumentException {
+
+  public IllegalArgumentNameException(final String name) {
+    super(name);
+  }
 }
