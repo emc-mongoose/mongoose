@@ -1,15 +1,13 @@
 *** Settings ***
 Documentation  Mongoose Run API tests
 Force Tags  Run
+Resource   Common.robot
 Library  Collections
 Library  OperatingSystem
 Library  RequestsLibrary
 
 *** Variables ***
-${DATA_DIR} =  src/test/robot/api/remote/data
-${HEADER_ETAG} =  ETag
 ${HEADER_IF_MATCH} =  If-Match
-${MONGOOSE_RUN_URI_PATH}=  /run
 
 *** Test Cases ***
 Should Start Scenario
@@ -98,12 +96,6 @@ Make Start Request Payload With Partial Config
     &{data} =  Create Dictionary  defaults=${defaults_data}
     [Return]  ${data}
 
-Start Mongoose Scenario
-    [Arguments]  ${data}
-    ${resp} =  Post Request  mongoose_node  ${MONGOOSE_RUN_URI_PATH}  files=${data}
-    Log  ${resp.status_code}
-    [Return]  ${resp}
-
 Should Return Mongoose Scenario Run State
     [Arguments]  ${etag}  ${expected_status_code}
     ${resp_state} =  Get Mongoose Scenario Run State  ${etag}
@@ -121,9 +113,3 @@ Get Mongoose Scenario Run State
     Log  ${resp.status_code}
     [Return]  ${resp}
 
-Stop Mongoose Scenario Run
-    [Arguments]  ${etag}
-    &{req_headers} =  Create Dictionary  If-Match=${etag}
-    ${resp} =  Delete Request  mongoose_node  ${MONGOOSE_RUN_URI_PATH}  headers=${req_headers}
-    Log  ${resp.status_code}
-    [Return]  ${resp}
