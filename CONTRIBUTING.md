@@ -137,6 +137,7 @@ Tracker link: https://mongoose-issues.atlassian.net/projects/BASE
 # 4. Continuous Integration
 
 https://gitlab.com/emcmongoose/mongoose/pipelines
+for Windows: https://ci.appveyor.com/project/veronikaKochugova/mongoose
 
 ## 4.1. Testing
 
