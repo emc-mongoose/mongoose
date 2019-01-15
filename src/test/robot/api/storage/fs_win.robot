@@ -10,16 +10,11 @@ Test Teardown  Remove Files
 *** Variables ***
 
 ${HOME_DIR}   C:\\projects\\mongoose
-#${HOME_DIR}   C:\\cygwin64\\home\\kochuv\\mongoose
 ${MONGOOSE_JAR_PATH}    ${HOME_DIR}\\build\\libs\\mongoose-4.1.1.jar
 ${ITEM_OUTPUT_PATH}     ${HOME_DIR}\\build\\fs-results
 ${ITEM_COUNT}    10
 ${ITEM_SIZE}    10KB
 ${STEP_ID}   win_fs_robotest
-#${LOG_DIR}   %HomeDrive%%HomePath%\\.mongoose\\4.1.1\\log
-#${LOG_DIR}   C:\\Users\\kochuv\\.mongoose\\4.1.1\\log
-
-
 
 *** Test Cases ***
 
@@ -55,9 +50,4 @@ Create Directory
 	${std_out} =  Run   ${cmd}
     Log  ${std_out}
 
-Remove Directory
-	[Arguments]  ${path}
-#    ${cmd} =  Catenate  mkdir ${path}
-    ${std_out} =  Run  ${cmd}
-    Log  ${std_out}
 
