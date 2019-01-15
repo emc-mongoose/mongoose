@@ -170,7 +170,6 @@ public final class Main {
 		}
 		checkAndSetStepId(config, initialStepId);
 		Arrays.stream(args).forEach(Loggers.CLI::info);
-		Loggers.CONFIG.info(ConfigUtil.toString(config));
 		return config;
 	}
 
