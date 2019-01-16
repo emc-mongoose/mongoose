@@ -19,7 +19,6 @@ public interface Constants {
   //
   int MIB = 0x10_00_00;
   double K = 1e3;
-
   double M = 1e6;
   Locale LOCALE_DEFAULT = Locale.ROOT;
 }
