@@ -56,6 +56,7 @@ public final class Main {
   public static void main(final String... args) throws Exception {
     final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
     final Path appHomePath = coreResources.appHomePath();
+        final int k = 1;
     final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
     LogUtil.init(appHomePath.toString(), initialStepId);
     try {
