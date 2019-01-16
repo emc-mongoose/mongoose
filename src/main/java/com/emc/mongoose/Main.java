@@ -183,7 +183,6 @@ public final class Main {
       final MetricsManager metricsMgr,
       final Path appHomePath)
       throws Exception {
-
     // init the API server
     final int port = fullDefaultConfig.intVal("run-port");
     final Server server = new Server(port);
