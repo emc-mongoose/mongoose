@@ -54,6 +54,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 public final class Main {
 
   public static void main(final String... args) throws Exception {
+
     final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
     final Path appHomePath = coreResources.appHomePath();
     final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
@@ -182,6 +183,7 @@ public final class Main {
       final MetricsManager metricsMgr,
       final Path appHomePath)
       throws Exception {
+
     // init the API server
     final int port = fullDefaultConfig.intVal("run-port");
     final Server server = new Server(port);

@@ -64,7 +64,7 @@ public class PatternDefinedSupplierImpl implements PatternDefinedSupplier {
   /** In this method the class fields are being filled */
   @SuppressWarnings(
       "unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for
-                   // getSuppliers[]
+  // getSuppliers[]
   protected void initialize() throws OmgShootMyFootException {
     if (pattern.charAt(0) != PATTERN_CHAR) {
       throw new OmgShootMyFootException();
