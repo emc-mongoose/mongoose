@@ -253,6 +253,18 @@ SUITE=api.storage TEST=s3 ./gradlew clean robotest
 
 # 5. Code
 
+## 5.0. Autoformatting hook
+
+Git autoformatting hook reformats Java source code to comply with [Google Java Style](https://google.github.io/styleguide/javaguide.html). To do this, move the script `pre-commit` to the directory `.git/hook/` and check that the script has the access permissions to execute:
+```bash
+ls -l pre-commit
+```
+If not, assign permissions for execution:
+```bash
+chmod +x pre-commit
+```
+This hook will work automatically with any commit and format the code in the same style.
+
 ## 5.1. Style
 
 * Indent code with TAB having width of 4 characters
