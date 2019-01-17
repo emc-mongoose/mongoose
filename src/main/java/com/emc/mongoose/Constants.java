@@ -15,7 +15,7 @@ public interface Constants {
   String PATH_DEFAULTS = DIR_CONFIG + "/" + "defaults.json";
   String KEY_HOME_DIR = "home_dir";
   String KEY_STEP_ID = "step_id";
-  String KEY_CLASS_NAME = "class_namee";
+  String KEY_CLASS_NAME = "class_name";
   //
   int MIB = 0x10_00_00;
   double K = 1e3;
