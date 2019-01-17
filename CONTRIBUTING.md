@@ -259,7 +259,9 @@ SUITE=api.storage TEST=s3 ./gradlew clean robotest
 
 ### Autoformatting hook
 
-Git autoformatting hook reformats Java source code to comply with [Google Java Style](https://google.github.io/styleguide/javaguide.html). To do this, move the script `pre-commit` to the directory `.git/hook/` and check that the script has the access permissions to execute:
+Git autoformatting hook reformats Java source code to comply with [Google Java Style](https://google.github.io/styleguide/javaguide.html). 
+
+The hook script is in the root of the repository named `pre-commit`.`pre-commit` **MUST be copied to the directory** `.git/hook/` and you need to check that the script has the access permissions to execute:
 ```bash
 ls -l pre-commit
 ```
