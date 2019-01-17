@@ -5,6 +5,7 @@ import static com.emc.mongoose.Constants.KEY_STEP_ID;
 
 import com.emc.mongoose.concurrent.DaemonBase;
 import com.emc.mongoose.concurrent.ServiceTaskExecutor;
+import com.emc.mongoose.config.ConfigUtil;
 import com.emc.mongoose.config.TimeUtil;
 import com.emc.mongoose.env.Extension;
 import com.emc.mongoose.exception.InterruptRunException;
@@ -52,6 +53,7 @@ implements LoadStep, Runnable {
 		this.extensions = extensions;
 		this.ctxConfigs = ctxConfigs;
 		this.metricsMgr = metricsMgr;
+		Loggers.CONFIG.info(ConfigUtil.toString(config));
 	}
 
 	@Override

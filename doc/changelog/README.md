@@ -1,7 +1,7 @@
 # Contents
 
 ## 2018
-* [4.1.1](#anchor-411) TBD
+* [4.1.1](#anchor-411) 2019-01-16
 * [4.1.0](#anchor-410) 2018-12-12
 * [4.0.3](#anchor-403) 2018-11-28
 * [4.0.2](#anchor-402) 2018-11-13
@@ -73,7 +73,9 @@
 
 | Id | Description |
 |----|-------------|
-| [GOOSE-1315](https://mongoose-issues.atlassian.net/browse/GOOSE-1315) | Do not create any log files under the `${ctx:step_id}` directory
+| [GOOSE-1265](https://mongoose-issues.atlassian.net/browse/GOOSE-1265) | Log the config for each load step |
+| [GOOSE-1315](https://mongoose-issues.atlassian.net/browse/GOOSE-1315) | Do not create any log files under the `${ctx:step_id}` directory |
+| [GOOSE-1317](https://mongoose-issues.atlassian.net/browse/GOOSE-1317) | Add the CORS related headers to the Remote API responses |
 
 # 4.1.0
 
