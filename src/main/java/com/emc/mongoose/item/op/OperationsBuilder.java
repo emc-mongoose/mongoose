@@ -2,39 +2,34 @@ package com.emc.mongoose.item.op;
 
 import com.emc.mongoose.item.Item;
 import com.emc.mongoose.supply.BatchSupplier;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-/**
- Created by kurila on 14.07.16.
- */
-public interface OperationsBuilder<I extends Item, O extends Operation<I>>
-extends Closeable {
-	
-	int originIndex();
-	
-	OpType opType();
+/** Created by kurila on 14.07.16. */
+public interface OperationsBuilder<I extends Item, O extends Operation<I>> extends Closeable {
 
-	OperationsBuilder<I, O> opType(final OpType opType);
+  int originIndex();
 
-	String inputPath();
+  OpType opType();
 
-	OperationsBuilder<I, O> inputPath(final String inputPath);
-	
-	OperationsBuilder<I, O> outputPathSupplier(final BatchSupplier<String> ops);
-	
-	OperationsBuilder<I, O> uidSupplier(final BatchSupplier<String> uidSupplier);
-	
-	OperationsBuilder<I, O> secretSupplier(final BatchSupplier<String> secretSupplier);
-	
-	OperationsBuilder<I, O> credentialsMap(final Map<String, String> credentials);
+  OperationsBuilder<I, O> opType(final OpType opType);
 
-	O buildOp(final I item)
-	throws IOException, IllegalArgumentException;
+  String inputPath();
 
-	void buildOps(final List<I> items, final List<O> buff)
-	throws IOException, IllegalArgumentException;
+  OperationsBuilder<I, O> inputPath(final String inputPath);
+
+  OperationsBuilder<I, O> outputPathSupplier(final BatchSupplier<String> ops);
+
+  OperationsBuilder<I, O> uidSupplier(final BatchSupplier<String> uidSupplier);
+
+  OperationsBuilder<I, O> secretSupplier(final BatchSupplier<String> secretSupplier);
+
+  OperationsBuilder<I, O> credentialsMap(final Map<String, String> credentials);
+
+  O buildOp(final I item) throws IOException, IllegalArgumentException;
+
+  void buildOps(final List<I> items, final List<O> buff)
+      throws IOException, IllegalArgumentException;
 }
