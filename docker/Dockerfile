@@ -1,6 +1,6 @@
-FROM openjdk:8-jre-alpine
+FROM openjdk:11-jre-slim
 
-RUN mkdir /opt /opt/mongoose $HOME/.mongoose; \
+RUN mkdir /opt/mongoose $HOME/.mongoose; \
     chmod -R ugo+rwx $HOME/.mongoose
 
 ADD build/libs/mongoose-*.jar /opt/mongoose/

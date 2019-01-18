@@ -1,6 +1,6 @@
 FROM docker:dind
 
-RUN apk add --no-cache --update openjdk8
+RUN apk add --no-cache --update openjdk11
 
 ADD docker /root/mongoose/docker
 ADD gradle /root/mongoose/gradle
