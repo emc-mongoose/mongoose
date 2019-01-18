@@ -12,7 +12,6 @@ import static com.emc.mongoose.util.TestCaseUtil.snakeCaseName;
 import static com.emc.mongoose.util.TestCaseUtil.stepId;
 import static com.emc.mongoose.util.docker.MongooseContainer.CONTAINER_SHARE_PATH;
 import static com.emc.mongoose.util.docker.MongooseEntryNodeContainer.systemTestContainerScenarioPath;
-
 import static org.junit.Assert.assertTrue;
 
 import com.emc.mongoose.config.BundledDefaultsProvider;
@@ -95,9 +94,7 @@ public class TlsReadUsingInputFileTest {
     this.concurrency = concurrency;
     this.itemSize = itemSize;
     final List<String> env =
-        System.getenv()
-            .entrySet()
-            .stream()
+        System.getenv().entrySet().stream()
             .map(e -> e.getKey() + "=" + e.getValue())
             .collect(Collectors.toList());
     env.add("ITEM_LIST_FILE=" + ITEM_LIST_FILE);
