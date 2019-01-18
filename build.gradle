@@ -46,6 +46,12 @@ ext {
 	log4j2PluginsDatPath = Paths.get(
 		"META-INF", "org", "apache", "logging", "log4j", "core", "config", "plugins", "Log4j2Plugins.dat",
 	)
+
+	jarFileName = rootProject.name
+	javaHome = System.properties["java.home"]
+	jreOutDir = "${rootProject.buildDir}${File.separator}jre"
+	rootPkg = "com.emc.mongoose"
+	optDepsDir = "${rootProject.buildDir}${File.separator}optDeps"
 }
 
 allprojects {
@@ -391,7 +397,39 @@ task mergeLog4j2PluginsDat(dependsOn: compileJava) {
 	}
 }
 
-task dist(type: Jar) {
+task collectOptDeps(type: Copy) {
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	excludes = [
+		"**/*.css",
+		"**/*.dll",
+		"**/*.h",
+		"**/*.html",
+		"**/*.java",
+		"**/pom.properties",
+		"**/pom.xml",
+		"aix/**",
+		"darwin/**",
+		"include/**",
+		"jdk-module-paths/**",
+		"kafka/**",
+		"module-info.class",
+		"schema/**",
+		"win/**",
+		"win32/**",
+		"META-INF/*.DSA",
+		"META-INF/*.RSA",
+		"META-INF/*.SF",
+		"META-INF/*.LIST",
+		"META-INF/versions/**",
+		"OSGI-OPT/**",
+	]
+	into optDepsDir
+	configurations.moduleOpt.each {
+		from zipTree(it.path)
+	}
+}
+
+task mainJar(type: Jar, dependsOn: collectOptDeps) {
 
 	dependsOn += compileJava
 	dependsOn += mergeLog4j2PluginsDat
@@ -401,8 +439,9 @@ task dist(type: Jar) {
 
 	manifest {
 		attributes(
-			"Implementation-Version": version,
+			"Automatic-Module-Name": rootPkg,
 			"Implementation-Title": rootProject.name,
+			"Implementation-Version": version,
 			"Main-Class": "com.emc.mongoose.Main",
 		)
 	}
@@ -415,7 +454,15 @@ task dist(type: Jar) {
 		it.isDirectory() ? it : zipTree(it)
 	}
 
-	exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
+	excludes [
+		"**/*.html",
+		"META-INF/*.DSA",
+		"META-INF/*.LIST",
+		"META-INF/*.RSA",
+		"META-INF/*.SF",
+		"module-info.class",
+		"org/apache/commons/lang/enum/**",
+	]
 
 	leafProjects
 		.each {
@@ -440,19 +487,19 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 artifacts {
-	archives dist
+	archives mainJar
 	archives sourcesJar
 	archives javadocJar
 }
 
-assemble.dependsOn += dist
+assemble.dependsOn += mainJar
 
 // Docker tasks ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 import com.bmuschko.gradle.docker.tasks.image.*
 import com.bmuschko.gradle.docker.tasks.container.*
 
-task buildImage(type: DockerBuildImage, dependsOn: dist) {
+task buildImage(type: DockerBuildImage, dependsOn: mainJar) {
 	inputDir = rootProject.projectDir
 	dockerFile = project.file("docker${File.separator}Dockerfile")
 	imageId = "emcmongoose/mongoose"
@@ -519,4 +566,13 @@ task robotest(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
 			println "Robotests PASSED"
 		}
 	}
+}
+
+task genMainModuleInfo(type: Exec, dependsOn: mainJar) {
+	executable = "${javaHome}${File.separator}bin${File.separator}jdeps"
+	args = [
+		"--module-path", "${javaHome}${File.separator}jmods",
+		"--generate-module-info", "${rootProject.buildDir}",
+		mainJar.outputs.files.iterator().next().path,
+	]
 }
