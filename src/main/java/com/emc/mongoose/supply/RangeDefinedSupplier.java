@@ -1,18 +1,14 @@
 package com.emc.mongoose.supply;
 
-/**
- Created by kurila on 11.03.16.
- */
-public interface RangeDefinedSupplier<T>
-extends BatchSupplier<String> {
+/** Created by kurila on 11.03.16. */
+public interface RangeDefinedSupplier<T> extends BatchSupplier<String> {
 
-	/**
-	 * Special characters
-	 */
-	char[] RANGE_BRACKETS = {'[',']'};
-	char RANGE_DELIMITER = '-';
+  /** Special characters */
+  char[] RANGE_BRACKETS = {'[', ']'};
 
-	char[] SEED_BRACKETS = {'(', ')'};
+  char RANGE_DELIMITER = '-';
 
-	T value();
+  char[] SEED_BRACKETS = {'(', ')'};
+
+  T value();
 }

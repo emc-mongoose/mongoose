@@ -71,9 +71,7 @@ public class InfiniteLoopTest {
       // delete a big count of the test files
     }
     final List<String> env =
-        System.getenv()
-            .entrySet()
-            .stream()
+        System.getenv().entrySet().stream()
             .map(e -> e.getKey() + "=" + e.getValue())
             .collect(Collectors.toList());
     final List<String> args = new ArrayList<>();
