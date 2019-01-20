@@ -1,5 +1,7 @@
 description = "mongoose-load-step-pipeline"
 
+ext.moduleName = "${rootPkg}.load.step.pipeline"
+
 dependencies {
 	compileOnly(
 		project(":"),

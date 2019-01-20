@@ -1,5 +1,7 @@
 description = "mongoose-load-step-linear"
 
+ext.moduleName = "${rootPkg}.load.step.linear"
+
 dependencies {
 	compileOnly(
 		project(":"),

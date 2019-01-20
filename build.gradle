@@ -54,6 +54,10 @@ ext {
 	optDepsDir = "${rootProject.buildDir}${File.separator}optDeps"
 }
 
+configurations {
+	moduleOpt
+}
+
 allprojects {
 
 	buildscript {
@@ -88,89 +92,101 @@ allprojects {
 		}
 	}
 
-	compileJava {
-		sourceCompatibility = JavaVersion.VERSION_11
-		targetCompatibility = JavaVersion.VERSION_11
-	}
-
-	compileTestJava {
-		sourceCompatibility = JavaVersion.VERSION_11
-		targetCompatibility = JavaVersion.VERSION_11
-	}
-
-	test {
-		exclude "com/emc/mongoose/endurance/*"
-		exclude "com/emc/mongoose/integration/*"
-		exclude "com/emc/mongoose/perf/*"
-		exclude "com/emc/mongoose/system/*"
-		exclude "**/TemplateTest.*"
-		exclude "**/*PerfTest.*"
-		jvmArgs "-XX:MaxDirectMemorySize=2g"
-		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
-		maxHeapSize "2g"
-		testLogging {
-			events = [
-				"standardOut", "skipped", "started", "failed",
-			]
-			showExceptions = true
-			showStandardStreams = true
+	afterEvaluate {
+		
+		compileJava {
+			if(project in leafProjects) {
+				sourceCompatibility = JavaVersion.VERSION_11
+				targetCompatibility = JavaVersion.VERSION_11
+				inputs.property("moduleName", moduleName)
+				doFirst {
+					options.compilerArgs = [
+						"--module-path", classpath.asPath,
+					]
+					classpath = files()
+				}
+			}
 		}
-	}
-
-	task perfTest(type: Test) {
-
-		include "com/emc/mongoose/perf/*"
-
-		jvmArgs "-XX:MaxDirectMemorySize=2g"
-		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
-		maxHeapSize "2g"
-		testLogging {
-			events = [
-				"standardOut", "skipped", "started", "failed",
-			]
-			showExceptions = true
-			showStandardStreams = true
+	
+		compileTestJava {
+			sourceCompatibility = JavaVersion.VERSION_11
+			targetCompatibility = JavaVersion.VERSION_11
 		}
-	}
-
-	task integrationTest(type: Test) {
-		include "com/emc/mongoose/integration/*"
-		exclude "**/RollingAppenderTest*"
-		jvmArgs "-XX:MaxDirectMemorySize=2g"
-		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
-		maxHeapSize "2g"
-		testLogging {
-			events = [
-				"standardOut", "skipped", "started", "failed",
-			]
-			showExceptions = true
-			showStandardStreams = true
+	
+		test {
+			exclude "com/emc/mongoose/endurance/*"
+			exclude "com/emc/mongoose/integration/*"
+			exclude "com/emc/mongoose/perf/*"
+			exclude "com/emc/mongoose/system/*"
+			exclude "**/TemplateTest.*"
+			exclude "**/*PerfTest.*"
+			jvmArgs "-XX:MaxDirectMemorySize=2g"
+			jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
+			maxHeapSize "2g"
+			testLogging {
+				events = [
+					"standardOut", "skipped", "started", "failed",
+				]
+				showExceptions = true
+				showStandardStreams = true
+			}
 		}
-	}
-
-	task systemTest(type: Test) {
-
-		include "com/emc/mongoose/system/*"
-
-		maxHeapSize "1g"
-		testLogging {
-			events = [
-				"standardOut", "skipped", "started", "failed",
-			]
-			showExceptions = true
-			showStandardStreams = true
+	
+		task perfTest(type: Test) {
+	
+			include "com/emc/mongoose/perf/*"
+	
+			jvmArgs "-XX:MaxDirectMemorySize=2g"
+			jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
+			maxHeapSize "2g"
+			testLogging {
+				events = [
+					"standardOut", "skipped", "started", "failed",
+				]
+				showExceptions = true
+				showStandardStreams = true
+			}
 		}
-	}
-
-	task enduranceTest(type: Test) {
-		include "com/emc/mongoose/endurance/*"
-		maxHeapSize "1g"
-		testLogging {
-			events = [
-				"standardOut", "skipped", "started", "failed",
-			]
-			showExceptions = true
-			showStandardStreams = true
+	
+		task integrationTest(type: Test) {
+			include "com/emc/mongoose/integration/*"
+			exclude "**/RollingAppenderTest*"
+			jvmArgs "-XX:MaxDirectMemorySize=2g"
+			jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
+			maxHeapSize "2g"
+			testLogging {
+				events = [
+					"standardOut", "skipped", "started", "failed",
+				]
+				showExceptions = true
+				showStandardStreams = true
+			}
+		}
+	
+		task systemTest(type: Test) {
+	
+			include "com/emc/mongoose/system/*"
+	
+			maxHeapSize "1g"
+			testLogging {
+				events = [
+					"standardOut", "skipped", "started", "failed",
+				]
+				showExceptions = true
+				showStandardStreams = true
+			}
+		}
+	
+		task enduranceTest(type: Test) {
+			include "com/emc/mongoose/endurance/*"
+			maxHeapSize "1g"
+			testLogging {
+				events = [
+					"standardOut", "skipped", "started", "failed",
+				]
+				showExceptions = true
+				showStandardStreams = true
+			}
 		}
 	}
 
@@ -309,6 +325,8 @@ dependencies {
 		"org.apache.commons:commons-math3:3.6.1",
 		"org.mockito:mockito-core:2.23.0",
 	)
+
+	moduleOpt(group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-xml", version: "${depVersion.jackson}") { transitive = false }
 }
 
 void collectName(Project p, LinkedList<String> names) {
@@ -454,7 +472,7 @@ task mainJar(type: Jar, dependsOn: collectOptDeps) {
 		it.isDirectory() ? it : zipTree(it)
 	}
 
-	excludes [
+	excludes = [
 		"**/*.html",
 		"META-INF/*.DSA",
 		"META-INF/*.LIST",
