@@ -489,7 +489,6 @@ task mainJar(type: Jar, dependsOn: collectOptDeps) {
 		"META-INF/*.LIST",
 		"META-INF/*.RSA",
 		"META-INF/*.SF",
-		"module-info.class",
 		"org/apache/commons/lang/enum/**",
 	]
 
@@ -597,11 +596,16 @@ task robotest(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
 	}
 }
 
-task genMainModuleInfo(type: Exec, dependsOn: mainJar) {
-	executable = "${javaHome}${File.separator}bin${File.separator}jdeps"
+task customJre(type: Exec, dependsOn: mainJar) {
+	executable = "${javaHome}${File.separator}bin${File.separator}jlink"
 	args = [
-		"--module-path", "${javaHome}${File.separator}jmods",
-		"--generate-module-info", "${rootProject.buildDir}",
-		mainJar.outputs.files.iterator().next().path,
+		"--module-path",
+		"${javaHome}${File.separator}jmods:${mainJar.outputs.files.iterator().next()}",
+		"--add-modules", rootPkg,
+		"--output", jreOutDir,
+		"--compress=2",
+		"--no-header-files",
+		"--no-man-pages",
+		"--strip-debug",
 	]
 }
