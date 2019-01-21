@@ -335,11 +335,9 @@ dependencies {
 		"org.mockito:mockito-core:2.23.0",
 	)
 
-	moduleOpt(
-		group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-xml", version: "${depVersion.jackson}"
-	) {
-		transitive = false
-	}
+	moduleOpt(group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-xml", version: "${depVersion.jackson}") { transitive = false }
+	moduleOpt(group: 'it.unimi.dsi', name: 'fastutil', version: '8.2.2') { transitive = false }
+
 }
 
 void collectName(Project p, LinkedList<String> names) {
