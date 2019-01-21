@@ -1,5 +1,7 @@
 description = "mongoose-storage-driver-preempt"
 
+ext.moduleName = "${rootPkg}.storage.driver.preempt"
+
 dependencies {
 	provided(
 		project(":"),
@@ -16,6 +18,7 @@ jar {
 
 	manifest {
 		attributes(
+			"Automatic-Module-Name": moduleName,
 			"Implementation-Version": version,
 			"Implementation-Title": project.description,
 		)

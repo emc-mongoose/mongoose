@@ -1,5 +1,7 @@
 description = "mongoose-storage-driver-coop-netty"
 
+ext.moduleName = "${rootPkg}.storage.driver.coop.netty"
+
 dependencies {
 
 	compileOnly(
@@ -36,6 +38,7 @@ jar {
 
 	manifest {
 		attributes (
+			"Automatic-Module-Name": moduleName,
 			"Implementation-Version": version,
 			"Implementation-Title": project.description,
 		)

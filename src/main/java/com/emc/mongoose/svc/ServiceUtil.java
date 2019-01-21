@@ -4,7 +4,6 @@ import com.emc.mongoose.logging.LogUtil;
 import com.emc.mongoose.logging.Loggers;
 import com.github.akurilov.commons.net.FixedPortRmiSocketFactory;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.lang.ref.WeakReference;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -25,7 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import javax.management.MBeanServer;
 import org.apache.logging.log4j.Level;
 
 /** Created on 28.09.16. */
@@ -35,8 +33,6 @@ public abstract class ServiceUtil {
   private static final String RMI_SCHEME = "rmi";
   private static final String KEY_RMI_HOSTNAME = "java.rmi.server.hostname";
   private static final Map<String, WeakReference<Service>> SVC_MAP = new HashMap<>();
-
-  public static final MBeanServer MBEAN_SERVER = ManagementFactory.getPlatformMBeanServer();
 
   public static void ensureRmiRegistryIsAvailableAt(final int port) throws RemoteException {
     synchronized (REGISTRY_MAP) {

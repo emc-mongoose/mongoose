@@ -51,6 +51,7 @@ ext {
 	javaHome = System.properties["java.home"]
 	jreOutDir = "${rootProject.buildDir}${File.separator}jre"
 	rootPkg = "com.emc.mongoose"
+	moduleName = rootPkg
 	optDepsDir = "${rootProject.buildDir}${File.separator}optDeps"
 }
 
@@ -95,22 +96,30 @@ allprojects {
 	afterEvaluate {
 		
 		compileJava {
-			if(project in leafProjects) {
-				sourceCompatibility = JavaVersion.VERSION_11
-				targetCompatibility = JavaVersion.VERSION_11
-				inputs.property("moduleName", moduleName)
-				doFirst {
-					options.compilerArgs = [
-						"--module-path", classpath.asPath,
-					]
-					classpath = files()
-				}
+			sourceCompatibility = JavaVersion.VERSION_11
+			targetCompatibility = JavaVersion.VERSION_11
+			inputs.property("moduleName", moduleName)
+			doFirst {
+				options.compilerArgs = [
+					"--module-path", classpath.asPath,
+				]
+				classpath = files()
 			}
 		}
 	
 		compileTestJava {
 			sourceCompatibility = JavaVersion.VERSION_11
 			targetCompatibility = JavaVersion.VERSION_11
+			inputs.property("moduleName", moduleName)
+			doFirst {
+				options.compilerArgs = [
+					"--module-path", classpath.asPath,
+					"--add-modules", "junit",
+					"--add-reads", "${moduleName}.test=junit",
+					"--patch-module", "${moduleName}=" + files(sourceSets.test.java.srcDirs).asPath,
+				]
+				classpath = files()
+			}
 		}
 	
 		test {
@@ -326,7 +335,11 @@ dependencies {
 		"org.mockito:mockito-core:2.23.0",
 	)
 
-	moduleOpt(group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-xml", version: "${depVersion.jackson}") { transitive = false }
+	moduleOpt(
+		group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-xml", version: "${depVersion.jackson}"
+	) {
+		transitive = false
+	}
 }
 
 void collectName(Project p, LinkedList<String> names) {
@@ -450,7 +463,7 @@ task collectOptDeps(type: Copy) {
 task mainJar(type: Jar, dependsOn: collectOptDeps) {
 
 	dependsOn += compileJava
-	dependsOn += mergeLog4j2PluginsDat
+	//dependsOn += mergeLog4j2PluginsDat
 
 	baseName = rootProject.name
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
