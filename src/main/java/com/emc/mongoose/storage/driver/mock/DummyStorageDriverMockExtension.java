@@ -20,6 +20,10 @@ public final class DummyStorageDriverMockExtension<
   private static final List<String> RES_INSTALL_FILES =
       Collections.unmodifiableList(Arrays.asList());
 
+  public static StorageDriverFactory provider() {
+  	return new DummyStorageDriverMockExtension();
+  }
+
   @Override
   public final String id() {
     return "dummy-mock";

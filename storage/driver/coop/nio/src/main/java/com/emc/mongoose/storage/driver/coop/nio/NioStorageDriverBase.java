@@ -31,7 +31,6 @@ import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.message.ThreadDumpMessage;
 
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -195,7 +194,7 @@ implements NioStorageDriver<I, O> {
 		for(final Fiber ioFiber : ioFibers) {
 			try {
 				ioFiber.start();
-			} catch(final RemoteException ignored) {
+			} catch(final IOException ignored) {
 			}
 		}
 	}
@@ -207,7 +206,7 @@ implements NioStorageDriver<I, O> {
 		for(final Fiber ioFiber: ioFibers) {
 			try {
 				ioFiber.shutdown();
-			} catch(final RemoteException ignored) {
+			} catch(final IOException ignored) {
 			}
 		}
 	}
@@ -219,7 +218,7 @@ implements NioStorageDriver<I, O> {
 		for(final Fiber ioFiber: ioFibers) {
 			try {
 				ioFiber.stop();
-			} catch(final RemoteException ignored) {
+			} catch(final IOException ignored) {
 			}
 		}
 	}

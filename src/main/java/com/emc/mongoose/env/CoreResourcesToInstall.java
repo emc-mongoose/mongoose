@@ -95,16 +95,14 @@ public final class CoreResourcesToInstall extends InstallableJarResources {
   public CoreResourcesToInstall() {
     final Config bundledDefaults;
     try {
-      final Map<String, Object> schema =
-          SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
+      final var schema = SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
       bundledDefaults = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
     } catch (final Exception e) {
-      throw new IllegalStateException(
-          "Failed to load the bundled default config from the resources", e);
+      throw new IllegalStateException("Failed to load the bundled default config from the resources", e);
     }
-    final String appVersion = bundledDefaults.stringVal("run-version");
-    final String msg = " " + APP_NAME + " v " + appVersion + " ";
-    final String pad = StringUtils.repeat("#", (120 - msg.length()) / 2);
+    final var appVersion = bundledDefaults.stringVal("run-version");
+    final var msg = " " + APP_NAME + " v " + appVersion + " ";
+    final var pad = StringUtils.repeat("#", (120 - msg.length()) / 2);
     System.out.println(pad + msg + pad);
     appHomePath = Paths.get(USER_HOME, "." + APP_NAME, appVersion);
   }

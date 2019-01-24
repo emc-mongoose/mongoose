@@ -1,5 +1,7 @@
 description = "mongoose-load-step-weighted"
 
+ext.moduleName = "${rootPkg}.load.step.weighted"
+
 dependencies {
 	compileOnly(
 		project(":"),
@@ -19,6 +21,7 @@ jar {
 
 	manifest {
 		attributes(
+			"Automatic-Module-Name": moduleName,
 			"Implementation-Version": version,
 			"Implementation-Title": project.description,
 		)

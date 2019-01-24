@@ -1,5 +1,7 @@
 description = "mongoose-storage-driver-coop-nio-fs"
 
+ext.moduleName = "${rootPkg}.storage.driver.coop.nio.fs"
+
 dependencies {
 
 	compileOnly(
@@ -30,6 +32,7 @@ jar {
 
 	manifest {
 		attributes(
+			"Automatic-Module-Name": moduleName,
 			"Implementation-Version": version,
 			"Implementation-Title": project.description,
 		)

@@ -1,5 +1,7 @@
 description = "mongoose-storage-driver-coop-netty-http-swift"
 
+ext.moduleName = "${rootPkg}.storage.driver.coop.netty.http.swift"
+
 dependencies {
 
 	compileOnly(
@@ -7,6 +9,7 @@ dependencies {
 		project(":storage:driver:coop"),
 		project(":storage:driver:coop:netty"),
 		project(":storage:driver:coop:netty:http"),
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
 		"com.github.akurilov:confuse:${depVersion.confuse}",
 		"com.github.akurilov:confuse-io-json:${depVersion.confuseIoJson}",
 		"com.fasterxml.jackson.core:jackson-core:${depVersion.jackson}",
@@ -36,6 +39,7 @@ jar {
 
 	manifest {
 		attributes(
+			"Automatic-Module-Name": moduleName,
 			"Implementation-Version": version,
 			"Implementation-Title": project.description,
 		)
