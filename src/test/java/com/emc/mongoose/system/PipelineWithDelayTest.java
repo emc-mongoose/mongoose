@@ -98,9 +98,7 @@ public class PipelineWithDelayTest {
     } catch (final Exception ignored) {
     }
     final List<String> env =
-        System.getenv()
-            .entrySet()
-            .stream()
+        System.getenv().entrySet().stream()
             .map(e -> e.getKey() + "=" + e.getValue())
             .collect(Collectors.toList());
     try {

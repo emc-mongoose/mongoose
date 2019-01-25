@@ -7,27 +7,26 @@ import com.github.dockerjava.core.DockerClientBuilder;
 
 public interface Docker {
 
-	String DEFAULT_IMAGE_VERSION = "latest";
-	DockerClient CLIENT = DockerClientBuilder.getInstance().build();
+  String DEFAULT_IMAGE_VERSION = "latest";
+  DockerClient CLIENT = DockerClientBuilder.getInstance().build();
 
-	interface Container
-	extends AsyncRunnable  {
+  interface Container extends AsyncRunnable {
 
-		long DEFAULT_MEMORY_LIMIT = SizeInBytes.toFixedSize("2GB");
+    long DEFAULT_MEMORY_LIMIT = SizeInBytes.toFixedSize("2GB");
 
-		int exitStatusCode();
+    int exitStatusCode();
 
-		String stdOutContent();
+    String stdOutContent();
 
-		String stdErrContent();
+    String stdErrContent();
 
-		static String serviceHost() {
-			final String serviceHost = System.getenv("SERVICE_HOST");
-			if(null == serviceHost || serviceHost.isEmpty()) {
-				return "127.0.0.1";
-			} else {
-				return serviceHost;
-			}
-		}
-	}
+    static String serviceHost() {
+      final String serviceHost = System.getenv("SERVICE_HOST");
+      if (null == serviceHost || serviceHost.isEmpty()) {
+        return "127.0.0.1";
+      } else {
+        return serviceHost;
+      }
+    }
+  }
 }
