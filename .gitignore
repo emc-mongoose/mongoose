@@ -12,6 +12,7 @@ gen### Java template
 *.tgz
 build/*
 */build/*
+**/build/*
 mongoose-*
 MANIFEST.MF
 
