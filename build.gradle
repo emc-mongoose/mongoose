@@ -376,7 +376,7 @@ task mainJar(type: Jar) {
 			"Automatic-Module-Name": rootPkg,
 			"Implementation-Title": rootProject.name,
 			"Implementation-Version": version,
-			"Main-Class": "com.emc.mongoose.Main",
+			"Main-Class": "${rootPkg}.Main",
 		)
 	}
 
@@ -539,8 +539,9 @@ task mainModule(type: Exec, dependsOn: compileModuleInfo) {
 	executable = "${javaHome}${File.separator}bin${File.separator}jar"
 	workingDir = "${rootProject.buildDir}${File.separator}${rootPkg}"
 	args = [
-		"-uf",
-		mainJar.outputs.files.iterator().next(),
+		"--update",
+		"--main-class=${rootPkg}.Main",
+		"--file=${mainJar.outputs.files.iterator().next()}",
 		"module-info.class",
 	]
 }
