@@ -1,6 +1,6 @@
 # Environment Requirements
 
-* JRE 8+ or Docker
+* JRE 11+ or Docker
 * OS open files limit is at least a bit higher than specified concurrency level
 * Few gigabytes of free memory.
 

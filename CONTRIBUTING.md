@@ -23,7 +23,8 @@ Please, note that all contributors shall follow the Contributor Agreement guidel
 4.1.2. [Integration Tests](#412-integration-tests)<br/>
 4.1.3. [Legacy System Tests](#413-system-tests)<br/>
 4.1.3.1. [Containerized Tests](#4131-containerized-tests)<br/>
-4.1.4. [Robot Tests](#414-robot-tests)<br/>
+4.1.4. [Endurance Tests](#414-endurance-tests)<br/>
+4.1.5. [Robot Tests](#415-robot-tests)<br/>
 4.2. [Releasing](#42-releasing)<br/>
 5. [Code](#6-code)<br/>
 5.1. [Style](#51-style)<br/>

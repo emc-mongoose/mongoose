@@ -7,7 +7,7 @@ useful to `read` or `update` the same items multiple times each.
 
 **Example**:
 ```bash
-java -jar mongoose-<VERSION>.jar --read --load-op-recycle --item-input-file=items.csv ...
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --read --load-op-recycle --item-input-file=items.csv ...
 ```
 
 **Note**:

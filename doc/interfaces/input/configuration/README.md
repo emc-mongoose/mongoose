@@ -231,7 +231,7 @@ Parameterized configuration parameter: `item-output-path`
 Example: dynamic files output path defined by some particular "width" (16) and "depth" (2):
 
 ```bash
-java -jar mongoose-<VERSION>.jar \
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose \
     --item-output-path=/mnt/storage/%p\{16\;2\} \
     --storage-driver-type=fs \
     ...

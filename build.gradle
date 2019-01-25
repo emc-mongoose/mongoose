@@ -57,7 +57,6 @@ ext {
 
 	jarFileName = rootProject.name
 	javaHome = System.properties["java.home"]
-	jreOutDir = "${rootProject.buildDir}${File.separator}jre"
 	rootPkg = "com.emc.mongoose"
 	moduleName = rootPkg
 }
@@ -428,81 +427,8 @@ artifacts {
 
 assemble.dependsOn += mainJar
 
-// Docker tasks ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-import com.bmuschko.gradle.docker.tasks.image.*
-import com.bmuschko.gradle.docker.tasks.container.*
-
-task buildImage(type: DockerBuildImage, dependsOn: mainJar) {
-	inputDir = rootProject.projectDir
-	dockerFile = project.file("docker${File.separator}Dockerfile")
-	imageId = "emcmongoose/mongoose"
-	tags = [
-		"emcmongoose/mongoose:${version}".toString(),
-		"emcmongoose/mongoose:testing",
-	]
-}
-
-task pushProductionImage(type: DockerPushImage, dependsOn: buildImage) {
-	imageName = "emcmongoose/mongoose"
-	tag = "emcmongoose/mongoose:${version}".toString()
-}
-
-task pushTestingImage(type: DockerPushImage, dependsOn: buildImage) {
-	imageName = "emcmongoose/mongoose"
-	tag = "emcmongoose/mongoose:${version}".toString()
-}
-
-task buildRobotestImage(type: DockerBuildImage) {
-	inputDir = rootProject.projectDir
-	dockerFile = project.file("docker${File.separator}Dockerfile.robotest")
-	imageId = "emcmongoose/mongoose-robotest"
-	tags = [
-		"emcmongoose/mongoose-robotest:${version}",
-	]
-}
-
-task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage, buildRobotestImage]) {
-	attachStderr = true
-	attachStdout = true
-	autoRemove = true
-	binds = [
-		"${rootProject.buildDir}": "/root/mongoose/build",
-		"/var/run/docker.sock": "/var/run/docker.sock",
-	]
-	envVars = [
-		"HOST_WORKING_DIR": rootProject.projectDir.absolutePath,
-		"MONGOOSE_VERSION": version,
-		"MONGOOSE_IMAGE_VERSION": version,
-		"SERVICE_HOST": "localhost",
-		"SUITE": System.getenv("SUITE"),
-		"TEST": System.getenv("TEST"),
-	]
-	imageId = buildRobotestImage.getImageId()
-	network = "host"
-	tty = true
-	doLast {
-		println "Created the container for the ${System.env.SUITE}.${System.env.TEST} test"
-	}
-}
-
-task startRobotestContainer(type: DockerStartContainer, dependsOn: createRobotestContainer) {
-	targetContainerId createRobotestContainer.getContainerId()
-}
-
-task robotest(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
-	targetContainerId createRobotestContainer.getContainerId()
-	timeout = 600 // 10 min w/o output -> fail on Travis CI
-	doLast {
-		if(0 != exitCode) {
-			throw new GradleException("Some robotests FAILED")
-		} else {
-			println "Robotests PASSED"
-		}
-	}
-}
-
 // Modules /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 task createModuleInfoSrc(type: Exec, dependsOn: mainJar) {
 	executable = "${javaHome}${File.separator}bin${File.separator}jdeps"
 	args = [
@@ -546,16 +472,78 @@ task mainModule(type: Exec, dependsOn: compileModuleInfo) {
 	]
 }
 
-task buildJre(type: Exec, dependsOn: mainModule) {
-	executable = "${javaHome}${File.separator}bin${File.separator}jlink"
-	args = [
-		"--module-path",
-		"${javaHome}${File.separator}jmods:${mainJar.outputs.files.iterator().next()}",
-		"--add-modules", rootPkg,
-		"--output", jreOutDir,
-		"--compress=2",
-		"--no-header-files",
-		"--no-man-pages",
-		"--strip-debug",
+// Docker tasks ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+import com.bmuschko.gradle.docker.tasks.image.*
+import com.bmuschko.gradle.docker.tasks.container.*
+
+task dockerBuildImage(type: DockerBuildImage, dependsOn: mainModule) {
+	inputDir = rootProject.projectDir
+	dockerFile = project.file("docker${File.separator}Dockerfile")
+	imageId = "emcmongoose/mongoose"
+	tags = [
+		"emcmongoose/mongoose:${version}".toString(),
+		"emcmongoose/mongoose:testing",
 	]
+}
+
+task dockerPushProductionImage(type: DockerPushImage, dependsOn: dockerBuildImage) {
+	imageName = "emcmongoose/mongoose"
+	tag = "emcmongoose/mongoose:${version}".toString()
+}
+
+task dockerPushTestingImage(type: DockerPushImage, dependsOn: dockerBuildImage) {
+	imageName = "emcmongoose/mongoose"
+	tag = "emcmongoose/mongoose:testing".toString()
+}
+
+// Robot Framework /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+task dockerBuildImageRobotest(type: DockerBuildImage) {
+	inputDir = rootProject.projectDir
+	dockerFile = project.file("docker${File.separator}Dockerfile.robotest")
+	imageId = "emcmongoose/mongoose-robotest"
+	tags = [
+		"emcmongoose/mongoose-robotest:${version}",
+	]
+}
+
+task dockerCreateContainerRobotest(type: DockerCreateContainer, dependsOn: [dockerBuildImage, dockerBuildImageRobotest]) {
+	attachStderr = true
+	attachStdout = true
+	autoRemove = true
+	binds = [
+		"${rootProject.buildDir}": "/root/mongoose/build",
+		"/var/run/docker.sock": "/var/run/docker.sock",
+	]
+	envVars = [
+		"HOST_WORKING_DIR": rootProject.projectDir.absolutePath,
+		"MONGOOSE_VERSION": version,
+		"MONGOOSE_IMAGE_VERSION": version,
+		"SERVICE_HOST": "localhost",
+		"SUITE": System.getenv("SUITE"),
+		"TEST": System.getenv("TEST"),
+	]
+	imageId = dockerBuildImageRobotest.getImageId()
+	network = "host"
+	tty = true
+	doLast {
+		println "Created the container for the ${System.env.SUITE}.${System.env.TEST} test"
+	}
+}
+
+task dockerStartContainerRobotest(type: DockerStartContainer, dependsOn: dockerCreateContainerRobotest) {
+	targetContainerId dockerCreateContainerRobotest.getContainerId()
+}
+
+task robotest(type: DockerWaitContainer, dependsOn: dockerStartContainerRobotest) {
+	targetContainerId dockerCreateContainerRobotest.getContainerId()
+	timeout = 600 // 10 min w/o output -> fail on Travis CI
+	doLast {
+		if(0 != exitCode) {
+			throw new GradleException("Some robotests FAILED")
+		} else {
+			println "Robotests PASSED"
+		}
+	}
 }
