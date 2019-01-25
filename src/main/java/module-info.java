@@ -19,7 +19,6 @@ module com.emc.mongoose {
 	requires org.eclipse.jetty.server;
 	requires org.eclipse.jetty.servlet;
 	requires commons.lang;
-	requires java.base;
 	requires java.rmi;
 	requires java.scripting;
 	requires java.logging;

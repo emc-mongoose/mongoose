@@ -503,7 +503,7 @@ task robotest(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
 }
 
 // Modules /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-task moduleInfoSrc(type: Exec, dependsOn: mainJar) {
+task createModuleInfoSrc(type: Exec, dependsOn: mainJar) {
 	executable = "${javaHome}${File.separator}bin${File.separator}jdeps"
 	args = [
 		"--module-path", "${javaHome}${File.separator}jmods",
@@ -513,7 +513,19 @@ task moduleInfoSrc(type: Exec, dependsOn: mainJar) {
 	]
 }
 
-task compileModuleInfo(type: Exec, dependsOn: moduleInfoSrc) {
+task patchModuleInfoSrc(dependsOn: createModuleInfoSrc) {
+	doLast {
+		def fs = File.separator
+		def filePath = "${rootProject.buildDir}${fs}${rootPkg}${fs}module-info.java"
+		def file = new File(filePath)
+		def fileContent = file.text
+		def ls = System.getProperty("line.separator")
+		def newFileContent = fileContent.replace("}", "    uses com.emc.mongoose.env.Extension;${ls}    uses com.github.akurilov.confuse.SchemaProvider;${ls}}")
+		file.write(newFileContent)
+	}
+}
+
+task compileModuleInfo(type: Exec, dependsOn: patchModuleInfoSrc) {
 	executable = "${javaHome}${File.separator}bin${File.separator}javac"
 	args = [
 		"--patch-module",
@@ -530,5 +542,19 @@ task mainModule(type: Exec, dependsOn: compileModuleInfo) {
 		"-uf",
 		mainJar.outputs.files.iterator().next(),
 		"module-info.class",
+	]
+}
+
+task buildJre(type: Exec, dependsOn: mainModule) {
+	executable = "${javaHome}${File.separator}bin${File.separator}jlink"
+	args = [
+		"--module-path",
+		"${javaHome}${File.separator}jmods:${mainJar.outputs.files.iterator().next()}",
+		"--add-modules", rootPkg,
+		"--output", jreOutDir,
+		"--compress=2",
+		"--no-header-files",
+		"--no-man-pages",
+		"--strip-debug",
 	]
 }
