@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.netty.http.swift;
 
-import static com.emc.mongoose.item.op.OpType.CREATE;
-import static com.emc.mongoose.item.op.Operation.SLASH;
+import static com.emc.mongoose.base.item.op.OpType.CREATE;
+import static com.emc.mongoose.base.item.op.Operation.SLASH;
 import static com.emc.mongoose.storage.driver.coop.netty.http.swift.SwiftApi.AUTH_URI;
 import static com.emc.mongoose.storage.driver.coop.netty.http.swift.SwiftApi.DEFAULT_VERSIONS_LOCATION;
 import static com.emc.mongoose.storage.driver.coop.netty.http.swift.SwiftApi.KEY_X_AUTH_KEY;
@@ -15,19 +15,19 @@ import static com.emc.mongoose.storage.driver.coop.netty.http.swift.SwiftApi.URI
 import static com.emc.mongoose.storage.driver.coop.netty.http.swift.SwiftApi.parseContainerListing;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-import com.emc.mongoose.config.IllegalArgumentNameException;
-import com.emc.mongoose.data.DataInput;
-import com.emc.mongoose.exception.InterruptRunException;
-import com.emc.mongoose.exception.OmgShootMyFootException;
-import com.emc.mongoose.item.DataItem;
-import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.ItemFactory;
-import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.item.op.composite.data.CompositeDataOperation;
-import com.emc.mongoose.item.op.partial.data.PartialDataOperation;
-import com.emc.mongoose.logging.LogUtil;
-import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.base.config.IllegalArgumentNameException;
+import com.emc.mongoose.base.data.DataInput;
+import com.emc.mongoose.base.exception.InterruptRunException;
+import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.item.DataItem;
+import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.item.ItemFactory;
+import com.emc.mongoose.base.item.op.OpType;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.item.op.composite.data.CompositeDataOperation;
+import com.emc.mongoose.base.item.op.partial.data.PartialDataOperation;
+import com.emc.mongoose.base.logging.LogUtil;
+import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpStorageDriverBase;
 import com.github.akurilov.confuse.Config;

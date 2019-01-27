@@ -72,9 +72,6 @@ allprojects {
 	repositories {
 		jcenter()
 		mavenCentral()
-		maven {
-			url "https://oss.sonatype.org/content/repositories/comgithubakurilov-1154"
-		}
 	}
 
 	apply plugin: "java"
@@ -264,7 +261,7 @@ allprojects {
 }
 
 String defineVersion() {
-	def configFilePath = [ rootDir, "src", "main", "resources", "config", "defaults.json", ]
+	def configFilePath = [ rootDir, "base", "src", "main", "resources", "config", "defaults.json", ]
 		.join(File.separator);
 	def inputFile = new File(configFilePath)
 	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
@@ -327,6 +324,76 @@ void collectName(Project p, LinkedList<String> names) {
 }
 
 subprojects {
+
+	jar {
+
+		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+		manifest {
+			attributes(
+				"Automatic-Module-Name": project.moduleName,
+				"Implementation-Version": rootProject.version,
+				"Implementation-Title": rootProject.description,
+				"Main-Class": "${project.moduleName}.Main",
+			)
+		}
+
+		excludes = [
+			"**/*.html",
+			"META-INF/*.DSA",
+			"META-INF/*.LIST",
+			"META-INF/*.RSA",
+			"META-INF/*.SF",
+			"module-info.class",
+			"org/apache/commons/lang/enum/**",
+		]
+	}
+
+	task moduleInfoSource(type: Exec, dependsOn: jar) {
+		executable = "${javaHome}${File.separator}bin${File.separator}jdeps"
+		args = [
+			"--module-path",
+			"${javaHome}${File.separator}jmods",
+			"--generate-module-info",
+			project.buildDir,
+			"--add-modules=ALL-MODULE-PATH",
+			jar.outputs.files.iterator().next().path,
+		]
+	}
+
+	task patchModuleInfoSource(dependsOn: moduleInfoSource) {
+		doLast {
+			def fs = File.separator
+			def filePath = "${project.buildDir}${fs}${project.moduleName}${fs}module-info.java"
+			def file = new File(filePath)
+			def fileContent = file.text
+			def ls = System.getProperty("line.separator")
+			def newFileContent = fileContent.replace("}", "    uses com.emc.mongoose.base.env.Extension;${ls}    uses com.github.akurilov.confuse.SchemaProvider;${ls}}")
+			file.write(newFileContent)
+		}
+	}
+
+	task moduleInfo(type: Exec, dependsOn: patchModuleInfoSource) {
+		executable = "${javaHome}${File.separator}bin${File.separator}javac"
+		args = [
+			"--patch-module",
+			"${project.moduleName}=${jar.outputs.files.iterator().next().path}",
+			"${project.buildDir}${File.separator}${project.moduleName}${File.separator}module-info.java",
+			"-d",
+			"${project.buildDir}${File.separator}${project.moduleName}"
+		]
+	}
+
+	task module(type: Exec, dependsOn: moduleInfo) {
+		executable = "${javaHome}${File.separator}bin${File.separator}jar"
+		workingDir = "${project.buildDir}${File.separator}${project.moduleName}"
+		args = [
+			"--update",
+			"--main-class=${project.moduleName}.Main",
+			"--file=${jar.outputs.files.iterator().next()}",
+			"module-info.class",
+		]
+	}
 
 	task sourcesJar(type: Jar, dependsOn: classes) {
 		LinkedList names = new LinkedList()
@@ -429,24 +496,14 @@ assemble.dependsOn += mainJar
 
 // Modules /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-task createModuleInfoSrc(type: Exec, dependsOn: mainJar) {
-	executable = "${javaHome}${File.separator}bin${File.separator}jdeps"
-	args = [
-		"--module-path", "${javaHome}${File.separator}jmods",
-		"--generate-module-info", rootProject.buildDir,
-		"--add-modules=ALL-MODULE-PATH",
-		mainJar.outputs.files.iterator().next().path,
-	]
-}
-
-task patchModuleInfoSrc(dependsOn: createModuleInfoSrc) {
+/*task patchModuleInfoSrc(dependsOn: createModuleInfoSrc) {
 	doLast {
 		def fs = File.separator
 		def filePath = "${rootProject.buildDir}${fs}${rootPkg}${fs}module-info.java"
 		def file = new File(filePath)
 		def fileContent = file.text
 		def ls = System.getProperty("line.separator")
-		def newFileContent = fileContent.replace("}", "    uses com.emc.mongoose.env.Extension;${ls}    uses com.github.akurilov.confuse.SchemaProvider;${ls}}")
+		def newFileContent = fileContent.replace("}", "    uses com.emc.mongoose.base.env.Extension;${ls}    uses com.github.akurilov.confuse.SchemaProvider;${ls}}")
 		file.write(newFileContent)
 	}
 }
@@ -470,14 +527,14 @@ task mainModule(type: Exec, dependsOn: compileModuleInfo) {
 		"--file=${mainJar.outputs.files.iterator().next()}",
 		"module-info.class",
 	]
-}
+}*/
 
 // Docker tasks ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 import com.bmuschko.gradle.docker.tasks.image.*
 import com.bmuschko.gradle.docker.tasks.container.*
 
-task dockerBuildImage(type: DockerBuildImage, dependsOn: mainModule) {
+/*task dockerBuildImage(type: DockerBuildImage, dependsOn: mainModule) {
 	inputDir = rootProject.projectDir
 	dockerFile = project.file("docker${File.separator}Dockerfile")
 	imageId = "emcmongoose/mongoose"
@@ -546,4 +603,4 @@ task robotest(type: DockerWaitContainer, dependsOn: dockerStartContainerRobotest
 			println "Robotests PASSED"
 		}
 	}
-}
+}*/

@@ -5,7 +5,7 @@ ext.moduleName = "${rootPkg}.storage.driver.coop.nio.fs"
 dependencies {
 
 	compileOnly(
-		project(":"),
+		project(":base"),
 		project(":storage:driver:coop"),
 		project(":storage:driver:coop:nio"),
 		"com.github.akurilov:confuse:${depVersion.confuse}",
@@ -26,10 +26,7 @@ dependencies {
 }
 
 jar {
-
-	baseName = project.description
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
 	manifest {
 		attributes(
 			"Automatic-Module-Name": moduleName,

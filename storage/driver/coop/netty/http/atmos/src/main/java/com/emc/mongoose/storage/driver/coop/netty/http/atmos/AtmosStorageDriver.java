@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.netty.http.atmos;
 
-import static com.emc.mongoose.item.op.OpType.CREATE;
+import static com.emc.mongoose.base.item.op.OpType.CREATE;
 import static com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants.KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED;
 import static com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants.KEY_X_EMC_NAMESPACE;
 import static com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants.KEY_X_EMC_SIGNATURE;
@@ -14,15 +14,15 @@ import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.SIG
 import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.SUBTENANT_URI_BASE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import com.emc.mongoose.data.DataInput;
-import com.emc.mongoose.exception.InterruptRunException;
-import com.emc.mongoose.exception.OmgShootMyFootException;
-import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.ItemFactory;
-import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.logging.LogUtil;
-import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.base.data.DataInput;
+import com.emc.mongoose.base.exception.InterruptRunException;
+import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.item.ItemFactory;
+import com.emc.mongoose.base.item.op.OpType;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.logging.LogUtil;
+import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpStorageDriverBase;
 import com.github.akurilov.confuse.Config;

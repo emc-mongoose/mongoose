@@ -1,11 +1,11 @@
 package com.emc.mongoose.storage.driver.coop.netty.http.s3;
 
-import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.item.op.composite.data.CompositeDataOperation;
-import com.emc.mongoose.item.op.partial.data.PartialDataOperation;
-import com.emc.mongoose.logging.LogUtil;
-import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.item.op.composite.data.CompositeDataOperation;
+import com.emc.mongoose.base.item.op.partial.data.PartialDataOperation;
+import com.emc.mongoose.base.logging.LogUtil;
+import com.emc.mongoose.base.logging.Loggers;
 
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpResponseHandlerBase;
 

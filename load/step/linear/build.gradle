@@ -4,7 +4,7 @@ ext.moduleName = "${rootPkg}.load.step.linear"
 
 dependencies {
 	compileOnly(
-		project(":"),
+		project(":base"),
 		"com.github.akurilov:confuse:${depVersion.confuse}",
 		"com.github.akurilov:confuse-io-json:${depVersion.confuseIoJson}",
 		"com.github.akurilov:fiber4j:${depVersion.fiber4j}",
@@ -14,15 +14,12 @@ dependencies {
 }
 
 jar {
-
-	baseName = project.description
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
 	manifest {
 		attributes(
 			"Automatic-Module-Name": moduleName,
 			"Implementation-Version": version,
 			"Implementation-Title": project.description,
+			"Main-Class": "${moduleName}.Main",
 		)
 	}
 }

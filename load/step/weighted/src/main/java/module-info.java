@@ -1,8 +1,8 @@
-import com.emc.mongoose.env.Extension;
+import com.emc.mongoose.base.env.Extension;
 import com.emc.mongoose.load.step.weighted.WeightedLoadStepExtension;
 
 module com.emc.mongoose.load.step.weighted {
-	requires com.emc.mongoose;
+	requires com.emc.mongoose.base;
 	requires com.github.akurilov.commons;
 	requires com.github.akurilov.confuse;
 	requires com.github.akurilov.confuse.io.json;

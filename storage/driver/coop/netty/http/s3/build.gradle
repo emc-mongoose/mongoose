@@ -5,7 +5,7 @@ ext.moduleName = "${rootPkg}.storage.driver.coop.netty.http.s3"
 dependencies {
 
 	compileOnly(
-		project(":"),
+		project(":base"),
 		project(":storage:driver:coop"),
 		project(":storage:driver:coop:netty"),
 		project(":storage:driver:coop:netty:http"),
@@ -34,7 +34,6 @@ dependencies {
 
 jar {
 
-	baseName = project.description
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
 	manifest {

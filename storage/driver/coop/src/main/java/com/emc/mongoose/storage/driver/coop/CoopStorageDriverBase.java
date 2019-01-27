@@ -1,15 +1,15 @@
 package com.emc.mongoose.storage.driver.coop;
 
-import com.emc.mongoose.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.data.DataInput;
-import com.emc.mongoose.exception.InterruptRunException;
-import com.emc.mongoose.exception.OmgShootMyFootException;
-import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.item.op.composite.CompositeOperation;
-import com.emc.mongoose.item.op.partial.PartialOperation;
-import com.emc.mongoose.logging.Loggers;
-import com.emc.mongoose.storage.driver.StorageDriver;
+import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
+import com.emc.mongoose.base.data.DataInput;
+import com.emc.mongoose.base.exception.InterruptRunException;
+import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.item.op.composite.CompositeOperation;
+import com.emc.mongoose.base.item.op.partial.PartialOperation;
+import com.emc.mongoose.base.logging.Loggers;
+import com.emc.mongoose.base.storage.driver.StorageDriver;
 import com.emc.mongoose.storage.driver.StorageDriverBase;
 import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.Constants.KEY_STEP_ID;

@@ -1,10 +1,10 @@
-import com.emc.mongoose.env.Extension;
+import com.emc.mongoose.base.env.Extension;
 import com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3StorageDriverExtension;
 import com.github.akurilov.confuse.SchemaProvider;
 
 module com.emc.mongoose.storage.driver.coop.netty.http.s3 {
 	requires com.emc.mongoose.storage.driver.coop.netty.http;
-	requires com.emc.mongoose;
+	requires com.emc.mongoose.base;
 	requires com.github.akurilov.commons;
 	requires com.github.akurilov.confuse;
 	requires com.github.akurilov.confuse.io.json;

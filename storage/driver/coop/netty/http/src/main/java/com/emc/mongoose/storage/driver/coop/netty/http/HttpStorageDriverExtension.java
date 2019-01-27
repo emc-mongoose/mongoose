@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.netty.http;
 
-import com.emc.mongoose.env.ExtensionBase;
+import com.emc.mongoose.base.env.ExtensionBase;
 
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.io.json.JsonSchemaProviderBase;

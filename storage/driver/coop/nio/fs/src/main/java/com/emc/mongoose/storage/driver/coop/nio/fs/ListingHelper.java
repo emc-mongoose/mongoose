@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.nio.fs;
 
-import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.ItemFactory;
+import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.item.ItemFactory;
 
 import java.io.File;
 import java.io.IOException;
