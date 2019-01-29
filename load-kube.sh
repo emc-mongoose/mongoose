@@ -1,7 +1,18 @@
 #!/bin/bash
 
+create_ns_if_needed(){
+	result=kubectl get namespaces -o name | grep 'namespace/mongoose'
+	echo 'created'
+	if [[ -z result ]]
+	then
+		kubectl create namespace mongoose
+		echo 'created'
+	fi
+}
+
 start() {
-    kubectl create namespace mongoose
+    create_ns_if_needed
+    echo "$1"
 #    kubectl apply -f mongoose-driver.yaml
 #    kubectl apply -f mongoose-controller.yaml
 }
