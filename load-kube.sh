@@ -2,7 +2,7 @@
 
 create_ns_if_needed(){
 	result=`kubectl get namespaces -o name | grep 'namespace/mongoose'`
-	if [[ -z result ]]
+	if ! [[ $result == *"namespace/mongoose"* ]]
 	then
 		echo "create"
 		`kubectl create namespace mongoose`
