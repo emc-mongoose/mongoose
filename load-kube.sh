@@ -2,7 +2,7 @@
 
 create_ns_if_needed(){
 	result=kubectl get namespaces -o name | grep 'namespace/mongoose'
-	echo 'created'
+	echo 'check'
 	if [[ -z result ]]
 	then
 		kubectl create namespace mongoose
