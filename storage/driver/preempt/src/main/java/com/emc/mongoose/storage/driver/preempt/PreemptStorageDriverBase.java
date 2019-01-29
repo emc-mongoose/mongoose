@@ -8,7 +8,7 @@ import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.logging.LogContextThreadFactory;
 import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.base.storage.driver.StorageDriver;
-import com.emc.mongoose.storage.driver.StorageDriverBase;
+import com.emc.mongoose.base.storage.driver.StorageDriverBase;
 import com.github.akurilov.confuse.Config;
 
 import java.io.EOFException;

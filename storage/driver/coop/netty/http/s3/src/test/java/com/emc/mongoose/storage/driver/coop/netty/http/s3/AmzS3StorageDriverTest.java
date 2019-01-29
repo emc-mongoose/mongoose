@@ -14,8 +14,8 @@ import com.emc.mongoose.base.item.op.composite.data.CompositeDataOperation;
 import com.emc.mongoose.base.item.op.data.DataOperationImpl;
 import com.emc.mongoose.base.item.op.data.DataOperation;
 import com.emc.mongoose.base.item.op.partial.data.PartialDataOperation;
-import com.emc.mongoose.storage.Credential;
-import static com.emc.mongoose.Constants.APP_NAME;
+import com.emc.mongoose.base.storage.Credential;
+import static com.emc.mongoose.base.Constants.APP_NAME;
 import static com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3Api.KEY_UPLOAD_ID;
 
 import com.github.akurilov.commons.collection.Range;

@@ -9,7 +9,7 @@ import com.emc.mongoose.base.item.ItemFactory;
 import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.item.op.data.DataOperation;
-import com.emc.mongoose.storage.Credential;
+import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.math.Random;

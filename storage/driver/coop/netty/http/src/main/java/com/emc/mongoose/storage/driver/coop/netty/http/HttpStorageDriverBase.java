@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.netty.http;
 
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.base.item.DataItem.rangeCount;
 import static com.emc.mongoose.base.item.DataItem.rangeOffset;
 import static com.emc.mongoose.base.item.op.Operation.SLASH;
@@ -20,7 +20,7 @@ import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.item.op.data.DataOperation;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
-import com.emc.mongoose.storage.Credential;
+import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverBase;
 import com.emc.mongoose.base.supply.BatchSupplier;
 import com.emc.mongoose.base.supply.ConstantStringSupplier;

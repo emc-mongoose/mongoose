@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.netty.http.atmos;
 
-import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.base.Constants.APP_NAME;
 import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.SUBTENANT_URI_BASE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -14,7 +14,7 @@ import com.emc.mongoose.base.item.DataItemImpl;
 import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.item.op.data.DataOperation;
 import com.emc.mongoose.base.item.op.data.DataOperationImpl;
-import com.emc.mongoose.storage.Credential;
+import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.netty.http.EmcConstants;
 import com.github.akurilov.commons.collection.TreeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;

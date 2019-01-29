@@ -5,8 +5,8 @@ import com.emc.mongoose.base.env.ExtensionBase;
 import com.emc.mongoose.base.exception.OmgShootMyFootException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
-import com.emc.mongoose.storage.driver.StorageDriverFactory;
-import static com.emc.mongoose.Constants.APP_NAME;
+import com.emc.mongoose.base.storage.driver.StorageDriverFactory;
+import static com.emc.mongoose.base.Constants.APP_NAME;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;

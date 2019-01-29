@@ -8,7 +8,7 @@ import com.emc.mongoose.base.item.op.data.DataOperation;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
-import com.emc.mongoose.storage.Credential;
+import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.storage.driver.preempt.PreemptStorageDriverBase;
 
 import com.github.akurilov.commons.collection.Range;

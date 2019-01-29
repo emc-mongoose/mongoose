@@ -5,8 +5,8 @@ import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
 
 import com.github.akurilov.commons.collection.CircularArrayBuffer;
 import com.github.akurilov.commons.collection.CircularBuffer;

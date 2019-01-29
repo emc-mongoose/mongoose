@@ -10,9 +10,9 @@ import com.emc.mongoose.base.item.op.composite.CompositeOperation;
 import com.emc.mongoose.base.item.op.partial.PartialOperation;
 import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.base.storage.driver.StorageDriver;
-import com.emc.mongoose.storage.driver.StorageDriverBase;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import com.emc.mongoose.base.storage.driver.StorageDriverBase;
+import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
 
 import com.github.akurilov.confuse.Config;
 

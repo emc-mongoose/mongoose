@@ -23,7 +23,7 @@ import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
-import com.emc.mongoose.storage.Credential;
+import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpStorageDriverBase;
 import com.github.akurilov.confuse.Config;
 import io.netty.buffer.Unpooled;

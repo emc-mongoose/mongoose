@@ -13,7 +13,7 @@ import com.emc.mongoose.base.item.op.data.DataOperation;
 import com.emc.mongoose.base.item.op.path.PathOperation;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
-import com.emc.mongoose.storage.Credential;
+import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.nio.NioStorageDriver;
 import com.emc.mongoose.storage.driver.coop.nio.NioStorageDriverBase;
 

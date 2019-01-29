@@ -1,10 +1,6 @@
 import groovy.json.JsonSlurper
 import groovy.json.JsonParserType
 
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.nio.file.StandardOpenOption
-
 buildscript {
 	repositories {
 		mavenCentral()
@@ -316,11 +312,19 @@ dependencies {
 	)
 }
 
-void collectName(Project p, LinkedList<String> names) {
+void collectName(final Project p, final LinkedList<String> names) {
 	names.addFirst p.name
 	if(p.parent != null) {
 		collectName(p.parent, names)
 	}
+}
+
+def execute(cmd, dir = null) {
+	def stdOut = new StringBuilder(), stdErr = new StringBuilder()
+	def proc = dir == null ? cmd.execute() : cmd.execute([], dir)
+	proc.consumeProcessOutput(stdOut, stdErr)
+	proc.waitForOrKill(100_000)
+	println "${cmd}:\nout> $stdOut\nerr> $stdErr"
 }
 
 subprojects {
@@ -334,7 +338,6 @@ subprojects {
 				"Automatic-Module-Name": project.moduleName,
 				"Implementation-Version": rootProject.version,
 				"Implementation-Title": rootProject.description,
-				"Main-Class": "${project.moduleName}.Main",
 			)
 		}
 
@@ -347,52 +350,53 @@ subprojects {
 			"module-info.class",
 			"org/apache/commons/lang/enum/**",
 		]
-	}
 
-	task moduleInfoSource(type: Exec, dependsOn: jar) {
-		executable = "${javaHome}${File.separator}bin${File.separator}jdeps"
-		args = [
-			"--module-path",
-			"${javaHome}${File.separator}jmods",
-			"--generate-module-info",
-			project.buildDir,
-			"--add-modules=ALL-MODULE-PATH",
-			jar.outputs.files.iterator().next().path,
-		]
-	}
-
-	task patchModuleInfoSource(dependsOn: moduleInfoSource) {
 		doLast {
+
+			execute(
+				[
+					"${javaHome}${File.separator}bin${File.separator}jdeps",
+					"--module-path ${javaHome}${File.separator}jmods:"
+						+ sourceSets.main.compileClasspath.collect { it.getPath() }.join(':'),
+					"--generate-module-info ${project.buildDir}",
+					"--add-modules=ALL-MODULE-PATH",
+					jar.outputs.files.iterator().next().path,
+				].join(' ')
+			)
+
 			def fs = File.separator
 			def filePath = "${project.buildDir}${fs}${project.moduleName}${fs}module-info.java"
 			def file = new File(filePath)
 			def fileContent = file.text
 			def ls = System.getProperty("line.separator")
-			def newFileContent = fileContent.replace("}", "    uses com.emc.mongoose.base.env.Extension;${ls}    uses com.github.akurilov.confuse.SchemaProvider;${ls}}")
+			def replacementText = [
+				"    uses com.emc.mongoose.base.env.Extension;${ls}",
+				"    uses com.github.akurilov.confuse.SchemaProvider;${ls}}",
+			].join()
+			def newFileContent = fileContent.replace("}", replacementText)
 			file.write(newFileContent)
+
+			execute(
+				[
+					"${javaHome}${File.separator}bin${File.separator}javac ",
+					"--module-path ${javaHome}${File.separator}jmods:"
+						+ sourceSets.main.compileClasspath.collect { it.getPath() }.join(':'),
+					"--patch-module ${project.moduleName}=${jar.outputs.files.iterator().next().path}",
+					"${project.buildDir}${File.separator}${project.moduleName}${File.separator}module-info.java",
+					"-d ${project.buildDir}${File.separator}${project.moduleName}",
+				].join(' ')
+			)
+
+			def cmdMakeModule = [
+				"${javaHome}${File.separator}bin${File.separator}jar --update",
+				"--module-path ${javaHome}${File.separator}jmods:"
+					+ sourceSets.main.compileClasspath.collect { it.getPath() }.join(':'),
+				project.hasProperty("mainClass") ? "--main-class=${project.moduleName}.Main" : "",
+				"--file=${jar.outputs.files.iterator().next()} module-info.class"
+			].join(' ')
+			def workingDir = new File("${project.buildDir}${File.separator}${project.moduleName}")
+			execute(cmdMakeModule, workingDir)
 		}
-	}
-
-	task moduleInfo(type: Exec, dependsOn: patchModuleInfoSource) {
-		executable = "${javaHome}${File.separator}bin${File.separator}javac"
-		args = [
-			"--patch-module",
-			"${project.moduleName}=${jar.outputs.files.iterator().next().path}",
-			"${project.buildDir}${File.separator}${project.moduleName}${File.separator}module-info.java",
-			"-d",
-			"${project.buildDir}${File.separator}${project.moduleName}"
-		]
-	}
-
-	task module(type: Exec, dependsOn: moduleInfo) {
-		executable = "${javaHome}${File.separator}bin${File.separator}jar"
-		workingDir = "${project.buildDir}${File.separator}${project.moduleName}"
-		args = [
-			"--update",
-			"--main-class=${project.moduleName}.Main",
-			"--file=${jar.outputs.files.iterator().next()}",
-			"module-info.class",
-		]
 	}
 
 	task sourcesJar(type: Jar, dependsOn: classes) {
@@ -419,7 +423,7 @@ subprojects {
 }
 
 wrapper {
-	gradleVersion = "5.1.1"
+	gradleVersion = "5.0"
 }
 
 static def isTestsProject(final Project p) {

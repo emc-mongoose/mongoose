@@ -1,8 +1,19 @@
 description = "mongoose-base"
 
-ext.moduleName = "${rootPkg}.base"
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
+
+ext {
+	log4j2PluginsDatPath = Paths.get(
+		"META-INF", "org", "apache", "logging", "log4j", "core", "config", "plugins", "Log4j2Plugins.dat",
+	)
+	moduleName = "${rootPkg}.base"
+	mainClass = "${moduleName}.Main"
+}
 
 dependencies {
+
 	provided(
 		"commons-codec:commons-codec:${depVersion.commonsCodec}",
 		"commons-lang:commons-lang:${depVersion.commonsLang}",
@@ -15,7 +26,6 @@ dependencies {
 		"com.github.akurilov:fiber4j:${depVersion.fiber4j}",
 		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
 		"com.lmax:disruptor:${depVersion.disruptor}",
-		// https://mvnrepository.com/artifact/io.prometheus/simpleclient
 		"io.prometheus:simpleclient:${depVersion.tsdbMetrics}",
 		"io.prometheus:simpleclient_servlet:${depVersion.tsdbMetrics}",
 		"io.prometheus:simpleclient_hotspot:${depVersion.tsdbMetrics}",
@@ -43,15 +53,57 @@ dependencies {
 	)
 }
 
+task mergeLog4j2PluginsDat(dependsOn: compileJava) {
+	doLast {
+
+		byte[] pluginsData
+		byte[] customPluginsData
+
+		configurations.provided
+			.each {
+			if(!it.isDirectory()) {
+				zipTree(it)
+					.filter {
+					it.toString().endsWith(log4j2PluginsDatPath.toString())
+				}
+				.each {
+					pluginsData = Files.readAllBytes(Paths.get(it.toString()))
+				}
+			}
+		}
+
+		sourceSets.main.output.classesDirs
+			.any {
+			customPluginsData = Files.readAllBytes(
+				Paths.get(it.toString(), log4j2PluginsDatPath.toString(),)
+			)
+		}
+
+		sourceSets.main.output.classesDirs
+			.any {
+			Files.write(
+				Paths.get(it.toString(), log4j2PluginsDatPath.toString(),),
+				pluginsData, StandardOpenOption.TRUNCATE_EXISTING
+			)
+			Files.write(
+				Paths.get(it.toString(), log4j2PluginsDatPath.toString(),),
+				customPluginsData, StandardOpenOption.APPEND
+			)
+		}
+	}
+}
+
 jar {
+
+	//dependsOn += mergeLog4j2PluginsDat
 
 	manifest {
 		attributes(
-			"Main-Class": "${moduleName}.Main",
+			"Main-Class": mainClass,
 		)
 	}
 
-	from configurations.provided.collect {
+	/*from configurations.provided.collect {
 		it.isDirectory() ? it : zipTree(it)
-	}
+	}*/
 }

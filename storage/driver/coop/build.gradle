@@ -5,21 +5,15 @@ ext.moduleName = "${rootPkg}.storage.driver.coop"
 dependencies {
 	compileOnly(
 		project(":base"),
+		"commons-codec:commons-codec:${depVersion.commonsCodec}",
+		"commons-lang:commons-lang:${depVersion.commonsLang}",
 		"com.github.akurilov:confuse:${depVersion.confuse}",
+		"com.github.akurilov:confuse-io-json:${depVersion.confuseIoJson}",
 		"com.github.akurilov:fiber4j:${depVersion.fiber4j}",
 		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
-		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"io.prometheus:simpleclient_servlet:${depVersion.tsdbMetrics}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+		"org.eclipse.jetty:jetty-servlet:${depVersion.jetty}",
+		"org.eclipse.jetty:jetty-rewrite:${depVersion.jetty}",
 	)
-}
-
-jar {
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-	manifest {
-		attributes(
-			"Automatic-Module-Name": moduleName,
-			"Implementation-Version": version,
-			"Implementation-Title": project.description,
-		)
-	}
 }

@@ -53,28 +53,26 @@ import org.eclipse.jetty.servlet.ServletHolder;
 
 public final class Main {
 
-  public static void main(final String... args) throws Exception {
+  public static void main(final String... args) {
 
-  	System.out.println(Main.class.getModule());
-    final CoreResourcesToInstall coreResources = new CoreResourcesToInstall();
-    final Path appHomePath = coreResources.appHomePath();
-    final String initialStepId = "none-" + LogUtil.getDateTimeStamp();
+  	final var coreResources = new CoreResourcesToInstall();
+    final var appHomePath = coreResources.appHomePath();
+    final var initialStepId = "none-" + LogUtil.getDateTimeStamp();
     LogUtil.init(appHomePath.toString(), initialStepId);
     try {
       // install the core resources
       coreResources.install(appHomePath);
       // load the defaults
-      final Config defaultConfig = loadDefaultConfig(appHomePath);
+      final var defaultConfig = loadDefaultConfig(appHomePath);
       // extensions
-      try (final URLClassLoader extClsLoader =
-          Extension.extClassLoader(Paths.get(appHomePath.toString(), DIR_EXT).toFile())) {
-        final List<Extension> extensions = Extension.load(extClsLoader);
+      try (final var extClsLoader = Extension.extClassLoader(Paths.get(appHomePath.toString(), DIR_EXT).toFile())) {
+        final var extensions = Extension.load(extClsLoader);
         // install the extensions
         installExtensions(extensions, appHomePath);
         final Config configWithArgs;
         try {
           // apply the extensions defaults
-          final Config fullDefaultConfig = collectDefaults(extensions, defaultConfig, appHomePath);
+          final var fullDefaultConfig = collectDefaults(extensions, defaultConfig, appHomePath);
           // parse the CLI args and apply them to the config instance
           configWithArgs = applyArgsToConfig(args, fullDefaultConfig, initialStepId);
         } catch (final Exception e) {
@@ -98,7 +96,7 @@ public final class Main {
   }
 
   private static Config loadDefaultConfig(final Path appHomePath) throws Exception {
-    final Map<String, Object> mainConfigSchema =
+    final var mainConfigSchema =
         SchemaProvider.resolve(APP_NAME, Thread.currentThread().getContextClassLoader()).stream()
             .findFirst()
             .orElseThrow(IllegalStateException::new);
@@ -108,12 +106,12 @@ public final class Main {
   }
 
   private static void installExtensions(final List<Extension> extensions, final Path appHomePath) {
-    final StringBuilder availExtMsg = new StringBuilder("Available/installed extensions:\n");
+    final var availExtMsg = new StringBuilder("Available/installed extensions:\n");
     extensions.forEach(
         ext -> {
           ext.install(appHomePath);
-          final String extId = ext.id();
-          final String extFqcn = ext.getClass().getCanonicalName();
+          final var extId = ext.id();
+          final var extFqcn = ext.getClass().getCanonicalName();
           availExtMsg
               .append('\t')
               .append(extId)
@@ -143,7 +141,7 @@ public final class Main {
     try {
       argsWithAliases(args, config).forEach(config::val);
     } catch (final IllegalArgumentNameException e) {
-      final String formattedAllCliArgs =
+      final var formattedAllCliArgs =
           allCliArgs(config.schema(), config.pathSep()).stream()
               .collect(Collectors.joining("\n", "\t", ""));
       Loggers.ERR.fatal(
@@ -172,7 +170,7 @@ public final class Main {
   }
 
   private static Map<String, String> argsWithAliases(final String[] args, final Config config) {
-    final Map<String, String> parsedArgs = CliArgUtil.parseArgs(args);
+    final var parsedArgs = CliArgUtil.parseArgs(args);
     final List<Map<String, Object>> aliasingConfig = config.listVal("aliasing");
     return AliasingUtil.apply(parsedArgs, aliasingConfig);
   }
@@ -186,18 +184,18 @@ public final class Main {
       throws Exception {
 
     // init the API server
-    final int port = fullDefaultConfig.intVal("run-port");
-    final Server server = new Server(port);
-    final ServletContextHandler context = new ServletContextHandler();
+    final var port = fullDefaultConfig.intVal("run-port");
+    final var server = new Server(port);
+    final var context = new ServletContextHandler();
     context.setContextPath("/");
     server.setHandler(context);
-    final RewriteHandler addCorsHeaderHandler = new RewriteHandler();
+    final var addCorsHeaderHandler = new RewriteHandler();
     addCorsHeaderHandler.addRule(new AddCorsHeadersRule());
     server.insertHandler(addCorsHeaderHandler);
     context.addServlet(new ServletHolder(new ConfigServlet(fullDefaultConfig)), "/config/*");
     context.addServlet(new ServletHolder(new LogServlet()), "/logs/*");
     context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
-    final ServletHolder runServletHolder =
+    final var runServletHolder =
         new ServletHolder(
             new RunServlet(extClsLoader, extensions, metricsMgr, fullDefaultConfig, appHomePath));
     runServletHolder
@@ -207,7 +205,7 @@ public final class Main {
     try {
       server.start();
       Loggers.MSG.info("Started to serve the remote API @ port # " + port);
-      final int listenPort = fullDefaultConfig.intVal("load-step-node-port");
+      final var listenPort = fullDefaultConfig.intVal("load-step-node-port");
       try (final Service fileMgrSvc = new FileManagerServiceImpl(listenPort);
           final Service scenarioStepSvc =
               new LoadStepManagerServiceImpl(listenPort, extensions, metricsMgr)) {
@@ -231,7 +229,7 @@ public final class Main {
       final MetricsManager metricsMgr,
       final Path appHomePath) {
     Path scenarioPath = null;
-    final String scenarioFile = config.stringVal("run-scenario");
+    final var scenarioFile = config.stringVal("run-scenario");
     if (scenarioFile != null && !scenarioFile.isEmpty()) {
       scenarioPath = Paths.get(scenarioFile);
     }
@@ -252,7 +250,7 @@ public final class Main {
       scenarioText = ScenarioUtil.defaultScenario(appHomePath);
     } else {
       scriptEngine = ScenarioUtil.scriptEngineByFilePath(scenarioPath, extClsLoader);
-      final StringBuilder strb = new StringBuilder();
+      final var strb = new StringBuilder();
       try {
         Files.lines(scenarioPath).forEach(line -> strb.append(line).append(System.lineSeparator()));
       } catch (final IOException e) {

@@ -3,7 +3,7 @@
 		"status" : "info",
 		"name" : "mongoose",
 		"monitorInterval" : 1000,
-		"packages" : "com.emc.mongoose.logging",
+		"packages" : "com.emc.mongoose.base.logging",
 		"shutdownHook" : "enable",
 		"shutdownTimeout" : 10000,
 		"appenders" : {
@@ -269,7 +269,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.Cli",
+					"name" : "com.emc.mongoose.base.logging.Cli",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "cliFile"
@@ -277,7 +277,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.Config",
+					"name" : "com.emc.mongoose.base.logging.Config",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "cfgFile"
@@ -285,7 +285,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.Errors",
+					"name" : "com.emc.mongoose.base.logging.Errors",
 					"level" : "DEBUG",
 					"AppenderRef" : [
 						{
@@ -298,7 +298,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.OpTraces",
+					"name" : "com.emc.mongoose.base.logging.OpTraces",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "opTraceFile"
@@ -306,7 +306,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.metrics.ExtResultsFile",
+					"name" : "com.emc.mongoose.base.logging.metrics.ExtResultsFile",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "extResultsFile"
@@ -314,7 +314,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.metrics.File",
+					"name" : "com.emc.mongoose.base.logging.metrics.File",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "metricsFile"
@@ -322,7 +322,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.metrics.FileTotal",
+					"name" : "com.emc.mongoose.base.logging.metrics.FileTotal",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "metricsFileTotal"
@@ -330,7 +330,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.metrics.StdOut",
+					"name" : "com.emc.mongoose.base.logging.metrics.StdOut",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "metricsStdout"
@@ -338,7 +338,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.metrics.threshold.ExtResultsFile",
+					"name" : "com.emc.mongoose.base.logging.metrics.threshold.ExtResultsFile",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "extThresholdResultsFile"
@@ -346,7 +346,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.metrics.threshold.File",
+					"name" : "com.emc.mongoose.base.logging.metrics.threshold.File",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "metricsThresholdFile"
@@ -354,7 +354,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.metrics.threshold.FileTotal",
+					"name" : "com.emc.mongoose.base.logging.metrics.threshold.FileTotal",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "metricsThresholdFileTotal"
@@ -362,7 +362,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.Messages",
+					"name" : "com.emc.mongoose.base.logging.Messages",
 					"level" : "DEBUG",
 					"AppenderRef" : [
 						{
@@ -375,7 +375,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.Multipart",
+					"name" : "com.emc.mongoose.base.logging.Multipart",
 					"level" : "DEBUG",
 					"AppenderRef" : {
 						"ref" : "partsUploadFile"
@@ -383,7 +383,7 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.logging.Scenario",
+					"name" : "com.emc.mongoose.base.logging.Scenario",
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "scenarioFile"

@@ -9,7 +9,7 @@ import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.item.op.composite.data.CompositeDataOperation;
 import com.emc.mongoose.base.item.op.data.DataOperation;
-import com.emc.mongoose.storage.Credential;
+import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverBase;
 
 import com.github.akurilov.commons.collection.Range;

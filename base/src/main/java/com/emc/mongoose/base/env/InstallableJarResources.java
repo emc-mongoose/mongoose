@@ -30,28 +30,32 @@ public abstract class InstallableJarResources implements Installable {
 
   private void installResourcesFile(final Path appHomePath, final String srcFilePath) {
 
-    final Path dstPath = Paths.get(appHomePath.toString(), srcFilePath);
+    final var dstPath = Paths.get(appHomePath.toString(), srcFilePath);
 
     if (dstPath.toFile().exists()) {
       Loggers.MSG.debug("The file {} already exists, checking the checksum", dstPath);
 
       final Checksum checksumCalc = new Adler32();
-      final byte[] buff = new byte[0x2000];
+      final var buff = new byte[0x2000];
       int n;
 
-      try (final InputStream in = resourceStream(srcFilePath)) {
-        while (-1 < (n = in.read(buff))) {
-          checksumCalc.update(buff, 0, n);
-        }
+      try (final var in = resourceStream(srcFilePath)) {
+      	if(in == null) {
+      		Loggers.ERR.warn("Resource file \"{}\" not found, skipping", srcFilePath);
+		} else {
+			while (-1 < (n = in.read(buff))) {
+			  checksumCalc.update(buff, 0, n);
+			}
+      	}
       } catch (final EOFException ok) {
       } catch (final IOException e) {
         LogUtil.exception(Level.WARN, e, "Failed to read the src file \"{}\"", srcFilePath);
       }
-      final long srcFileChecksum = checksumCalc.getValue();
+      final var srcFileChecksum = checksumCalc.getValue();
 
       checksumCalc.reset();
 
-      try (final InputStream in = Files.newInputStream(dstPath, StandardOpenOption.READ)) {
+      try (final var in = Files.newInputStream(dstPath, StandardOpenOption.READ)) {
         while (-1 < (n = in.read(buff))) {
           checksumCalc.update(buff, 0, n);
         }
@@ -59,7 +63,7 @@ public abstract class InstallableJarResources implements Installable {
       } catch (final IOException e) {
         LogUtil.exception(Level.WARN, e, "Failed to read the dst file \"{}\"", dstPath);
       }
-      final long dstFileChecksum = checksumCalc.getValue();
+      final var dstFileChecksum = checksumCalc.getValue();
 
       if (srcFileChecksum == dstFileChecksum) {
         Loggers.MSG.debug(
@@ -84,8 +88,8 @@ public abstract class InstallableJarResources implements Installable {
       dstPath.getParent().toFile().mkdirs();
     }
 
-    try (final InputStream srcFileInput = resourceStream(srcFilePath)) {
-      final long copiedBytesCount = Files.copy(srcFileInput, dstPath);
+    try (final var srcFileInput = resourceStream(srcFilePath)) {
+      final var copiedBytesCount = Files.copy(srcFileInput, dstPath);
       Loggers.MSG.debug("The file {} installed ({})", dstPath, copiedBytesCount);
     } catch (final Exception e) {
       LogUtil.exception(Level.WARN, e, "Failed to copy file from {} to {}", srcFilePath, dstPath);

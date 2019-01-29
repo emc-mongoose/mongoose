@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.netty.http.swift;
 
-import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.base.Constants.APP_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -19,7 +19,7 @@ import com.emc.mongoose.base.item.op.composite.data.CompositeDataOperationImpl;
 import com.emc.mongoose.base.item.op.data.DataOperation;
 import com.emc.mongoose.base.item.op.data.DataOperationImpl;
 import com.emc.mongoose.base.item.op.partial.data.PartialDataOperation;
-import com.emc.mongoose.storage.Credential;
+import com.emc.mongoose.base.storage.Credential;
 import com.github.akurilov.commons.collection.TreeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;

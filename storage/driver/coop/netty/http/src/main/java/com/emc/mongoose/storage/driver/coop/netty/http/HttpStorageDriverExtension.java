@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.base.Constants.APP_NAME;
 
 public final class HttpStorageDriverExtension
 extends ExtensionBase {
