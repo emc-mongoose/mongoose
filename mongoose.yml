@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongoose
+  namespace: mongoose
+spec:
+  selector:
+    matchLabels:
+      name: mongoose
+  template:
+    metadata:
+      labels:
+        name: mongoose
+    spec:
+      containers:
+      - image: emcmongoose/mongoose
+        name: mongoose
+        args:
+          - --storage-driver-type=dummy-mock
+          - --load-step-limit-time=1m
