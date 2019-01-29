@@ -1,7 +1,7 @@
 #!/bin/bash
 
 create_ns_if_needed(){
-	result=kubectl get namespaces -o name | grep 'namespace/mongoose'
+	result=`kubectl get namespaces -o name | grep 'namespace/mongoose'`
 	echo 'check'
 	if [[ -z result ]]
 	then
