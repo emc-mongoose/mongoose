@@ -10,8 +10,7 @@ create_ns_if_needed(){
 
 start() {
     create_ns_if_needed
-    echo "$1"
-#    kubectl apply -f mongoose-driver.yaml
+    kubectl apply -f mongoose.yaml
 #    kubectl apply -f mongoose-controller.yaml
 }
 
