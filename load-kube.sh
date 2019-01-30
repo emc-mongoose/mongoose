@@ -44,13 +44,13 @@ if [[ -n "$1" ]]; then
         ;;
         *)
         echo "wrong input argument provided: '$1'"
-        echo "available args: --start, --stop, --logs"
+        echo "available args: --start, --stop, --log"
         ret=5
         ;;
     esac
 else
     echo "no input argument provided"
-    echo "available args: --start, --stop, --logs"
+    echo "available args: --start, --stop, --log"
     ret=7
 fi
 
