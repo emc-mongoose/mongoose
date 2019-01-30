@@ -103,7 +103,7 @@ jar {
 		)
 	}
 
-	/*from configurations.provided.collect {
+	from configurations.provided.collect {
 		it.isDirectory() ? it : zipTree(it)
-	}*/
+	}
 }

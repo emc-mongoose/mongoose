@@ -350,9 +350,10 @@ subprojects {
 			"module-info.class",
 			"org/apache/commons/lang/enum/**",
 		]
+	}
 
+	task moduleJar(dependsOn: jar) {
 		doLast {
-
 			execute(
 				[
 					"${javaHome}${File.separator}bin${File.separator}jdeps",
