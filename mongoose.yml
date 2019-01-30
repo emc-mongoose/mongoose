@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: Job
 metadata:
   name: mongoose
   namespace: mongoose
@@ -18,3 +18,4 @@ spec:
         args:
           - --storage-driver-type=dummy-mock
           - --load-step-limit-time=1m
+      restartPolicy: OnFailure
