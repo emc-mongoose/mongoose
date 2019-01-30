@@ -15,7 +15,7 @@ start() {
 }
 
 stop() {
-   kubectl delete -f mongoose-controller.yaml
+   kubectl delete -f mongoose.yml
    #kubectl delete -f mongoose-driver.yaml
    kubectl delete namespace mongoose
 }
