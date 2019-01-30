@@ -73,9 +73,8 @@ extends HttpStorageDriverBase<I, O> {
 	private static final Function<String, Mac> GET_MAC_BY_SECRET =
 		secret -> {
 			try {
-				final SecretKeySpec secretKey =
-					new SecretKeySpec(BASE64_DECODER.decode(secret.getBytes(UTF_8)), SIGN_METHOD);
-				final Mac mac = Mac.getInstance(SIGN_METHOD);
+				final var secretKey = new SecretKeySpec(BASE64_DECODER.decode(secret.getBytes(UTF_8)), SIGN_METHOD);
+				final var mac = Mac.getInstance(SIGN_METHOD);
 				mac.init(secretKey);
 				return mac;
 			} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
@@ -93,7 +92,7 @@ extends HttpStorageDriverBase<I, O> {
 		final int batchSize
 	) throws OmgShootMyFootException, InterruptedException {
 		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
-		final Config httpConfig = storageConfig.configVal("net-http");
+		final var httpConfig = storageConfig.configVal("net-http");
 		fsAccess = httpConfig.boolVal("fsAccess");
 		if(namespace != null && !namespace.isEmpty()) {
 			sharedHeaders.set(KEY_X_EMC_NAMESPACE, namespace);
@@ -110,7 +109,7 @@ extends HttpStorageDriverBase<I, O> {
 	protected final String requestNewAuthToken(final Credential credential)
 	throws InterruptRunException {
 
-		final String nodeAddr = storageNodeAddrs[0];
+		final var nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
@@ -277,8 +276,8 @@ extends HttpStorageDriverBase<I, O> {
 		}
 
 		if(secret != null && !secret.isEmpty()) {
-			final Mac mac = MAC_BY_SECRET.get().computeIfAbsent(secret, GET_MAC_BY_SECRET);
-			final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
+			final var mac = MAC_BY_SECRET.get().computeIfAbsent(secret, GET_MAC_BY_SECRET);
+			final var canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
 			final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
 			httpHeaders.set(KEY_X_EMC_SIGNATURE, BASE64_ENCODER.encodeToString(sigData));
 		}
@@ -287,13 +286,13 @@ extends HttpStorageDriverBase<I, O> {
 	protected String getCanonical(
 		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath
 	) {
-		final StringBuilder buffCanonical = BUFF_CANONICAL.get();
+		final var buffCanonical = BUFF_CANONICAL.get();
 		buffCanonical.setLength(0); // reset/clear
 		buffCanonical.append(httpMethod.name());
 
-		for(final AsciiString headerName : HEADERS_CANONICAL) {
+		for(final var headerName : HEADERS_CANONICAL) {
 			if(httpHeaders.contains(headerName)) {
-				for(final String headerValue : httpHeaders.getAll(headerName)) {
+				for(final var headerValue : httpHeaders.getAll(headerName)) {
 					buffCanonical.append('\n').append(headerValue);
 				}
 			} else if(sharedHeaders != null && sharedHeaders.contains(headerName)) {
@@ -309,20 +308,20 @@ extends HttpStorageDriverBase<I, O> {
 		String headerName;
 		Map<String, String> sortedHeaders = new TreeMap<>();
 		if(sharedHeaders != null) {
-			for(final Map.Entry<String, String> header : sharedHeaders) {
+			for(final var header : sharedHeaders) {
 				headerName = header.getKey().toLowerCase();
 				if(headerName.startsWith(PREFIX_KEY_X_EMC) && !headerName.equals(KEY_X_EMC_SIGNATURE)) {
 					sortedHeaders.put(headerName, header.getValue());
 				}
 			}
 		}
-		for(final Map.Entry<String, String> header : httpHeaders) {
+		for(final var header : httpHeaders) {
 			headerName = header.getKey().toLowerCase();
 			if(headerName.startsWith(PREFIX_KEY_X_EMC) && !headerName.equals(KEY_X_EMC_SIGNATURE)) {
 				sortedHeaders.put(headerName, header.getValue());
 			}
 		}
-		for(final Map.Entry<String, String> sortedHeader : sortedHeaders.entrySet()) {
+		for(final var sortedHeader : sortedHeaders.entrySet()) {
 			buffCanonical
 				.append('\n')
 				.append(sortedHeader.getKey())

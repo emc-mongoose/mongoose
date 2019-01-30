@@ -1,22 +1,27 @@
 FROM adoptopenjdk/openjdk11:alpine AS jlink
 
-ADD build/libs/mongoose-*.jar /tmp/mongoose.jar
+ADD base base
+ADD gradle gradle
+ADD load load
+ADD storage storage
+ADD build.gradle build.gradle
+ADD gradlew gradlew
+ADD settings.gradle settings.gradle
 
-RUN jlink \
-    --module-path ${JAVA_HOME}/jmods:/tmp/mongoose.jar \
-    --add-modules com.emc.mongoose \
-    --bind-services \
-    --output /opt/mongoose/jre \
-    --compress=2 \
-    --no-header-files \
-    --no-man-pages \
-    --strip-debug
+RUN ./gradlew clean jre
 
 FROM alpine:3.8
 
-COPY --from=jlink /opt/mongoose/jre /opt/mongoose/jre
+COPY --from=jlink build/jre /opt/mongoose
 
-RUN apk --update add --no-cache ca-certificates curl openssl binutils xz \
+ADD build/libs/mongoose-*.jar /opt/mongoose/mongoose.jar
+ADD docker/entrypoint.sh /opt/mongoose/entrypoint.sh
+
+RUN mkdir ${HOME}/.mongoose; \
+    chmod -R ugo+rwx ${HOME}/.mongoose; \
+    chmod -R +x /opt/mongoose/bin; \
+    chmod +x /opt/mongoose/entrypoint.sh; \
+    apk --update add --no-cache ca-certificates curl openssl binutils xz \
     && GLIBC_VER="2.28-r0" \
     && ALPINE_GLIBC_REPO="https://github.com/sgerrand/alpine-pkg-glibc/releases/download" \
     && GCC_LIBS_URL="https://archive.archlinux.org/packages/g/gcc-libs/gcc-libs-8.2.1%2B20180831-1-x86_64.pkg.tar.xz" \
@@ -39,18 +44,5 @@ RUN apk --update add --no-cache ca-certificates curl openssl binutils xz \
     && mv /tmp/libz/usr/lib/libz.so* /usr/glibc-compat/lib \
     && apk del binutils \
     && rm -rf /tmp/${GLIBC_VER}.apk /tmp/gcc /tmp/gcc-libs.tar.xz /tmp/libz /tmp/libz.tar.xz /var/cache/apk/*
-
-ADD docker/entrypoint.sh /opt/mongoose/entrypoint.sh
-ADD docker/entrypoint_debug.sh /opt/mongoose/entrypoint_debug.sh
-ADD docker/entrypoint_limit_heap_1GB.sh /opt/mongoose/entrypoint_limit_heap_1GB.sh
-
-RUN mkdir ${HOME}/.mongoose; \
-    chmod -R ugo+rwx ${HOME}/.mongoose; \
-    chmod -R +x /opt/mongoose/jre/bin; \
-    chmod +x /opt/mongoose/entrypoint.sh; \
-    chmod +x /opt/mongoose/entrypoint_debug.sh; \
-    chmod +x /opt/mongoose/entrypoint_limit_heap_1GB.sh; \
-    rm -rf /opt/java; \
-    rm -f /tmp/mongoose.jar
 
 ENTRYPOINT ["/opt/mongoose/entrypoint.sh"]

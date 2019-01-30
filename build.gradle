@@ -422,9 +422,9 @@ task jre(dependsOn: dedupModulesDeps) {
 		execute(
 			[
 				"${javaHome}${File.separator}bin${File.separator}jlink",
-				"--no-header-files --no-man-pages --strip-debug --bind-services",
-				"--module-path ${javaHome}${File.separator}jmods:${jar.outputs.files.iterator().next()}",
-				"--add-modules ${modulesToAdd} --output ${jreOutputDir}",
+				"--no-header-files --no-man-pages --strip-debug --compress=2 --bind-services",
+				"--module-path ${javaHome}${File.separator}jmods --add-modules ${modulesToAdd}",
+				"--output ${jreOutputDir}",
 			].join(' ')
 		)
 	}

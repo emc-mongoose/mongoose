@@ -7,6 +7,12 @@ dependencies {
 		project(":storage:driver:coop"),
 		project(":storage:driver:coop:netty"),
 		project(":storage:driver:coop:netty:http"),
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
+		"com.github.akurilov:confuse:${depVersion.confuse}",
+		"com.github.akurilov:confuse-io-json:${depVersion.confuseIoJson}",
+		"io.netty:netty-codec-http:${depVersion.netty}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 	)
 
 	testCompile(
