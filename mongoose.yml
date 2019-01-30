@@ -18,3 +18,4 @@ spec:
         args:
           - --storage-driver-type=dummy-mock
           - --load-step-limit-time=1m
+      restartPolicy: Never
