@@ -4,7 +4,7 @@ metadata:
   name: mongoose
   namespace: mongoose
 spec:
-  parallelism: 2
+#  parallelism: 2
   template:
     metadata:
       labels:
