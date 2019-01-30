@@ -8,8 +8,7 @@ ext {
 	log4j2PluginsDatPath = Paths.get(
 		"META-INF", "org", "apache", "logging", "log4j", "core", "config", "plugins", "Log4j2Plugins.dat",
 	)
-	moduleName = "${rootPkg}.base"
-	mainClass = "${moduleName}.Main"
+	mainClass = "${rootPkg}.base.Main"
 }
 
 dependencies {
@@ -40,7 +39,7 @@ dependencies {
 		"org.slf4j:slf4j-api:${depVersion.slf4j}",
 	)
 
-	testImplementation(
+	testCompile(
 		"com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${depVersion.jackson}",
 		"junit:junit:${depVersion.junit}",
 		"org.scala-lang:scala-compiler:${depVersion.scala}",
@@ -94,15 +93,13 @@ task mergeLog4j2PluginsDat(dependsOn: compileJava) {
 }
 
 jar {
-
-	//dependsOn += mergeLog4j2PluginsDat
-
+	dependsOn += mergeLog4j2PluginsDat
 	manifest {
 		attributes(
 			"Main-Class": mainClass,
+			"Implementation-Title": project.description,
 		)
 	}
-
 	from configurations.provided.collect {
 		it.isDirectory() ? it : zipTree(it)
 	}

@@ -1,6 +1,6 @@
 package com.emc.mongoose.base.item
 
-import com.emc.mongoose.item.op.data.{DataOperation, DataOperationsBuilderImpl}
+import com.emc.mongoose.base.item.op.data.{DataOperation, DataOperationsBuilderImpl}
 import com.github.akurilov.commons.io.Input
 import com.github.akurilov.commons.system.SizeInBytes
 import org.junit._
@@ -13,8 +13,8 @@ import com.emc.mongoose.base.item.io.{DelayedTransferConvertBuffer, NewDataItemI
 import com.emc.mongoose.base.item.op.{OpType, OperationsBuilder}
 import com.emc.mongoose.base.item.op.data.{DataOperation, DataOperationsBuilderImpl}
 import com.emc.mongoose.base.supply.ConstantStringSupplier
-import com.emc.mongoose.item.io.{DelayedTransferConvertBuffer, NewDataItemInput}
-import com.emc.mongoose.item.op.{OpType, OperationsBuilder}
+import com.emc.mongoose.base.item.io.{DelayedTransferConvertBuffer, NewDataItemInput}
+import com.emc.mongoose.base.item.op.{OpType, OperationsBuilder}
 import org.junit.Assert.fail
 
 final class DelayedTransferBufferPerfTest {

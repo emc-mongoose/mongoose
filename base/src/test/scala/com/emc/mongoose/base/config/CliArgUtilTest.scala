@@ -1,10 +1,9 @@
-package com.emc.mongoose.cli
+package com.emc.mongoose.base.config
+
+import java.lang.Boolean.TRUE
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.lang.Boolean.TRUE
-
-import com.emc.mongoose.base.config.CliArgUtil
 
 final class CliArgUtilTest {
 

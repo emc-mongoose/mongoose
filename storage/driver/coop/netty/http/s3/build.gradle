@@ -1,7 +1,5 @@
 description = "mongoose-storage-driver-coop-netty-http-s3"
 
-ext.moduleName = "${rootPkg}.storage.driver.coop.netty.http.s3"
-
 dependencies {
 
 	compileOnly(
@@ -9,13 +7,6 @@ dependencies {
 		project(":storage:driver:coop"),
 		project(":storage:driver:coop:netty"),
 		project(":storage:driver:coop:netty:http"),
-		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
-		"com.github.akurilov:confuse:${depVersion.confuse}",
-		"com.github.akurilov:confuse-io-json:${depVersion.confuseIoJson}",
-		"io.netty:netty-buffer:${depVersion.netty}",
-		"io.netty:netty-codec-http:${depVersion.netty}",
-		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
-		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 	)
 
 	testCompile(
@@ -33,13 +24,8 @@ dependencies {
 }
 
 jar {
-
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
 	manifest {
 		attributes(
-			"Automatic-Module-Name": moduleName,
-			"Implementation-Version": version,
 			"Implementation-Title": project.description,
 		)
 	}
