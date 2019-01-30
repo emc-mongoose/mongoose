@@ -1,8 +1,10 @@
 #!/bin/bash
 
+NAMESPACE_NAME='namespace/mongoose'
+
 create_ns_if_needed(){
-	result=`kubectl get namespaces -o name | grep 'namespace/mongoose'`
-	if ! [[ $result == *"namespace/mongoose"* ]]
+	result=`kubectl get namespaces -o name | grep $NAMESPACE_NAME`
+	if ! [[ $result == *$NAMESPACE_NAME* ]]
 	then
 		kubectl create namespace mongoose
 	fi
@@ -10,7 +12,7 @@ create_ns_if_needed(){
 
 start() {
     create_ns_if_needed
-    kubectl create -f mongoose.yml
+    kubectl create -f mongoose.yml --replicas=3
 #    kubectl apply -f mongoose-controller.yaml
 }
 
@@ -42,11 +44,13 @@ if [[ -n "$1" ]]; then
         ;;
         *)
         echo "wrong input argument provided: '$1'"
+        echo "available args: --start, --stop, --logs"
         ret=5
         ;;
     esac
 else
     echo "no input argument provided"
+    echo "available args: --start, --stop, --logs"
     ret=7
 fi
 
