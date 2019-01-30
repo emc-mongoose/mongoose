@@ -12,7 +12,7 @@ create_ns_if_needed(){
 
 start() {
     create_ns_if_needed
-    kubectl create -f mongoose.yml
+    kubectl apply -f mongoose.yml
 #    kubectl apply -f mongoose-controller.yaml
 }
 
