@@ -16,12 +16,12 @@ start() {
 
 stop() {
    kubectl delete -f mongoose-controller.yaml
-   kubectl delete -f mongoose-driver.yaml
+   #kubectl delete -f mongoose-driver.yaml
    kubectl delete namespace mongoose
 }
 
 log() {
-  pod_name=`kubectl get pods -n mongoose | grep controller | awk '{print $1}'`
+  pod_name=`kubectl get pods -n mongoose | grep mongoose | awk '{print $1}'`
   kubectl logs -f -n mongoose $pod_name
 }
 
