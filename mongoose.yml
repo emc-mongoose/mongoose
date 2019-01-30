@@ -1,9 +1,10 @@
 apiVersion: v1
-kind: Pod
+kind: ReplicationController
 metadata:
   name: mongoose
   namespace: mongoose
 spec:
+  replicas: 3
   template:
     metadata:
       labels:
