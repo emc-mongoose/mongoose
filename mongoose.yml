@@ -4,9 +4,6 @@ metadata:
   name: mongoose
   namespace: mongoose
 spec:
-  selector:
-    matchLabels:
-      name: mongoose
   template:
     metadata:
       labels:
