@@ -5,10 +5,6 @@ metadata:
   namespace: mongoose
 spec:
 #  parallelism: 2
-  template:
-    metadata:
-      labels:
-        name: mongoose
     spec:
       containers:
       - image: emcmongoose/mongoose
