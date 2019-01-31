@@ -5,13 +5,12 @@ metadata:
   namespace: mongoose
 spec:
 #  parallelism: 2
-    spec:
-      containers:
-      - image: emcmongoose/mongoose
-        name: mongoose
-        args:
-          - --storage-driver-type=dummy-mock
-          - --load-step-limit-time=1m
-      restartPolicy: OnFailure
-      nodeSelector:
-        hostname : data-domain-dev-vm
+  containers:
+  - image: emcmongoose/mongoose
+    name: mongoose
+    args:
+    - --storage-driver-type=dummy-mock
+    - --load-step-limit-time=1m
+  restartPolicy: OnFailure
+  nodeSelector:
+    hostname: data-domain-dev-vm
