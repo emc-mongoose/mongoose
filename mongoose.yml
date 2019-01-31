@@ -17,3 +17,5 @@ spec:
           - --storage-driver-type=dummy-mock
           - --load-step-limit-time=1m
       restartPolicy: OnFailure
+      nodeSelector:
+        hostname : data-domain-dev-vm
