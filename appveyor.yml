@@ -8,7 +8,7 @@ environment:
 
 build: off
 build_script:
-  - cmd: echo %JAVA_HOME%
+  - cmd: dir C:\Progra~1\Java\
   - cmd: cd %HOME_DIR%
   - cmd: gradlew.bat clean jar
 
