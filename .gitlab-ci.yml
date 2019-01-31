@@ -25,6 +25,7 @@ before_script:
   - mkdir /opt
   - tar xvf /tmp/jdk11.tgz -C /opt
   - export PATH=${PATH}:${JAVA_HOME}/bin
+  - chmod ugo+x ${JAVA_HOME}/bin/*
 
 build:
   stage: build

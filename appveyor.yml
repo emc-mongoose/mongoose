@@ -22,6 +22,7 @@ before_test:
   - cmd: type nul > %PATH_TO_ARTIFACTS%\report.html
   - cmd: type nul > %PATH_TO_ARTIFACTS%\output.xml
   - cmd: type nul > %PATH_TO_ARTIFACTS%\log.html
+  - cmd: echo %JAVA_HOME%
 
 test_script:
   - cmd: robot --outputdir %PATH_TO_ARTIFACTS% --suite api.storage --include "fs win" src\test\robot
