@@ -25,9 +25,8 @@ before_script:
   - mkdir /opt
   - tar xvf /tmp/jdk11.tgz -C /opt
   - export PATH=${PATH}:${JAVA_HOME}/bin
-  - ls -l ${JAVA_HOME}
-  - ls -l ${JAVA_HOME}/bin
-  - java -version
+  - cat ${JAVA_HOME}/bin/java
+  - ${JAVA_HOME}/bin/java -version
 
 build:
   stage: build
