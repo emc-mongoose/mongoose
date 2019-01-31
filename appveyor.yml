@@ -2,13 +2,13 @@ image:
   - Visual Studio 2017
 
 environment:
+  JAVA_HOME: C:\Progra~1\Java\jdk11
   HOME_DIR: C:\projects\mongoose
   PATH_TO_JAR: build\libs\mongoose-*.jar
   PATH_TO_ARTIFACTS: C:\projects\mongoose\build\robotest
 
 build: off
 build_script:
-  - cmd: dir C:\Progra~1\Java\
   - cmd: cd %HOME_DIR%
   - cmd: gradlew.bat clean jar
 

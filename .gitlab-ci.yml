@@ -20,12 +20,34 @@ stages:
   - deploy
 
 before_script:
-  - apk add curl
+  - apk --update add --no-cache ca-certificates curl openssl binutils xz \
   - curl -Lks https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.2%2B9/OpenJDK11U-jdk_x64_linux_hotspot_11.0.2_9.tar.gz -o /tmp/jdk11.tgz
   - mkdir /opt
   - tar xvf /tmp/jdk11.tgz -C /opt
+  - rm -rf /tmp/jdk11.tgz
   - export PATH=${PATH}:${JAVA_HOME}/bin
-  - ldd ${JAVA_HOME}/bin/java
+  - export GLIBC_VER="2.28-r0"
+  - export ALPINE_GLIBC_REPO="https://github.com/sQgerrand/alpine-pkg-glibc/releases/download"
+  - export GCC_LIBS_URL="https://archive.archlinux.org/packages/g/gcc-libs/gcc-libs-8.2.1%2B20180831-1-x86_64.pkg.tar.xz"
+  - export GCC_LIBS_SHA256=e4b39fb1f5957c5aab5c2ce0c46e03d30426f3b94b9992b009d417ff2d56af4d
+  - export ZLIB_URL="https://archive.archlinux.org/packages/z/zlib/zlib-1%3A1.2.9-1-x86_64.pkg.tar.xz"
+  - export ZLIB_SHA256=bb0959c08c1735de27abf01440a6f8a17c5c51e61c3b4c707e988c906d3b7f67
+  - curl -Lks https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub -o /etc/apk/keys/sgerrand.rsa.pub
+  - curl -Lks ${ALPINE_GLIBC_REPO}/${GLIBC_VER}/glibc-${GLIBC_VER}.apk > /tmp/${GLIBC_VER}.apk
+  - apk add --allow-untrusted /tmp/${GLIBC_VER}.apk
+  - curl -Lks ${GCC_LIBS_URL} -o /tmp/gcc-libs.tar.xz
+  - echo "${GCC_LIBS_SHA256}  /tmp/gcc-libs.tar.xz" | sha256sum -c -
+  - mkdir /tmp/gcc
+  - tar -xf /tmp/gcc-libs.tar.xz -C /tmp/gcc
+  - mv /tmp/gcc/usr/lib/libgcc* /tmp/gcc/usr/lib/libstdc++* /usr/glibc-compat/lib
+  - strip /usr/glibc-compat/lib/libgcc_s.so.* /usr/glibc-compat/lib/libstdc++.so*
+  - curl -Lks ${ZLIB_URL} -o /tmp/libz.tar.xz
+  - echo "${ZLIB_SHA256}  /tmp/libz.tar.xz" | sha256sum -c -
+  - mkdir /tmp/libz
+  - tar -xf /tmp/libz.tar.xz -C /tmp/libz
+  - mv /tmp/libz/usr/lib/libz.so* /usr/glibc-compat/lib
+  - apk del binutils
+  - rm -rf /tmp/${GLIBC_VER}.apk /tmp/gcc /tmp/gcc-libs.tar.xz /tmp/libz /tmp/libz.tar.xz /var/cache/apk/*
 
 build:
   stage: build
