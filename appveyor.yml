@@ -9,7 +9,7 @@ environment:
 build: off
 build_script:
   - cmd: cd %HOME_DIR%
-  - cmd: gradlew.bat clean dist
+  - cmd: gradlew.bat clean jar
 
 before_test:
   - ps: pip install -U virtualenv
