@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+ssh root@node1
+
 # install wget or curl
 yum install curl
 # install unzip
