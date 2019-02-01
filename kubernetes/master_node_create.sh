@@ -10,6 +10,7 @@ yum update
 yes | kubeadm reset
 kubeadm init --pod-network-cidr=10.244.0.0/16 --ignore-preflight-errors Swap | tee ./init_output
 cat ./init_output |  grep 'kubeadm join ' > join_command.sh
+chmod +x join_command.sh
 
 mkdir -p $HOME/.kube
 chown $(id -u):$(id -g) /etc/kubernetes/admin.conf
