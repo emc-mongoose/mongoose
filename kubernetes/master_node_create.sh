@@ -7,6 +7,7 @@ echo Environment="KUBELET_EXTRA_ARGS=--fail-swap-on=false" >> /etc/systemd/syste
 systemctl daemon-reload && systemctl restart kubelet
 yum update
 
+kubeadm reset
 kubeadm init --pod-network-cidr=10.244.0.0/16 --ignore-preflight-errors Swap
 
 mkdir -p $HOME/.kube
