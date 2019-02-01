@@ -6,7 +6,7 @@ wget https://gitlab.com/emcmongoose/mongoose/raw/SLTM-1226-kubernetes/kubernetes
 tar -xzf kubernetes.tar.gz 
 ```
 
-## Arhive contant
+## Arhive content
 
 The archive contains the following scripts:
 
