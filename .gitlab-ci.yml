@@ -77,7 +77,7 @@ build_docker_image:
     - docker save ${IMAGE_NAME}:${CI_COMMIT_SHA} > ${IMAGE_FILE_NAME}
   artifacts:
     paths:
-     - ${IMAGE_FILE_NAME}
+      - ${IMAGE_FILE_NAME}
 
 .test_robot:
   stage: test_functional
