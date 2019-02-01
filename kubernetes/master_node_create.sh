@@ -7,12 +7,12 @@ echo Environment="KUBELET_EXTRA_ARGS=--fail-swap-on=false" >> /etc/systemd/syste
 systemctl daemon-reload && systemctl restart kubelet
 yum update
 
-kubeadm reset
-kubeadm init --pod-network-cidr=10.244.0.0/16 --ignore-preflight-errors Swap
+yes | kubeadm reset
+kubeadm init --pod-network-cidr=10.244.0.0/16 --ignore-preflight-errors Swap | tee ./init_output
 
 mkdir -p $HOME/.kube
 chown $(id -u):$(id -g) /etc/kubernetes/admin.conf
-cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+yes | cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 #chown $(id -u):$(id -g) $HOME/.kube/config
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 
