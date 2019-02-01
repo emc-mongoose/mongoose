@@ -34,8 +34,6 @@ before_script:
   - export ZLIB_SHA256=bb0959c08c1735de27abf01440a6f8a17c5c51e61c3b4c707e988c906d3b7f67
   - curl -Lks https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub -o /etc/apk/keys/sgerrand.rsa.pub
   - curl -Lks ${ALPINE_GLIBC_REPO}/${GLIBC_VER}/glibc-${GLIBC_VER}.apk > /tmp/${GLIBC_VER}.apk
-  - cat /tmp/${GLIBC_VER}.apk
-  - ls -l /tmp
   - apk add --allow-untrusted /tmp/${GLIBC_VER}.apk
   - curl -Lks ${GCC_LIBS_URL} -o /tmp/gcc-libs.tar.xz
   - echo "${GCC_LIBS_SHA256}  /tmp/gcc-libs.tar.xz" | sha256sum -c -

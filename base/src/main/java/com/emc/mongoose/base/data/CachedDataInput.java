@@ -65,7 +65,6 @@ public class CachedDataInput extends DataInputBase {
         for (final int i : layersCache.keySet()) {
           layer = layersCache.remove(i);
           if (layer != null) {
-            layer = null;
             layersCountToFree--;
             if (layersCountToFree == 0) {
               break;
