@@ -3,9 +3,7 @@
 yum install curl
 # install unzip
 yum install unzip
-# download archive with certificate authority (attached above)
-# extract and copy file
-unzip EMCSSLDecryptionCAv2.cer.zip
+# copy CA
 cp EMCSSLDecryptionCAv2.cer /etc/pki/ca-trust/source/anchors/EMCSSLDecryptionCAv2.pem
 # import certificate authority to the system
 update-ca-trust
