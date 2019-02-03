@@ -14,7 +14,7 @@ build_script:
   - cmd: gradlew.bat clean jar
 
 before_test:
-  - ps: $env.PATH += ";C:\Python37-x64\scripts"
+  - ps: $env:PATH += ";C:\Python37-x64\scripts"
   - ps: C:\Python37-x64\scripts\pip install -U virtualenv
   - ps: C:\Python37-x64\scripts\pip install -U requests
   - ps: C:\Python37-x64\scripts\pip install -U robotframework
