@@ -6,17 +6,16 @@ environment:
   HOME_DIR: C:\projects\mongoose
   PATH_TO_JAR: build\libs\mongoose-*.jar
   PATH_TO_ARTIFACTS: C:\projects\mongoose\build\robotest
-  matrix:
-    - PYTHON: "C:\\Python35-x64"
-      PYTHON_VERSION: 3.5
-      PYTHON_ARCH: 64
+  PYTHON: "C:\\Python35-x64"
+  PYTHON_VERSION: 3.5
+  PYTHON_ARCH: 64
 
 build: off
 build_script:
   - cmd: cd %HOME_DIR%
   - cmd: gradlew.bat clean jar
 
-before_test:
+test_script:
   - cmd: %PYTHON%\\python.exe -m pip install --upgrade pip
   - ps: pip install -U virtualenv
   - ps: pip install -U requests
@@ -28,8 +27,6 @@ before_test:
   - cmd: type nul > %PATH_TO_ARTIFACTS%\report.html
   - cmd: type nul > %PATH_TO_ARTIFACTS%\output.xml
   - cmd: type nul > %PATH_TO_ARTIFACTS%\log.html
-
-test_script:
   - cmd: robot --outputdir %PATH_TO_ARTIFACTS% --suite api.storage --include "fs win" src\test\robot
 
 artifacts:
