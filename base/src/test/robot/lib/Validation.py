@@ -9,7 +9,7 @@ def validate_item_output_file(
 			actual_item_output_path, actual_item_name = row[0].split('/', 1)
 			assert item_output_path == actual_item_output_path, \
 				"Item output path: '{}', expected: '{}".format(actual_item_output_path, item_output_path)
-			item_size = long(row[2])
+			item_size = int(row[2])
 			assert item_size >= item_size_min, "Item size: {}, expected >= {}".format(item_size, item_size_min)
 			assert item_size <= item_size_max, "Item size: {}, expected <= {}".format(item_size, item_size_max)
 

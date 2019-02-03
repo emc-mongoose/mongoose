@@ -70,7 +70,7 @@ public class ExposedMetricsTest {
   @Before
   public void setUp() throws Exception {
     //
-    final ServletContextHandler context = new ServletContextHandler();
+    final var context = new ServletContextHandler();
     context.setContextPath("/");
     server.setHandler(context);
     context.addServlet(new ServletHolder(new MetricsServlet()), CONTEXT);
@@ -115,17 +115,17 @@ public class ExposedMetricsTest {
   public void test() throws Exception {
     final MetricsManager metricsMgr = new MetricsManagerImpl(ServiceTaskExecutor.INSTANCE);
     metricsMgr.register(distributedMetricsContext);
-    for (int i = 0; i < ITERATION_COUNT; ++i) {
+    for (var i = 0; i < ITERATION_COUNT; ++i) {
       metricsContext.markSucc(ITEM_DATA_SIZE.get(), MARK_DUR, MARK_LAT);
       metricsContext.markFail();
       metricsContext.refreshLastSnapshot();
       TimeUnit.MICROSECONDS.sleep(MARK_DUR);
     }
-    final String result = resultFromServer("http://localhost:" + PORT + CONTEXT);
+    final var result = resultFromServer("http://localhost:" + PORT + CONTEXT);
     System.out.println(result);
     //
     final Map tmp = new HashMap();
-    final long elapsedTimeMillis = TimeUnit.MICROSECONDS.toSeconds(MARK_DUR * ITERATION_COUNT);
+    final var elapsedTimeMillis = TimeUnit.MICROSECONDS.toSeconds(MARK_DUR * ITERATION_COUNT);
     tmp.put("value", new Double(elapsedTimeMillis));
     testMetric(result, MetricsConstants.METRIC_NAME_TIME, tmp, RATE_ACCURACY);
     //
@@ -147,11 +147,11 @@ public class ExposedMetricsTest {
   }
 
   private void testLabel(final String result, final String labelName, final String expectedValue) {
-    final Pattern p = Pattern.compile("\\{.*" + labelName + "=[^,]*");
-    final Matcher m = p.matcher(result);
-    final boolean found = m.find();
+    final var p = Pattern.compile("\\{.*" + labelName + "=[^,]*");
+    final var m = p.matcher(result);
+    final var found = m.find();
     Assert.assertTrue(found);
-    final String actualValue = m.group().split(labelName + "=")[1].replaceAll("\"", "");
+    final var actualValue = m.group().split(labelName + "=")[1].replaceAll("\"", "");
     Assert.assertEquals("label : " + labelName, expectedValue, actualValue);
   }
 
@@ -161,7 +161,7 @@ public class ExposedMetricsTest {
     // only after the condition, and concurrency - every time
     final double count = ITERATION_COUNT;
     final double accuracy = TIMING_ACCURACY;
-    final double markValueInSec = markValue / Constants.M;
+    final var markValueInSec = markValue / Constants.M;
     final double[] values = {
       count,
       markValueInSec * count,
@@ -172,7 +172,7 @@ public class ExposedMetricsTest {
       markValueInSec,
       markValueInSec
     };
-    for (int i = 0; i < TIMING_METRICS.length; ++i) {
+    for (var i = 0; i < TIMING_METRICS.length; ++i) {
       expectedValues.put(TIMING_METRICS[i], values[i]);
     }
     testMetric(stdOut, name, expectedValues, accuracy);
@@ -181,13 +181,13 @@ public class ExposedMetricsTest {
   private void testRateMetric(final String stdOut, final double markValue, final String name) {
     final Map<String, Double> expectedValues = new HashMap<>();
     double count = ITERATION_COUNT;
-    String[] rateMetrics = OPS_METRICS;
+	  var rateMetrics = OPS_METRICS;
     if (name.equals(MetricsConstants.METRIC_NAME_BYTE)) {
       count *= markValue;
       rateMetrics = BYTES_METRICS;
     }
     final Double[] values = {count, markValue, markValue};
-    for (int i = 0; i < rateMetrics.length; ++i) {
+    for (var i = 0; i < rateMetrics.length; ++i) {
       expectedValues.put(rateMetrics[i], values[i]);
     }
     testMetric(stdOut, name, expectedValues, RATE_ACCURACY);
@@ -200,17 +200,17 @@ public class ExposedMetricsTest {
     final double[] values = {
       1, 1,
     };
-    for (int i = 0; i < CONCURRENCY_METRICS.length; ++i) {
+    for (var i = 0; i < CONCURRENCY_METRICS.length; ++i) {
       expectedValues.put(CONCURRENCY_METRICS[i], values[i]);
     }
     testMetric(stdOut, name, expectedValues, accuracy);
   }
 
   private String resultFromServer(final String urlPath) throws Exception {
-    final StringBuilder stringBuilder = new StringBuilder();
-    final URL url = new URL(urlPath);
-    final URLConnection conn = url.openConnection();
-    try (final BufferedReader br =
+    final var stringBuilder = new StringBuilder();
+    final var url = new URL(urlPath);
+    final var conn = url.openConnection();
+    try (final var br =
         new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
       br.lines().forEach(l -> stringBuilder.append(l).append("\n"));
     }
@@ -222,14 +222,13 @@ public class ExposedMetricsTest {
       final String metricName,
       final Map<String, Double> expectedValues,
       final double accuracy) {
-    for (final String key : expectedValues.keySet()) {
-      final Pattern p =
-          Pattern.compile(String.format(METRIC_FORMAT, metricName, key) + "\\{.+\\} .+");
-      final Matcher m = p.matcher(resultOutput);
-      final boolean found = m.find();
+    for (final var key : expectedValues.keySet()) {
+      final var p = Pattern.compile(String.format(METRIC_FORMAT, metricName, key) + "\\{.+\\} .+");
+      final var m = p.matcher(resultOutput);
+      final var found = m.find();
       Assert.assertTrue(found);
-      final Double actualValue = Double.valueOf(m.group().split("}")[1]);
-      final Double expectedValue = Double.valueOf(expectedValues.get(key));
+      final var actualValue = Double.valueOf(m.group().split("}")[1]);
+      final var expectedValue = Double.valueOf(expectedValues.get(key));
       Assert.assertEquals(
           "metric : " + metricName + "_" + key,
           expectedValue,

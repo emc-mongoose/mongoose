@@ -6,6 +6,7 @@ environment:
   HOME_DIR: C:\projects\mongoose
   PATH_TO_JAR: build\libs\mongoose-*.jar
   PATH_TO_ARTIFACTS: C:\projects\mongoose\build\robotest
+  PIP3: C:\\Python34\Scripts\pip
 
 build: off
 build_script:
@@ -13,12 +14,12 @@ build_script:
   - cmd: gradlew.bat clean jar
 
 before_test:
-  - ps: pip install -U virtualenv
-  - ps: pip install -U requests
-  - ps: pip install -U robotframework
-  - ps: pip install -U robotframework-requests
-  - ps: pip install -U robotframework-csvlibrary
-  - cmd: set PYTHONPATH=%HOME_DIR%\src\test\robot\lib;C:\python27\lib\site-packages
+  - ps: %PIP3% install -U virtualenv
+  - ps: %PIP3% install -U requests
+  - ps: %PIP3% install -U robotframework
+  - ps: %PIP3% install -U robotframework-requests
+  - ps: %PIP3% install -U robotframework-csvlibrary
+  - cmd: set PYTHONPATH=%HOME_DIR%\src\test\robot\lib;C:\Python37-x64\lib\site-packages
   - cmd: mkdir %PATH_TO_ARTIFACTS%
   - cmd: type nul > %PATH_TO_ARTIFACTS%\report.html
   - cmd: type nul > %PATH_TO_ARTIFACTS%\output.xml

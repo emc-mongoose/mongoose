@@ -68,7 +68,7 @@ test_integration:
     - ./gradlew integrationTest
   artifacts:
     paths:
-      - base/build/reports/tests/integrationTest/index.html
+      - base/build/reports/tests/integrationTest/*
     when: on_failure
 
 build_docker_image:
