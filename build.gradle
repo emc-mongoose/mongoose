@@ -252,7 +252,7 @@ allprojects {
 }
 
 String defineVersion() {
-	def configFilePath = [ rootDir, "base", "src", "main", "resources", "config", "defaults.json", ]
+	def configFilePath = [ rootProject.rootDir, "base", "src", "main", "resources", "config", "defaults.json", ]
 		.join(File.separator);
 	def inputFile = new File(configFilePath)
 	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)

@@ -1,6 +1,12 @@
 FROM adoptopenjdk/openjdk11:alpine AS build
 
-ADD base.gradle,load,storage,build.gradle,gradlew,settings.gradle .
+ADD base ./base/
+ADD gradle ./gradle/
+ADD load ./load/
+ADD storage ./storage/
+ADD build.gradle ./build.gradle
+ADD gradlew ./gradlew
+ADD settings.gradle ./settings.gradle
 
 RUN ./gradlew clean jre
 
@@ -8,7 +14,7 @@ FROM alpine:3.8
 
 RUN apk --update add --no-cache ca-certificates curl openssl binutils xz \
     && GLIBC_VER="2.28-r0" \
-    && ALPINE_GLIBC_REPO="https://github.com/sQgerrand/alpine-pkg-glibc/releases/download" \
+    && ALPINE_GLIBC_REPO="https://github.com/sgerrand/alpine-pkg-glibc/releases/download" \
     && GCC_LIBS_URL="https://archive.archlinux.org/packages/g/gcc-libs/gcc-libs-8.2.1%2B20180831-1-x86_64.pkg.tar.xz" \
     && GCC_LIBS_SHA256=e4b39fb1f5957c5aab5c2ce0c46e03d30426f3b94b9992b009d417ff2d56af4d \
     && ZLIB_URL="https://archive.archlinux.org/packages/z/zlib/zlib-1%3A1.2.9-1-x86_64.pkg.tar.xz" \
