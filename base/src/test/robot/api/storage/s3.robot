@@ -48,7 +48,7 @@ Should Create Objects Using Multipart Upload
     ...  --load-batch-size=1
     ...  --load-step-limit-size=2GB
     ...  --load-step-id=${step_id}
-    ...  --storage-driver-limit-concurrency=10
+    ...  --storage-driver-limit-concurrency=20
     &{env_params} =  Create Dictionary
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
@@ -69,7 +69,7 @@ Should Read Single Random Byte Ranges
     ...  --load-op-limit-count=${object_count_limit}
     ...  --load-step-id=${step_id}
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
-    ...  --storage-driver-limit-concurrency=100
+    ...  --storage-driver-limit-concurrency=50
     &{env_params} =  Create Dictionary  ITEM_LIST_FILE=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv  RANDOM_BYTE_RANGE_COUNT=${random_byte_range_count}
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
@@ -87,7 +87,7 @@ Should Update Multiple Random Byte Ranges
     ...  --load-op-limit-count=${object_count_limit}
     ...  --load-step-id=${step_id}
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
-    ...  --storage-driver-limit-concurrency=1000
+    ...  --storage-driver-limit-concurrency=100
     &{env_params} =  Create Dictionary  ITEM_LIST_FILE=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv  RANDOM_BYTE_RANGE_COUNT=${random_byte_range_count}
     ${std_out} =  Execute Mongoose Scenario  ${DATA_DIR}  ${env_params}  ${MONGOOSE_SHARED_ARGS} ${args}
     Log  ${std_out}
