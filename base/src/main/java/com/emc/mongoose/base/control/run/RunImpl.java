@@ -1,5 +1,6 @@
 package com.emc.mongoose.base.control.run;
 
+import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
 import javax.script.ScriptEngine;
@@ -34,7 +35,9 @@ public final class RunImpl implements Run {
   public final void run() {
     Loggers.SCENARIO.log(Level.INFO, scenario);
     try {
-      scriptEngine.eval(scenario);
+		scriptEngine.eval(scenario);
+	} catch(final InterruptRunException e) {
+    	Loggers.MSG.info("Scenario run \"{}\" interrupted", timestamp);
     } catch (final ScriptException e) {
       LogUtil.trace(
           Loggers.ERR,
