@@ -3,6 +3,7 @@ image:
 
 environment:
   JAVA_HOME: C:\Progra~1\Java\jdk11
+  PATH: %PATH%;%JAVA_HOME%\bin;c:\python34\Scripts
   HOME_DIR: C:\projects\mongoose
   PATH_TO_JAR: build\libs\mongoose-*.jar
   PATH_TO_ARTIFACTS: C:\projects\mongoose\build\robotest
