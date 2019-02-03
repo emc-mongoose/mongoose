@@ -4,7 +4,7 @@ Library  OperatingSystem
 Library  RequestsLibrary
 
 *** Variables ***
-${LOG_DIR} =  build/log
+${LOG_DIR} =  base/build/log
 ${MONGOOSE_CONTAINER_DATA_DIR} =  /data
 ${MONGOOSE_CONTAINER_NAME} =  mongoose
 ${MONGOOSE_IMAGE_NAME} =  emcmongoose/mongoose

@@ -2,7 +2,7 @@
 Documentation  Commons Remoute API Keywords
 
 *** Variables ***
-${DATA_DIR} =  src/test/robot/api/remote/data
+${DATA_DIR} =  base/src/test/robot/api/remote/data
 ${HEADER_ETAG} =  ETag
 ${MONGOOSE_RUN_URI_PATH}=  /run
 

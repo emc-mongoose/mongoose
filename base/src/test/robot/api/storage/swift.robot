@@ -11,8 +11,8 @@ Test Setup  Start Swift Server
 Test Teardown  Remove Containers
 
 *** Variables ***
-${DATA_DIR} =  src/test/robot/api/storage/data
-${LOG_DIR} =  build/log
+${DATA_DIR} =  base/src/test/robot/api/storage/data
+${LOG_DIR} =  base/build/log
 ${SWIFT_IMAGE_NAME} =  serverascode/swift-onlyone
 ${SWIFT_IMAGE_VERSION} =  latest
 ${SWIFT_PORT} =  8080

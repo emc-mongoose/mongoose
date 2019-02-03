@@ -9,8 +9,8 @@ Test Setup  Start S3 Server
 Test Teardown  Remove Containers
 
 *** Variables ***
-${DATA_DIR} =  src/test/robot/api/storage/data
-${LOG_DIR} =  build/log
+${DATA_DIR} =  base/src/test/robot/api/storage/data
+${LOG_DIR} =  base/build/log
 ${S3_IMAGE_NAME} =  minio/minio
 ${S3_IMAGE_VERSION} =  latest
 ${S3_PORT} =  9000

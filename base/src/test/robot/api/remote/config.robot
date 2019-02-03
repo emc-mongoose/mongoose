@@ -5,7 +5,7 @@ Library  OperatingSystem
 Library  RequestsLibrary
 
 *** Variables ***
-${DATA_DIR} =  src/test/robot/api/remote/data
+${DATA_DIR} =  base/src/test/robot/api/remote/data
 ${MONGOOSE_CONFIG_URI_PATH}=  /config
 ${MONGOOSE_CONFIG_SCHEMA_URI_PATH}=  ${MONGOOSE_CONFIG_URI_PATH}/schema
 
