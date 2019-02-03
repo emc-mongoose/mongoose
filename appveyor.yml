@@ -18,11 +18,11 @@ build_script:
 before_test:
   - ps: $env:PATH += ";C:\Python37-x64\scripts"
   - ps: python -m pip install --upgrade pip
-  - ps: C:\Python37-x64\scripts\pip install -U virtualenv
-  - ps: C:\Python37-x64\scripts\pip install -U requests
-  - ps: C:\Python37-x64\scripts\pip install -U robotframework
-  - ps: C:\Python37-x64\scripts\pip install -U robotframework-requests
-  - ps: C:\Python37-x64\scripts\pip install -U robotframework-csvlibrary
+  - ps: pip install -U virtualenv
+  - ps: pip install -U requests
+  - ps: pip install -U robotframework
+  - ps: pip install -U robotframework-requests
+  - ps: pip install -U robotframework-csvlibrary
   - cmd: set PYTHONPATH=%HOME_DIR%\src\test\robot\lib;C:\Python37-x64\lib\site-packages
   - cmd: mkdir %PATH_TO_ARTIFACTS%
   - cmd: type nul > %PATH_TO_ARTIFACTS%\report.html
