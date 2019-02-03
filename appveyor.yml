@@ -6,6 +6,7 @@ environment:
   HOME_DIR: C:\projects\mongoose
   PATH_TO_JAR: build\libs\mongoose-*.jar
   PATH_TO_ARTIFACTS: C:\projects\mongoose\build\robotest
+  PATH: %PATH%;C:\Python37-x64\scripts
 
 build: off
 build_script:
