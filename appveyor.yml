@@ -6,7 +6,7 @@ environment:
   HOME_DIR: C:\projects\mongoose
   PATH_TO_JAR: build\libs\mongoose-*.jar
   PATH_TO_ARTIFACTS: C:\projects\mongoose\build\robotest
-  PATH: C:\\Python37-x64\scripts;%PATH%
+  PATH: C:\Python37-x64\scripts;%PATH%
 
 build: off
 build_script:
@@ -14,8 +14,7 @@ build_script:
   - cmd: gradlew.bat clean jar
 
 before_test:
-  - ps: |
-      [Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";C:\Python37-x64\scripts", "Machine")
+  - ps: $env.PATH += ";C:\Python37-x64\scripts"
   - ps: C:\Python37-x64\scripts\pip install -U virtualenv
   - ps: C:\Python37-x64\scripts\pip install -U requests
   - ps: C:\Python37-x64\scripts\pip install -U robotframework
