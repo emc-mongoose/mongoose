@@ -9,7 +9,7 @@ Test Teardown  Remove Files
 
 *** Variables ***
 
-${VERSION}     4.1.1
+${VERSION}     4.2.0
 ${HOME_DIR}   C:\\projects\\mongoose
 ${MONGOOSE_JAR_PATH}    ${HOME_DIR}\\build\\libs\\mongoose-${VERSION}.jar
 ${ITEM_OUTPUT_PATH}     ${HOME_DIR}\\build\\fs-results
