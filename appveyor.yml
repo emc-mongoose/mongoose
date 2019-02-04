@@ -5,7 +5,7 @@ environment:
   JAVA_HOME: C:\Progra~1\Java\jdk11
   HOME_DIR: C:\projects\mongoose
   PATH_TO_JAR: build\libs\mongoose-*.jar
-  PATH_TO_ARTIFACTS: C:\projects\mongoose\build\robotest
+  PATH_TO_ARTIFACTS: C:\projects\mongoose\base\build\robotest
   PYTHON: "C:\\Python37-x64"
   PYTHON_VERSION: 3.7
   PYTHON_ARCH: 64
