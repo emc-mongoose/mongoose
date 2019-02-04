@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: mongoose
-  namespace: mongoose
+#  namespace: mongoose
 spec:
 #  parallelism: 2
   containers:
