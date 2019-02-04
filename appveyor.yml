@@ -30,6 +30,7 @@ before_test:
 
 test_script:
   - cmd: robot --outputdir %PATH_TO_ARTIFACTS% --suite api.storage --include "fs win" base\src\test\robot
+  - cmd: type %PATH_TO_ARTIFACTS%\log.html
 
 artifacts:
-  - path: build\robotest\*.html
+  - path: %PATH_TO_ARTIFACTS%
