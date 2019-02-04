@@ -54,5 +54,9 @@ scp ./join_command.sh USER@SERVER:/path/to/kubernetes-directory/join_command.sh
 > ```
 > This means that the token has expired. You need to re-create it with a command `kubeadm token create` on MASTER node. Then add this new token to the file `./join_command.sh` after `--token` and restart the script on ADDITIONAL node.
 
+## Run Mongoose
+
+To run the mongoose on a cluster, you must run the script  `load-kube.sh` with argument `--start`.
+
 
 IN PROGRESS
