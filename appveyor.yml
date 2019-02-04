@@ -33,4 +33,4 @@ test_script:
   - cmd: type %PATH_TO_ARTIFACTS%\log.html
 
 artifacts:
-  - path: %PATH_TO_ARTIFACTS%
+  - path: "%PATH_TO_ARTIFACTS%"
