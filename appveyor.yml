@@ -29,7 +29,7 @@ before_test:
   - cmd: type nul > %PATH_TO_ARTIFACTS%\log.html
 
 test_script:
-  - cmd: robot --outputdir %PATH_TO_ARTIFACTS% --suite api.storage --include "fs win" src\test\robot
+  - cmd: robot --outputdir %PATH_TO_ARTIFACTS% --suite api.storage --include "fs win" base\src\test\robot
 
 artifacts:
   - path: build\robotest\
