@@ -16,7 +16,7 @@ build_script:
   - cmd: gradlew.bat clean jar
 
 before_test:
-  - cmd: set PYTHONPATH=%HOME_DIR%\base'src\test\robot\lib;C:\Python37-x64\lib\site-packages
+  - cmd: set PYTHONPATH=%HOME_DIR%\base\src\test\robot\lib;C:\Python37-x64\lib\site-packages
   - cmd: "%PYTHON%\\python.exe -m pip install --upgrade pip"
   - cmd: "%PYTHON%\\python.exe -m pip install -U virtualenv"
   - cmd: "%PYTHON%\\python.exe -m pip install -U requests"
