@@ -52,7 +52,7 @@ scp ./join_command.sh USER@SERVER:/path/to/kubernetes-directory/join_command.sh
 > [join] FYI: You can look at this config file with 'kubectl -n kube-system get cm kubeadm-config -oyaml'
 > unable to fetch the kubeadm-config ConfigMap: failed to get config map: Unauthorized
 > ```
-> This means that the token has expired. You need to re-create it with a command `kubeadm token create` on MASTER node. Then add this new token to the file `./join_command.sh` after `--token` and restart the script on ADDITIONAL nodet.
+> This means that the token has expired. You need to re-create it with a command `kubeadm token create` on MASTER node. Then add this new token to the file `./join_command.sh` after `--token` and restart the script on ADDITIONAL node.
 
 
 IN PROGRESS
