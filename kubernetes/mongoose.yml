@@ -13,4 +13,4 @@ spec:
     - --load-step-limit-time=1m
   restartPolicy: OnFailure
   nodeSelector:
-    kubernetes.io/hostname: node3
+    kubernetes.io/hostname: node2
