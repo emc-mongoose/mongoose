@@ -17,6 +17,7 @@ build_script:
 
 before_test:
   - cmd: "%PYTHON%\\python.exe -m pip install --upgrade pip"
+  - cmd: "%PYTHON%\\python.exe -m pip install -U Pygments"
   - cmd: "%PYTHON%\\python.exe -m pip install -U virtualenv"
   - cmd: "%PYTHON%\\python.exe -m pip install -U requests"
   - cmd: "%PYTHON%\\python.exe -m pip install -U robotframework"
