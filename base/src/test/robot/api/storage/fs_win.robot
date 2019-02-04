@@ -35,8 +35,9 @@ Get Log Directory
 	[Return]  ${std_out}\\.mongoose\\${VERSION}\\log
 
 Start Mongoose
+	${java_home} =  Get Environment Variable  JAVA_HOME
 	${cmd} =  Catenate  SEPARATOR=\t
-	...  java -jar ${MONGOOSE_JAR_PATH}
+	...  ${java_home}\\bin\\java -jar ${MONGOOSE_JAR_PATH}
 	...  --item-data-size=${ITEM_SIZE}
 	...  --storage-driver-type=fs
 	...  --item-output-path=${ITEM_OUTPUT_PATH}
