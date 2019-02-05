@@ -51,7 +51,7 @@
 &nbsp;&nbsp;3.6. Design<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.1. [Architecture](doc/design/architecture)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.2. [Distributed Mode](doc/design/distributed_mode)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.3. [Installer](src/main/java/com/emc/mongoose/env)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;3.7.3. [Installer](src/main/java/com/emc/mongoose/base/env)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.4. [Recycle Mode](doc/design/recycle_mode)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.5. [Data Reentrancy](doc/design/data_reentrancy)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;3.7.6. [Byte Range Operations](doc/design/byte_range_operations)<br/>
@@ -206,7 +206,7 @@ The *average* metrics output is being done periodically while a load step is run
 done once when a load step is finished. Also, it's possible to obtain the highest precision metrics (for each operation,
 so called *I/O trace* records).
 
-## 2.4. [Extension](src/main/java/com/emc/mongoose/env)
+## 2.4. [Extension](src/main/java/com/emc/mongoose/base/env)
 
 Mongoose is designed to be agnostic to the particular extensions implementations. This allows to support any storage,
 scenario language, different load step kinds.

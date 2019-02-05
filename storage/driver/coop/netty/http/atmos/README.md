@@ -34,7 +34,7 @@
 ## 2. Usage
 
 ```bash
-java -jar mongoose-<VERSION>.jar \
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose \
     --storage-driver-type=atmos \
     ...
 ```

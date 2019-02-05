@@ -30,7 +30,7 @@ Mongoose will try to distribute the active connections equally among the endpoin
 ## 3. SSL/TLS
 
 ```bash
-java -jar mongoose-<VERSION>.jar \
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose \
     --storage-net-ssl \
     --storage-net-node-port=9021 \
     ...
@@ -39,7 +39,7 @@ java -jar mongoose-<VERSION>.jar \
 ## 4. Connection Timeout
 
 ```bash
-java -jar mongoose-<VERSION>.jar \
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose \
     --storage-net-timeoutMillisec=100000 \
     ...
 ```
@@ -54,14 +54,14 @@ improves the I/O performance significantly. But users may set the buffer sizes m
 
 Example: setting the *input* buffer to 100KB:
 ```bash
-java -jar mongoose-<VERSION>.jar \
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose \
     --storage-net-rcvBuf=100KB \
     ...
 ```
 
 Example: setting the *output* buffer to 10MB:
 ```bash
-java -jar mongoose-<VERSION>.jar \
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose \
     --storage-net-sndBuf=10MB \
     ...
 ```

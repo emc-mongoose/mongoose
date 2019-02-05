@@ -18,13 +18,15 @@ Please, note that all contributors shall follow the Contributor Agreement guidel
 3.2. [Defects Priority](#32-defects-priority)<br/>
 3.3. [Specific Properties](#33-specific-properties)<br/>
 4. [Continuous Integration](#7-continuous-integration)<br/>
-4.1 [Testing](#4-testing)<br/>
-4.1.1. [Unit Tests](#411-unit-tests)<br/>
-4.1.2. [Integration Tests](#412-integration-tests)<br/>
-4.1.3. [Legacy System Tests](#413-system-tests)<br/>
-4.1.3.1. [Containerized Tests](#4131-containerized-tests)<br/>
-4.1.4. [Robot Tests](#414-robot-tests)<br/>
-4.2. [Releasing](#42-releasing)<br/>
+4.1. [Build](#41-build)<br/>
+4.2. [Testing](#42-testing)<br/>
+4.2.1. [Unit Tests](#421-unit-tests)<br/>
+4.2.2. [Integration Tests](#422-integration-tests)<br/>
+4.2.3. [Legacy System Tests](#423-system-tests)<br/>
+4.2.3.1. [Containerized Tests](#4231-containerized-tests)<br/>
+4.2.4. [Endurance Tests](#424-endurance-tests)<br/>
+4.2.5. [Robot Tests](#425-robot-tests)<br/>
+4.3. [Releasing](#43-releasing)<br/>
 5. [Code](#6-code)<br/>
 5.1. [Style](#51-style)<br/>
 5.2. [Exception Handling](#52-exception-handling)<br/>
@@ -139,21 +141,31 @@ Tracker link: https://mongoose-issues.atlassian.net/projects/BASE
 https://gitlab.com/emcmongoose/mongoose/pipelines
 for Windows: https://ci.appveyor.com/project/veronikaKochugova/mongoose
 
-## 4.1. Testing
+## 4.1. Build
 
-### 4.1.1. Unit Tests
+Mongoose may be distributed as a single jar. JDK 11+ is required to build.
+
+```bash
+./gradlew clean jar
+```
+
+The resulting jar file path is `./build/libs/mongoose-<VERSION>.jar`.
+
+## 4.2. Testing
+
+### 4.2.1. Unit Tests
 
 ```bash
 ./gradlew clean test
 ```
 
-### 4.1.2. Integration Tests
+### 4.2.2. Integration Tests
 
 ```bash
 ./gradlew clean integrationTest
 ```
 
-### 4.1.3. Legacy System Tests
+### 4.2.3. Legacy System Tests
 
 The system tests use the [JUnit parameterization](https://github.com/junit-team/junit4/wiki/Parameterized-tests). The parameter values are taken from the environment. The list of the system tests parameters below:
 
@@ -178,7 +190,7 @@ export ITEM_SIZE=small
 
 Note that some system tests will not run for some parameter values. The acceptable parameter values are declared explicitly in the `.travis.yml` file.
 
-#### 4.1.3.1. Containerized Tests
+#### 4.2.3.1. Containerized Tests
 
 Since v4.0.0 all system tests are containerized. To run a system test locally it's necessary to
 prepare testing Docker image manually:
@@ -199,7 +211,7 @@ export ITEM_SIZE=small
 ./gradlew clean systemTest --tests com.emc.mongoose.system.CreateNoLimitTest
 ```
 
-### 4.1.4. Endurance Tests
+### 4.2.4. Endurance Tests
 
 ```bash
 export MONGOOSE_IMAGE_VERSION=testing
@@ -210,7 +222,7 @@ export ITEM_SIZE=large
 ./gradlew clean enduranceTest --tests com.emc.mongoose.endurance.ParallelPipelineAndInfiniteLoopTest
 ```
 
-### 4.1.5. Robot Tests
+### 4.2.5. Robot Tests
 
 *Note*:
 > Currently the Robot tests are failing when being executed locally and passing when being executed on the [Gitlab CI](https://gitlab.com/emcmongoose/mongoose/pipelines)
@@ -226,7 +238,7 @@ Example:
 SUITE=api.storage TEST=s3 ./gradlew clean robotest
 ```
 
-## 4.2. Releasing
+## 4.3. Releasing
 
 1. Ensure all tests are OK
 2. Ensure the new version documentation is ready

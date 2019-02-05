@@ -1,9 +1,9 @@
 package com.emc.mongoose.storage.driver.coop.netty.http.s3;
 
-import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.ItemFactory;
-import com.emc.mongoose.logging.LogUtil;
-import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.item.ItemFactory;
+import com.emc.mongoose.base.logging.LogUtil;
+import com.emc.mongoose.base.logging.Loggers;
 
 import org.apache.logging.log4j.Level;
 

@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.driver.coop.nio.fs;
 
-import com.emc.mongoose.item.DataItemImpl;
-import com.emc.mongoose.item.ItemFactoryImpl;
-import com.emc.mongoose.item.DataItem;
+import com.emc.mongoose.base.item.DataItemImpl;
+import com.emc.mongoose.base.item.ItemFactoryImpl;
+import com.emc.mongoose.base.item.DataItem;
 
 import com.github.akurilov.commons.math.Random;
 import org.apache.commons.io.FileUtils;

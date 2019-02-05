@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.netty.http;
 
-import com.emc.mongoose.env.DateUtil;
-import com.emc.mongoose.supply.async.AsyncValueUpdatingSupplier;
+import com.emc.mongoose.base.env.DateUtil;
+import com.emc.mongoose.base.supply.async.AsyncValueUpdatingSupplier;
 
 import com.github.akurilov.fiber4j.FibersExecutor;
 

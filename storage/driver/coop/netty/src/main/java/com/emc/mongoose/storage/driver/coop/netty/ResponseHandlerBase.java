@@ -1,12 +1,12 @@
 package com.emc.mongoose.storage.driver.coop.netty;
 
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.item.Item;
-import com.emc.mongoose.logging.LogUtil;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.item.op.Operation.Status.INTERRUPTED;
-import static com.emc.mongoose.item.op.Operation.Status.FAIL_IO;
-import static com.emc.mongoose.item.op.Operation.Status.FAIL_UNKNOWN;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.logging.LogUtil;
+import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.base.item.op.Operation.Status.INTERRUPTED;
+import static com.emc.mongoose.base.item.op.Operation.Status.FAIL_IO;
+import static com.emc.mongoose.base.item.op.Operation.Status.FAIL_UNKNOWN;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;

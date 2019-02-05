@@ -75,8 +75,8 @@ curl GET http://localhost:9999/config/schema
 Start a new scenario run:
 ```bash
 curl -v -X POST \
-    -F defaults=@src/test/robot/api/remote/data/aggregated_defaults.json \
-    -F scenario=@src/test/robot/api/remote/data/scenario_dummy.js \
+    -F defaults=@base/src/test/robot/api/remote/data/aggregated_defaults.json \
+    -F scenario=@base/src/test/robot/api/remote/data/scenario_dummy.js \
     http://localhost:9999/run
 ```
 

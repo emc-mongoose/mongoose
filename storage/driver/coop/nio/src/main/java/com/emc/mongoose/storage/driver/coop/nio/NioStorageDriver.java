@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.driver.coop.nio;
 
-import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.storage.driver.StorageDriver;
+import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.storage.driver.StorageDriver;
 
 /**
  Created by andrey on 12.05.17.
