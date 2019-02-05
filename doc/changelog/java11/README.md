@@ -13,7 +13,7 @@ the features which are very useful for the developers and users. Few examples:
 | 307 | GC performance improvement
 | 312 | Performance improvement
 
-# Performance
+## Performance
 
 Environment:
 * Virtual
@@ -21,13 +21,13 @@ Environment:
 * Memory: 10GB
 * CPU: 8 cores, Intel(R) Xeon(R) CPU E5-2690 v4 @ 2.60GHz
 
-## Storage Drivers Internal
+### Storage Drivers Internal
 
 The load ooperations processing rate is improved in the most cases (from -2 % up to +119 %).
 
 ![](../../images/driver_tp_java_8vs11.png)
 
-## End User
+### End User
 
 The I/O byte rate is improved in all cases (from +1,25 % up to +70,39 %)
 
