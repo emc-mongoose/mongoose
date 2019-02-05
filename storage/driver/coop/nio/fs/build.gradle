@@ -3,7 +3,7 @@ description = "mongoose-storage-driver-coop-nio-fs"
 dependencies {
 
 	compileOnly(
-		project(":"),
+		project(":base"),
 		project(":storage:driver:coop"),
 		project(":storage:driver:coop:nio"),
 		"com.github.akurilov:confuse:${depVersion.confuse}",
@@ -17,22 +17,12 @@ dependencies {
 		"junit:junit:${depVersion.junit}",
 		"commons-io:commons-io:2.6",
 	)
-
-	testRuntime(
-		"commons-codec:commons-codec:${depVersion.commonsCodec}",
-	)
 }
 
 jar {
-
-	baseName = project.description
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
 	manifest {
 		attributes(
-			"Implementation-Version": version,
 			"Implementation-Title": project.description,
 		)
 	}
 }
-

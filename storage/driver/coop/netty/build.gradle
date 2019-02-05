@@ -3,7 +3,7 @@ description = "mongoose-storage-driver-coop-netty"
 dependencies {
 
 	compileOnly(
-		project(":"),
+		project(":base"),
 		project(":storage:driver:coop"),
 		"com.github.akurilov:confuse:${depVersion.confuse}",
 		"com.github.akurilov:confuse-io-json:${depVersion.confuseIoJson}",
@@ -30,17 +30,11 @@ dependencies {
 }
 
 jar {
-
-	baseName = project.description
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
 	manifest {
 		attributes (
-			"Implementation-Version": version,
 			"Implementation-Title": project.description,
 		)
 	}
-
 	// 1st level dependencies only
 	from configurations
 		.provided
@@ -53,6 +47,4 @@ jar {
 		.collect {
 			zipTree it
 		}
-
-	exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
 }

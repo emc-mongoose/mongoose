@@ -2,16 +2,16 @@ package com.emc.mongoose.storage.driver.coop.netty.data;
 
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.DirectMemUtil;
-import com.emc.mongoose.data.DataCorruptionException;
-import com.emc.mongoose.data.DataSizeException;
-import com.emc.mongoose.data.DataVerificationException;
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.item.op.data.DataOperation;
-import com.emc.mongoose.item.DataItem;
-import static com.emc.mongoose.item.DataItem.rangeCount;
-import static com.emc.mongoose.item.DataItem.rangeOffset;
+import com.emc.mongoose.base.data.DataCorruptionException;
+import com.emc.mongoose.base.data.DataSizeException;
+import com.emc.mongoose.base.data.DataVerificationException;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.item.op.data.DataOperation;
+import com.emc.mongoose.base.item.DataItem;
+import static com.emc.mongoose.base.item.DataItem.rangeCount;
+import static com.emc.mongoose.base.item.DataItem.rangeOffset;
 
-import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.base.logging.Loggers;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 

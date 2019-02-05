@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.netty.data;
 
-import static com.emc.mongoose.storage.driver.StorageDriver.BUFF_SIZE_MAX;
+import static com.emc.mongoose.base.storage.driver.StorageDriver.BUFF_SIZE_MAX;
 
 import io.netty.handler.stream.ChunkedNioStream;
 

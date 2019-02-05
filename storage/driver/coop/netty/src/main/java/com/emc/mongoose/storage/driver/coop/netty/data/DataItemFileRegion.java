@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.netty.data;
 
-import com.emc.mongoose.item.DataItem;
+import com.emc.mongoose.base.item.DataItem;
 
 import io.netty.channel.FileRegion;
 import io.netty.util.AbstractReferenceCounted;

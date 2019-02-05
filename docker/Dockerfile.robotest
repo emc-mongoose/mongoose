@@ -7,11 +7,11 @@ RUN apk add --no-cache --update python py-pip \
     && pip install -U robotframework-requests \
     && pip install -U robotframework-csvlibrary
 
-ENV PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/site-packages:/root/mongoose/src/test/robot/lib
+ENV PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/site-packages:/root/mongoose/base/src/test/robot/lib
 
-ADD build /root/mongoose/build
+ADD base/build /root/mongoose/base/build
 ADD docker/entrypoint_robotest.sh /root/mongoose/docker/entrypoint_robotest.sh
-ADD src/test/robot /root/mongoose/src/test/robot
+ADD base/src/test/robot /root/mongoose/base/src/test/robot
 
 RUN chmod ugo+x /root/mongoose/docker/entrypoint_robotest.sh
 

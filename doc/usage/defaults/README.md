@@ -2,7 +2,7 @@
 
 Mongoose uses the assumed defaults when run. It makes Mongoose quite simple to use, allowing *just to run* it:
 ```bash
-java -jar mongoose-<VERSION>.jar
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose
 ```
 
 ## 1. Input
@@ -28,7 +28,7 @@ Load.run();
 
 This behaviour may be overriden by supplying the custom scenario file name via CLI arguments:
 ```bash
-java -jar mongoose-<VERSION>.jar --run-scenario=custom_scenario_file.js
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --run-scenario=custom_scenario_file.js
 ```
 
 ## 2. Output

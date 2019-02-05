@@ -1,9 +1,14 @@
 import groovy.json.JsonSlurper
 import groovy.json.JsonParserType
 
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.nio.file.StandardOpenOption
+buildscript {
+	repositories {
+		mavenCentral()
+		maven {
+			url "https://plugins.gradle.org/m2/"
+		}
+	}
+}
 
 plugins {
 	id "com.bmuschko.docker-remote-api" version "4.0.5"
@@ -12,40 +17,40 @@ plugins {
 description = "Mongoose is a high-load storage performance testing tool"
 
 ext {
-
 	depVersion = [
-		confuse            : "1.1.4",
-		confuseIoJson      : "1.0.4",
+		confuse            : "1.2.1",
+		confuseIoJson      : "1.1.0",
 		commonsCodec       : "1.11",
 		commonsLang        : "2.6",
 		disruptor          : "3.4.2",
-		fiber4j            : "1.0.7",
-		jackson            : "2.9.6",
-		javaCommons        : "2.1.14",
+		fiber4j            : "1.1.0",
+		jackson            : "2.9.8",
+		javaCommons        : "2.2.3",
 		javassist          : "3.23.1-GA",
 		jetty              : "9.4.14.v20181114",
-		junit              : "[4,)",
+		junit              : "4.12",
 		scala              : "2.12.6",
 		slf4j              : "1.7.25",
 		log4j              : "2.8.2",
 		tsdbMetrics        : "0.6.0",
 		nagaina            : "3.6.11",
 		netty              : "4.1.25.Final",
-		nettyConnectionPool: "1.0.9",
+		nettyConnectionPool: "1.1.0",
 		nettyTcNative      : "2.0.12.Final",
 	]
-
-	leafProjects = subprojects.findAll {
-		!it.path.equals(":load") &&
+	baseProject = project(":base")
+	extProjects = subprojects.findAll {
+		!it.path.equals(":base") &&
+			!it.path.equals(":load") &&
 			!it.path.equals(":load:step") &&
-			!it.path.equals(":load:step:type") &&
 			!it.path.equals(":storage") &&
 			!it.path.equals(":storage:driver")
 	}
-
-	log4j2PluginsDatPath = Paths.get(
-		"META-INF", "org", "apache", "logging", "log4j", "core", "config", "plugins", "Log4j2Plugins.dat",
-	)
+	jarFileName = rootProject.name
+	javaHome = System.properties["java.home"]
+	jreOutputDir = "${rootProject.buildDir}${File.separator}jre"
+	rootPkg = "com.emc.mongoose"
+	modulesDepsFilePath = "${rootProject.buildDir}${File.separator}modules.deps"
 }
 
 allprojects {
@@ -69,6 +74,9 @@ allprojects {
 	group = "com.github.emc-mongoose"
 	version = defineVersion()
 
+	sourceCompatibility = 11
+	targetCompatibility = 11
+
 	configurations {
 		provided
 		testCompile {
@@ -82,21 +90,14 @@ allprojects {
 		}
 	}
 
-	compileJava {
-		sourceCompatibility = JavaVersion.VERSION_1_8
-		targetCompatibility = JavaVersion.VERSION_1_8
-	}
-
-	compileTestJava {
-		sourceCompatibility = JavaVersion.VERSION_1_8
-		targetCompatibility = JavaVersion.VERSION_1_8
-	}
-
 	test {
+		useJUnit()
 		exclude "com/emc/mongoose/endurance/*"
 		exclude "com/emc/mongoose/integration/*"
+		exclude "com/emc/mongoose/params/*"
 		exclude "com/emc/mongoose/perf/*"
 		exclude "com/emc/mongoose/system/*"
+		exclude "com/emc/mongoose/util/*"
 		exclude "**/TemplateTest.*"
 		exclude "**/*PerfTest.*"
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
@@ -112,9 +113,8 @@ allprojects {
 	}
 
 	task perfTest(type: Test) {
-
+		useJUnit()
 		include "com/emc/mongoose/perf/*"
-
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
 		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
 		maxHeapSize "2g"
@@ -128,6 +128,7 @@ allprojects {
 	}
 
 	task integrationTest(type: Test) {
+		useJUnit()
 		include "com/emc/mongoose/integration/*"
 		exclude "**/RollingAppenderTest*"
 		jvmArgs "-XX:MaxDirectMemorySize=2g"
@@ -143,9 +144,8 @@ allprojects {
 	}
 
 	task systemTest(type: Test) {
-
+		useJUnit()
 		include "com/emc/mongoose/system/*"
-
 		maxHeapSize "1g"
 		testLogging {
 			events = [
@@ -157,6 +157,7 @@ allprojects {
 	}
 
 	task enduranceTest(type: Test) {
+		useJUnit()
 		include "com/emc/mongoose/endurance/*"
 		maxHeapSize "1g"
 		testLogging {
@@ -186,7 +187,7 @@ allprojects {
 	uploadArchives {
 
 		// upload base artifact and extensions
-		if(project != rootProject && !(project in leafProjects)) {
+		if(project != rootProject && !(project in extProjects)) {
 			return
 		}
 
@@ -251,7 +252,7 @@ allprojects {
 }
 
 String defineVersion() {
-	def configFilePath = [ rootDir, "src", "main", "resources", "config", "defaults.json", ]
+	def configFilePath = [ rootProject.rootDir, "base", "src", "main", "resources", "config", "defaults.json", ]
 		.join(File.separator);
 	def inputFile = new File(configFilePath)
 	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
@@ -264,48 +265,7 @@ task mongooseVersion {
 	doLast { logger.quiet version }
 }
 
-dependencies {
-
-	provided(
-		"commons-codec:commons-codec:${depVersion.commonsCodec}",
-		"commons-lang:commons-lang:${depVersion.commonsLang}",
-		"com.fasterxml.jackson.core:jackson-annotations:${depVersion.jackson}",
-		"com.fasterxml.jackson.core:jackson-core:${depVersion.jackson}",
-		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
-		"com.github.akurilov:confuse:${depVersion.confuse}",
-		"com.github.akurilov:confuse-io-json:${depVersion.confuseIoJson}",
-		"com.github.akurilov:fiber4j:${depVersion.fiber4j}",
-		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
-		"com.lmax:disruptor:${depVersion.disruptor}",
-		// https://mvnrepository.com/artifact/io.prometheus/simpleclient
-		"io.prometheus:simpleclient:${depVersion.tsdbMetrics}",
-		"io.prometheus:simpleclient_servlet:${depVersion.tsdbMetrics}",
-		"io.prometheus:simpleclient_hotspot:${depVersion.tsdbMetrics}",
-		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
-		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
-		"org.eclipse.jetty:jetty-server:${depVersion.jetty}",
-		"org.eclipse.jetty:jetty-servlet:${depVersion.jetty}",
-		"org.eclipse.jetty:jetty-rewrite:${depVersion.jetty}",
-		// actually the deps below are the runtime deps
-		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
-		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
-		"org.slf4j:slf4j-api:${depVersion.slf4j}"
-	)
-
-	testCompile(
-		"com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${depVersion.jackson}",
-		"junit:junit:${depVersion.junit}",
-		"org.scala-lang:scala-compiler:${depVersion.scala}",
-		"org.scala-lang:scala-library:${depVersion.scala}",
-		"com.github.docker-java:docker-java:[3,)",
-		"org.apache.commons:commons-csv:1.1",
-		"com.google.guava:guava:25.1-jre",
-		"org.apache.commons:commons-math3:3.6.1",
-		"org.mockito:mockito-core:2.23.0",
-	)
-}
-
-void collectName(Project p, LinkedList<String> names) {
+void collectName(final Project p, final LinkedList<String> names) {
 	names.addFirst p.name
 	if(p.parent != null) {
 		collectName(p.parent, names)
@@ -313,6 +273,27 @@ void collectName(Project p, LinkedList<String> names) {
 }
 
 subprojects {
+
+	jar {
+
+		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+		manifest {
+			attributes(
+				"Implementation-Version": rootProject.version,
+			)
+		}
+
+		excludes = [
+			"**/*.css",
+			"**/*.html",
+			"META-INF/*.DSA",
+			"META-INF/*.LIST",
+			"META-INF/*.RSA",
+			"META-INF/*.SF",
+			"module-info.class",
+		]
+	}
 
 	task sourcesJar(type: Jar, dependsOn: classes) {
 		LinkedList names = new LinkedList()
@@ -337,87 +318,29 @@ subprojects {
 	}
 }
 
-task wrapper(type: Wrapper) {
-	gradleVersion = "4.8"
+wrapper {
+	gradleVersion = "4.10.3"
 }
 
-static def isTestsProject(final Project p) {
-	if(p == null) {
-		return false
-	} else if(p.name.contains("test")) {
-		return true
-	} else {
-		return isTestsProject(p.parent)
-	}
-}
-
-task mergeLog4j2PluginsDat(dependsOn: compileJava) {
-	doLast {
-
-		byte[] pluginsData
-		byte[] customPluginsData
-
-		configurations.provided
-			.each {
-				if(!it.isDirectory()) {
-					zipTree(it)
-						.filter {
-							it.toString().endsWith(log4j2PluginsDatPath.toString())
-						}
-						.each {
-							pluginsData = Files.readAllBytes(Paths.get(it.toString()))
-						}
-				}
-			}
-
-		sourceSets.main.output.classesDirs
-			.any {
-				customPluginsData = Files.readAllBytes(
-					Paths.get(it.toString(), log4j2PluginsDatPath.toString(),)
-				)
-			}
-
-		sourceSets.main.output.classesDirs
-			.any {
-				Files.write(
-					Paths.get(it.toString(), log4j2PluginsDatPath.toString(),),
-					pluginsData, StandardOpenOption.TRUNCATE_EXISTING
-				)
-				Files.write(
-					Paths.get(it.toString(), log4j2PluginsDatPath.toString(),),
-					customPluginsData, StandardOpenOption.APPEND
-				)
-			}
-	}
-}
-
-task dist(type: Jar) {
-
-	dependsOn += compileJava
-	dependsOn += mergeLog4j2PluginsDat
+jar {
 
 	baseName = rootProject.name
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
 	manifest {
 		attributes(
-			"Implementation-Version": version,
+			"Automatic-Module-Name": rootPkg,
 			"Implementation-Title": rootProject.name,
-			"Main-Class": "com.emc.mongoose.Main",
+			"Implementation-Version": version,
+			"Main-Class": "${rootPkg}.base.Main",
 		)
 	}
 
-	from compileJava.outputs.files
-
-	from sourceSets.main.resources
-
-	from configurations.provided.collect {
-		it.isDirectory() ? it : zipTree(it)
+	from baseProject.jar.outputs.files.collect {
+		zipTree(it)
 	}
 
-	exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
-
-	leafProjects
+	extProjects
 		.each {
 			final Project p = it
 			from(p.jar.outputs.files) {
@@ -440,19 +363,79 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 artifacts {
-	archives dist
+	archives jar
 	archives sourcesJar
 	archives javadocJar
 }
 
-assemble.dependsOn += dist
+assemble.dependsOn += jar
+
+// Custom JRE //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+def execute(cmd, dir = null) {
+	def stdOut = new StringBuilder(), stdErr = new StringBuilder()
+	def proc = dir == null ? cmd.execute() : cmd.execute([], dir)
+	proc.consumeProcessOutput(stdOut, stdErr)
+	proc.waitForOrKill(100_000)
+	println "${cmd}\n\t$stdErr"
+	stdOut.toString()
+}
+
+task listAllModulesDeps(dependsOn: jar) {
+	doLast {
+		def modulesDepsFile = new File(modulesDepsFilePath)
+		modulesDepsFile.delete()
+		def projects = []
+		projects.add(baseProject)
+		projects.addAll(extProjects)
+		projects.each {
+			def cmd = [
+				"${javaHome}${File.separator}bin${File.separator}jdeps",
+				"--module-path ${javaHome}${File.separator}jmods",
+				"--list-deps ${it.jar.outputs.files.iterator().next()}",
+			].join(' ')
+			def deps = execute(cmd)
+				.takeWhile { it != '/' } + '\n'
+			modulesDepsFile.append(deps)
+		}
+	}
+}
+
+task dedupModulesDeps(dependsOn: listAllModulesDeps) {
+	doLast {
+		def deps = execute("sort -b -u ${modulesDepsFilePath}")
+			.lines()
+			.findAll { !it.isBlank() }
+			.join('\n')
+		def modulesDepsFile = new File(modulesDepsFilePath)
+		modulesDepsFile.delete()
+		modulesDepsFile.append(deps)
+	}
+}
+
+task jre(dependsOn: dedupModulesDeps) {
+	doLast {
+		def modulesToAdd = new File(modulesDepsFilePath)
+			.readLines()
+			*.trim()
+			.join(',')
+		execute(
+			[
+				"${javaHome}${File.separator}bin${File.separator}jlink",
+				"--no-header-files --no-man-pages --strip-debug --compress=2 --bind-services",
+				"--module-path ${javaHome}${File.separator}jmods --add-modules ${modulesToAdd}",
+				"--output ${jreOutputDir}",
+			].join(' ')
+		)
+	}
+}
 
 // Docker tasks ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 import com.bmuschko.gradle.docker.tasks.image.*
 import com.bmuschko.gradle.docker.tasks.container.*
 
-task buildImage(type: DockerBuildImage, dependsOn: dist) {
+task dockerBuildImage(type: DockerBuildImage, dependsOn: jar) {
 	inputDir = rootProject.projectDir
 	dockerFile = project.file("docker${File.separator}Dockerfile")
 	imageId = "emcmongoose/mongoose"
@@ -462,17 +445,19 @@ task buildImage(type: DockerBuildImage, dependsOn: dist) {
 	]
 }
 
-task pushProductionImage(type: DockerPushImage, dependsOn: buildImage) {
+task dockerPushProductionImage(type: DockerPushImage, dependsOn: dockerBuildImage) {
 	imageName = "emcmongoose/mongoose"
 	tag = "emcmongoose/mongoose:${version}".toString()
 }
 
-task pushTestingImage(type: DockerPushImage, dependsOn: buildImage) {
+task dockerPushTestingImage(type: DockerPushImage, dependsOn: dockerBuildImage) {
 	imageName = "emcmongoose/mongoose"
-	tag = "emcmongoose/mongoose:${version}".toString()
+	tag = "emcmongoose/mongoose:testing".toString()
 }
 
-task buildRobotestImage(type: DockerBuildImage) {
+// Robot Framework /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+task dockerBuildImageRobotest(type: DockerBuildImage) {
 	inputDir = rootProject.projectDir
 	dockerFile = project.file("docker${File.separator}Dockerfile.robotest")
 	imageId = "emcmongoose/mongoose-robotest"
@@ -481,7 +466,7 @@ task buildRobotestImage(type: DockerBuildImage) {
 	]
 }
 
-task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage, buildRobotestImage]) {
+task dockerCreateContainerRobotest(type: DockerCreateContainer, dependsOn: [dockerBuildImage, dockerBuildImageRobotest]) {
 	attachStderr = true
 	attachStdout = true
 	autoRemove = true
@@ -497,7 +482,7 @@ task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage
 		"SUITE": System.getenv("SUITE"),
 		"TEST": System.getenv("TEST"),
 	]
-	imageId = buildRobotestImage.getImageId()
+	imageId = dockerBuildImageRobotest.getImageId()
 	network = "host"
 	tty = true
 	doLast {
@@ -505,12 +490,12 @@ task createRobotestContainer(type: DockerCreateContainer, dependsOn: [buildImage
 	}
 }
 
-task startRobotestContainer(type: DockerStartContainer, dependsOn: createRobotestContainer) {
-	targetContainerId createRobotestContainer.getContainerId()
+task dockerStartContainerRobotest(type: DockerStartContainer, dependsOn: dockerCreateContainerRobotest) {
+	targetContainerId dockerCreateContainerRobotest.getContainerId()
 }
 
-task robotest(type: DockerWaitContainer, dependsOn: startRobotestContainer) {
-	targetContainerId createRobotestContainer.getContainerId()
+task robotest(type: DockerWaitContainer, dependsOn: dockerStartContainerRobotest) {
+	targetContainerId dockerCreateContainerRobotest.getContainerId()
 	timeout = 600 // 10 min w/o output -> fail on Travis CI
 	doLast {
 		if(0 != exitCode) {
