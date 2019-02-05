@@ -29,6 +29,3 @@ test_script:
 
 on_failure:
   - cmd: appveyor PushArtifact %PATH_TO_TEST_LOGS%\log.html
-
-artifacts:
-  - path: "%PATH_TO_TEST_LOGS%"
