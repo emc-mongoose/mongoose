@@ -6,3 +6,5 @@
 | 4 | Load using large data items I/O | Observed bandwidth is lower than using v3.4.x | Use lower `load-service-threads` value (1 or 2) |
 | 5 | - Default ("s3") storage driver used<br> - "x-emc-*" custom header(s) is configured | 403 responses from the storage with message "signature mismatch" | Use "emcs3" storage driver
 | 6 | Terminal doesn't support &gt;16 colors | Unreadable/meaningless symbols in the standard output | Try to set the configuration option `output-color` to `false`
+| 7 | Java version < 11 | Exception w/ message: Class has been compiled by a more recent version of the Java Environment (class file version 55.0)... | Use Java version 11 or higher to run Mongoose
+

@@ -1,5 +1,4 @@
 * Core
-    * Java 11/12 Migration
     * Tests Solidification
     * Measurements Solidification
         * Fix the measurement issues like negative actual concurrency
@@ -9,7 +8,6 @@
         to be aggregated from any node, the step may be stopped in the absence of the entry node, etc
 * GUI
 * Storage Drivers Implementation
-    * Pravega
     * Kafka
     * JDBC
         Required to prove that Mongoose is abstract enough to work against any kind of data storage

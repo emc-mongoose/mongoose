@@ -1,6 +1,6 @@
 # Environment Requirements
 
-* JRE 11+ or Docker
+* Java 11+ or Docker
 * OS open files limit is at least a bit higher than specified concurrency level
 * Few gigabytes of free memory.
 
@@ -9,7 +9,7 @@ High-load tests may allocate up to 1-2 GB of the memory depending on the scenari
 * (Distributed Mode) Connectivity with the additional/remote nodes via port #1099 (RMI)
 * (Remote Monitoring) Connectivity with the nodes via port #9010 (JMX)
 
-# Deliverable Package
+# Jar
 
 Mongoose is distributed as a single jar file from:
 https://github.com/emc-mongoose/mongoose/releases/tag/latest
@@ -79,9 +79,7 @@ docker run \
 
 | Image Name | Description |
 |------------|-------------|
-| mongoose-storage-driver-cifs | Base image + CIFS storage driver implementation (planned) |
 | [mongoose-storage-driver-hdfs](https://github.com/emc-mongoose/mongoose-storage-driver-hdfs) | Base image + HDFS storage driver implementation |
-| mongoose-storage-driver-nfs | Base image + NFS storage driver implementation (planned) |
 | [mongoose-storage-driver-pravega](https://github.com/emc-mongoose/mongoose-storage-driver-pravega) | Base image + [Pravega](http://pravega.io) storage driver implementation (planned) |
 
 ## Additional Notes
