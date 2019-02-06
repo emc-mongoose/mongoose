@@ -12,6 +12,7 @@ import com.emc.mongoose.base.item.op.data.DataOperation;
 import com.emc.mongoose.base.item.op.path.PathOperation;
 import com.emc.mongoose.base.item.op.token.TokenOperation;
 import com.emc.mongoose.base.logging.LogUtil;
+import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.base.supply.BatchSupplier;
 import com.emc.mongoose.base.supply.ConstantStringSupplier;
@@ -24,8 +25,10 @@ import org.apache.logging.log4j.Level;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
@@ -124,8 +127,15 @@ implements Jep321StorageDriver {
 	@Override
 	protected final boolean submit(final O op)
 	throws InterruptRunException, IllegalStateException {
-		final var req = httpRequest(op);
-		client.sendAsync(req, this).th
+		try {
+			final var req = httpRequest(op);
+			client
+				.sendAsync(req, new ResponseBodyHandler<>(op))
+				.handle(this::handleResponse);
+			return true;
+		} catch(final URISyntaxException e) {
+			LogUtil.exception(Level.ERROR, e, "{}: failed to build the request URI", stepId);
+		}
 		return false;
 	}
 
@@ -171,7 +181,8 @@ implements Jep321StorageDriver {
 
 	private final AtomicInteger nodeRoundRobinCounter = new AtomicInteger(0);
 
-	protected HttpRequest httpRequest(final O op) {
+	protected HttpRequest httpRequest(final O op)
+	throws URISyntaxException {
 		final var reqBuilder = httpRequestBuilder();
 		// method
 		final var method = httpMethod(op);
@@ -259,7 +270,8 @@ implements Jep321StorageDriver {
 		}
 	}
 
-	protected URI uri(final O op) {
+	protected URI uri(final O op)
+	throws URISyntaxException  {
 		final var proto = sslFlag ? PROTOCOL_HTTPS : PROTOCOL_HTTP;
 		final var host = storageNodeAddrs[nodeRoundRobinCounter.incrementAndGet() % storageNodeAddrs.length];
 		final var path = uriPath(op);
@@ -279,6 +291,44 @@ implements Jep321StorageDriver {
 		} else {
 			throw new AssertionError("Unexpected item type: " + op.item().getClass());
 		}
+	}
+
+	protected final String dataUriPath(
+		final I item, final String srcPath, final String dstPath, final OpType opType
+	) {
+		final String itemPath;
+		if(dstPath != null) {
+			itemPath = dstPath.startsWith(SLASH) ? dstPath : SLASH + dstPath;
+		} else if(srcPath != null) {
+			itemPath = srcPath.startsWith(SLASH) ? srcPath : SLASH + srcPath;
+		} else {
+			itemPath = null;
+		}
+		final String itemNameRaw = item.name();
+		final String itemName = itemNameRaw.startsWith(SLASH) ? itemNameRaw : SLASH + itemNameRaw;
+		return namespacePath + (itemPath == null || itemName.startsWith(itemPath)) ? itemName : itemPath + itemName;
+	}
+
+	protected final String pathUriPath(
+		final I item, final String srcPath, final String dstPath, final OpType opType
+	) {
+		final String itemName = item.name();
+		if(itemName.startsWith(SLASH)) {
+			return namespacePath + itemName;
+		} else {
+			return namespacePath + SLASH + itemName;
+		}
+	}
+
+	protected final String tokenUriPath(
+		final I item, final String srcPath, final String dstPath, final OpType opType
+	) {
+		return AUTH_URI;
+	}
+
+	protected Object handleResponse(final HttpResponse<Object> resp, final Throwable thrown) {
+		Loggers.MSG.warn("Jep321StorageDriverBase::handleResponse({}, {})", resp, thrown);
+		return resp.body();
 	}
 
 	@Override
