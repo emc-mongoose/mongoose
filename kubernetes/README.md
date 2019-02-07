@@ -46,6 +46,10 @@ scp ./join_command.sh USER@SERVER:/path/to/kubernetes-directory/join_command.sh
 ```bash
 ./add_node_create.sh
 ```
+6. (*) If there are problems with the coredns-pods (they don't run), then you may need to copy the flannel-configuration to an additional node. And do step 5 again.
+```bash
+scp /run/flannel/subnet.env USER@SERVER:/run/flannel/subnet.env
+```
 
 > If you have a such error msg:
 > ```bash
