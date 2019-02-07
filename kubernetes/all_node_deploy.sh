@@ -5,6 +5,7 @@ yum install curl
 yum install unzip
 # copy CA
 cp *.cer /etc/pki/ca-trust/source/anchors/CA.pem
+cp *.cer /
 # import certificate authority to the system
 update-ca-trust
 

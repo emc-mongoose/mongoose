@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-yum install -y kubelet kubeadm kubectl
+mkdir /run/flannel
+touch /run/flannel/subnet.env
+
+
+y | yum install -y kubelet kubeadm kubectl
 systemctl enable kubelet && systemctl start kubelet && systemctl status kubelet
 
 echo Environment="KUBELET_EXTRA_ARGS=--fail-swap-on=false" >> /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
