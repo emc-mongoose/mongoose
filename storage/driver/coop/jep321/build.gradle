@@ -10,6 +10,10 @@ dependencies {
 		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
 		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
 	)
+
+	testCompile(
+		"junit:junit:${depVersion.junit}",
+	)
 }
 
 jar {

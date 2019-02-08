@@ -41,7 +41,6 @@ Use  the command line arguments either load step configurations in the scenario 
 				// Custom HTTP headers section.
 				// An user may place here a key-value pair which will be used as HTTP header.
 				"headers": {
-					"Connection": "Keep-Alive",
 					"User-Agent": "mongoose/4.2.0"
 				},
 				"uri": {
