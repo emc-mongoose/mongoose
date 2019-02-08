@@ -201,6 +201,7 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
         .stdOutColorFlag(stdOutColorFlag)
         .avgPersistFlag(avgPersistFlag)
         .sumPersistFlag(sumPersistFlag)
+		.perfDbResultsFileFlag(perfDbResultsFileFlag)
         .snapshotsSupplier(snapshotsSupplier)
         .quantileValues(quantileValues)
         .nodeAddrs(nodeAddrs)

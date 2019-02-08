@@ -343,6 +343,7 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
             .outputPeriodSec(avgPeriod(metricsConfig))
             .stdOutColorFlag(outputColorFlag)
             .avgPersistFlag(metricsAvgPersistFlag)
+			.perfDbResultsFileFlag(metricsSumPerfDbOutputFlag)
             .sumPersistFlag(metricsSumPersistFlag)
             .snapshotsSupplier(() -> metricsSnapshotsByIndex(originIndex))
             .quantileValues(quantiles(metricsConfig))
