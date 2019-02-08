@@ -175,16 +175,6 @@ public class MetricsManagerImpl extends ExclusiveFiberBase implements MetricsMan
                   new MetricsCsvLogMessage(
                       snapshot, metricsCtx.opType(), metricsCtx.concurrencyLimit()));
             }
-            if (metricsCtx.perfDbResultsFileEnabled()) {
-              Loggers.METRICS_EXT_RESULTS_FILE.info(
-                  new ExtResultsXmlLogMessage(
-                      metricsCtx.id(),
-                      snapshot,
-                      metricsCtx.startTimeStamp(),
-                      metricsCtx.opType(),
-                      metricsCtx.concurrencyLimit(),
-                      metricsCtx.itemDataSize()));
-            }
           }
           // console output
           if (metricsCtx instanceof DistributedMetricsContext) {
@@ -239,16 +229,6 @@ public class MetricsManagerImpl extends ExclusiveFiberBase implements MetricsMan
     if (lastThresholdMetrics.sumPersistEnabled()) {
       Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
           new MetricsCsvLogMessage(snapshot, metricsCtx.opType(), metricsCtx.concurrencyLimit()));
-    }
-    if (lastThresholdMetrics.perfDbResultsFileEnabled()) {
-      Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
-          new ExtResultsXmlLogMessage(
-              metricsCtx.id(),
-              snapshot,
-              metricsCtx.startTimeStamp(),
-              metricsCtx.opType(),
-              metricsCtx.concurrencyLimit(),
-              metricsCtx.itemDataSize()));
     }
     metricsCtx.exitThresholdState();
   }
