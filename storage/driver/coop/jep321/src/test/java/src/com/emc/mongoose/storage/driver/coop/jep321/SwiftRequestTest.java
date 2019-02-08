@@ -9,11 +9,13 @@ import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.concurrent.CountDownLatch;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class SwiftRequestTest {
 
   @Test
+  @Ignore
   public void testGetAuthTokenSyncRequest() throws Exception {
     final var client = HttpClient.newBuilder().build();
     final var uri = new URI("http://127.0.0.1:8080/auth/v1.0");
@@ -32,6 +34,7 @@ public class SwiftRequestTest {
   }
 
   @Test
+  @Ignore
   public void testGetAuthTokenAsyncRequest() throws Exception {
     final var client = HttpClient.newBuilder().build();
     final var uri = new URI("http://127.0.0.1:8080/auth/v1.0");

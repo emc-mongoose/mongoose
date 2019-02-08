@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
+import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
@@ -41,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -86,6 +88,9 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
 
     super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 
+    final var driverConfig = storageConfig.configVal("driver");
+    final var threads = driverConfig.intVal("threads");
+
     final var netConfig = storageConfig.configVal("net");
 
     sslFlag = netConfig.boolVal("ssl");
@@ -97,9 +102,11 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
     final var httpVersion = HttpClient.Version.valueOf(httpConfig.stringVal("version"));
     client =
         HttpClient.newBuilder()
-            // .connectTimeout(timeoutDuration)
-            // .executor(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()))
-            // .version(httpVersion)
+            .connectTimeout(timeoutDuration)
+            .executor(
+                Executors.newFixedThreadPool(
+                    threads > 0 ? threads : Runtime.getRuntime().availableProcessors()))
+            .version(httpVersion)
             .build();
     reqBuilder.version(httpVersion).timeout(timeoutDuration);
     final var headersMap = httpConfig.<String>mapVal("headers");
@@ -147,8 +154,18 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
   @Override
   protected final boolean submit(final O op) throws InterruptRunException, IllegalStateException {
     try {
-      final var req = httpRequest(op);
+      final var uri =
+          new URI("http://127.0.0.1:8080/v1/AUTH_test/20190208.131101.336/oepg6zu536xn");
+      final var req =
+          HttpRequest.newBuilder()
+              .PUT(BodyPublishers.ofString("Hi there"))
+              .uri(uri)
+              .header("User-Agent", "mongoose/4.2.0")
+              .version(Version.HTTP_1_1)
+              .build();
       client.sendAsync(req, new ResponseBodyHandler<>(op)).handle(this::handleResponse);
+      //	    final var req_ = httpRequest(op);
+      //        client.sendAsync(req_, new ResponseBodyHandler<>(op)).handle(this::handleResponse);
       return true;
     } catch (final URISyntaxException e) {
       LogUtil.exception(Level.ERROR, e, "{}: failed to build the request URI", stepId);
