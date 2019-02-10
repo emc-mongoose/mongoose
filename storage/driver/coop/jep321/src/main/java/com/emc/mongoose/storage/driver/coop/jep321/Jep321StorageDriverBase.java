@@ -102,7 +102,6 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
     final var httpVersion = HttpClient.Version.valueOf(httpConfig.stringVal("version"));
     client =
         HttpClient.newBuilder()
-            .connectTimeout(timeoutDuration)
             .executor(
                 Executors.newFixedThreadPool(
                     threads > 0 ? threads : Runtime.getRuntime().availableProcessors()))
@@ -161,11 +160,10 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
               .PUT(BodyPublishers.ofString("Hi there"))
               .uri(uri)
               .header("User-Agent", "mongoose/4.2.0")
-              .version(Version.HTTP_1_1)
               .build();
       client.sendAsync(req, new ResponseBodyHandler<>(op)).handle(this::handleResponse);
-      //	    final var req_ = httpRequest(op);
-      //        client.sendAsync(req_, new ResponseBodyHandler<>(op)).handle(this::handleResponse);
+	  //final var req_ = httpRequest(op);
+	  //client.sendAsync(req_, new ResponseBodyHandler<>(op)).handle(this::handleResponse);
       return true;
     } catch (final URISyntaxException e) {
       LogUtil.exception(Level.ERROR, e, "{}: failed to build the request URI", stepId);
@@ -176,7 +174,7 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
   @Override
   protected final int submit(final List<O> ops, final int from, final int to)
       throws InterruptRunException, IllegalStateException {
-    for (int i = from; i < to; i++) {
+    for (var i = from; i < to; i++) {
       submit(ops.get(i));
     }
     return to - from;
@@ -185,7 +183,7 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
   @Override
   protected final int submit(final List<O> ops)
       throws InterruptRunException, IllegalStateException {
-    for (final O op : ops) {
+    for (final var op : ops) {
       submit(op);
     }
     return ops.size();
@@ -364,15 +362,15 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
     } else {
       itemPath = null;
     }
-    final String itemNameRaw = item.name();
-    final String itemName = itemNameRaw.startsWith(SLASH) ? itemNameRaw : SLASH + itemNameRaw;
+    final var itemNameRaw = item.name();
+    final var itemName = itemNameRaw.startsWith(SLASH) ? itemNameRaw : SLASH + itemNameRaw;
     return namespacePath
         + ((itemPath == null || itemName.startsWith(itemPath)) ? itemName : (itemPath + itemName));
   }
 
   protected final String pathUriPath(
       final I item, final String srcPath, final String dstPath, final OpType opType) {
-    final String itemName = item.name();
+    final var itemName = item.name();
     if (itemName.startsWith(SLASH)) {
       return namespacePath + itemName;
     } else {
