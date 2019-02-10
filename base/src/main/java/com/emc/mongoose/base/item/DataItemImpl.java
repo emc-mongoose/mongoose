@@ -56,13 +56,12 @@ public class DataItemImpl extends ItemImpl implements DataItem {
       throws IllegalArgumentException {
 
     super(value.substring(0, firstCommaPos));
-
-    int prevCommaPos = firstCommaPos;
-    int nextCommaPos = value.indexOf(',', prevCommaPos + 1);
+	  var prevCommaPos = firstCommaPos;
+	  var nextCommaPos = value.indexOf(',', prevCommaPos + 1);
     if (nextCommaPos < prevCommaPos) {
       throw new IllegalArgumentException("Invalid data item description: " + value);
     }
-    final String offsetInfo = value.substring(prevCommaPos + 1, nextCommaPos);
+    final var offsetInfo = value.substring(prevCommaPos + 1, nextCommaPos);
     try {
       offset(Long.parseLong(offsetInfo, 0x10));
     } catch (final NumberFormatException e) {
@@ -74,7 +73,7 @@ public class DataItemImpl extends ItemImpl implements DataItem {
     if (nextCommaPos < prevCommaPos) {
       throw new IllegalArgumentException("Invalid data item description: " + value);
     }
-    final String sizeInfo = value.substring(prevCommaPos + 1, nextCommaPos);
+    final var sizeInfo = value.substring(prevCommaPos + 1, nextCommaPos);
     try {
       truncate(Long.parseLong(sizeInfo, 10));
     } catch (final NumberFormatException e) {
@@ -82,13 +81,13 @@ public class DataItemImpl extends ItemImpl implements DataItem {
     }
 
     prevCommaPos = nextCommaPos;
-    final String rangesInfo = value.substring(prevCommaPos + 1);
-    final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP, 0);
+    final var rangesInfo = value.substring(prevCommaPos + 1);
+    final var sepPos = rangesInfo.indexOf(LAYER_MASK_SEP, 0);
     try {
       // extract hexadecimal layer number
       layerNum = Integer.parseInt(rangesInfo.substring(0, sepPos), 0x10);
       // extract hexadecimal mask, convert into bit set and add to the existing mask
-      final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
+      final var rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
       final char rangesMaskChars[];
       if (rangesMask.length() == 0) {
         rangesMaskChars = ("00" + rangesMask).toCharArray();
@@ -146,7 +145,7 @@ public class DataItemImpl extends ItemImpl implements DataItem {
 
   @Override
   public String toString() {
-    final StringBuilder strb = STRB.get();
+    final var strb = STRB.get();
     strb.setLength(0); // reset
     return strb.append(super.toString())
         .append(',')
@@ -165,7 +164,7 @@ public class DataItemImpl extends ItemImpl implements DataItem {
 
   @Override
   public String toString(final String itemPath) {
-    final StringBuilder strBuilder = STRB.get();
+    final var strBuilder = STRB.get();
     strBuilder.setLength(0); // reset
     return strBuilder
         .append(super.toString(itemPath))
@@ -234,7 +233,7 @@ public class DataItemImpl extends ItemImpl implements DataItem {
     if (partSize < 1) {
       throw new IllegalArgumentException();
     }
-    final DataItemImpl dataItemSlice = new DataItemImpl(name, offset + from, partSize, layerNum);
+    final var dataItemSlice = new DataItemImpl(name, offset + from, partSize, layerNum);
     if (dataInput != null) {
       dataItemSlice.dataInput(dataInput);
     }
@@ -309,8 +308,7 @@ public class DataItemImpl extends ItemImpl implements DataItem {
   @Override
   public final int read(final ByteBuffer dst) {
     final int n;
-    final MappedByteBuffer ringBuff =
-        (MappedByteBuffer) dataInput.getLayer(layerNum).asReadOnlyBuffer();
+    final var ringBuff = (MappedByteBuffer) dataInput.getLayer(layerNum).asReadOnlyBuffer();
     ringBuff.position((int) ((offset + position) % dataInputSize));
     // bytes count to transfer
     n = Math.min(dst.remaining(), ringBuff.remaining());
@@ -327,10 +325,9 @@ public class DataItemImpl extends ItemImpl implements DataItem {
       return 0;
     }
     int m;
-    final MappedByteBuffer ringBuff =
-        (MappedByteBuffer) dataInput.getLayer(layerNum).asReadOnlyBuffer();
+    final var ringBuff = (MappedByteBuffer) dataInput.getLayer(layerNum).asReadOnlyBuffer();
     ringBuff.position((int) ((offset + position) % dataInputSize));
-    final int n = Math.min(src.remaining(), ringBuff.remaining());
+    final var n = Math.min(src.remaining(), ringBuff.remaining());
     if (n > 0) {
       byte bs, bi;
       for (m = 0; m < n; m++) {
@@ -350,8 +347,7 @@ public class DataItemImpl extends ItemImpl implements DataItem {
   @Override
   public final long writeToSocketChannel(final WritableByteChannel chanDst, final long maxCount)
       throws IOException {
-    final MappedByteBuffer ringBuff =
-        (MappedByteBuffer) dataInput.getLayer(layerNum).asReadOnlyBuffer();
+    final var ringBuff = (MappedByteBuffer) dataInput.getLayer(layerNum).asReadOnlyBuffer();
     long doneCount = 0;
     int n, m;
     // spin while not done either destination channel consumes all the data
@@ -372,9 +368,8 @@ public class DataItemImpl extends ItemImpl implements DataItem {
   @Override
   public final long writeToFileChannel(final FileChannel chanDst, final long maxCount)
       throws IOException {
-    final MappedByteBuffer ringBuff =
-        (MappedByteBuffer) dataInput.getLayer(layerNum).asReadOnlyBuffer();
-    int n = (int) ((offset + position) % dataInputSize);
+    final var ringBuff = (MappedByteBuffer) dataInput.getLayer(layerNum).asReadOnlyBuffer();
+	  var n = (int) ((offset + position) % dataInputSize);
     ringBuff.position(n);
     n = (int) Math.min(maxCount, ringBuff.remaining());
     ringBuff.limit(ringBuff.position() + n);
@@ -385,7 +380,7 @@ public class DataItemImpl extends ItemImpl implements DataItem {
 
   @Override
   public final void verify(final ByteBuffer inBuff) throws DataCorruptionException {
-    final ByteBuffer ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
+    final var ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
     ringBuff.position((int) ((offset + position) % dataInputSize));
     verify(inBuff, ringBuff);
   }
@@ -393,21 +388,21 @@ public class DataItemImpl extends ItemImpl implements DataItem {
   private void verify(final ByteBuffer inBuff, final ByteBuffer ringBuff)
       throws DataCorruptionException {
 
-    final int inputSize = inBuff.remaining();
-    final int sizeToVerify = Math.min(ringBuff.remaining(), inputSize);
+    final var inputSize = inBuff.remaining();
+    final var sizeToVerify = Math.min(ringBuff.remaining(), inputSize);
 
     // compare the 64 bit words 1st to make it faster
-    final int wordCount = sizeToVerify >>> 3; // how many 64 bit words are there
+    final var wordCount = sizeToVerify >>> 3; // how many 64 bit words are there
     if (wordCount > 0) {
       long ws, wi;
-      for (int k = 0; k < wordCount; k++) {
+      for (var k = 0; k < wordCount; k++) {
         ws = ringBuff.getLong();
         wi = inBuff.getLong();
         if (ws != wi) {
           // don't hurry more, find the exact non-matching byte
-          final int wordPos = k << 3;
+          final var wordPos = k << 3;
           byte bs, bi;
-          for (int i = 0; i < 8; i++) {
+          for (var i = 0; i < 8; i++) {
             bs = (byte) ws;
             ws >>= 8;
             bi = (byte) wi;
@@ -421,10 +416,10 @@ public class DataItemImpl extends ItemImpl implements DataItem {
     }
 
     // compare the remaining bytes if any
-    final int tailByteCount = sizeToVerify & 7;
+    final var tailByteCount = sizeToVerify & 7;
     if (tailByteCount > 0) {
       byte bs, bi;
-      for (int m = 0; m < tailByteCount; m++) {
+      for (var m = 0; m < tailByteCount; m++) {
         bs = ringBuff.get();
         bi = inBuff.get();
         if (bs != bi) {
@@ -449,7 +444,7 @@ public class DataItemImpl extends ItemImpl implements DataItem {
     if (!(o instanceof DataItemImpl)) {
       return false;
     }
-    final DataItemImpl other = (DataItemImpl) o;
+    final var other = (DataItemImpl) o;
     return super.equals(other) && offset == other.offset;
   }
   //
@@ -477,9 +472,19 @@ public class DataItemImpl extends ItemImpl implements DataItem {
     offset = in.readLong();
     position = in.readLong();
     size = in.readLong();
-    final int len = in.readInt();
+    final var len = in.readInt();
     final byte buff[] = new byte[len];
     in.readFully(buff);
     modifiedRangesMask.or(BitSet.valueOf(buff));
   }
+
+	@Override
+	public final boolean hasNext() {
+		return false;
+	}
+
+	@Override
+	public final ByteBuffer next() {
+		return dataInput.getLayer(layerNum);
+	}
 }

@@ -12,9 +12,10 @@ import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.BitSet;
+import java.util.Iterator;
 
 /** Created by kurila on 11.07.16. */
-public interface DataItem extends Item, SeekableByteChannel {
+public interface DataItem extends Item, SeekableByteChannel, Iterator<ByteBuffer> {
 
   double LOG2 = Math.log(2);
 
