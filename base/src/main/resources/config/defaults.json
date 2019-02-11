@@ -151,8 +151,6 @@ Use  the command line arguments either load step configurations in the scenario 
 				}
 			},
 			"summary": {
-				// Output the results.xml file used as a PerfDb input if true
-				"perfDbResultsFile": false,
 				// Persist the summary (total) metrics if true
 				"persist": true
 			},
@@ -179,7 +177,7 @@ Use  the command line arguments either load step configurations in the scenario 
 		// The scenario file to run, null means invoking the default.js scenario bundled into the distribution
 		"scenario": null,
 		// The Mongoose version
-		"version": "4.1.2"
+		"version": "4.2.0"
 	},
 	"storage": {
 		"auth": {
