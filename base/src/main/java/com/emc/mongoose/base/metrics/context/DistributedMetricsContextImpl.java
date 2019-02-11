@@ -24,7 +24,6 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
   private final Supplier<List<AllMetricsSnapshot>> snapshotsSupplier;
   private final boolean avgPersistFlag;
   private final boolean sumPersistFlag;
-  private final boolean perfDbResultsFileFlag;
   private volatile DistributedMetricsListener metricsListener = null;
   private final List<Double> quantileValues;
   private final List<String> nodeAddrs;
@@ -40,7 +39,6 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
       final boolean stdOutColorFlag,
       final boolean avgPersistFlag,
       final boolean sumPersistFlag,
-      final boolean perfDbResultsFileFlag,
       final Supplier<List<AllMetricsSnapshot>> snapshotsSupplier,
       final List<Double> quantileValues,
       final List<String> nodeAddrs,
@@ -59,7 +57,6 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
     this.snapshotsSupplier = snapshotsSupplier;
     this.avgPersistFlag = avgPersistFlag;
     this.sumPersistFlag = sumPersistFlag;
-    this.perfDbResultsFileFlag = perfDbResultsFileFlag;
     this.quantileValues = quantileValues;
     this.nodeAddrs = nodeAddrs;
   }
@@ -110,11 +107,6 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
   @Override
   public boolean sumPersistEnabled() {
     return sumPersistFlag;
-  }
-
-  @Override
-  public boolean perfDbResultsFileEnabled() {
-    return perfDbResultsFileFlag;
   }
 
   @Override
@@ -201,7 +193,6 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
         .stdOutColorFlag(stdOutColorFlag)
         .avgPersistFlag(avgPersistFlag)
         .sumPersistFlag(sumPersistFlag)
-        .perfDbResultsFileFlag(perfDbResultsFileFlag)
         .snapshotsSupplier(snapshotsSupplier)
         .quantileValues(quantileValues)
         .nodeAddrs(nodeAddrs)
@@ -249,7 +240,6 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
     private Supplier<List<AllMetricsSnapshot>> snapshotsSupplier;
     private boolean avgPersistFlag;
     private boolean sumPersistFlag;
-    private boolean perfDbResultsFileFlag;
     private List<Double> quantileValues;
     private List<String> nodeAddrs;
     private String id;
@@ -275,7 +265,6 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
           stdOutColorFlag,
           avgPersistFlag,
           sumPersistFlag,
-          perfDbResultsFileFlag,
           snapshotsSupplier,
           quantileValues,
           nodeAddrs,
@@ -335,11 +324,6 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 
     public DistributedContextBuilder sumPersistFlag(final boolean sumPersistFlag) {
       this.sumPersistFlag = sumPersistFlag;
-      return this;
-    }
-
-    public DistributedContextBuilder perfDbResultsFileFlag(final boolean perfDbResultsFileFlag) {
-      this.perfDbResultsFileFlag = perfDbResultsFileFlag;
       return this;
     }
 

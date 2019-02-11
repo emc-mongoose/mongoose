@@ -328,7 +328,6 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
         (int) (concurrencyLimit * metricsConfig.doubleVal("threshold"));
     final boolean metricsAvgPersistFlag = metricsConfig.boolVal("average-persist");
     final boolean metricsSumPersistFlag = metricsConfig.boolVal("summary-persist");
-    final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
     // it's not known yet how many nodes are involved, so passing the function "this::sliceCount"
     // reference for
     // further usage
@@ -343,7 +342,6 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
             .outputPeriodSec(avgPeriod(metricsConfig))
             .stdOutColorFlag(outputColorFlag)
             .avgPersistFlag(metricsAvgPersistFlag)
-            .perfDbResultsFileFlag(metricsSumPerfDbOutputFlag)
             .sumPersistFlag(metricsSumPersistFlag)
             .snapshotsSupplier(() -> metricsSnapshotsByIndex(originIndex))
             .quantileValues(quantiles(metricsConfig))

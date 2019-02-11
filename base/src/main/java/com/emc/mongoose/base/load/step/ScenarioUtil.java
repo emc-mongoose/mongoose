@@ -136,7 +136,6 @@ public interface ScenarioUtil {
 
     specificConfig = new BasicConfig(config);
     specificConfig.val("output-metrics-average-persist", false);
-    specificConfig.val("output-metrics-summary-perfDbResultsFile", false);
     specificConfig.val("output-metrics-summary-persist", false);
     specificConfig.val("output-metrics-trace-persist", false);
     se.put(
