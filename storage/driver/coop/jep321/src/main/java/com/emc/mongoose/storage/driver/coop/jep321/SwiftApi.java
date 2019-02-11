@@ -32,6 +32,13 @@ public interface SwiftApi {
 
   int MAX_LIST_LIMIT = 10_000;
 
+  enum ContainerState {
+	UNKNOWN,
+	NOT_EXISTS,
+	EXISTS,
+	VERSIONING_ENABLED
+  }
+
   static <I extends Item> int parseContainerListing(
       final List<I> buff,
       final InputStream inStream,

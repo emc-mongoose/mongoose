@@ -478,13 +478,24 @@ public class DataItemImpl extends ItemImpl implements DataItem {
     modifiedRangesMask.or(BitSet.valueOf(buff));
   }
 
+  /////////////////////////////////////////////////////////////////////////////////////////////////
+  // Iterator<ByteBuffer> implementation is needed for the Java Standard Http Client //////////////
+  /////////////////////////////////////////////////////////////////////////////////////////////////
+
 	@Override
 	public final boolean hasNext() {
-		return false;
+		return size > position;
 	}
 
 	@Override
 	public final ByteBuffer next() {
-		return dataInput.getLayer(layerNum);
+		final var ringBuff = dataInput.getLayer(layerNum).asReadOnlyBuffer();
+		ringBuff.position((int) ((offset + position) % dataInputSize));
+		// bytes count to transfer
+		final var n = (int) Math.min(size - position, ringBuff.remaining());
+		ringBuff.limit(ringBuff.position() + n);
+		// mark the bytes count
+		position += n;
+		return ringBuff;
 	}
 }
