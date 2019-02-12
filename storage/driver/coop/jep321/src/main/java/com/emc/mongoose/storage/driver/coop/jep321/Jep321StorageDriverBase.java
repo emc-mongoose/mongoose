@@ -6,6 +6,7 @@ import static com.emc.mongoose.storage.driver.coop.jep321.SwiftApi.ContainerStat
 import static com.emc.mongoose.storage.driver.coop.jep321.SwiftApi.ContainerState.NOT_EXISTS;
 import static com.emc.mongoose.storage.driver.coop.jep321.SwiftApi.ContainerState.UNKNOWN;
 import static com.emc.mongoose.storage.driver.coop.jep321.SwiftApi.ContainerState.VERSIONING_ENABLED;
+
 import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.base.config.IllegalArgumentNameException;
 import com.emc.mongoose.base.data.DataInput;
@@ -33,9 +34,7 @@ import com.emc.mongoose.base.supply.async.AsyncPatternDefinedSupplier;
 import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import com.emc.mongoose.storage.driver.coop.jep321.data.BodyPublisherDataCreate;
 import com.emc.mongoose.storage.driver.coop.jep321.data.ResponseBodyHandler;
-
 import com.github.akurilov.confuse.Config;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -53,7 +52,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import org.apache.logging.log4j.Level;
 
 public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
@@ -68,14 +66,14 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
           return null;
         }
       };
-  private static final TokenOperation<TokenItem> CREATE_AUTH_TOKEN_OP = new TokenOperationImpl<>(
-  	0, OpType.CREATE, new TokenItemImpl(" "), null
-  );
-  protected static final HttpRequest.BodyPublisher EMPTY_PUBLISHER = HttpRequest.BodyPublishers.noBody();
-  protected static final HttpResponse.BodySubscriber<Void> DISCARDING_RESPONSE_BODY_SUBSCRIBER
-	  = HttpResponse.BodySubscribers.discarding();
-  protected static final HttpResponse.BodyHandler<Void> DISCARDING_RESPONSE_BODY_HANDLER
-	  = (responseInfo) -> DISCARDING_RESPONSE_BODY_SUBSCRIBER;
+  private static final TokenOperation<TokenItem> CREATE_AUTH_TOKEN_OP =
+      new TokenOperationImpl<>(0, OpType.CREATE, new TokenItemImpl(" "), null);
+  protected static final HttpRequest.BodyPublisher EMPTY_PUBLISHER =
+      HttpRequest.BodyPublishers.noBody();
+  protected static final HttpResponse.BodySubscriber<Void> DISCARDING_RESPONSE_BODY_SUBSCRIBER =
+      HttpResponse.BodySubscribers.discarding();
+  protected static final HttpResponse.BodyHandler<Void> DISCARDING_RESPONSE_BODY_HANDLER =
+      (responseInfo) -> DISCARDING_RESPONSE_BODY_SUBSCRIBER;
 
   protected final AsyncCurrentDateSupplier dateSupplier =
       new AsyncCurrentDateSupplier(ServiceTaskExecutor.INSTANCE);
@@ -169,17 +167,17 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
 
   @Override
   protected final boolean submit(final O op) throws InterruptRunException, IllegalStateException {
-    try {
-      final var req = httpRequest(op);
-      final var respBodyHandler = new ResponseBodyHandler<>(op, this::handleCompleted);
-		op.startRequest();
-	  client
-		  .sendAsync(req, respBodyHandler, null)
-		  .handle(this::handleResponse);
-	  op.finishRequest();
-      return true;
-    } catch (final URISyntaxException e) {
-      LogUtil.exception(Level.ERROR, e, "{}: failed to build the request URI", stepId);
+    if (concurrencyThrottle.tryAcquire()) {
+      try {
+        final var req = httpRequest(op);
+        final var respBodyHandler = new ResponseBodyHandler<>(op, this::releaseCompleted);
+        op.startRequest();
+        client.sendAsync(req, respBodyHandler, null).handle(this::handleResponse);
+        op.finishRequest();
+        return true;
+      } catch (final URISyntaxException e) {
+        LogUtil.exception(Level.ERROR, e, "{}: failed to build the request URI", stepId);
+      }
     }
     return false;
   }
@@ -202,116 +200,126 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
     return ops.size();
   }
 
+  private void releaseCompleted(final O op) {
+    concurrencyThrottle.release();
+    super.handleCompleted(op);
+  }
+
   @Override
   protected String requestNewPath(final String path) throws InterruptRunException {
-  	final var container = new PathItemImpl(path);
-  	final var containerState = requestContainerState(container);
-	// create or update the destination container if it doesn't exists
-	if(NOT_EXISTS.equals(containerState) || (EXISTS.equals(containerState) && versioning)) {
-		final var reqBuilder = httpRequestBuilder();
-		applySharedHeaders(reqBuilder);
-		if(versioning) {
-			reqBuilder.header(KEY_X_VERSIONS_LOCATION, DEFAULT_VERSIONS_LOCATION);
-		}
-		final var containerPath = pathUriPath(container, null, null, null);
-		final var method = pathHttpMethod(OpType.CREATE);
-		applyAuthHeaders(reqBuilder, method, containerPath, credential);
-		reqBuilder.method(method.name(), EMPTY_PUBLISHER);
-		final var host = host();
-		try {
-			final var uri = new URI(protocol + "://" + host + containerPath);
-			final var req = reqBuilder.uri(uri).build();
-			try {
-				final var respStatisCode = client.send(req, DISCARDING_RESPONSE_BODY_HANDLER).statusCode();
-				if(respStatisCode < 200 || respStatisCode >= 300) {
-					Loggers.ERR.warn(
-						"{}: create/update container \"{}\" response status: {}", stepId, path, respStatisCode
-					);
-					return null;
-				}
-			} catch(final InterruptedException e) {
-				throw new InterruptRunException(e);
-			} catch(final IOException e) {
-				LogUtil.exception(Level.WARN, e, "{}: failed to create the container {}", stepId, container);
-			}
-		} catch(final URISyntaxException e) {
-			LogUtil.exception(Level.WARN, e, "{}: failed to create the container {}", stepId, container);
-		}
-	}
-	return path;
+    final var container = new PathItemImpl(path);
+    final var containerState = requestContainerState(container);
+    // create or update the destination container if it doesn't exists
+    if (NOT_EXISTS.equals(containerState) || (EXISTS.equals(containerState) && versioning)) {
+      final var reqBuilder = httpRequestBuilder();
+      applySharedHeaders(reqBuilder);
+      if (versioning) {
+        reqBuilder.header(KEY_X_VERSIONS_LOCATION, DEFAULT_VERSIONS_LOCATION);
+      }
+      final var containerPath = pathUriPath(container, null, null, null);
+      final var method = pathHttpMethod(OpType.CREATE);
+      applyAuthHeaders(reqBuilder, method, containerPath, credential);
+      reqBuilder.method(method.name(), EMPTY_PUBLISHER);
+      final var host = host();
+      try {
+        final var uri = new URI(protocol + "://" + host + containerPath);
+        final var req = reqBuilder.uri(uri).build();
+        try {
+          final var respStatisCode =
+              client.send(req, DISCARDING_RESPONSE_BODY_HANDLER).statusCode();
+          if (respStatisCode < 200 || respStatisCode >= 300) {
+            Loggers.ERR.warn(
+                "{}: create/update container \"{}\" response status: {}",
+                stepId,
+                path,
+                respStatisCode);
+            return null;
+          }
+        } catch (final InterruptedException e) {
+          throw new InterruptRunException(e);
+        } catch (final IOException e) {
+          LogUtil.exception(
+              Level.WARN, e, "{}: failed to create the container {}", stepId, container);
+        }
+      } catch (final URISyntaxException e) {
+        LogUtil.exception(
+            Level.WARN, e, "{}: failed to create the container {}", stepId, container);
+      }
+    }
+    return path;
   }
 
   private ContainerState requestContainerState(final PathItem container) {
-	  // check the destination container if it exists w/ HEAD request
-	  final var reqBuilder = httpRequestBuilder();
-	  final var method = HttpMethod.HEAD;
-	  reqBuilder.method(method.name(), EMPTY_PUBLISHER);
-	  applySharedHeaders(reqBuilder);
-	  final var containerPath = pathUriPath(container, null, null, null);
-	  final var credential = pathToCredMap.getOrDefault(container.name(), this.credential);
-	  applyAuthHeaders(reqBuilder, method, containerPath, credential);
-	  final var host = host();
-	  var containerState = UNKNOWN; // assume
-	  try {
-	  	final var uri = new URI(protocol + "://" + host + containerPath);
-		  final var req = reqBuilder
-			  .uri(uri)
-			  .build();
-		  try {
-		  	final var resp = client.send(req, HttpResponse.BodyHandlers.discarding());
-			  final var respStatusCode = resp.statusCode();
-			  if(respStatusCode >= 200 && respStatusCode < 300) {
-				  Loggers.MSG.info("Container \"{}\" already exists", container);
-				  final var versionsLocation = resp.headers().firstValue(KEY_X_VERSIONS_LOCATION);
-				  if(versionsLocation.isPresent() && !versionsLocation.get().isEmpty()) {
-					containerState = VERSIONING_ENABLED;
-				  } else {
-					containerState = EXISTS;
-				  }
-			  } else if(respStatusCode == 404) {
-				  containerState = NOT_EXISTS;
-			  } else {
-				  Loggers.ERR.warn("Unexpected container checking response: {}", respStatusCode);
-
-			  }
-		  } catch(final InterruptedException e) {
-		  	throw new InterruptRunException(e);
-		  } catch(final IOException e) {
-			  LogUtil.exception(Level.WARN, e, "{}: failed to check the container {} state", stepId, container);
-		  }
-	  } catch(final URISyntaxException e) {
-		  LogUtil.exception(Level.WARN, e, "{}: failed to check the container {} state", stepId, container);
-	  }
-	  return containerState;
+    // check the destination container if it exists w/ HEAD request
+    final var reqBuilder = httpRequestBuilder();
+    final var method = HttpMethod.HEAD;
+    reqBuilder.method(method.name(), EMPTY_PUBLISHER);
+    applySharedHeaders(reqBuilder);
+    final var containerPath = pathUriPath(container, null, null, null);
+    final var credential = pathToCredMap.getOrDefault(container.name(), this.credential);
+    applyAuthHeaders(reqBuilder, method, containerPath, credential);
+    final var host = host();
+    var containerState = UNKNOWN; // assume
+    try {
+      final var uri = new URI(protocol + "://" + host + containerPath);
+      final var req = reqBuilder.uri(uri).build();
+      try {
+        final var resp = client.send(req, HttpResponse.BodyHandlers.discarding());
+        final var respStatusCode = resp.statusCode();
+        if (respStatusCode >= 200 && respStatusCode < 300) {
+          Loggers.MSG.info("Container \"{}\" already exists", container);
+          final var versionsLocation = resp.headers().firstValue(KEY_X_VERSIONS_LOCATION);
+          if (versionsLocation.isPresent() && !versionsLocation.get().isEmpty()) {
+            containerState = VERSIONING_ENABLED;
+          } else {
+            containerState = EXISTS;
+          }
+        } else if (respStatusCode == 404) {
+          containerState = NOT_EXISTS;
+        } else {
+          Loggers.ERR.warn("Unexpected container checking response: {}", respStatusCode);
+        }
+      } catch (final InterruptedException e) {
+        throw new InterruptRunException(e);
+      } catch (final IOException e) {
+        LogUtil.exception(
+            Level.WARN, e, "{}: failed to check the container {} state", stepId, container);
+      }
+    } catch (final URISyntaxException e) {
+      LogUtil.exception(
+          Level.WARN, e, "{}: failed to check the container {} state", stepId, container);
+    }
+    return containerState;
   }
 
   @Override
   protected String requestNewAuthToken(final Credential credential) throws InterruptRunException {
-  		var authTokenVal = (String) null;
-  		final var reqBuilder = httpRequestBuilder();
-  		final var method = tokenHttpMethod(OpType.CREATE);
-		reqBuilder.method(method.name(), EMPTY_PUBLISHER);
-		applyAuthHeaders(reqBuilder, method, AUTH_URI, credential);
-		reqBuilder.header("Accept", "*/*");
-		try {
-			final var uri = uri(CREATE_AUTH_TOKEN_OP);
-			reqBuilder.uri(uri);
-			final var req = reqBuilder.build();
-			try {
-				authTokenVal = client
-					.send(req, DISCARDING_RESPONSE_BODY_HANDLER)
-					.headers()
-					.firstValue(KEY_X_AUTH_TOKEN)
-					.orElse(null);
-			} catch(final InterruptedException e) {
-				throw new InterruptRunException(e);
-			} catch(final IOException e) {
-				LogUtil.exception(Level.WARN, e, "{}: failed to create new auth token", stepId);
-			}
-		} catch(final URISyntaxException e) {
-			LogUtil.exception(Level.WARN, e, "{}: failed to create new auth token", stepId);
-		}
-		return authTokenVal;
+    var authTokenVal = (String) null;
+    final var reqBuilder = httpRequestBuilder();
+    final var method = tokenHttpMethod(OpType.CREATE);
+    reqBuilder.method(method.name(), EMPTY_PUBLISHER);
+    applyAuthHeaders(reqBuilder, method, AUTH_URI, credential);
+    reqBuilder.header("Accept", "*/*");
+    try {
+      final var uri = uri(CREATE_AUTH_TOKEN_OP);
+      reqBuilder.uri(uri);
+      final var req = reqBuilder.build();
+      try {
+        authTokenVal =
+            client
+                .send(req, DISCARDING_RESPONSE_BODY_HANDLER)
+                .headers()
+                .firstValue(KEY_X_AUTH_TOKEN)
+                .orElse(null);
+      } catch (final InterruptedException e) {
+        throw new InterruptRunException(e);
+      } catch (final IOException e) {
+        LogUtil.exception(Level.WARN, e, "{}: failed to create new auth token", stepId);
+      }
+    } catch (final URISyntaxException e) {
+      LogUtil.exception(Level.WARN, e, "{}: failed to create new auth token", stepId);
+    }
+    return authTokenVal;
   }
 
   @Override
@@ -407,9 +415,9 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
         if (op instanceof DataOperation) {
           return new BodyPublisherDataCreate((DataOperation) op);
         } else if (op instanceof PathOperation) {
-			throw new AssertionError("Not implemented yet");
+          throw new AssertionError("Not implemented yet");
         } else if (op instanceof TokenOperation) {
-			throw new AssertionError("Not implemented yet");
+          throw new AssertionError("Not implemented yet");
         }
       case READ:
         return EMPTY_PUBLISHER;
@@ -432,7 +440,7 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
   }
 
   protected String host() {
-  	return storageNodeAddrs[nodeRoundRobinCounter.incrementAndGet() % storageNodeAddrs.length];
+    return storageNodeAddrs[nodeRoundRobinCounter.incrementAndGet() % storageNodeAddrs.length];
   }
 
   protected String uriPath(final Operation<? extends Item> op) {
@@ -482,61 +490,60 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
     return AUTH_URI;
   }
 
-  	protected void applySharedHeaders(final HttpRequest.Builder reqBuilder) {
-		//reqBuilder.header("Date", dateSupplier.get());
-  		String name;
-  		String value;
-		for (final var headerPattern : headerPatterns.entrySet()) {
-			name = headerNameInputs.get(headerPattern.getKey()).get();
-			value = headerValueInputs.get(headerPattern.getValue()).get();
-			reqBuilder.header(name, value);
-		}
-	}
+  protected void applySharedHeaders(final HttpRequest.Builder reqBuilder) {
+    // reqBuilder.header("Date", dateSupplier.get());
+    String name;
+    String value;
+    for (final var headerPattern : headerPatterns.entrySet()) {
+      name = headerNameInputs.get(headerPattern.getKey()).get();
+      value = headerValueInputs.get(headerPattern.getValue()).get();
+      reqBuilder.header(name, value);
+    }
+  }
 
-	protected void applyMetaDataHeaders(final HttpRequest.Builder reqBuilder) {
-	}
+  protected void applyMetaDataHeaders(final HttpRequest.Builder reqBuilder) {}
 
-	protected void applyAuthHeaders(
-		final HttpRequest.Builder reqBuilder,
-		final HttpMethod httpMethod,
-		final String dstUriPath,
-		final Credential credential) {
-		final String authToken;
-		final String uid;
-		final String secret;
-		if(credential != null) {
-			authToken = authTokens.get(credential);
-			uid = credential.getUid();
-			secret = credential.getSecret();
-		} else if(this.credential != null) {
-			authToken = authTokens.get(this.credential);
-			uid = this.credential.getUid();
-			secret = this.credential.getSecret();
-		} else {
-			authToken = authTokens.get(Credential.NONE);
-			uid = null;
-			secret = null;
-		}
-		if(dstUriPath.equals(AUTH_URI)) {
-			if(uid != null && !uid.isEmpty()) {
-				reqBuilder.header(KEY_X_AUTH_USER, uid);
-			}
-			if(secret != null && !secret.isEmpty()) {
-				reqBuilder.header(KEY_X_AUTH_KEY, secret);
-			}
-		} else if(authToken != null && ! authToken.isEmpty()) {
-			reqBuilder.header(KEY_X_AUTH_TOKEN, authToken);
-		}
-	}
+  protected void applyAuthHeaders(
+      final HttpRequest.Builder reqBuilder,
+      final HttpMethod httpMethod,
+      final String dstUriPath,
+      final Credential credential) {
+    final String authToken;
+    final String uid;
+    final String secret;
+    if (credential != null) {
+      authToken = authTokens.get(credential);
+      uid = credential.getUid();
+      secret = credential.getSecret();
+    } else if (this.credential != null) {
+      authToken = authTokens.get(this.credential);
+      uid = this.credential.getUid();
+      secret = this.credential.getSecret();
+    } else {
+      authToken = authTokens.get(Credential.NONE);
+      uid = null;
+      secret = null;
+    }
+    if (dstUriPath.equals(AUTH_URI)) {
+      if (uid != null && !uid.isEmpty()) {
+        reqBuilder.header(KEY_X_AUTH_USER, uid);
+      }
+      if (secret != null && !secret.isEmpty()) {
+        reqBuilder.header(KEY_X_AUTH_KEY, secret);
+      }
+    } else if (authToken != null && !authToken.isEmpty()) {
+      reqBuilder.header(KEY_X_AUTH_TOKEN, authToken);
+    }
+  }
 
-	protected void applyCopyHeaders(final HttpRequest.Builder reqBuilder, final String srcPath)
-	throws URISyntaxException {
-		reqBuilder.header(
-			KEY_X_COPY_FROM,
-			srcPath != null && !srcPath.isEmpty() && srcPath.startsWith(namespacePath) ?
-			srcPath.substring(namespacePath.length()) : srcPath
-		);
-	}
+  protected void applyCopyHeaders(final HttpRequest.Builder reqBuilder, final String srcPath)
+      throws URISyntaxException {
+    reqBuilder.header(
+        KEY_X_COPY_FROM,
+        srcPath != null && !srcPath.isEmpty() && srcPath.startsWith(namespacePath)
+            ? srcPath.substring(namespacePath.length())
+            : srcPath);
+  }
 
   protected Object handleResponse(final HttpResponse resp, final Throwable thrown) {
     Loggers.MSG.warn("Jep321StorageDriverBase::handleResponse({}, {})", resp, thrown);
