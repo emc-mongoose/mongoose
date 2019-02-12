@@ -15,7 +15,7 @@ build_script:
   - cmd: gradlew.bat clean jar
 
 before_test:
-  - cmd: echo findstr %1 %2 %3 %4 %5 > %systemroot%\grep.cmd
+  - ps: new-alias grep findstr
   - ps:  $env:MONGOOSE_VERSION=$(type base\src\main\resources\config\defaults.json | grep version )
   - cmd: set PYTHONPATH=%HOME_DIR%\base\src\test\robot\lib;C:\Python37-x64\lib\site-packages
   - cmd: set PATH=%PATH%;C:\Python37-x64;C:\Python37-x64\Scripts
