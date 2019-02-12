@@ -15,8 +15,8 @@ build_script:
   - cmd: gradlew.bat clean jar
 
 before_test:
-  - ps: new-alias grep findstr
-  - ps:  $env:MONGOOSE_VERSION=$(type base\src\main\resources\config\defaults.json | grep version )
+  - cmd: echo findstr %1 %2 %3 %4 %5 > %systemroot%\grep.cmd
+  - ps:  $env:MONGOOSE_VERSION=$(type base\src\main\resources\config\defaults.json | grep version | %{$_ -replace ".*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*","\1"}) #sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
   - cmd: set PYTHONPATH=%HOME_DIR%\base\src\test\robot\lib;C:\Python37-x64\lib\site-packages
   - cmd: set PATH=%PATH%;C:\Python37-x64;C:\Python37-x64\Scripts
   - cmd: "%PYTHON%\\python.exe -m pip install --upgrade pip"
