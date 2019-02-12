@@ -172,8 +172,8 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
         final var req = httpRequest(op);
         final var respBodyHandler = new ResponseBodyHandler<>(op, this::releaseCompleted);
         op.startRequest();
-        client.sendAsync(req, respBodyHandler, null).handle(this::handleResponse);
         op.finishRequest();
+        client.sendAsync(req, respBodyHandler, null).handle(this::handleResponse);
         return true;
       } catch (final URISyntaxException e) {
         LogUtil.exception(Level.ERROR, e, "{}: failed to build the request URI", stepId);
