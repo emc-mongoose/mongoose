@@ -48,7 +48,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -115,13 +114,7 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
 
     final var httpConfig = netConfig.configVal("http");
     final var httpVersion = Version.valueOf(httpConfig.stringVal("version"));
-    client =
-        HttpClient.newBuilder()
-            .executor(
-                Executors.newFixedThreadPool(
-                    threads > 0 ? threads : Runtime.getRuntime().availableProcessors()))
-            .version(httpVersion)
-            .build();
+    client = HttpClient.newBuilder().version(httpVersion).build();
     reqBuilder.version(httpVersion);
     final var headersMap = httpConfig.<String>mapVal("headers");
     for (final var header : headersMap.entrySet()) {
