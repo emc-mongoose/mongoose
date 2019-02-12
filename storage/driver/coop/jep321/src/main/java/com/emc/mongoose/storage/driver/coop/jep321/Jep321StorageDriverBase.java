@@ -546,7 +546,11 @@ public class Jep321StorageDriverBase<I extends Item, O extends Operation<I>>
   }
 
   protected Object handleResponse(final HttpResponse resp, final Throwable thrown) {
-    Loggers.MSG.warn("Jep321StorageDriverBase::handleResponse({}, {})", resp, thrown);
+    if (thrown == null) {
+      throw new AssertionError("Unexpected behaviour");
+    } else {
+      LogUtil.trace(Loggers.ERR, Level.WARN, thrown, "{}: HTTP request failed", stepId);
+    }
     return null;
   }
 
