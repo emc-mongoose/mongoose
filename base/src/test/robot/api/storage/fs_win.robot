@@ -36,7 +36,7 @@ Get Log Directory
 
 Start Mongoose
 	[Arguments]  ${version}
-	${MONGOOSE_JAR_PATH}    ${HOME_DIR}\\build\\libs\\mongoose-${version}.jar
+	${MONGOOSE_JAR_PATH} =  Catenate  ${HOME_DIR}\\build\\libs\\mongoose-${version}.jar
 	${java_home} =  Get Environment Variable  JAVA_HOME
 	${cmd} =  Catenate  SEPARATOR=\t
 	...  ${java_home}\\bin\\java -jar ${MONGOOSE_JAR_PATH}
