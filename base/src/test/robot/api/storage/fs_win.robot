@@ -20,21 +20,23 @@ ${STEP_ID}   win_fs_robotest
 Should Create Files Test
 	${VERSION}    Get Environment Variable  MONGOOSE_VERSION
 	Create Directory  ${ITEM_OUTPUT_PATH}
-	Start Mongoose
-	${log_dir} =  Get Log Directory
+	Start Mongoose  ${VERSION}
+	${log_dir} =  Get Log Directory  ${VERSION}
 	Validate Log File Metrics Total  ${log_dir}\\${STEP_ID}  file_separator=\\  count_succ_min=${10}  count_succ_max=${10}
 	...  transfer_size=${10240000}  transfer_size_delta=${10240000}
 
 *** Keywords ***
 
 Get Log Directory
+	[Arguments]  ${version}
 	${cmd} =  Catenate  ECHO %HomeDrive%%HomePath%
 	${std_out} =  Run   ${cmd}
 	${std_out} =  Strip String  ${std_out}
-	[Return]  ${std_out}\\.mongoose\\${VERSION}\\log
+	[Return]  ${std_out}\\.mongoose\\${version}\\log
 
 Start Mongoose
-	${MONGOOSE_JAR_PATH}    ${HOME_DIR}\\build\\libs\\mongoose-${VERSION}.jar
+	[Arguments]  ${version}
+	${MONGOOSE_JAR_PATH}    ${HOME_DIR}\\build\\libs\\mongoose-${version}.jar
 	${java_home} =  Get Environment Variable  JAVA_HOME
 	${cmd} =  Catenate  SEPARATOR=\t
 	...  ${java_home}\\bin\\java -jar ${MONGOOSE_JAR_PATH}
