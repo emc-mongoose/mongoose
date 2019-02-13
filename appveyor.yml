@@ -15,7 +15,6 @@ build_script:
   - cmd: gradlew.bat clean jar
 
 before_test:
-  - cmd: echo findstr %1 %2 %3 %4 %5 > %systemroot%\grep.cmd
   - ps: >
         $env:MONGOOSE_VERSION=$(type base\src\main\resources\config\defaults.json
         |  where { $_ -match "version"} | Select-String -Pattern '\b\d\.\d\.\d\b' -AllMatches
