@@ -16,7 +16,10 @@ build_script:
 
 before_test:
   - cmd: echo findstr %1 %2 %3 %4 %5 > %systemroot%\grep.cmd
-  - ps:  $env:MONGOOSE_VERSION=$(type base\src\main\resources\config\defaults.json |  where { $_ -match "version"} | Select-String -Pattern '\b\d\.\d\.\d\b' -AllMatches | % { $_.Matches } | % { $_.Value }) #sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+  - ps:  >
+  $env:MONGOOSE_VERSION=$(type base\src\main\resources\config\defaults.json
+  |  where { $_ -match "version"} | Select-String -Pattern '\b\d\.\d\.\d\b' -AllMatches
+  | % { $_.Matches } | % { $_.Value })
   - cmd: set PYTHONPATH=%HOME_DIR%\base\src\test\robot\lib;C:\Python37-x64\lib\site-packages
   - cmd: set PATH=%PATH%;C:\Python37-x64;C:\Python37-x64\Scripts
   - cmd: "%PYTHON%\\python.exe -m pip install --upgrade pip"
