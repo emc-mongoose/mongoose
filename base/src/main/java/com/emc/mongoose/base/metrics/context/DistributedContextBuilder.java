@@ -10,8 +10,6 @@ import java.util.function.Supplier;
 public interface DistributedContextBuilder
     extends ContextBuilder<DistributedContextBuilder, DistributedMetricsContextImpl> {
 
-  DistributedContextBuilder perfDbResultsFileFlag(final boolean perfDbResultsFileFlag);
-
   DistributedContextBuilder quantileValues(final List<Double> quantileValues);
 
   DistributedContextBuilder nodeAddrs(final List<String> nodeAddrs);

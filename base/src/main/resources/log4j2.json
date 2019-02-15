@@ -214,32 +214,6 @@
 						"header" : "ItemPath,UploadId,RespLatency[us]%n",
 						"pattern" : "%m%n"
 					}
-				},
-				{
-					"name" : "extResultsFile",
-					"type" : "File",
-					"fileName" : "result.xml",
-					"append" : true,
-					"createOnDemand" : true,
-					"PatternLayout" : {
-						"header" : "<result>\n",
-						"footer" : "</result>\n",
-						"pattern" : "%m",
-						"noConsoleNoAnsi" : true
-					}
-				},
-				{
-					"name" : "extThresholdResultsFile",
-					"type" : "File",
-					"fileName" : "result-threshold.xml",
-					"append" : true,
-					"createOnDemand" : true,
-					"PatternLayout" : {
-						"header" : "<result-with-threshold>\n",
-						"footer" : "</result-with-threshold>\n",
-						"pattern" : "%m",
-						"noConsoleNoAnsi" : true
-					}
 				}
 			]
 		},
@@ -306,14 +280,6 @@
 					"additivity" : false
 				},
 				{
-					"name" : "com.emc.mongoose.base.logging.metrics.ExtResultsFile",
-					"level" : "INFO",
-					"AppenderRef" : {
-						"ref" : "extResultsFile"
-					},
-					"additivity" : false
-				},
-				{
 					"name" : "com.emc.mongoose.base.logging.metrics.File",
 					"level" : "INFO",
 					"AppenderRef" : {
@@ -334,14 +300,6 @@
 					"level" : "INFO",
 					"AppenderRef" : {
 						"ref" : "metricsStdout"
-					},
-					"additivity" : false
-				},
-				{
-					"name" : "com.emc.mongoose.base.logging.metrics.threshold.ExtResultsFile",
-					"level" : "INFO",
-					"AppenderRef" : {
-						"ref" : "extThresholdResultsFile"
 					},
 					"additivity" : false
 				},

@@ -65,8 +65,6 @@ public interface MetricsContext<S extends AllMetricsSnapshot>
 
   boolean sumPersistEnabled();
 
-  boolean perfDbResultsFileEnabled();
-
   long outputPeriodMillis();
 
   long lastOutputTs();

@@ -179,11 +179,6 @@ public class MetricsContextImpl<S extends AllMetricsSnapshotImpl> extends Metric
   }
 
   @Override
-  public final boolean perfDbResultsFileEnabled() {
-    return false;
-  }
-
-  @Override
   @SuppressWarnings("unchecked")
   public void refreshLastSnapshot() {
     final long currentTimeMillis = System.currentTimeMillis();

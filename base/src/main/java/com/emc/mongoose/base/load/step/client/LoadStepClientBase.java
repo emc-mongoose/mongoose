@@ -15,12 +15,12 @@ import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.io.ItemInputFactory;
 import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.item.op.Operation;
-import com.emc.mongoose.base.load.step.client.metrics.MetricsAggregator;
-import com.emc.mongoose.base.load.step.client.metrics.MetricsAggregatorImpl;
-import com.emc.mongoose.base.load.step.file.FileManager;
 import com.emc.mongoose.base.load.step.LoadStep;
 import com.emc.mongoose.base.load.step.LoadStepBase;
 import com.emc.mongoose.base.load.step.LoadStepFactory;
+import com.emc.mongoose.base.load.step.client.metrics.MetricsAggregator;
+import com.emc.mongoose.base.load.step.client.metrics.MetricsAggregatorImpl;
+import com.emc.mongoose.base.load.step.file.FileManager;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.base.metrics.MetricsManager;
@@ -328,7 +328,6 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
         (int) (concurrencyLimit * metricsConfig.doubleVal("threshold"));
     final boolean metricsAvgPersistFlag = metricsConfig.boolVal("average-persist");
     final boolean metricsSumPersistFlag = metricsConfig.boolVal("summary-persist");
-    final boolean metricsSumPerfDbOutputFlag = metricsConfig.boolVal("summary-perfDbResultsFile");
     // it's not known yet how many nodes are involved, so passing the function "this::sliceCount"
     // reference for
     // further usage

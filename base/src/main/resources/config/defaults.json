@@ -151,8 +151,6 @@ Use  the command line arguments either load step configurations in the scenario 
 				}
 			},
 			"summary": {
-				// Output the results.xml file used as a PerfDb input if true
-				"perfDbResultsFile": false,
 				// Persist the summary (total) metrics if true
 				"persist": true
 			},

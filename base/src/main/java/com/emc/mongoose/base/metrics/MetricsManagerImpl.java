@@ -7,7 +7,6 @@ import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.logging.ExtResultsXmlLogMessage;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.base.logging.MetricsAsciiTableLogMessage;
@@ -175,16 +174,6 @@ public class MetricsManagerImpl extends ExclusiveFiberBase implements MetricsMan
                   new MetricsCsvLogMessage(
                       snapshot, metricsCtx.opType(), metricsCtx.concurrencyLimit()));
             }
-            if (metricsCtx.perfDbResultsFileEnabled()) {
-              Loggers.METRICS_EXT_RESULTS_FILE.info(
-                  new ExtResultsXmlLogMessage(
-                      metricsCtx.id(),
-                      snapshot,
-                      metricsCtx.startTimeStamp(),
-                      metricsCtx.opType(),
-                      metricsCtx.concurrencyLimit(),
-                      metricsCtx.itemDataSize()));
-            }
           }
           // console output
           if (metricsCtx instanceof DistributedMetricsContext) {
@@ -239,16 +228,6 @@ public class MetricsManagerImpl extends ExclusiveFiberBase implements MetricsMan
     if (lastThresholdMetrics.sumPersistEnabled()) {
       Loggers.METRICS_THRESHOLD_FILE_TOTAL.info(
           new MetricsCsvLogMessage(snapshot, metricsCtx.opType(), metricsCtx.concurrencyLimit()));
-    }
-    if (lastThresholdMetrics.perfDbResultsFileEnabled()) {
-      Loggers.METRICS_THRESHOLD_EXT_RESULTS_FILE.info(
-          new ExtResultsXmlLogMessage(
-              metricsCtx.id(),
-              snapshot,
-              metricsCtx.startTimeStamp(),
-              metricsCtx.opType(),
-              metricsCtx.concurrencyLimit(),
-              metricsCtx.itemDataSize()));
     }
     metricsCtx.exitThresholdState();
   }

@@ -3,7 +3,6 @@
     "color" : "boolean",
     "metrics" : {
       "summary" : {
-        "perfDbResultsFile" : "boolean",
         "persist" : "boolean"
       },
       "quantiles" : "list",
