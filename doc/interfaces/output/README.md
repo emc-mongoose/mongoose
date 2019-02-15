@@ -56,6 +56,42 @@ To disable the console output coloring set the `output-color` configuration opti
 The most of log messages are written to the output files using dynamic output file path:
 `<MONGOOSE_DIR>/log/<STEP_ID>/...` where "STEP_ID" may change during runtime.
 
+### 1.1.4. Log configuration
+
+In order to configure logging, can be used custom log4j2 config. This may be necessary to disable warnings or logging certain files.
+Use parameter `Dlog4j.configurationFile` for this:
+```bash
+java -Dlog4j.configurationFile=/path/to/custom/config/log4j2.json -jar mongoose-<VERSION>.jar
+```
+An example of a default configuration is `mongoose/base/src/main/resources/log4j2.json`
+
+For docker:
+
+You first need to create custom `entrypoint.sh`:
+```bash
+#!/bin/sh
+umask 0000
+export JAVA_HOME=/opt/mongoose
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${JAVA_HOME}/bin
+java -Dlog4j.configurationFile=/path/in/container/custom-log4j2.json -jar /opt/mongoose/mongoose.jar "$@"
+```
+
+which differs from default entrypoint by this parameter: `-Dlog4j.configurationFile=/path/in/container/custom-log4j2.json`
+
+and run container with following command:
+
+```bash
+docker run \
+    -ti -v /path/on/host/custom-log4j2json:/path/in/container/custom-log4j2.json \
+    -v /path/on/host/custom-entrypoint.sh:/path/in/container/custom-entrypoint.sh \
+    --entrypoint /path/in/container/custom-entrypoint.sh \
+    --network host \
+    emcmongoose/mongoose[-<TYPE>] [\
+    <ARGS>]
+docker run -ti -v /home/user/mongoose/log4j2-new.json:/opt/mongoose/log4j2-new.json -v /home/user/mongoose/docker/entrypoint.sh:/opt/mongoose/entrypoint-new.sh  --entrypoint /opt/mongoose/entrypoint-new.sh --network host emcmongoose/mongoose <ARGS>
+```
+
+
 ## 1.2. Categories
 
 ### 1.2.1. CLI Arguments
