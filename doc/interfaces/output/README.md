@@ -64,9 +64,9 @@ Use parameter `Dlog4j.configurationFile` for this:
 ```bash
 java -Dlog4j.configurationFile=/path/to/custom/config/log4j2.json -jar mongoose-<VERSION>.jar
 ```
-An example of a default configuration is `mongoose/base/src/main/resources/log4j2.json`
+An example of a default configuration [here](base/src/main/resources/log4j2.json).
 
-For docker:
+#####For docker:
 
 You first need to create custom `entrypoint.sh`:
 ```bash
@@ -77,7 +77,7 @@ export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${JAVA_
 java -Dlog4j.configurationFile=/path/in/container/custom-log4j2.json -jar /opt/mongoose/mongoose.jar "$@"
 ```
 
-which differs from default entrypoint by this parameter: `-Dlog4j.configurationFile=/path/in/container/custom-log4j2.json`
+which differs from default [entrypoint](docker/entrypoint.sh) by this parameter: `-Dlog4j.configurationFile=/path/in/container/custom-log4j2.json`
 
 and run container with following command:
 
@@ -89,7 +89,6 @@ docker run \
     --network host \
     emcmongoose/mongoose[-<TYPE>] [\
     <ARGS>]
-docker run -ti -v /home/user/mongoose/log4j2-new.json:/opt/mongoose/log4j2-new.json -v /home/user/mongoose/docker/entrypoint.sh:/opt/mongoose/entrypoint-new.sh  --entrypoint /opt/mongoose/entrypoint-new.sh --network host emcmongoose/mongoose <ARGS>
 ```
 
 
