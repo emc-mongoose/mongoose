@@ -42,6 +42,15 @@ Please, note that all contributors shall follow the Contributor Agreement guidel
 * [Mikhail Malygin](https://github.com/aphreet)
 * [Olga Zhavzharova](https://github.com/Zhavzharova)
 * [Veronika Kochugova](https://github.com/veronikaKochugova)
+* Vladislav Kulakovsky
+* Anton Yurkov
+* Alexander Afonin
+* Igor Konev
+* Evgeny Timoshchuk
+* Andrey Koltsov 
+* Alina Pereskokova
+* Pavel Vinogradov
+* Ivan Sysoev
 
 # 1.2. Roles
 
