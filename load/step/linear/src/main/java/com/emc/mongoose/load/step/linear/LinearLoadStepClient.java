@@ -1,11 +1,11 @@
 package com.emc.mongoose.load.step.linear;
 
-import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.load.step.client.LoadStepClient;
-import com.emc.mongoose.load.step.client.LoadStepClientBase;
-import com.emc.mongoose.logging.LogUtil;
-import com.emc.mongoose.metrics.MetricsManager;
+import com.emc.mongoose.base.env.Extension;
+import com.emc.mongoose.base.item.op.OpType;
+import com.emc.mongoose.base.load.step.client.LoadStepClient;
+import com.emc.mongoose.base.load.step.client.LoadStepClientBase;
+import com.emc.mongoose.base.logging.LogUtil;
+import com.emc.mongoose.base.metrics.MetricsManager;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;

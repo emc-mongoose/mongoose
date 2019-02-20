@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.coop.netty;
 
-import com.emc.mongoose.env.ExtensionBase;
+import com.emc.mongoose.base.env.ExtensionBase;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.io.json.JsonSchemaProviderBase;
 
@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.emc.mongoose.Constants.APP_NAME;
+import static com.emc.mongoose.base.Constants.APP_NAME;
 
 public final class NettyStorageDriverExtension
 extends ExtensionBase {

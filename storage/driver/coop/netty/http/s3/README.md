@@ -14,7 +14,7 @@
 * Data item operation types:
     * `create`
         * [copy](../../../../../../doc/design/copy_mode/README.md)
-        * [Multipart Upload](../../../../../../src/main/java/com/emc/mongoose/item/op/composite/README.md)
+        * [Multipart Upload](../../../../../../src/main/java/com/emc/mongoose/base/item/op/composite/README.md)
     * `read`
         * full
         * random byte ranges
@@ -35,7 +35,7 @@
 ## 2. Usage
 
 ```bash
-java -jar mongoose-<VERSION>.jar \
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose \
     --storage-driver-type=s3 \
     ...
 ```

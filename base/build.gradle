@@ -1,0 +1,106 @@
+description = "mongoose-base"
+
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
+
+ext {
+	log4j2PluginsDatPath = Paths.get(
+		"META-INF", "org", "apache", "logging", "log4j", "core", "config", "plugins", "Log4j2Plugins.dat",
+	)
+	mainClass = "${rootPkg}.base.Main"
+}
+
+dependencies {
+
+	provided(
+		"commons-codec:commons-codec:${depVersion.commonsCodec}",
+		"commons-lang:commons-lang:${depVersion.commonsLang}",
+		"com.fasterxml.jackson.core:jackson-annotations:${depVersion.jackson}",
+		"com.fasterxml.jackson.core:jackson-core:${depVersion.jackson}",
+		"com.fasterxml.jackson.core:jackson-databind:${depVersion.jackson}",
+		"com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${depVersion.jackson}",
+		"com.github.akurilov:confuse:${depVersion.confuse}",
+		"com.github.akurilov:confuse-io-json:${depVersion.confuseIoJson}",
+		"com.github.akurilov:fiber4j:${depVersion.fiber4j}",
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
+		"com.lmax:disruptor:${depVersion.disruptor}",
+		"io.prometheus:simpleclient:${depVersion.tsdbMetrics}",
+		"io.prometheus:simpleclient_servlet:${depVersion.tsdbMetrics}",
+		"io.prometheus:simpleclient_hotspot:${depVersion.tsdbMetrics}",
+		"org.apache.logging.log4j:log4j-api:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-core:${depVersion.log4j}",
+		"org.eclipse.jetty:jetty-server:${depVersion.jetty}",
+		"org.eclipse.jetty:jetty-servlet:${depVersion.jetty}",
+		"org.eclipse.jetty:jetty-rewrite:${depVersion.jetty}",
+		// actually the deps below are the runtime deps
+		"org.apache.logging.log4j:log4j-jul:${depVersion.log4j}",
+		"org.apache.logging.log4j:log4j-slf4j-impl:${depVersion.log4j}",
+		"org.slf4j:slf4j-api:${depVersion.slf4j}",
+	)
+
+	testCompile(
+		"com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${depVersion.jackson}",
+		"junit:junit:${depVersion.junit}",
+		"org.scala-lang:scala-compiler:${depVersion.scala}",
+		"org.scala-lang:scala-library:${depVersion.scala}",
+		"com.github.docker-java:docker-java:[3,)",
+		"org.apache.commons:commons-csv:1.1",
+		"com.google.guava:guava:25.1-jre",
+		"org.apache.commons:commons-math3:3.6.1",
+		"org.mockito:mockito-core:2.23.0",
+	)
+}
+
+task mergeLog4j2PluginsDat(dependsOn: compileJava) {
+	doLast {
+
+		byte[] pluginsData
+		byte[] customPluginsData
+
+		configurations.provided
+			.each {
+			if(!it.isDirectory()) {
+				zipTree(it)
+					.filter {
+					it.toString().endsWith(log4j2PluginsDatPath.toString())
+				}
+				.each {
+					pluginsData = Files.readAllBytes(Paths.get(it.toString()))
+				}
+			}
+		}
+
+		sourceSets.main.output.classesDirs
+			.any {
+			customPluginsData = Files.readAllBytes(
+				Paths.get(it.toString(), log4j2PluginsDatPath.toString(),)
+			)
+		}
+
+		sourceSets.main.output.classesDirs
+			.any {
+			Files.write(
+				Paths.get(it.toString(), log4j2PluginsDatPath.toString(),),
+				pluginsData, StandardOpenOption.TRUNCATE_EXISTING
+			)
+			Files.write(
+				Paths.get(it.toString(), log4j2PluginsDatPath.toString(),),
+				customPluginsData, StandardOpenOption.APPEND
+			)
+		}
+	}
+}
+
+jar {
+	dependsOn += mergeLog4j2PluginsDat
+	manifest {
+		attributes(
+			"Main-Class": mainClass,
+			"Implementation-Title": project.description,
+		)
+	}
+	from configurations.provided.collect {
+		it.isDirectory() ? it : zipTree(it)
+	}
+}

@@ -1,9 +1,9 @@
 package com.emc.mongoose.load.step.linear;
 
-import com.emc.mongoose.env.Extension;
-import com.emc.mongoose.env.ExtensionBase;
-import com.emc.mongoose.load.step.LoadStepFactory;
-import com.emc.mongoose.metrics.MetricsManager;
+import com.emc.mongoose.base.env.Extension;
+import com.emc.mongoose.base.env.ExtensionBase;
+import com.emc.mongoose.base.load.step.LoadStepFactory;
+import com.emc.mongoose.base.metrics.MetricsManager;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 
