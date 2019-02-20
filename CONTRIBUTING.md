@@ -34,6 +34,8 @@ Please, note that all contributors shall follow the Contributor Agreement guidel
 
 # 1. Contributors
 
+Alphabetically:
+
 * [Andrey Kurilov](https://github.com/akurilov)
 * Gennady Eremeev
 * [Ilya Kisliakovsky](https://github.com/kisliakovsky)
@@ -87,7 +89,7 @@ Types:
 | Task     | A task which couldn't be included into any defect/story |
 | Sub-task | A task which could be included into a defect/story |
 
-Tracker link: https://mongoose-issues.atlassian.net/projects/BASE
+Tracker link: https://mongoose-issues.atlassian.net/projects/GOOSE
 
 ## 3.1. States
 
