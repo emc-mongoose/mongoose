@@ -47,7 +47,7 @@ create_config = {
         "load" : {
         	"step" : {
         		"limit" : {
-        			"size" : 10B
+        			"size" : 10
         		}
         	}
         }
