@@ -68,6 +68,7 @@ Should Read Multiple Random Byte Ranges
     ...  --item-data-size=100KB
     ...  --load-op-limit-count=${object_count_limit}
     ...  --load-step-id=${step_id}
+    ...  --item-data-verify=true
     ...  --run-scenario=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.js
     ...  --storage-driver-limit-concurrency=10
     &{env_params} =  Create Dictionary  ITEM_LIST_FILE=${MONGOOSE_CONTAINER_DATA_DIR}/${step_id}.csv  RANDOM_BYTE_RANGE_COUNT=${random_byte_range_count}
