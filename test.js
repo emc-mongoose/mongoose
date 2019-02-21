@@ -1,5 +1,4 @@
-itemInputFile =
-itemOutputFile =
+swift_item_list = "swift_item_list.csv"
 
 config = {
 	"storage" : {
@@ -29,7 +28,7 @@ config = {
 read_config = {
         "item": {
             "input": {
-                "file": itemInputFile
+                "file": swift_item_list
             },
             "data": {
             	"verify" : true,
@@ -42,7 +41,7 @@ read_config = {
 create_config = {
         "item": {
             "output": {
-                "file": itemOutputFile
+                "file": swift_item_list
             }
         }
     }
