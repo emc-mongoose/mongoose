@@ -29,12 +29,6 @@ read_config = {
         "item": {
             "input": {
                 "file": swift_item_list
-            },
-            "data": {
-            	"verify" : true,
-            	"ranges" : {
-                    "random" : 1
-                }
             }
         }
       }
