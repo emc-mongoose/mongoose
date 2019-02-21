@@ -14,15 +14,15 @@ config = {
 		"auth" : {
 			"uid" : "test:tester",
 			"secret" : "ievahsaelaiz"
-		},
-		"load": {
-             "op": {
-                  "limit": {
-                       "count": 10
-                  }
-             }
-        }
-	}
+		}
+	},
+	"load": {
+         "op": {
+              "limit": {
+                   "count": 10
+              }
+         }
+    }
 }
 
 read_config = {
