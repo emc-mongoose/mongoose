@@ -19,7 +19,7 @@ config = {
 	"load": {
          "op": {
               "limit": {
-                   "count": 10
+                   "count": 1
               }
          }
     }
@@ -33,7 +33,7 @@ read_config = {
             "data": {
             	"verify" : true,
             	"ranges" : {
-                    "random" : 10
+                    "random" : 1
                 }
             }
         }
@@ -43,6 +43,13 @@ create_config = {
             "output": {
                 "file": swift_item_list
             }
+        },
+        "load" : {
+        	"step" : {
+        		"limit" : {
+        			"size" : 10B
+        		}
+        	}
         }
     }
 
