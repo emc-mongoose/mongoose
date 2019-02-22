@@ -44,7 +44,7 @@ create_config = {
             		"file" : "content.txt"
             	},
             	"ranges" : {
-                    "fixed" : 1-5,5-10
+                    "fixed" : 1-5,6-10
                 }
             }
         }
