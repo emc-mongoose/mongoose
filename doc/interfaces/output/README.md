@@ -5,6 +5,8 @@
 &nbsp;&nbsp;&nbsp;&nbsp;1.1.1. [Load Step Id](#111-load-step-id)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;1.1.2. [Console](#112-console)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;1.1.3. [Files](#113-files)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;1.1.4. [Log configuration](#114-log-configuration)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;1.1.4.1. [Docker Custom Logging](#1141-docker-custom-logging)<br/> 
 &nbsp;&nbsp;1.2. [Categories](#12-categories)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;1.2.1. [CLI Arguments](#121-cli-arguments)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;1.2.2. [Configuration Dump](#122-configuration-dump)<br/>
@@ -55,6 +57,43 @@ To disable the console output coloring set the `output-color` configuration opti
 
 The most of log messages are written to the output files using dynamic output file path:
 `<MONGOOSE_DIR>/log/<STEP_ID>/...` where "STEP_ID" may change during runtime.
+
+### 1.1.4. Log configuration
+
+In order to configure logging, can be used custom log4j2 config. This may be necessary to disable warnings or logging certain files.
+Use parameter `Dlog4j.configurationFile` for this:
+```bash
+java -Dlog4j.configurationFile=/path/to/custom/config/log4j2.json -jar mongoose-<VERSION>.jar
+```
+An example of a default configuration [here](base/src/main/resources/log4j2.json).
+
+##### 1.1.4.1. Docker Custom Logging
+
+The custom docker image should be built with the modified *entrypoint* for custom logging configuration. The additional property
+`-Dlog4j.configurationFile=/path/in/container/custom-log4j2.json` should be added:
+
+```bash
+#!/bin/sh
+umask 0000
+export JAVA_HOME=/opt/mongoose
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${JAVA_HOME}/bin
+java -Dlog4j.configurationFile=/path/in/container/custom-log4j2.json -jar /opt/mongoose/mongoose.jar "$@"
+```
+
+> default [entrypoint](docker/entrypoint.sh) 
+
+and run container with following command:
+
+```bash
+docker run \
+    -ti -v /path/on/host/custom-log4j2json:/path/in/container/custom-log4j2.json \
+    -v /path/on/host/custom-entrypoint.sh:/path/in/container/custom-entrypoint.sh \
+    --entrypoint /path/in/container/custom-entrypoint.sh \
+    --network host \
+    emcmongoose/mongoose[-<TYPE>] [\
+    <ARGS>]
+```
+
 
 ## 1.2. Categories
 
