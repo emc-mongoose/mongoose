@@ -29,6 +29,12 @@ read_config = {
         "item": {
             "input": {
                 "file": swift_item_list
+            },
+            "data" : {
+            	"ranges" : {
+                    "fixed" : new java.util.ArrayList(["1-5", "6-10"])
+                },
+                "verify" : true
             }
         }
       }
@@ -38,14 +44,10 @@ create_config = {
                 "file": swift_item_list
             },
             "data" : {
-            	"verify" : true,
             	"size" : 10,
             	"input" : {
             		"file" : "content.txt"
-            	},
-            	"ranges" : {
-                    "fixed" : new java.util.ArrayList(["1-5","6-10"])
-                }
+            	}
             }
         }
     }
