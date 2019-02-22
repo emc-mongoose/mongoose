@@ -44,7 +44,7 @@ create_config = {
             		"file" : "content.txt"
             	},
             	"ranges" : {
-                    "fixed" : 1-5,6-10
+                    "fixed" : new java.util.ArrayList(["1-5","6-10"])
                 }
             }
         }
