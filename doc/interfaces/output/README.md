@@ -6,6 +6,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;1.1.2. [Console](#112-console)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;1.1.3. [Files](#113-files)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;1.1.4. [Log configuration](#114-log-configuration)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;1.1.4.1. [Docker Custom Logging](#1141-docker-custom-logging)<br/> 
 &nbsp;&nbsp;1.2. [Categories](#12-categories)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;1.2.1. [CLI Arguments](#121-cli-arguments)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;1.2.2. [Configuration Dump](#122-configuration-dump)<br/>
@@ -66,9 +67,11 @@ java -Dlog4j.configurationFile=/path/to/custom/config/log4j2.json -jar mongoose-
 ```
 An example of a default configuration [here](base/src/main/resources/log4j2.json).
 
-##### For docker:
+##### 1.1.4.1. Docker Custom Logging
 
-You first need to create custom `entrypoint.sh`:
+The custom docker image should be built with the modified *entrypoint* for custom logging configuration. The additional property
+`-Dlog4j.configurationFile=/path/in/container/custom-log4j2.json` should be added:
+
 ```bash
 #!/bin/sh
 umask 0000
@@ -77,7 +80,7 @@ export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${JAVA_
 java -Dlog4j.configurationFile=/path/in/container/custom-log4j2.json -jar /opt/mongoose/mongoose.jar "$@"
 ```
 
-which differs from default [entrypoint](docker/entrypoint.sh) by this parameter: `-Dlog4j.configurationFile=/path/in/container/custom-log4j2.json`
+> default [entrypoint](docker/entrypoint.sh) 
 
 and run container with following command:
 
