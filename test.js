@@ -32,7 +32,7 @@ read_config = {
             },
             "data" : {
             	"ranges" : {
-                    "fixed" : new java.util.ArrayList(["1-5", "6-10"])
+                    "fixed" : new java.util.ArrayList(["0-4", "5-9"])
                 },
                 "verify" : true
             }
