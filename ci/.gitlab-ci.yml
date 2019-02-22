@@ -73,10 +73,8 @@ test_integration:
 
 build_docker_image:
   stage: build_docker_image
-  variables:
-    DOCKERFILE: Dockerfile
   script:
-    - docker build -f docker/${DOCKERFILE} -t ${IMAGE_NAME}:${CI_COMMIT_SHA} .
+    - docker build -f ci/docker/Dockerfile -t ${IMAGE_NAME}:${CI_COMMIT_SHA} .
     - docker save ${IMAGE_NAME}:${CI_COMMIT_SHA} > ${IMAGE_FILE_NAME}
   artifacts:
     paths:

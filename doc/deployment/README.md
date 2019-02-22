@@ -12,7 +12,7 @@ High-load tests may allocate up to 1-2 GB of the memory depending on the scenari
 # Jar
 
 Mongoose is distributed as a single jar file from:
-https://github.com/emc-mongoose/mongoose/releases/tag/latest
+http://central.maven.org/maven2/com/github/emc-mongoose/mongoose/
 
 # Docker
 

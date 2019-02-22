@@ -39,7 +39,7 @@ RUN apk --update add --no-cache ca-certificates curl openssl binutils xz \
 COPY --from=build build/jre /opt/mongoose
 
 ADD build/libs/mongoose-*.jar /opt/mongoose/
-ADD docker/entrypoint.sh /opt/mongoose/entrypoint.sh
+ADD ci/docker/entrypoint.sh /opt/mongoose/entrypoint.sh
 
 RUN ln -s /opt/mongoose/mongoose-*.jar /opt/mongoose/mongoose.jar; \
     mkdir ${HOME}/.mongoose; \
