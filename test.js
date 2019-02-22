@@ -42,7 +42,10 @@ create_config = {
             	"size" : 10,
             	"input" : {
             		"file" : "content.txt"
-            	}
+            	},
+            	"ranges" : {
+                    "fixed" : 1-5,5-10
+                }
             }
         }
     }
