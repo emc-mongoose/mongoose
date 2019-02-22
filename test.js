@@ -36,14 +36,10 @@ create_config = {
         "item": {
             "output": {
                 "file": swift_item_list
+            },
+            "data" : {
+            	"size" : 10
             }
-        },
-        "load" : {
-        	"step" : {
-        		"limit" : {
-        			"size" : 10
-        		}
-        	}
         }
     }
 
