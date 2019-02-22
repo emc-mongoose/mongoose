@@ -38,6 +38,7 @@ create_config = {
                 "file": swift_item_list
             },
             "data" : {
+            	"verify" : true,
             	"size" : 10,
             	"input" : {
             		"file" : "content.txt"
