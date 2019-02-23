@@ -2,7 +2,7 @@
 [![downloads](https://img.shields.io/github/downloads/emc-mongoose/mongoose/total.svg)](https://github.com/emc-mongoose/mongoose/releases)
 [![release](https://img.shields.io/github/release/emc-mongoose/mongoose.svg)](https://github.com/emc-mongoose/mongoose)
 [![Docker Pulls](https://img.shields.io/docker/pulls/emcmongoose/mongoose.svg)](https://hub.docker.com/r/emcmongoose/mongoose/)
-[![Gitter chat](https://badges.gitter.im/emc-mongoose/mongoose.png)](https://gitter.im/emc-mongoose/mongoose)
+[![Gitter chat](https://badges.gitter.im/emc-mongoose.png)](https://gitter.im/emc-mongoose)
 
 # Contents
 
