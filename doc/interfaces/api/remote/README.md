@@ -310,7 +310,7 @@ Each metric contains also the following labels/tags:
 |Label name|Configured param|Type|
 |:---|:---|---|
 |`load_step_id`|load-step-id|string|
-|`load_op_type`|load-op-type|string, [takes one of these values](https://github.com/emc-mongoose/mongoose/tree/master/doc/usage/load/operations/types#load-operation-types)|
+|`load_op_type`|load-op-type|string, [takes one of these values](doc/usage/load/operations/types#load-operation-types)|
 |`storage_driver_limit_concurrency`|storage-driver-limit-concurrency|integer|
 |`node_count`|the count of the Mongoose nodes involved into the given load step|integer|
 |`item_data_size`|item-data-size|string with the unit suffix (KB, MB, ...)|

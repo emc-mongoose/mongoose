@@ -1,11 +1,10 @@
 [![Gitter chat](https://badges.gitter.im/emc-mongoose.png)](https://gitter.im/emc-mongoose)
 [![Issue Tracker](https://img.shields.io/badge/Issue-Tracker-red.svg)](https://mongoose-issues.atlassian.net/projects/GOOSE)
-[![Build Status](https://api.cirrus-ci.com/github/emc-mongoose/mongoose.svg)](https://cirrus-ci.com/github/emc-mongoose/mongoose)
+[![CI status](https://gitlab.com/emcmongoose/mongoose/badges/master/pipeline.svg)](https://gitlab.com/emcmongoose/mongoose/commits/master)
 [![Tag](https://img.shields.io/github/tag/emc-mongoose/mongoose.svg)](https://github.com/emc-mongoose/mongoose/tags)
 [![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose/maven-metadata.xml.svg)](http://central.maven.org/maven2/com/github/emc-mongoose/mongoose)
 [![Sonatype Nexus (Releases)](https://img.shields.io/nexus/r/http/oss.sonatype.org/com.github.emc-mongoose/mongoose.svg)](http://oss.sonatype.org/com.github.emc-mongoose/mongoose)
 [![Docker Pulls](https://img.shields.io/docker/pulls/emcmongoose/mongoose.svg)](https://hub.docker.com/r/emcmongoose/mongoose/)
-[![downloads](https://img.shields.io/github/downloads/emc-mongoose/mongoose/total.svg)](https://github.com/emc-mongoose/mongoose/releases)
 
 # Contents
 
