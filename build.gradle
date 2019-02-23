@@ -437,7 +437,7 @@ import com.bmuschko.gradle.docker.tasks.container.*
 
 task dockerBuildImage(type: DockerBuildImage, dependsOn: jar) {
 	inputDir = rootProject.projectDir
-	dockerFile = project.file("docker${File.separator}Dockerfile")
+	dockerFile = project.file("ci${File.separator}docker${File.separator}Dockerfile")
 	imageId = "emcmongoose/mongoose"
 	tags = [
 		"emcmongoose/mongoose:${version}".toString(),
@@ -459,7 +459,7 @@ task dockerPushTestingImage(type: DockerPushImage, dependsOn: dockerBuildImage) 
 
 task dockerBuildImageRobotest(type: DockerBuildImage) {
 	inputDir = rootProject.projectDir
-	dockerFile = project.file("docker${File.separator}Dockerfile.robotest")
+	dockerFile = project.file("ci${File.separator}docker${File.separator}Dockerfile.robotest")
 	imageId = "emcmongoose/mongoose-robotest"
 	tags = [
 		"emcmongoose/mongoose-robotest:${version}",
