@@ -1,14 +1,14 @@
 package com.emc.mongoose.storage.driver.preempt;
 
-import com.emc.mongoose.data.DataInput;
-import com.emc.mongoose.exception.InterruptRunException;
-import com.emc.mongoose.exception.OmgShootMyFootException;
-import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.logging.LogContextThreadFactory;
-import com.emc.mongoose.logging.Loggers;
-import com.emc.mongoose.storage.driver.StorageDriver;
-import com.emc.mongoose.storage.driver.StorageDriverBase;
+import com.emc.mongoose.base.data.DataInput;
+import com.emc.mongoose.base.exception.InterruptRunException;
+import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.logging.LogContextThreadFactory;
+import com.emc.mongoose.base.logging.Loggers;
+import com.emc.mongoose.base.storage.driver.StorageDriver;
+import com.emc.mongoose.base.storage.driver.StorageDriverBase;
 import com.github.akurilov.confuse.Config;
 
 import java.io.EOFException;

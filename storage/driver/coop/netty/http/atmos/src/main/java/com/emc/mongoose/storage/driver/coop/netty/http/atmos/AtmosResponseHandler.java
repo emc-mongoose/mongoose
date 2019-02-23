@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.driver.coop.netty.http.atmos;
 
-import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpResponseHandlerBase;
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpStorageDriverBase;
 

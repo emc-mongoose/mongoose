@@ -1,6 +1,7 @@
 # Contents
 
 ## 2018
+* [4.2.0](#anchor-420) TBD
 * [4.1.1](#anchor-411) 2019-01-16
 * [4.1.0](#anchor-410) 2018-12-12
 * [4.0.3](#anchor-403) 2018-11-28
@@ -56,6 +57,24 @@
 * [0.1.5](#anchor-015) 09/22/14
 * [0.1.4](#anchor-014) 09/17/14
 * [0.1.3](#anchor-013) 08/15/14
+
+# 4.2.0
+
+## New Features and Enhancements
+
+### Functional
+
+1. TBD
+
+### Non-functional
+
+1. [Migration to Java 11](java11/).
+
+## Fixed Bugs
+
+| Id | Description |
+|----|-------------|
+| TBD | TBD |
 
 # 4.1.1
 

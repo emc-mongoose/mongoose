@@ -3,10 +3,11 @@ description = "mongoose-storage-driver-coop-netty-http-atmos"
 dependencies {
 
 	compileOnly(
-		project(":"),
+		project(":base"),
 		project(":storage:driver:coop"),
 		project(":storage:driver:coop:netty"),
 		project(":storage:driver:coop:netty:http"),
+		"com.github.akurilov:java-commons:${depVersion.javaCommons}",
 		"com.github.akurilov:confuse:${depVersion.confuse}",
 		"com.github.akurilov:confuse-io-json:${depVersion.confuseIoJson}",
 		"io.netty:netty-codec-http:${depVersion.netty}",
@@ -28,13 +29,8 @@ dependencies {
 }
 
 jar {
-
-	baseName = project.description
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
 	manifest {
 		attributes(
-			"Implementation-Version": version,
 			"Implementation-Title": project.description,
 		)
 	}

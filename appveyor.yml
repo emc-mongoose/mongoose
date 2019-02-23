@@ -2,29 +2,34 @@ image:
   - Visual Studio 2017
 
 environment:
+  JAVA_HOME: "C:\\Progra~1\\Java\\jdk11"
   HOME_DIR: C:\projects\mongoose
-  PATH_TO_JAR: build\libs\mongoose-*.jar
-  PATH_TO_ARTIFACTS: C:\projects\mongoose\build\robotest
+  PATH_TO_TEST_LOGS: "C:\\projects\\mongoose\\base\\build\\robotest"
+  PYTHON: "C:\\Python37-x64"
+  PYTHON_VERSION: 3.7
+  PYTHON_ARCH: 64
 
 build: off
 build_script:
   - cmd: cd %HOME_DIR%
-  - cmd: gradlew.bat clean dist
+  - cmd: gradlew.bat clean jar
 
 before_test:
-  - ps: pip install -U virtualenv
-  - ps: pip install -U requests
-  - ps: pip install -U robotframework
-  - ps: pip install -U robotframework-requests
-  - ps: pip install -U robotframework-csvlibrary
-  - cmd: set PYTHONPATH=%HOME_DIR%\src\test\robot\lib;C:\python27\lib\site-packages
-  - cmd: mkdir %PATH_TO_ARTIFACTS%
-  - cmd: type nul > %PATH_TO_ARTIFACTS%\report.html
-  - cmd: type nul > %PATH_TO_ARTIFACTS%\output.xml
-  - cmd: type nul > %PATH_TO_ARTIFACTS%\log.html
+  - ps: >
+        $env:MONGOOSE_VERSION=$(type base\src\main\resources\config\defaults.json
+        |  where { $_ -match "version"} | Select-String -Pattern '\b\d\.\d\.\d\b' -AllMatches
+        | % { $_.Matches } | % { $_.Value })
+  - cmd: set PYTHONPATH=%HOME_DIR%\base\src\test\robot\lib;C:\Python37-x64\lib\site-packages
+  - cmd: set PATH=%PATH%;C:\Python37-x64;C:\Python37-x64\Scripts
+  - cmd: "%PYTHON%\\python.exe -m pip install --upgrade pip"
+  - cmd: "%PYTHON%\\python.exe -m pip install -U virtualenv"
+  - cmd: "%PYTHON%\\python.exe -m pip install -U requests"
+  - cmd: "%PYTHON%\\python.exe -m pip install -U robotframework"
+  - cmd: "%PYTHON%\\python.exe -m pip install -U robotframework-requests"
+  - cmd: mkdir %PATH_TO_TEST_LOGS%
 
 test_script:
-  - cmd: robot --outputdir %PATH_TO_ARTIFACTS% --suite api.storage --include "fs win" src\test\robot
+  - cmd: robot --outputdir %PATH_TO_TEST_LOGS% --suite api.storage --include "fs win" base\src\test\robot
 
-artifacts:
-  - path: build\robotest\
+on_failure:
+  - cmd: appveyor PushArtifact %PATH_TO_TEST_LOGS%\log.html

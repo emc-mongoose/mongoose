@@ -73,7 +73,6 @@ reference.
 | output-metrics-average-persist                 | Flag | true | Persist the average (periodic) metrics if true
 | output-metrics-average-table-header-period     | Integer > 0 | 20 | Output the metrics table header every N rows
 | **output-metrics-quantiles**                   | List |[0.25,0.5,0.75]| Output quantiles for metrics (only for [Monitoring API](https://github.com/emc-mongoose/mongoose/tree/master/doc/interfaces/api/monitoring#monitoring-api))
-| output-metrics-summary-perfDbResultsFile       | Flag | false | Output the results.xml file used as a PerfDb input if true
 | output-metrics-summary-persist                 | Flag | true | Persist the load step's summary (total) metrics if true
 | output-metrics-trace-persist                   | Flag | true | Persist the information about each load operation if true
 | output-metrics-threshold                       | 0 <= Float <= 1 | 0 | The concurrency threshold to enable intermediate statistics calculation, 0 means no threshold
@@ -231,7 +230,7 @@ Parameterized configuration parameter: `item-output-path`
 Example: dynamic files output path defined by some particular "width" (16) and "depth" (2):
 
 ```bash
-java -jar mongoose-<VERSION>.jar \
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose \
     --item-output-path=/mnt/storage/%p\{16\;2\} \
     --storage-driver-type=fs \
     ...

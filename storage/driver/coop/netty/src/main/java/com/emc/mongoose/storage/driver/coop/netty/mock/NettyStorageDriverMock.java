@@ -1,15 +1,15 @@
 package com.emc.mongoose.storage.driver.coop.netty.mock;
 
-import com.emc.mongoose.data.DataInput;
-import com.emc.mongoose.exception.OmgShootMyFootException;
-import com.emc.mongoose.item.DataItem;
-import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.ItemFactory;
-import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.item.op.composite.data.CompositeDataOperation;
-import com.emc.mongoose.item.op.data.DataOperation;
-import com.emc.mongoose.storage.Credential;
+import com.emc.mongoose.base.data.DataInput;
+import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.item.DataItem;
+import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.item.ItemFactory;
+import com.emc.mongoose.base.item.op.OpType;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.item.op.composite.data.CompositeDataOperation;
+import com.emc.mongoose.base.item.op.data.DataOperation;
+import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverBase;
 
 import com.github.akurilov.commons.collection.Range;

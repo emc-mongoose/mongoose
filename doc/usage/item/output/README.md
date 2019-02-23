@@ -4,7 +4,7 @@
 
 It's possible to store the info about the item for each successful load operation.
 ```bash
-java -jar mongoose-<VERSION>.jar --item-output-file=items.csv ...
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-output-file=items.csv ...
 ```
 **Note**:
 > 1. The items output file includes also its modification state information for further reading and verification.
@@ -16,7 +16,7 @@ java -jar mongoose-<VERSION>.jar --item-output-file=items.csv ...
 
 For new items (basic `create` case) the storage destination path may be specified.
 ```bash
-java -jar mongoose-<VERSION>.jar --item-output-path=/storage/path/for/the/new/items
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-output-path=/storage/path/for/the/new/items
 ```
 
 **Note**:

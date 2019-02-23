@@ -65,7 +65,7 @@ The exact `read` operation behaviour depends on the particular item type and the
 
 By default the data is just being read from the storage and discarded immediately.
 ```bash
-java -jar mongoose-<VERSION>.jar --read ...
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --read ...
 ```
 
 ### 2.2. Content Verification
@@ -76,7 +76,7 @@ The expected data is being described by the [item data input](../../../item/type
 items have been updated (modified).
 
 ```bash
-java -jar mongoose-<VERSION>.jar --read --item-data-verify --item-input-file=items.csv ...
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --read --item-data-verify --item-input-file=items.csv ...
 ```
 
 An load operation is reported with the [status code](../../../../interfaces/output#232-files) 12 if the content verification fails.
@@ -94,7 +94,7 @@ By default the `update` operation rewrites the whole corresponding data item on 
 >   these items with enabled verification later.
 
 ```bash
-java -jar mongoose-<VERSION>.jar --update ...
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --update ...
 ```
 
 ## 4. Delete
@@ -105,7 +105,7 @@ Deletes the items on the storage if the operation is supported by the storage dr
 > Delete operations require the obviously configured [items input](../../../item/input).
 
 ```bash
-java -jar mongoose-<VERSION>.jar --delete ...
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --delete ...
 ```
 
 ## 5. Noop
@@ -114,7 +114,7 @@ Does nothing with the items. May be useful for demo/testing either to
 [enumerate the given item input storage path](../../../item/output#2-path).
 
 ```bash
-java -jar mongoose-<VERSION>.jar --noop ...
+java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --noop ...
 ```
 
 

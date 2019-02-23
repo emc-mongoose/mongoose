@@ -1,12 +1,12 @@
 package com.emc.mongoose.storage.driver.coop.nio.fs;
 
-import com.emc.mongoose.data.DataCorruptionException;
-import com.emc.mongoose.data.DataSizeException;
-import com.emc.mongoose.item.DataItem;
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.item.op.data.DataOperation;
-import com.emc.mongoose.logging.LogUtil;
-import com.emc.mongoose.logging.Loggers;
+import com.emc.mongoose.base.data.DataCorruptionException;
+import com.emc.mongoose.base.data.DataSizeException;
+import com.emc.mongoose.base.item.DataItem;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.item.op.data.DataOperation;
+import com.emc.mongoose.base.logging.LogUtil;
+import com.emc.mongoose.base.logging.Loggers;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.system.DirectMemUtil;
 import org.apache.logging.log4j.Level;
@@ -20,8 +20,8 @@ import java.nio.file.Path;
 import java.util.BitSet;
 import java.util.List;
 
-import static com.emc.mongoose.item.DataItem.rangeCount;
-import static com.emc.mongoose.item.DataItem.rangeOffset;
+import static com.emc.mongoose.base.item.DataItem.rangeCount;
+import static com.emc.mongoose.base.item.DataItem.rangeOffset;
 import static com.emc.mongoose.storage.driver.coop.nio.fs.FsConstants.FS;
 import static com.emc.mongoose.storage.driver.coop.nio.fs.FsConstants.FS_PROVIDER;
 import static com.emc.mongoose.storage.driver.coop.nio.fs.FsConstants.READ_OPEN_OPT;

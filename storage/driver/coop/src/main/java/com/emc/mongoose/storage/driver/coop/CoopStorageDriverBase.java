@@ -1,18 +1,18 @@
 package com.emc.mongoose.storage.driver.coop;
 
-import com.emc.mongoose.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.data.DataInput;
-import com.emc.mongoose.exception.InterruptRunException;
-import com.emc.mongoose.exception.OmgShootMyFootException;
-import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.item.op.composite.CompositeOperation;
-import com.emc.mongoose.item.op.partial.PartialOperation;
-import com.emc.mongoose.logging.Loggers;
-import com.emc.mongoose.storage.driver.StorageDriver;
-import com.emc.mongoose.storage.driver.StorageDriverBase;
-import static com.emc.mongoose.Constants.KEY_CLASS_NAME;
-import static com.emc.mongoose.Constants.KEY_STEP_ID;
+import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
+import com.emc.mongoose.base.data.DataInput;
+import com.emc.mongoose.base.exception.InterruptRunException;
+import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.item.op.composite.CompositeOperation;
+import com.emc.mongoose.base.item.op.partial.PartialOperation;
+import com.emc.mongoose.base.logging.Loggers;
+import com.emc.mongoose.base.storage.driver.StorageDriver;
+import com.emc.mongoose.base.storage.driver.StorageDriverBase;
+import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
 
 import com.github.akurilov.confuse.Config;
 
@@ -43,7 +43,7 @@ implements StorageDriver<I, O> {
 		final int batchSize
 	) throws OmgShootMyFootException {
 		super(testStepId, dataInput, storageConfig, verifyFlag);
-		final int inQueueLimit = storageConfig.intVal("driver-limit-queue-input");
+		final var inQueueLimit = storageConfig.intVal("driver-limit-queue-input");
 		this.childOpQueue = new ArrayBlockingQueue<>(inQueueLimit);
 		this.inOpQueue = new ArrayBlockingQueue<>(inQueueLimit);
 		this.concurrencyThrottle = new Semaphore(concurrencyLimit > 0 ? concurrencyLimit : Integer.MAX_VALUE, true);
@@ -79,7 +79,7 @@ implements StorageDriver<I, O> {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
-		int i = from;
+		var i = from;
 		O nextOp;
 		while(i < to && isStarted()) {
 			nextOp = ops.get(i);
@@ -90,7 +90,7 @@ implements StorageDriver<I, O> {
 				break;
 			}
 		}
-		final int n = i - from;
+		final var n = i - from;
 		scheduledOpCount.add(n);
 		return n;
 	}
@@ -101,8 +101,8 @@ implements StorageDriver<I, O> {
 		if(!isStarted()) {
 			throw new EOFException();
 		}
-		int n = 0;
-		for(final O nextOp: ops) {
+		var n = 0;
+		for(final var nextOp: ops) {
 			if(isStarted()) {
 				prepare(nextOp);
 				if(inOpQueue.offer(nextOp)) {
@@ -161,7 +161,7 @@ implements StorageDriver<I, O> {
 		if(super.handleCompleted(op)) {
 			completedOpCount.increment();
 			if(op instanceof CompositeOperation) {
-				final CompositeOperation parentOp = (CompositeOperation) op;
+				final var parentOp = (CompositeOperation) op;
 				if(!parentOp.allSubOperationsDone()) {
 					final List<O> subOps = parentOp.subOperations();
 					for(final O nextSubOp: subOps) {
@@ -172,8 +172,8 @@ implements StorageDriver<I, O> {
 					}
 				}
 			} else if(op instanceof PartialOperation) {
-				final PartialOperation subOp = (PartialOperation) op;
-				final CompositeOperation parentOp = subOp.parent();
+				final var subOp = (PartialOperation) op;
+				final var parentOp = subOp.parent();
 				if(parentOp.allSubOperationsDone()) {
 					// execute once again to finalize the things if necessary:
 					// complete the multipart upload, for example
@@ -205,7 +205,7 @@ implements StorageDriver<I, O> {
 	protected void doClose()
 	throws InterruptRunException, IOException, IllegalStateException {
 		try(
-			final CloseableThreadContext.Instance logCtx = CloseableThreadContext
+			final var logCtx = CloseableThreadContext
 				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())
 		) {

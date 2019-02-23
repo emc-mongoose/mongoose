@@ -1,10 +1,10 @@
 package com.emc.mongoose.storage.driver.coop.netty.http.swift;
 
-import com.emc.mongoose.item.DataItem;
-import com.emc.mongoose.item.Item;
-import com.emc.mongoose.item.op.OpType;
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.item.op.data.DataOperation;
+import com.emc.mongoose.base.item.DataItem;
+import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.item.op.OpType;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.item.op.data.DataOperation;
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpResponseHandlerBase;
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpStorageDriverBase;
 import static com.emc.mongoose.storage.driver.coop.netty.http.swift.SwiftApi.VALUE_MULTIPART_BYTERANGES;
@@ -58,12 +58,12 @@ extends HttpResponseHandlerBase<I, O> {
 Content-Type: application/octet-stream
 Content-Range: bytes 0-0/10240
 
-�
+?
 --ac9c12f841fa093d82ba80a402f6b62e
 Content-Type: application/octet-stream
 Content-Range: bytes 3-6/10240
 
-�}$�
+????
 --ac9c12f841fa093d82ba80a402f6b62e--
 	 */
 	protected final void handleResponseContentChunk(final Channel channel, final O op, final ByteBuf contentChunk)

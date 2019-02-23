@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.netty;
 
-import com.emc.mongoose.item.op.Operation;
-import com.emc.mongoose.logging.LogUtil;
+import com.emc.mongoose.base.item.op.Operation;
+import com.emc.mongoose.base.logging.LogUtil;
 
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
