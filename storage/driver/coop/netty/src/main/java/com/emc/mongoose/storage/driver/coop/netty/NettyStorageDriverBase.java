@@ -28,15 +28,12 @@ import com.github.akurilov.confuse.Config;
 
 import com.github.akurilov.netty.connection.pool.MultiNodeConnPoolImpl;
 import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;
-
 import static com.github.akurilov.netty.connection.pool.NonBlockingConnPool.ATTR_KEY_NODE;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.channel.EventLoopGroup;
@@ -47,17 +44,13 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 
 import org.apache.logging.log4j.CloseableThreadContext;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.util.BitSet;
 import java.util.List;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -88,30 +81,30 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 
 		super(stepId, itemDataInput, storageConfig, verifyFlag, batchSize);
 
-		final Config netConfig = storageConfig.configVal("net");
+		final var netConfig = storageConfig.configVal("net");
 		sslFlag = netConfig.boolVal("ssl");
 		if(sslFlag) {
 			Loggers.MSG.info("{}: SSL/TLS is enabled", stepId);
 		}
-		final int sto = netConfig.intVal("timeoutMilliSec");
+		final var sto = netConfig.intVal("timeoutMilliSec");
 		if(sto > 0) {
 			this.netTimeoutMilliSec = sto;
 		} else {
 			this.netTimeoutMilliSec = Integer.MAX_VALUE;
 		}
-		final Config nodeConfig = netConfig.configVal("node");
+		final var nodeConfig = netConfig.configVal("node");
 		storageNodePort = nodeConfig.intVal("port");
 		connAttemptsLimit = nodeConfig.intVal("connAttemptsLimit");
 		final String t[] = nodeConfig.<String>listVal("addrs").toArray(new String[]{});
 		storageNodeAddrs = new String[t.length];
 		String n;
-		for(int i = 0; i < t.length; i ++) {
+		for(var i = 0; i < t.length; i ++) {
 			n = t[i];
 			storageNodeAddrs[i] = n + (n.contains(":") ? "" : ":" + storageNodePort);
 		}
 		
 		final int workerCount;
-		final int confWorkerCount = storageConfig.intVal("driver-threads");
+		final var confWorkerCount = storageConfig.intVal("driver-threads");
 		if(confWorkerCount < 1) {
 			workerCount = ThreadUtil.getHardwareThreadCount();
 		} else {
@@ -119,7 +112,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 		}
 
 		final Transport transportKey;
-		final String transportConfig = netConfig.stringVal("transport");
+		final var transportConfig = netConfig.stringVal("transport");
 		if(transportConfig == null || transportConfig.isEmpty()) {
 			if(Epoll.isAvailable()) {
 				transportKey = Transport.EPOLL;
@@ -134,16 +127,16 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 
 		try {
 
-			final String ioExecutorClsName = IO_EXECUTOR_IMPLS.get(transportKey);
-			final Class<EventLoopGroup> transportCls = (Class<EventLoopGroup>) Class.forName(ioExecutorClsName);
+			final var ioExecutorClsName = IO_EXECUTOR_IMPLS.get(transportKey);
+			final var transportCls = (Class<EventLoopGroup>) Class.forName(ioExecutorClsName);
 			ioExecutor = transportCls
 				.getConstructor(Integer.TYPE, ThreadFactory.class)
 				.newInstance(workerCount, new LogContextThreadFactory("ioWorker", true));
 			Loggers.MSG.info("{}: use {} I/O workers", toString(), workerCount);
 
-			final int ioRatio = netConfig.intVal("ioRatio");
+			final var ioRatio = netConfig.intVal("ioRatio");
 			try {
-				final Method setIoRatioMethod = transportCls.getMethod("setIoRatio", Integer.TYPE);
+				final var setIoRatioMethod = transportCls.getMethod("setIoRatio", Integer.TYPE);
 				setIoRatioMethod.invoke(ioExecutor, ioRatio);
 			} catch(final ReflectiveOperationException e) {
 				LogUtil.exception(Level.ERROR, e, "Failed to set the I/O ratio");
@@ -153,7 +146,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 			throw new AssertionError(e);
 		}
 
-		final String socketChannelClsName = SOCKET_CHANNEL_IMPLS.get(transportKey);
+		final var socketChannelClsName = SOCKET_CHANNEL_IMPLS.get(transportKey);
 		try {
 			socketChannelCls = (Class<SocketChannel>) Class.forName(socketChannelClsName);
 		} catch(final ReflectiveOperationException e) {
@@ -184,7 +177,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 		bootstrap.option(ChannelOption.SO_REUSEADDR, netConfig.boolVal("reuseAddr"));
 		bootstrap.option(ChannelOption.TCP_NODELAY, netConfig.boolVal("tcpNoDelay"));
 		try(
-			final Instance logCtx = CloseableThreadContext
+			final var logCtx = CloseableThreadContext
 				.put(KEY_STEP_ID, this.stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
@@ -194,8 +187,8 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 
 	protected NonBlockingConnPool createConnectionPool() {
 		return new MultiNodeConnPoolImpl(
-			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort, connAttemptsLimit,
-			netTimeoutMilliSec, TimeUnit.MILLISECONDS
+			storageNodeAddrs, bootstrap, this, storageNodePort, connAttemptsLimit, netTimeoutMilliSec,
+			TimeUnit.MILLISECONDS
 		);
 	}
 	
@@ -203,7 +196,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 	public final void adjustIoBuffers(final long avgTransferSize, final OpType opType) {
 		final int size;
 		try(
-			final Instance logCtx = CloseableThreadContext
+			final var logCtx = CloseableThreadContext
 				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
@@ -251,7 +244,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 					protected final void initChannel(final SocketChannel conn)
 					throws Exception {
 						try(
-							final Instance logCtx = CloseableThreadContext
+							final var logCtx = CloseableThreadContext
 								.put(KEY_STEP_ID, stepId)
 								.put(KEY_CLASS_NAME, CLS_NAME)
 						) {
@@ -265,7 +258,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 			);
 
 		final Channel conn;
-		final ChannelFuture connFuture = bootstrap.connect(socketAddr);
+		final var connFuture = bootstrap.connect(socketAddr);
 		if(netTimeoutMilliSec > 0) {
 			if(connFuture.await(netTimeoutMilliSec, TimeUnit.MILLISECONDS)) {
 				conn = connFuture.channel();
@@ -301,9 +294,9 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 		if(!isStarted()) {
 			throw new IllegalStateException();
 		}
-		try {
-			if(OpType.NOOP.equals(op.type())) {
-				if(concurrencyThrottle.tryAcquire()) {
+		if(concurrencyThrottle.tryAcquire()) {
+			try {
+				if(OpType.NOOP.equals(op.type())) {
 					op.startRequest();
 					sendRequest(null, null, op);
 					op.finishRequest();
@@ -312,79 +305,95 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 					op.startResponse();
 					complete(null, op);
 				} else {
-					return false;
+					final var conn = connPool.lease();
+					if(conn == null) {
+						return false;
+					}
+					conn.attr(ATTR_KEY_OPERATION).set(op);
+					op.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
+					op.startRequest();
+					sendRequest(conn, conn.newPromise().addListener(new RequestSentCallback(op)), op);
 				}
-			} else {
-				final Channel conn = connPool.lease();
-				if(conn == null) {
-					return false;
-				}
-				conn.attr(ATTR_KEY_OPERATION).set(op);
-				op.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
-				op.startRequest();
-				sendRequest(conn, conn.newPromise().addListener(new RequestSentCallback(op)), op);
+			} catch(final ConnectException e) {
+				LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the load operation");
+				op.status(Operation.Status.FAIL_IO);
+				complete(null, op);
+			} catch(final Throwable thrown){
+				LogUtil.exception(Level.WARN, thrown, "Failed to submit the load operation");
+				op.status(Operation.Status.FAIL_UNKNOWN);
+				complete(null, op);
 			}
-		} catch(final IllegalStateException e) {
-			LogUtil.exception(Level.WARN, e, "Submit the load operation in the invalid state");
-		} catch(final ConnectException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the load operation");
-			op.status(Operation.Status.FAIL_IO);
-			complete(null, op);
+			return true;
+		} else {
+			return false;
 		}
-		return true;
-
 	}
 	
 	@Override @SuppressWarnings("unchecked")
 	protected int submit(final List<O> ops, final int from, final int to)
 	throws InterruptRunException, IllegalStateException {
 
+		if(ops.size() == 0) {
+			return 0;
+		}
+		final var needed = to - from;
+		if(needed == 0) {
+			return 0;
+		}
+		var permits = concurrencyThrottle.drainPermits();
+		if(permits == 0) {
+			return 0;
+		}
+		if(permits > needed) {
+			concurrencyThrottle.release(permits - needed);
+			permits -= needed;
+		}
+
 		ThreadContext.put(KEY_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
 		Channel conn;
-		O nextOp;
+		O nextOp = null;
+		var n = 0;
 		try {
-			for(int i = from; i < to && isStarted(); i ++) {
-				nextOp = ops.get(i);
+			while(n < permits && isStarted()) {
+				nextOp = ops.get(n);
 				if(OpType.NOOP.equals(nextOp.type())) {
-					if(concurrencyThrottle.tryAcquire()) {
-						nextOp.startRequest();
-						sendRequest(null, null, nextOp);
-						nextOp.finishRequest();
-						concurrencyThrottle.release();
-						nextOp.status(SUCC);
-						nextOp.startResponse();
-						complete(null, nextOp);
-					} else {
-						return i - from;
-					}
+					nextOp.startRequest();
+					sendRequest(null, null, nextOp);
+					nextOp.finishRequest();
+					concurrencyThrottle.release();
+					nextOp.status(SUCC);
+					nextOp.startResponse();
+					complete(null, nextOp);
 				} else {
 					conn = connPool.lease();
 					if(conn == null) {
-						return i - from;
+						return n;
 					}
 					conn.attr(ATTR_KEY_OPERATION).set(nextOp);
 					nextOp.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
 					nextOp.startRequest();
 					sendRequest(conn, conn.newPromise().addListener(new RequestSentCallback(nextOp)), nextOp);
 				}
-			}
-		} catch(final IllegalStateException e) {
-			LogUtil.exception(Level.WARN, e, "Submit the load operation in the invalid state");
-		} catch(final RejectedExecutionException e) {
-			if(!isStopped()) {
-				LogUtil.exception(Level.WARN, e, "Failed to submit the load operation");
+				n ++;
 			}
 		} catch(final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the load operation");
-			for(int i = from; i < to; i ++) {
-				nextOp = ops.get(i);
-				nextOp.status(Operation.Status.FAIL_IO);
-				complete(null, nextOp);
+			nextOp.status(Operation.Status.FAIL_IO);
+			complete(null, nextOp);
+			if(permits - n > 1) {
+				concurrencyThrottle.release(permits - n - 1);
+			}
+		} catch(final Throwable thrown) {
+			LogUtil.exception(Level.WARN, thrown, "Failed to submit the load operations");
+			nextOp.status(Operation.Status.FAIL_UNKNOWN);
+			complete(null, nextOp);
+			if(permits - n > 1) {
+				concurrencyThrottle.release(permits - n - 1);
 			}
 		}
-		return to - from;
+		return n;
 	}
 	
 	@Override
@@ -405,15 +414,15 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 	protected final void sendRequestData(final Channel channel, final O op)
 	throws IOException {
 		
-		final OpType opType = op.type();
+		final var opType = op.type();
 		
 		if(OpType.CREATE.equals(opType)) {
-			final I item = op.item();
+			final var item = op.item();
 			if(item instanceof DataItem) {
-				final DataOperation dataOp = (DataOperation) op;
+				final var dataOp = (DataOperation) op;
 				if(!(dataOp instanceof CompositeDataOperation)) {
-					final DataItem dataItem = (DataItem) item;
-					final String srcPath = dataOp.srcPath();
+					final var dataItem = (DataItem) item;
+					final var srcPath = dataOp.srcPath();
 					if(0 < dataItem.size() && (null == srcPath || srcPath.isEmpty())) {
 						if(sslFlag) {
 							channel.write(new SeekableByteChannelChunkedNioStream(dataItem));
@@ -425,21 +434,21 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 				}
 			}
 		} else if(OpType.UPDATE.equals(opType)) {
-			final I item = op.item();
+			final var item = op.item();
 			if(item instanceof DataItem) {
 				
-				final DataItem dataItem = (DataItem) item;
-				final DataOperation dataOp = (DataOperation) op;
+				final var dataItem = (DataItem) item;
+				final var dataOp = (DataOperation) op;
 				
-				final List<Range> fixedRanges = dataOp.fixedRanges();
+				final var fixedRanges = (List<Range>) dataOp.fixedRanges();
 				if(fixedRanges == null || fixedRanges.isEmpty()) {
 					// random ranges update case
-					final BitSet updRangesMaskPair[] = dataOp.markedRangesMaskPair();
-					final int rangeCount = rangeCount(dataItem.size());
+					final var updRangesMaskPair = dataOp.markedRangesMaskPair();
+					final var rangeCount = rangeCount(dataItem.size());
 					DataItem updatedRange;
 					if(sslFlag) {
 						// current layer updates first
-						for(int i = 0; i < rangeCount; i ++) {
+						for(var i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[0].get(i)) {
 								dataOp.currRangeIdx(i);
 								updatedRange = dataOp.currRangeUpdate();
@@ -447,7 +456,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 							}
 						}
 						// then next layer updates if any
-						for(int i = 0; i < rangeCount; i ++) {
+						for(var i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[1].get(i)) {
 								dataOp.currRangeIdx(i);
 								updatedRange = dataOp.currRangeUpdate();
@@ -456,7 +465,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 						}
 					} else {
 						// current layer updates first
-						for(int i = 0; i < rangeCount; i ++) {
+						for(var i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[0].get(i)) {
 								dataOp.currRangeIdx(i);
 								updatedRange = dataOp.currRangeUpdate();
@@ -464,7 +473,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 							}
 						}
 						// then next layer updates if any
-						for(int i = 0; i < rangeCount; i ++) {
+						for(var i = 0; i < rangeCount; i ++) {
 							if(updRangesMaskPair[1].get(i)) {
 								dataOp.currRangeIdx(i);
 								updatedRange = dataOp.currRangeUpdate();
@@ -474,12 +483,12 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 					}
 					dataItem.commitUpdatedRanges(dataOp.markedRangesMaskPair());
 				} else { // fixed byte ranges case
-					final long baseItemSize = dataItem.size();
+					final var baseItemSize = dataItem.size();
 					long beg;
 					long end;
 					long size;
 					if(sslFlag) {
-						for(final Range fixedRange : fixedRanges) {
+						for(final var fixedRange : fixedRanges) {
 							beg = fixedRange.getBeg();
 							end = fixedRange.getEnd();
 							size = fixedRange.getSize();
@@ -496,14 +505,12 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 								// append
 								beg = baseItemSize;
 								// note down the new size
-								dataItem.size(
-									dataItem.size() + dataOp.markedRangesSize()
-								);
+								dataItem.size(dataItem.size() + dataOp.markedRangesSize());
 							}
 							channel.write(new SeekableByteChannelChunkedNioStream(dataItem.slice(beg, size)));
 						}
 					} else {
-						for(final Range fixedRange : fixedRanges) {
+						for(final var fixedRange : fixedRanges) {
 							beg = fixedRange.getBeg();
 							end = fixedRange.getEnd();
 							size = fixedRange.getSize();
@@ -544,6 +551,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(Level.DEBUG, e, "{}: invalid load operation state", op.toString());
 		}
+		concurrencyThrottle.release();
 		if(channel != null) {
 			connPool.release(channel);
 		}
@@ -564,7 +572,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 	public final void channelCreated(final Channel channel)
 	throws Exception {
 		try(
-			final Instance ctx = CloseableThreadContext.put(KEY_STEP_ID, stepId)
+			final var ctx = CloseableThreadContext.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {
 			appendHandlers(channel);
@@ -575,7 +583,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 	}
 
 	protected void appendHandlers(final Channel channel) {
-		final ChannelPipeline pipeline = channel.pipeline();
+		final var pipeline = channel.pipeline();
 		if(sslFlag) {
 			Loggers.MSG.debug("{}: SSL/TLS is enabled for the channel", stepId);
 			pipeline.addLast(SslUtil.CLIENT_SSL_CONTEXT.newHandler(channel.alloc()));
@@ -589,7 +597,7 @@ implements NettyStorageDriver<I, O>, ChannelPoolHandler {
 	protected final void doStop()
 	throws InterruptRunException, IllegalStateException {
 		try(
-			final Instance ctx = CloseableThreadContext
+			final var ctx = CloseableThreadContext
 				.put(KEY_STEP_ID, stepId)
 				.put(KEY_CLASS_NAME, CLS_NAME)
 		) {

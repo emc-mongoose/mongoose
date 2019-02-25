@@ -39,9 +39,7 @@ extends NettyStorageDriverBase<I, O> {
 	}
 
 	protected NonBlockingConnPool createConnectionPool() {
-		return new MultiNodeConnPoolMock(
-			concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort, connAttemptsLimit
-		);
+		return new MultiNodeConnPoolMock(storageNodeAddrs, bootstrap, this, storageNodePort, connAttemptsLimit);
 	}
 
 	@Override
