@@ -6,6 +6,7 @@ import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.metrics.snapshot.AllMetricsSnapshot;
 import com.github.akurilov.fiber4j.ExclusiveFiberBase;
 import com.github.akurilov.fiber4j.FibersExecutor;
+
 import java.util.List;
 import org.apache.logging.log4j.Level;
 
@@ -14,6 +15,7 @@ public final class MetricsSnapshotsSupplierTaskImpl extends ExclusiveFiberBase
 
   private final LoadStep loadStep;
   private volatile List<? extends AllMetricsSnapshot> snapshotsByOrigin;
+  private volatile boolean failedBeforeFlag = false;
 
   public MetricsSnapshotsSupplierTaskImpl(final LoadStep loadStep) {
     this(ServiceTaskExecutor.INSTANCE, loadStep);
@@ -27,10 +29,16 @@ public final class MetricsSnapshotsSupplierTaskImpl extends ExclusiveFiberBase
   @Override
   protected final void invokeTimedExclusively(final long startTimeNanos) {
     try {
-      snapshotsByOrigin = loadStep.metricsSnapshots();
-    } catch (final Exception e) {
-      LogUtil.exception(
-          Level.DEBUG, e, "Failed to fetch the metrics snapshots from \"{}\"", loadStep);
+		snapshotsByOrigin = loadStep.metricsSnapshots();
+	} catch(final Exception e) {
+		LogUtil.exception(Level.INFO, e, "Failed to fetch the metrics snapshots from \"{}\"", loadStep);
+		if(failedBeforeFlag) {
+			LogUtil.exception(
+				Level.WARN, e, "Failed to fetch the metrics snapshots from \"{}\" twice, stopping", loadStep);
+			stop();
+		} else {
+			failedBeforeFlag = true;
+		}
     }
   }
 

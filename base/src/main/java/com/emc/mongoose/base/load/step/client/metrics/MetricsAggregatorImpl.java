@@ -48,8 +48,7 @@ public final class MetricsAggregatorImpl extends AsyncRunnableBase implements Me
         .values()
         .forEach(
             snapshotsSupplier -> {
-              try (final Instance logCtx =
-                  put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+              try (final var logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
                 snapshotsSupplier.start();
               } catch (final RemoteException e) {
                 LogUtil.exception(
