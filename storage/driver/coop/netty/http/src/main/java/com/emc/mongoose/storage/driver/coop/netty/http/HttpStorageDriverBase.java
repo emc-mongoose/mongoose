@@ -350,7 +350,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
     String headerValue;
     BatchSupplier<String> headerNameSupplier;
     BatchSupplier<String> headerValueSupplier;
-    for (final Map.Entry<String, String> nextHeader : dynamicHeaders) {
+    for (final var nextHeader : dynamicHeaders) {
       headerName = nextHeader.getKey();
       // header name is a generator pattern
       headerNameSupplier =
