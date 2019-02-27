@@ -29,9 +29,10 @@ import com.github.akurilov.netty.connection.pool.MultiNodeConnPoolImpl;
 import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPromise;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
@@ -64,6 +65,7 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
   private final Class<SocketChannel> socketChannelCls;
   private final NonBlockingConnPool connPool;
   private final boolean sslFlag;
+  protected final ChannelFutureListener reqSentCallback = this::sendFullRequestComplete;
 
   @SuppressWarnings("unchecked")
   protected NettyStorageDriverBase(
@@ -268,6 +270,8 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
         connPool.preConnect(concurrencyLimit);
       } catch (final ConnectException e) {
         LogUtil.exception(Level.WARN, e, "Failed to pre-create the connections");
+      } catch (final InterruptedException e) {
+        throw new InterruptRunException(e);
       }
     }
   }
@@ -285,7 +289,7 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
       try {
         if (OpType.NOOP.equals(op.type())) {
           op.startRequest();
-          sendRequest(null, null, op);
+          sendRequest(null, op);
           op.finishRequest();
           concurrencyThrottle.release();
           op.status(SUCC);
@@ -299,7 +303,7 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
           conn.attr(ATTR_KEY_OPERATION).set(op);
           op.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
           op.startRequest();
-          sendRequest(conn, conn.newPromise().addListener(new RequestSentCallback(op)), op);
+          sendRequest(conn, op);
         }
       } catch (final ConnectException e) {
         LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the load operation");
@@ -348,7 +352,7 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
         nextOp = ops.get(from + n);
         if (OpType.NOOP.equals(nextOp.type())) {
           nextOp.startRequest();
-          sendRequest(null, null, nextOp);
+          sendRequest(null, nextOp);
           nextOp.finishRequest();
           concurrencyThrottle.release();
           nextOp.status(SUCC);
@@ -362,7 +366,7 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
           conn.attr(ATTR_KEY_OPERATION).set(nextOp);
           nextOp.nodeAddr(conn.attr(ATTR_KEY_NODE).get());
           nextOp.startRequest();
-          sendRequest(conn, conn.newPromise().addListener(new RequestSentCallback(nextOp)), nextOp);
+          sendRequest(conn, nextOp);
         }
         n++;
       }
@@ -395,11 +399,9 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
    * Operation)} method to send the actual payload (if any).
    *
    * @param channel the channel to send request to
-   * @param channelPromise the promise which will be invoked when the request is sent completely
    * @param op the load operation describing the item and the operation type to perform
    */
-  protected abstract void sendRequest(
-      final Channel channel, final ChannelPromise channelPromise, final O op);
+  protected abstract void sendRequest(final Channel channel, final O op);
 
   protected final void sendRequestData(final Channel channel, final O op) throws IOException {
 
@@ -524,6 +526,15 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
         }
         dataOp.countBytesDone(dataOp.markedRangesSize());
       }
+    }
+  }
+
+  void sendFullRequestComplete(final ChannelFuture future) {
+    final var op = future.channel().attr(ATTR_KEY_OPERATION).get();
+    try {
+      op.finishRequest();
+    } catch (final IllegalStateException e) {
+      LogUtil.exception(Level.DEBUG, e, "{}", op.toString());
     }
   }
 
