@@ -35,7 +35,7 @@ ext {
 		tsdbMetrics        : "0.6.0",
 		nagaina            : "3.6.11",
 		netty              : "4.1.25.Final",
-		nettyConnectionPool: "1.1.0",
+		nettyConnectionPool: "1.2.1",
 		nettyTcNative      : "2.0.12.Final",
 	]
 	baseProject = project(":base")

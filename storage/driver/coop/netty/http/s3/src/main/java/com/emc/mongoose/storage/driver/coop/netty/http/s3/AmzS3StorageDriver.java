@@ -75,9 +75,9 @@ extends HttpStorageDriverBase<I, O> {
 		BUCKET_LIST_QUERY = ThreadLocal.withInitial(StringBuilder::new);
 	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(HashMap::new);
 	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
-		final SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(UTF_8), AmzS3Api.SIGN_METHOD);
+		final var secretKey = new SecretKeySpec(secret.getBytes(UTF_8), AmzS3Api.SIGN_METHOD);
 		try {
-			final Mac mac = Mac.getInstance(AmzS3Api.SIGN_METHOD);
+			final var mac = Mac.getInstance(AmzS3Api.SIGN_METHOD);
 			mac.init(secretKey);
 			return mac;
 		} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
@@ -93,7 +93,7 @@ extends HttpStorageDriverBase<I, O> {
 		final int batchSize
 	) throws OmgShootMyFootException, InterruptedException {
 		super(stepId, itemDataInput, storageConfig, verifyFlag, batchSize);
-		final Config httpConfig = storageConfig.configVal("net-http");
+		final var httpConfig = storageConfig.configVal("net-http");
 		fsAccess = httpConfig.boolVal("fsAccess");
 		versioning = httpConfig.boolVal("versioning");
 		requestAuthTokenFunc = null; // do not use
@@ -102,16 +102,16 @@ extends HttpStorageDriverBase<I, O> {
 	@Override
 	protected String requestNewPath(final String path)
 	throws InterruptRunException {
-		final String bucketUri = path.startsWith(SLASH) ? path : SLASH + path;
+		final var bucketUri = path.startsWith(SLASH) ? path : SLASH + path;
 		// check the destination bucket if it exists w/ HEAD request
-		final String nodeAddr = storageNodeAddrs[0];
-		HttpHeaders reqHeaders = new DefaultHttpHeaders();
+		final var nodeAddr = storageNodeAddrs[0];
+		var reqHeaders = (HttpHeaders) new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		final Credential credential = pathToCredMap.getOrDefault(bucketUri, this.credential);
+		final var credential = pathToCredMap.getOrDefault(bucketUri, this.credential);
 		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, bucketUri, credential);
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.HEAD, bucketUri, Unpooled.EMPTY_BUFFER, reqHeaders,
@@ -126,7 +126,7 @@ extends HttpStorageDriverBase<I, O> {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
 		}
-		boolean bucketExistedBefore = true;
+		var bucketExistedBefore = true;
 		if(checkBucketResp != null) {
 			if(!HttpStatusClass.SUCCESS.equals(checkBucketResp.status().codeClass())) {
 				Loggers.MSG.info("The bucket checking response is: {}", checkBucketResp.status().toString());
@@ -165,7 +165,7 @@ extends HttpStorageDriverBase<I, O> {
 		}
 
 		// check the bucket versioning state
-		final String bucketVersioningReqUri = bucketUri + "?" + AmzS3Api.URL_ARG_VERSIONING;
+		final var bucketVersioningReqUri = bucketUri + "?" + AmzS3Api.URL_ARG_VERSIONING;
 		reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
@@ -200,13 +200,13 @@ extends HttpStorageDriverBase<I, O> {
 	protected void handleCheckBucketVersioningResponse(
 		final FullHttpResponse getBucketVersioningResp, final String nodeAddr, final String bucketVersioningReqUri
 	) {
-		boolean versioningEnabled = false;
+		var versioningEnabled = false;
 		if(!HttpStatusClass.SUCCESS.equals(getBucketVersioningResp.status().codeClass())) {
 			Loggers.ERR.warn(
 				"The bucket versioning checking response is: {}", getBucketVersioningResp.status().toString()
 			);
 		} else {
-			final String content = getBucketVersioningResp
+			final var content = getBucketVersioningResp
 				.content()
 				.toString(StandardCharsets.US_ASCII);
 			versioningEnabled = content.contains("Enabled");
@@ -222,7 +222,7 @@ extends HttpStorageDriverBase<I, O> {
 		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, AmzS3Api.VERSIONING_ENABLE_CONTENT.length);
 		applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketVersioningReqUri, credential);
-		final FullHttpRequest putBucketVersioningReq = new DefaultFullHttpRequest(
+		final var putBucketVersioningReq = (FullHttpRequest) new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.PUT, bucketVersioningReqUri,
 			Unpooled.wrappedBuffer(AmzS3Api.VERSIONING_ENABLE_CONTENT).retain(), reqHeaders,
 			EmptyHttpHeaders.INSTANCE
@@ -253,15 +253,15 @@ extends HttpStorageDriverBase<I, O> {
 		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
 		final I lastPrevItem, final int count
 	) throws InterruptRunException, IOException {
-		final int countLimit = count < 1 || count > AmzS3Api.MAX_KEYS_LIMIT ? AmzS3Api.MAX_KEYS_LIMIT : count;
-		final String nodeAddr = storageNodeAddrs[0];
-		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
+		final var countLimit = count < 1 || count > AmzS3Api.MAX_KEYS_LIMIT ? AmzS3Api.MAX_KEYS_LIMIT : count;
+		final var nodeAddr = storageNodeAddrs[0];
+		final var reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		final StringBuilder queryBuilder = BUCKET_LIST_QUERY.get();
+		final var queryBuilder = BUCKET_LIST_QUERY.get();
 		queryBuilder.setLength(0);
 		queryBuilder.append(path).append('?');
 		if(prefix != null && !prefix.isEmpty()) {
@@ -271,7 +271,7 @@ extends HttpStorageDriverBase<I, O> {
 			if('?' != queryBuilder.charAt(queryBuilder.length() - 1)) {
 				queryBuilder.append('&');
 			}
-			String lastItemName = lastPrevItem.name();
+			var lastItemName = lastPrevItem.name();
 			if(lastItemName.contains("/")) {
 				lastItemName = lastItemName.substring(lastItemName.lastIndexOf('/') + 1);
 			}
@@ -281,7 +281,7 @@ extends HttpStorageDriverBase<I, O> {
 			queryBuilder.append('&');
 		}
 		queryBuilder.append("max-keys=").append(countLimit);
-		final String query = queryBuilder.toString();
+		final var query = queryBuilder.toString();
 		applyAuthHeaders(reqHeaders, HttpMethod.GET, path, credential);
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 			HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders,
@@ -289,19 +289,17 @@ extends HttpStorageDriverBase<I, O> {
 		);
 		final List<I> buff = new ArrayList<>(countLimit);
 		try {
-			final FullHttpResponse listResp = executeHttpRequest(checkBucketReq);
+			final var listResp = executeHttpRequest(checkBucketReq);
 			try {
-				final ByteBuf listRespContent = listResp.content();
-				SAXParser listRespParser = THREAD_LOCAL_XML_PARSER.get();
+				final var listRespContent = listResp.content();
+				var listRespParser = THREAD_LOCAL_XML_PARSER.get();
 				if(listRespParser == null) {
 					listRespParser = SAXParserFactory.newInstance().newSAXParser();
 					THREAD_LOCAL_XML_PARSER.set(listRespParser);
 				} else {
 					listRespParser.reset();
 				}
-				final BucketXmlListingHandler<I> listingHandler = new BucketXmlListingHandler<>(
-					buff, path, itemFactory, idRadix
-				);
+				final var listingHandler = new BucketXmlListingHandler<>(buff, path, itemFactory, idRadix);
 				try(final InputStream contentStream = new ByteBufInputStream(listRespContent)) {
 					listRespParser.parse(contentStream, listingHandler);
 				}
@@ -333,7 +331,7 @@ extends HttpStorageDriverBase<I, O> {
 		final OpType opType = op.type();
 		if(op instanceof CompositeDataOperation) {
 			if(OpType.CREATE.equals(opType)) {
-				final CompositeDataOperation mpuOp = (CompositeDataOperation) op;
+				final var mpuOp = (CompositeDataOperation) op;
 				if(mpuOp.allSubOperationsDone()) {
 					httpRequest = getCompleteMpuRequest(mpuOp, nodeAddr);
 				} else { // this is the initial state of the task
@@ -380,7 +378,7 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final String pathUriPath(final I item, final String srcPath, final String dstPath, final OpType opType) {
-		final String itemName = item.name();
+		final var itemName = item.name();
 		if(itemName.startsWith(SLASH)) {
 			return itemName;
 		} else {
@@ -393,24 +391,22 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	private HttpRequest getInitMpuRequest(final O op, final String nodeAddr) {
-		final I item = op.item();
-		final String srcPath = op.srcPath();
+		final var item = op.item();
+		final var srcPath = op.srcPath();
 		if(srcPath != null && !srcPath.isEmpty()) {
 			throw new AssertionError(
 				"Multipart copy operation is not implemented yet"
 			);
 		}
-		final String uriPath = dataUriPath(item, srcPath, op.dstPath(), OpType.CREATE) + "?uploads";
-		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		final var uriPath = dataUriPath(item, srcPath, op.dstPath(), OpType.CREATE) + "?uploads";
+		final var httpHeaders = new DefaultHttpHeaders();
 		if(nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
 		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		final HttpMethod httpMethod = HttpMethod.POST;
-		final HttpRequest httpRequest = new DefaultHttpRequest(
-			HTTP_1_1, httpMethod, uriPath, httpHeaders
-		);
+		final var httpMethod = HttpMethod.POST;
+		final var httpRequest = (HttpRequest) new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
@@ -419,9 +415,9 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	private HttpRequest getUploadPartRequest(final PartialDataOperation partialDataOp, final String nodeAddr) {
-		final I item = (I) partialDataOp.item();
-		final String srcPath = partialDataOp.srcPath();
-		final String uriPath = dataUriPath(item, srcPath, partialDataOp.dstPath(), OpType.CREATE)
+		final var item = (I) partialDataOp.item();
+		final var srcPath = partialDataOp.srcPath();
+		final var uriPath = dataUriPath(item, srcPath, partialDataOp.dstPath(), OpType.CREATE)
 			+ "?partNumber=" + (partialDataOp.partNumber() + 1)
 			+ "&uploadId=" + partialDataOp.parent().get(AmzS3Api.KEY_UPLOAD_ID);
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
@@ -429,7 +425,7 @@ extends HttpStorageDriverBase<I, O> {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
 		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
-		final HttpMethod httpMethod = HttpMethod.PUT;
+		final var httpMethod = HttpMethod.PUT;
 		final HttpRequest httpRequest = new DefaultHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, httpHeaders
 		);
@@ -447,13 +443,13 @@ extends HttpStorageDriverBase<I, O> {
 	private final static ThreadLocal<StringBuilder> THREAD_LOCAL_STRB = ThreadLocal.withInitial(StringBuilder::new);
 
 	private FullHttpRequest getCompleteMpuRequest(final CompositeDataOperation mpuTask, final String nodeAddr) {
-		final StringBuilder content = THREAD_LOCAL_STRB.get();
+		final var content = THREAD_LOCAL_STRB.get();
 		content.setLength(0);
 		content.append(AmzS3Api.COMPLETE_MPU_HEADER);
 		final List<PartialDataOperation> subTasks = mpuTask.subOperations();
 		int nextPartNum;
 		String nextEtag;
-		for(final PartialDataOperation subTask : subTasks) {
+		for(final var subTask : subTasks) {
 			nextPartNum = subTask.partNumber() + 1;
 			nextEtag = mpuTask.get(Integer.toString(nextPartNum));
 			content
@@ -464,16 +460,16 @@ extends HttpStorageDriverBase<I, O> {
 				.append(AmzS3Api.COMPLETE_MPU_PART_ETAG_END);
 		}
 		content.append(AmzS3Api.COMPLETE_MPU_FOOTER);
-		final String srcPath = mpuTask.srcPath();
-		final I item = (I) mpuTask.item();
-		final String uploadId = mpuTask.get(AmzS3Api.KEY_UPLOAD_ID);
-		final String uriPath = dataUriPath(item, srcPath, mpuTask.dstPath(), OpType.CREATE) +
+		final var srcPath = mpuTask.srcPath();
+		final var item = (I) mpuTask.item();
+		final var uploadId = mpuTask.get(AmzS3Api.KEY_UPLOAD_ID);
+		final var uriPath = dataUriPath(item, srcPath, mpuTask.dstPath(), OpType.CREATE) +
 			"?uploadId=" + uploadId;
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
-		final HttpMethod httpMethod = HttpMethod.POST;
-		final String contentStr = content.toString();
+		final var httpMethod = HttpMethod.POST;
+		final var contentStr = content.toString();
 		final FullHttpRequest httpRequest = new DefaultFullHttpRequest(
 			HTTP_1_1, httpMethod, uriPath, Unpooled.wrappedBuffer(contentStr.getBytes()),
 			httpHeaders, EmptyHttpHeaders.INSTANCE
@@ -489,14 +485,14 @@ extends HttpStorageDriverBase<I, O> {
 	@Override
 	public void complete(final Channel channel, final O op) {
 		if(channel != null && op instanceof CompositeDataOperation) {
-			final CompositeDataOperation compositeOp = (CompositeDataOperation) op;
+			final var compositeOp = (CompositeDataOperation) op;
 			if(compositeOp.allSubOperationsDone()) {
 				Loggers.MULTIPART.info(
 					"{},{},{}", compositeOp.item().name(), compositeOp.get(AmzS3Api.KEY_UPLOAD_ID),
 					compositeOp.latency()
 				);
 			} else {
-				final String uploadId = channel.attr(AmzS3Api.KEY_ATTR_UPLOAD_ID).get();
+				final var uploadId = channel.attr(AmzS3Api.KEY_ATTR_UPLOAD_ID).get();
 				if(uploadId == null) {
 					op.status(Operation.Status.RESP_FAIL_NOT_FOUND);
 				} else {
@@ -538,21 +534,21 @@ extends HttpStorageDriverBase<I, O> {
 		if(uid == null || secret == null) {
 			return;
 		}
-		final Mac mac = MAC_BY_SECRET.get().computeIfAbsent(secret, GET_MAC_BY_SECRET);
-		final String canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
-		final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
+		final var mac = MAC_BY_SECRET.get().computeIfAbsent(secret, GET_MAC_BY_SECRET);
+		final var canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
+		final var sigData = mac.doFinal(canonicalForm.getBytes());
 		httpHeaders.set(
 			HttpHeaderNames.AUTHORIZATION, AmzS3Api.AUTH_PREFIX + uid + ':' + BASE64_ENCODER.encodeToString(sigData)
 		);
 	}
 
 	protected String getCanonical(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath) {
-		final StringBuilder buffCanonical = BUFF_CANONICAL.get();
+		final var buffCanonical = BUFF_CANONICAL.get();
 		buffCanonical.setLength(0); // reset/clear
 		buffCanonical.append(httpMethod.name());
-		for(final AsciiString headerName : AmzS3Api.HEADERS_CANONICAL) {
+		for(final var headerName : AmzS3Api.HEADERS_CANONICAL) {
 			if(httpHeaders.contains(headerName)) {
-				for(final String headerValue : httpHeaders.getAll(headerName)) {
+				for(final var headerValue : httpHeaders.getAll(headerName)) {
 					buffCanonical.append('\n').append(headerValue);
 				}
 			} else if(sharedHeaders != null && sharedHeaders.contains(headerName)) {
@@ -565,20 +561,20 @@ extends HttpStorageDriverBase<I, O> {
 		String headerName;
 		final Map<String, String> sortedHeaders = new TreeMap<>();
 		if(sharedHeaders != null) {
-			for(final Map.Entry<String, String> header : sharedHeaders) {
+			for(final var header : sharedHeaders) {
 				headerName = header.getKey().toLowerCase();
 				if(headerName.startsWith(AmzS3Api.PREFIX_KEY_X_AMZ)) {
 					sortedHeaders.put(headerName, header.getValue());
 				}
 			}
 		}
-		for(final Map.Entry<String, String> header : httpHeaders) {
+		for(final var header : httpHeaders) {
 			headerName = header.getKey().toLowerCase();
 			if(headerName.startsWith(AmzS3Api.PREFIX_KEY_X_AMZ)) {
 				sortedHeaders.put(headerName, header.getValue());
 			}
 		}
-		for(final Map.Entry<String, String> sortedHeader : sortedHeaders.entrySet()) {
+		for(final var sortedHeader : sortedHeaders.entrySet()) {
 			buffCanonical
 				.append('\n').append(sortedHeader.getKey())
 				.append(':').append(sortedHeader.getValue());

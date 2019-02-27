@@ -181,7 +181,7 @@ public class MetricsContextImpl<S extends AllMetricsSnapshotImpl> extends Metric
   @Override
   @SuppressWarnings("unchecked")
   public void refreshLastSnapshot() {
-    final long currentTimeMillis = System.currentTimeMillis();
+    final var currentTimeMillis = System.currentTimeMillis();
     if (currentTimeMillis - lastOutputTs() > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
       refreshTimings();
       actualConcurrency.update(actualConcurrencyGauge.getAsInt());
