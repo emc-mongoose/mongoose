@@ -74,7 +74,7 @@ implements NioStorageDriver<I, O> {
 		opBuffs = new CircularBuffer[ioWorkerCount];
 		opBuffLocks = new Lock[ioWorkerCount];
 		opBuffCapacity = Math.max(MIN_TASK_BUFF_CAPACITY, concurrencyLimit / ioWorkerCount);
-		for(int i = 0; i < ioWorkerCount; i ++) {
+		for(var i = 0; i < ioWorkerCount; i ++) {
 			opBuffs[i] = new CircularArrayBuffer<>(opBuffCapacity);
 			opBuffLocks[i] = new ReentrantLock();
 			ioFibers.add(new NioWorkerTask(IO_EXECUTOR, opBuffs[i], opBuffLocks[i]));

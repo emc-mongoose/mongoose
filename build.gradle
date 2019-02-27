@@ -23,6 +23,7 @@ ext {
 		commonsCodec       : "1.11",
 		commonsLang        : "2.6",
 		disruptor          : "3.4.2",
+		fastutil           : "8.2.2",
 		fiber4j            : "1.1.0",
 		jackson            : "2.9.8",
 		javaCommons        : "2.2.3",

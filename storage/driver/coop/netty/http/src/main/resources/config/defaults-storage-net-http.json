@@ -11,7 +11,7 @@ Use  the command line arguments either load step configurations in the scenario 
 				// An user may place here a key-value pair which will be used as HTTP header.
 				"headers": {
 					"Connection": "Keep-Alive",
-					"User-Agent": "mongoose/4.2.0"
+					"User-Agent": "mongoose/5.0.0"
 				},
 				"uri": {
 					// Custom URI query arguments according http://www.ietf.org/rfc/rfc2396.txt

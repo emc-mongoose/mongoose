@@ -9,9 +9,86 @@ ext {
 		"META-INF", "org", "apache", "logging", "log4j", "core", "config", "plugins", "Log4j2Plugins.dat",
 	)
 	mainClass = "${rootPkg}.base.Main"
+	provided3rdPartyClasses = [
+		"it/unimi/dsi/fastutil/bytes/ByteIterator.class",
+		"it/unimi/dsi/fastutil/Stack.class",
+		"it/unimi/dsi/fastutil/Arrays.class",
+		"it/unimi/dsi/fastutil/Swapper.class",
+		"it/unimi/dsi/fastutil/Hash.class",
+		"it/unimi/dsi/fastutil/Hash\$Strategy.class",
+		"it/unimi/dsi/fastutil/Function.class",
+		"it/unimi/dsi/fastutil/HashCommon.class",
+		"it/unimi/dsi/fastutil/objects/AbstractObjectCollection.class",
+		"it/unimi/dsi/fastutil/objects/ObjectSet.class",
+		"it/unimi/dsi/fastutil/objects/ObjectBidirectionalIterator.class",
+		"it/unimi/dsi/fastutil/objects/Object2IntMap.class",
+		"it/unimi/dsi/fastutil/objects/Object2IntMap\$FastEntrySet.class",
+		"it/unimi/dsi/fastutil/objects/ObjectList.class",
+		"it/unimi/dsi/fastutil/objects/AbstractObjectList.class",
+		"it/unimi/dsi/fastutil/objects/ObjectCollection.class",
+		"it/unimi/dsi/fastutil/objects/AbstractObjectListIterator.class",
+		"it/unimi/dsi/fastutil/objects/ObjectArrayList.class",
+		"it/unimi/dsi/fastutil/objects/AbstractObject2IntFunction.class",
+		"it/unimi/dsi/fastutil/objects/Object2IntFunction.class",
+		"it/unimi/dsi/fastutil/objects/ObjectIterators.class",
+		"it/unimi/dsi/fastutil/objects/AbstractObject2IntMap.class",
+		"it/unimi/dsi/fastutil/objects/ObjectArrays.class",
+		"it/unimi/dsi/fastutil/objects/AbstractObjectBidirectionalIterator.class",
+		"it/unimi/dsi/fastutil/objects/ObjectIterator.class",
+		"it/unimi/dsi/fastutil/objects/ObjectArraySet.class",
+		"it/unimi/dsi/fastutil/objects/Object2IntOpenHashMap.class",
+		"it/unimi/dsi/fastutil/objects/ObjectListIterator.class",
+		"it/unimi/dsi/fastutil/objects/ObjectIterable.class",
+		"it/unimi/dsi/fastutil/objects/AbstractObjectSet.class",
+		"it/unimi/dsi/fastutil/objects/AbstractObjectIterator.class",
+		"it/unimi/dsi/fastutil/BidirectionalIterator.class",
+		"it/unimi/dsi/fastutil/shorts/ShortIterator.class",
+		"it/unimi/dsi/fastutil/ints/IntArrayList.class",
+		"it/unimi/dsi/fastutil/ints/AbstractIntIterator.class",
+		"it/unimi/dsi/fastutil/ints/IntListIterator.class",
+		"it/unimi/dsi/fastutil/ints/AbstractIntCollection.class",
+		"it/unimi/dsi/fastutil/ints/AbstractInt2IntMap.class",
+		"it/unimi/dsi/fastutil/ints/AbstractInt2ObjectFunction.class",
+		"it/unimi/dsi/fastutil/ints/AbstractIntBidirectionalIterator.class",
+		"it/unimi/dsi/fastutil/ints/Int2IntFunction.class",
+		"it/unimi/dsi/fastutil/ints/AbstractIntSet.class",
+		"it/unimi/dsi/fastutil/ints/Int2IntOpenHashMap.class",
+		"it/unimi/dsi/fastutil/ints/IntArraySet.class",
+		"it/unimi/dsi/fastutil/ints/IntList.class",
+		"it/unimi/dsi/fastutil/ints/IntStack.class",
+		"it/unimi/dsi/fastutil/ints/IntIterator.class",
+		"it/unimi/dsi/fastutil/ints/IntBidirectionalIterator.class",
+		"it/unimi/dsi/fastutil/ints/IntIterable.class",
+		"it/unimi/dsi/fastutil/ints/Int2ObjectFunction.class",
+		"it/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap.class",
+		"it/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap\$KeyIterator.class",
+		"it/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap\$KeySet.class",
+		"it/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap\$MapIterator.class",
+		"it/unimi/dsi/fastutil/ints/IntArrays.class",
+		"it/unimi/dsi/fastutil/ints/IntCollection.class",
+		"it/unimi/dsi/fastutil/ints/AbstractInt2IntFunction.class",
+		"it/unimi/dsi/fastutil/ints/Int2ObjectMap.class",
+		"it/unimi/dsi/fastutil/ints/Int2ObjectMap\$FastEntrySet.class",
+		"it/unimi/dsi/fastutil/ints/Int2IntMap.class",
+		"it/unimi/dsi/fastutil/ints/Int2IntMap\$FastEntrySet.class",
+		"it/unimi/dsi/fastutil/ints/IntIterators.class",
+		"it/unimi/dsi/fastutil/ints/IntComparator.class",
+		"it/unimi/dsi/fastutil/ints/AbstractIntListIterator.class",
+		"it/unimi/dsi/fastutil/ints/AbstractIntList.class",
+		"it/unimi/dsi/fastutil/ints/AbstractInt2ObjectMap.class",
+		"it/unimi/dsi/fastutil/ints/IntSet.class",
+	]
+}
+
+configurations {
+	partial
 }
 
 dependencies {
+
+	partial("it.unimi.dsi:fastutil:${depVersion.fastutil}") {
+		transitive = false
+	}
 
 	provided(
 		"commons-codec:commons-codec:${depVersion.commonsCodec}",
@@ -99,6 +176,12 @@ jar {
 			"Main-Class": mainClass,
 			"Implementation-Title": project.description,
 		)
+	}
+	provided3rdPartyClasses.each {
+		final clsName = it
+		from(configurations.partial.collect { zipTree(it) }) {
+			include "**" + clsName
+		}
 	}
 	from configurations.provided.collect {
 		it.isDirectory() ? it : zipTree(it)

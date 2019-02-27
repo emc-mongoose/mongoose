@@ -1,7 +1,7 @@
 # Contents
 
 ## 2019
-* [4.2.0](#anchor-420) TBD
+* [5.0.0](#anchor-500) TBD
 * [4.1.1](#anchor-411) 2019-01-16
 
 ## 2018
@@ -60,7 +60,7 @@
 * [0.1.4](#anchor-014) 09/17/14
 * [0.1.3](#anchor-013) 08/15/14
 
-# 4.2.0
+# 5.0.0
 
 ## New Features and Enhancements
 
