@@ -334,7 +334,7 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
     }
     if (permits > needed) {
       concurrencyThrottle.release(permits - needed);
-      permits -= needed;
+      permits = needed;
     }
 
     ThreadContext.put(KEY_STEP_ID, stepId);
