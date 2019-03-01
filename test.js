@@ -13,7 +13,7 @@ config = {
 		},
 		"auth" : {
 			"uid" : "test:tester",
-			"secret" : "ievahsaelaiz"
+			"secret" : "giezecahxaid"
 		}
 	},
 	"load": {
@@ -31,9 +31,9 @@ read_config = {
                 "file": swift_item_list
             },
             "data" : {
-            	"ranges" : {
-                    "fixed" : new java.util.ArrayList(["0-4", "5-9"])
-                },
+//            	"ranges" : {
+//                    "fixed" : new java.util.ArrayList(["0-4", "5-9"])
+//                },
                 "verify" : true
             }
         }

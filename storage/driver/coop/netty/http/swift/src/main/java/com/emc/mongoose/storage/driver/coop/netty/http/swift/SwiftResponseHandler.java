@@ -33,7 +33,8 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		VALUE_MULTIPART_BYTERANGES + ";" + HttpHeaderValues.BOUNDARY + "=([0-9a-f]+)"
 	);
 	private static final String HEADER_PATTERN = ".*[\\s]*(Content-Type:).*[\\s]*(Content-Range:).*";
-	private static final String HEADER_WITH_BOUNDERY_PATTERN =
+	private static final String
+		HEADER_WITH_BOUNDARY_PATTERN =
 		"[\\s]*%s[-]*[\\s]*(" + HEADER_PATTERN + ")*[\\s]*";
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey
 		.valueOf("boundary_marker");
@@ -102,11 +103,17 @@ Content-Range: bytes 3-6/10240
 		}
 	}
 
-	ByteBuf removeHeaders(Channel channel, O op, ByteBuf contentChunk) {
-		final String boundaryMarker = channel.attr(ATTR_KEY_BOUNDARY_MARKER).get();
-		final byte[] bytes = contentChunk.array();
+	ByteBuf removeHeaders(final Channel channel, final O op, final ByteBuf contentChunk) {
+		final String boundaryMarker = "--" + channel.attr(ATTR_KEY_BOUNDARY_MARKER).get();
+//		final byte[] bytes = contentChunk.array();
+		final int chunckSize = contentChunk.readableBytes();
+		final byte[] bytes = new byte[chunckSize];
+		while (contentChunk.readerIndex() < chunckSize) {
+			bytes[contentChunk.readerIndex()] = contentChunk.readByte();
+		}
 		String s = new String(bytes);
-		s = s.replaceAll(String.format(HEADER_WITH_BOUNDERY_PATTERN, boundaryMarker), "");
+		s = s.replaceAll(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker), "");
+		System.out.println(s);
 		return Unpooled.copiedBuffer(s.getBytes());
 	}
 }
