@@ -9,20 +9,20 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.github.akurilov.commons.io.el.ExpressionInput;
-import java.util.concurrent.TimeUnit;
-
 import com.github.akurilov.commons.io.el.SynchronousExpressionInput;
-import com.github.akurilov.commons.math.MathUtil;
+import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 public class ExpressionInputTest {
 
   @Test
   public void test() throws Exception {
-    final var in = (AsyncExpressionInput<Long>) ExpressionInputBuilder.newInstance()
-            .expression("#{time:millisSinceEpoch()}")
-            .type(long.class)
-            .<Long, ExpressionInput<Long>>build();
+    final var in =
+        (AsyncExpressionInput<Long>)
+            ExpressionInputBuilder.newInstance()
+                .expression("#{time:millisSinceEpoch()}")
+                .type(long.class)
+                .<Long, ExpressionInput<Long>>build();
     assertNull(in.get());
     in.start();
     TimeUnit.MILLISECONDS.sleep(100);
@@ -41,28 +41,28 @@ public class ExpressionInputTest {
     assertNull(in.get());
   }
 
-	@Test
-	public void testRandomItemId()
-	throws Exception {
-		final var radix = 36;
-		final var length = 10;
-		final var offsetInput = ExpressionInputBuilder.newInstance()
-			.expression("${math:absInt64(math:xorShift64(this.last()) % math:pow(radix, length))}")
-			.type(long.class)
-			.value("radix", radix, int.class)
-			.value("length", length, int.class)
-			.initial(Math.abs(reverse(currentTimeMillis()) ^ reverseBytes(nanoTime())))
-			.<Long, SynchronousExpressionInput<Long>>build();
-		final var itemNameInput = ExpressionInputBuilder.newInstance()
-			.expression("${int64:toString(offsetInput.get(), radix)}")
-			.type(String.class)
-			.function("int64", "toString", Long.class.getMethod("toString", long.class, int.class))
-			.value("offsetInput", offsetInput, SynchronousExpressionInput.class)
-			.value("radix", radix, int.class)
-			.<String, SynchronousExpressionInput<String>>build();
-		final var id = itemNameInput.get();
-		assertEquals(length, id.length());
-		final var offset = offsetInput.last();
-		assertTrue(Long.toString(offset, radix).endsWith(id));
-	}
+  @Test
+  public void testRandomItemId() throws Exception {
+    final var radix = 36;
+    final var length = 10;
+    final var offsetInput =
+        ExpressionInputBuilder.newInstance()
+            .expression("${math:absInt64(math:xorShift64(this.last()) % math:pow(radix, length))}")
+            .type(long.class)
+            .value("radix", radix, int.class)
+            .value("length", length, int.class)
+            .initial(Math.abs(reverse(currentTimeMillis()) ^ reverseBytes(nanoTime())))
+            .<Long, SynchronousExpressionInput<Long>>build();
+    final var itemNameInput =
+        ExpressionInputBuilder.newInstance()
+            .expression("${int64:toString(offsetInput.get(), radix)}")
+            .type(String.class)
+            .value("offsetInput", offsetInput, SynchronousExpressionInput.class)
+            .value("radix", radix, int.class)
+            .<String, SynchronousExpressionInput<String>>build();
+    final var id = itemNameInput.get();
+    assertEquals(length, id.length());
+    final var offset = offsetInput.last();
+    assertTrue(Long.toString(offset, radix).endsWith(id));
+  }
 }
