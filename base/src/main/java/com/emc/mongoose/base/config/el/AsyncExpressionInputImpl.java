@@ -1,7 +1,6 @@
 package com.emc.mongoose.base.config.el;
 
 import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
-
 import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
 import com.github.akurilov.commons.io.el.ExpressionInput;
 import com.github.akurilov.commons.io.el.SynchronousExpressionInput;
