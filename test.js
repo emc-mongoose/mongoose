@@ -1,6 +1,14 @@
 swift_item_list = "swift_item_list.csv"
 
 config = {
+    "item": {
+        "data" : {
+            "size" : 10,
+            "input" : {
+            	"file" : "content.txt"
+            }
+        }
+    },
 	"storage" : {
 		"driver" : {
 			"type" : "swift"
@@ -31,23 +39,18 @@ read_config = {
                 "file": swift_item_list
             },
             "data" : {
-//            	"ranges" : {
-//                    "fixed" : new java.util.ArrayList(["0-4", "5-9"])
-//                },
+            	"ranges" : {
+                    "fixed" : new java.util.ArrayList(["0-4", "5-9"])
+                },
                 "verify" : true
             }
         }
       }
+
 create_config = {
         "item": {
             "output": {
                 "file": swift_item_list
-            },
-            "data" : {
-            	"size" : 10,
-            	"input" : {
-            		"file" : "content.txt"
-            	}
             }
         }
     }

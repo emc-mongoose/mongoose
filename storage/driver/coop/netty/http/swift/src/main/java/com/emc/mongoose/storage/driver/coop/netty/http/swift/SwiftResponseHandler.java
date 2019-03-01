@@ -51,7 +51,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		if (contentType != null) {
 			final Matcher boundaryMatcher = BOUNDARY_VALUE_PATTERN.matcher(contentType);
 			if (boundaryMatcher.find()) {
-				final String boundaryMarker = boundaryMatcher.group(1);
+				final String boundaryMarker = "--" + boundaryMatcher.group(1);
 				channel.attr(ATTR_KEY_BOUNDARY_MARKER).set(boundaryMarker);
 			}
 		}
@@ -84,13 +84,13 @@ Content-Range: bytes 3-6/10240
 					.cardinality()) {
 					final ByteBuf newContentChunk = removeHeaders(channel, op, contentChunk);
 					super.handleResponseContentChunk(channel, op,
-						newContentChunk); // TODO defect GOOSE-1316
+						newContentChunk);
 				} else {
 					final List<Range> fixedRanges = dataOp.fixedRanges();
 					if (fixedRanges != null && 1 < fixedRanges.size()) {
 						final ByteBuf newContentChunk = removeHeaders(channel, op, contentChunk);
 						super.handleResponseContentChunk(channel, op,
-							newContentChunk); // TODO defect GOOSE-1316
+							newContentChunk);
 					} else {
 						super.handleResponseContentChunk(channel, op, contentChunk);
 					}
@@ -104,8 +104,7 @@ Content-Range: bytes 3-6/10240
 	}
 
 	ByteBuf removeHeaders(final Channel channel, final O op, final ByteBuf contentChunk) {
-		final String boundaryMarker = "--" + channel.attr(ATTR_KEY_BOUNDARY_MARKER).get();
-//		final byte[] bytes = contentChunk.array();
+		final String boundaryMarker = channel.attr(ATTR_KEY_BOUNDARY_MARKER).get();
 		final int chunckSize = contentChunk.readableBytes();
 		final byte[] bytes = new byte[chunckSize];
 		while (contentChunk.readerIndex() < chunckSize) {
@@ -113,7 +112,6 @@ Content-Range: bytes 3-6/10240
 		}
 		String s = new String(bytes);
 		s = s.replaceAll(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker), "");
-		System.out.println(s);
 		return Unpooled.copiedBuffer(s.getBytes());
 	}
 }
