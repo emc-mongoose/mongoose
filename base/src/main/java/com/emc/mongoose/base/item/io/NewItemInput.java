@@ -20,12 +20,12 @@ public class NewItemInput<I extends Item> implements Input<I> {
   }
 
   @Override
-  public I get() throws IOException {
+  public I get() {
     return itemFactory.getItem(idInput.get());
   }
 
   @Override
-  public int get(final List<I> buffer, final int maxCount) throws IOException {
+  public int get(final List<I> buffer, final int maxCount) {
     for (int i = 0; i < maxCount; i++) {
       buffer.add(itemFactory.getItem(idInput.get()));
     }
@@ -39,17 +39,17 @@ public class NewItemInput<I extends Item> implements Input<I> {
    * @throws IOException doesn't throw
    */
   @Override
-  public final long skip(final long itemsCount) throws IOException {
+  public final long skip(final long itemsCount) {
     return idInput.skip(itemsCount);
   }
 
   @Override
-  public final void reset() throws IOException {
+  public final void reset() {
     idInput.reset();
   }
 
   @Override
-  public final void close() throws IOException {
+  public final void close() throws Exception {
     idInput.close();
   }
 

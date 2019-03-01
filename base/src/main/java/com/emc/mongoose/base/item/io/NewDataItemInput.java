@@ -5,7 +5,6 @@ import com.emc.mongoose.base.item.IdStringInput;
 import com.emc.mongoose.base.item.ItemFactory;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.system.SizeInBytes;
-import java.io.IOException;
 import java.util.List;
 
 public final class NewDataItemInput<D extends DataItem> extends NewItemInput<D>
@@ -20,12 +19,12 @@ public final class NewDataItemInput<D extends DataItem> extends NewItemInput<D>
   }
 
   @Override
-  public final D get() throws IOException {
+  public final D get() {
     return itemFactory.getItem(idInput.get(), idInput.getAsLong(), dataSize.get());
   }
 
   @Override
-  public final int get(final List<D> buffer, final int maxCount) throws IOException {
+  public final int get(final List<D> buffer, final int maxCount) {
     for (int i = 0; i < maxCount; i++) {
       buffer.add(itemFactory.getItem(idInput.get(), idInput.getAsLong(), dataSize.get()));
     }

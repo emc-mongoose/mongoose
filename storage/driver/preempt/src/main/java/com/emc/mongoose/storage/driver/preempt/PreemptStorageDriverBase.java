@@ -1,5 +1,7 @@
 package com.emc.mongoose.storage.driver.preempt;
 
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
+
 import com.emc.mongoose.base.data.DataInput;
 import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.exception.OmgShootMyFootException;
@@ -51,13 +53,13 @@ public abstract class PreemptStorageDriverBase<I extends Item, O extends Operati
   }
 
   @Override
-  public final boolean put(final O op) throws InterruptRunException, EOFException {
+  public final boolean put(final O op) throws InterruptRunException {
     try {
       ioExecutor.execute(wrapToBlocking(op));
       return true;
     } catch (final RejectedExecutionException e) {
       if (!isStarted() || ioExecutor.isShutdown() || ioExecutor.isTerminated()) {
-        throw new EOFException();
+        throwUnchecked(new EOFException());
       }
       return false;
     }
@@ -65,9 +67,9 @@ public abstract class PreemptStorageDriverBase<I extends Item, O extends Operati
 
   @Override
   public final int put(final List<O> ops, final int from, final int to)
-      throws InterruptRunException, EOFException {
+      throws InterruptRunException {
     if (!isStarted() || ioExecutor.isShutdown() || ioExecutor.isTerminated()) {
-      throw new EOFException();
+      throwUnchecked(new EOFException());
     }
     int i = from;
     try {
@@ -81,7 +83,7 @@ public abstract class PreemptStorageDriverBase<I extends Item, O extends Operati
   }
 
   @Override
-  public final int put(final List<O> ops) throws InterruptRunException, EOFException {
+  public final int put(final List<O> ops) throws InterruptRunException {
     return put(ops, 0, ops.size());
   }
 

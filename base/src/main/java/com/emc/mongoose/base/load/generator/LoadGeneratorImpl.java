@@ -19,7 +19,6 @@ import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FiberBase;
 import java.io.EOFException;
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -176,11 +175,13 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
                     opBuff.remove(0);
                   }
                 }
-              } catch (final EOFException e) {
-                Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
-                outputFinishFlag = true;
-              } catch (final IOException e) {
-                LogUtil.exception(Level.ERROR, e, "{}: operation output failure", name);
+              } catch (final Exception e) {
+                if (e instanceof EOFException) {
+                  Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
+                  outputFinishFlag = true;
+                } else {
+                  LogUtil.exception(Level.ERROR, e, "{}: operation output failure", name);
+                }
               }
             } else { // batch mode branch
               try {
@@ -191,16 +192,12 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
                 } else {
                   opBuff.clear();
                 }
-              } catch (final EOFException e) {
-                Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
-                outputFinishFlag = true;
-              } catch (final RemoteException e) {
-                final Throwable cause = e.getCause();
-                if (cause instanceof EOFException) {
+              } catch (final Exception e) {
+                if (e instanceof EOFException) {
                   Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
                   outputFinishFlag = true;
                 } else {
-                  LogUtil.trace(Loggers.ERR, Level.ERROR, cause, "Unexpected failure");
+                  LogUtil.trace(Loggers.ERR, Level.ERROR, e, "Unexpected failure");
                 }
               }
             }
@@ -230,8 +227,10 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
     final List<I> items = new ArrayList<>(n); // prepare the items buffer
     try {
       itemInput.get(items, n); // get the items from the input
-    } catch (final EOFException e) {
-      return null;
+    } catch (final Exception e) {
+      if (e instanceof EOFException) {
+        return null;
+      }
     }
     return items;
   }

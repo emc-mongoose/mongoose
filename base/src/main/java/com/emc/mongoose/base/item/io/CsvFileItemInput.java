@@ -1,5 +1,7 @@
 package com.emc.mongoose.base.item.io;
 
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
+
 import com.emc.mongoose.base.item.DataItemFactory;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
@@ -34,15 +36,19 @@ public class CsvFileItemInput<I extends Item> extends CsvItemInput<I> implements
   }
   //
   @Override
-  public final Path getFilePath() {
+  public final Path filePath() {
     return itemsFilePath;
   }
   //
   @Override
-  public void reset() throws IOException {
-    if (itemsSrc != null) {
-      itemsSrc.close();
+  public void reset() {
+    try {
+      if (itemsSrc != null) {
+        itemsSrc.close();
+      }
+      setItemsSrc(Files.newBufferedReader(itemsFilePath, StandardCharsets.UTF_8));
+    } catch (final IOException e) {
+      throwUnchecked(e);
     }
-    setItemsSrc(Files.newBufferedReader(itemsFilePath, StandardCharsets.UTF_8));
   }
 }

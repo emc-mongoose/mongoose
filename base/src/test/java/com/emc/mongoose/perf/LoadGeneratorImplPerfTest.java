@@ -19,7 +19,6 @@ import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.io.collection.CircularListInput;
 import com.github.akurilov.commons.io.collection.ListInput;
 import com.github.akurilov.commons.system.SizeInBytes;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,30 +42,30 @@ public class LoadGeneratorImplPerfTest {
     }
 
     @Override
-    public boolean put(final T item) throws IOException {
+    public boolean put(final T item) {
       counter.increment();
       return true;
     }
 
     @Override
-    public int put(final List<T> buffer, final int from, final int to) throws IOException {
+    public int put(final List<T> buffer, final int from, final int to) {
       counter.add(to - from);
       return to - from;
     }
 
     @Override
-    public int put(final List<T> buffer) throws IOException {
+    public int put(final List<T> buffer) {
       counter.add(buffer.size());
       return buffer.size();
     }
 
     @Override
-    public Input<T> getInput() throws IOException {
+    public Input<T> getInput() {
       return null;
     }
 
     @Override
-    public void close() throws IOException {}
+    public void close() throws Exception {}
   }
 
   private static final class RecyclingAndCountingOutput<T> extends CountingOutput<T> {
@@ -78,13 +77,13 @@ public class LoadGeneratorImplPerfTest {
     }
 
     @Override
-    public boolean put(final T item) throws IOException {
+    public boolean put(final T item) {
       loadGenerator.recycle((Operation) item);
       return super.put(item);
     }
 
     @Override
-    public int put(final List<T> buffer, final int from, final int to) throws IOException {
+    public int put(final List<T> buffer, final int from, final int to) {
       for (int i = from; i < to; i++) {
         loadGenerator.recycle((Operation) buffer.get(i));
       }
@@ -92,7 +91,7 @@ public class LoadGeneratorImplPerfTest {
     }
 
     @Override
-    public int put(final List<T> buffer) throws IOException {
+    public int put(final List<T> buffer) {
       for (int i = 0; i < buffer.size(); i++) {
         loadGenerator.recycle((Operation) buffer.get(i));
       }

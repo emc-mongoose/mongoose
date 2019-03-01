@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.driver.coop;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.base.data.DataInput;
@@ -59,9 +60,9 @@ public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<
   }
 
   @Override
-  public final boolean put(final O op) throws InterruptRunException, EOFException {
+  public final boolean put(final O op) throws InterruptRunException {
     if (!isStarted()) {
-      throw new EOFException();
+      throwUnchecked(new EOFException());
     }
     if (prepare(op) && inOpQueue.offer(op)) {
       scheduledOpCount.increment();
@@ -73,9 +74,9 @@ public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<
 
   @Override
   public final int put(final List<O> ops, final int from, final int to)
-      throws InterruptRunException, EOFException {
+      throws InterruptRunException {
     if (!isStarted()) {
-      throw new EOFException();
+      throwUnchecked(new EOFException());
     }
     var i = from;
     O nextOp;
@@ -93,9 +94,9 @@ public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<
   }
 
   @Override
-  public final int put(final List<O> ops) throws InterruptRunException, EOFException {
+  public final int put(final List<O> ops) throws InterruptRunException {
     if (!isStarted()) {
-      throw new EOFException();
+      throwUnchecked(new EOFException());
     }
     var n = 0;
     for (final var nextOp : ops) {

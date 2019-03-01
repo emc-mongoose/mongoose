@@ -297,7 +297,7 @@ public class LoadGeneratorBuilderImpl<
         } finally {
           try {
             itemInput.close();
-          } catch (final IOException ignored) {
+          } catch (final Exception ignored) {
           }
         }
 
@@ -380,14 +380,23 @@ public class LoadGeneratorBuilderImpl<
       while (n < maxCount) {
         n += itemInput.get(items, maxCount - n);
       }
-    } catch (final EOFException ignored) {
-    } catch (final IOException e) {
-      LogUtil.exception(Level.WARN, e, "Failed to estimate the average data item size");
+    } catch (final Exception e) {
+      if (e instanceof IOException) {
+        if (!(e instanceof EOFException)) {
+          LogUtil.exception(Level.WARN, e, "Failed to estimate the average data item size");
+        }
+      } else {
+        throw e;
+      }
     } finally {
       try {
         itemInput.reset();
-      } catch (final IOException e) {
-        LogUtil.exception(Level.WARN, e, "Failed reset the items input");
+      } catch (final Exception e) {
+        if (e instanceof IOException) {
+          LogUtil.exception(Level.WARN, e, "Failed reset the items input");
+        } else {
+          throw e;
+        }
       }
     }
 
@@ -532,10 +541,14 @@ public class LoadGeneratorBuilderImpl<
                   n += m;
                 }
               }
-            } catch (final EOFException e) {
-              Loggers.MSG.info("Loaded {} items, end of items input", n);
-            } catch (final IOException e) {
-              LogUtil.exception(Level.WARN, e, "Loaded {} items, I/O failure occurred", n);
+            } catch (final Exception e) {
+              if (e instanceof EOFException) {
+                Loggers.MSG.info("Loaded {} items, end of items input", n);
+              } else if (e instanceof IOException) {
+                LogUtil.exception(Level.WARN, e, "Loaded {} items, I/O failure occurred", n);
+              } else {
+                throw e;
+              }
             } finally {
               finishLatch.countDown();
             }

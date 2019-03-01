@@ -17,7 +17,6 @@ import com.github.akurilov.commons.concurrent.AsyncRunnable;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.confuse.Config;
-import java.io.EOFException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -42,14 +41,13 @@ public interface StorageDriver<I extends Item, O extends Operation<I>>
       throws InterruptRunException, IOException;
 
   @Override
-  boolean put(final O op) throws InterruptRunException, EOFException, IOException;
+  boolean put(final O op) throws InterruptRunException;
 
   @Override
-  int put(final List<O> ops, final int from, final int to)
-      throws InterruptRunException, EOFException, IOException;
+  int put(final List<O> ops, final int from, final int to) throws InterruptRunException;
 
   @Override
-  int put(final List<O> ops) throws InterruptRunException, EOFException, IOException;
+  int put(final List<O> ops) throws InterruptRunException;
 
   boolean hasRemainingResults();
 

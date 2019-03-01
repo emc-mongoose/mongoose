@@ -81,12 +81,12 @@ ext {
 }
 
 configurations {
-	partial
+	partial.extendsFrom compileOnly
 }
 
 dependencies {
 
-	partial("it.unimi.dsi:fastutil:${depVersion.fastutil}") {
+	compileOnly("it.unimi.dsi:fastutil:${depVersion.fastutil}") {
 		transitive = false
 	}
 
