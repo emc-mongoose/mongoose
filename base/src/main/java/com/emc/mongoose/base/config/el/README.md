@@ -14,7 +14,15 @@ configuration options based on [Java Unified Expression Language](http://juel.so
 
 # 2. Limitations
 
+1. JUEL standard doesn't allow to mix the [synchronous and asynchronous evaluation](#41-synchronous-and-asynchronous-evaluation) in the same expression
+2. The [initial value](#42-initial-value) should be set if the [self referencing](#431-self-referencing) is used
+
 # 3. Requirements
+
+1. Support both synchronous and asynchronous expression evaluation
+2. The expression result should be refreshing in background constantly in case of asynchronous evaluation
+3. The JUEL syntax should be extended to support the initial/seed value setting
+4. The expression should be able to use the result of the previous evaluation (self referencing)
 
 # 4. Approach
 
@@ -36,10 +44,19 @@ expected to yield a sequence of the same value. The asynchronous evaluation is m
 The symbols `$` (synchronous) and `#` (async) are used in the JUEL standard to distinguish between the synchronous and
 asynchronous evaluation.
 
-* **Note**:
-> JUEL standard doesn't allow to mix the synchronous and asynchronous evaluation in the same expression
+## 4.2. Initial Value
 
-## 4.2. Built-in Functions
+The JUEL standard doesn't allow the initial value setting. However, this is required for the self-referencing
+functionality. The pattern
+`%{<INITIAL_VALUE>}`
+should be used outside (somewhere before either after) of the dynamic part of the expression to set the initial value.
+For example, the expression:
+`%{-1}${this.last() + 1}`
+will produce the following sequence of numbers: 0, 1, 2, ...
+
+The useful thing is that the initial value is also an expression.
+
+## 4.3. Built-in Functions
 
 There are some useful static Java methods mapped into the expression language:
 * [env:get(String name)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#getenv(java.lang.String))
@@ -49,6 +66,7 @@ There are some useful static Java methods mapped into the expression language:
 * [int64:reverseBytes(long x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Long.html#reverseBytes(long))
 * [int64:rotateLeft(long x, int distance)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Long.html#rotateLeft(long,int))
 * [int64:rotateRight(long x, int distance)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Long.html#rotateRight(long,int))
+* int64:xor(long x1, long x2)
 * [math:absInt32(int x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#abs(int))
 * [math:absInt64(long x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#abs(long))
 * [math:absFloat32(float x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#abs(float))
@@ -75,12 +93,17 @@ There are some useful static Java methods mapped into the expression language:
 * [math:sqrt(double x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#sqrt(double))
 * [math:tan(double x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#tan(double))
 * [math:xorShift64(long x)](https://github.com/akurilov/java-commons/blob/a3cfeb4ed0985dc22832ce370b902de46f19062e/src/main/java/com/github/akurilov/commons/math/MathUtil.java#L34)
+* [path:random(int width, int depth)](#421-random-path-generator)
 * [string:format(string pattern, args...)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html#format(java.lang.String,java.lang.Object...))
 * [string:join(string delimeter, string elements...)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html#join(java.lang.CharSequence,java.lang.CharSequence...))
 * [time:millisSinceEpoch()](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#currentTimeMillis())
 * [time:nanos()](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#nanoTime())
 
-## 4.3. Built-in Values
+### 4.3.1. Random Path Generator
+
+TODO
+
+## 4.4. Built-in Values
 
 | Name | Type | Description |
 |------|------|-------------|
@@ -90,7 +113,7 @@ There are some useful static Java methods mapped into the expression language:
 | `pi` | double | The ratio of the circumference of a circle to its diameter
 | `this` | [ExpressionInput](https://github.com/akurilov/java-commons/blob/master/src/main/java/com/github/akurilov/commons/io/el/ExpressionInput.java) | The expression input instance (self referencing)
 
-### 4.3.1. Self Referencing
+### 4.4.1. Self Referencing
 
 There are `this` among the built-in values. This is designed for the self referencing purposes. This allows to make an
 expression evaluating the next value using the previous evaluation result. For example, the expression:
@@ -100,15 +123,13 @@ supplies the incremented value on each evaluation. The another example:
 supplies the new 64-bit random integer on each evaluation.
 
 **Note**:
-> * The initial value should be set if the self referencing is used.
 > * The only useful method for the `this` is [last](https://github.com/akurilov/java-commons/blob/a3cfeb4ed0985dc22832ce370b902de46f19062e/src/main/java/com/github/akurilov/commons/io/el/ExpressionInput.java#L35). Please don't use any other methods.
 
 # 5. Configuration
 
 ## 5.1. New Items Naming
 
-* `item-id-seed`
-* `item-id-expr`
+* `item-id`
 * `item-name`
 
 ## 5.2. Variable Items Output Path

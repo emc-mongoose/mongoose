@@ -1,15 +1,19 @@
 package com.emc.mongoose.base.config.el;
 
+import static com.github.akurilov.commons.io.el.ExpressionInput.SYNC_MARKER;
 import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.github.akurilov.commons.io.el.ExpressionInput;
 import com.github.akurilov.commons.io.el.SynchronousExpressionInput;
 import com.github.akurilov.commons.math.MathUtil;
 import java.io.File;
+import java.util.regex.Pattern;
 
 public class ExpressionInputBuilderImpl
     extends com.github.akurilov.commons.io.el.ExpressionInputBuilder
     implements ExpressionInputBuilder {
+
+  static final Pattern INITIAL_VALUE_PATTERN = Pattern.compile(".*%\\{(.+)}([$#]\\{.+}).*");
 
   public ExpressionInputBuilderImpl() {
     try {
@@ -23,6 +27,8 @@ public class ExpressionInputBuilderImpl
       function("int64", "reverseBytes", Long.class.getMethod("reverseBytes", long.class));
       function("int64", "rotateLeft", Long.class.getMethod("rotateLeft", long.class, int.class));
       function("int64", "rotateRight", Long.class.getMethod("rotateRight", long.class, int.class));
+      function(
+          "int64", "xor", ExpressionInputBuilder.class.getMethod("xor", long.class, long.class));
       function("math", "absInt32", Math.class.getMethod("abs", int.class));
       function("math", "absInt64", Math.class.getMethod("abs", long.class));
       function("math", "absFloat32", Math.class.getMethod("abs", float.class));
@@ -49,6 +55,7 @@ public class ExpressionInputBuilderImpl
       function("math", "sqrt", Math.class.getMethod("sqrt", double.class));
       function("math", "tan", Math.class.getMethod("tan", double.class));
       function("math", "xorShift64", MathUtil.class.getMethod("xorShift", long.class));
+      function("path", "random", RandomPath.class.getMethod("get", int.class, int.class));
       function(
           "string",
           "format",
@@ -71,6 +78,19 @@ public class ExpressionInputBuilderImpl
   @SuppressWarnings("unchecked")
   @Override
   public <T, U extends ExpressionInput<T>> U build() {
+    final var initValMatcher = INITIAL_VALUE_PATTERN.matcher(expr);
+    if (initValMatcher.find()) {
+      final var initial = initValMatcher.group(1);
+      final var initialExpr = initial.replaceFirst(INITIAL_VALUE_EXPRESSION_MARKER, SYNC_MARKER);
+      try (final var initialExprInput = expression(initialExpr).build()) {
+        final var initialVal = initialExprInput.get();
+        initial(initialVal);
+      } catch (final Exception e) {
+        throwUnchecked(e);
+      }
+      final var expression = initValMatcher.group(2);
+      expression(expression);
+    }
     var input = super.<T, U>build();
     if (!(input instanceof SynchronousExpressionInput)) {
       input =
