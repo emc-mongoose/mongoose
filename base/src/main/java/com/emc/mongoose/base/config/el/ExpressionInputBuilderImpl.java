@@ -29,6 +29,7 @@ public class ExpressionInputBuilderImpl
       function("int64", "rotateRight", Long.class.getMethod("rotateRight", long.class, int.class));
       function(
           "int64", "xor", ExpressionInputBuilder.class.getMethod("xor", long.class, long.class));
+      function("int64", "xorShift", MathUtil.class.getMethod("xorShift", long.class));
       function("math", "absInt32", Math.class.getMethod("abs", int.class));
       function("math", "absInt64", Math.class.getMethod("abs", long.class));
       function("math", "absFloat32", Math.class.getMethod("abs", float.class));
@@ -54,7 +55,6 @@ public class ExpressionInputBuilderImpl
       function("math", "sin", Math.class.getMethod("sin", double.class));
       function("math", "sqrt", Math.class.getMethod("sqrt", double.class));
       function("math", "tan", Math.class.getMethod("tan", double.class));
-      function("math", "xorShift64", MathUtil.class.getMethod("xorShift", long.class));
       function("path", "random", RandomPath.class.getMethod("get", int.class, int.class));
       function(
           "string",

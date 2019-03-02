@@ -46,7 +46,7 @@ public class ExpressionInputTest {
     final var length = 10;
     final var init =
         "%{math:absInt64(int64:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos())))}";
-    final var expr = "${math:absInt64(math:xorShift64(this.last()) % math:pow(radix, length))}";
+    final var expr = "${math:absInt64(int64:xorShift(this.last()) % math:pow(radix, length))}";
     final var offsetInput =
         ExpressionInputBuilder.newInstance()
             .expression(init + expr)

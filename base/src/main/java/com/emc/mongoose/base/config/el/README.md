@@ -67,6 +67,7 @@ There are some useful static Java methods mapped into the expression language:
 * [int64:rotateLeft(long x, int distance)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Long.html#rotateLeft(long,int))
 * [int64:rotateRight(long x, int distance)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Long.html#rotateRight(long,int))
 * int64:xor(long x1, long x2)
+* [int64:xorShift(long x)](https://github.com/akurilov/java-commons/blob/a3cfeb4ed0985dc22832ce370b902de46f19062e/src/main/java/com/github/akurilov/commons/math/MathUtil.java#L34)
 * [math:absInt32(int x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#abs(int))
 * [math:absInt64(long x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#abs(long))
 * [math:absFloat32(float x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#abs(float))
@@ -92,7 +93,6 @@ There are some useful static Java methods mapped into the expression language:
 * [math:sin(double x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#sin(double))
 * [math:sqrt(double x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#sqrt(double))
 * [math:tan(double x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#tan(double))
-* [math:xorShift64(long x)](https://github.com/akurilov/java-commons/blob/a3cfeb4ed0985dc22832ce370b902de46f19062e/src/main/java/com/github/akurilov/commons/math/MathUtil.java#L34)
 * [path:random(int width, int depth)](#421-random-path-generator)
 * [string:format(string pattern, args...)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html#format(java.lang.String,java.lang.Object...))
 * [string:join(string delimeter, string elements...)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html#join(java.lang.CharSequence,java.lang.CharSequence...))
@@ -119,7 +119,7 @@ There are `this` among the built-in values. This is designed for the self refere
 expression evaluating the next value using the previous evaluation result. For example, the expression:
 ```${this.last() + 1}```
 supplies the incremented value on each evaluation. The another example:
-```${math:xorShift64(this.last())}```
+```${int64:xorShift(this.last())}```
 supplies the new 64-bit random integer on each evaluation.
 
 **Note**:
