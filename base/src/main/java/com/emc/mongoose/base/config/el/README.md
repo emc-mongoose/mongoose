@@ -54,7 +54,8 @@ For example, the expression:
 `%{-1}${this.last() + 1}`
 will produce the following sequence of numbers: 0, 1, 2, ...
 
-The useful thing is that the initial value is also an expression.
+The useful thing is that the initial value is also an expression which is being evaluated *once* to provide the
+constant initial value.
 
 ## 4.3. Built-in Functions
 
