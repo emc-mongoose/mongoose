@@ -18,8 +18,30 @@ configuration options based on [Java Unified Expression Language](http://juel.so
 
 # 4. Approach
 
-## 4.1. Built-in Functions
+## 4.1. Synchronous And Asynchronous Evaluation
 
+JUEL supports both immediate (synchronous) and deferred (asynchronous) evaluation ways.
+
+* **Synchronous**
+The expression is being evaluated on every invocation. The synchronous evaluation is useful if:
+    * The evaluation complexity is low enough
+    * The evaluation is non-blocking
+    * The different value on each invocation is strictly required.
+* **Asynchronous**
+The expression is being evaluated constantly in the background fiber. Requesting the expression value frequently is
+expected to yield a sequence of the same value. The asynchronous evaluation is most useful when:
+    * The recalculation cost is too high
+    * The values consumer doesn't require different value each time
+
+The symbols `$` (synchronous) and `#` (async) are used in the JUEL standard to distinguish between the synchronous and
+asynchronous evaluation.
+
+* **Note**:
+> JUEL standard doesn't allow to mix the synchronous and asynchronous evaluation in the same expression
+
+## 4.2. Built-in Functions
+
+There are some useful static Java methods mapped into the expression language:
 * [env:get(String name)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#getenv(java.lang.String))
 * [int64:toString(long x, int radix)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Long.html#toString(long,int))
 * [int64:toUnsignedString(long x, int radix)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Long.html#toUnsignedString(long,int))
@@ -58,7 +80,7 @@ configuration options based on [Java Unified Expression Language](http://juel.so
 * [time:millisSinceEpoch()](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#currentTimeMillis())
 * [time:nanos()](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#nanoTime())
 
-## 4.2. Built-in Values
+## 4.3. Built-in Values
 
 | Name | Type | Description |
 |------|------|-------------|
@@ -68,7 +90,7 @@ configuration options based on [Java Unified Expression Language](http://juel.so
 | `pi` | double | The ratio of the circumference of a circle to its diameter
 | `this` | [ExpressionInput](https://github.com/akurilov/java-commons/blob/master/src/main/java/com/github/akurilov/commons/io/el/ExpressionInput.java) | The expression input instance (self referencing)
 
-### 4.2.1. Self Referencing
+### 4.3.1. Self Referencing
 
 There are `this` among the built-in values. This is designed for the self referencing purposes. This allows to make an
 expression evaluating the next value using the previous evaluation result. For example, the expression:
@@ -83,12 +105,25 @@ supplies the new 64-bit random integer on each evaluation.
 
 # 5. Configuration
 
-List of the options, supporting the expression values:
-* `item-id`
+## 5.1. New Items Naming
+
+* `item-id-seed`
+* `item-id-expr`
 * `item-name`
+
+## 5.2. Variable Items Output Path
+
 * `item-output-path`
+
+## 5.3. Authentication
+
 * `storage-auth-uid`
 * `storage-auth-secret`
+
+## 5.4. HTTP
+
+TODO write to another file
+
 * `storage-net-http-headers-*`
 * `storage-net-http-uri-args-*`
 
