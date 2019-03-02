@@ -4,7 +4,7 @@ import com.github.akurilov.commons.io.el.ExpressionInput;
 
 public interface ExpressionInputBuilder extends ExpressionInput.Builder {
 
-  String INITIAL_VALUE_EXPRESSION_MARKER = "%";
+  String INITIAL_MARKER = "%";
 
   static ExpressionInputBuilder newInstance() {
     return new ExpressionInputBuilderImpl();

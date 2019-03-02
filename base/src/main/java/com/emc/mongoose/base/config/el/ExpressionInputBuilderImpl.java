@@ -13,7 +13,7 @@ public class ExpressionInputBuilderImpl
     extends com.github.akurilov.commons.io.el.ExpressionInputBuilder
     implements ExpressionInputBuilder {
 
-  static final Pattern INITIAL_VALUE_PATTERN = Pattern.compile(".*%\\{(.+)}([$#]\\{.+}).*");
+  static final Pattern INITIAL_VALUE_PATTERN = Pattern.compile(".*(%\\{.+})[$#]\\{.+}.*");
 
   public ExpressionInputBuilderImpl() {
     try {
@@ -81,14 +81,18 @@ public class ExpressionInputBuilderImpl
     final var initValMatcher = INITIAL_VALUE_PATTERN.matcher(expr);
     if (initValMatcher.find()) {
       final var initial = initValMatcher.group(1);
-      final var initialExpr = initial.replaceFirst(INITIAL_VALUE_EXPRESSION_MARKER, SYNC_MARKER);
+      final var initialExpr = SYNC_MARKER + initial.substring(1); // replace "%" with "$"
+      final var fullExpr = expr; // remember the full expression
       try (final var initialExprInput = expression(initialExpr).build()) {
         final var initialVal = initialExprInput.get();
         initial(initialVal);
       } catch (final Exception e) {
         throwUnchecked(e);
       }
-      final var expression = initValMatcher.group(2);
+      // remove the initial expression from the full expression
+      final var expression =
+          fullExpr.substring(0, initValMatcher.start(1))
+              + fullExpr.substring(initValMatcher.end(1));
       expression(expression);
     }
     var input = super.<T, U>build();
