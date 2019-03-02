@@ -68,7 +68,7 @@
     "comment" : "",
     "port" : 9999,
     "scenario" : null,
-    "version" : "4.2.0"
+    "version" : "5.0.0"
   },
   "storage" : {
     "namespace" : null,
@@ -106,7 +106,7 @@
         "fsAccess" : false,
         "headers" : {
           "Connection" : "Keep-Alive",
-          "User-Agent" : "mongoose/4.2.0"
+          "User-Agent" : "mongoose/5.0.0"
         },
         "versioning" : false,
         "uri" : {
