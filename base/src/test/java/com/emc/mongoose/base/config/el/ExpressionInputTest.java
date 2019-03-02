@@ -65,4 +65,25 @@ public class ExpressionInputTest {
     final var offset = offsetInput.last();
     assertTrue(Long.toString(offset, radix).endsWith(id));
   }
+
+  @Test
+  public void testVararg() throws Exception {
+    final var inputBuilder =
+        ExpressionInputBuilder.newInstance()
+            .function(
+                "string",
+                "join",
+                String.class.getMethod(
+                    "join", new Class[] {CharSequence.class, CharSequence[].class}))
+            .type(String.class);
+    var in =
+        inputBuilder
+            .expression("${string:join('_', 'a')}")
+            .<String, ExpressionInput<String>>build();
+    assertEquals("a", in.get());
+    in.close();
+    in = inputBuilder.expression("${string:join('_', 'a', 'b')}").build();
+    assertEquals("a_b", in.get());
+    in.close();
+  }
 }

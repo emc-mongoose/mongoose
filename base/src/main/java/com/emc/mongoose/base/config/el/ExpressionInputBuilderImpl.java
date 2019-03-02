@@ -14,8 +14,15 @@ public class ExpressionInputBuilderImpl
   public ExpressionInputBuilderImpl() {
     try {
       function("env", "get", System.class.getMethod("getenv", String.class));
-      function("int32", "toString", Integer.class.getMethod("toString", int.class, int.class));
       function("int64", "toString", Long.class.getMethod("toString", long.class, int.class));
+      function(
+          "int64",
+          "toUnsignedString",
+          Long.class.getMethod("toUnsignedString", long.class, int.class));
+      function("int64", "reverse", Long.class.getMethod("reverse", long.class));
+      function("int64", "reverseBytes", Long.class.getMethod("reverseBytes", long.class));
+      function("int64", "rotateLeft", Long.class.getMethod("rotateLeft", long.class, int.class));
+      function("int64", "rotateRight", Long.class.getMethod("rotateRight", long.class, int.class));
       function("math", "absInt32", Math.class.getMethod("abs", int.class));
       function("math", "absInt64", Math.class.getMethod("abs", long.class));
       function("math", "absFloat32", Math.class.getMethod("abs", float.class));
@@ -29,6 +36,10 @@ public class ExpressionInputBuilderImpl
       function("math", "floor", Math.class.getMethod("floor", double.class));
       function("math", "log", Math.class.getMethod("log", double.class));
       function("math", "log10", Math.class.getMethod("log10", double.class));
+      function("math", "maxInt32", Math.class.getMethod("max", int.class, int.class));
+      function("math", "maxInt64", Math.class.getMethod("max", long.class, long.class));
+      function("math", "maxFloat32", Math.class.getMethod("max", float.class, float.class));
+      function("math", "maxFloat64", Math.class.getMethod("max", double.class, double.class));
       function("math", "minInt32", Math.class.getMethod("min", int.class, int.class));
       function("math", "minInt64", Math.class.getMethod("min", long.class, long.class));
       function("math", "minFloat32", Math.class.getMethod("min", float.class, float.class));
@@ -38,11 +49,19 @@ public class ExpressionInputBuilderImpl
       function("math", "sqrt", Math.class.getMethod("sqrt", double.class));
       function("math", "tan", Math.class.getMethod("tan", double.class));
       function("math", "xorShift64", MathUtil.class.getMethod("xorShift", long.class));
+      function(
+          "string",
+          "format",
+          String.class.getMethod("format", new Class[] {String.class, Object[].class}));
+      function(
+          "string",
+          "join",
+          String.class.getMethod("join", new Class[] {CharSequence.class, CharSequence[].class}));
       function("time", "millisSinceEpoch", System.class.getMethod("currentTimeMillis"));
       function("time", "nanos", System.class.getMethod("nanoTime"));
       value("e", Math.E, double.class);
-      value("lineSeparator", System.lineSeparator(), String.class);
-      value("pathSeparator", File.pathSeparator, String.class);
+      value("lineSep", System.lineSeparator(), String.class);
+      value("pathSep", File.pathSeparator, String.class);
       value("pi", Math.PI, double.class);
     } catch (final NoSuchMethodException e) {
       throwUnchecked(e);
