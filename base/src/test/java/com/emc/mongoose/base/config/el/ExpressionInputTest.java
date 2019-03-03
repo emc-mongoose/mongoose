@@ -98,7 +98,7 @@ public class ExpressionInputTest {
     final var withInitVal = "prefix_%{-1}${this.last() + 1}suffix";
     var m = INITIAL_VALUE_PATTERN.matcher(withInitVal);
     assertTrue(m.find());
-    assertEquals("-1", m.group(1));
+    assertEquals("%{-1}", m.group(1));
     final var noInitVal = "prefix_${this.last() + 1}suffix";
     m = INITIAL_VALUE_PATTERN.matcher(noInitVal);
     assertFalse(m.find());
