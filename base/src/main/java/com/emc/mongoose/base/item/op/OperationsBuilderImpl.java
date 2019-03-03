@@ -1,9 +1,11 @@
 package com.emc.mongoose.base.item.op;
 
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
+
+import com.emc.mongoose.base.config.ConstStringInput;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.storage.Credential;
-import com.emc.mongoose.base.supply.BatchSupplier;
-import com.emc.mongoose.base.supply.ConstantStringSupplier;
+import com.github.akurilov.commons.io.Input;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -17,15 +19,15 @@ public class OperationsBuilderImpl<I extends Item, O extends Operation<I>>
   protected OpType opType = OpType.CREATE; // by default
   protected String inputPath = null;
 
-  protected BatchSupplier<String> outputPathSupplier;
+  protected Input<String> outputPathSupplier;
   protected boolean constantOutputPathFlag;
   protected String constantOutputPath;
 
-  protected BatchSupplier<String> uidSupplier;
+  protected Input<String> uidInput;
   protected boolean constantUidFlag;
   protected String constantUid;
 
-  protected BatchSupplier<String> secretSupplier;
+  protected Input<String> secretInput;
   protected boolean constantSecretFlag;
   protected String constantSecret;
 
@@ -62,12 +64,12 @@ public class OperationsBuilderImpl<I extends Item, O extends Operation<I>>
   }
 
   @Override
-  public final OperationsBuilderImpl<I, O> outputPathSupplier(final BatchSupplier<String> ops) {
+  public final OperationsBuilderImpl<I, O> outputPathSupplier(final Input<String> ops) {
     this.outputPathSupplier = ops;
     if (outputPathSupplier == null) {
       constantOutputPathFlag = true;
       constantOutputPath = null;
-    } else if (outputPathSupplier instanceof ConstantStringSupplier) {
+    } else if (outputPathSupplier instanceof ConstStringInput) {
       constantOutputPathFlag = true;
       constantOutputPath = outputPathSupplier.get();
     } else {
@@ -77,14 +79,14 @@ public class OperationsBuilderImpl<I extends Item, O extends Operation<I>>
   }
 
   @Override
-  public final OperationsBuilderImpl<I, O> uidSupplier(final BatchSupplier<String> uidSupplier) {
-    this.uidSupplier = uidSupplier;
-    if (uidSupplier == null) {
+  public final OperationsBuilderImpl<I, O> uidInput(final Input<String> uidInput) {
+    this.uidInput = uidInput;
+    if (uidInput == null) {
       constantUidFlag = true;
       constantUid = null;
-    } else if (uidSupplier instanceof ConstantStringSupplier) {
+    } else if (uidInput instanceof ConstStringInput) {
       constantUidFlag = true;
-      constantUid = uidSupplier.get();
+      constantUid = uidInput.get();
     } else {
       constantUidFlag = false;
     }
@@ -92,15 +94,14 @@ public class OperationsBuilderImpl<I extends Item, O extends Operation<I>>
   }
 
   @Override
-  public final OperationsBuilderImpl<I, O> secretSupplier(
-      final BatchSupplier<String> secretSupplier) {
-    this.secretSupplier = secretSupplier;
-    if (secretSupplier == null) {
+  public final OperationsBuilderImpl<I, O> secretInput(final Input<String> secretInput) {
+    this.secretInput = secretInput;
+    if (secretInput == null) {
       constantSecretFlag = true;
       constantSecret = null;
-    } else if (secretSupplier instanceof ConstantStringSupplier) {
+    } else if (secretInput instanceof ConstStringInput) {
       constantSecretFlag = true;
-      constantSecret = secretSupplier.get();
+      constantSecret = secretInput.get();
     } else {
       constantSecretFlag = false;
     }
@@ -111,7 +112,7 @@ public class OperationsBuilderImpl<I extends Item, O extends Operation<I>>
   public OperationsBuilderImpl<I, O> credentialsMap(final Map<String, String> credentials) {
     if (credentials != null) {
       this.credentialsMap = credentials;
-      secretSupplier(null);
+      secretInput(null);
     }
     return this;
   }
@@ -152,7 +153,7 @@ public class OperationsBuilderImpl<I extends Item, O extends Operation<I>>
   }
 
   protected final String getNextUid() {
-    return constantUidFlag ? constantUid : uidSupplier.get();
+    return constantUidFlag ? constantUid : uidInput.get();
   }
 
   protected final String getNextSecret(final String uid) {
@@ -161,28 +162,32 @@ public class OperationsBuilderImpl<I extends Item, O extends Operation<I>>
     } else if (constantSecretFlag) {
       return constantSecret;
     } else {
-      return secretSupplier.get();
+      return secretInput.get();
     }
   }
 
   @Override
   public void close() throws IOException {
     inputPath = null;
-    if (outputPathSupplier != null) {
-      outputPathSupplier.close();
-      outputPathSupplier = null;
-    }
-    if (uidSupplier != null) {
-      uidSupplier.close();
-      uidSupplier = null;
-    }
-    if (secretSupplier != null) {
-      secretSupplier.close();
-      secretSupplier = null;
-    }
-    if (credentialsMap != null) {
-      credentialsMap.clear();
-      credentialsMap = null;
+    try {
+      if (outputPathSupplier != null) {
+        outputPathSupplier.close();
+        outputPathSupplier = null;
+      }
+      if (uidInput != null) {
+        uidInput.close();
+        uidInput = null;
+      }
+      if (secretInput != null) {
+        secretInput.close();
+        secretInput = null;
+      }
+      if (credentialsMap != null) {
+        credentialsMap.clear();
+        credentialsMap = null;
+      }
+    } catch (final Exception e) {
+      throwUnchecked(e);
     }
   }
 }

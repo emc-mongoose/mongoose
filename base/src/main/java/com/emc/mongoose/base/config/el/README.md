@@ -60,6 +60,8 @@ constant initial value.
 ## 4.3. Built-in Functions
 
 There are some useful static Java methods mapped into the expression language:
+* date:formatNowIso8601()
+* date:formatNowRfc1123()
 * [env:get(String name)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#getenv(java.lang.String))
 * [int64:toString(long x, int radix)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Long.html#toString(long,int))
 * [int64:toUnsignedString(long x, int radix)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Long.html#toUnsignedString(long,int))

@@ -3,6 +3,7 @@ package com.emc.mongoose.base.config.el;
 import static com.github.akurilov.commons.io.el.ExpressionInput.SYNC_MARKER;
 import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
+import com.emc.mongoose.base.env.DateUtil;
 import com.github.akurilov.commons.io.el.ExpressionInput;
 import com.github.akurilov.commons.io.el.SynchronousExpressionInput;
 import com.github.akurilov.commons.math.MathUtil;
@@ -17,6 +18,8 @@ public class ExpressionInputBuilderImpl
 
   public ExpressionInputBuilderImpl() {
     try {
+      function("date", "formatNowIso8601", DateUtil.class.getMethod("formatNowIso8601"));
+      function("date", "formatNowRfc1123", DateUtil.class.getMethod("formatNowRfc1123"));
       function("env", "get", System.class.getMethod("getenv", String.class));
       function("int64", "toString", Long.class.getMethod("toString", long.class, int.class));
       function(

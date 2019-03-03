@@ -7,8 +7,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.emc.mongoose.base.env.DateUtil;
 import com.github.akurilov.commons.io.el.ExpressionInput;
 import com.github.akurilov.commons.io.el.SynchronousExpressionInput;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
@@ -102,5 +104,26 @@ public class ExpressionInputTest {
     final var noInitVal = "prefix_${this.last() + 1}suffix";
     m = INITIAL_VALUE_PATTERN.matcher(noInitVal);
     assertFalse(m.find());
+  }
+
+  @Test
+  public void testDateFormatRfc1123() throws Exception {
+    final var d0 = DateUtil.FMT_DATE_RFC1123.format(new Date(System.currentTimeMillis()));
+    try (final var dateInput =
+        ExpressionInputBuilder.newInstance()
+            .type(String.class)
+            .function("date", "formatNowRfc1123", DateUtil.class.getMethod("formatNowRfc1123"))
+            .expression("#{date:formatNowRfc1123()}")
+            .initial(d0)
+            .<String, AsyncExpressionInput<String>>build()) {
+      final var d1 = dateInput.get();
+      assertEquals(d0, d1);
+      dateInput.start();
+      TimeUnit.MILLISECONDS.sleep(2000);
+      final var d2 = dateInput.get();
+      final var date2 = DateUtil.FMT_DATE_RFC1123.parse(d2);
+      final var date1 = DateUtil.FMT_DATE_RFC1123.parse(d1);
+      assertTrue(date2.after(date1));
+    }
   }
 }

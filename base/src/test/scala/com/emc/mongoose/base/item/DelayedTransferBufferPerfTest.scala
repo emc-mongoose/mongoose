@@ -37,8 +37,8 @@ final class DelayedTransferBufferPerfTest {
 		ioTaskBuilder = new DataOperationsBuilderImpl[DataItem, DataOperation[DataItem]](0)
 		ioTaskBuilder.opType(OpType.NOOP)
 		ioTaskBuilder.outputPathSupplier(new ConstantStringSupplier("/default"))
-		ioTaskBuilder.uidSupplier(new ConstantStringSupplier("uid1"))
-		ioTaskBuilder.secretSupplier(new ConstantStringSupplier("secret1"))
+		ioTaskBuilder.uidInput(new ConstantStringSupplier("uid1"))
+		ioTaskBuilder.secretInput(new ConstantStringSupplier("secret1"))
 		buff = new DelayedTransferConvertBuffer[DataItem, DataOperation[DataItem]](
 			BUFF_CAPACITY, 0, TimeUnit.SECONDS
 		)

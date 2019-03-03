@@ -1,5 +1,6 @@
 package com.emc.mongoose.perf;
 
+import com.emc.mongoose.base.config.ConstStringInput;
 import com.emc.mongoose.base.item.DataItemFactoryImpl;
 import com.emc.mongoose.base.item.DataItemImpl;
 import com.emc.mongoose.base.item.ItemFactory;
@@ -12,8 +13,6 @@ import com.emc.mongoose.base.item.op.OperationsBuilder;
 import com.emc.mongoose.base.item.op.data.DataOperationsBuilderImpl;
 import com.emc.mongoose.base.load.generator.LoadGenerator;
 import com.emc.mongoose.base.load.generator.LoadGeneratorImpl;
-import com.emc.mongoose.base.supply.ConstantStringSupplier;
-import com.emc.mongoose.base.supply.RangePatternDefinedSupplier;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.io.collection.CircularListInput;
@@ -112,9 +111,9 @@ public class LoadGeneratorImplPerfTest {
     final OperationsBuilder opsBuilder =
         new DataOperationsBuilderImpl(0)
             .opType(OpType.CREATE)
-            .outputPathSupplier(new ConstantStringSupplier("/default"))
-            .uidSupplier(null)
-            .secretSupplier(null);
+            .outputPathSupplier(new ConstStringInput("/default"))
+            .uidInput(null)
+            .secretInput(null);
     final boolean shuffleFlag = false;
 
     try (final LoadGenerator loadGenerator =
@@ -147,9 +146,9 @@ public class LoadGeneratorImplPerfTest {
     final OperationsBuilder opsBuilder =
         new DataOperationsBuilderImpl(0)
             .opType(OpType.CREATE)
-            .outputPathSupplier(new ConstantStringSupplier("/default"))
-            .uidSupplier(null)
-            .secretSupplier(null);
+            .outputPathSupplier(new ConstStringInput("/default"))
+            .uidInput(null)
+            .secretInput(null);
     final boolean shuffleFlag = false;
 
     try (final LoadGenerator loadGenerator =
@@ -183,9 +182,9 @@ public class LoadGeneratorImplPerfTest {
     final OperationsBuilder opsBuilder =
         new DataOperationsBuilderImpl(0)
             .opType(OpType.CREATE)
-            .outputPathSupplier(new ConstantStringSupplier("/default"))
-            .uidSupplier(new ConstantStringSupplier("wuser1@sanity.local"))
-            .secretSupplier(new ConstantStringSupplier("secret"));
+            .outputPathSupplier(new ConstStringInput("/default"))
+            .uidInput(new ConstStringInput("wuser1@sanity.local"))
+            .secretInput(new ConstStringInput("secret"));
     final boolean shuffleFlag = false;
 
     try (final LoadGenerator loadGenerator =
@@ -221,9 +220,9 @@ public class LoadGeneratorImplPerfTest {
     final OperationsBuilder opsBuilder =
         new DataOperationsBuilderImpl(0)
             .opType(OpType.CREATE)
-            .outputPathSupplier(new RangePatternDefinedSupplier("$p{16;2}"))
-            .uidSupplier(null)
-            .secretSupplier(null);
+            // .outputPathSupplier(ExpressionInputBuilder.newInstance().type("$p{16;2}"))
+            .uidInput(null)
+            .secretInput(null);
     final boolean shuffleFlag = false;
 
     try (final LoadGenerator loadGenerator =
@@ -261,8 +260,8 @@ public class LoadGeneratorImplPerfTest {
         new DataOperationsBuilderImpl(0)
             .opType(OpType.READ)
             .outputPathSupplier(null)
-            .uidSupplier(null)
-            .secretSupplier(null);
+            .uidInput(null)
+            .secretInput(null);
     final boolean shuffleFlag = false;
 
     try (final LoadGenerator loadGenerator =
@@ -299,8 +298,8 @@ public class LoadGeneratorImplPerfTest {
         new DataOperationsBuilderImpl(0)
             .opType(OpType.READ)
             .outputPathSupplier(null)
-            .uidSupplier(null)
-            .secretSupplier(null);
+            .uidInput(null)
+            .secretInput(null);
     final boolean shuffleFlag = true;
 
     try (final LoadGenerator loadGenerator =
@@ -338,8 +337,8 @@ public class LoadGeneratorImplPerfTest {
         new DataOperationsBuilderImpl(0)
             .opType(OpType.READ)
             .outputPathSupplier(null)
-            .uidSupplier(null)
-            .secretSupplier(null);
+            .uidInput(null)
+            .secretInput(null);
     final boolean shuffleFlag = false;
 
     try (final Output taskOutput = new RecyclingAndCountingOutput(counter)) {

@@ -1,7 +1,7 @@
 package com.emc.mongoose.base.item.op;
 
 import com.emc.mongoose.base.item.Item;
-import com.emc.mongoose.base.supply.BatchSupplier;
+import com.github.akurilov.commons.io.Input;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
@@ -20,11 +20,11 @@ public interface OperationsBuilder<I extends Item, O extends Operation<I>> exten
 
   OperationsBuilder<I, O> inputPath(final String inputPath);
 
-  OperationsBuilder<I, O> outputPathSupplier(final BatchSupplier<String> ops);
+  OperationsBuilder<I, O> outputPathSupplier(final Input<String> outputPathSupplier);
 
-  OperationsBuilder<I, O> uidSupplier(final BatchSupplier<String> uidSupplier);
+  OperationsBuilder<I, O> uidInput(final Input<String> uidInput);
 
-  OperationsBuilder<I, O> secretSupplier(final BatchSupplier<String> secretSupplier);
+  OperationsBuilder<I, O> secretInput(final Input<String> secretInput);
 
   OperationsBuilder<I, O> credentialsMap(final Map<String, String> credentials);
 
