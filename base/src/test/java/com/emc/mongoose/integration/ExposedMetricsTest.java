@@ -223,7 +223,7 @@ public class ExposedMetricsTest {
       final Map<String, Double> expectedValues,
       final double accuracy) {
     for (final var key : expectedValues.keySet()) {
-      final var p = Pattern.compile(String.format(METRIC_FORMAT, metricName, key) + "\\{.+\\} .+");
+      final var p = Pattern.compile(String.format(METRIC_FORMAT, metricName) + "_" + key + "\\{.+\\} .+");
       final var m = p.matcher(resultOutput);
       final var found = m.find();
       Assert.assertTrue(found);
