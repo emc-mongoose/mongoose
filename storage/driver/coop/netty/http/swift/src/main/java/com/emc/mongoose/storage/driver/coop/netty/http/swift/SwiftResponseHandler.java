@@ -39,7 +39,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey
 		.valueOf("boundary_marker");
 
-	private String cuteChunck = "";
+	private String cutChunck = "";
 
 	public SwiftResponseHandler(final HttpStorageDriverBase<I, O> driver,
 		final boolean verifyFlag) {
@@ -112,29 +112,29 @@ Content-Range: bytes 3-6/10240
 		while (contentChunk.readerIndex() < chunckSize) {
 			bytes[contentChunk.readerIndex()] = contentChunk.readByte();
 		}
-		String s = cuteChunck + new String(bytes);
+		String s = cutChunck + new String(bytes);
 		s = s.replaceAll(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker), "");
 		//TODO kochuv : check the end
-		cuteChunck = cuteEnd(s);
+		s = cuteEnd(s);
 		return Unpooled.copiedBuffer(s.getBytes());
 	}
 
 	private String cuteEnd(final String content) {
 		if (content.substring(content.length() - 1) == "-") {
-			cuteChunck = "-";
+			cutChunck = "-";
 		}
 		if (content.substring(content.length() - 2) == "--") {
-			cuteChunck = "--";
+			cutChunck = "--";
 		}
 		final Pattern pattern = Pattern.compile("--(.|\\s)*");
 		final Matcher matcher = pattern.matcher(content);
 		if (matcher.find()) {
 			//TODO kochuv: may be without count?
 			final int count = matcher.groupCount();
-			cuteChunck = matcher.group(count - 1);
-			return content.replaceAll(cuteChunck, "");
+			cutChunck = matcher.group(count - 1);
+			return content.replaceAll(cutChunck, "");
 		}
-		cuteChunck = "";
+		cutChunck = "";
 		return content;
 	}
 }
