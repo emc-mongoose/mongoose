@@ -34,11 +34,9 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	);
 	private static final String HEADER_PATTERN = ".*[\\s]*(Content-Type:).*[\\s]*(Content-Range:).*";
 
-
-
 	private static final String
 		HEADER_WITH_BOUNDARY_PATTERN =
-		"[\\s]*((%1$s)[\\s]*(" + HEADER_PATTERN + ")|(%1$s--))[\\s]*";
+		"[\\s]{0,1}((%1$s)[\\s]*(" + HEADER_PATTERN + ")|(%1$s--))[\\s]{0,3}";
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey
 		.valueOf("boundary_marker");
 
@@ -129,7 +127,7 @@ Content-Range: bytes 3-6/10240
 		if (content.substring(content.length() - 2) == "--") {
 			cutChunck = "--";
 		}
-		final Pattern pattern = Pattern.compile("[\\s]*--(.|\\s)*");
+		final Pattern pattern = Pattern.compile("[\\n]{0,1}[\\r]{0,1}--(.|\\s)*");
 		final Matcher matcher = pattern.matcher(content);
 		if (matcher.find()) {
 			//TODO kochuv: may be without count?

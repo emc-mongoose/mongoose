@@ -19,29 +19,29 @@ public class SwiftResponseHandlerTest {
 	private static final String HTTP_RESPONSE = "\n"
 		+ "--3d07fbbddf4041880c931c29e43cb6c4\n"
 		+ "Content-Type: application/octet-stream\n"
-		+ "Content-Range: bytes 0-4/10\n"
-		+ "aaaaa\n"
+		+ "Content-Range: bytes 0-4/10\n\r\n"
+		+ "\naaa\naa\n"
 		+ "--3d07fbbddf4041880c931c29e43cb6c4\n"
 		+ "Content-Type: application/octet-stream\n"
-		+ "Content-Range: bytes 5-9/10\n"
+		+ "Content-Range: bytes 5-9/10\n\r\n"
 		+ "aaaaa\n"
 		+ "--3d07fbbddf4041880c931c29e43cb6c4--\n";
 
 	private static final String PART_1_HTTP_RESPONSE = "\n"
 		+ "--3d07fbbddf4041880c931c29e43cb6c4\n"
 		+ "Content-Type: application/octet-stream\n"
-		+ "Content-Range: bytes 0-4/10\n"
-		+ "aaaaa\n"
+		+ "Content-Range: bytes 0-4/10\n\r\n"
+		+ "\naaa\naa\n"
 		+ "--3d07fbbddf4041880c931c29e43cb6c4\n"
 		+ "Content-Type: appli";
 
 	private static final String PART_2_HTTP_RESPONSE = "\n"
 		+ "cation/octet-stream\n"
-		+ "Content-Range: bytes 5-9/10\n"
+		+ "Content-Range: bytes 5-9/10\n\r\n"
 		+ "aaaaa\n"
 		+ "--3d07fbbddf4041880c931c29e43cb6c4--\n";
 
-	private static final String EXPECTED_CONTENT = "aaaaaaaaaa";
+	private static final String EXPECTED_CONTENT = "\naaa\naaaaaaa";
 	private static final String BOUNDARY = "--3d07fbbddf4041880c931c29e43cb6c4";
 	private static final EmbeddedChannel channel = new EmbeddedChannel(); //channel mock
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey
