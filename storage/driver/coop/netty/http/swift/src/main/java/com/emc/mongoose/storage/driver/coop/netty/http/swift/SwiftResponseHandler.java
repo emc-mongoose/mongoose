@@ -33,9 +33,12 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		VALUE_MULTIPART_BYTERANGES + ";" + HttpHeaderValues.BOUNDARY + "=([0-9a-f]+)"
 	);
 	private static final String HEADER_PATTERN = ".*[\\s]*(Content-Type:).*[\\s]*(Content-Range:).*";
+
+
+
 	private static final String
 		HEADER_WITH_BOUNDARY_PATTERN =
-		"[\\s]*%s[-]*[\\s]*(" + HEADER_PATTERN + ")*[\\s]*";
+		"[\\s]*((%1$s)[\\s]*(" + HEADER_PATTERN + ")|(%1$s--))[\\s]*";
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey
 		.valueOf("boundary_marker");
 
@@ -112,8 +115,8 @@ Content-Range: bytes 3-6/10240
 		while (contentChunk.readerIndex() < chunckSize) {
 			bytes[contentChunk.readerIndex()] = contentChunk.readByte();
 		}
-		String s = cutChunck + new String(bytes);
-		s = s.replaceAll(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker), "");
+		String s = cutChunck + new String(bytes).replaceFirst("\n","");
+		s = s.replaceAll(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker, boundaryMarker), "");
 		//TODO kochuv : check the end
 		s = cuteEnd(s);
 		return Unpooled.copiedBuffer(s.getBytes());
@@ -126,7 +129,7 @@ Content-Range: bytes 3-6/10240
 		if (content.substring(content.length() - 2) == "--") {
 			cutChunck = "--";
 		}
-		final Pattern pattern = Pattern.compile("--(.|\\s)*");
+		final Pattern pattern = Pattern.compile("[\\s]*--(.|\\s)*");
 		final Matcher matcher = pattern.matcher(content);
 		if (matcher.find()) {
 			//TODO kochuv: may be without count?

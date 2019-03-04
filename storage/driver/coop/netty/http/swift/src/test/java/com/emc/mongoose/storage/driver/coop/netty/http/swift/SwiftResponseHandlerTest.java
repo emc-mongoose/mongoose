@@ -86,12 +86,12 @@ public class SwiftResponseHandlerTest {
 			.copiedBuffer(channel.readOutbound().toString().getBytes());
 		final ByteBuf newContentChunk2 = responseHandler.removeHeaders(channel, null, contentChunk2);
 
-		final byte[] fullContentChunk = newContentChunk1.array() + newContentChunk2.array();
+		final ByteBuf fullContentChunk = Unpooled.copiedBuffer(newContentChunk1, newContentChunk2);
 
-		Assert.assertEquals(expectedContent.array().length, fullContentChunk.length);
+		Assert.assertEquals(expectedContent.array().length, fullContentChunk.array().length);
 		while (expectedContent.isReadable()) {
 			final byte a = expectedContent.readByte();
-			final byte b = newContentChunk.readByte();
+			final byte b = fullContentChunk.readByte();
 			Assert.assertEquals(a, b);
 		}
 	}
