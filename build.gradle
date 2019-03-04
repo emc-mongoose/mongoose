@@ -12,6 +12,7 @@ buildscript {
 
 plugins {
 	id "com.bmuschko.docker-remote-api" version "4.0.5"
+	id "com.diffplug.gradle.spotless" version "3.18.0"
 }
 
 description = "Mongoose is a high-load storage performance testing tool"
@@ -504,5 +505,19 @@ task robotest(type: DockerWaitContainer, dependsOn: dockerStartContainerRobotest
 		} else {
 			println "Robotests PASSED"
 		}
+	}
+}
+
+spotless {
+	format "misc", {
+		target "**/*.gradle", "**/*.json", "**/*.js", "**/*.groovy", "**/*.py", "**/*.scala"
+		indentWithTabs()
+		endWithNewline()
+	}
+	java {
+		target "**/*.java"
+		endWithNewline()
+		removeUnusedImports()
+		eclipse().configFile "spotless.eclipseformat.xml"
 	}
 }
