@@ -3,7 +3,7 @@ swift_item_list = "swift_item_list.csv"
 config = {
     "item": {
         "data" : {
-            "size" : 10,
+            "size" : "10MB",
             "input" : {
             	"file" : "content.txt"
             }
@@ -40,7 +40,7 @@ read_config = {
             },
             "data" : {
             	"ranges" : {
-                    "fixed" : new java.util.ArrayList(["0-4", "5-9"])
+                    "random" : 10
                 },
                 "verify" : true
             }
@@ -54,6 +54,13 @@ create_config = {
             }
         }
     }
+
+var cmd = new java.lang.ProcessBuilder()
+    .command("sh", "-c", "rm -R " + swift_item_list)
+    .inheritIO()
+    .start();
+
+cmd.waitFor();
 
 PreconditionLoad
 	.config(config)
