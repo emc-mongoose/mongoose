@@ -48,7 +48,7 @@ public class ExposedMetricsTest {
   private static final int MARK_LAT = 1_000_000;
   private static final String[] CONCURRENCY_METRICS = {"mean", "last"};
   private static final String[] TIMING_METRICS = {
-    "count", "sum", "mean", "min", "max", "quantile_0.25", "quantile_0.5", "quantile_0.75"
+    "count", "sum", "mean", "min", "max", "quantile_0_25", "quantile_0_5", "quantile_0_75"
   };
   private static final String[] OPS_METRICS = {"count", "rate_mean", "rate_last"};
   private static final String[] BYTES_METRICS = {"count", "rate_mean", "rate_last"};
