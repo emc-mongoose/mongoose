@@ -19,7 +19,6 @@ import io.prometheus.client.exporter.MetricsServlet;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +26,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -181,7 +179,7 @@ public class ExposedMetricsTest {
   private void testRateMetric(final String stdOut, final double markValue, final String name) {
     final Map<String, Double> expectedValues = new HashMap<>();
     double count = ITERATION_COUNT;
-	  var rateMetrics = OPS_METRICS;
+    var rateMetrics = OPS_METRICS;
     if (name.equals(MetricsConstants.METRIC_NAME_BYTE)) {
       count *= markValue;
       rateMetrics = BYTES_METRICS;
@@ -210,8 +208,7 @@ public class ExposedMetricsTest {
     final var stringBuilder = new StringBuilder();
     final var url = new URL(urlPath);
     final var conn = url.openConnection();
-    try (final var br =
-        new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+    try (final var br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
       br.lines().forEach(l -> stringBuilder.append(l).append("\n"));
     }
     return stringBuilder.toString();
