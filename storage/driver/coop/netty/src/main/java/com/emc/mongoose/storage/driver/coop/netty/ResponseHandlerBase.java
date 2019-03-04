@@ -21,25 +21,26 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 
 /**
- Created by kurila on 04.10.16.
- Contains the content validation functionality
- */
+Created by kurila on 04.10.16.
+Contains the content validation functionality
+*/
 public abstract class ResponseHandlerBase<M, I extends Item, O extends Operation<I>>
-extends SimpleChannelInboundHandler<M> {
+				extends SimpleChannelInboundHandler<M> {
 
 	private final static String CLS_NAME = ResponseHandlerBase.class.getSimpleName();
-	
+
 	protected final NettyStorageDriverBase<I, O> driver;
 	protected final boolean verifyFlag;
-	
+
 	protected ResponseHandlerBase(final NettyStorageDriverBase<I, O> driver, boolean verifyFlag) {
 		this.driver = driver;
 		this.verifyFlag = verifyFlag;
 	}
-	
-	@Override @SuppressWarnings("unchecked")
+
+	@Override
+	@SuppressWarnings("unchecked")
 	protected final void channelRead0(final ChannelHandlerContext ctx, final M msg)
-	throws Exception {
+					throws Exception {
 
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
@@ -47,29 +48,30 @@ extends SimpleChannelInboundHandler<M> {
 		final O op = (O) channel.attr(NettyStorageDriver.ATTR_KEY_OPERATION).get();
 		handle(channel, op, msg);
 	}
-	
-	protected abstract void handle(final Channel channel, final O op, final M msg)
-	throws IOException;
 
-	@Override @SuppressWarnings("unchecked")
+	protected abstract void handle(final Channel channel, final O op, final M msg)
+					throws IOException;
+
+	@Override
+	@SuppressWarnings("unchecked")
 	public final void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause)
-	throws IOException {
+					throws IOException {
 		final Channel channel = ctx.channel();
 		final O op = (O) channel.attr(NettyStorageDriver.ATTR_KEY_OPERATION).get();
-		if(op != null) {
-			if(driver.isStarted() || driver.isShutdown()) {
+		if (op != null) {
+			if (driver.isStarted() || driver.isShutdown()) {
 				LogUtil.exception(Level.WARN, cause, "Premature channel closure");
 				op.status(FAIL_IO);
-			} else if(cause instanceof PrematureChannelClosureException) {
+			} else if (cause instanceof PrematureChannelClosureException) {
 				op.status(INTERRUPTED);
 			} else {
 				LogUtil.exception(Level.WARN, cause, "Client handler failure");
 				op.status(FAIL_UNKNOWN);
 			}
-			if(!driver.isStopped()) {
+			if (!driver.isStopped()) {
 				try {
 					driver.complete(channel, op);
-				} catch(final Exception e) {
+				} catch (final Exception e) {
 					LogUtil.exception(Level.DEBUG, e, "Failed to complete the load operation");
 				}
 			}
@@ -78,8 +80,8 @@ extends SimpleChannelInboundHandler<M> {
 
 	@Override
 	public final void userEventTriggered(final ChannelHandlerContext ctx, final Object evt)
-	throws Exception {
-		if(evt instanceof IdleStateEvent) {
+					throws Exception {
+		if (evt instanceof IdleStateEvent) {
 			throw new SocketTimeoutException();
 		}
 	}

@@ -51,7 +51,7 @@ java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --run-scenar
 | Item size | 1MB
 | Item payload | Random bytes, defined by the default seed value
 | Item input | New items generator
-| Item naming | Random ids, no prefix, radix = 36, id length = 12
+| Item input names | Random ids, no prefix, radix = 36, name length = 12
 | Item output file | None, the items info will not be persisted by default
 | Item output storage path | Not specified, generate on the fly using a timestamp
 | Load type | Create

@@ -9,7 +9,6 @@ import com.emc.mongoose.base.env.Extension;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.DataItemFactoryImpl;
 import com.emc.mongoose.base.item.ItemFactory;
-import com.emc.mongoose.base.item.ItemNamingType;
 import com.emc.mongoose.base.item.ItemType;
 import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.item.op.Operation;
@@ -37,133 +36,128 @@ import org.junit.Test;
 
 public class LoadGeneratorBuilderImplTest {
 
-  private static final Map<String, Object> CONFIG_SCHEMA;
+	private static final Map<String, Object> CONFIG_SCHEMA;
 
-  static {
-    try {
-      final List<Map<String, Object>> configSchemas =
-          Extension.load(Thread.currentThread().getContextClassLoader()).stream()
-              .map(Extension::schemaProvider)
-              .filter(Objects::nonNull)
-              .map(
-                  schemaProvider -> {
-                    try {
-                      return schemaProvider.schema();
-                    } catch (final Exception e) {
-                      fail(e.getMessage());
-                    }
-                    return null;
-                  })
-              .filter(Objects::nonNull)
-              .collect(Collectors.toList());
-      SchemaProvider.resolve(APP_NAME, Thread.currentThread().getContextClassLoader()).stream()
-          .findFirst()
-          .ifPresent(configSchemas::add);
-      CONFIG_SCHEMA = TreeUtil.reduceForest(configSchemas);
-    } catch (final Throwable cause) {
-      throw new AssertionError(cause);
-    }
-  }
+	static {
+		try {
+			final List<Map<String, Object>> configSchemas = Extension.load(Thread.currentThread().getContextClassLoader()).stream()
+							.map(Extension::schemaProvider)
+							.filter(Objects::nonNull)
+							.map(
+											schemaProvider -> {
+												try {
+													return schemaProvider.schema();
+												} catch (final Exception e) {
+													fail(e.getMessage());
+												}
+												return null;
+											})
+							.filter(Objects::nonNull)
+							.collect(Collectors.toList());
+			SchemaProvider.resolve(APP_NAME, Thread.currentThread().getContextClassLoader()).stream()
+							.findFirst()
+							.ifPresent(configSchemas::add);
+			CONFIG_SCHEMA = TreeUtil.reduceForest(configSchemas);
+		} catch (final Throwable cause) {
+			throw new AssertionError(cause);
+		}
+	}
 
-  @Test
-  public void multiBucketPerUserTest() throws Exception {
+	@Test
+	public void multiBucketPerUserTest() throws Exception {
 
-    final Path credentialsFilePath = Files.createTempFile(getClass().getSimpleName(), ".csv");
-    credentialsFilePath.toFile().deleteOnExit();
-    final int bucketCount = 100;
-    final int opCount = 10000;
-    final String prefixUid = "user-";
-    final String prefixSecret = "secret-";
-    final String prefixBucket = "bucket-";
-    try (final BufferedWriter bw = Files.newBufferedWriter(credentialsFilePath)) {
-      for (int i = 0; i < bucketCount; i++) {
-        bw.append(prefixBucket)
-            .append(Integer.toString(i))
-            .append(',')
-            .append(prefixUid)
-            .append(Integer.toString(i))
-            .append(',')
-            .append(prefixSecret)
-            .append(Integer.toString(i));
-        bw.newLine();
-      }
-    }
-    final int seed = 314159265;
-    final Map<String, Object> options =
-        new HashMap<String, Object>() {
-          {
-            put("item-data-ranges-concat", null);
-            put("item-data-ranges-fixed", null);
-            put("item-data-ranges-random", 0);
-            put("item-data-ranges-threshold", 0);
-            put("item-data-size", "1MB");
-            put("item-input-path", null);
-            put("item-naming-length", 13);
-            put("item-naming-offset", 0);
-            put("item-naming-prefix", null);
-            put("item-naming-radix", 36);
-            put("item-naming-type", ItemNamingType.RANDOM.name().toLowerCase());
-            put("item-output-path", prefixBucket + "%{" + seed + "}${rnd.nextLong(100)}");
-            put("load-batch-size", opCount);
-            put("load-op-limit-count", opCount);
-            put("load-op-limit-recycle", 1_000_000);
-            put("load-op-recycle", false);
-            put("load-op-retry", false);
-            put("load-op-shuffle", false);
-            put("load-op-type", OpType.CREATE.name().toLowerCase());
-            put("storage-auth-file", credentialsFilePath.toAbsolutePath().toString());
-          }
-        };
-    final Config config = new BasicConfig("-", CONFIG_SCHEMA);
-    options.forEach(config::val);
-    final ItemFactory itemFactory = new DataItemFactoryImpl();
-    final List<DataOperation<DataItem>> ops = new ArrayList<>(opCount);
+		final Path credentialsFilePath = Files.createTempFile(getClass().getSimpleName(), ".csv");
+		credentialsFilePath.toFile().deleteOnExit();
+		final int bucketCount = 100;
+		final int opCount = 10000;
+		final String prefixUid = "user-";
+		final String prefixSecret = "secret-";
+		final String prefixBucket = "bucket-";
+		try (final BufferedWriter bw = Files.newBufferedWriter(credentialsFilePath)) {
+			for (int i = 0; i < bucketCount; i++) {
+				bw.append(prefixBucket)
+								.append(Integer.toString(i))
+								.append(',')
+								.append(prefixUid)
+								.append(Integer.toString(i))
+								.append(',')
+								.append(prefixSecret)
+								.append(Integer.toString(i));
+				bw.newLine();
+			}
+		}
+		final int seed = 314159265;
+		final Map<String, Object> options = new HashMap<String, Object>() {
+			{
+				put("item-data-ranges-concat", null);
+				put("item-data-ranges-fixed", null);
+				put("item-data-ranges-random", 0);
+				put("item-data-ranges-threshold", 0);
+				put("item-data-size", "1MB");
+				put("item-input-path", null);
+				put("item-input-name-id", "%{math:absInt64(int64:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos())))}${math:absInt64(int64:xorShift(this.last()))}");
+				put("item-input-name-length", 12);
+				put("item-input-name-prefix", null);
+				put("item-input-name-radix", 36);
+				put("item-output-path", prefixBucket + "%{" + seed + "}${rnd.nextLong(100)}");
+				put("load-batch-size", opCount);
+				put("load-op-limit-count", opCount);
+				put("load-op-limit-recycle", 1_000_000);
+				put("load-op-recycle", false);
+				put("load-op-retry", false);
+				put("load-op-shuffle", false);
+				put("load-op-type", OpType.CREATE.name().toLowerCase());
+				put("storage-auth-file", credentialsFilePath.toAbsolutePath().toString());
+			}
+		};
+		final Config config = new BasicConfig("-", CONFIG_SCHEMA);
+		options.forEach(config::val);
+		final ItemFactory itemFactory = new DataItemFactoryImpl();
+		final List<DataOperation<DataItem>> ops = new ArrayList<>(opCount);
 
-    try (final IoBuffer<DataOperation<DataItem>> opBuff =
-            new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(opCount));
-        final LoadGenerator loadGenerator =
-            new LoadGeneratorBuilderImpl()
-                .authConfig(config.configVal("storage-auth"))
-                .itemConfig(config.configVal("item"))
-                .itemFactory(itemFactory)
-                .itemType(ItemType.DATA)
-                .loadConfig(config.configVal("load"))
-                .loadOperationsOutput(opBuff)
-                .originIndex(0)
-                .build()) {
-      loadGenerator.start();
-      if (!loadGenerator.await(10, TimeUnit.SECONDS)) {
-        throw new AssertionError("Load generator await timeout");
-      }
-      assertEquals(opCount, loadGenerator.generatedOpCount());
-      assertEquals(opCount, opBuff.size());
-      assertEquals(opCount, opBuff.get(ops, opCount));
-    }
+		try (final IoBuffer<DataOperation<DataItem>> opBuff = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(opCount));
+						final LoadGenerator loadGenerator = new LoadGeneratorBuilderImpl()
+										.authConfig(config.configVal("storage-auth"))
+										.itemConfig(config.configVal("item"))
+										.itemFactory(itemFactory)
+										.itemType(ItemType.DATA)
+										.loadConfig(config.configVal("load"))
+										.loadOperationsOutput(opBuff)
+										.originIndex(0)
+										.build()) {
+			loadGenerator.start();
+			if (!loadGenerator.await(10, TimeUnit.SECONDS)) {
+				throw new AssertionError("Load generator await timeout");
+			}
+			assertEquals(opCount, loadGenerator.generatedOpCount());
+			assertEquals(opCount, opBuff.size());
+			assertEquals(opCount, opBuff.get(ops, opCount));
+		}
 
-    String bucket;
-    Credential credential;
-    String uid;
-    String secret;
-    String suffix;
-    int n;
-    final Frequency freq = new Frequency();
-    for (final Operation op : ops) {
-      bucket = op.dstPath();
-      suffix = bucket.substring(prefixBucket.length());
-      n = Integer.parseInt(suffix);
-      assertTrue(n >= 0);
-      assertTrue(n < bucketCount);
-      freq.addValue(n);
-      credential = op.credential();
-      uid = credential.getUid();
-      assertEquals(prefixUid + suffix, uid);
-      secret = credential.getSecret();
-      assertEquals(prefixSecret + suffix, secret);
-    }
-    ops.clear();
-    final int expectedFreq = opCount / bucketCount;
-    for (int i = 0; i < bucketCount; i++) {
-      assertEquals(expectedFreq, freq.getCount(i), expectedFreq / 3);
-    }
-  }
+		String bucket;
+		Credential credential;
+		String uid;
+		String secret;
+		String suffix;
+		int n;
+		final Frequency freq = new Frequency();
+		for (final Operation op : ops) {
+			bucket = op.dstPath();
+			suffix = bucket.substring(prefixBucket.length());
+			n = Integer.parseInt(suffix);
+			assertTrue(n >= 0);
+			assertTrue(n < bucketCount);
+			freq.addValue(n);
+			credential = op.credential();
+			uid = credential.getUid();
+			assertEquals(prefixUid + suffix, uid);
+			secret = credential.getSecret();
+			assertEquals(prefixSecret + suffix, secret);
+		}
+		ops.clear();
+		final int expectedFreq = opCount / bucketCount;
+		for (int i = 0; i < bucketCount; i++) {
+			assertEquals(expectedFreq, freq.getCount(i), expectedFreq / 3);
+		}
+	}
 }

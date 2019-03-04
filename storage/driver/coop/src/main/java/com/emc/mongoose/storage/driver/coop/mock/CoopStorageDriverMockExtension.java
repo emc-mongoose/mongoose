@@ -15,24 +15,22 @@ import java.util.Collections;
 import java.util.List;
 
 public class CoopStorageDriverMockExtension<I extends Item, O extends Operation<I>, T extends CoopStorageDriverMock<I, O>>
-extends ExtensionBase
-implements StorageDriverFactory<I, O, T>  {
+				extends ExtensionBase
+				implements StorageDriverFactory<I, O, T> {
 
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
-		Arrays.asList(
-		)
-	);
+					Arrays.asList());
 
 	@Override
 	public final String id() {
 		return "coop-mock";
 	}
 
-	@Override @SuppressWarnings("unchecked")
+	@Override
+	@SuppressWarnings("unchecked")
 	public T create(
-		final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-		final int batchSize
-	) throws OmgShootMyFootException, InterruptedException {
+					final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+					final int batchSize) throws OmgShootMyFootException, InterruptedException {
 		return (T) new CoopStorageDriverMock<>(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 	}
 

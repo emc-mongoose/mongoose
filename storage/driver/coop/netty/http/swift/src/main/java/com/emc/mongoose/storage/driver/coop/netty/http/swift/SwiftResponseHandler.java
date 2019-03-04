@@ -25,14 +25,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- Created by andrey on 26.11.16.
- */
+Created by andrey on 26.11.16.
+*/
 public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
-extends HttpResponseHandlerBase<I, O> {
+				extends HttpResponseHandlerBase<I, O> {
 
 	private static final Pattern BOUNDARY_VALUE_PATTERN = Pattern.compile(
-		VALUE_MULTIPART_BYTERANGES + ";" + HttpHeaderValues.BOUNDARY + "=([0-9a-f]+)"
-	);
+					VALUE_MULTIPART_BYTERANGES + ";" + HttpHeaderValues.BOUNDARY + "=([0-9a-f]+)");
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey.newInstance("boundary_marker");
 
 	public SwiftResponseHandler(final HttpStorageDriverBase<I, O> driver, final boolean verifyFlag) {
@@ -42,9 +41,9 @@ extends HttpResponseHandlerBase<I, O> {
 	@Override
 	protected final void handleResponseHeaders(final Channel channel, final O op, final HttpHeaders respHeaders) {
 		final String contentType = respHeaders.get(HttpHeaderNames.CONTENT_TYPE);
-		if(contentType != null) {
+		if (contentType != null) {
 			final Matcher boundaryMatcher = BOUNDARY_VALUE_PATTERN.matcher(contentType);
-			if(boundaryMatcher.find()) {
+			if (boundaryMatcher.find()) {
 				final String boundaryMarker = boundaryMatcher.group(1);
 				channel.attr(ATTR_KEY_BOUNDARY_MARKER).set(boundaryMarker);
 			}
@@ -54,31 +53,31 @@ extends HttpResponseHandlerBase<I, O> {
 	/*
 	Boundary marker: ac9c12f841fa093d82ba80a402f6b62e
 	Content:
---ac9c12f841fa093d82ba80a402f6b62e
-Content-Type: application/octet-stream
-Content-Range: bytes 0-0/10240
-
-?
---ac9c12f841fa093d82ba80a402f6b62e
-Content-Type: application/octet-stream
-Content-Range: bytes 3-6/10240
-
-????
---ac9c12f841fa093d82ba80a402f6b62e--
-	 */
+	--ac9c12f841fa093d82ba80a402f6b62e
+	Content-Type: application/octet-stream
+	Content-Range: bytes 0-0/10240
+	
+	?
+	--ac9c12f841fa093d82ba80a402f6b62e
+	Content-Type: application/octet-stream
+	Content-Range: bytes 3-6/10240
+	
+	????
+	--ac9c12f841fa093d82ba80a402f6b62e--
+	*/
 	protected final void handleResponseContentChunk(final Channel channel, final O op, final ByteBuf contentChunk)
-	throws IOException {
-		if(OpType.READ.equals(op.type())) {
-			if(op instanceof DataOperation) {
+					throws IOException {
+		if (OpType.READ.equals(op.type())) {
+			if (op instanceof DataOperation) {
 				final DataOperation<? extends DataItem> dataOp = (DataOperation<? extends DataItem>) op;
 				final BitSet[] markedRangesMaskRair = dataOp.markedRangesMaskPair();
 				// if the count of marked byte ranges > 1
-				if(1 < markedRangesMaskRair[0].cardinality() + markedRangesMaskRair[1].cardinality()) {
+				if (1 < markedRangesMaskRair[0].cardinality() + markedRangesMaskRair[1].cardinality()) {
 					final String boundaryMarker = channel.attr(ATTR_KEY_BOUNDARY_MARKER).get();
 					super.handleResponseContentChunk(channel, op, contentChunk); // TODO defect GOOSE-1316
 				} else {
 					final List<Range> fixedRanges = dataOp.fixedRanges();
-					if(fixedRanges != null && 1 < fixedRanges.size()) {
+					if (fixedRanges != null && 1 < fixedRanges.size()) {
 						final String boundaryMarker = channel.attr(ATTR_KEY_BOUNDARY_MARKER).get();
 						super.handleResponseContentChunk(channel, op, contentChunk); // TODO defect GOOSE-1316
 					} else {

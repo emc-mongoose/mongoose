@@ -49,28 +49,26 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class SwiftStorageDriverTest
-	extends SwiftStorageDriver {
+				extends SwiftStorageDriver {
 
-	private static final Credential CREDENTIAL =
-		Credential.getInstance("user1", "u5QtPuQx+W5nrrQQEg7nArBqSgC8qLiDt2RhQthb");
+	private static final Credential CREDENTIAL = Credential.getInstance("user1", "u5QtPuQx+W5nrrQQEg7nArBqSgC8qLiDt2RhQthb");
 	private static final String AUTH_TOKEN = "AUTH_tk65840af9f6f74d1aaefac978cb8f0899";
 	private static final String NS = "ns1";
 
 	private static Config getConfig() {
 		try {
-			final List<Map<String, Object>> configSchemas =
-				Extension.load(Thread.currentThread().getContextClassLoader()).stream().map(
-					Extension::schemaProvider).filter(Objects::nonNull).map(schemaProvider -> {
-					try {
-						return schemaProvider.schema();
-					} catch(final Exception e) {
-						fail(e.getMessage());
-					}
-					return null;
-				}).filter(Objects::nonNull).collect(Collectors.toList());
+			final List<Map<String, Object>> configSchemas = Extension.load(Thread.currentThread().getContextClassLoader()).stream().map(
+							Extension::schemaProvider).filter(Objects::nonNull).map(schemaProvider -> {
+								try {
+									return schemaProvider.schema();
+								} catch (final Exception e) {
+									fail(e.getMessage());
+								}
+								return null;
+							}).filter(Objects::nonNull).collect(Collectors.toList());
 			SchemaProvider.resolve(
-				APP_NAME, Thread.currentThread().getContextClassLoader()).stream().findFirst().ifPresent(
-				configSchemas::add);
+							APP_NAME, Thread.currentThread().getContextClassLoader()).stream().findFirst().ifPresent(
+											configSchemas::add);
 			final Map<String, Object> configSchema = TreeUtil.reduceForest(configSchemas);
 			final Config config = new BasicConfig("-", configSchema);
 			config.val("load-batch-size", 4096);
@@ -101,7 +99,7 @@ public class SwiftStorageDriverTest
 			config.val("storage-driver-limit-queue-input", 1_000_000);
 			config.val("storage-driver-limit-queue-output", 1_000_000);
 			return config;
-		} catch(final Throwable cause) {
+		} catch (final Throwable cause) {
 			throw new RuntimeException(cause);
 		}
 	}
@@ -109,15 +107,14 @@ public class SwiftStorageDriverTest
 	private final Queue<FullHttpRequest> httpRequestsLog = new ArrayDeque<>();
 
 	public SwiftStorageDriverTest()
-	throws Exception {
+					throws Exception {
 		this(getConfig());
 	}
 
 	private SwiftStorageDriverTest(final Config config)
-	throws Exception {
+					throws Exception {
 		super("test-storage-driver-swift", DataInput.instance(null, "7a42d9c483244167", new SizeInBytes("4MB"), 16),
-			config.configVal("storage"), false, config.intVal("load-batch-size")
-		);
+						config.configVal("storage"), false, config.intVal("load-batch-size"));
 	}
 
 	@Override
@@ -133,14 +130,14 @@ public class SwiftStorageDriverTest
 
 	@After
 	public void tearDown()
-	throws Exception {
+					throws Exception {
 		httpRequestsLog.clear();
 		close();
 	}
 
 	@Test
 	public void testRequestNewAuthToken()
-	throws Exception {
+					throws Exception {
 		requestNewAuthToken(credential);
 		assertEquals(1, httpRequestsLog.size());
 		final FullHttpRequest req = httpRequestsLog.poll();
@@ -157,7 +154,7 @@ public class SwiftStorageDriverTest
 
 	@Test
 	public void testRequestNewPath()
-	throws Exception {
+					throws Exception {
 		final String container = "/container0";
 		assertEquals(container, requestNewPath(container));
 		assertEquals(2, httpRequestsLog.size());
@@ -187,21 +184,21 @@ public class SwiftStorageDriverTest
 
 	@Test
 	public void testContainerListingTest()
-	throws Exception {
+					throws Exception {
 		final ItemFactory itemFactory = ItemType.getItemFactory(ItemType.DATA);
 		final String container = "/container1";
 		final String itemPrefix = "0000";
 		final String markerItemId = "00003brre8lgz";
-		final Item markerItem =
-			itemFactory.getItem(markerItemId, Long.parseLong(markerItemId, Character.MAX_RADIX), 10240);
+		final Item markerItem = itemFactory.getItem(markerItemId, Long.parseLong(markerItemId, Character.MAX_RADIX), 10240);
 		final List<Item> items = list(itemFactory, container, itemPrefix, Character.MAX_RADIX, markerItem, 1000);
 		assertEquals(0, items.size());
 		assertEquals(1, httpRequestsLog.size());
 		final FullHttpRequest req = httpRequestsLog.poll();
 		assertEquals(HttpMethod.GET, req.method());
 		assertEquals(
-			SwiftApi.URI_BASE + '/' + NS + container + "?format=json&prefix=" + itemPrefix + "&marker=" + markerItemId +
-				"&limit=1000", req.uri());
+						SwiftApi.URI_BASE + '/' + NS + container + "?format=json&prefix=" + itemPrefix + "&marker=" + markerItemId +
+										"&limit=1000",
+						req.uri());
 		final HttpHeaders reqHeaders = req.headers();
 		assertEquals(storageNodeAddrs[0], reqHeaders.get(HttpHeaderNames.HOST));
 		assertEquals(0, reqHeaders.getInt(HttpHeaderNames.CONTENT_LENGTH).intValue());
@@ -212,16 +209,14 @@ public class SwiftStorageDriverTest
 
 	@Test
 	public void testCopyRequest()
-	throws Exception {
+					throws Exception {
 		final String containerSrcName = "/containerSrc";
 		final String containerDstName = "/containerDst";
 		final long itemSize = 10240;
 		final String itemId = "00003brre8lgz";
 		final DataItem dataItem = new DataItemImpl(itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize);
-		final DataOperation<DataItem> dataOp =
-			new DataOperationImpl<>(hashCode(), OpType.CREATE, dataItem, containerSrcName, containerDstName, CREDENTIAL,
-				null, 0
-			);
+		final DataOperation<DataItem> dataOp = new DataOperationImpl<>(hashCode(), OpType.CREATE, dataItem, containerSrcName, containerDstName, CREDENTIAL,
+						null, 0);
 		final HttpRequest req = httpRequest(dataOp, storageNodeAddrs[0]);
 		assertEquals(HttpMethod.PUT, req.method());
 		assertEquals(SwiftApi.URI_BASE + '/' + NS + containerDstName + '/' + itemId, req.uri());
@@ -236,16 +231,14 @@ public class SwiftStorageDriverTest
 
 	@Test
 	public void testCreateDloPartRequest()
-	throws Exception {
+					throws Exception {
 		final String container = "/container2";
 		final long itemSize = 12345;
 		final long partSize = 1234;
 		final String itemId = "00003brre8lgz";
 		final DataItem dataItem = new DataItemImpl(itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize);
-		final CompositeDataOperation<DataItem> dloOp =
-			new CompositeDataOperationImpl<>(hashCode(), OpType.CREATE, dataItem, null, container, CREDENTIAL, null, 0,
-				partSize
-			);
+		final CompositeDataOperation<DataItem> dloOp = new CompositeDataOperationImpl<>(hashCode(), OpType.CREATE, dataItem, null, container, CREDENTIAL, null, 0,
+						partSize);
 		final PartialDataOperation<DataItem> dloSubOp = dloOp.subOperations().get(0);
 		final HttpRequest req = httpRequest(dloSubOp, storageNodeAddrs[0]);
 		assertEquals(HttpMethod.PUT, req.method());
@@ -260,19 +253,17 @@ public class SwiftStorageDriverTest
 
 	@Test
 	public void testCreateDloManifestRequest()
-	throws Exception {
+					throws Exception {
 		final String container = "container2";
 		final long itemSize = 12345;
 		final long partSize = 1234;
 		final String itemId = "00003brre8lgz";
 		final DataItem dataItem = new DataItemImpl(itemId, Long.parseLong(itemId, Character.MAX_RADIX), itemSize);
-		final CompositeDataOperation<DataItem> dloOp =
-			new CompositeDataOperationImpl<>(hashCode(), OpType.CREATE, dataItem, null, '/' + container, CREDENTIAL,
-				null, 0, partSize
-			);
+		final CompositeDataOperation<DataItem> dloOp = new CompositeDataOperationImpl<>(hashCode(), OpType.CREATE, dataItem, null, '/' + container, CREDENTIAL,
+						null, 0, partSize);
 		// emulate DLO parts creation
 		final List<? extends PartialDataOperation<DataItem>> subOps = dloOp.subOperations();
-		for(final PartialDataOperation<DataItem> subOp : subOps) {
+		for (final PartialDataOperation<DataItem> subOp : subOps) {
 			subOp.startRequest();
 			subOp.finishRequest();
 			subOp.startResponse();

@@ -11,46 +11,46 @@ import java.util.List;
 import org.apache.logging.log4j.Level;
 
 public final class MetricsSnapshotsSupplierTaskImpl extends ExclusiveFiberBase
-    implements MetricsSnapshotsSupplierTask {
+				implements MetricsSnapshotsSupplierTask {
 
-  private final LoadStep loadStep;
-  private volatile List<? extends AllMetricsSnapshot> snapshotsByOrigin;
-  private volatile boolean failedBeforeFlag = false;
+	private final LoadStep loadStep;
+	private volatile List<? extends AllMetricsSnapshot> snapshotsByOrigin;
+	private volatile boolean failedBeforeFlag = false;
 
-  public MetricsSnapshotsSupplierTaskImpl(final LoadStep loadStep) {
-    this(ServiceTaskExecutor.INSTANCE, loadStep);
-  }
+	public MetricsSnapshotsSupplierTaskImpl(final LoadStep loadStep) {
+		this(ServiceTaskExecutor.INSTANCE, loadStep);
+	}
 
-  public MetricsSnapshotsSupplierTaskImpl(final FibersExecutor executor, final LoadStep loadStep) {
-    super(executor);
-    this.loadStep = loadStep;
-  }
+	public MetricsSnapshotsSupplierTaskImpl(final FibersExecutor executor, final LoadStep loadStep) {
+		super(executor);
+		this.loadStep = loadStep;
+	}
 
-  @Override
-  protected final void invokeTimedExclusively(final long startTimeNanos) {
-    try {
-		snapshotsByOrigin = loadStep.metricsSnapshots();
-	} catch(final Exception e) {
-		LogUtil.exception(Level.INFO, e, "Failed to fetch the metrics snapshots from \"{}\"", loadStep);
-		if(failedBeforeFlag) {
-			LogUtil.exception(
-				Level.WARN, e, "Failed to fetch the metrics snapshots from \"{}\" twice, stopping", loadStep);
-			stop();
-		} else {
-			failedBeforeFlag = true;
+	@Override
+	protected final void invokeTimedExclusively(final long startTimeNanos) {
+		try {
+			snapshotsByOrigin = loadStep.metricsSnapshots();
+		} catch (final Exception e) {
+			LogUtil.exception(Level.INFO, e, "Failed to fetch the metrics snapshots from \"{}\"", loadStep);
+			if (failedBeforeFlag) {
+				LogUtil.exception(
+								Level.WARN, e, "Failed to fetch the metrics snapshots from \"{}\" twice, stopping", loadStep);
+				stop();
+			} else {
+				failedBeforeFlag = true;
+			}
 		}
-    }
-  }
+	}
 
-  @Override
-  public final List<? extends AllMetricsSnapshot> get() {
-    return snapshotsByOrigin;
-  }
+	@Override
+	public final List<? extends AllMetricsSnapshot> get() {
+		return snapshotsByOrigin;
+	}
 
-  @Override
-  protected final void doClose() {
-    if (null != snapshotsByOrigin) {
-      snapshotsByOrigin.clear();
-    }
-  }
+	@Override
+	protected final void doClose() {
+		if (null != snapshotsByOrigin) {
+			snapshotsByOrigin.clear();
+		}
+	}
 }

@@ -4,8 +4,8 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.util.AsciiString;
 
 /**
- Created by kurila on 11.11.16.
- */
+Created by kurila on 11.11.16.
+*/
 public interface AtmosApi {
 
 	String URI_BASE = "/rest";
@@ -21,10 +21,10 @@ public interface AtmosApi {
 	String KEY_SUBTENANT_ID = "subtenantID";
 
 	AsciiString HEADERS_CANONICAL[] = {
-		//HttpHeaderNames.CONTENT_MD5,
-		HttpHeaderNames.CONTENT_TYPE,
-		HttpHeaderNames.RANGE,
-		HttpHeaderNames.DATE
+			//HttpHeaderNames.CONTENT_MD5,
+			HttpHeaderNames.CONTENT_TYPE,
+			HttpHeaderNames.RANGE,
+			HttpHeaderNames.DATE
 	};
 
 }

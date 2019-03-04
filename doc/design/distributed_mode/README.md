@@ -73,7 +73,7 @@ The configuration parameters which are the subject of slicing in the scenario:
 
 1. `item-input-file`
 2. `item-input-path`
-3. `item-naming-offset`
+3. `item-name-id`
 4. `item-output-path` (in case of parameterization is used)
 5. `storage-auth-file`
 6. `storage-net-http-headers-*` (in case of parameterization is used)

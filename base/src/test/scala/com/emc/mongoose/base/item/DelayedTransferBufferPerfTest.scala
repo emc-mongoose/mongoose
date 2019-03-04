@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.LongAdder
 
 import com.emc.mongoose.base.config.ConstantValueInputImpl
 import com.emc.mongoose.base.item.op.data.{DataOperation, DataOperationsBuilderImpl}
-import com.emc.mongoose.base.item.io.{DelayedTransferConvertBuffer, NewDataItemInput}
+import com.emc.mongoose.base.item.io.{DelayedTransferConvertBuffer, ItemNameInputImpl, NewDataItemInput}
 import com.emc.mongoose.base.item.op.{OpType, OperationsBuilder}
 import com.emc.mongoose.base.storage.Credential
 import org.junit.Assert.fail
@@ -29,7 +29,7 @@ final class DelayedTransferBufferPerfTest {
 	def setUp(): Unit = {
 		itemInput = new NewDataItemInput[DataItem](
 			ItemType getItemFactory (ItemType DATA),
-			new ItemNameSupplier(ItemNamingType.ASC, null, 13, Character.MAX_RADIX, 0),
+			new ItemNameInputImpl("%{-1}${this.last() + 1}", 12, null, Character.MAX_RADIX),
 			new SizeInBytes(0)
 		)
 		ioTaskBuilder = new DataOperationsBuilderImpl[DataItem, DataOperation[DataItem]](0)

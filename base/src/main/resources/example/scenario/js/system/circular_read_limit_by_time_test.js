@@ -1,7 +1,7 @@
 var cmd = new java.lang.ProcessBuilder()
-    .command("sh", "-c", "rm -f " + FILE_NAME)
-    .inheritIO()
-    .start();
+	.command("sh", "-c", "rm -f " + FILE_NAME)
+	.inheritIO()
+	.start();
 cmd.waitFor();
 
 PreconditionLoad

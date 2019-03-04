@@ -17,13 +17,13 @@ public interface SslUtil {
 	static SslContext sslContext() {
 		try {
 			return SslContextBuilder
-				.forClient()
-				.trustManager(InsecureTrustManagerFactory.INSTANCE)
-				.sslProvider(OpenSslContext.defaultClientProvider())
-				.protocols("TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3")
-				.ciphers(Arrays.asList(SSLContext.getDefault().getServerSocketFactory().getSupportedCipherSuites()))
-				.build();
-		} catch(final NoSuchAlgorithmException | SSLException e) {
+							.forClient()
+							.trustManager(InsecureTrustManagerFactory.INSTANCE)
+							.sslProvider(OpenSslContext.defaultClientProvider())
+							.protocols("TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3")
+							.ciphers(Arrays.asList(SSLContext.getDefault().getServerSocketFactory().getSupportedCipherSuites()))
+							.build();
+		} catch (final NoSuchAlgorithmException | SSLException e) {
 			throw new AssertionError(e);
 		}
 	}

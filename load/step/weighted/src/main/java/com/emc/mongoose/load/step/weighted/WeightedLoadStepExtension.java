@@ -17,8 +17,8 @@ import java.util.Collections;
 import java.util.List;
 
 public final class WeightedLoadStepExtension<T extends WeightedLoadStepLocal, U extends WeightedLoadStepClient>
-extends ExtensionBase
-implements LoadStepFactory<T, U> {
+				extends ExtensionBase
+				implements LoadStepFactory<T, U> {
 
 	public static final String TYPE = "WeightedLoad";
 
@@ -38,26 +38,25 @@ implements LoadStepFactory<T, U> {
 	private static final String DEFAULTS_FILE_NAME = "defaults-load-generator-weight.json";
 
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
-		Arrays.asList("config/" + DEFAULTS_FILE_NAME)
-	);
+					Arrays.asList("config/" + DEFAULTS_FILE_NAME));
 
 	@Override
 	public final String id() {
 		return TYPE;
 	}
 
-	@Override @SuppressWarnings("unchecked")
+	@Override
+	@SuppressWarnings("unchecked")
 	public final T createLocal(
-		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs,
-		final MetricsManager metricsManager
-	) {
+					final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs,
+					final MetricsManager metricsManager) {
 		return (T) new WeightedLoadStepLocal(baseConfig, extensions, contextConfigs, metricsManager);
 	}
 
-	@Override @SuppressWarnings("unchecked")
+	@Override
+	@SuppressWarnings("unchecked")
 	public final U createClient(
-		final Config baseConfig, final List<Extension> extensions, final MetricsManager metricsManager
-	) {
+					final Config baseConfig, final List<Extension> extensions, final MetricsManager metricsManager) {
 		return (U) new WeightedLoadStepClient(baseConfig, extensions, null, metricsManager);
 	}
 

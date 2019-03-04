@@ -11,24 +11,24 @@ import java.util.Map;
 /** Created by kurila on 14.07.16. */
 public interface OperationsBuilder<I extends Item, O extends Operation<I>> extends Closeable {
 
-  int originIndex();
+	int originIndex();
 
-  OpType opType();
+	OpType opType();
 
-  OperationsBuilder<I, O> opType(final OpType opType);
+	OperationsBuilder<I, O> opType(final OpType opType);
 
-  String inputPath();
+	String inputPath();
 
-  OperationsBuilder<I, O> inputPath(final String inputPath);
+	OperationsBuilder<I, O> inputPath(final String inputPath);
 
-  OperationsBuilder<I, O> outputPathInput(final Input<String> outputPathSupplier);
+	OperationsBuilder<I, O> outputPathInput(final Input<String> outputPathSupplier);
 
-  OperationsBuilder<I, O> credentialInput(final Input<Credential> credentialInput);
+	OperationsBuilder<I, O> credentialInput(final Input<Credential> credentialInput);
 
-  OperationsBuilder<I, O> credentialsByPath(final Map<String, Credential> credentials);
+	OperationsBuilder<I, O> credentialsByPath(final Map<String, Credential> credentials);
 
-  O buildOp(final I item) throws IOException, IllegalArgumentException;
+	O buildOp(final I item) throws IOException, IllegalArgumentException;
 
-  void buildOps(final List<I> items, final List<O> buff)
-      throws IOException, IllegalArgumentException;
+	void buildOps(final List<I> items, final List<O> buff)
+					throws IOException, IllegalArgumentException;
 }

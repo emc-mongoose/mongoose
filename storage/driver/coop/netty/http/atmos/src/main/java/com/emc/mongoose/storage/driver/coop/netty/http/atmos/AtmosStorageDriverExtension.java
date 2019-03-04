@@ -17,19 +17,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class AtmosStorageDriverExtension<
-	I extends Item, O extends Operation<I>, T extends AtmosStorageDriver<I, O>
->
-extends ExtensionBase
-implements StorageDriverFactory<I, O, T> {
+public class AtmosStorageDriverExtension<I extends Item, O extends Operation<I>, T extends AtmosStorageDriver<I, O>>
+				extends ExtensionBase
+				implements StorageDriverFactory<I, O, T> {
 
 	private static final String NAME = "atmos";
 	private static final String DEFAULTS_FILE_NAME = "defaults-storage-atmos.json";
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
-		Arrays.asList(
-			"config/" + DEFAULTS_FILE_NAME
-		)
-	);
+					Arrays.asList(
+									"config/" + DEFAULTS_FILE_NAME));
 
 	@Override
 	public String id() {
@@ -38,9 +34,8 @@ implements StorageDriverFactory<I, O, T> {
 
 	@Override
 	public T create(
-		final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-		final int batchSize
-	) throws OmgShootMyFootException, InterruptedException {
+					final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+					final int batchSize) throws OmgShootMyFootException, InterruptedException {
 		return (T) new AtmosStorageDriver<>(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 	}
 
@@ -69,4 +64,3 @@ implements StorageDriverFactory<I, O, T> {
 		return RES_INSTALL_FILES;
 	}
 }
-

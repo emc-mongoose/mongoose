@@ -17,19 +17,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public final class AmzS3StorageDriverExtension<
-	I extends Item, O extends Operation<I>, T extends AmzS3StorageDriver<I,O>
->
-extends ExtensionBase
-implements StorageDriverFactory<I, O, T> {
+public final class AmzS3StorageDriverExtension<I extends Item, O extends Operation<I>, T extends AmzS3StorageDriver<I, O>>
+				extends ExtensionBase
+				implements StorageDriverFactory<I, O, T> {
 
 	private static final String NAME = "s3";
 	private static final String DEFAULTS_FILE_NAME = "defaults-storage-s3.json";
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
-		Arrays.asList(
-			"config/" + DEFAULTS_FILE_NAME
-		)
-	);
+					Arrays.asList(
+									"config/" + DEFAULTS_FILE_NAME));
 
 	@Override
 	public String id() {
@@ -38,9 +34,8 @@ implements StorageDriverFactory<I, O, T> {
 
 	@Override
 	public T create(
-		final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-		final int batchSize
-	) throws OmgShootMyFootException, InterruptedException {
+					final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+					final int batchSize) throws OmgShootMyFootException, InterruptedException {
 		return (T) new AmzS3StorageDriver<>(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 	}
 

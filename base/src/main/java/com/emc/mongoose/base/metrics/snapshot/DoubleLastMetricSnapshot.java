@@ -4,5 +4,5 @@ import java.io.Serializable;
 
 public interface DoubleLastMetricSnapshot extends Serializable {
 
-  double last();
+	double last();
 }

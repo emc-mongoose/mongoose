@@ -19,29 +19,29 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- Created by andrey on 02.12.16.
- */
+Created by andrey on 02.12.16.
+*/
 public class FileStorageDriverTest {
 
 	private static Path TMP_DIR_PATH = null;
 
 	@BeforeClass
 	public static void setUpClass()
-	throws Exception {
+					throws Exception {
 		try {
 			TMP_DIR_PATH = Files.createTempDirectory(null);
-		} catch(final IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace(System.err);
 		}
 	}
 
 	@AfterClass
 	public static void tearDownClass()
-	throws Exception {
-		if(TMP_DIR_PATH != null) {
+					throws Exception {
+		if (TMP_DIR_PATH != null) {
 			try {
 				FileUtils.deleteDirectory(TMP_DIR_PATH.toFile());
-			} catch(final IOException e) {
+			} catch (final IOException e) {
 				e.printStackTrace(System.err);
 			}
 			TMP_DIR_PATH = null;
@@ -51,44 +51,41 @@ public class FileStorageDriverTest {
 	@Test
 	@Ignore // fails @ travis with unclear reason
 	public final void testList()
-	throws Exception {
+					throws Exception {
 
 		final String prefix = "yohoho";
 		final int count = 1000;
 
-		for(int i = 0; i < count; i ++) {
-			if(i < 10) {
+		for (int i = 0; i < count; i++) {
+			if (i < 10) {
 				new File(TMP_DIR_PATH.toString() + File.separatorChar + prefix + "000" + Integer.toString(i))
-					.createNewFile();
-			} else if(i < 100) {
+								.createNewFile();
+			} else if (i < 100) {
 				new File(TMP_DIR_PATH.toString() + File.separatorChar + prefix + "00" + Integer.toString(i))
-					.createNewFile();
-			} else if(i < 1000) {
+								.createNewFile();
+			} else if (i < 1000) {
 				new File(TMP_DIR_PATH.toString() + File.separatorChar + prefix + "0" + Integer.toString(i))
-					.createNewFile();
+								.createNewFile();
 			}
 		}
 
 		final Random rnd = new Random();
-		for(int i = 0; i < count; i ++) {
+		for (int i = 0; i < count; i++) {
 			new File(TMP_DIR_PATH.toString() + File.separatorChar + Integer.toString(rnd.nextInt()))
-				.createNewFile();
+							.createNewFile();
 		}
 
 		List<DataItem> items = ListingHelper.list(
-			new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), prefix, 10,
-			new DataItemImpl("yohoho0099", 0, 0), count
-		);
+						new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), prefix, 10,
+						new DataItemImpl("yohoho0099", 0, 0), count);
 		assertEquals(Integer.toString(items.size()), 99, items.size());
 
 		items = ListingHelper.list(
-			new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), prefix, 10, null, 100
-		);
+						new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), prefix, 10, null, 100);
 		assertEquals(100, items.size());
 
 		items = ListingHelper.list(
-			new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), null, 10, null, 2 * count
-		);
+						new ItemFactoryImpl<>(), TMP_DIR_PATH.toString(), null, 10, null, 2 * count);
 		assertEquals(2 * count, items.size());
 	}
 }

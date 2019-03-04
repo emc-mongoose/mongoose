@@ -4,13 +4,13 @@ import com.github.akurilov.commons.io.el.ExpressionInput;
 
 public interface ExpressionInputBuilder extends ExpressionInput.Builder {
 
-  String INITIAL_MARKER = "%";
+	String INITIAL_MARKER = "%";
 
-  static ExpressionInputBuilder newInstance() {
-    return new ExpressionInputBuilderImpl();
-  }
+	static ExpressionInputBuilder newInstance() {
+		return new ExpressionInputBuilderImpl();
+	}
 
-  static long xor(final long x1, final long x2) {
-    return x1 ^ x2;
-  }
+	static long xor(final long x1, final long x2) {
+		return x1 ^ x2;
+	}
 }

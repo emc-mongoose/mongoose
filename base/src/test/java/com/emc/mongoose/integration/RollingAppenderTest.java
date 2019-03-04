@@ -12,32 +12,32 @@ import org.junit.Test;
 
 public class RollingAppenderTest {
 
-  private static final int LIMIT = 5;
-  private static String fileName = "/tmp/log4jFileTest.txt";
-  public static Logger logger = Logger.getLogger(RollingAppenderTest.class);
-  public static Appender appender;
+	private static final int LIMIT = 5;
+	private static String fileName = "/tmp/log4jFileTest.txt";
+	public static Logger logger = Logger.getLogger(RollingAppenderTest.class);
+	public static Appender appender;
 
-  @Test
-  public void test() throws InterruptedException, IOException {
-    appender = new RollingFileAppender(new SimpleLayout(), fileName);
-    logger.addAppender(appender);
-    for (int counter = 0; counter < LIMIT; ++counter) {
-      TimeUnit.SECONDS.sleep(1);
-      System.out.println(counter);
-      RollingAppenderTest.logger.info(counter);
-    }
-    Assert.assertEquals("The file is not created", true, new File(fileName).exists());
-    new File(fileName).delete();
-    //
-    System.out.println("<File is deleted>");
-    //
-    for (int counter = LIMIT; counter < LIMIT * 2; ++counter) {
-      TimeUnit.SECONDS.sleep(1);
-      System.out.println(counter);
-      RollingAppenderTest.logger.info(counter);
-    }
-    //
-    Assert.assertEquals(
-        "The file is not created after deletion: Log4j2 bug", true, new File(fileName).exists());
-  }
+	@Test
+	public void test() throws InterruptedException, IOException {
+		appender = new RollingFileAppender(new SimpleLayout(), fileName);
+		logger.addAppender(appender);
+		for (int counter = 0; counter < LIMIT; ++counter) {
+			TimeUnit.SECONDS.sleep(1);
+			System.out.println(counter);
+			RollingAppenderTest.logger.info(counter);
+		}
+		Assert.assertEquals("The file is not created", true, new File(fileName).exists());
+		new File(fileName).delete();
+		//
+		System.out.println("<File is deleted>");
+		//
+		for (int counter = LIMIT; counter < LIMIT * 2; ++counter) {
+			TimeUnit.SECONDS.sleep(1);
+			System.out.println(counter);
+			RollingAppenderTest.logger.info(counter);
+		}
+		//
+		Assert.assertEquals(
+						"The file is not created after deletion: Log4j2 bug", true, new File(fileName).exists());
+	}
 }

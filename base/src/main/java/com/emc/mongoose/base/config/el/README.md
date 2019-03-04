@@ -145,13 +145,6 @@ supplies the new 64-bit random integer on each evaluation.
 * `storage-auth-uid`
 * `storage-auth-secret`
 
-## 5.4. HTTP
-
-TODO write to another file
-
-* `storage-net-http-headers-*`
-* `storage-net-http-uri-args-*`
-
 # 6. Future Enhancements
 
 Use the expressions to define the following configuration options:

@@ -5,9 +5,11 @@ new java.lang.ProcessBuilder()
 
 var itemNamingConfig = {
 	"item": {
-		"naming": {
-			"length": 16,
-			"radix": 16
+		"input": {
+			"name": {
+				"length": 16,
+				"radix": 16
+			}
 		}
 	}
 }

@@ -39,12 +39,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- Created by kurila on 19.07.16.
- The multi-threaded non-blocking I/O storage driver.
- */
+Created by kurila on 19.07.16.
+The multi-threaded non-blocking I/O storage driver.
+*/
 public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I>>
-extends CoopStorageDriverBase<I, O>
-implements NioStorageDriver<I, O> {
+				extends CoopStorageDriverBase<I, O>
+				implements NioStorageDriver<I, O> {
 
 	private final static String CLS_NAME = NioStorageDriverBase.class.getSimpleName();
 	private final static FibersExecutor IO_EXECUTOR = new FibersExecutor(false);
@@ -58,14 +58,13 @@ implements NioStorageDriver<I, O> {
 
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
-		final String testStepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-		final int batchSize
-	) throws OmgShootMyFootException {
+					final String testStepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+					final int batchSize) throws OmgShootMyFootException {
 		super(testStepId, dataInput, storageConfig, verifyFlag, batchSize);
 		final int confWorkerCount = storageConfig.intVal("driver-threads");
-		if(confWorkerCount > 0) {
+		if (confWorkerCount > 0) {
 			ioWorkerCount = confWorkerCount;
-		} else if(concurrencyLimit > 0) {
+		} else if (concurrencyLimit > 0) {
 			ioWorkerCount = Math.min(concurrencyLimit, ThreadUtil.getHardwareThreadCount());
 		} else {
 			ioWorkerCount = ThreadUtil.getHardwareThreadCount();
@@ -74,7 +73,7 @@ implements NioStorageDriver<I, O> {
 		opBuffs = new CircularBuffer[ioWorkerCount];
 		opBuffLocks = new Lock[ioWorkerCount];
 		opBuffCapacity = Math.max(MIN_TASK_BUFF_CAPACITY, concurrencyLimit / ioWorkerCount);
-		for(var i = 0; i < ioWorkerCount; i ++) {
+		for (var i = 0; i < ioWorkerCount; i++) {
 			opBuffs[i] = new CircularArrayBuffer<>(opBuffCapacity);
 			opBuffLocks[i] = new ReentrantLock();
 			ioFibers.add(new NioWorkerTask(IO_EXECUTOR, opBuffs[i], opBuffLocks[i]));
@@ -82,12 +81,12 @@ implements NioStorageDriver<I, O> {
 	}
 
 	/**
-	 The class represents the non-blocking load operation execution algorithm.
-	 The load operation itself may correspond to a large data transfer so it can't be non-blocking.
-	 So the load operation may be invoked multiple times (in the reentrant manner).
-	 */
+	The class represents the non-blocking load operation execution algorithm.
+	The load operation itself may correspond to a large data transfer so it can't be non-blocking.
+	So the load operation may be invoked multiple times (in the reentrant manner).
+	*/
 	private final class NioWorkerTask
-	extends ExclusiveFiberBase {
+					extends ExclusiveFiberBase {
 
 		private final CircularBuffer<O> opBuff;
 		private final List<O> opLocalBuff;
@@ -107,23 +106,23 @@ implements NioStorageDriver<I, O> {
 			ThreadContext.put(KEY_STEP_ID, stepId);
 
 			opBuffSize = opBuff.size();
-			if(opBuffSize > 0) {
+			if (opBuffSize > 0) {
 				try {
-					for(int i = 0; i < opBuffSize; i ++) {
+					for (int i = 0; i < opBuffSize; i++) {
 						op = opBuff.get(i);
 						// if timeout, put the op into the temporary buffer
-						if(System.nanoTime() - startTimeNanos >= SOFT_DURATION_LIMIT_NANOS) {
+						if (System.nanoTime() - startTimeNanos >= SOFT_DURATION_LIMIT_NANOS) {
 							opLocalBuff.add(op);
 							continue;
 						}
 						// check if the op is invoked 1st time
-						if(PENDING.equals(op.status())) {
+						if (PENDING.equals(op.status())) {
 							// do not start the new op if the state is not more active
-							if(!isStarted()) {
+							if (!isStarted()) {
 								continue;
 							}
 							// respect the configured concurrency level
-							if(!concurrencyThrottle.tryAcquire()) {
+							if (!concurrencyThrottle.tryAcquire()) {
 								opLocalBuff.add(op);
 								continue;
 							}
@@ -134,7 +133,7 @@ implements NioStorageDriver<I, O> {
 						// perform non blocking I/O for the op
 						invokeNio(op);
 						// remove the op from the buffer if it is not active more
-						if(!ACTIVE.equals(op.status())) {
+						if (!ACTIVE.equals(op.status())) {
 							concurrencyThrottle.release();
 							handleCompleted(op);
 						} else {
@@ -142,14 +141,14 @@ implements NioStorageDriver<I, O> {
 							opLocalBuff.add(op);
 						}
 					}
-				} catch(final Throwable cause) {
+				} catch (final Throwable cause) {
 					LogUtil.exception(Level.ERROR, cause, "I/O worker failure");
 				} finally {
 					// put the active operations back into the buffer
 					opBuff.clear();
 					opBuffSize = opLocalBuff.size();
-					if(opBuffSize > 0) {
-						for(int i = 0; i < opBuffSize; i ++) {
+					if (opBuffSize > 0) {
+						for (int i = 0; i < opBuffSize; i++) {
 							opBuff.add(opLocalBuff.get(i));
 						}
 						opLocalBuff.clear();
@@ -162,9 +161,9 @@ implements NioStorageDriver<I, O> {
 		protected final void doStop() {
 			opBuffSize = opBuff.size();
 			Loggers.MSG.debug("Finish {} remaining active load operations finally", opBuffSize);
-			for(int i = 0; i < opBuffSize; i ++) {
+			for (int i = 0; i < opBuffSize; i++) {
 				op = opBuff.get(i);
-				if(ACTIVE.equals(op.status())) {
+				if (ACTIVE.equals(op.status())) {
 					op.status(INTERRUPTED);
 					concurrencyThrottle.release();
 					handleCompleted(op);
@@ -180,70 +179,67 @@ implements NioStorageDriver<I, O> {
 	}
 
 	/**
-	 Reentrant method which decorates the actual non-blocking create/read/etc I/O operation.
-	 May change the task status or not change if the I/O operation is not completed during this
-	 particular invocation
-	 @param op
-	 */
+	Reentrant method which decorates the actual non-blocking create/read/etc I/O operation.
+	May change the task status or not change if the I/O operation is not completed during this
+	particular invocation
+	@param op
+	*/
 	protected abstract void invokeNio(final O op);
 
 	@Override
 	protected final void doStart()
-	throws IllegalStateException {
+					throws IllegalStateException {
 		super.doStart();
-		for(final Fiber ioFiber : ioFibers) {
+		for (final Fiber ioFiber : ioFibers) {
 			try {
 				ioFiber.start();
-			} catch(final IOException ignored) {
-			}
+			} catch (final IOException ignored) {}
 		}
 	}
 
 	@Override
 	protected final void doShutdown()
-	throws IllegalStateException {
+					throws IllegalStateException {
 		super.doShutdown();
-		for(final Fiber ioFiber: ioFibers) {
+		for (final Fiber ioFiber : ioFibers) {
 			try {
 				ioFiber.shutdown();
-			} catch(final IOException ignored) {
-			}
+			} catch (final IOException ignored) {}
 		}
 	}
 
 	@Override
 	protected final void doStop()
-	throws IllegalStateException {
+					throws IllegalStateException {
 		super.doStop();
-		for(final Fiber ioFiber: ioFibers) {
+		for (final Fiber ioFiber : ioFibers) {
 			try {
 				ioFiber.stop();
-			} catch(final IOException ignored) {
-			}
+			} catch (final IOException ignored) {}
 		}
 	}
 
 	@Override
 	protected final boolean submit(final O op)
-	throws IllegalStateException {
+					throws IllegalStateException {
 		CircularBuffer<O> opBuff;
 		Lock opBuffLock;
 		int j;
-		for(int i = 0; i < ioWorkerCount; i ++) {
-			if(!isStarted()) {
+		for (int i = 0; i < ioWorkerCount; i++) {
+			if (!isStarted()) {
 				throw new IllegalStateException();
 			}
 			j = (int) (rrc.getAndIncrement() % ioWorkerCount);
 			opBuff = opBuffs[j];
 			opBuffLock = opBuffLocks[j];
-			if(opBuffLock.tryLock()) {
+			if (opBuffLock.tryLock()) {
 				try {
 					return opBuff.size() < opBuffCapacity && opBuff.add(op);
 				} finally {
 					opBuffLock.unlock();
 				}
 			} else {
-				i ++;
+				i++;
 			}
 		}
 		return false;
@@ -251,24 +247,24 @@ implements NioStorageDriver<I, O> {
 
 	@Override
 	protected final int submit(final List<O> ops, final int from, final int to)
-	throws IllegalStateException {
+					throws IllegalStateException {
 		CircularBuffer<O> opBuff;
 		Lock opBuffLock;
 		int j = from;
 		int k;
 		int n;
 		int m;
-		for(int i = 0; i < ioWorkerCount; i ++) {
-			if(!isStarted()) {
+		for (int i = 0; i < ioWorkerCount; i++) {
+			if (!isStarted()) {
 				throw new IllegalStateException();
 			}
 			m = (int) (rrc.getAndIncrement() % ioWorkerCount);
 			opBuff = opBuffs[m];
 			opBuffLock = opBuffLocks[m];
-			if(opBuffLock.tryLock()) {
+			if (opBuffLock.tryLock()) {
 				try {
 					n = Math.min(to - j, opBuffCapacity - opBuff.size());
-					for(k = 0; k < n; k ++) {
+					for (k = 0; k < n; k++) {
 						opBuff.add(ops.get(j + k));
 					}
 					j += n;
@@ -282,50 +278,48 @@ implements NioStorageDriver<I, O> {
 
 	@Override
 	protected final int submit(final List<O> ops)
-	throws IllegalStateException {
+					throws IllegalStateException {
 		return submit(ops, 0, ops.size());
 	}
-	
+
 	protected final void finishOperation(final O op) {
 		try {
 			op.startResponse();
 			op.finishResponse();
 			op.status(Operation.Status.SUCC);
-		} catch(final IllegalStateException e) {
+		} catch (final IllegalStateException e) {
 			LogUtil.exception(
-				Level.WARN, e, "{}: finishing the load operation which is in an invalid state", op.toString()
-			);
+							Level.WARN, e, "{}: finishing the load operation which is in an invalid state", op.toString());
 			op.status(Operation.Status.FAIL_UNKNOWN);
 		}
 	}
-	
+
 	@Override
 	protected void doClose()
-	throws IOException, InterruptRunException {
+					throws IOException, InterruptRunException {
 
 		ioFibers.forEach(
-			fiber -> {
-				try {
-					fiber.close();
-				} catch(final Exception e) {
-					LogUtil.exception(Level.WARN, e, "Failed to close the I/O fiber: {}", fiber);
-				}
-			}
-		);
+						fiber -> {
+							try {
+								fiber.close();
+							} catch (final Exception e) {
+								LogUtil.exception(Level.WARN, e, "Failed to close the I/O fiber: {}", fiber);
+							}
+						});
 		ioFibers.clear();
 
-		for(int i = 0; i < ioWorkerCount; i ++) {
-			try(final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
-				if(opBuffLocks[i].tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
+		for (int i = 0; i < ioWorkerCount; i++) {
+			try (final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
+				if (opBuffLocks[i].tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 					try {
 						opBuffs[i].clear();
 					} finally {
 						opBuffLocks[i].unlock();
 					}
-				} else if(opBuffs[i].size() > 0){
+				} else if (opBuffs[i].size() > 0) {
 					Loggers.ERR.debug(new ThreadDumpMessage("Failed to obtain the load operations buff lock in time"));
 				}
-			} catch(final InterruptedException e) {
+			} catch (final InterruptedException e) {
 				throw new InterruptRunException(e);
 			}
 			opBuffs[i] = null;

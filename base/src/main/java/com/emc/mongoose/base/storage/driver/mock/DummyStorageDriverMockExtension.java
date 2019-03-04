@@ -13,46 +13,44 @@ import java.util.Collections;
 import java.util.List;
 
 /** Created by andrey on 19.09.17. */
-public final class DummyStorageDriverMockExtension<
-        I extends Item, O extends Operation<I>, T extends DummyStorageDriverMock<I, O>>
-    extends ExtensionBase implements StorageDriverFactory<I, O, T> {
+public final class DummyStorageDriverMockExtension<I extends Item, O extends Operation<I>, T extends DummyStorageDriverMock<I, O>>
+				extends ExtensionBase implements StorageDriverFactory<I, O, T> {
 
-  private static final List<String> RES_INSTALL_FILES =
-      Collections.unmodifiableList(Arrays.asList());
+	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(Arrays.asList());
 
-  public static StorageDriverFactory provider() {
-  	return new DummyStorageDriverMockExtension();
-  }
+	public static StorageDriverFactory provider() {
+		return new DummyStorageDriverMockExtension();
+	}
 
-  @Override
-  public final String id() {
-    return "dummy-mock";
-  }
+	@Override
+	public final String id() {
+		return "dummy-mock";
+	}
 
-  @Override
-  @SuppressWarnings("unchecked")
-  public final T create(
-      final String stepId,
-      final DataInput dataInput,
-      final Config storageConfig,
-      final boolean verifyFlag,
-      final int batchSize)
-      throws OmgShootMyFootException {
-    return (T) new DummyStorageDriverMock<I, O>(storageConfig);
-  }
+	@Override
+	@SuppressWarnings("unchecked")
+	public final T create(
+					final String stepId,
+					final DataInput dataInput,
+					final Config storageConfig,
+					final boolean verifyFlag,
+					final int batchSize)
+					throws OmgShootMyFootException {
+		return (T) new DummyStorageDriverMock<I, O>(storageConfig);
+	}
 
-  @Override
-  public final SchemaProvider schemaProvider() {
-    return null;
-  }
+	@Override
+	public final SchemaProvider schemaProvider() {
+		return null;
+	}
 
-  @Override
-  protected final String defaultsFileName() {
-    return null;
-  }
+	@Override
+	protected final String defaultsFileName() {
+		return null;
+	}
 
-  @Override
-  protected final List<String> resourceFilesToInstall() {
-    return RES_INSTALL_FILES;
-  }
+	@Override
+	protected final List<String> resourceFilesToInstall() {
+		return RES_INSTALL_FILES;
+	}
 }

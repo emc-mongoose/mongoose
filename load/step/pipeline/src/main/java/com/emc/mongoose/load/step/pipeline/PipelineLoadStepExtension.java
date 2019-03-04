@@ -17,8 +17,8 @@ import java.util.Collections;
 import java.util.List;
 
 public final class PipelineLoadStepExtension<T extends PipelineLoadStepLocal, U extends PipelineLoadStepClient>
-extends ExtensionBase
-implements LoadStepFactory<T, U> {
+				extends ExtensionBase
+				implements LoadStepFactory<T, U> {
 
 	public static final String TYPE = "PipelineLoad";
 
@@ -38,8 +38,7 @@ implements LoadStepFactory<T, U> {
 	private static final String DEFAULTS_FILE_NAME = "defaults-item-output-delay.json";
 
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
-		Arrays.asList("config/" + DEFAULTS_FILE_NAME)
-	);
+					Arrays.asList("config/" + DEFAULTS_FILE_NAME));
 
 	@Override
 	public final String id() {
@@ -61,18 +60,18 @@ implements LoadStepFactory<T, U> {
 		return RES_INSTALL_FILES;
 	}
 
-	@Override @SuppressWarnings("unchecked")
+	@Override
+	@SuppressWarnings("unchecked")
 	public final T createLocal(
-		final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs,
-		final MetricsManager metricsManager
-	) {
+					final Config baseConfig, final List<Extension> extensions, final List<Config> contextConfigs,
+					final MetricsManager metricsManager) {
 		return (T) new PipelineLoadStepLocal(baseConfig, extensions, contextConfigs, metricsManager);
 	}
 
-	@Override @SuppressWarnings("unchecked")
+	@Override
+	@SuppressWarnings("unchecked")
 	public final U createClient(
-		final Config baseConfig, final List<Extension> extensions, final MetricsManager metricsManager
-	) {
+					final Config baseConfig, final List<Extension> extensions, final MetricsManager metricsManager) {
 		return (U) new PipelineLoadStepClient(baseConfig, extensions, null, metricsManager);
 	}
 }
