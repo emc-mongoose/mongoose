@@ -6,7 +6,7 @@ import static com.emc.mongoose.base.storage.driver.StorageDriver.BUFF_SIZE_MIN;
 import static com.github.akurilov.commons.io.el.ExpressionInput.ASYNC_MARKER;
 import static com.github.akurilov.commons.io.el.ExpressionInput.SYNC_MARKER;
 
-import com.emc.mongoose.base.config.ConstStringInput;
+import com.emc.mongoose.base.config.ConstantValueInputImpl;
 import com.emc.mongoose.base.config.el.ExpressionInputBuilder;
 import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.exception.OmgShootMyFootException;
@@ -31,6 +31,7 @@ import com.emc.mongoose.base.item.op.token.TokenOperationsBuilderImpl;
 import com.emc.mongoose.base.logging.LogContextThreadFactory;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
+import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.base.storage.driver.StorageDriver;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
@@ -208,34 +209,24 @@ public class LoadGeneratorBuilderImpl<
     } else {
       outputPathSupplier = null;
     }
-    opsBuilder.outputPathSupplier(outputPathSupplier);
+    opsBuilder.outputPathInput(outputPathSupplier);
     // init the credentials, multi-user case support
-    final Input<String> uidInput;
     if (authConfig == null) {
       throw new OmgShootMyFootException("Storage auth config is not set");
     }
-    final var uid = authConfig.stringVal("uid");
-    if (uid == null) {
-      uidInput = null;
-    } else if (uid.contains(ASYNC_MARKER) || uid.contains(SYNC_MARKER)) {
-      uidInput = ExpressionInputBuilder.newInstance().type(String.class).expression(uid).build();
-    } else {
-      uidInput = new ConstStringInput(uid);
-    }
-    opsBuilder.uidInput(uidInput);
     final var authFile = authConfig.stringVal("file");
     if (authFile != null && !authFile.isEmpty()) {
-      final var credentials = loadCredentials(authFile, (long) M);
-      opsBuilder.credentialsMap(credentials);
+      final var credentials = loadCredentialsByPath(authFile, (long) M);
+      opsBuilder.credentialsByPath(credentials);
     } else {
-      final Input<String> secretInput;
+      final var uid = authConfig.stringVal("uid");
       final var secret = authConfig.stringVal("secret");
-      if (secret == null) {
-        secretInput = null;
+      if (null == uid && null == secret) {
+        opsBuilder.credentialInput(new ConstantValueInputImpl<>(Credential.NONE));
       } else {
-        secretInput = new ConstStringInput(secret);
+        opsBuilder.credentialInput(
+            new ConstantValueInputImpl<>(Credential.getInstance(uid, secret)));
       }
-      opsBuilder.secretInput(secretInput);
     }
     // init the items input
     final var itemInputFile = inputConfig.stringVal("file");
@@ -439,7 +430,7 @@ public class LoadGeneratorBuilderImpl<
     if (path.contains(SYNC_MARKER) || path.contains(ASYNC_MARKER)) {
       pathInput = ExpressionInputBuilder.newInstance().type(String.class).expression(path).build();
     } else {
-      pathInput = new ConstStringInput(path);
+      pathInput = new ConstantValueInputImpl(path);
     }
     return pathInput;
   }
@@ -471,29 +462,23 @@ public class LoadGeneratorBuilderImpl<
     return itemInput;
   }
 
-  private static Map<String, String> loadCredentials(final String file, final long countLimit)
-      throws OmgShootMyFootException {
-    final var credentials = (Map<String, String>) new HashMap<String, String>();
+  private static Map<String, Credential> loadCredentialsByPath(
+      final String file, final long countLimit) {
+    final var credByPath = (Map<String, Credential>) new HashMap<String, Credential>();
     try (final var br = Files.newBufferedReader(Paths.get(file))) {
       String line;
       String parts[];
-      int firstCommaPos;
       long count = 0;
       while (null != (line = br.readLine()) && count < countLimit) {
-        firstCommaPos = line.indexOf(',');
-        if (-1 == firstCommaPos) {
-          Loggers.ERR.warn("Invalid credentials line: \"{}\"", line);
-        } else {
-          parts = line.split(",", 2);
-          credentials.put(parts[0], parts[1]);
-          count++;
-        }
+        parts = line.split(",", 3);
+        credByPath.put(parts[0], Credential.getInstance(parts[1], parts[2]));
+        count++;
       }
-      Loggers.MSG.info("Loaded {} credential pairs from the file \"{}\"", credentials.size(), file);
-    } catch (final IOException e) {
+      Loggers.MSG.info("Loaded {} credential pairs from the file \"{}\"", credByPath.size(), file);
+    } catch (final Exception e) {
       LogUtil.exception(Level.WARN, e, "Failed to load the credentials from the file \"{}\"", file);
     }
-    return credentials;
+    return credByPath;
   }
 
   private static <I extends Item> int loadSrcItems(

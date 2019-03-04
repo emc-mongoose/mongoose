@@ -114,6 +114,7 @@ TODO
 | `lineSep` | string | The system-dependent line separator string
 | `pathSep` | string | The system-dependent path-separator
 | `pi` | double | The ratio of the circumference of a circle to its diameter
+| `rnd` | Random | The random number generator
 | `this` | [ExpressionInput](https://github.com/akurilov/java-commons/blob/master/src/main/java/com/github/akurilov/commons/io/el/ExpressionInput.java) | The expression input instance (self referencing)
 
 ### 4.4.1. Self Referencing

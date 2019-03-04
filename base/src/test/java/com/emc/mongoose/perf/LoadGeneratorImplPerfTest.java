@@ -1,6 +1,6 @@
 package com.emc.mongoose.perf;
 
-import com.emc.mongoose.base.config.ConstStringInput;
+import com.emc.mongoose.base.config.ConstantValueInputImpl;
 import com.emc.mongoose.base.item.DataItemFactoryImpl;
 import com.emc.mongoose.base.item.DataItemImpl;
 import com.emc.mongoose.base.item.ItemFactory;
@@ -111,9 +111,8 @@ public class LoadGeneratorImplPerfTest {
     final OperationsBuilder opsBuilder =
         new DataOperationsBuilderImpl(0)
             .opType(OpType.CREATE)
-            .outputPathSupplier(new ConstStringInput("/default"))
-            .uidInput(null)
-            .secretInput(null);
+            .outputPathInput(new ConstantValueInputImpl<>("/default"))
+            .credentialInput(null);
     final boolean shuffleFlag = false;
 
     try (final LoadGenerator loadGenerator =
@@ -142,13 +141,12 @@ public class LoadGeneratorImplPerfTest {
     final ItemFactory itemFactory = new DataItemFactoryImpl();
     final ItemNameSupplier itemNameInput =
         new ItemNameSupplier(ItemNamingType.ASC, null, 10, 10, 0);
-    final Input itemInput = new NewDataItemInput(itemFactory, itemNameInput, itemSize);
+    final Input itemInput = new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
     final OperationsBuilder opsBuilder =
         new DataOperationsBuilderImpl(0)
             .opType(OpType.CREATE)
-            .outputPathSupplier(new ConstStringInput("/default"))
-            .uidInput(null)
-            .secretInput(null);
+            .outputPathInput(new ConstantValueInputImpl<>("/default"))
+            .credentialInput(null);
     final boolean shuffleFlag = false;
 
     try (final LoadGenerator loadGenerator =
@@ -178,13 +176,12 @@ public class LoadGeneratorImplPerfTest {
     final ItemFactory itemFactory = new DataItemFactoryImpl();
     final ItemNameSupplier itemNameInput =
         new ItemNameSupplier(ItemNamingType.RANDOM, null, 13, Character.MAX_RADIX, 0);
-    final Input itemInput = new NewDataItemInput(itemFactory, itemNameInput, itemSize);
+    final Input itemInput = new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
     final OperationsBuilder opsBuilder =
         new DataOperationsBuilderImpl(0)
             .opType(OpType.CREATE)
-            .outputPathSupplier(new ConstStringInput("/default"))
-            .uidInput(new ConstStringInput("wuser1@sanity.local"))
-            .secretInput(new ConstStringInput("secret"));
+            .outputPathInput(new ConstantValueInputImpl<>("/default"))
+            .credentialInput(null);
     final boolean shuffleFlag = false;
 
     try (final LoadGenerator loadGenerator =
@@ -216,13 +213,12 @@ public class LoadGeneratorImplPerfTest {
     final ItemFactory itemFactory = new DataItemFactoryImpl();
     final ItemNameSupplier itemNameInput =
         new ItemNameSupplier(ItemNamingType.RANDOM, null, 13, Character.MAX_RADIX, 0);
-    final Input itemInput = new NewDataItemInput(itemFactory, itemNameInput, itemSize);
+    final Input itemInput = new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
     final OperationsBuilder opsBuilder =
         new DataOperationsBuilderImpl(0)
             .opType(OpType.CREATE)
-            // .outputPathSupplier(ExpressionInputBuilder.newInstance().type("$p{16;2}"))
-            .uidInput(null)
-            .secretInput(null);
+            // .outputPathInput(ExpressionInputBuilder.newInstance().type("$p{16;2}"))
+            .credentialInput(null);
     final boolean shuffleFlag = false;
 
     try (final LoadGenerator loadGenerator =
@@ -259,9 +255,8 @@ public class LoadGeneratorImplPerfTest {
     final OperationsBuilder opsBuilder =
         new DataOperationsBuilderImpl(0)
             .opType(OpType.READ)
-            .outputPathSupplier(null)
-            .uidInput(null)
-            .secretInput(null);
+            .outputPathInput(null)
+            .credentialInput(null);
     final boolean shuffleFlag = false;
 
     try (final LoadGenerator loadGenerator =
@@ -297,9 +292,8 @@ public class LoadGeneratorImplPerfTest {
     final OperationsBuilder opsBuilder =
         new DataOperationsBuilderImpl(0)
             .opType(OpType.READ)
-            .outputPathSupplier(null)
-            .uidInput(null)
-            .secretInput(null);
+            .outputPathInput(null)
+            .credentialInput(null);
     final boolean shuffleFlag = true;
 
     try (final LoadGenerator loadGenerator =
@@ -336,9 +330,8 @@ public class LoadGeneratorImplPerfTest {
     final OperationsBuilder opsBuilder =
         new DataOperationsBuilderImpl(0)
             .opType(OpType.READ)
-            .outputPathSupplier(null)
-            .uidInput(null)
-            .secretInput(null);
+            .outputPathInput(null)
+            .credentialInput(null);
     final boolean shuffleFlag = false;
 
     try (final Output taskOutput = new RecyclingAndCountingOutput(counter)) {

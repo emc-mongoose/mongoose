@@ -2,7 +2,6 @@ package com.emc.mongoose.base.item.op.token;
 
 import com.emc.mongoose.base.item.TokenItem;
 import com.emc.mongoose.base.item.op.OperationsBuilderImpl;
-import com.emc.mongoose.base.storage.Credential;
 import java.io.IOException;
 import java.util.List;
 
@@ -17,27 +16,18 @@ public class TokenOperationsBuilderImpl<I extends TokenItem, O extends TokenOper
   @Override
   @SuppressWarnings("unchecked")
   public O buildOp(final I item) throws IOException {
-    final String uid;
-    return (O)
-        new TokenOperationImpl<>(
-            originIndex,
-            opType,
-            item,
-            Credential.getInstance(uid = getNextUid(), getNextSecret(uid)));
+    final String outputPath = getNextOutputPath();
+    return (O) new TokenOperationImpl<>(originIndex, opType, item, getNextCredential(outputPath));
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public void buildOps(final List<I> items, final List<O> buff) throws IOException {
-    String uid;
+    String outputPath;
     for (final I item : items) {
+      outputPath = getNextOutputPath();
       buff.add(
-          (O)
-              new TokenOperationImpl<>(
-                  originIndex,
-                  opType,
-                  item,
-                  Credential.getInstance(uid = getNextUid(), getNextSecret(uid))));
+          (O) new TokenOperationImpl<>(originIndex, opType, item, getNextCredential(outputPath)));
     }
   }
 }

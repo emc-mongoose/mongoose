@@ -77,12 +77,13 @@ public class LoadGeneratorBuilderImplTest {
     final String prefixBucket = "bucket-";
     try (final BufferedWriter bw = Files.newBufferedWriter(credentialsFilePath)) {
       for (int i = 0; i < bucketCount; i++) {
-        bw.append(prefixUid)
-            .append(i < 10 ? "0" : "")
+        bw.append(prefixBucket)
+            .append(Integer.toString(i))
+            .append(',')
+            .append(prefixUid)
             .append(Integer.toString(i))
             .append(',')
             .append(prefixSecret)
-            .append(i < 10 ? "0" : "")
             .append(Integer.toString(i));
         bw.newLine();
       }
@@ -102,7 +103,7 @@ public class LoadGeneratorBuilderImplTest {
             put("item-naming-prefix", null);
             put("item-naming-radix", 36);
             put("item-naming-type", ItemNamingType.RANDOM.name().toLowerCase());
-            put("item-output-path", prefixBucket + "%d(" + seed + "){00}[0-99]");
+            put("item-output-path", prefixBucket + "%{" + seed + "}${rnd.nextLong(100)}");
             put("load-batch-size", opCount);
             put("load-op-limit-count", opCount);
             put("load-op-limit-recycle", 1_000_000);
@@ -111,7 +112,6 @@ public class LoadGeneratorBuilderImplTest {
             put("load-op-shuffle", false);
             put("load-op-type", OpType.CREATE.name().toLowerCase());
             put("storage-auth-file", credentialsFilePath.toAbsolutePath().toString());
-            put("storage-auth-uid", prefixUid + "%d(" + seed + "){00}[0-99]");
           }
         };
     final Config config = new BasicConfig("-", CONFIG_SCHEMA);

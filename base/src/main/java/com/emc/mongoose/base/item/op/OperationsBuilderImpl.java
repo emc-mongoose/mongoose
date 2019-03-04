@@ -2,7 +2,7 @@ package com.emc.mongoose.base.item.op;
 
 import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
-import com.emc.mongoose.base.config.ConstStringInput;
+import com.emc.mongoose.base.config.ConstantValueInput;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.storage.Credential;
 import com.github.akurilov.commons.io.Input;
@@ -19,19 +19,15 @@ public class OperationsBuilderImpl<I extends Item, O extends Operation<I>>
   protected OpType opType = OpType.CREATE; // by default
   protected String inputPath = null;
 
-  protected Input<String> outputPathSupplier;
-  protected boolean constantOutputPathFlag;
-  protected String constantOutputPath;
+  protected Input<String> outputPathInput;
+  protected boolean constOutputPathFlag;
+  protected String constOutputPath;
 
-  protected Input<String> uidInput;
-  protected boolean constantUidFlag;
-  protected String constantUid;
+  protected Input<Credential> credentialInput;
+  protected boolean constCredFlag;
+  protected Credential constCred;
 
-  protected Input<String> secretInput;
-  protected boolean constantSecretFlag;
-  protected String constantSecret;
-
-  protected Map<String, String> credentialsMap = null;
+  protected Map<String, Credential> credentialsByPath = null;
 
   public OperationsBuilderImpl(final int originIndex) {
     this.originIndex = originIndex;
@@ -64,127 +60,87 @@ public class OperationsBuilderImpl<I extends Item, O extends Operation<I>>
   }
 
   @Override
-  public final OperationsBuilderImpl<I, O> outputPathSupplier(final Input<String> ops) {
-    this.outputPathSupplier = ops;
-    if (outputPathSupplier == null) {
-      constantOutputPathFlag = true;
-      constantOutputPath = null;
-    } else if (outputPathSupplier instanceof ConstStringInput) {
-      constantOutputPathFlag = true;
-      constantOutputPath = outputPathSupplier.get();
+  public final OperationsBuilderImpl<I, O> outputPathInput(final Input<String> ops) {
+    this.outputPathInput = ops;
+    if (outputPathInput == null) {
+      constOutputPathFlag = true;
+      constOutputPath = null;
+    } else if (outputPathInput instanceof ConstantValueInput) {
+      constOutputPathFlag = true;
+      constOutputPath = outputPathInput.get();
     } else {
-      constantOutputPathFlag = false;
+      constOutputPathFlag = false;
     }
     return this;
   }
 
   @Override
-  public final OperationsBuilderImpl<I, O> uidInput(final Input<String> uidInput) {
-    this.uidInput = uidInput;
-    if (uidInput == null) {
-      constantUidFlag = true;
-      constantUid = null;
-    } else if (uidInput instanceof ConstStringInput) {
-      constantUidFlag = true;
-      constantUid = uidInput.get();
+  public final OperationsBuilderImpl<I, O> credentialInput(
+      final Input<Credential> credentialInput) {
+    this.credentialInput = credentialInput;
+    if (credentialInput == null) {
+      constCredFlag = true;
+      constCred = Credential.NONE;
+    } else if (credentialInput instanceof ConstantValueInput) {
+      constCredFlag = true;
+      constCred = credentialInput.get();
     } else {
-      constantUidFlag = false;
+      constCredFlag = false;
     }
     return this;
   }
 
   @Override
-  public final OperationsBuilderImpl<I, O> secretInput(final Input<String> secretInput) {
-    this.secretInput = secretInput;
-    if (secretInput == null) {
-      constantSecretFlag = true;
-      constantSecret = null;
-    } else if (secretInput instanceof ConstStringInput) {
-      constantSecretFlag = true;
-      constantSecret = secretInput.get();
-    } else {
-      constantSecretFlag = false;
-    }
-    return this;
-  }
-
-  @Override
-  public OperationsBuilderImpl<I, O> credentialsMap(final Map<String, String> credentials) {
-    if (credentials != null) {
-      this.credentialsMap = credentials;
-      secretInput(null);
-    }
+  public OperationsBuilderImpl<I, O> credentialsByPath(final Map<String, Credential> credByPath) {
+    this.credentialsByPath = credByPath;
     return this;
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public O buildOp(final I item) throws IOException {
-    final String uid;
+    final String outputPath = getNextOutputPath();
     return (O)
-        new OperationImpl<>(
-            originIndex,
-            opType,
-            item,
-            inputPath,
-            getNextOutputPath(),
-            Credential.getInstance(uid = getNextUid(), getNextSecret(uid)));
+        new OperationImpl<I>(
+            originIndex, opType, item, inputPath, outputPath, getNextCredential(outputPath));
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public void buildOps(final List<I> items, final List<O> buff) throws IOException {
-    String uid;
+    String outputPath;
     for (final I item : items) {
+      outputPath = getNextOutputPath();
       buff.add(
           (O)
               new OperationImpl<>(
-                  originIndex,
-                  opType,
-                  item,
-                  inputPath,
-                  getNextOutputPath(),
-                  Credential.getInstance(uid = getNextUid(), getNextSecret(uid))));
+                  originIndex, opType, item, inputPath, outputPath, getNextCredential(outputPath)));
     }
   }
 
   protected final String getNextOutputPath() {
-    return constantOutputPathFlag ? constantOutputPath : outputPathSupplier.get();
+    return constOutputPathFlag ? constOutputPath : outputPathInput.get();
   }
 
-  protected final String getNextUid() {
-    return constantUidFlag ? constantUid : uidInput.get();
-  }
-
-  protected final String getNextSecret(final String uid) {
-    if (uid != null && credentialsMap != null) {
-      return credentialsMap.get(uid);
-    } else if (constantSecretFlag) {
-      return constantSecret;
-    } else {
-      return secretInput.get();
-    }
+  protected final Credential getNextCredential(final String path) {
+    return constCredFlag ? constCred : credentialsByPath.get(path);
   }
 
   @Override
   public void close() throws IOException {
     inputPath = null;
     try {
-      if (outputPathSupplier != null) {
-        outputPathSupplier.close();
-        outputPathSupplier = null;
+      if (outputPathInput != null) {
+        outputPathInput.close();
+        outputPathInput = null;
       }
-      if (uidInput != null) {
-        uidInput.close();
-        uidInput = null;
+      if (credentialInput != null) {
+        credentialInput.close();
+        credentialInput = null;
       }
-      if (secretInput != null) {
-        secretInput.close();
-        secretInput = null;
-      }
-      if (credentialsMap != null) {
-        credentialsMap.clear();
-        credentialsMap = null;
+      if (credentialsByPath != null) {
+        credentialsByPath.clear();
+        credentialsByPath = null;
       }
     } catch (final Exception e) {
       throwUnchecked(e);

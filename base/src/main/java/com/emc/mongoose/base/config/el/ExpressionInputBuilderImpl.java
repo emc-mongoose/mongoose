@@ -7,6 +7,7 @@ import com.emc.mongoose.base.env.DateUtil;
 import com.github.akurilov.commons.io.el.ExpressionInput;
 import com.github.akurilov.commons.io.el.SynchronousExpressionInput;
 import com.github.akurilov.commons.math.MathUtil;
+import com.github.akurilov.commons.math.Random;
 import java.io.File;
 import java.util.regex.Pattern;
 
@@ -73,6 +74,7 @@ public class ExpressionInputBuilderImpl
       value("lineSep", System.lineSeparator(), String.class);
       value("pathSep", File.pathSeparator, String.class);
       value("pi", Math.PI, double.class);
+      value("rnd", new Random(), Random.class);
     } catch (final NoSuchMethodException e) {
       throwUnchecked(e);
     }

@@ -10,7 +10,7 @@ import static com.github.akurilov.commons.io.el.ExpressionInput.SYNC_MARKER;
 import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-import com.emc.mongoose.base.config.ConstStringInput;
+import com.emc.mongoose.base.config.ConstantValueInputImpl;
 import com.emc.mongoose.base.config.el.AsyncExpressionInput;
 import com.emc.mongoose.base.config.el.ExpressionInputBuilder;
 import com.emc.mongoose.base.data.DataInput;
@@ -128,7 +128,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
             .map(entry -> entry.getKey() + '=' + entry.getValue())
             .collect(Collectors.joining("&"));
     if (uriQueryExpr.length() > 0) {
-      uriQueryInput = new ConstStringInput("");
+      uriQueryInput = new ConstantValueInputImpl("");
     } else {
       uriQueryInput = EXPR_INPUT_FUNC.apply('?' + uriQueryExpr);
     }

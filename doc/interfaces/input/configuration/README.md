@@ -80,7 +80,7 @@ reference.
 | **run-node**                                   | Flag | false | Run in the slave node or not
 | **run-scenario**                               | Path | null | The default file scenario to run, null means invoking the default.js scenario bundled into the distribution
 | **run-version**                                | String | 4.0.0 | The Mongoose version
-| storage-auth-file                              | Path | null | The path to a credentials list file, containing the lines of comma-separated user ids and secret keys
+| storage-auth-file                              | Path | null | The path to a credentials list file, containing the lines of comma-separated item path, user id and secret key
 | storage-auth-uid                               | String | null | The authentication identifier
 | storage-auth-secret                            | String | null | The authentication secret
 | storage-auth-token                             | String | null | S3: no effect, Atmos: subtenant, Swift: token

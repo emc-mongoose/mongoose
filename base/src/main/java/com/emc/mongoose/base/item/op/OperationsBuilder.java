@@ -1,6 +1,7 @@
 package com.emc.mongoose.base.item.op;
 
 import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.storage.Credential;
 import com.github.akurilov.commons.io.Input;
 import java.io.Closeable;
 import java.io.IOException;
@@ -20,13 +21,11 @@ public interface OperationsBuilder<I extends Item, O extends Operation<I>> exten
 
   OperationsBuilder<I, O> inputPath(final String inputPath);
 
-  OperationsBuilder<I, O> outputPathSupplier(final Input<String> outputPathSupplier);
+  OperationsBuilder<I, O> outputPathInput(final Input<String> outputPathSupplier);
 
-  OperationsBuilder<I, O> uidInput(final Input<String> uidInput);
+  OperationsBuilder<I, O> credentialInput(final Input<Credential> credentialInput);
 
-  OperationsBuilder<I, O> secretInput(final Input<String> secretInput);
-
-  OperationsBuilder<I, O> credentialsMap(final Map<String, String> credentials);
+  OperationsBuilder<I, O> credentialsByPath(final Map<String, Credential> credentials);
 
   O buildOp(final I item) throws IOException, IllegalArgumentException;
 

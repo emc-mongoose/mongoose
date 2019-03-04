@@ -89,9 +89,20 @@ public class ExpressionInputTest {
         ExpressionInputBuilder.newInstance()
             .type(String.class)
             .expression("/${path:random(16, 2)}")
-            .build();
+            .<String, ExpressionInput<String>>build();
+    String p;
+    String[] pp;
     for (var i = 0; i < 100; i++) {
-      System.out.println(exprPathInput.get());
+      p = exprPathInput.get();
+      assertTrue(p.startsWith("/"));
+      assertTrue(p.endsWith("/"));
+      pp = p.split("/", 4);
+      assertTrue(pp.length > 2 && pp.length < 5);
+      for (var ppp : pp) {
+        if (!ppp.isEmpty()) {
+          assertTrue(16 > Integer.parseInt(ppp, 16));
+        }
+      }
     }
   }
 
