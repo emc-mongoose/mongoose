@@ -22,7 +22,6 @@ stages:
 before_script:
   - apk --update add --no-cache ca-certificates curl openssl binutils xz
   - curl -Lks https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.2%2B9/OpenJDK11U-jdk_x64_linux_hotspot_11.0.2_9.tar.gz -o /tmp/jdk11.tgz
-  - mkdir /opt
   - tar xvf /tmp/jdk11.tgz -C /opt
   - rm -rf /tmp/jdk11.tgz
   - export PATH=${PATH}:${JAVA_HOME}/bin

@@ -1,33 +1,48 @@
-
 #!/bin/sh
 
+####################################################################################
 # download formatter
+####################################################################################
+
 mkdir -p .cache
 cd .cache
-if [ ! -f google-java-format-1.7-all-deps.jar ]
+formatter_name="google-java-format-1.7-all-deps.jar"
+formatter_url="https://github.com/google/google-java-format/releases/download/google-java-format-1.7/"$formatter_name
+if [ ! -f $formatter_name ]
 then
-    wget https://github.com/google/google-java-format/releases/download/google-java-format-1.7/google-java-format-1.7-all-deps.jar
-    chmod 755 google-java-format-1.7-all-deps.jar
+    if [ -z `hash wget` ]
+    then
+        wget $formatter_url
+    else
+        curl -O $formatter_url
+    fi
+    chmod 755 $formatter_name
 fi
 cd ..
 
+####################################################################################
+# get staged files
+####################################################################################
 
 changed_java_files=$(git diff --cached --name-only --diff-filter=ACMR | grep ".*java$" )
 echo $changed_java_files
 
 if [ ! -z "$changed_java_files" ]
 then
-  java -jar .cache/google-java-format-1.7-all-deps.jar -replace $changed_java_files
+  java -jar .cache/$formatter_name -replace $changed_java_files
 fi
 
+####################################################################################
 # Format staged files
+####################################################################################
+
 for file in $changed_java_files
 do
   echo "Formatting $file"
   # Get the file from index
   git show ":$file" > "$file.tmp.java"
   # Format it
-  java -jar .cache/google-java-format-1.7-all-deps.jar -replace "$file.tmp.java"
+  java -jar .cache/$formatter_name -replace "$file.tmp.java"
   # Create a blob object from the formatted file
   hash=`git hash-object -w "$file.tmp.java"`
   # Add it back to index
@@ -35,5 +50,3 @@ do
   # Remove the tmp file
   rm "$file.tmp.java"
 done
-
-

@@ -1,5 +1,6 @@
 package com.emc.mongoose.base.metrics.util;
 
+import static com.emc.mongoose.base.metrics.MetricsConstants.*;
 import static io.prometheus.client.Collector.MetricFamilySamples.Sample;
 
 import com.emc.mongoose.base.Constants;
@@ -105,11 +106,11 @@ public class PrometheusMetricsExporterImpl extends Collector implements Promethe
       final double timeMillis, final List<MetricFamilySamples> mfsList) {
     mfsList.add(
         new MetricFamilySamples(
-            "" + this.hashCode(),
+			String.format(METRIC_FORMAT, METRIC_NAME_TIME),
             Type.GAUGE,
             help,
             Collections.singletonList(
-                newSample(MetricsConstants.METRIC_NAME_TIME, "value", timeMillis / Constants.K))));
+                newSample(METRIC_NAME_TIME, "value", timeMillis / Constants.K))));
   }
 
   private void collectSnapshot(
@@ -125,7 +126,7 @@ public class PrometheusMetricsExporterImpl extends Collector implements Promethe
       Loggers.ERR.warn("Unexpected metric snapshot type: {}", snapshot.getClass());
     }
     final MetricFamilySamples mfs =
-        new MetricFamilySamples("" + this.hashCode(), Type.GAUGE, help, samples);
+        new MetricFamilySamples(String.format(METRIC_FORMAT, snapshot.name()), Type.GAUGE, help, samples);
     mfsList.add(mfs);
   }
 
@@ -150,7 +151,7 @@ public class PrometheusMetricsExporterImpl extends Collector implements Promethe
       samples.add(
           newSample(
               metricName,
-              "quantile_" + quantileValues.get(i),
+              "quantile_" + quantileValues.get(i).toString().replaceAll("\\.","_"),
               snapshot.quantile(quantileValues.get(i)) / Constants.M));
     }
     samples.add(newSample(metricName, "max", metric.max() / Constants.M));
@@ -168,6 +169,6 @@ public class PrometheusMetricsExporterImpl extends Collector implements Promethe
   private Sample newSample(
       final String metricName, final String aggregationType, final double value) {
     return new Sample(
-        String.format(MetricsConstants.METRIC_FORMAT, metricName, aggregationType), labelNames, labelValues, value);
+        String.format(METRIC_FORMAT, metricName) + "_" + aggregationType, labelNames, labelValues, value);
   }
 }
