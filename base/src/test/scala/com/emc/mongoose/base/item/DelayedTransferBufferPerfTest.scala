@@ -14,6 +14,7 @@ import com.emc.mongoose.base.item.io.{DelayedTransferConvertBuffer, NewDataItemI
 import com.emc.mongoose.base.item.naming.ItemNameInputImpl
 import com.emc.mongoose.base.item.op.{OpType, OperationsBuilder}
 import com.emc.mongoose.base.storage.Credential
+import it.unimi.dsi.fastutil.longs.Long2LongFunction
 import org.junit.Assert.fail
 
 final class DelayedTransferBufferPerfTest {
@@ -30,7 +31,12 @@ final class DelayedTransferBufferPerfTest {
 	def setUp(): Unit = {
 		itemInput = new NewDataItemInput[DataItem](
 			ItemType getItemFactory (ItemType DATA),
-			new ItemNameInputImpl("%{-1}${this.last() + 1}", 12, null, Character.MAX_RADIX),
+			new ItemNameInputImpl(
+				new Long2LongFunction {
+					override def get(v: Long): Long = v + 1
+				},
+				12, null, Character.MAX_RADIX
+			),
 			new SizeInBytes(0)
 		)
 		ioTaskBuilder = new DataOperationsBuilderImpl[DataItem, DataOperation[DataItem]](0)

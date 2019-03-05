@@ -1,7 +1,7 @@
 GNU style command line arguments are used:
 
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose \
+java mongoose-<VERSION>.jar \
     --read \
     --item-input-file=items.csv \
     --load-step-limit-concurrency=10 \

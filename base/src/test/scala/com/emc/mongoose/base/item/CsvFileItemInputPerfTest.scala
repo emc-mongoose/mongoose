@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.LongAdder
 
 import com.emc.mongoose.base.item.io.{CsvFileItemInput, CsvFileItemOutput, NewDataItemInput}
 import com.emc.mongoose.base.item.naming.ItemNameInputImpl
+import it.unimi.dsi.fastutil.longs.Long2LongFunction
 
 final class CsvFileItemInputPerfTest {
 
@@ -29,7 +30,11 @@ final class CsvFileItemInputPerfTest {
 		val count = 100000000
 		val itemFactory = ItemType.getItemFactory[DataItem, ItemFactory[DataItem]](ItemType.DATA)
 		val itemBuff = new util.ArrayList[DataItem](BATCH_SIZE)
-		val itemNameInput = new ItemNameInputImpl("%{-1}${this.last() + 1}", 12, null, Character.MAX_RADIX)
+		val itemNameInput = new ItemNameInputImpl(
+			new Long2LongFunction {
+				override def get(v: Long): Long = v + 1
+			},
+			12, null, Character.MAX_RADIX)
 		val newItemsInput = new NewDataItemInput[DataItem](itemFactory, itemNameInput, new SizeInBytes("0-1MB,2"))
 		try {
 			val newItemsOutput = new CsvFileItemOutput[DataItem](

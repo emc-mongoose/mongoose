@@ -7,17 +7,6 @@
 1.2.2. [Size](#122-size)<br/>
 1.2.3. [Dictionary](#123-dictionary)<br/>
 2. [Parameterization](#2-parameterization)<br/>
-2.1. [Symchronous Supply](#21-synchronous-supply)<br/>
-2.2. [Asynchronous Supply](#22-asynchronous-supply)<br/>
-2.3. [Syntax](#23-syntax)<br/>
-2.3.1. [Available Formats](#231-available-formats)<br/>
-2.3.1.1. [Integer](#2311-integer)<br/>
-2.3.1.2. [Floating Point Number](#2312-floating-point-number)<br/>
-2.3.1.3. [Date](#2313-date)<br/>
-2.3.1.4. [Path](#2314-path)<br/>
-2.4. [Use Cases](#24-use-cases)<br/>
-2.4.1. [Variable Items Output Path](#241-variable-items-output-path)<br/>
-2.4.2. [Multiuser Load](#242-multiuser-load)<br/>
 3. [Aliasing](#3-aliasing)<br/>
 
 ## 1. Overview
@@ -145,72 +134,8 @@ setting.
 
 ## 2. Parameterization
 
-The configuration value is usually fixed. However, it's possible to define a dynamic value changing
-in the runtime. Each next value may be taken in a synchronous either asynchronous way.
-
-### 2.1. Synchronous Supply
-
-The next value is recalculated for each take attempt. The synchronous input is useful if the
-recalculation complexity is low either different value on each take attempt is strictly required.
-
-### 2.2. Asynchronous Supply
-
-The next value is being recalculated in the background continuously. Taking the value frequently
-is expected to yield a sequence of the same value. The asynchronous input is most useful when the
-recalculation cost is relatively high and the values consumer doesn't require different value each
-time.
-
-### 2.3. Syntax
-
-The common pattern syntax (excluding *path* format pattern) has the following general layout:
-
-`%<TYPE_LETTER>(<SEED>){<FORMAT>}[<RANGE>]`
-
-Where:
-* `TYPE_LETTER` defines the value type, may be "d", "f", "D" ("p" has a bit different syntax, see below)
-* `SEED` is ***optional***, the initial value for the random number generator used to obtain each next value
-* `FORMAT` is ***optional***, the pattern to convert the value to a string
-* `RANGE` is ***optional***, describes the value range as `<FROM>-<TO>` (`TO` value is exclusive)
-
-For the number values (configured with "d" or "f") the format may be described using the Java's
-DecimalFormat syntax: https://docs.oracle.com/javase/8/docs/api/java/text/DecimalFormat.html
-
-#### 2.3.1. Available Formats
-
-##### 2.3.1.1. Integer
-
-Generates random 64-bit signed integer value in the specified range (optional).
-
-Examples:
-* `%d`: any integer value from `java.lang.Long.MIN_VALUE` to `java.lang.Long.MAX_VALUE`
-* `%d{##########}`: as above, but with padding with leading zeroes to make the result string length = 10
-* `%d[0-100]`: any integer value from 0 to 99
-* `%d{###}[0-100]`: any integer value from 00 to 99
-* `%d(123456789){###}[0-100]`: any integer value from 00 to 99, internal PRNG will be initialized using the specified seed
-
-##### 2.3.1.2. Floating Point Number
-
-Examples:
-* `%f`: any floating point value from 0 to 1 (exclusive)
-* `%f[1.23-4.56]`: any floating point value from 1.23 (inclusive) to 4.56 (exclusive)
-* `%f{#.#######}`: any floating point value formatted using the specified format (3.1415926 for example)
-* `%f{#.##}[2.71828182846-3.1415926]`: any floating point value from *e* to *pi* (exclusive)
-
-##### 2.3.1.3. Date
-
-Generates random date in the specified format (mandatory) in the specified range (optional).
-
-Examples:
-* `%D`: any date time between Unix zero date time and *now*
-* `%D{yyyy-MM-dd'T'HH:mm:ss}[2013/10/30-2017/02/09]`: any date time between the specified dates
-* `%D{yyyy-MM-dd'T'HH:mm:ss}`: any date time between Unix zero date time and *now* in the specified format
-* `%D{yyyy-MM-dd'T'HH:mm:ss}[2013/10/30-2017/02/09]`: any date time between the specified dates in the specified format
-
-***Note***:
-> * The format may be described using the Java's SimpleDateFormat syntax:
-https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html
-
-> * Range boundary dates should be in `yyyy/MM/dd` or `yyyy/MM/dd'T'HH:mm:ss` format
+Since v5.0.0 the [expression language](base/src/main/java/com/emc/mongoose/config/el/README.md) is used to specify the
+dynamic values.
 
 ## 3. Aliasing
 
