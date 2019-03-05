@@ -4,8 +4,8 @@ TODO
 
 # 1. Introduction
 
-Mongoose is extensible with storage driver and load step plugins. It's also supports scenarios scripting with any
-JSR-223 compatible language. Moreover, any Mongoose plugin may introduce its own configuration options which are being
+Mongoose is extensible with storage driver and load step plugins. It also supports scenarios scripting with any JSR-223
+compatible language. Moreover, any Mongoose plugin may introduce its own configuration options which are being
 dynamically embedded into the runtime configuration (the modular configuration feature). It is also very useful to
 parameterize some configuration options, i.e. the given option should supply some dynamically evaluated value which may
 be different on each value read. The new Mongoose version provides a general mechanism to describe the dynamic
@@ -14,7 +14,8 @@ configuration options based on [Java Unified Expression Language](http://juel.so
 
 # 2. Limitations
 
-1. JUEL standard doesn't allow to mix the [synchronous and asynchronous evaluation](#41-synchronous-and-asynchronous-evaluation) in the same expression
+1. JUEL standard doesn't allow to mix the
+   [synchronous and asynchronous evaluation](#41-synchronous-and-asynchronous-evaluation) in the same expression
 2. The [initial value](#42-initial-value) should be set if the [self referencing](#431-self-referencing) is used
 
 # 3. Requirements
@@ -48,10 +49,15 @@ asynchronous evaluation.
 
 The JUEL standard doesn't allow the initial value setting. However, this is required for the self-referencing
 functionality. The pattern
+
 `%{<INITIAL_VALUE>}`
+
 should be used outside (somewhere before either after) of the dynamic part of the expression to set the initial value.
+
 For example, the expression:
+
 `%{-1}${this.last() + 1}`
+
 will produce the following sequence of numbers: 0, 1, 2, ...
 
 The useful thing is that the initial value is also an expression which is being evaluated *once* to provide the
@@ -96,15 +102,16 @@ There are some useful static Java methods mapped into the expression language:
 * [math:sin(double x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#sin(double))
 * [math:sqrt(double x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#sqrt(double))
 * [math:tan(double x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#tan(double))
-* [path:random(int width, int depth)](#421-random-path-generator)
+* [path:random(int width, int depth)](#431-random-path-generator)
 * [string:format(string pattern, args...)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html#format(java.lang.String,java.lang.Object...))
 * [string:join(string delimeter, string elements...)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html#join(java.lang.CharSequence,java.lang.CharSequence...))
 * [time:millisSinceEpoch()](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#currentTimeMillis())
 * [time:nanos()](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#nanoTime())
 
-### 4.3.1. Random Path Generator
+### 4.3.1. Random Path
 
-TODO
+The random path function yields a random path specified by ***width*** and ***depth*** parameters, where the width
+specifies the maximum count of the directories per one level and depth specifies the maximum count of such levels.
 
 ## 4.4. Built-in Values
 
@@ -121,9 +128,13 @@ TODO
 
 There are `this` among the built-in values. This is designed for the self referencing purposes. This allows to make an
 expression evaluating the next value using the previous evaluation result. For example, the expression:
+
 ```${this.last() + 1}```
+
 supplies the incremented value on each evaluation. The another example:
+
 ```${int64:xorShift(this.last())}```
+
 supplies the new 64-bit random integer on each evaluation.
 
 **Note**:
@@ -133,17 +144,24 @@ supplies the new 64-bit random integer on each evaluation.
 
 ## 5.1. New Items Naming
 
-* `item-id`
-* `item-name`
+The expression language is used to generate the integer ids for the new items. For example, the expression:
+
+`%{math:absInt64(int64:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos())))}${math:absInt64(int64:xorShift(this.last()))}`
+
+yields the random 63 bit unsigned integer ids. The new items will be generated using these `id`s converted with the
+specified `radix`, max `length` and `prefix`.
+
+Using the expression language it's very simple to configure the non-random sequential new item names, ascending either
+descending.
 
 ## 5.2. Variable Items Output Path
 
-* `item-output-path`
+The `item-output-path` configuration option value may be an expression to generate the new path value for each new item
+operation.
 
-## 5.3. Authentication
+## 5.3. HTTP Request Headers And Queries
 
-* `storage-auth-uid`
-* `storage-auth-secret`
+See the specific [HTTP storage driver documentation](storage/driver/coop/netty/http/README.md) for the details.
 
 # 6. Future Enhancements
 

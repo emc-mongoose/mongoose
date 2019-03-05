@@ -4,12 +4,11 @@ import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.emc.mongoose.base.config.el.AsyncExpressionInput;
 import com.emc.mongoose.base.config.el.ExpressionInputBuilder;
-import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.el.ExpressionInput;
 import java.util.List;
 
 public final class ItemNameInputImpl
-	implements ItemNameInput {
+				implements ItemNameInput {
 
 	private final ExpressionInput<Long> itemIdInput;
 	private final long maxId;
@@ -18,8 +17,7 @@ public final class ItemNameInputImpl
 	private final int radix;
 
 	public ItemNameInputImpl(
-		final String idExpr, final int length, final String prefix, final int radix
-	) {
+					final String idExpr, final int length, final String prefix, final int radix) {
 		itemIdInput = ExpressionInputBuilder.newInstance().type(long.class).expression(idExpr).build();
 		if (itemIdInput instanceof AsyncExpressionInput) {
 			try {
@@ -41,7 +39,7 @@ public final class ItemNameInputImpl
 
 	@Override
 	public final String get() {
-		if(prefix == null) {
+		if (prefix == null) {
 			return Long.toString(itemIdInput.get() % maxId, radix);
 		} else {
 			return prefix + Long.toString(itemIdInput.get() % maxId, radix);
@@ -50,7 +48,7 @@ public final class ItemNameInputImpl
 
 	@Override
 	public final int get(final List<String> buffer, final int limit) {
-		for(var i = 0; i < limit; i ++) {
+		for (var i = 0; i < limit; i++) {
 			buffer.add(get());
 		}
 		return limit;
