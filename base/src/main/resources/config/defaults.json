@@ -39,21 +39,28 @@ Use  the command line arguments either load step configurations in the scenario 
 			// The source file for the items to process.
 			// If null the behavior depends on the load type.
 			"file": null,
-			"name": {
-				// The expression to generate each new item id
-				"id": "%{math:absInt64(int64:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos())))}${math:absInt64(int64:xorShift(this.last()))}",
-				// The name length for the new items. Has effect only in the case of create (if not partial) load
-				"length": 12,
-				// The name prefix for the processed items. A correct value is neccessary to pass the content
-				// verification in the case of read load.
-				"prefix": null,
-				// The radix for the item ids. May be in the range of 2..36. A correct value is neccessary to pass the
-				// content verification in the case of read load.
-				"radix": 36
-			},
 			// The source path which may be used as items input if not "item-input-file" is specified.
 			// Also used for the copy mode as the path containing the items to be copied into the output path.
 			"path": null
+		},
+		"naming": {
+			// Specifies the new items naming order. Has effect only in the case of create load.
+			// "random": the new items are named randomly
+			// "serial": the new items are named in the sequential order defined by offset and step options
+			"type": "random",
+			// The name prefix for the processed items.
+			// A correct value is necessary to pass the content verification in the case of read load.
+			"prefix": null,
+			// The radix for the item ids. May be in the range of 2..36.
+			// A correct value is necessary to pass the content verification in the case of read load.
+			"radix": 36,
+			//
+			"step": 1,
+			// The start id for the new item ids
+			"offset": 0,
+			// The name length for the new items.
+			// Has effect only in the case of create (if not partial) load
+			"length": 12
 		},
 		"output": {
 			// Specified the target file for the items processed successfully.
@@ -558,31 +565,6 @@ Use  the command line arguments either load step configurations in the scenario 
 			"name": "test-step-limit-time",
 			"deprecated": true,
 			"target": "load-step-limit-time"
-		},
-
-		// v5.0
-		{
-			"name": "item-naming-length",
-			"deprecated": true,
-			"target": "item-input-name-length"
-		},
-		{
-			"name": "item-naming-offset",
-			"deprecated": true
-		},
-		{
-			"name": "item-naming-prefix",
-			"deprecated": true,
-			"target": "item-input-name-prefix"
-		},
-		{
-			"name": "item-naming-radix",
-			"deprecated": true,
-			"target": "item-input-name-radix"
-		},
-		{
-			"name": "item-naming-type",
-			"deprecated": true
 		}
 	]
 }

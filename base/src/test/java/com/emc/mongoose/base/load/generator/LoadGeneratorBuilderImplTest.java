@@ -40,7 +40,7 @@ public class LoadGeneratorBuilderImplTest {
 
 	static {
 		try {
-			final List<Map<String, Object>> configSchemas = Extension.load(Thread.currentThread().getContextClassLoader()).stream()
+			final var configSchemas = Extension.load(Thread.currentThread().getContextClassLoader()).stream()
 							.map(Extension::schemaProvider)
 							.filter(Objects::nonNull)
 							.map(
@@ -66,15 +66,15 @@ public class LoadGeneratorBuilderImplTest {
 	@Test
 	public void multiBucketPerUserTest() throws Exception {
 
-		final Path credentialsFilePath = Files.createTempFile(getClass().getSimpleName(), ".csv");
+		final var credentialsFilePath = Files.createTempFile(getClass().getSimpleName(), ".csv");
 		credentialsFilePath.toFile().deleteOnExit();
-		final int bucketCount = 100;
-		final int opCount = 10000;
-		final String prefixUid = "user-";
-		final String prefixSecret = "secret-";
-		final String prefixBucket = "bucket-";
-		try (final BufferedWriter bw = Files.newBufferedWriter(credentialsFilePath)) {
-			for (int i = 0; i < bucketCount; i++) {
+		final var bucketCount = 100;
+		final var opCount = 10000;
+		final var prefixUid = "user-";
+		final var prefixSecret = "secret-";
+		final var prefixBucket = "bucket-";
+		try (final var bw = Files.newBufferedWriter(credentialsFilePath)) {
+			for (var i = 0; i < bucketCount; i++) {
 				bw.append(prefixBucket)
 								.append(Integer.toString(i))
 								.append(',')
@@ -86,8 +86,8 @@ public class LoadGeneratorBuilderImplTest {
 				bw.newLine();
 			}
 		}
-		final int seed = 314159265;
-		final Map<String, Object> options = new HashMap<String, Object>() {
+		final var seed = 314159265;
+		final Map<String, Object> options = new HashMap<>() {
 			{
 				put("item-data-ranges-concat", null);
 				put("item-data-ranges-fixed", null);
@@ -95,10 +95,11 @@ public class LoadGeneratorBuilderImplTest {
 				put("item-data-ranges-threshold", 0);
 				put("item-data-size", "1MB");
 				put("item-input-path", null);
-				put("item-input-name-id", "%{math:absInt64(int64:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos())))}${math:absInt64(int64:xorShift(this.last()))}");
-				put("item-input-name-length", 12);
-				put("item-input-name-prefix", null);
-				put("item-input-name-radix", 36);
+				put("item-naming-length", 12);
+				put("item-naming-offset", 0L);
+				put("item-naming-prefix", null);
+				put("item-naming-radix", 36);
+				put("item-naming-type", "random");
 				put("item-output-path", prefixBucket + "%{" + seed + "}${rnd.nextLong(100)}");
 				put("load-batch-size", opCount);
 				put("load-op-limit-count", opCount);
@@ -110,9 +111,9 @@ public class LoadGeneratorBuilderImplTest {
 				put("storage-auth-file", credentialsFilePath.toAbsolutePath().toString());
 			}
 		};
-		final Config config = new BasicConfig("-", CONFIG_SCHEMA);
+		final var config = (Config) new BasicConfig("-", CONFIG_SCHEMA);
 		options.forEach(config::val);
-		final ItemFactory itemFactory = new DataItemFactoryImpl();
+		final var itemFactory = (ItemFactory) new DataItemFactoryImpl();
 		final List<DataOperation<DataItem>> ops = new ArrayList<>(opCount);
 
 		try (final IoBuffer<DataOperation<DataItem>> opBuff = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(opCount));
@@ -140,7 +141,7 @@ public class LoadGeneratorBuilderImplTest {
 		String secret;
 		String suffix;
 		int n;
-		final Frequency freq = new Frequency();
+		final var freq = new Frequency();
 		for (final Operation op : ops) {
 			bucket = op.dstPath();
 			suffix = bucket.substring(prefixBucket.length());
@@ -155,8 +156,8 @@ public class LoadGeneratorBuilderImplTest {
 			assertEquals(prefixSecret + suffix, secret);
 		}
 		ops.clear();
-		final int expectedFreq = opCount / bucketCount;
-		for (int i = 0; i < bucketCount; i++) {
+		final var expectedFreq = opCount / bucketCount;
+		for (var i = 0; i < bucketCount; i++) {
 			assertEquals(expectedFreq, freq.getCount(i), expectedFreq / 3);
 		}
 	}

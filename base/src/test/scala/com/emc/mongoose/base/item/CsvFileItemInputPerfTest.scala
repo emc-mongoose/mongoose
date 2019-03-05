@@ -8,7 +8,8 @@ import java.util
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
 
-import com.emc.mongoose.base.item.io.{CsvFileItemInput, CsvFileItemOutput, ItemNameInputImpl, NewDataItemInput}
+import com.emc.mongoose.base.item.io.{CsvFileItemInput, CsvFileItemOutput, NewDataItemInput}
+import com.emc.mongoose.base.item.naming.ItemNameInputImpl
 
 final class CsvFileItemInputPerfTest {
 

@@ -10,7 +10,8 @@ import java.util.concurrent.atomic.LongAdder
 
 import com.emc.mongoose.base.config.ConstantValueInputImpl
 import com.emc.mongoose.base.item.op.data.{DataOperation, DataOperationsBuilderImpl}
-import com.emc.mongoose.base.item.io.{DelayedTransferConvertBuffer, ItemNameInputImpl, NewDataItemInput}
+import com.emc.mongoose.base.item.io.{DelayedTransferConvertBuffer, NewDataItemInput}
+import com.emc.mongoose.base.item.naming.ItemNameInputImpl
 import com.emc.mongoose.base.item.op.{OpType, OperationsBuilder}
 import com.emc.mongoose.base.storage.Credential
 import org.junit.Assert.fail

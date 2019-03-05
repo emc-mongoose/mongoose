@@ -17,7 +17,9 @@ import com.emc.mongoose.base.item.ItemFactory;
 import com.emc.mongoose.base.item.ItemType;
 import com.emc.mongoose.base.item.TransferConvertBuffer;
 import com.emc.mongoose.base.item.io.ItemInputFactory;
-import com.emc.mongoose.base.item.io.ItemNameInputImpl;
+import com.emc.mongoose.base.item.naming.ItemNameInput;
+import com.emc.mongoose.base.item.naming.ItemNameInput.ItemNamingType;
+import com.emc.mongoose.base.item.naming.ItemNameInputImpl;
 import com.emc.mongoose.base.item.io.NewDataItemInput;
 import com.emc.mongoose.base.item.io.NewItemInput;
 import com.emc.mongoose.base.item.op.OpType;
@@ -427,13 +429,19 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 	}
 
 	private Input<I> newItemInput() throws OmgShootMyFootException {
-		final var inputConfig = itemConfig.configVal("input");
-		final var nameConfig = inputConfig.configVal("name");
-		final var idExpr = nameConfig.stringVal("id");
-		final var prefix = nameConfig.stringVal("prefix");
-		final var length = nameConfig.intVal("length");
-		final var radix = nameConfig.intVal("radix");
-		final var itemNameInput = new ItemNameInputImpl(idExpr, length, prefix, radix);
+		final var namingConfig = itemConfig.configVal("naming");
+		final var length = namingConfig.intVal("length");
+		final var offset = namingConfig.longVal("offset");
+		final var prefix = namingConfig.stringVal("prefix");
+		final var radix = namingConfig.intVal("radix");
+		final var type = ItemNamingType.valueOf(namingConfig.stringVal("type").toUpperCase());
+		final var itemNameInput = ItemNameInput.Builder.newInstance()
+			.length(length)
+			.offset(offset)
+			.prefix(prefix)
+			.radix(radix)
+			.type(type)
+			.build();
 		if (itemFactory == null) {
 			throw new OmgShootMyFootException("Item factory is not set");
 		}

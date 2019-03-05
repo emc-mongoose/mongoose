@@ -43,7 +43,7 @@ var varHttpHeadersConfig = {
         "net" : {
             "http" : {
                 "headers" : {
-                    "x-amz-meta-${math:random(30) + 1}" : "%D{yyyy-MM-dd'T'HH:mm:ssZ}[1970/01/01-2016/01/01]"
+                    "x-amz-meta-${math:random(30) + 1}" : "${date:format("yyyy-MM-dd'T'HH:mm:ssZ").format(date:from(rnd.nextLong(time:millisSinceEpoch())))}"
                 }
             }
         }

@@ -2,6 +2,7 @@ package com.emc.mongoose.base.config.el;
 
 import static com.github.akurilov.commons.io.el.ExpressionInput.SYNC_MARKER;
 import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
+import static java.lang.ThreadLocal.withInitial;
 
 import com.emc.mongoose.base.env.DateUtil;
 import com.github.akurilov.commons.io.el.ExpressionInput;
@@ -9,6 +10,10 @@ import com.github.akurilov.commons.io.el.SynchronousExpressionInput;
 import com.github.akurilov.commons.math.MathUtil;
 import com.github.akurilov.commons.math.Random;
 import java.io.File;
+import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class ExpressionInputBuilderImpl
@@ -16,11 +21,21 @@ public class ExpressionInputBuilderImpl
 				implements ExpressionInputBuilder {
 
 	static final Pattern INITIAL_VALUE_PATTERN = Pattern.compile(".*(%\\{.+})[$#]\\{.+}.*");
+	static final ThreadLocal<Map<String, MessageFormat>> MSG_FORMATS_BY_PATTERN = withInitial(HashMap::new);
+	public static String format(final String pattern, final Object... args) {
+		return MSG_FORMATS_BY_PATTERN
+			.get()
+			.computeIfAbsent(pattern, p -> new MessageFormat(p, Locale.ROOT))
+			.format(args, new StringBuffer(), null)
+			.toString();
+	}
 
 	public ExpressionInputBuilderImpl() {
 		try {
 			function("date", "formatNowIso8601", DateUtil.class.getMethod("formatNowIso8601"));
 			function("date", "formatNowRfc1123", DateUtil.class.getMethod("formatNowRfc1123"));
+			function("date", "format", DateUtil.class.getMethod("dateFormat", String.class));
+			function("date", "from", DateUtil.class.getMethod("date", long.class));
 			function("env", "get", System.class.getMethod("getenv", String.class));
 			function("int64", "toString", Long.class.getMethod("toString", long.class, int.class));
 			function(
@@ -63,8 +78,10 @@ public class ExpressionInputBuilderImpl
 			function(
 							"string",
 							"format",
-							String.class.getMethod("format", new Class[]{String.class, Object[].class
-							}));
+							ExpressionInputBuilderImpl.class.getMethod(
+								"format",  new Class[]{String.class, Object[].class}
+							)
+			);
 			function(
 							"string",
 							"join",

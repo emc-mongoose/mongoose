@@ -86,7 +86,7 @@ public class CreateLimitBySizeTest {
 	private final Concurrency concurrency;
 	private final ItemSize itemSize;
 	private final Config config;
-	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-input-name-radix");
+	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private final SizeInBytes sizeLimit;
 	private final long expectedCount;
 	private final int averagePeriod;

@@ -42,11 +42,13 @@ reference.
 | item-data-size                                 | Size | 1MB | The size of the data items to process. Doesn't have any effect if item.type=container |
 | item-data-verify                               | Flag | false | Specifies whether to verify the content while reading the data items or not. Doesn't have any effect if load-type != read |
 | item-input-file                                | Path | null | The source file for the items to process. If null the behavior depends on the load type. |
-| **item-input-name-id**                         | String | %{math:absInt64(int64:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos())))}${math:absInt64(int64:xorShift(this.last()) % math:pow(36, 12))} | The expression to generate each new item id
-| **item-input-name-length**                     | Integer > 0 | 12 | The name length for the new items. Has effect only in the case of create (if not partial) load
-| **item-input-name-prefix**                     | String | null | The name prefix for the processed items. A correct value is neccessary to pass the content verification in the case of read load.
-| **item-input-name-radix**                      | Integer >= 2 | 36 | The radix for the item ids. May be in the range of 2..36. A correct value is neccessary to pass the content verification in the case of read load.
 | item-input-path                                | String | null | The source path which may be used as items input if not "item-input-file" is specified. Also used for the copy mode as the path containing the items to be copied into the output path. |
+| item-naming-length                             | Integer > 0 | 12 | The name length for the new items. Has effect only in the case of create (if not partial) load
+| item-naming-offset                             | Integer | 0 | The start id for the new item ids. Makes sense only in case of "serial" naming type.
+| item-naming-prefix                             | String | null | The name prefix for the processed items. A correct value is neccessary to pass the content verification in the case of read load.
+| item-naming-radix                              | Integer >= 2 | 36 | The radix for the item ids. May be in the range of 2..36. A correct value is neccessary to pass the content verification in the case of read load.
+| item-naming-step                               | Integer | 1 | The item naming step. Makes sense in case of "serial" naming type. Negative values cause descending order.
+| item-naming-type                               | Enum | random | Specifies the new items naming order. Has effect only in the case of create load. "serial": the new items are named in a sequential order, "random": the new items are named randomly |
 | item-output-file                               | Path | null | Specified the target file for the items processed successfully. If null the items info is not saved.
 | item-output-path                               | String | null | The target path. Null (default) value leads to path name generation and pre-creation.
 | item-type                                      | Enum | data | The type of the item to use, the possible values are: "data", "path", "token". In case of filesystem "data" means files and "path" means directories
@@ -209,98 +211,6 @@ Examples:
 https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html
 
 > * Range boundary dates should be in `yyyy/MM/dd` or `yyyy/MM/dd'T'HH:mm:ss` format
-
-##### 2.3.1.4. Path
-
-Generates the path hierarchy elements using specified hierarchy *"width"* and *"depth"*.
-
-The synchronous implementation is only available.
-
-Also, has different layout:
-
-`%p{<WIDTH>;<DEPTH>}` or `%p(<SEED>){<WIDTH>;<DEPTH>}`
-
-### 2.4. Use Cases
-
-#### 2.4.1. Variable Items Output Path
-
-Parameterized configuration parameter: `item-output-path`
-
-Example: dynamic files output path defined by some particular "width" (16) and "depth" (2):
-
-```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose \
-    --item-output-path=/mnt/storage/%p\{16\;2\} \
-    --storage-driver-type=fs \
-    ...
-```
-
-#### 2.4.2. Multiuser Load
-
-Parameterized configuration parameters:
-* `item-output-path`
-* `storage-auth-uid`
-
-Let's realize the case when someone needs to perform a load using many (hundreds, thousands)
-destination paths (S3 buckets, Swift containers, filesystem directories, etc) using many different
-credentials.
-
-```javascript
-var multiUserConfig = {
-    "item" : {
-        "data" : {
-            "size" : "10KB"
-        },
-        "output" : {
-            "file" : "objects.csv",
-            "path" : "bucket-%d(314159265){00}[0-99]"
-        }
-    },
-    "load" : {
-        "op" : {
-            "limit" : {
-                "count" : 10000
-            }
-        }
-    },
-    "storage" : {
-        "auth" : {
-            "file" : "credentials.csv",
-            "uid" : "user-%d(314159265){00}[0-99]"
-        },
-        "driver" : {
-            "limit" : {
-                "concurrency" : 10
-            },
-            "type" : "s3"
-        }
-    }
-};
-
-Load
-    .config(multiUserConfig)
-    .run();
-```
-
-**Note**:
-> * The seed value "314159265" should be used to init the internal PRNG to align the bucket names with user ids (The same "XY" value for each pair of "bucket-XY" and "user-XY" supplied).
-> * The current externally loaded credentials count limit is 1 million.
-
-In this case, the file "credentials.csv" should be prepared manually. Example contents:
-```
-user-00,secret-00
-user-01,secret-01
-user-02,secret-02
-...
-user-99,secret-99
-```
-(in the real world it is expected that the storage users with the listed names and secret keys are already existing)
-
-To make such example file you may use the following 2 commands:
-```bash
-for i in $(seq 0 9); do echo "user-0$i,secret-0$i" >> credentials.csv; done;
-for i in $(seq 10 99); do echo "user-$i,secret-$i" >> credentials.csv; done
-```
 
 ## 3. Aliasing
 

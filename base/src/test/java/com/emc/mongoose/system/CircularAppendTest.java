@@ -274,7 +274,7 @@ public final class CircularAppendTest {
 				items.add(csvRecord);
 			}
 		}
-		final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-input-name-radix");
+		final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 		final Frequency freq = new Frequency();
 		String itemPath, itemId;
 		long itemOffset;

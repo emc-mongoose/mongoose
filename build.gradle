@@ -510,7 +510,7 @@ task robotest(type: DockerWaitContainer, dependsOn: dockerStartContainerRobotest
 
 spotless {
 	format "misc", {
-		target "**/*.gradle", "**/*.json", "**/*.js", "**/*.groovy", "**/*.py", "**/*.scala"
+		target "**/*.gradle", "**/*.js", "**/*.groovy", "**/*.py", "**/*.scala"
 		indentWithTabs()
 		endWithNewline()
 	}

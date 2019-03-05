@@ -71,10 +71,9 @@ public interface ItemInputFactory {
 					final StorageDriver<I, O> storageDriver) {
 		Input<I> itemInput = null;
 		try {
-			final var inputConfig = itemConfig.configVal("input");
-			final var nameConfig = itemConfig.configVal("name");
-			final var prefix = nameConfig.stringVal("prefix");
-			final var radix = nameConfig.intVal("radix");
+			final var namingConfig = itemConfig.configVal("naming");
+			final var prefix = namingConfig.stringVal("prefix");
+			final var radix = namingConfig.intVal("radix");
 			itemInput = new StorageItemInput<>(
 							storageDriver, batchSize, itemFactory, itemInputPath, prefix, radix);
 		} catch (final IllegalStateException | IllegalArgumentException e) {

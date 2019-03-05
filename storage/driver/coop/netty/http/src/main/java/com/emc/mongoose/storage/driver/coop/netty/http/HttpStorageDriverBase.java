@@ -55,9 +55,12 @@ import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.nio.channels.ClosedChannelException;
 import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.SynchronousQueue;
@@ -94,7 +97,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 	private final Map<String, Input<String>> headerNameInputs = new ConcurrentHashMap<>();
 	private final Map<String, Input<String>> headerValueInputs = new ConcurrentHashMap<>();
 	protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
-	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
+	protected final Map<String, String> dynamicHeaders = new HashMap<>();
 	private final Input<String> uriQueryInput;
 	protected final ChannelFutureListener httpReqSentCallback = this::sendHttpRequestComplete;
 
@@ -115,7 +118,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 							|| headerKey.contains(SYNC_MARKER)
 							|| headerValue.contains(ASYNC_MARKER)
 							|| headerValue.contains(SYNC_MARKER)) {
-				dynamicHeaders.add(headerKey, headerValue);
+				dynamicHeaders.put(headerKey, headerValue);
 			} else {
 				sharedHeaders.add(headerKey, headerValue);
 			}
@@ -344,7 +347,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 	}
 
 	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
-		for (final Map.Entry<String, String> sharedHeader : sharedHeaders) {
+		for (final var sharedHeader : sharedHeaders) {
 			httpHeaders.add(sharedHeader.getKey(), sharedHeader.getValue());
 		}
 	}
@@ -354,7 +357,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 		String headerValue;
 		Input<String> headerNameSupplier;
 		Input<String> headerValueSupplier;
-		for (final var nextHeader : dynamicHeaders) {
+		for (final var nextHeader : dynamicHeaders.entrySet()) {
 			headerName = nextHeader.getKey();
 			// header name is a generator pattern
 			headerNameSupplier = headerNameInputs.computeIfAbsent(headerName, EXPR_INPUT_FUNC);

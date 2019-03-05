@@ -74,7 +74,7 @@ public class MultipartCreateTest {
 	private final SizeInBytes partSize;
 	private final SizeInBytes fullItemSize;
 	private final SizeInBytes sizeLimit;
-	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-input-name-radix");
+	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private String stdOutContent = null;
 	private long expectedCountMax;
 

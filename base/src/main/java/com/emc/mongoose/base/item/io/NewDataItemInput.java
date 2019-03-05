@@ -2,6 +2,7 @@ package com.emc.mongoose.base.item.io;
 
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.ItemFactory;
+import com.emc.mongoose.base.item.naming.ItemNameInput;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.system.SizeInBytes;
 import java.util.List;

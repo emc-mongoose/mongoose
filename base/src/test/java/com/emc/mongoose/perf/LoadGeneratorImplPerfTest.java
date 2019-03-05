@@ -6,8 +6,7 @@ import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.DataItemFactoryImpl;
 import com.emc.mongoose.base.item.DataItemImpl;
 import com.emc.mongoose.base.item.ItemFactory;
-import com.emc.mongoose.base.item.io.ItemNameInput;
-import com.emc.mongoose.base.item.io.ItemNameInputImpl;
+import com.emc.mongoose.base.item.naming.ItemNameInput;
 import com.emc.mongoose.base.item.io.NewDataItemInput;
 import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.item.op.OperationsBuilder;
@@ -40,9 +39,11 @@ public class LoadGeneratorImplPerfTest {
 
 		final var itemSize = new SizeInBytes(0);
 		final var itemFactory = (ItemFactory<DataItem>) new DataItemFactoryImpl();
-		final var itemNameInput = (ItemNameInput) new ItemNameInputImpl(
-						"%{math:absInt64(int64:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos())))}${math:absInt64(int64:xorShift(this.last()))}",
-						12, null, Character.MAX_RADIX);
+		final var itemNameInput = (ItemNameInput) ItemNameInput.Builder.newInstance()
+			.type(ItemNameInput.ItemNamingType.RANDOM)
+			.radix(Character.MAX_RADIX)
+			.length(12)
+			.build();
 		final var itemInput = (Input) new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
 		final var opsBuilder = (OperationsBuilder) new DataOperationsBuilderImpl(0)
 						.opType(OpType.CREATE)
@@ -72,7 +73,11 @@ public class LoadGeneratorImplPerfTest {
 		final var counter = new LongAdder();
 		final var itemSize = new SizeInBytes(0);
 		final var itemFactory = (ItemFactory) new DataItemFactoryImpl();
-		final var itemNameInput = new ItemNameInputImpl("%{-1}${this.last() + 1}", 10, null, 10);
+		final var itemNameInput = (ItemNameInput) ItemNameInput.Builder.newInstance()
+			.type(ItemNameInput.ItemNamingType.SERIAL)
+			.radix(10)
+			.length(10)
+			.build();
 		final var itemInput = (Input) new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
 		final var opsBuilder = (OperationsBuilder) new DataOperationsBuilderImpl(0)
 						.opType(OpType.CREATE)
@@ -104,9 +109,11 @@ public class LoadGeneratorImplPerfTest {
 
 		final SizeInBytes itemSize = new SizeInBytes(0);
 		final ItemFactory itemFactory = new DataItemFactoryImpl();
-		final var itemNameInput = (ItemNameInput) new ItemNameInputImpl(
-						"%{math:absInt64(int64:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos())))}${math:absInt64(int64:xorShift(this.last()))}",
-						12, null, Character.MAX_RADIX);
+		final var itemNameInput = (ItemNameInput) ItemNameInput.Builder.newInstance()
+			.type(ItemNameInput.ItemNamingType.RANDOM)
+			.radix(Character.MAX_RADIX)
+			.length(12)
+			.build();
 		final Input itemInput = new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
 		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
 						.opType(OpType.CREATE)
@@ -140,9 +147,11 @@ public class LoadGeneratorImplPerfTest {
 
 		final SizeInBytes itemSize = new SizeInBytes(0);
 		final ItemFactory itemFactory = new DataItemFactoryImpl();
-		final var itemNameInput = (ItemNameInput) new ItemNameInputImpl(
-						"%{math:absInt64(int64:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos())))}${math:absInt64(int64:xorShift(this.last()))}",
-						12, null, Character.MAX_RADIX);
+		final var itemNameInput = (ItemNameInput) ItemNameInput.Builder.newInstance()
+			.type(ItemNameInput.ItemNamingType.RANDOM)
+			.radix(Character.MAX_RADIX)
+			.length(12)
+			.build();
 		final Input itemInput = new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
 		final Input pathInput = ExpressionInputBuilder.newInstance()
 						.type(String.class)

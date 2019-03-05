@@ -4,6 +4,9 @@ import com.emc.mongoose.base.Constants;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 
 /** Created by andrey on 18.11.16. */
@@ -39,4 +42,24 @@ public interface DateUtil {
 			setTimeZone(TZ_UTC);
 		}
 	};
+
+	ThreadLocal<Map<String, DateFormat>> DATE_FORMATS = ThreadLocal.withInitial(HashMap::new);
+	static DateFormat dateFormat(final String pattern) {
+		return DATE_FORMATS.get().computeIfAbsent(
+			pattern,
+			p -> {
+				final var f = new SimpleDateFormat(p, Locale.ROOT);
+				f.setTimeZone(TZ_UTC);
+				return f;
+			}
+		);
+	}
+
+	static Date date(long millisSinceEpoch) {
+		return new Date(millisSinceEpoch);
+	}
+
+	static long toMillisSinceEpoch(final Date date) {
+		return date.getTime();
+	}
 }

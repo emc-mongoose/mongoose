@@ -11,9 +11,8 @@
 4.4. [Built-in Values](#44-built-in-values)<br/>
 4.4.1. [Self-referencing](#441-self-referencing)<br/>
 5. [Configuration](#5-configuration)<br/>
-5.1. [New Items Naming](#51-new-items-naming)<br/>
-5.2. [Variable Items Output Path](#52-variable-items-output-path)<br/>
-5.3. [HTTP request headers and queries](#53-http-request-headers-and-queries)<br/>
+5.1. [Variable Items Output Path](#51-variable-items-output-path)<br/>
+5.2. [HTTP request headers and queries](#52-http-request-headers-and-queries)<br/>
 6. [Future Enhancements](#6-future-enhancements)
 
 # 1. Introduction
@@ -31,7 +30,6 @@ configuration options based on [Java Unified Expression Language](http://juel.so
 1. JUEL standard doesn't allow to mix the
    [synchronous and asynchronous evaluation](#41-synchronous-and-asynchronous-evaluation) in the same expression
 2. The [initial value](#42-initial-value) should be set if the [self referencing](#431-self-referencing) is used
-3. The expressions are not *partitionable* and may [work incorrectly in the distributed mode](doc/design/distributed_mode/README.md#new-item-naming).
 
 # 3. Requirements
 
@@ -157,24 +155,12 @@ supplies the new 64-bit random integer on each evaluation.
 
 # 5. Configuration
 
-## 5.1. New Items Naming
-
-The expression language is used to generate the integer ids for the new items. For example, the expression:
-
-`%{math:absInt64(int64:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos())))}${math:absInt64(int64:xorShift(this.last()))}`
-
-yields the random 63 bit unsigned integer ids. The new items will be generated using these `id`s converted with the
-specified `radix`, max `length` and `prefix`.
-
-Using the expression language it's very simple to configure the non-random sequential new item names, ascending either
-descending.
-
-## 5.2. Variable Items Output Path
+## 5.1. Variable Items Output Path
 
 The `item-output-path` configuration option value may be an expression to generate the new path value for each new item
 operation.
 
-## 5.3. HTTP Request Headers And Queries
+## 5.2. HTTP Request Headers And Queries
 
 See the specific [HTTP storage driver documentation](storage/driver/coop/netty/http/README.md) for the details.
 

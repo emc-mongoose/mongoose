@@ -77,7 +77,7 @@ public class MultipleFixedUpdateAndSingleFixedReadTest {
 	private final RunMode runMode;
 	private final Concurrency concurrency;
 	private final Config config;
-	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-input-name-radix");
+	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private int averagePeriod;
 	private String stdOutContent = null;
 

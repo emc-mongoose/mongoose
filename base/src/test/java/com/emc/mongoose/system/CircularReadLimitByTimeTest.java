@@ -71,7 +71,7 @@ public class CircularReadLimitByTimeTest {
 	private final String ITEM_OUTPUT_FILE = "/CircularReadLimitByTime.csv";
 	private final String HOST_ITEM_OUTPUT_PATH;
 	private final String HOST_ITEM_OUTPUT_FILE = HOST_SHARE_PATH + "/" + getClass().getSimpleName() + ".csv";
-	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-input-name-radix");
+	private final int itemIdRadix = BUNDLED_DEFAULTS.intVal("item-naming-radix");
 	private final Map<String, HttpStorageMockContainer> storageMocks = new HashMap<>();
 	private final Map<String, MongooseAdditionalNodeContainer> slaveNodes = new HashMap<>();
 	private final MongooseEntryNodeContainer testContainer;

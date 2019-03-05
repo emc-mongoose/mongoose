@@ -3,6 +3,7 @@ package com.emc.mongoose.base.item.io;
 import com.emc.mongoose.base.item.DataItemFactory;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
+import com.emc.mongoose.base.item.naming.ItemNameInput;
 import com.github.akurilov.commons.io.Input;
 import java.io.IOException;
 import java.util.List;
