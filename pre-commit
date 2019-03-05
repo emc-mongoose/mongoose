@@ -27,10 +27,10 @@ cd ..
 changed_java_files=$(git diff --cached --name-only --diff-filter=ACMR | grep ".*java$" )
 echo $changed_java_files
 
-#if [ ! -z "$changed_java_files" ]
-#then
-#  java -jar .cache/$formatter_name -replace $changed_java_files
-#fi
+if [ ! -z "$changed_java_files" ]
+then
+  java -jar .cache/$formatter_name -replace $changed_java_files
+fi
 
 ####################################################################################
 # Format staged files
