@@ -1,6 +1,20 @@
 # Contents
 
-TODO
+1. [Introduction](#1-introduction)<br/>
+2. [Limitations](#2-limitations)<br/>
+3. [Requirements](#3-requirements)<br/>
+4. [Approach](#4-approach)<br/>
+4.1. [Synchronous And Asynchronous Evaluation](#41-synchronous-and-asynchronous-evaluation)<br/>
+4.2. [Initial Value](#42-initial-value)<br/>
+4.3. [Built-in Functions](#43-built-in-functions)<br/>
+4.3.1. [Random Path](#431-random-path)<br/>
+4.4. [Built-in Values](#44-built-in-values)<br/>
+4.4.1. [Self-referencing](#441-self-referencing)<br/>
+5. [Configuration](#5-configuration)<br/>
+5.1. [New Items Naming](#51-new-items-naming)<br/>
+5.2. [Variable Items Output Path](#52-variable-items-output-path)<br/>
+5.3. [HTTP request headers and queries](#53-http-request-headers-and-queries)<br/>
+6. [Future Enhancements](#6-future-enhancements)
 
 # 1. Introduction
 
@@ -17,6 +31,7 @@ configuration options based on [Java Unified Expression Language](http://juel.so
 1. JUEL standard doesn't allow to mix the
    [synchronous and asynchronous evaluation](#41-synchronous-and-asynchronous-evaluation) in the same expression
 2. The [initial value](#42-initial-value) should be set if the [self referencing](#431-self-referencing) is used
+3. The expressions are not *partitionable* and may [work incorrectly in the distributed mode](doc/design/distributed_mode/README.md#new-item-naming).
 
 # 3. Requirements
 
@@ -129,11 +144,11 @@ specifies the maximum count of the directories per one level and depth specifies
 There are `this` among the built-in values. This is designed for the self referencing purposes. This allows to make an
 expression evaluating the next value using the previous evaluation result. For example, the expression:
 
-```${this.last() + 1}```
+`${this.last() + 1}`
 
 supplies the incremented value on each evaluation. The another example:
 
-```${int64:xorShift(this.last())}```
+`${int64:xorShift(this.last())}`
 
 supplies the new 64-bit random integer on each evaluation.
 

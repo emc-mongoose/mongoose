@@ -1,7 +1,7 @@
 # Introduction
 
 In the new major version of Mongoose the new distributed mode architecture is introduced. Any *distributed load step*
-execution may be initiated from any node from the given set. Then the chosen node becomes an temparary *entry node*.
+execution may be initiated from any node from the given set. Then the chosen node becomes an temporary *entry node*.
 There may be also *additional nodes* involved in the given distributed load step. All necessary input is prepared
 (*sliced*) and distributed among the nodes before the actual load step start to get rid of the redundant interaction
 via the network during the load step execution. The additional nodes are being polled periodically to synchronize the
@@ -73,39 +73,22 @@ The configuration parameters which are the subject of slicing in the scenario:
 
 1. `item-input-file`
 2. `item-input-path`
-3. `item-name-id`
-4. `item-output-path` (in case of parameterization is used)
-5. `storage-auth-file`
-6. `storage-net-http-headers-*` (in case of parameterization is used)
-7. `storage-net-node-addrs` (if node-to-node mapping is enabled)
-8. `load-step-node-addrs` set to empty list value
+3. `item-output-path` (in case of parameterization is used)
+4. `storage-auth-file`
+5. `storage-net-http-headers-*` (in case of parameterization is used)
+6. `storage-net-node-addrs` (if node-to-node mapping is enabled)
+7. `load-step-node-addrs` set to empty list value
 
 #### Items Input
 
 The items input is being read locally if configured. The items from the input are distributed to the files located on
 the remote side. Then these files are used as items input files by the remote side.
 
-#### Item Naming Scheme
+#### New Item Naming
 
-New configuration parameter `item-naming-step` is required to support a load step slicing in case of a non-random item
-naming scheme. The default `item-naming-step` parameter value is 1. In the distributed mode the value is equal to the
-count of the slave nodes involved in the test.
-
-Example:
-
-* item-naming-length: 2
-* item-naming-offset: 0
-* item-naming-radix: 10
-* item-naming-scheme: asc
-* load-op-limit-count: 18
-* load-step-node-addrs: A,B,C
-
-| Node    | Offset | Resulting Item Names |
-|---------|--------|----------------------|
-| <LOCAL> | 0      | 00, 04, 08, 12, 16   |
-| A       | 1      | 01, 05, 09, 13, 17   |
-| B       | 2      | 02, 06, 10, 14       |
-| C       | 3      | 03, 07, 11, 15       |
+The only random item naming will work correctly in the distributed mode since the expressions are used for the new items
+naming. Do not use the expression with constant initial values in the distributed node as far each Mongoose node will
+generate the equal sequence of the item names as any other node involved in the given load step.
 
 ### Configuration
 
