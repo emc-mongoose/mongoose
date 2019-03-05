@@ -151,6 +151,6 @@ public class ExpressionInputTest {
 						.type(String.class)
 						.expression("${string:format(\"At {1,time} on {1,date}, there was {2} on planet {0,number,integer}.\", 7, date:from(0), \"a disturbance in the Force\")}")
 						.build();
-		assertEquals("At 03:00:00 on 1970 Jan 1, there was a disturbance in the Force on planet 7.", msgInput.get());
+		assertEquals("At 00:00:00 on 1970 Jan 1, there was a disturbance in the Force on planet 7.", msgInput.get());
 	}
 }

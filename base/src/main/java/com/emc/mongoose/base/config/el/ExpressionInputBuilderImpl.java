@@ -10,7 +10,9 @@ import com.github.akurilov.commons.io.el.SynchronousExpressionInput;
 import com.github.akurilov.commons.math.MathUtil;
 import com.github.akurilov.commons.math.Random;
 import java.io.File;
+import java.text.DateFormat;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -26,7 +28,18 @@ public class ExpressionInputBuilderImpl
 	public static String format(final String pattern, final Object... args) {
 		return MSG_FORMATS_BY_PATTERN
 						.get()
-						.computeIfAbsent(pattern, p -> new MessageFormat(p, Locale.ROOT))
+						.computeIfAbsent(
+							pattern,
+							p -> {
+								final var format = new MessageFormat(p, Locale.ROOT);
+								Arrays
+									.stream(format.getFormats())
+									.filter(f -> f instanceof DateFormat)
+									.map(f -> (DateFormat) f)
+									.forEach(df -> df.setTimeZone(DateUtil.TZ_UTC));
+								return format;
+							}
+						)
 						.format(args, new StringBuffer(), null)
 						.toString();
 	}
