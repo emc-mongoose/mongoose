@@ -1,5 +1,6 @@
 package com.emc.mongoose.base.metrics.util;
 
+import static com.emc.mongoose.base.metrics.MetricsConstants.*;
 import static io.prometheus.client.Collector.MetricFamilySamples.Sample;
 
 import com.emc.mongoose.base.Constants;
@@ -101,32 +102,33 @@ public class PrometheusMetricsExporterImpl extends Collector implements Promethe
 		return mfsList;
 	}
 
-	private void collectElapsedTime(
-					final double timeMillis, final List<MetricFamilySamples> mfsList) {
-		mfsList.add(
-						new MetricFamilySamples(
-										"" + this.hashCode(),
-										Type.GAUGE,
-										help,
-										Collections.singletonList(
-														newSample(MetricsConstants.METRIC_NAME_TIME, "value", timeMillis / Constants.K))));
-	}
+  private void collectElapsedTime(
+      final double timeMillis, final List<MetricFamilySamples> mfsList) {
+    mfsList.add(
+        new MetricFamilySamples(
+			String.format(METRIC_FORMAT, METRIC_NAME_TIME),
+            Type.GAUGE,
+            help,
+            Collections.singletonList(
+                newSample(METRIC_NAME_TIME, "value", timeMillis / Constants.K))));
+  }
 
-	private void collectSnapshot(
-					final NamedMetricSnapshot snapshot, final List<MetricFamilySamples> mfsList) {
-		final List<Sample> samples = new ArrayList<>();
-		if (snapshot instanceof TimingMetricSnapshot) {
-			samples.addAll(collect((TimingMetricSnapshot) snapshot));
-		} else if (snapshot instanceof RateMetricSnapshot) {
-			samples.addAll(collect((RateMetricSnapshot) snapshot));
-		} else if (snapshot instanceof ConcurrencyMetricSnapshot) {
-			samples.addAll(collect((ConcurrencyMetricSnapshot) snapshot));
-		} else {
-			Loggers.ERR.warn("Unexpected metric snapshot type: {}", snapshot.getClass());
-		}
-		final MetricFamilySamples mfs = new MetricFamilySamples("" + this.hashCode(), Type.GAUGE, help, samples);
-		mfsList.add(mfs);
-	}
+  private void collectSnapshot(
+      final NamedMetricSnapshot snapshot, final List<MetricFamilySamples> mfsList) {
+    final List<Sample> samples = new ArrayList<>();
+    if (snapshot instanceof TimingMetricSnapshot) {
+      samples.addAll(collect((TimingMetricSnapshot) snapshot));
+    } else if (snapshot instanceof RateMetricSnapshot) {
+      samples.addAll(collect((RateMetricSnapshot) snapshot));
+    } else if (snapshot instanceof ConcurrencyMetricSnapshot) {
+      samples.addAll(collect((ConcurrencyMetricSnapshot) snapshot));
+    } else {
+      Loggers.ERR.warn("Unexpected metric snapshot type: {}", snapshot.getClass());
+    }
+    final MetricFamilySamples mfs =
+        new MetricFamilySamples(String.format(METRIC_FORMAT, snapshot.name()), Type.GAUGE, help, samples);
+    mfsList.add(mfs);
+  }
 
 	private List<Sample> collect(final RateMetricSnapshot metric) {
 		final String metricName = metric.name();
@@ -137,24 +139,24 @@ public class PrometheusMetricsExporterImpl extends Collector implements Promethe
 		return samples;
 	}
 
-	private List<Sample> collect(final TimingMetricSnapshot metric) {
-		final List<Sample> samples = new ArrayList<>();
-		final HistogramSnapshot snapshot = metric.histogramSnapshot(); // for quantiles
-		final String metricName = metric.name();
-		samples.add(newSample(metricName, "count", metric.count()));
-		samples.add(newSample(metricName, "sum", metric.sum() / Constants.M));
-		samples.add(newSample(metricName, "mean", metric.mean() / Constants.M));
-		samples.add(newSample(metricName, "min", metric.min() / Constants.M));
-		for (int i = 0; i < quantileValues.size(); ++i) {
-			samples.add(
-							newSample(
-											metricName,
-											"quantile_" + quantileValues.get(i),
-											snapshot.quantile(quantileValues.get(i)) / Constants.M));
-		}
-		samples.add(newSample(metricName, "max", metric.max() / Constants.M));
-		return samples;
-	}
+  private List<Sample> collect(final TimingMetricSnapshot metric) {
+    final List<Sample> samples = new ArrayList<>();
+    final HistogramSnapshot snapshot = metric.histogramSnapshot(); // for quantiles
+    final String metricName = metric.name();
+    samples.add(newSample(metricName, "count", metric.count()));
+    samples.add(newSample(metricName, "sum", metric.sum() / Constants.M));
+    samples.add(newSample(metricName, "mean", metric.mean() / Constants.M));
+    samples.add(newSample(metricName, "min", metric.min() / Constants.M));
+    for (int i = 0; i < quantileValues.size(); ++i) {
+      samples.add(
+          newSample(
+              metricName,
+              "quantile_" + quantileValues.get(i).toString().replaceAll("\\.","_"),
+              snapshot.quantile(quantileValues.get(i)) / Constants.M));
+    }
+    samples.add(newSample(metricName, "max", metric.max() / Constants.M));
+    return samples;
+  }
 
 	private List<Sample> collect(final ConcurrencyMetricSnapshot metric) {
 		final String metricName = metric.name();
@@ -164,9 +166,9 @@ public class PrometheusMetricsExporterImpl extends Collector implements Promethe
 		return samples;
 	}
 
-	private Sample newSample(
-					final String metricName, final String aggregationType, final double value) {
-		return new Sample(
-						String.format(MetricsConstants.METRIC_FORMAT, metricName, aggregationType), labelNames, labelValues, value);
-	}
+  private Sample newSample(
+      final String metricName, final String aggregationType, final double value) {
+    return new Sample(
+        String.format(METRIC_FORMAT, metricName) + "_" + aggregationType, labelNames, labelValues, value);
+  }
 }
