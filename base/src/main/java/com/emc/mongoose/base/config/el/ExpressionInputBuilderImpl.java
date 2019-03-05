@@ -29,17 +29,16 @@ public class ExpressionInputBuilderImpl
 		return MSG_FORMATS_BY_PATTERN
 						.get()
 						.computeIfAbsent(
-							pattern,
-							p -> {
-								final var format = new MessageFormat(p, Locale.ROOT);
-								Arrays
-									.stream(format.getFormats())
-									.filter(f -> f instanceof DateFormat)
-									.map(f -> (DateFormat) f)
-									.forEach(df -> df.setTimeZone(DateUtil.TZ_UTC));
-								return format;
-							}
-						)
+										pattern,
+										p -> {
+											final var format = new MessageFormat(p, Locale.ROOT);
+											Arrays
+															.stream(format.getFormats())
+															.filter(f -> f instanceof DateFormat)
+															.map(f -> (DateFormat) f)
+															.forEach(df -> df.setTimeZone(DateUtil.TZ_UTC));
+											return format;
+										})
 						.format(args, new StringBuffer(), null)
 						.toString();
 	}
