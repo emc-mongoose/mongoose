@@ -50,5 +50,3 @@ do
   # Remove the tmp file
   rm "$file.tmp.java"
 done
-
-
