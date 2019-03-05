@@ -6,7 +6,6 @@ import com.emc.mongoose.base.logging.Loggers;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.logging.log4j.Level;
 
 public final class RunImpl implements Run {

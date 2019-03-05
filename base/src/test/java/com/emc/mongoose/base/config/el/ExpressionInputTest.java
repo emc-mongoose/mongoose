@@ -3,7 +3,6 @@ package com.emc.mongoose.base.config.el;
 import static com.emc.mongoose.base.config.el.ExpressionInputBuilderImpl.INITIAL_VALUE_PATTERN;
 import static com.emc.mongoose.base.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static java.lang.System.currentTimeMillis;
-import static java.lang.ThreadLocal.withInitial;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -13,11 +12,7 @@ import com.emc.mongoose.base.env.DateUtil;
 import com.github.akurilov.commons.io.el.ExpressionInput;
 import com.github.akurilov.commons.io.el.SynchronousExpressionInput;
 
-import java.text.MessageFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
@@ -138,11 +133,11 @@ public class ExpressionInputTest {
 
 	@Test
 	public void testRandomDateInRangeCustomFormat()
-	throws Exception {
+					throws Exception {
 		final var dateInput = ExpressionInputBuilder.newInstance()
-			.type(String.class)
-			.expression("${date:format(\"" + DateUtil.PATTERN_METRICS_TABLE + "\").format(date:from(rnd.nextLong(time:millisSinceEpoch())))}")
-			.<String, ExpressionInput<String>>build();
+						.type(String.class)
+						.expression("${date:format(\"" + DateUtil.PATTERN_METRICS_TABLE + "\").format(date:from(rnd.nextLong(time:millisSinceEpoch())))}")
+						.<String, ExpressionInput<String>> build();
 		final var rndDateStr = dateInput.get();
 		final var rndDate = FMT_DATE_METRICS_TABLE.parse(rndDateStr);
 		assertTrue(rndDate.after(new Date(0)));
@@ -151,11 +146,11 @@ public class ExpressionInputTest {
 
 	@Test
 	public void testMessageFormat()
-	throws Exception {
+					throws Exception {
 		final var msgInput = ExpressionInputBuilder.newInstance()
-			.type(String.class)
-			.expression("${string:format(\"At {1,time} on {1,date}, there was {2} on planet {0,number,integer}.\", 7, date:from(0), \"a disturbance in the Force\")}")
-			.build();
+						.type(String.class)
+						.expression("${string:format(\"At {1,time} on {1,date}, there was {2} on planet {0,number,integer}.\", 7, date:from(0), \"a disturbance in the Force\")}")
+						.build();
 		assertEquals("At 03:00:00 on 1970 Jan 1, there was a disturbance in the Force on planet 7.", msgInput.get());
 	}
 }

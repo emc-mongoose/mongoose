@@ -40,10 +40,10 @@ public class LoadGeneratorImplPerfTest {
 		final var itemSize = new SizeInBytes(0);
 		final var itemFactory = (ItemFactory<DataItem>) new DataItemFactoryImpl();
 		final var itemNameInput = (ItemNameInput) ItemNameInput.Builder.newInstance()
-			.type(ItemNameInput.ItemNamingType.RANDOM)
-			.radix(Character.MAX_RADIX)
-			.length(12)
-			.build();
+						.type(ItemNameInput.ItemNamingType.RANDOM)
+						.radix(Character.MAX_RADIX)
+						.length(12)
+						.build();
 		final var itemInput = (Input) new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
 		final var opsBuilder = (OperationsBuilder) new DataOperationsBuilderImpl(0)
 						.opType(OpType.CREATE)
@@ -74,10 +74,10 @@ public class LoadGeneratorImplPerfTest {
 		final var itemSize = new SizeInBytes(0);
 		final var itemFactory = (ItemFactory) new DataItemFactoryImpl();
 		final var itemNameInput = (ItemNameInput) ItemNameInput.Builder.newInstance()
-			.type(ItemNameInput.ItemNamingType.SERIAL)
-			.radix(10)
-			.length(10)
-			.build();
+						.type(ItemNameInput.ItemNamingType.SERIAL)
+						.radix(10)
+						.length(10)
+						.build();
 		final var itemInput = (Input) new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
 		final var opsBuilder = (OperationsBuilder) new DataOperationsBuilderImpl(0)
 						.opType(OpType.CREATE)
@@ -110,10 +110,10 @@ public class LoadGeneratorImplPerfTest {
 		final SizeInBytes itemSize = new SizeInBytes(0);
 		final ItemFactory itemFactory = new DataItemFactoryImpl();
 		final var itemNameInput = (ItemNameInput) ItemNameInput.Builder.newInstance()
-			.type(ItemNameInput.ItemNamingType.RANDOM)
-			.radix(Character.MAX_RADIX)
-			.length(12)
-			.build();
+						.type(ItemNameInput.ItemNamingType.RANDOM)
+						.radix(Character.MAX_RADIX)
+						.length(12)
+						.build();
 		final Input itemInput = new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
 		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
 						.opType(OpType.CREATE)
@@ -148,10 +148,10 @@ public class LoadGeneratorImplPerfTest {
 		final SizeInBytes itemSize = new SizeInBytes(0);
 		final ItemFactory itemFactory = new DataItemFactoryImpl();
 		final var itemNameInput = (ItemNameInput) ItemNameInput.Builder.newInstance()
-			.type(ItemNameInput.ItemNamingType.RANDOM)
-			.radix(Character.MAX_RADIX)
-			.length(12)
-			.build();
+						.type(ItemNameInput.ItemNamingType.RANDOM)
+						.radix(Character.MAX_RADIX)
+						.length(12)
+						.build();
 		final Input itemInput = new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
 		final Input pathInput = ExpressionInputBuilder.newInstance()
 						.type(String.class)

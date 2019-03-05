@@ -14,8 +14,7 @@ public final class ItemNameInputImpl
 	private final int radix;
 
 	public ItemNameInputImpl(
-		final Long2LongFunction idFunction, final long offset, final String prefix, final int radix
-	) {
+					final Long2LongFunction idFunction, final long offset, final String prefix, final int radix) {
 		this.initialId = offset;
 		this.idFunction = idFunction;
 		this.prefix = prefix;
@@ -46,7 +45,7 @@ public final class ItemNameInputImpl
 
 	@Override
 	public final long skip(final long count) {
-		for(var i = 0L; i < count; i ++) {
+		for (var i = 0L; i < count; i++) {
 			idFunction.applyAsLong(lastId);
 		}
 		return count;
@@ -58,6 +57,5 @@ public final class ItemNameInputImpl
 	}
 
 	@Override
-	public final void close() {
-	}
+	public final void close() {}
 }

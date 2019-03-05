@@ -44,15 +44,15 @@ public interface DateUtil {
 	};
 
 	ThreadLocal<Map<String, DateFormat>> DATE_FORMATS = ThreadLocal.withInitial(HashMap::new);
+
 	static DateFormat dateFormat(final String pattern) {
 		return DATE_FORMATS.get().computeIfAbsent(
-			pattern,
-			p -> {
-				final var f = new SimpleDateFormat(p, Locale.ROOT);
-				f.setTimeZone(TZ_UTC);
-				return f;
-			}
-		);
+						pattern,
+						p -> {
+							final var f = new SimpleDateFormat(p, Locale.ROOT);
+							f.setTimeZone(TZ_UTC);
+							return f;
+						});
 	}
 
 	static Date date(long millisSinceEpoch) {

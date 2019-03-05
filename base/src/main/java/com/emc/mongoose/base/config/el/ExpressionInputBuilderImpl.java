@@ -22,12 +22,13 @@ public class ExpressionInputBuilderImpl
 
 	static final Pattern INITIAL_VALUE_PATTERN = Pattern.compile(".*(%\\{.+})[$#]\\{.+}.*");
 	static final ThreadLocal<Map<String, MessageFormat>> MSG_FORMATS_BY_PATTERN = withInitial(HashMap::new);
+
 	public static String format(final String pattern, final Object... args) {
 		return MSG_FORMATS_BY_PATTERN
-			.get()
-			.computeIfAbsent(pattern, p -> new MessageFormat(p, Locale.ROOT))
-			.format(args, new StringBuffer(), null)
-			.toString();
+						.get()
+						.computeIfAbsent(pattern, p -> new MessageFormat(p, Locale.ROOT))
+						.format(args, new StringBuffer(), null)
+						.toString();
 	}
 
 	public ExpressionInputBuilderImpl() {
@@ -79,9 +80,8 @@ public class ExpressionInputBuilderImpl
 							"string",
 							"format",
 							ExpressionInputBuilderImpl.class.getMethod(
-								"format",  new Class[]{String.class, Object[].class}
-							)
-			);
+											"format", new Class[]{String.class, Object[].class
+											}));
 			function(
 							"string",
 							"join",

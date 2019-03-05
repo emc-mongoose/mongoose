@@ -9,7 +9,7 @@ import static java.lang.System.currentTimeMillis;
 import static java.lang.System.nanoTime;
 
 public final class ItemNameInputBuilder
-implements ItemNameInput.Builder {
+				implements ItemNameInput.Builder {
 
 	private volatile ItemNamingType type = RANDOM;
 	private volatile int radix = Character.MAX_RADIX;
@@ -57,12 +57,12 @@ implements ItemNameInput.Builder {
 	@Override
 	public <T extends ItemNameInput> T build() {
 		final var maxId = (long) pow(radix, length);
-		switch(type) {
-			case RANDOM:
-				final var seed = abs(Long.reverse(currentTimeMillis()) ^ Long.reverseBytes(nanoTime()));
-				return (T) new ItemNameInputImpl((x) -> abs(xorShift(x) % maxId), seed, prefix, radix);
-			case SERIAL:
-				return (T) new ItemNameInputImpl((x) -> abs((x + step) % maxId), offset, prefix, radix);
+		switch (type) {
+		case RANDOM:
+			final var seed = abs(Long.reverse(currentTimeMillis()) ^ Long.reverseBytes(nanoTime()));
+			return (T) new ItemNameInputImpl((x) -> abs(xorShift(x) % maxId), seed, prefix, radix);
+		case SERIAL:
+			return (T) new ItemNameInputImpl((x) -> abs((x + step) % maxId), offset, prefix, radix);
 		}
 		return null;
 	}

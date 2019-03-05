@@ -19,7 +19,6 @@ import com.emc.mongoose.base.item.TransferConvertBuffer;
 import com.emc.mongoose.base.item.io.ItemInputFactory;
 import com.emc.mongoose.base.item.naming.ItemNameInput;
 import com.emc.mongoose.base.item.naming.ItemNameInput.ItemNamingType;
-import com.emc.mongoose.base.item.naming.ItemNameInputImpl;
 import com.emc.mongoose.base.item.io.NewDataItemInput;
 import com.emc.mongoose.base.item.io.NewItemInput;
 import com.emc.mongoose.base.item.op.OpType;
@@ -436,12 +435,12 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		final var radix = namingConfig.intVal("radix");
 		final var type = ItemNamingType.valueOf(namingConfig.stringVal("type").toUpperCase());
 		final var itemNameInput = ItemNameInput.Builder.newInstance()
-			.length(length)
-			.offset(offset)
-			.prefix(prefix)
-			.radix(radix)
-			.type(type)
-			.build();
+						.length(length)
+						.offset(offset)
+						.prefix(prefix)
+						.radix(radix)
+						.type(type)
+						.build();
 		if (itemFactory == null) {
 			throw new OmgShootMyFootException("Item factory is not set");
 		}

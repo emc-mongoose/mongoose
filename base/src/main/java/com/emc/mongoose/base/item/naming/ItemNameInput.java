@@ -8,8 +8,7 @@ public interface ItemNameInput
 	long lastId();
 
 	enum ItemNamingType {
-		RANDOM,
-		SERIAL,
+		RANDOM, SERIAL,
 	}
 
 	interface Builder {
