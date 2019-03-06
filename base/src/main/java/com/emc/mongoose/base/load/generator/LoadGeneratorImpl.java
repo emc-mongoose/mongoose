@@ -214,8 +214,7 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
     } catch (final InterruptRunException e) {
       throw e;
     } catch (final Throwable t) {
-      LogUtil.exception(Level.ERROR, t, "{}: unexpected failure", name);
-      t.printStackTrace(System.err);
+      LogUtil.trace(Loggers.ERR, Level.ERROR, t, "{}: unexpected failure", name);
     } finally {
       if (isFinished()) {
         try {

@@ -237,7 +237,7 @@ mongoose_elapsed_time_value{load_step_id="robotest",load_op_type="CREATE",storag
 
 | Option | Type | Default Value | Description
 |:--|:--|:--|:--|
-| output-metrics-quantiles | List of numbers each in the range (0; 1] | 0.25,0.5,0.75 | The quantile values to calculate and report for the timing metrics (duration/latency)
+| output-metrics-quantiles | List of numbers each in the range (0; 1] | [0.25,0.5,0.75] | The quantile values to calculate and report for the timing metrics (duration/latency)
 | run-node | Boolean | `false` | Run in the mode node. Should be enabled to serve the Remote API
 | run-port | Integer in the range (0; 65536) | 9999 | The port to listen the Remote API requests
 
@@ -302,7 +302,7 @@ and 3 Primitive Types: Timing, Rate, Concurrency. Depends on the type of metric,
 
 ### 6.1.1. Custom Quantiles
 To specify the value of the required quantiles, use the `--output-metrics-quantiles` parameter.
-By default `--output-metrics-quantiles=0.25,0.5,0.75`.
+By default `output-metrics-quantiles=[0.25,0.5,0.75]`.
 
 ### 6.1.2. Labels
 Each metric contains also the following labels/tags:
@@ -310,7 +310,7 @@ Each metric contains also the following labels/tags:
 |Label name|Configured param|Type|
 |:---|:---|---|
 |`load_step_id`|load-step-id|string|
-|`load_op_type`|load-op-type|string, [takes one of these values](https://github.com/emc-mongoose/mongoose/tree/master/doc/usage/load/operations/types#load-operation-types)|
+|`load_op_type`|load-op-type|string, [takes one of these values](doc/usage/load/operations/types#load-operation-types)|
 |`storage_driver_limit_concurrency`|storage-driver-limit-concurrency|integer|
 |`node_count`|the count of the Mongoose nodes involved into the given load step|integer|
 |`item_data_size`|item-data-size|string with the unit suffix (KB, MB, ...)|

@@ -12,7 +12,6 @@ dependencies {
 }
 
 jar {
-	baseName = project.description
 	manifest {
 		attributes(
 			"Implementation-Title": project.description,

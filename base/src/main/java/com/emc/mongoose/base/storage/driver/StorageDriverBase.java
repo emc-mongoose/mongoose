@@ -89,7 +89,7 @@ public abstract class StorageDriverBase<I extends Item, O extends Operation<I>> 
   protected abstract String requestNewAuthToken(final Credential credential)
       throws InterruptRunException;
 
-  protected void prepare(final O op) throws InterruptRunException {
+  protected boolean prepare(final O op) throws InterruptRunException {
     op.reset();
     if (op instanceof DataOperation) {
       ((DataOperation) op).item().dataInput(itemDataInput);
@@ -108,9 +108,11 @@ public abstract class StorageDriverBase<I extends Item, O extends Operation<I>> 
         if (null == pathMap.computeIfAbsent(dstPath, requestNewPathFunc)) {
           Loggers.ERR.debug("Failed to compute the destination path for the operation: {}", op);
           op.status(Operation.Status.FAIL_UNKNOWN);
+          // return false;
         }
       }
     }
+    return true;
   }
 
   protected boolean handleCompleted(final O op) {
