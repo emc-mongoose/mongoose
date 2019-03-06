@@ -5,7 +5,6 @@ import static com.emc.mongoose.base.config.el.ExpressionInputBuilder.ASYNC_EXPR_
 import static com.emc.mongoose.base.config.el.ExpressionInputBuilder.SYNC_EXPR_START_MARKER;
 import static com.emc.mongoose.base.item.DataItem.rangeCount;
 import static com.emc.mongoose.base.storage.driver.StorageDriver.BUFF_SIZE_MIN;
-import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.emc.mongoose.base.config.ConstantValueInputImpl;
 import com.emc.mongoose.base.config.el.ExpressionInputBuilder;
@@ -419,9 +418,9 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		final var path = itemConfig.stringVal("output-path");
 		if (path.contains(SYNC_EXPR_START_MARKER) || path.contains(ASYNC_EXPR_START_MARKER)) {
 			pathInput = ExpressionInputBuilder.newInstance()
-				.type(String.class)
-				.expression(path)
-				.build();
+							.type(String.class)
+							.expression(path)
+							.build();
 		} else {
 			pathInput = new ConstantValueInputImpl<>(path);
 		}

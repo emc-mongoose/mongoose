@@ -157,12 +157,12 @@ public class ExpressionInputTest {
 
 	@Test
 	public void testConstantValueExpression()
-	throws Exception{
+					throws Exception {
 		final var t0 = System.currentTimeMillis();
 		final var in = ExpressionInputBuilder.newInstance()
-			.expression("%{time:millisSinceEpoch()}")
-			.type(long.class)
-			.<Long, ExpressionInput<Long>>build();
+						.expression("%{time:millisSinceEpoch()}")
+						.type(long.class)
+						.<Long, ExpressionInput<Long>> build();
 		final var t1 = in.get();
 		final var t2 = System.currentTimeMillis();
 		assertTrue(t0 < t1);
@@ -174,32 +174,32 @@ public class ExpressionInputTest {
 
 	@Test
 	public void testExpressionWithoutTypeSpecified()
-	throws Exception {
+					throws Exception {
 		final var in = ExpressionInputBuilder.newInstance()
-			.expression("%{time:millisSinceEpoch()}")
-			.type(Object.class)
-			.build();
+						.expression("%{time:millisSinceEpoch()}")
+						.type(Object.class)
+						.build();
 		final var x = in.get();
 		System.out.println(x);
 	}
 
 	@Test
 	public void testCompositeExpression()
-	throws Exception {
+					throws Exception {
 		final var e = "prefix%{time:millisSinceEpoch()}foo${rnd.nextInt(42)}bar${this.last() + 1}%{-1}____#{date:formatNowRfc1123()}#{this.last() + 1}%{0}suffix";
 		final var m = EXPRESSION_PATTERN.matcher(e);
 		var start = 0;
 		var end = 0;
 		final var strb = new StringBuilder();
-		while(m.find()) {
+		while (m.find()) {
 			end = m.start();
-			if(end > 0) {
+			if (end > 0) {
 				strb.append(e, start, end);
 			}
 			start = m.end();
 			final var expr = m.group("expr");
 			final var init = m.group("init");
-			if(expr != null || init != null) {
+			if (expr != null || init != null) {
 				System.out.println('"' + strb.toString() + '"');
 				strb.setLength(0);
 				System.out.println("expr: \"" + m.group("expr") + "\", init: \"" + m.group("init") + '"');
