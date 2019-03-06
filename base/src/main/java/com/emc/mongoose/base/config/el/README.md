@@ -6,10 +6,11 @@
 4. [Approach](#4-approach)<br/>
 4.1. [Synchronous And Asynchronous Evaluation](#41-synchronous-and-asynchronous-evaluation)<br/>
 4.2. [Initial Value](#42-initial-value)<br/>
-4.3. [Built-in Functions](#43-built-in-functions)<br/>
-4.3.1. [Random Path](#431-random-path)<br/>
-4.4. [Built-in Values](#44-built-in-values)<br/>
-4.4.1. [Self-referencing](#441-self-referencing)<br/>
+4.3. [Types Summary](#43-types-summary)<br/>
+4.4. [Built-in Functions](#44-built-in-functions)<br/>
+4.4.1. [Random Path](#441-random-path)<br/>
+4.5. [Built-in Values](#45-built-in-values)<br/>
+4.5.1. [Self-referencing](#451-self-referencing)<br/>
 5. [Configuration](#5-configuration)<br/>
 5.1. [Variable Items Output Path](#51-variable-items-output-path)<br/>
 5.2. [HTTP request headers and queries](#52-http-request-headers-and-queries)<br/>
@@ -63,20 +64,43 @@ asynchronous evaluation.
 The JUEL standard doesn't allow the initial value setting. However, this is required for the self-referencing
 functionality. The pattern
 
-`%{<INITIAL_VALUE>}`
+`%{<INIT_EXPRESSION>}`
 
-should be used outside (somewhere before either after) of the dynamic part of the expression to set the initial value.
+should be used right before the expression to set the initial value.
 
 For example, the expression:
 
 `%{-1}${this.last() + 1}`
 
-will produce the following sequence of numbers: 0, 1, 2, ...
+will produce the following sequence of values: 0, 1, 2, ...
+
+### 4.2.1. Initial Value Expression
 
 The useful thing is that the initial value is also an expression which is being evaluated *once* to provide the
-constant initial value.
+constant initial value:
 
-## 4.3. Built-in Functions
+`%{rnd.nextInt(42)}#{this.last() + 1}`
+
+### 4.2.2. Constant Value Expression
+
+Some expressions actually are being evaluated only once and then the resulting value is reused without changes:
+
+`%{rnd.nextInt(42)}${this.last()}`
+
+For performance considerations such expression shouldn't be evaluated every time to get a constant value. To do this,
+the following specific syntax should be used:
+
+`%{rnd.nextInt(42)}`
+
+## 4.3. Types Summary
+
+| Marker | Evaluation                    | May be used as initial value expression for another one
+|--------|-------------------------------|-------|
+| `$`    | On every access (synchronous) | false |
+| `#`    | In the background (async)     | false |
+| `%`    | Once only                     | true  |
+
+## 4.4. Built-in Functions
 
 There are some useful static Java methods mapped into the expression language:
 * date:formatNowIso8601()
@@ -121,12 +145,12 @@ There are some useful static Java methods mapped into the expression language:
 * [time:millisSinceEpoch()](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#currentTimeMillis())
 * [time:nanos()](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#nanoTime())
 
-### 4.3.1. Random Path
+### 4.4.1. Random Path
 
 The random path function yields a random path specified by ***width*** and ***depth*** parameters, where the width
 specifies the maximum count of the directories per one level and depth specifies the maximum count of such levels.
 
-## 4.4. Built-in Values
+## 4.5. Built-in Values
 
 | Name | Type | Description |
 |------|------|-------------|
@@ -137,7 +161,7 @@ specifies the maximum count of the directories per one level and depth specifies
 | `rnd` | Random | The random number generator
 | `this` | [ExpressionInput](https://github.com/akurilov/java-commons/blob/master/src/main/java/com/github/akurilov/commons/io/el/ExpressionInput.java) | The expression input instance (self referencing)
 
-### 4.4.1. Self Referencing
+### 4.5.1. Self Referencing
 
 There are `this` among the built-in values. This is designed for the self referencing purposes. This allows to make an
 expression evaluating the next value using the previous evaluation result. For example, the expression:

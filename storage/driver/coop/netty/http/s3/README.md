@@ -35,7 +35,7 @@
 ## 2. Usage
 
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose \
+java -jar mongoose-<VERSION>.jar \
     --storage-driver-type=s3 \
     ...
 ```

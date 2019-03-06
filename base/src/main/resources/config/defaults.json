@@ -66,8 +66,8 @@ Use  the command line arguments either load step configurations in the scenario 
 			// Specified the target file for the items processed successfully.
 			// If null the items info is not saved.
 			"file": null,
-			// The target path. Null (default) value leads to path name generation and pre-creation.
-			"path": null
+			// The target path. By default the expression will once generate the constant value equal to the timestamp
+			"path": "%{date:format(\"yyyyMMdd.HHmmss.SSS\").format(date:from(time:millisSinceEpoch()))}"
 		},
 		// The type of the item to use, the possible values are: "data", "path", "token".
 		// In case of filesystem "data" means files and "path" means directories

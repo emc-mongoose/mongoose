@@ -4,7 +4,7 @@
 
 The load step ids are used primarily to distinguish the load step results.
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --load-step-id=custom_test_0 ...
+java -jar mongoose-<VERSION>.jar --load-step-id=custom_test_0 ...
 ```
 
 See also the [output reference](../../../interfaces/output#111-load-step-id)
@@ -17,21 +17,21 @@ By default the load steps are not limited explicitly. There are several ways to 
 
 Limit the load step by the operation count:
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --load-op-limit-count=1000000 ...
+java -jar mongoose-<VERSION>.jar --load-op-limit-count=1000000 ...
 ```
 
 ### 2.2. Time
 
 Limit the load step by the time (5 minutes):
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --load-step-limit-time=5m ...
+java -jar mongoose-<VERSION>.jar --load-step-limit-time=5m ...
 ```
 
 ### 2.3. Transfer Size
 
 Limit the load step by the transfer size:
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --load-step-limit-size=1.234TB ...
+java -jar mongoose-<VERSION>.jar --load-step-limit-size=1.234TB ...
 ```
 
 ### 2.4. End Of Input

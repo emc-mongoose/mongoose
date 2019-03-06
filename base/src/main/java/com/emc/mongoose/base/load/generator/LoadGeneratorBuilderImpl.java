@@ -1,10 +1,11 @@
 package com.emc.mongoose.base.load.generator;
 
 import static com.emc.mongoose.base.Constants.M;
+import static com.emc.mongoose.base.config.el.ExpressionInputBuilder.ASYNC_EXPR_START_MARKER;
+import static com.emc.mongoose.base.config.el.ExpressionInputBuilder.SYNC_EXPR_START_MARKER;
 import static com.emc.mongoose.base.item.DataItem.rangeCount;
 import static com.emc.mongoose.base.storage.driver.StorageDriver.BUFF_SIZE_MIN;
-import static com.github.akurilov.commons.io.el.ExpressionInput.ASYNC_MARKER;
-import static com.github.akurilov.commons.io.el.ExpressionInput.SYNC_MARKER;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.emc.mongoose.base.config.ConstantValueInputImpl;
 import com.emc.mongoose.base.config.el.ExpressionInputBuilder;
@@ -415,14 +416,14 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 
 	private Input<String> getOutputPathSupplier() {
 		final Input<String> pathInput;
-		var path = itemConfig.stringVal("output-path");
-		if (path == null || path.isEmpty()) {
-			path = LogUtil.getDateTimeStamp();
-		}
-		if (path.contains(SYNC_MARKER) || path.contains(ASYNC_MARKER)) {
-			pathInput = ExpressionInputBuilder.newInstance().type(String.class).expression(path).build();
+		final var path = itemConfig.stringVal("output-path");
+		if (path.contains(SYNC_EXPR_START_MARKER) || path.contains(ASYNC_EXPR_START_MARKER)) {
+			pathInput = ExpressionInputBuilder.newInstance()
+				.type(String.class)
+				.expression(path)
+				.build();
 		} else {
-			pathInput = new ConstantValueInputImpl(path);
+			pathInput = new ConstantValueInputImpl<>(path);
 		}
 		return pathInput;
 	}

@@ -22,7 +22,7 @@ public class ExpressionInputBuilderImpl
 				extends com.github.akurilov.commons.io.el.ExpressionInputBuilder
 				implements ExpressionInputBuilder {
 
-	static final Pattern INITIAL_VALUE_PATTERN = Pattern.compile(".*(%\\{.+})[$#]\\{.+}.*");
+	static final Pattern INITIAL_VALUE_PATTERN = Pattern.compile(".*(%\\{.+})([$#]\\{.+}.)*");
 	static final ThreadLocal<Map<String, MessageFormat>> MSG_FORMATS_BY_PATTERN = withInitial(HashMap::new);
 
 	public static String format(final String pattern, final Object... args) {
@@ -131,7 +131,8 @@ public class ExpressionInputBuilderImpl
 			expression(expression);
 		}
 		var input = super.<T, U> build();
-		if (!(input instanceof SynchronousExpressionInput)) {
+		// this should be a constant value expression if the expr field is empty, leave the ExpressionInputImpl instance
+		if (!expr.isEmpty() && !(input instanceof SynchronousExpressionInput)) {
 			input = (U) new AsyncExpressionInputImpl<>(
 							input); // async input case, wrap with the refreshing fiber
 		}

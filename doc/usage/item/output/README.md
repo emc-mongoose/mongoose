@@ -4,7 +4,7 @@
 
 It's possible to store the info about the item for each successful load operation.
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-output-file=items.csv ...
+java -jar mongoose-<VERSION>.jar --item-output-file=items.csv ...
 ```
 **Note**:
 > 1. The items output file includes also its modification state information for further reading and verification.
@@ -16,7 +16,7 @@ java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-outpu
 
 For new items (basic `create` case) the storage destination path may be specified.
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-output-path=/storage/path/for/the/new/items
+java -jar mongoose-<VERSION>.jar --item-output-path=/storage/path/for/the/new/items
 ```
 
 **Note**:
@@ -28,7 +28,7 @@ java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-outpu
 The items output path also supports the [expression language](base/src/main/com/emc/mongoose/config/el/README.md).
 Example: dynamic files output path defined by some particular "width" (16) and "depth" (2):
 ```bash
-java mongoose-<VERSION>.jar \
+java -jar mongoose-<VERSION>.jar \
     --item-output-path=/mnt/storage/\$\{path\:random\(16\,\ 2\)\} \
     --storage-driver-type=fs \
     ...

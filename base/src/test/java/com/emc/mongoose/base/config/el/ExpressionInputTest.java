@@ -1,5 +1,6 @@
 package com.emc.mongoose.base.config.el;
 
+import static com.emc.mongoose.base.config.el.ExpressionInputBuilder.EXPRESSION_PATTERN;
 import static com.emc.mongoose.base.config.el.ExpressionInputBuilderImpl.INITIAL_VALUE_PATTERN;
 import static com.emc.mongoose.base.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static java.lang.System.currentTimeMillis;
@@ -152,5 +153,59 @@ public class ExpressionInputTest {
 						.expression("${string:format(\"At {1,time} on {1,date}, there was {2} on planet {0,number,integer}.\", 7, date:from(0), \"a disturbance in the Force\")}")
 						.build();
 		assertEquals("At 00:00:00 on 1970 Jan 1, there was a disturbance in the Force on planet 7.", msgInput.get());
+	}
+
+	@Test
+	public void testConstantValueExpression()
+	throws Exception{
+		final var t0 = System.currentTimeMillis();
+		final var in = ExpressionInputBuilder.newInstance()
+			.expression("%{time:millisSinceEpoch()}")
+			.type(long.class)
+			.<Long, ExpressionInput<Long>>build();
+		final var t1 = in.get();
+		final var t2 = System.currentTimeMillis();
+		assertTrue(t0 < t1);
+		assertTrue(t1 < t2);
+		TimeUnit.SECONDS.sleep(5); // wait, maybe the value will change...
+		final var t3 = in.get();
+		assertEquals(t1, t3); // no, it has not been changed
+	}
+
+	@Test
+	public void testExpressionWithoutTypeSpecified()
+	throws Exception {
+		final var in = ExpressionInputBuilder.newInstance()
+			.expression("%{time:millisSinceEpoch()}")
+			.type(Object.class)
+			.build();
+		final var x = in.get();
+		System.out.println(x);
+	}
+
+	@Test
+	public void testCompositeExpression()
+	throws Exception {
+		final var e = "prefix%{time:millisSinceEpoch()}foo${rnd.nextInt(42)}bar${this.last() + 1}%{-1}____#{date:formatNowRfc1123()}#{this.last() + 1}%{0}suffix";
+		final var m = EXPRESSION_PATTERN.matcher(e);
+		var start = 0;
+		var end = 0;
+		final var strb = new StringBuilder();
+		while(m.find()) {
+			end = m.start();
+			if(end > 0) {
+				strb.append(e, start, end);
+			}
+			start = m.end();
+			final var expr = m.group("expr");
+			final var init = m.group("init");
+			if(expr != null || init != null) {
+				System.out.println('"' + strb.toString() + '"');
+				strb.setLength(0);
+				System.out.println("expr: \"" + m.group("expr") + "\", init: \"" + m.group("init") + '"');
+			}
+		}
+		System.out.println('"' + strb.toString() + '"');
+		strb.setLength(0);
 	}
 }

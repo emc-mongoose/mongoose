@@ -2,11 +2,11 @@ package com.emc.mongoose.storage.driver.coop.netty.http;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.base.config.el.ExpressionInputBuilder.ASYNC_EXPR_START_MARKER;
+import static com.emc.mongoose.base.config.el.ExpressionInputBuilder.SYNC_EXPR_START_MARKER;
 import static com.emc.mongoose.base.item.DataItem.rangeCount;
 import static com.emc.mongoose.base.item.DataItem.rangeOffset;
 import static com.emc.mongoose.base.item.op.Operation.SLASH;
-import static com.github.akurilov.commons.io.el.ExpressionInput.ASYNC_MARKER;
-import static com.github.akurilov.commons.io.el.ExpressionInput.SYNC_MARKER;
 import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
@@ -112,10 +112,10 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 		for (final var header : headersMap.entrySet()) {
 			final var headerKey = header.getKey();
 			final var headerValue = header.getValue();
-			if (headerKey.contains(ASYNC_MARKER)
-							|| headerKey.contains(SYNC_MARKER)
-							|| headerValue.contains(ASYNC_MARKER)
-							|| headerValue.contains(SYNC_MARKER)) {
+			if (headerKey.contains(ASYNC_EXPR_START_MARKER)
+							|| headerKey.contains(SYNC_EXPR_START_MARKER)
+							|| headerValue.contains(ASYNC_EXPR_START_MARKER)
+							|| headerValue.contains(SYNC_EXPR_START_MARKER)) {
 				dynamicHeaders.put(headerKey, headerValue);
 			} else {
 				sharedHeaders.add(headerKey, headerValue);
@@ -126,9 +126,9 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 						.map(entry -> entry.getKey() + '=' + entry.getValue())
 						.collect(Collectors.joining("&"));
 		if (uriQueryExpr.length() > 0) {
-			uriQueryInput = new ConstantValueInputImpl("");
-		} else {
 			uriQueryInput = EXPR_INPUT_FUNC.apply('?' + uriQueryExpr);
+		} else {
+			uriQueryInput = new ConstantValueInputImpl("");
 		}
 	}
 
@@ -186,9 +186,9 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 	}
 
 	protected HttpRequest httpRequest(final O op, final String nodeAddr) throws URISyntaxException {
-		final I item = op.item();
-		final OpType opType = op.type();
-		final String srcPath = op.srcPath();
+		final var item = op.item();
+		final var opType = op.type();
+		final var srcPath = op.srcPath();
 		final HttpMethod httpMethod;
 		final String uriPath;
 		if (item instanceof DataItem) {
@@ -203,11 +203,13 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 		} else {
 			throw new AssertionError("Unsupported item class: " + item.getClass().getName());
 		}
-		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		final var uriQuery = uriQuery();
+		final var uri = uriQuery == null || uriQuery.isEmpty() ? uriPath : uriPath + uriQuery;
+		final var httpHeaders = (HttpHeaders) new DefaultHttpHeaders();
 		if (nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		final HttpRequest httpRequest = new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
+		final var httpRequest = (HttpRequest) new DefaultHttpRequest(HTTP_1_1, httpMethod, uri, httpHeaders);
 		switch (opType) {
 		case CREATE:
 			if (srcPath == null || srcPath.isEmpty()) {
@@ -230,7 +232,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 			}
 			break;
 		case UPDATE:
-			final DataOperation dataOp = (DataOperation) op;
+			final var dataOp = (DataOperation) op;
 			httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, dataOp.markedRangesSize());
 			applyRangesHeaders(httpHeaders, dataOp);
 			break;
@@ -381,7 +383,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 		}
 	}
 
-	protected String uriQuery() {
+	final String uriQuery() {
 		return uriQueryInput.get();
 	}
 

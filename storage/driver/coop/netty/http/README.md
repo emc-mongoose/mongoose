@@ -36,7 +36,7 @@ Load
 
 ### 2.1. Expressions
 
-Scenario example, note the parameterized header name:
+Scenario example, note both the parameterized header name and value:
 ```javascript
 var varHttpHeadersConfig = {
     "storage" : {
@@ -57,8 +57,64 @@ Load
 
 ## 3. Custom URI Arguments
 
-TODO
+Custom URI query arguments may be set in the same way as custom HTTP headers.
+
+```javascript
+var uriQueryConfig = {
+    "storage" : {
+        "net" : {
+            "http" : {
+                "uri" : {
+                    "args" : {
+                        "foo": "bar",
+                        "key1" : "val1"
+                    }
+                }
+            }
+        }
+    }
+};
+
+Load
+    .config(uriQueryConfig)
+    .run();
+```
+
+will produce the HTTP requests with URIs like:
+`/20190306.104255.627/kticoxcknpuy?key1=val1&foo=bar`
+
+
+**Note**:
+> Don't use the command line arguments for the custom HTTP URI query arguments setting.
 
 ### 3.1. Expressions
 
-TODO
+Example:
+```javascript
+var uriQueryConfig = {
+    "storage" : {
+        "net" : {
+            "http" : {
+                "uri" : {
+                    "args" : {
+                        "foo${rnd.nextInt()}" : "bar${time:millisSinceEpoch()}",
+                        "key1" : "${date:formatNowIso8601()}",
+                        "${e}" : "${pi}"
+                    }
+                }
+            }
+        }
+    }
+};
+
+Load
+    .config(uriQueryConfig)
+    .run();
+```
+
+will produce the HTTP requests with URIs like:
+`/20190306.104255.627/kticoxcknpuy?key1=2019-03-06T10:42:56,768&2.718281828459045=3.141592653589793&foo1130828259=bar1551868976768`
+
+**Note**:
+> Don't use both synchronous and asynchronous expressions for the query args simultaneously. All configured query args
+> are collected into the single expression input.
