@@ -3,13 +3,9 @@ package com.emc.mongoose.storage.driver.coop.netty.http.swift;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
-import io.netty.handler.codec.string.StringDecoder;
 import io.netty.util.AttributeKey;
-import io.netty.util.CharsetUtil;
 import java.io.IOException;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** @author veronika K. on 28.02.19 */
@@ -49,9 +45,7 @@ public class SwiftResponseHandlerTest {
   private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER =
       AttributeKey.valueOf("boundary_marker");
 
-  @Before
-  public void setUp() {
-    channel.pipeline().addLast("stringDecoder", new StringDecoder(CharsetUtil.UTF_8));
+  static {
     channel.attr(ATTR_KEY_BOUNDARY_MARKER).set(BOUNDARY);
   }
 
@@ -95,11 +89,5 @@ public class SwiftResponseHandlerTest {
       final byte b = fullContentChunk.readByte();
       Assert.assertEquals(a, b);
     }
-  }
-
-  @After
-  public void tearDown() {
-    channel.disconnect();
-    channel.close();
   }
 }
