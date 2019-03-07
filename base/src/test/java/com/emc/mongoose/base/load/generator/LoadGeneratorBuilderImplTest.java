@@ -98,7 +98,7 @@ public class LoadGeneratorBuilderImplTest {
 				put("item-naming-prefix", null);
 				put("item-naming-radix", 36);
 				put("item-naming-type", "random");
-				put("item-output-path", prefixBucket + "%{" + seed + "}${rnd.nextLong(100)}");
+				put("item-output-path", prefixBucket + "${rnd.nextLong(100)}%{" + seed + "}");
 				put("load-batch-size", opCount);
 				put("load-op-limit-count", opCount);
 				put("load-op-limit-recycle", 1_000_000);
@@ -138,12 +138,12 @@ public class LoadGeneratorBuilderImplTest {
 		String uid;
 		String secret;
 		String suffix;
-		int n;
+		long n;
 		final var freq = new Frequency();
 		for (final Operation op : ops) {
 			bucket = op.dstPath();
 			suffix = bucket.substring(prefixBucket.length());
-			n = Integer.parseInt(suffix);
+			n = Long.parseLong(suffix);
 			assertTrue(n >= 0);
 			assertTrue(n < bucketCount);
 			freq.addValue(n);
