@@ -27,7 +27,7 @@
   },
   "item" : {
     "output" : {
-      "path" : null,
+      "path" : "%{date:format(\"yyyyMMdd.HHmmss.SSS\").format(date:from(time:millisSinceEpoch()))}",
       "delay" : 0,
       "file" : null
     },
@@ -106,6 +106,7 @@
         "fsAccess" : false,
         "headers" : {
           "Connection" : "Keep-Alive",
+          "Date" : "#{date:formatNowRfc1123()}%{date:formatNowRfc1123()}",
           "User-Agent" : "mongoose/5.0.0"
         },
         "versioning" : false,

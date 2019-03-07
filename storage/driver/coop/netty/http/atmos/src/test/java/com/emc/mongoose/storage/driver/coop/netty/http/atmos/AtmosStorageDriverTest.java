@@ -91,11 +91,12 @@ public class AtmosStorageDriverTest extends AtmosStorageDriver {
 			config.val("storage-net-node-connAttemptsLimit", 0);
 			config.val("storage-net-http-fsAccess", false);
 			config.val(
-				"storage-net-http-headers",
-				new HashMap<String, String>() {{
-					put("Date", "#{date:formatNowRfc1123()}%{date:formatNowRfc1123()}");
-				}}
-			);
+							"storage-net-http-headers",
+							new HashMap<String, String>() {
+								{
+									put("Date", "#{date:formatNowRfc1123()}%{date:formatNowRfc1123()}");
+								}
+							});
 			config.val("storage-net-http-uri-args", Collections.EMPTY_MAP);
 			config.val("storage-auth-uid", CREDENTIAL.getUid());
 			config.val("storage-auth-token", AUTH_TOKEN);
