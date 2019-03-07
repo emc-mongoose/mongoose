@@ -76,10 +76,9 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 				extends NettyStorageDriverBase<I, O> implements HttpStorageDriver<I, O> {
 
 	private static final String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
-	private static final Function<String, Input<String>> EXPR_INPUT_FUNC = expr ->
-		CompositeExpressionInputBuilder.newInstance()
-			.expression(expr)
-			.build();
+	private static final Function<String, Input<String>> EXPR_INPUT_FUNC = expr -> CompositeExpressionInputBuilder.newInstance()
+					.expression(expr)
+					.build();
 	private final Map<String, Input<String>> headerNameInputs = new ConcurrentHashMap<>();
 	private final Map<String, Input<String>> headerValueInputs = new ConcurrentHashMap<>();
 	protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
@@ -101,12 +100,11 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 			final var headerKey = header.getKey();
 			final var headerValue = header.getValue();
 			if (headerKey.contains(ASYNC_MARKER)
-				|| headerKey.contains(SYNC_MARKER)
-				|| headerKey.contains(INIT_MARKER)
-				|| headerValue.contains(ASYNC_MARKER)
-				|| headerValue.contains(SYNC_MARKER)
-				|| headerValue.contains(INIT_MARKER)
-			) {
+							|| headerKey.contains(SYNC_MARKER)
+							|| headerKey.contains(INIT_MARKER)
+							|| headerValue.contains(ASYNC_MARKER)
+							|| headerValue.contains(SYNC_MARKER)
+							|| headerValue.contains(INIT_MARKER)) {
 				dynamicHeaders.put(headerKey, headerValue);
 			} else {
 				sharedHeaders.add(headerKey, headerValue);

@@ -126,8 +126,8 @@ public class CompositeExpressionInputTest {
 	public void testCompositeExpression()
 					throws Exception {
 		final var in = CompositeExpressionInputBuilder.newInstance()
-			.expression("prefix%{time:millisSinceEpoch()}foo${rnd.nextInt(42)}bar${this.last() + 1}%{-1}_#{date:formatNowRfc1123()}#{this.last() + 1}%{0}suffix")
-			.build();
+						.expression("prefix%{time:millisSinceEpoch()}foo${rnd.nextInt(42)}bar${this.last() + 1}%{-1}_#{date:formatNowRfc1123()}#{this.last() + 1}%{0}suffix")
+						.build();
 		TimeUnit.SECONDS.sleep(1);
 		System.out.println(in.get());
 		TimeUnit.SECONDS.sleep(1);

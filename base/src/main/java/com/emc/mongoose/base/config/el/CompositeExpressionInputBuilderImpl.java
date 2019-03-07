@@ -19,13 +19,14 @@ import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 public class CompositeExpressionInputBuilderImpl
-implements CompositeExpressionInputBuilder {
+				implements CompositeExpressionInputBuilder {
 
 	static {
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 	}
 	static final Pattern INITIAL_VALUE_PATTERN = Pattern.compile(".*(%\\{.+})([$#]\\{.+}.)*");
 	static final Formatter FORMATTER = new Formatter(Locale.ROOT);
+
 	public static String format(final String pattern, final Object... args) {
 		return FORMATTER.format(pattern, args).toString();
 	}
@@ -116,8 +117,7 @@ implements CompositeExpressionInputBuilder {
 	@SuppressWarnings("unchecked")
 	@Override
 	public final <T extends CompositeExpressionInputBuilder> T function(
-		final String prefix, final String name, final Method method
-	) {
+					final String prefix, final String name, final Method method) {
 		inputBuilder.function(prefix, name, method);
 		return (T) this;
 	}
@@ -125,8 +125,7 @@ implements CompositeExpressionInputBuilder {
 	@SuppressWarnings("unchecked")
 	@Override
 	public final <T extends CompositeExpressionInputBuilder> T value(
-		final String name, final Object value, final Class<?> type
-	) {
+					final String name, final Object value, final Class<?> type) {
 		inputBuilder.value(name, value, type);
 		return (T) this;
 	}
@@ -150,15 +149,15 @@ implements CompositeExpressionInputBuilder {
 			final var segmentInit = matcher.group(2);
 			if (segmentExpr != null || segmentInit != null) {
 				final var constSegment = constSegmentBuilder.toString();
-				if(!constSegment.isEmpty()) {
+				if (!constSegment.isEmpty()) {
 					segments.add(constSegment);
 					constSegmentBuilder.setLength(0);
 				}
 				final var inputSegment = inputBuilder
-					.expression(fullSegmentExpr)
-					.build();
+								.expression(fullSegmentExpr)
+								.build();
 				// the input segment is constant value input if the segment expression is null
-				if(null == segmentExpr || inputSegment instanceof SynchronousExpressionInput) {
+				if (null == segmentExpr || inputSegment instanceof SynchronousExpressionInput) {
 					segments.add(inputSegment);
 				} else {
 					final var asyncInputSegment = new AsyncExpressionInputImpl<>(inputSegment);
