@@ -39,11 +39,11 @@ public class CompositeExpressionInputTest {
 
 	@Test
 	public void testSelfReferenceInCompositeExpression()
-	throws Exception {
+					throws Exception {
 		final var data = "Foo${this.expr()}Bar#{this.expr()}";
 		final var in = CompositeExpressionInputBuilder.newInstance()
-			.expression(data)
-			.build();
+						.expression(data)
+						.build();
 		TimeUnit.MILLISECONDS.sleep(100);
 		final var result = in.get();
 		assertEquals(data, result);

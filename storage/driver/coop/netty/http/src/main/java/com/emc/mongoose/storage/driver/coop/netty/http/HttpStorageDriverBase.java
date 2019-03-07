@@ -354,9 +354,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 				continue;
 			}
 			// spin while header name generator is not ready
-			while (null == (headerName = headerNameInput.get())) {
-				LockSupport.parkNanos(1_000_000);
-			}
+			headerName = headerNameInput.get();
 			headerValue = nextHeader.getValue();
 			// header value is a generator pattern
 			headerValueInput = headerValueInputs.computeIfAbsent(headerValue, EXPR_INPUT_FUNC);
@@ -364,15 +362,13 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 				continue;
 			}
 			// spin while header value generator is not ready
-			while (null == (headerValue = headerValueInput.get())) {
-				LockSupport.parkNanos(1_000_000);
-			}
+			headerValue = headerValueInput.get();
 			// put the generated header value into the request
 			httpHeaders.set(headerName, headerValue);
 		}
 	}
 
-	final String uriQuery() {
+	protected final String uriQuery() {
 		return uriQueryInput.get();
 	}
 

@@ -98,6 +98,8 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 	@Override
 	protected String requestNewPath(final String path) throws InterruptRunException {
 		final var bucketUri = path.startsWith(SLASH) ? path : SLASH + path;
+		final var uriQuery = uriQuery();
+		final var uri = uriQuery == null || uriQuery.isEmpty() ? bucketUri : bucketUri + uriQuery;
 		// check the destination bucket if it exists w/ HEAD request
 		final var nodeAddr = storageNodeAddrs[0];
 		var reqHeaders = (HttpHeaders) new DefaultHttpHeaders();
@@ -105,12 +107,12 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		final var credential = pathToCredMap.getOrDefault(bucketUri, this.credential);
-		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, bucketUri, credential);
+		final var credential = pathToCredMap.getOrDefault(uri, this.credential);
+		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, uri, credential);
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 						HttpVersion.HTTP_1_1,
 						HttpMethod.HEAD,
-						bucketUri,
+						uri,
 						Unpooled.EMPTY_BUFFER,
 						reqHeaders,
 						EmptyHttpHeaders.INSTANCE);
@@ -140,11 +142,11 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			applyMetaDataHeaders(reqHeaders);
 			applyDynamicHeaders(reqHeaders);
 			applySharedHeaders(reqHeaders);
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, bucketUri, credential);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, uri, credential);
 			final FullHttpRequest putBucketReq = new DefaultFullHttpRequest(
 							HttpVersion.HTTP_1_1,
 							HttpMethod.PUT,
-							bucketUri,
+							uri,
 							Unpooled.EMPTY_BUFFER,
 							reqHeaders,
 							EmptyHttpHeaders.INSTANCE);
@@ -269,32 +271,32 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		final var queryBuilder = BUCKET_LIST_QUERY.get();
-		queryBuilder.setLength(0);
-		queryBuilder.append(path).append('?');
+		final var uriBuilder = BUCKET_LIST_QUERY.get();
+		uriBuilder.setLength(0);
+		uriBuilder.append(path).append('?');
 		if (prefix != null && !prefix.isEmpty()) {
-			queryBuilder.append("prefix=").append(prefix);
+			uriBuilder.append("prefix=").append(prefix);
 		}
 		if (lastPrevItem != null) {
-			if ('?' != queryBuilder.charAt(queryBuilder.length() - 1)) {
-				queryBuilder.append('&');
+			if ('?' != uriBuilder.charAt(uriBuilder.length() - 1)) {
+				uriBuilder.append('&');
 			}
 			var lastItemName = lastPrevItem.name();
 			if (lastItemName.contains("/")) {
 				lastItemName = lastItemName.substring(lastItemName.lastIndexOf('/') + 1);
 			}
-			queryBuilder.append("marker=").append(lastItemName);
+			uriBuilder.append("marker=").append(lastItemName);
 		}
-		if ('?' != queryBuilder.charAt(queryBuilder.length() - 1)) {
-			queryBuilder.append('&');
+		if ('?' != uriBuilder.charAt(uriBuilder.length() - 1)) {
+			uriBuilder.append('&');
 		}
-		queryBuilder.append("max-keys=").append(countLimit);
-		final var query = queryBuilder.toString();
+		uriBuilder.append("max-keys=").append(countLimit);
+		final var uri = uriBuilder.toString();
 		applyAuthHeaders(reqHeaders, HttpMethod.GET, path, credential);
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 						HttpVersion.HTTP_1_1,
 						HttpMethod.GET,
-						query,
+						uri,
 						Unpooled.EMPTY_BUFFER,
 						reqHeaders,
 						EmptyHttpHeaders.INSTANCE);
@@ -407,18 +409,18 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		if (srcPath != null && !srcPath.isEmpty()) {
 			throw new AssertionError("Multipart copy operation is not implemented yet");
 		}
-		final var uriPath = dataUriPath(item, srcPath, op.dstPath(), OpType.CREATE) + "?uploads";
+		final var uri = dataUriPath(item, srcPath, op.dstPath(), OpType.CREATE) + "?uploads";
 		final var httpHeaders = new DefaultHttpHeaders();
 		if (nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		final var httpMethod = HttpMethod.POST;
-		final var httpRequest = (HttpRequest) new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
+		final var httpRequest = (HttpRequest) new DefaultHttpRequest(HTTP_1_1, httpMethod, uri, httpHeaders);
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, op.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uri, op.credential());
 		return httpRequest;
 	}
 
@@ -426,7 +428,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 					final PartialDataOperation partialDataOp, final String nodeAddr) {
 		final var item = (I) partialDataOp.item();
 		final var srcPath = partialDataOp.srcPath();
-		final var uriPath = dataUriPath(item, srcPath, partialDataOp.dstPath(), OpType.CREATE)
+		final var uri = dataUriPath(item, srcPath, partialDataOp.dstPath(), OpType.CREATE)
 						+ "?partNumber="
 						+ (partialDataOp.partNumber() + 1)
 						+ "&uploadId="
@@ -436,14 +438,14 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
 		final var httpMethod = HttpMethod.PUT;
-		final HttpRequest httpRequest = new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
+		final HttpRequest httpRequest = new DefaultHttpRequest(HTTP_1_1, httpMethod, uri, httpHeaders);
 		try {
 			httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, ((DataItem) item).size());
 		} catch (final IOException ignored) {}
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, partialDataOp.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uri, partialDataOp.credential());
 		return httpRequest;
 	}
 
@@ -471,7 +473,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		final var srcPath = mpuTask.srcPath();
 		final var item = (I) mpuTask.item();
 		final var uploadId = mpuTask.get(AmzS3Api.KEY_UPLOAD_ID);
-		final var uriPath = dataUriPath(item, srcPath, mpuTask.dstPath(), OpType.CREATE) + "?uploadId=" + uploadId;
+		final var uri = dataUriPath(item, srcPath, mpuTask.dstPath(), OpType.CREATE) + "?uploadId=" + uploadId;
 		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
 		httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		final var httpMethod = HttpMethod.POST;
@@ -479,7 +481,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		final FullHttpRequest httpRequest = new DefaultFullHttpRequest(
 						HTTP_1_1,
 						httpMethod,
-						uriPath,
+						uri,
 						Unpooled.wrappedBuffer(contentStr.getBytes()),
 						httpHeaders,
 						EmptyHttpHeaders.INSTANCE);
@@ -487,7 +489,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, mpuTask.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uri, mpuTask.credential());
 		return httpRequest;
 	}
 

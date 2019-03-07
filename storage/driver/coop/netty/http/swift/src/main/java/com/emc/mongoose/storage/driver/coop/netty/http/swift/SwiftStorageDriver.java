@@ -87,18 +87,20 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 	protected final String requestNewPath(final String path) throws InterruptRunException {
 		// check the destination container if it exists w/ HEAD request
 		final var nodeAddr = storageNodeAddrs[0];
+		final var containerUri = namespacePath + (path.startsWith(SLASH) ? path : SLASH + path);
+		final var uriQuery = uriQuery();
+		final var reqUri = uriQuery == null || uriQuery.isEmpty() ? containerUri : containerUri + uriQuery;
 		var reqHeaders = (HttpHeaders) new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		applySharedHeaders(reqHeaders);
 		applyDynamicHeaders(reqHeaders);
-		final var containerUri = namespacePath + (path.startsWith(SLASH) ? path : SLASH + path);
 		final var credential = pathToCredMap.getOrDefault(path, this.credential);
-		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, containerUri, credential);
+		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, reqUri, credential);
 		final FullHttpRequest checkContainerReq = new DefaultFullHttpRequest(
 						HttpVersion.HTTP_1_1,
 						HttpMethod.HEAD,
-						containerUri,
+						reqUri,
 						Unpooled.EMPTY_BUFFER,
 						reqHeaders,
 						EmptyHttpHeaders.INSTANCE);
@@ -138,11 +140,11 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 			if (versioning) {
 				reqHeaders.set(KEY_X_VERSIONS_LOCATION, DEFAULT_VERSIONS_LOCATION);
 			}
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, containerUri, credential);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, reqUri, credential);
 			final FullHttpRequest putContainerReq = new DefaultFullHttpRequest(
 							HttpVersion.HTTP_1_1,
 							HttpMethod.PUT,
-							containerUri,
+							reqUri,
 							Unpooled.EMPTY_BUFFER,
 							reqHeaders,
 							EmptyHttpHeaders.INSTANCE);
@@ -225,27 +227,27 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		final var queryBuilder = CONTAINER_LIST_QUERY.get();
-		queryBuilder.setLength(0);
-		queryBuilder.append(namespacePath).append(path).append("?format=json");
+		final var uriBuilder = CONTAINER_LIST_QUERY.get();
+		uriBuilder.setLength(0);
+		uriBuilder.append(namespacePath).append(path).append("?format=json");
 		if (prefix != null && !prefix.isEmpty()) {
-			queryBuilder.append("&prefix=").append(prefix);
+			uriBuilder.append("&prefix=").append(prefix);
 		}
 		if (lastPrevItem != null) {
 			var lastItemName = lastPrevItem.name();
 			if (lastItemName.contains("/")) {
 				lastItemName = lastItemName.substring(lastItemName.lastIndexOf('/') + 1);
 			}
-			queryBuilder.append("&marker=").append(lastItemName);
+			uriBuilder.append("&marker=").append(lastItemName);
 		}
-		queryBuilder.append("&limit=").append(countLimit);
-		final var query = queryBuilder.toString();
+		uriBuilder.append("&limit=").append(countLimit);
+		final var uri = uriBuilder.toString();
 		authTokens.computeIfAbsent(credential, requestAuthTokenFunc);
-		applyAuthHeaders(reqHeaders, HttpMethod.GET, query, credential);
+		applyAuthHeaders(reqHeaders, HttpMethod.GET, uri, credential);
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
 						HttpVersion.HTTP_1_1,
 						HttpMethod.GET,
-						query,
+						uri,
 						Unpooled.EMPTY_BUFFER,
 						reqHeaders,
 						EmptyHttpHeaders.INSTANCE);
@@ -409,6 +411,8 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 		final var item = (I) compositeDataOp.item();
 		final var srcPath = compositeDataOp.srcPath();
 		final var uriPath = dataUriPath(item, srcPath, compositeDataOp.dstPath(), CREATE);
+		final var uriQuery = uriQuery();
+		final var uri = uriQuery == null || uriQuery.isEmpty() ? uriPath : uriPath + uriQuery;
 		final var httpHeaders = (HttpHeaders) new DefaultHttpHeaders();
 		if (nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
@@ -419,11 +423,11 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 						KEY_X_OBJECT_MANIFEST,
 						(objManifestPath.startsWith("/") ? objManifestPath.substring(1) : objManifestPath) + "/");
 		final var httpMethod = HttpMethod.PUT;
-		final var httpRequest = (HttpRequest) new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
+		final var httpRequest = (HttpRequest) new DefaultHttpRequest(HTTP_1_1, httpMethod, uri, httpHeaders);
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, compositeDataOp.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uri, compositeDataOp.credential());
 		return httpRequest;
 	}
 
@@ -436,19 +440,21 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 						+ "/"
 						+ PART_NUM_MASK.substring(partNumStr.length())
 						+ partNumStr;
+		final var uriQuery = uriQuery();
+		final var uri = uriQuery == null || uriQuery.isEmpty() ? uriPath : uriPath + uriQuery;
 		final var httpHeaders = (HttpHeaders) new DefaultHttpHeaders();
 		if (nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
 		final var httpMethod = HttpMethod.PUT;
-		final var httpRequest = (HttpRequest) new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
+		final var httpRequest = (HttpRequest) new DefaultHttpRequest(HTTP_1_1, httpMethod, uri, httpHeaders);
 		try {
 			httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, ((DataItem) item).size());
 		} catch (final IOException ignored) {}
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, partialDataOp.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uri, partialDataOp.credential());
 		return httpRequest;
 	}
 

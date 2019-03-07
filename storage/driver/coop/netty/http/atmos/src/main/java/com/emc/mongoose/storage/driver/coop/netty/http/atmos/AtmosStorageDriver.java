@@ -105,6 +105,8 @@ public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
 					throws InterruptRunException {
 
 		final var nodeAddr = storageNodeAddrs[0];
+		final var uriQuery = uriQuery();
+		final var uri = uriQuery == null || uriQuery.isEmpty() ? SUBTENANT_URI_BASE : SUBTENANT_URI_BASE + uriQuery;
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
@@ -114,12 +116,12 @@ public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
 		}
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		applyAuthHeaders(reqHeaders, HttpMethod.PUT, SUBTENANT_URI_BASE, credential);
+		applyAuthHeaders(reqHeaders, HttpMethod.PUT, uri, credential);
 
 		final FullHttpRequest getSubtenantReq = new DefaultFullHttpRequest(
 						HttpVersion.HTTP_1_1,
 						HttpMethod.PUT,
-						SUBTENANT_URI_BASE,
+						uri,
 						Unpooled.EMPTY_BUFFER,
 						reqHeaders,
 						EmptyHttpHeaders.INSTANCE);
