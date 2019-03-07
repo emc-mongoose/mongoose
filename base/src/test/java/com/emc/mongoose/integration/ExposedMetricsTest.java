@@ -41,7 +41,7 @@ public class ExposedMetricsTest {
   private static final String CONTEXT = "/metrics";
   private static final int ITERATION_COUNT = 10;
   private static final Double TIMING_ACCURACY = 0.0001;
-  private static final double ELAPSED_TIME_ACCURACY = 0.05;
+  private static final double ELAPSED_TIME_ACCURACY = 0.1;
   private static final int MARK_DUR = 1_100_000; // dur must be more than lat (dur > lat)
   private static final int MARK_LAT = 1_000_000;
   private static final String[] CONCURRENCY_METRICS = {"mean", "last"};
