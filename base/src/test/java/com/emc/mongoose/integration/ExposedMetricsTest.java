@@ -41,7 +41,7 @@ public class ExposedMetricsTest {
   private static final String CONTEXT = "/metrics";
   private static final int ITERATION_COUNT = 10;
   private static final Double TIMING_ACCURACY = 0.0001;
-  private static final Double RATE_ACCURACY = 0.5;
+  private static final double ELAPSED_TIME_ACCURACY = 0.1;
   private static final int MARK_DUR = 1_100_000; // dur must be more than lat (dur > lat)
   private static final int MARK_LAT = 1_000_000;
   private static final String[] CONCURRENCY_METRICS = {"mean", "last"};
@@ -124,10 +124,10 @@ public class ExposedMetricsTest {
     //
     testHelpLine(result);
     //
-    final Map tmp = new HashMap();
+    final Map expected = new HashMap();
     final var elapsedTimeMillis = TimeUnit.MICROSECONDS.toSeconds(MARK_DUR * ITERATION_COUNT);
-    tmp.put("value", new Double(elapsedTimeMillis));
-    testMetric(result, METRIC_NAME_TIME, tmp, RATE_ACCURACY);
+    expected.put("value", (double) elapsedTimeMillis);
+    testMetric(result, METRIC_NAME_TIME, expected, ELAPSED_TIME_ACCURACY);
     //
     testTimingMetric(result, MARK_DUR, METRIC_NAME_DUR);
     testTimingMetric(result, MARK_LAT, METRIC_NAME_LAT);
@@ -211,7 +211,7 @@ public class ExposedMetricsTest {
     for (var i = 0; i < rateMetrics.length; ++i) {
       expectedValues.put(rateMetrics[i], values[i]);
     }
-    testMetric(stdOut, name, expectedValues, RATE_ACCURACY);
+    testMetric(stdOut, name, expectedValues, false);
   }
 
   private void testConcurrencyMetric(
@@ -242,6 +242,30 @@ public class ExposedMetricsTest {
       final String metricName,
       final Map<String, Double> expectedValues,
       final double accuracy) {
+    testMetric(resultOutput, metricName, expectedValues, true, accuracy);
+  }
+
+  private void testMetric(
+      final String resultOutput,
+      final String metricName,
+      final Map<String, Double> expectedValues,
+      final boolean compareEquality) {
+    testMetric(resultOutput, metricName, expectedValues, compareEquality, 0);
+  }
+
+  private void testMetric(
+      final String resultOutput,
+      final String metricName,
+      final Map<String, Double> expectedValues) {
+    testMetric(resultOutput, metricName, expectedValues, true, 0);
+  }
+
+  private void testMetric(
+      final String resultOutput,
+      final String metricName,
+      final Map<String, Double> expectedValues,
+      final boolean compareEquality,
+      final double accuracy) {
     for (final var key : expectedValues.keySet()) {
       final var p =
           Pattern.compile(String.format(METRIC_FORMAT, metricName) + "_" + key + "\\{.+\\} .+");
@@ -250,11 +274,16 @@ public class ExposedMetricsTest {
       Assert.assertTrue(found);
       final var actualValue = Double.valueOf(m.group().split("}")[1]);
       final var expectedValue = Double.valueOf(expectedValues.get(key));
-      Assert.assertEquals(
-          "metric : " + metricName + "_" + key,
-          expectedValue,
-          actualValue,
-          expectedValue * accuracy);
+      if (compareEquality) {
+        Assert.assertEquals(
+            "metric : " + metricName + "_" + key,
+            expectedValue,
+            actualValue,
+            expectedValue * accuracy);
+      } else {
+        Assert.assertEquals(
+            "metric : " + metricName + "_" + key, true, actualValue <= expectedValue);
+      }
     }
   }
 }
