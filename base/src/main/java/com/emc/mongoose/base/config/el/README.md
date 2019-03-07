@@ -50,14 +50,19 @@ The [requirements 2-5](#3-requirements) are implemented as the
 
 EBNF notation:
 ```ebnf
-SEGMENTS                        = SEGMENT*
-SEGMENT                         = CONSTANT_STRING | EXPRESSION
-EXPRESSION                      = (ASYNC_EXPRESSION | SYNC_EXPRESSION) \[ INIT_EXPRESSION ]
-ASYNC_EXPRESSION                = "#" EXPRESSION_BODY_WITH_BOUNDARIES
-SYNC_EXPRESSION                 = "$" EXPRESSION_BODY_WITH_BOUNDARIES
-INIT_EXPRESSION                 = "%" EXPRESSION_BODY_WITH_BOUNDARIES
-EXPRESSION_BODY_WITH_BOUNDARIES = "{" EXPRESSION_BODY "}"
+SEGMENTS                  = SEGMENT*
+SEGMENT                   = CONST_STRING | EXPRESSION
+EXPRESSION                = (ASYNC_EXPR | SYNC_EXPR) \[ INIT_EXPR ]
+ASYNC_EXPR                = "#" EXPR_BODY_WITH_BOUNDARIES
+SYNC_EXPR                 = "$" EXPR_BODY_WITH_BOUNDARIES
+INIT_EXPR                 = "%" EXPR_BODY_WITH_BOUNDARIES
+EXPR_BODY_WITH_BOUNDARIES = "{" EXPR_BODY "}"
 ```
+
+| Token          | Description |
+|----------------|-------------|
+| `CONST_STRING` | Any sequence of characters which doesn't contain `#{`/`${`/`%{` |
+| `EXPR_BODY`    | The expression body which shouldn't contain `}` symbols or any nested expressions |
 
 ## 4.1. Synchronous And Asynchronous Evaluation
 
