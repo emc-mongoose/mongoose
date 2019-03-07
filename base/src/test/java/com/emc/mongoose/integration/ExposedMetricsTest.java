@@ -1,11 +1,11 @@
 package com.emc.mongoose.integration;
 
+import static com.emc.mongoose.base.metrics.MetricsConstants.*;
 import static com.emc.mongoose.base.metrics.MetricsConstants.METRIC_FORMAT;
 
 import com.emc.mongoose.base.Constants;
 import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.base.item.op.OpType;
-import com.emc.mongoose.base.metrics.MetricsConstants;
 import com.emc.mongoose.base.metrics.MetricsManager;
 import com.emc.mongoose.base.metrics.MetricsManagerImpl;
 import com.emc.mongoose.base.metrics.context.DistributedMetricsContext;
@@ -19,7 +19,6 @@ import io.prometheus.client.exporter.MetricsServlet;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +26,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -43,12 +41,12 @@ public class ExposedMetricsTest {
   private static final String CONTEXT = "/metrics";
   private static final int ITERATION_COUNT = 10;
   private static final Double TIMING_ACCURACY = 0.0001;
-  private static final Double RATE_ACCURACY = 0.5;
+  private static final double ELAPSED_TIME_ACCURACY = 0.1;
   private static final int MARK_DUR = 1_100_000; // dur must be more than lat (dur > lat)
   private static final int MARK_LAT = 1_000_000;
   private static final String[] CONCURRENCY_METRICS = {"mean", "last"};
   private static final String[] TIMING_METRICS = {
-    "count", "sum", "mean", "min", "max", "quantile_0.25", "quantile_0.5", "quantile_0.75"
+    "count", "sum", "mean", "min", "max", "quantile_0_25", "quantile_0_5", "quantile_0_75"
   };
   private static final String[] OPS_METRICS = {"count", "rate_mean", "rate_last"};
   private static final String[] BYTES_METRICS = {"count", "rate_mean", "rate_last"};
@@ -124,21 +122,44 @@ public class ExposedMetricsTest {
     final var result = resultFromServer("http://localhost:" + PORT + CONTEXT);
     System.out.println(result);
     //
-    final Map tmp = new HashMap();
+    testHelpLine(result);
+    //
+    final Map expected = new HashMap();
     final var elapsedTimeMillis = TimeUnit.MICROSECONDS.toSeconds(MARK_DUR * ITERATION_COUNT);
-    tmp.put("value", new Double(elapsedTimeMillis));
-    testMetric(result, MetricsConstants.METRIC_NAME_TIME, tmp, RATE_ACCURACY);
+    expected.put("value", (double) elapsedTimeMillis);
+    testMetric(result, METRIC_NAME_TIME, expected, ELAPSED_TIME_ACCURACY);
     //
-    testTimingMetric(result, MARK_DUR, MetricsConstants.METRIC_NAME_DUR);
-    testTimingMetric(result, MARK_LAT, MetricsConstants.METRIC_NAME_LAT);
-    testConcurrencyMetric(result, 1, MetricsConstants.METRIC_NAME_CONC);
+    testTimingMetric(result, MARK_DUR, METRIC_NAME_DUR);
+    testTimingMetric(result, MARK_LAT, METRIC_NAME_LAT);
+    testConcurrencyMetric(result, 1, METRIC_NAME_CONC);
     //
-    testRateMetric(result, ITEM_DATA_SIZE.get(), MetricsConstants.METRIC_NAME_BYTE);
-    testRateMetric(result, 1, MetricsConstants.METRIC_NAME_FAIL);
-    testRateMetric(result, 1, MetricsConstants.METRIC_NAME_SUCC);
+    testRateMetric(result, ITEM_DATA_SIZE.get(), METRIC_NAME_BYTE);
+    testRateMetric(result, 1, METRIC_NAME_FAIL);
+    testRateMetric(result, 1, METRIC_NAME_SUCC);
     //
     testLabels(result);
     metricsMgr.close();
+  }
+
+  private void testHelpLine(final String result) {
+    final String[] names = {
+      METRIC_NAME_BYTE,
+      METRIC_NAME_CONC,
+      METRIC_NAME_LAT,
+      METRIC_NAME_DUR,
+      METRIC_NAME_FAIL,
+      METRIC_NAME_SUCC,
+      METRIC_NAME_TIME,
+      METRIC_NAME_TIME
+    };
+    for (final String n : names) {
+      final var p =
+          Pattern.compile(
+              String.format("# HELP %1$s[\\s]*# TYPE %1$s", String.format(METRIC_FORMAT, n)));
+      final var m = p.matcher(result);
+      final var found = m.find();
+      Assert.assertTrue(found);
+    }
   }
 
   private void testLabels(final String result) {
@@ -181,8 +202,8 @@ public class ExposedMetricsTest {
   private void testRateMetric(final String stdOut, final double markValue, final String name) {
     final Map<String, Double> expectedValues = new HashMap<>();
     double count = ITERATION_COUNT;
-	  var rateMetrics = OPS_METRICS;
-    if (name.equals(MetricsConstants.METRIC_NAME_BYTE)) {
+    var rateMetrics = OPS_METRICS;
+    if (name.equals(METRIC_NAME_BYTE)) {
       count *= markValue;
       rateMetrics = BYTES_METRICS;
     }
@@ -190,7 +211,7 @@ public class ExposedMetricsTest {
     for (var i = 0; i < rateMetrics.length; ++i) {
       expectedValues.put(rateMetrics[i], values[i]);
     }
-    testMetric(stdOut, name, expectedValues, RATE_ACCURACY);
+    testMetric(stdOut, name, expectedValues, false);
   }
 
   private void testConcurrencyMetric(
@@ -210,8 +231,7 @@ public class ExposedMetricsTest {
     final var stringBuilder = new StringBuilder();
     final var url = new URL(urlPath);
     final var conn = url.openConnection();
-    try (final var br =
-        new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+    try (final var br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
       br.lines().forEach(l -> stringBuilder.append(l).append("\n"));
     }
     return stringBuilder.toString();
@@ -222,18 +242,48 @@ public class ExposedMetricsTest {
       final String metricName,
       final Map<String, Double> expectedValues,
       final double accuracy) {
+    testMetric(resultOutput, metricName, expectedValues, true, accuracy);
+  }
+
+  private void testMetric(
+      final String resultOutput,
+      final String metricName,
+      final Map<String, Double> expectedValues,
+      final boolean compareEquality) {
+    testMetric(resultOutput, metricName, expectedValues, compareEquality, 0);
+  }
+
+  private void testMetric(
+      final String resultOutput,
+      final String metricName,
+      final Map<String, Double> expectedValues) {
+    testMetric(resultOutput, metricName, expectedValues, true, 0);
+  }
+
+  private void testMetric(
+      final String resultOutput,
+      final String metricName,
+      final Map<String, Double> expectedValues,
+      final boolean compareEquality,
+      final double accuracy) {
     for (final var key : expectedValues.keySet()) {
-      final var p = Pattern.compile(String.format(METRIC_FORMAT, metricName, key) + "\\{.+\\} .+");
+      final var p =
+          Pattern.compile(String.format(METRIC_FORMAT, metricName) + "_" + key + "\\{.+\\} .+");
       final var m = p.matcher(resultOutput);
       final var found = m.find();
       Assert.assertTrue(found);
       final var actualValue = Double.valueOf(m.group().split("}")[1]);
       final var expectedValue = Double.valueOf(expectedValues.get(key));
-      Assert.assertEquals(
-          "metric : " + metricName + "_" + key,
-          expectedValue,
-          actualValue,
-          expectedValue * accuracy);
+      if (compareEquality) {
+        Assert.assertEquals(
+            "metric : " + metricName + "_" + key,
+            expectedValue,
+            actualValue,
+            expectedValue * accuracy);
+      } else {
+        Assert.assertEquals(
+            "metric : " + metricName + "_" + key, true, actualValue <= expectedValue);
+      }
     }
   }
 }

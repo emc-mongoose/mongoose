@@ -20,5 +20,5 @@ public interface MetricsConstants {
     "node_list",
     "user_comment"
   };
-  String METRIC_FORMAT = Constants.APP_NAME + "_%s_%s"; // appName_metricName_aggregationType
+  String METRIC_FORMAT = Constants.APP_NAME + "_%s"; // appName_metricName<_aggregationType>
 }
