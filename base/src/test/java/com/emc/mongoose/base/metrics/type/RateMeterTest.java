@@ -6,6 +6,8 @@ import com.emc.mongoose.base.metrics.snapshot.RateMetricSnapshot;
 
 import java.time.Clock;
 import java.util.concurrent.TimeUnit;
+
+import org.junit.Ignore;
 import org.junit.Test;
 
 /** @author veronika K. on 16.10.18 */
@@ -16,6 +18,7 @@ public class RateMeterTest {
 	private static final int COUNT_BYTES_2 = 567;
 	private static final double ACCURACY = 0.1;
 
+	@Ignore
 	@Test
 	public void test() throws InterruptedException {
 		final RateMeter<RateMetricSnapshot> meter = new RateMeterImpl(Clock.systemUTC(), "SOME_RATE");
