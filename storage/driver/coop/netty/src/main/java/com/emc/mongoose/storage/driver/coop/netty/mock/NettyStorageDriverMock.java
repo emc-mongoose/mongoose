@@ -80,6 +80,8 @@ public final class NettyStorageDriverMock<I extends Item, O extends Operation<I>
 		} catch (final Exception e) {
 			e.printStackTrace(System.err);
 		}
+		op.finishRequest();
+		op.startResponse();
 		complete(channel, op);
 	}
 
