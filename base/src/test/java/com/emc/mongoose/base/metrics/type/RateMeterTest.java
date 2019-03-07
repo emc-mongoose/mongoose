@@ -13,6 +13,7 @@ public class RateMeterTest {
   private static final int SLEEP_MILLISEC = 1000;
   private static final int COUNT_BYTES_1 = 1234;
   private static final int COUNT_BYTES_2 = 567;
+  private static final double ACCURACY = 0.01;
 
   @Test
   public void test() throws InterruptedException {
@@ -31,7 +32,10 @@ public class RateMeterTest {
     assertEquals(
         1000.0 * (COUNT_BYTES_1 + COUNT_BYTES_2) / (t2 - t0),
         snapshot2.mean(),
-        snapshot2.mean() * 0.01);
-    assertEquals(1000.0 * (COUNT_BYTES_1 + COUNT_BYTES_2) / (t2 - t0), snapshot2.last(), 100.0);
+        snapshot2.mean() * ACCURACY);
+    assertEquals(
+        1000.0 * (COUNT_BYTES_1 + COUNT_BYTES_2) / (t2 - t0),
+        snapshot2.last(),
+        snapshot2.last() * ACCURACY);
   }
 }
