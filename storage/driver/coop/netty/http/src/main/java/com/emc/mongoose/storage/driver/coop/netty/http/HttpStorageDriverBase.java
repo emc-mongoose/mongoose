@@ -71,398 +71,388 @@ import org.apache.logging.log4j.ThreadContext;
  * operations.
  */
 public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<I>>
-    extends NettyStorageDriverBase<I, O> implements HttpStorageDriver<I, O> {
+				extends NettyStorageDriverBase<I, O> implements HttpStorageDriver<I, O> {
 
-  private static final String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
-  private static final Function<String, BatchSupplier<String>> ASYNC_PATTERN_SUPPLIER_FUNC =
-      pattern -> {
-        try {
-          return new AsyncPatternDefinedSupplier(ServiceTaskExecutor.INSTANCE, pattern);
-        } catch (final OmgShootMyFootException e) {
-          LogUtil.exception(Level.ERROR, e, "Failed to create the pattern defined input");
-          return null;
-        }
-      };
-  private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
-  private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
-  protected final AsyncCurrentDateSupplier dateSupplier =
-      new AsyncCurrentDateSupplier(ServiceTaskExecutor.INSTANCE);
-  protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
-  protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
-  private final BatchSupplier<String> uriQueryInput;
-  protected final ChannelFutureListener httpReqSentCallback = this::sendHttpRequestComplete;
+	private static final String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
+	private static final Function<String, BatchSupplier<String>> ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
+		try {
+			return new AsyncPatternDefinedSupplier(ServiceTaskExecutor.INSTANCE, pattern);
+		} catch (final OmgShootMyFootException e) {
+			LogUtil.exception(Level.ERROR, e, "Failed to create the pattern defined input");
+			return null;
+		}
+	};
+	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
+	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
+	protected final AsyncCurrentDateSupplier dateSupplier = new AsyncCurrentDateSupplier(ServiceTaskExecutor.INSTANCE);
+	protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
+	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
+	private final BatchSupplier<String> uriQueryInput;
+	protected final ChannelFutureListener httpReqSentCallback = this::sendHttpRequestComplete;
 
-  protected HttpStorageDriverBase(
-      final String testStepId,
-      final DataInput itemDataInput,
-      final Config storageConfig,
-      final boolean verifyFlag,
-      final int batchSize)
-      throws OmgShootMyFootException, InterruptedException {
-    super(testStepId, itemDataInput, storageConfig, verifyFlag, batchSize);
-    final Config httpConfig = storageConfig.configVal("net-http");
-    final Map<String, String> headersMap = httpConfig.mapVal("headers");
-    for (final Map.Entry<String, String> header : headersMap.entrySet()) {
-      final String headerKey = header.getKey();
-      final String headerValue = header.getValue();
-      if (-1 < (headerKey).indexOf(PATTERN_CHAR) || -1 < headerValue.indexOf(PATTERN_CHAR)) {
-        dynamicHeaders.add(headerKey, headerValue);
-      } else {
-        sharedHeaders.add(headerKey, headerValue);
-      }
-    }
-    final Map<String, String> uriArgs = httpConfig.mapVal("uri-args");
-    final String uriQueryPattern =
-        uriArgs.entrySet().stream()
-            .map(entry -> entry.getKey() + '=' + entry.getValue())
-            .collect(Collectors.joining("&"));
-    if (uriQueryPattern.length() > 0) {
-      uriQueryInput = new ConstantStringSupplier("");
-    } else {
-      uriQueryInput = ASYNC_PATTERN_SUPPLIER_FUNC.apply("?" + uriQueryPattern);
-    }
-  }
+	protected HttpStorageDriverBase(
+					final String testStepId,
+					final DataInput itemDataInput,
+					final Config storageConfig,
+					final boolean verifyFlag,
+					final int batchSize)
+					throws OmgShootMyFootException, InterruptedException {
+		super(testStepId, itemDataInput, storageConfig, verifyFlag, batchSize);
+		final Config httpConfig = storageConfig.configVal("net-http");
+		final Map<String, String> headersMap = httpConfig.mapVal("headers");
+		for (final Map.Entry<String, String> header : headersMap.entrySet()) {
+			final String headerKey = header.getKey();
+			final String headerValue = header.getValue();
+			if (-1 < (headerKey).indexOf(PATTERN_CHAR) || -1 < headerValue.indexOf(PATTERN_CHAR)) {
+				dynamicHeaders.add(headerKey, headerValue);
+			} else {
+				sharedHeaders.add(headerKey, headerValue);
+			}
+		}
+		final Map<String, String> uriArgs = httpConfig.mapVal("uri-args");
+		final String uriQueryPattern = uriArgs.entrySet().stream()
+						.map(entry -> entry.getKey() + '=' + entry.getValue())
+						.collect(Collectors.joining("&"));
+		if (uriQueryPattern.length() > 0) {
+			uriQueryInput = new ConstantStringSupplier("");
+		} else {
+			uriQueryInput = ASYNC_PATTERN_SUPPLIER_FUNC.apply("?" + uriQueryPattern);
+		}
+	}
 
-  protected FullHttpResponse executeHttpRequest(final FullHttpRequest request)
-      throws InterruptedException, ConnectException {
-    ThreadContext.put(KEY_STEP_ID, stepId);
-    ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
-    final FullHttpResponse resp;
-    final var channel = getUnpooledConnection(storageNodeAddrs[0], storageNodePort);
-    try {
-      final var pipeline = channel.pipeline();
-      Loggers.MSG.debug(
-          "{}: execute the HTTP request using the channel {} w/ pipeline: {}",
-          stepId,
-          channel.hashCode(),
-          pipeline);
-      pipeline.removeLast(); // remove the API specific handler
-      final var fullRespSync = new SynchronousQueue<FullHttpResponse>();
-      pipeline.addLast(new HttpObjectAggregator(Integer.MAX_VALUE));
-      pipeline.addLast(
-          new SimpleChannelInboundHandler<HttpObject>() {
-            @Override
-            protected final void channelRead0(final ChannelHandlerContext ctx, final HttpObject msg)
-                throws Exception {
-              if (msg instanceof FullHttpResponse) {
-                fullRespSync.put(((FullHttpResponse) msg).retain());
-              }
-            }
-          });
-      channel.writeAndFlush(request).sync();
-      if (null == (resp = fullRespSync.poll(netTimeoutMilliSec, TimeUnit.MILLISECONDS))) {
-        Loggers.MSG.warn("{}: Response timeout \n Request: {}", stepId, request);
-      }
-    } catch (final NoSuchElementException e) {
-      throw new ConnectException("Channel pipeline is empty: connectivity related failure");
-    } catch (final Exception e) {
-      if (e instanceof ClosedChannelException) {
-        throw new ConnectException("Connection is closed: " + e.toString());
-      } else {
-        throw new ConnectException("Connection failure: " + e.toString());
-      }
-    } finally {
-      channel.close();
-    }
-    return resp;
-  }
+	protected FullHttpResponse executeHttpRequest(final FullHttpRequest request)
+					throws InterruptedException, ConnectException {
+		ThreadContext.put(KEY_STEP_ID, stepId);
+		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
+		final FullHttpResponse resp;
+		final var channel = getUnpooledConnection(storageNodeAddrs[0], storageNodePort);
+		try {
+			final var pipeline = channel.pipeline();
+			Loggers.MSG.debug(
+							"{}: execute the HTTP request using the channel {} w/ pipeline: {}",
+							stepId,
+							channel.hashCode(),
+							pipeline);
+			pipeline.removeLast(); // remove the API specific handler
+			final var fullRespSync = new SynchronousQueue<FullHttpResponse>();
+			pipeline.addLast(new HttpObjectAggregator(Integer.MAX_VALUE));
+			pipeline.addLast(
+							new SimpleChannelInboundHandler<HttpObject>() {
+								@Override
+								protected final void channelRead0(final ChannelHandlerContext ctx, final HttpObject msg)
+												throws Exception {
+									if (msg instanceof FullHttpResponse) {
+										fullRespSync.put(((FullHttpResponse) msg).retain());
+									}
+								}
+							});
+			channel.writeAndFlush(request).sync();
+			if (null == (resp = fullRespSync.poll(netTimeoutMilliSec, TimeUnit.MILLISECONDS))) {
+				Loggers.MSG.warn("{}: Response timeout \n Request: {}", stepId, request);
+			}
+		} catch (final NoSuchElementException e) {
+			throw new ConnectException("Channel pipeline is empty: connectivity related failure");
+		} catch (final Exception e) {
+			if (e instanceof ClosedChannelException) {
+				throw new ConnectException("Connection is closed: " + e.toString());
+			} else {
+				throw new ConnectException("Connection failure: " + e.toString());
+			}
+		} finally {
+			channel.close();
+		}
+		return resp;
+	}
 
-  @Override
-  protected void appendHandlers(final Channel channel) {
-    super.appendHandlers(channel);
-    channel
-        .pipeline()
-        .addLast(new HttpClientCodec(REQ_LINE_LEN, HEADERS_LEN, CHUNK_SIZE, true))
-        .addLast(new ChunkedWriteHandler());
-  }
+	@Override
+	protected void appendHandlers(final Channel channel) {
+		super.appendHandlers(channel);
+		channel
+						.pipeline()
+						.addLast(new HttpClientCodec(REQ_LINE_LEN, HEADERS_LEN, CHUNK_SIZE, true))
+						.addLast(new ChunkedWriteHandler());
+	}
 
-  protected HttpRequest httpRequest(final O op, final String nodeAddr) throws URISyntaxException {
-    final I item = op.item();
-    final OpType opType = op.type();
-    final String srcPath = op.srcPath();
-    final HttpMethod httpMethod;
-    final String uriPath;
-    if (item instanceof DataItem) {
-      httpMethod = dataHttpMethod(opType);
-      uriPath = dataUriPath(item, srcPath, op.dstPath(), opType);
-    } else if (item instanceof TokenItem) {
-      httpMethod = tokenHttpMethod(opType);
-      uriPath = tokenUriPath(item, srcPath, op.dstPath(), opType);
-    } else if (item instanceof PathItem) {
-      httpMethod = pathHttpMethod(opType);
-      uriPath = pathUriPath(item, srcPath, op.dstPath(), opType);
-    } else {
-      throw new AssertionError("Unsupported item class: " + item.getClass().getName());
-    }
-    final HttpHeaders httpHeaders = new DefaultHttpHeaders();
-    if (nodeAddr != null) {
-      httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
-    }
-    httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
-    final HttpRequest httpRequest =
-        new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
-    switch (opType) {
-      case CREATE:
-        if (srcPath == null || srcPath.isEmpty()) {
-          if (item instanceof DataItem) {
-            try {
-              httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, ((DataItem) item).size());
-            } catch (final IOException ignored) {
-            }
-          } else {
-            httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-          }
-        } else {
-          applyCopyHeaders(httpHeaders, dataUriPath(item, srcPath, null, opType));
-          httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-        }
-        break;
-      case READ:
-        httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-        if (op instanceof DataOperation) {
-          applyRangesHeaders(httpHeaders, (DataOperation) op);
-        }
-        break;
-      case UPDATE:
-        final DataOperation dataOp = (DataOperation) op;
-        httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, dataOp.markedRangesSize());
-        applyRangesHeaders(httpHeaders, dataOp);
-        break;
-      case DELETE:
-        httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-        break;
-    }
-    applyMetaDataHeaders(httpHeaders);
-    applyDynamicHeaders(httpHeaders);
-    applySharedHeaders(httpHeaders);
-    applyAuthHeaders(httpHeaders, httpMethod, uriPath, op.credential());
-    return httpRequest;
-  }
+	protected HttpRequest httpRequest(final O op, final String nodeAddr) throws URISyntaxException {
+		final I item = op.item();
+		final OpType opType = op.type();
+		final String srcPath = op.srcPath();
+		final HttpMethod httpMethod;
+		final String uriPath;
+		if (item instanceof DataItem) {
+			httpMethod = dataHttpMethod(opType);
+			uriPath = dataUriPath(item, srcPath, op.dstPath(), opType);
+		} else if (item instanceof TokenItem) {
+			httpMethod = tokenHttpMethod(opType);
+			uriPath = tokenUriPath(item, srcPath, op.dstPath(), opType);
+		} else if (item instanceof PathItem) {
+			httpMethod = pathHttpMethod(opType);
+			uriPath = pathUriPath(item, srcPath, op.dstPath(), opType);
+		} else {
+			throw new AssertionError("Unsupported item class: " + item.getClass().getName());
+		}
+		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		if (nodeAddr != null) {
+			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
+		}
+		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
+		final HttpRequest httpRequest = new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
+		switch (opType) {
+		case CREATE:
+			if (srcPath == null || srcPath.isEmpty()) {
+				if (item instanceof DataItem) {
+					try {
+						httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, ((DataItem) item).size());
+					} catch (final IOException ignored) {}
+				} else {
+					httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+				}
+			} else {
+				applyCopyHeaders(httpHeaders, dataUriPath(item, srcPath, null, opType));
+				httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+			}
+			break;
+		case READ:
+			httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+			if (op instanceof DataOperation) {
+				applyRangesHeaders(httpHeaders, (DataOperation) op);
+			}
+			break;
+		case UPDATE:
+			final DataOperation dataOp = (DataOperation) op;
+			httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, dataOp.markedRangesSize());
+			applyRangesHeaders(httpHeaders, dataOp);
+			break;
+		case DELETE:
+			httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
+			break;
+		}
+		applyMetaDataHeaders(httpHeaders);
+		applyDynamicHeaders(httpHeaders);
+		applySharedHeaders(httpHeaders);
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, op.credential());
+		return httpRequest;
+	}
 
-  protected HttpMethod dataHttpMethod(final OpType opType) {
-    switch (opType) {
-      case READ:
-        return HttpMethod.GET;
-      case DELETE:
-        return HttpMethod.DELETE;
-      default:
-        return HttpMethod.PUT;
-    }
-  }
+	protected HttpMethod dataHttpMethod(final OpType opType) {
+		switch (opType) {
+		case READ:
+			return HttpMethod.GET;
+		case DELETE:
+			return HttpMethod.DELETE;
+		default:
+			return HttpMethod.PUT;
+		}
+	}
 
-  protected abstract HttpMethod tokenHttpMethod(final OpType opType);
+	protected abstract HttpMethod tokenHttpMethod(final OpType opType);
 
-  protected abstract HttpMethod pathHttpMethod(final OpType opType);
+	protected abstract HttpMethod pathHttpMethod(final OpType opType);
 
-  protected String dataUriPath(
-      final I item, final String srcPath, final String dstPath, final OpType opType) {
-    final String itemPath;
-    if (dstPath != null) {
-      itemPath = dstPath.startsWith(SLASH) ? dstPath : SLASH + dstPath;
-    } else if (srcPath != null) {
-      itemPath = srcPath.startsWith(SLASH) ? srcPath : SLASH + srcPath;
-    } else {
-      itemPath = null;
-    }
-    final String itemNameRaw = item.name();
-    final String itemName = itemNameRaw.startsWith(SLASH) ? itemNameRaw : SLASH + itemNameRaw;
-    return (itemPath == null || itemName.startsWith(itemPath)) ? itemName : itemPath + itemName;
-  }
+	protected String dataUriPath(
+					final I item, final String srcPath, final String dstPath, final OpType opType) {
+		final String itemPath;
+		if (dstPath != null) {
+			itemPath = dstPath.startsWith(SLASH) ? dstPath : SLASH + dstPath;
+		} else if (srcPath != null) {
+			itemPath = srcPath.startsWith(SLASH) ? srcPath : SLASH + srcPath;
+		} else {
+			itemPath = null;
+		}
+		final String itemNameRaw = item.name();
+		final String itemName = itemNameRaw.startsWith(SLASH) ? itemNameRaw : SLASH + itemNameRaw;
+		return (itemPath == null || itemName.startsWith(itemPath)) ? itemName : itemPath + itemName;
+	}
 
-  protected abstract String tokenUriPath(
-      final I item, final String srcPath, final String dstPath, final OpType opType);
+	protected abstract String tokenUriPath(
+					final I item, final String srcPath, final String dstPath, final OpType opType);
 
-  protected abstract String pathUriPath(
-      final I item, final String srcPath, final String dstPath, final OpType opType);
+	protected abstract String pathUriPath(
+					final I item, final String srcPath, final String dstPath, final OpType opType);
 
-  private static final ThreadLocal<StringBuilder> THR_LOC_RANGES_BUILDER =
-      ThreadLocal.withInitial(StringBuilder::new);
+	private static final ThreadLocal<StringBuilder> THR_LOC_RANGES_BUILDER = ThreadLocal.withInitial(StringBuilder::new);
 
-  protected void applyRangesHeaders(final HttpHeaders httpHeaders, final DataOperation dataOp) {
-    final long baseItemSize;
-    try {
-      baseItemSize = dataOp.item().size();
-    } catch (final IOException e) {
-      throw new AssertionError(e);
-    }
-    final List<Range> fixedRanges = dataOp.fixedRanges();
-    final StringBuilder strb = THR_LOC_RANGES_BUILDER.get();
-    strb.setLength(0);
-    if (fixedRanges == null || fixedRanges.isEmpty()) {
-      final BitSet rangesMaskPair[] = dataOp.markedRangesMaskPair();
-      if (rangesMaskPair[0].isEmpty() && rangesMaskPair[1].isEmpty()) {
-        return; // do not set the ranges header
-      }
-      // current layer first
-      for (int i = 0; i < rangeCount(baseItemSize); i++) {
-        if (rangesMaskPair[0].get(i)) {
-          if (strb.length() > 0) {
-            strb.append(',');
-          }
-          strb.append(rangeOffset(i))
-              .append('-')
-              .append(Math.min(rangeOffset(i + 1), baseItemSize) - 1);
-        }
-      }
-      // then next layer ranges if any
-      for (int i = 0; i < rangeCount(baseItemSize); i++) {
-        if (rangesMaskPair[1].get(i)) {
-          if (strb.length() > 0) {
-            strb.append(',');
-          }
-          strb.append(rangeOffset(i))
-              .append('-')
-              .append(Math.min(rangeOffset(i + 1), baseItemSize) - 1);
-        }
-      }
-    } else { // fixed byte ranges
-      rangeListToStringBuff(fixedRanges, baseItemSize, strb);
-    }
-    httpHeaders.set(HttpHeaderNames.RANGE, "bytes=" + strb.toString());
-  }
+	protected void applyRangesHeaders(final HttpHeaders httpHeaders, final DataOperation dataOp) {
+		final long baseItemSize;
+		try {
+			baseItemSize = dataOp.item().size();
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
+		final List<Range> fixedRanges = dataOp.fixedRanges();
+		final StringBuilder strb = THR_LOC_RANGES_BUILDER.get();
+		strb.setLength(0);
+		if (fixedRanges == null || fixedRanges.isEmpty()) {
+			final BitSet rangesMaskPair[] = dataOp.markedRangesMaskPair();
+			if (rangesMaskPair[0].isEmpty() && rangesMaskPair[1].isEmpty()) {
+				return; // do not set the ranges header
+			}
+			// current layer first
+			for (int i = 0; i < rangeCount(baseItemSize); i++) {
+				if (rangesMaskPair[0].get(i)) {
+					if (strb.length() > 0) {
+						strb.append(',');
+					}
+					strb.append(rangeOffset(i))
+									.append('-')
+									.append(Math.min(rangeOffset(i + 1), baseItemSize) - 1);
+				}
+			}
+			// then next layer ranges if any
+			for (int i = 0; i < rangeCount(baseItemSize); i++) {
+				if (rangesMaskPair[1].get(i)) {
+					if (strb.length() > 0) {
+						strb.append(',');
+					}
+					strb.append(rangeOffset(i))
+									.append('-')
+									.append(Math.min(rangeOffset(i + 1), baseItemSize) - 1);
+				}
+			}
+		} else { // fixed byte ranges
+			rangeListToStringBuff(fixedRanges, baseItemSize, strb);
+		}
+		httpHeaders.set(HttpHeaderNames.RANGE, "bytes=" + strb.toString());
+	}
 
-  protected static void rangeListToStringBuff(
-      final List<Range> ranges, final long baseLength, final StringBuilder dstBuff) {
-    Range nextFixedRange;
-    long nextRangeSize;
-    for (int i = 0; i < ranges.size(); i++) {
-      nextFixedRange = ranges.get(i);
-      nextRangeSize = nextFixedRange.getSize();
-      if (i > 0) {
-        dstBuff.append(',');
-      }
-      if (nextRangeSize == -1) {
-        dstBuff.append(nextFixedRange.toString());
-      } else {
-        dstBuff.append(baseLength).append("-");
-      }
-    }
-  }
+	protected static void rangeListToStringBuff(
+					final List<Range> ranges, final long baseLength, final StringBuilder dstBuff) {
+		Range nextFixedRange;
+		long nextRangeSize;
+		for (int i = 0; i < ranges.size(); i++) {
+			nextFixedRange = ranges.get(i);
+			nextRangeSize = nextFixedRange.getSize();
+			if (i > 0) {
+				dstBuff.append(',');
+			}
+			if (nextRangeSize == -1) {
+				dstBuff.append(nextFixedRange.toString());
+			} else {
+				dstBuff.append(baseLength).append("-");
+			}
+		}
+	}
 
-  protected void applySharedHeaders(final HttpHeaders httpHeaders) {
-    for (final Map.Entry<String, String> sharedHeader : sharedHeaders) {
-      httpHeaders.add(sharedHeader.getKey(), sharedHeader.getValue());
-    }
-  }
+	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
+		for (final Map.Entry<String, String> sharedHeader : sharedHeaders) {
+			httpHeaders.add(sharedHeader.getKey(), sharedHeader.getValue());
+		}
+	}
 
-  protected void applyDynamicHeaders(final HttpHeaders httpHeaders) {
-    String headerName;
-    String headerValue;
-    BatchSupplier<String> headerNameSupplier;
-    BatchSupplier<String> headerValueSupplier;
-    for (final Map.Entry<String, String> nextHeader : dynamicHeaders) {
-      headerName = nextHeader.getKey();
-      // header name is a generator pattern
-      headerNameSupplier =
-          headerNameInputs.computeIfAbsent(headerName, ASYNC_PATTERN_SUPPLIER_FUNC);
-      if (headerNameSupplier == null) {
-        continue;
-      }
-      // spin while header name generator is not ready
-      while (null == (headerName = headerNameSupplier.get())) {
-        LockSupport.parkNanos(1_000_000);
-      }
-      headerValue = nextHeader.getValue();
-      // header value is a generator pattern
-      headerValueSupplier =
-          headerValueInputs.computeIfAbsent(headerValue, ASYNC_PATTERN_SUPPLIER_FUNC);
-      if (headerValueSupplier == null) {
-        continue;
-      }
-      // spin while header value generator is not ready
-      while (null == (headerValue = headerValueSupplier.get())) {
-        LockSupport.parkNanos(1_000_000);
-      }
-      // put the generated header value into the request
-      httpHeaders.set(headerName, headerValue);
-    }
-  }
+	protected void applyDynamicHeaders(final HttpHeaders httpHeaders) {
+		String headerName;
+		String headerValue;
+		BatchSupplier<String> headerNameSupplier;
+		BatchSupplier<String> headerValueSupplier;
+		for (final Map.Entry<String, String> nextHeader : dynamicHeaders) {
+			headerName = nextHeader.getKey();
+			// header name is a generator pattern
+			headerNameSupplier = headerNameInputs.computeIfAbsent(headerName, ASYNC_PATTERN_SUPPLIER_FUNC);
+			if (headerNameSupplier == null) {
+				continue;
+			}
+			// spin while header name generator is not ready
+			while (null == (headerName = headerNameSupplier.get())) {
+				LockSupport.parkNanos(1_000_000);
+			}
+			headerValue = nextHeader.getValue();
+			// header value is a generator pattern
+			headerValueSupplier = headerValueInputs.computeIfAbsent(headerValue, ASYNC_PATTERN_SUPPLIER_FUNC);
+			if (headerValueSupplier == null) {
+				continue;
+			}
+			// spin while header value generator is not ready
+			while (null == (headerValue = headerValueSupplier.get())) {
+				LockSupport.parkNanos(1_000_000);
+			}
+			// put the generated header value into the request
+			httpHeaders.set(headerName, headerValue);
+		}
+	}
 
-  protected String uriQuery() {
-    return uriQueryInput.get();
-  }
+	protected String uriQuery() {
+		return uriQueryInput.get();
+	}
 
-  protected abstract void applyMetaDataHeaders(final HttpHeaders httpHeaders);
+	protected abstract void applyMetaDataHeaders(final HttpHeaders httpHeaders);
 
-  protected abstract void applyAuthHeaders(
-      final HttpHeaders httpHeaders,
-      final HttpMethod httpMethod,
-      final String dstUriPath,
-      final Credential credential);
+	protected abstract void applyAuthHeaders(
+					final HttpHeaders httpHeaders,
+					final HttpMethod httpMethod,
+					final String dstUriPath,
+					final Credential credential);
 
-  protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
-      throws URISyntaxException;
+	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
+					throws URISyntaxException;
 
-  @Override
-  protected final void sendRequest(final Channel channel, final O op) {
-    final String nodeAddr = op.nodeAddr();
-    try {
-      final HttpRequest httpRequest = httpRequest(op, nodeAddr);
-      if (channel == null) {
-        return;
-      } else {
-        channel.write(httpRequest).addListener(httpReqSentCallback);
-        if (Loggers.MSG.isTraceEnabled()) {
-          Loggers.MSG.trace(
-              "{} >>>> {} {}", op.hashCode(), httpRequest.method(), httpRequest.uri());
-        }
-      }
-      if (!(httpRequest instanceof FullHttpRequest)) {
-        sendRequestData(channel, op);
-      }
-    } catch (final IOException e) {
-      LogUtil.exception(Level.WARN, e, "Failed to write the data");
-    } catch (final URISyntaxException e) {
-      LogUtil.exception(Level.WARN, e, "Failed to build the request URI");
-    } catch (final Throwable e) {
-      if (!isStopped() && !isClosed()) {
-        LogUtil.trace(Loggers.ERR, Level.ERROR, e, "Send HTTP request failure");
-      }
-    }
-    channel.write(LastHttpContent.EMPTY_LAST_CONTENT).addListener(reqSentCallback);
-    channel.flush();
-  }
+	@Override
+	protected final void sendRequest(final Channel channel, final O op) {
+		final String nodeAddr = op.nodeAddr();
+		try {
+			final HttpRequest httpRequest = httpRequest(op, nodeAddr);
+			if (channel == null) {
+				return;
+			} else {
+				channel.write(httpRequest).addListener(httpReqSentCallback);
+				if (Loggers.MSG.isTraceEnabled()) {
+					Loggers.MSG.trace(
+									"{} >>>> {} {}", op.hashCode(), httpRequest.method(), httpRequest.uri());
+				}
+			}
+			if (!(httpRequest instanceof FullHttpRequest)) {
+				sendRequestData(channel, op);
+			}
+		} catch (final IOException e) {
+			LogUtil.exception(Level.WARN, e, "Failed to write the data");
+		} catch (final URISyntaxException e) {
+			LogUtil.exception(Level.WARN, e, "Failed to build the request URI");
+		} catch (final Throwable e) {
+			if (!isStopped() && !isClosed()) {
+				LogUtil.trace(Loggers.ERR, Level.ERROR, e, "Send HTTP request failure");
+			}
+		}
+		channel.write(LastHttpContent.EMPTY_LAST_CONTENT).addListener(reqSentCallback);
+		channel.flush();
+	}
 
-  void sendHttpRequestComplete(final ChannelFuture future) {
-    try {
-      future.get(1, TimeUnit.NANOSECONDS);
-    } catch (final ExecutionException | TimeoutException e) {
-      final var cause = e.getCause();
-      LogUtil.trace(Loggers.ERR, Level.WARN, cause, "Failed to send the request");
-      final var op = future.channel().attr(ATTR_KEY_OPERATION).get();
-      op.status(Status.FAIL_IO);
-      complete(future.channel(), (O) op);
-    } catch (final InterruptedException e) {
-      throw new InterruptRunException(e);
-    }
-  };
+	void sendHttpRequestComplete(final ChannelFuture future) {
+		try {
+			future.get(1, TimeUnit.NANOSECONDS);
+		} catch (final ExecutionException | TimeoutException e) {
+			final var cause = e.getCause();
+			LogUtil.trace(Loggers.ERR, Level.WARN, cause, "Failed to send the request");
+			final var op = future.channel().attr(ATTR_KEY_OPERATION).get();
+			op.status(Status.FAIL_IO);
+			complete(future.channel(), (O) op);
+		} catch (final InterruptedException e) {
+			throw new InterruptRunException(e);
+		}
+	};
 
-  @Override
-  protected void doClose() throws IOException {
-    super.doClose();
-    uriQueryInput.close();
-    dateSupplier.close();
-    sharedHeaders.clear();
-    dynamicHeaders.clear();
-    headerNameInputs
-        .values()
-        .forEach(
-            headerNameInput -> {
-              try {
-                headerNameInput.close();
-              } catch (final IOException ignored) {
-              }
-            });
-    headerNameInputs.clear();
-    headerValueInputs
-        .values()
-        .forEach(
-            headerValueInput -> {
-              try {
-                headerValueInput.close();
-              } catch (final IOException ignored) {
-              }
-            });
-    headerValueInputs.clear();
-  }
+	@Override
+	protected void doClose() throws IOException {
+		super.doClose();
+		uriQueryInput.close();
+		dateSupplier.close();
+		sharedHeaders.clear();
+		dynamicHeaders.clear();
+		headerNameInputs
+						.values()
+						.forEach(
+										headerNameInput -> {
+											try {
+												headerNameInput.close();
+											} catch (final IOException ignored) {}
+										});
+		headerNameInputs.clear();
+		headerValueInputs
+						.values()
+						.forEach(
+										headerValueInput -> {
+											try {
+												headerValueInput.close();
+											} catch (final IOException ignored) {}
+										});
+		headerValueInputs.clear();
+	}
 }

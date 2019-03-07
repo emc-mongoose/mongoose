@@ -38,7 +38,6 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
-import io.netty.util.AsciiString;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -60,41 +59,37 @@ import org.apache.logging.log4j.Level;
  * Created by kurila on 11.11.16.
  */
 public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
-extends HttpStorageDriverBase<I, O> {
+				extends HttpStorageDriverBase<I, O> {
 
-	private static final ThreadLocal<StringBuilder> BUFF_CANONICAL =
-		ThreadLocal.withInitial(StringBuilder::new);
+	private static final ThreadLocal<StringBuilder> BUFF_CANONICAL = ThreadLocal.withInitial(StringBuilder::new);
 
 	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 	private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
-	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET =
-		ThreadLocal.withInitial(HashMap::new);
-	private static final Function<String, Mac> GET_MAC_BY_SECRET =
-		secret -> {
-			try {
-				final var secretKey = new SecretKeySpec(BASE64_DECODER.decode(secret.getBytes(UTF_8)), SIGN_METHOD);
-				final var mac = Mac.getInstance(SIGN_METHOD);
-				mac.init(secretKey);
-				return mac;
-			} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
-				LogUtil.exception(Level.ERROR, e, "Failed to init MAC for the given secret key");
-			} catch(final IllegalArgumentException e) {
-				LogUtil.exception(Level.ERROR, e, "Failed to perform the secret key Base-64 decoding");
-			}
-			return null;
-		};
+	private static final ThreadLocal<Map<String, Mac>> MAC_BY_SECRET = ThreadLocal.withInitial(HashMap::new);
+	private static final Function<String, Mac> GET_MAC_BY_SECRET = secret -> {
+		try {
+			final var secretKey = new SecretKeySpec(BASE64_DECODER.decode(secret.getBytes(UTF_8)), SIGN_METHOD);
+			final var mac = Mac.getInstance(SIGN_METHOD);
+			mac.init(secretKey);
+			return mac;
+		} catch (final NoSuchAlgorithmException | InvalidKeyException e) {
+			LogUtil.exception(Level.ERROR, e, "Failed to init MAC for the given secret key");
+		} catch (final IllegalArgumentException e) {
+			LogUtil.exception(Level.ERROR, e, "Failed to perform the secret key Base-64 decoding");
+		}
+		return null;
+	};
 
 	protected final boolean fsAccess;
 
 	public AtmosStorageDriver(
-		final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-		final int batchSize
-	) throws OmgShootMyFootException, InterruptedException {
+					final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+					final int batchSize) throws OmgShootMyFootException, InterruptedException {
 		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 		final var httpConfig = storageConfig.configVal("net-http");
 		fsAccess = httpConfig.boolVal("fsAccess");
-		if(namespace != null && !namespace.isEmpty()) {
+		if (namespace != null && !namespace.isEmpty()) {
 			sharedHeaders.set(KEY_X_EMC_NAMESPACE, namespace);
 		}
 		requestNewPathFunc = null; // do not use
@@ -107,7 +102,7 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final String requestNewAuthToken(final Credential credential)
-	throws InterruptRunException {
+					throws InterruptRunException {
 
 		final var nodeAddr = storageNodeAddrs[0];
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
@@ -115,22 +110,20 @@ extends HttpStorageDriverBase<I, O> {
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
 		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		// reqHeaders.set(KEY_X_EMC_DATE, reqHeaders.get(HttpHeaderNames.DATE));
-		if(fsAccess) {
+		if (fsAccess) {
 			reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess));
 		}
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
 		applyAuthHeaders(reqHeaders, HttpMethod.PUT, SUBTENANT_URI_BASE, credential);
 
-		final FullHttpRequest getSubtenantReq =
-			new DefaultFullHttpRequest(
-				HttpVersion.HTTP_1_1,
-				HttpMethod.PUT,
-				SUBTENANT_URI_BASE,
-				Unpooled.EMPTY_BUFFER,
-				reqHeaders,
-				EmptyHttpHeaders.INSTANCE
-			);
+		final FullHttpRequest getSubtenantReq = new DefaultFullHttpRequest(
+						HttpVersion.HTTP_1_1,
+						HttpMethod.PUT,
+						SUBTENANT_URI_BASE,
+						Unpooled.EMPTY_BUFFER,
+						reqHeaders,
+						EmptyHttpHeaders.INSTANCE);
 
 		String subtenantId = null;
 
@@ -138,18 +131,18 @@ extends HttpStorageDriverBase<I, O> {
 		try {
 			getSubtenantResp = executeHttpRequest(getSubtenantReq);
 			try {
-				if(HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
+				if (HttpStatusClass.SUCCESS.equals(getSubtenantResp.status().codeClass())) {
 					subtenantId = getSubtenantResp.headers().get(KEY_SUBTENANT_ID);
 				} else {
 					Loggers.ERR.warn(
-						"Creating the subtenant: got response {}", getSubtenantResp.status().toString());
+									"Creating the subtenant: got response {}", getSubtenantResp.status().toString());
 				}
 			} finally {
 				getSubtenantResp.release();
 			}
-		} catch(final InterruptedException e) {
+		} catch (final InterruptedException e) {
 			throw new InterruptRunException(e);
-		} catch(final ConnectException e) {
+		} catch (final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}
 
@@ -158,10 +151,9 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	public final List<I> list(
-		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
-		final I lastPrevItem, final int count
-	)
-	throws IOException {
+					final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
+					final I lastPrevItem, final int count)
+					throws IOException {
 		return null;
 	}
 
@@ -173,35 +165,35 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final HttpMethod dataHttpMethod(final OpType opType) {
-		switch(opType) {
-			case NOOP:
-				return HttpMethod.HEAD;
-			case CREATE:
-				return HttpMethod.POST;
-			case READ:
-				return HttpMethod.GET;
-			case UPDATE:
-				return HttpMethod.PUT;
-			case DELETE:
-				return HttpMethod.DELETE;
-			default:
-				throw new AssertionError("Unsupported I/O type: " + opType);
+		switch (opType) {
+		case NOOP:
+			return HttpMethod.HEAD;
+		case CREATE:
+			return HttpMethod.POST;
+		case READ:
+			return HttpMethod.GET;
+		case UPDATE:
+			return HttpMethod.PUT;
+		case DELETE:
+			return HttpMethod.DELETE;
+		default:
+			throw new AssertionError("Unsupported I/O type: " + opType);
 		}
 	}
 
 	@Override
 	protected final HttpMethod tokenHttpMethod(final OpType opType) {
-		switch(opType) {
-			case NOOP:
-				return HttpMethod.HEAD;
-			case CREATE:
-				return HttpMethod.PUT;
-			case READ:
-				return HttpMethod.GET;
-			case DELETE:
-				return HttpMethod.DELETE;
-			default:
-				throw new AssertionError("Not implemented yet");
+		switch (opType) {
+		case NOOP:
+			return HttpMethod.HEAD;
+		case CREATE:
+			return HttpMethod.PUT;
+		case READ:
+			return HttpMethod.GET;
+		case DELETE:
+			return HttpMethod.DELETE;
+		default:
+			throw new AssertionError("Not implemented yet");
 		}
 	}
 
@@ -212,11 +204,10 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final String dataUriPath(
-		final I item, final String srcPath, final String dstPath, final OpType opType
-	) {
-		if(fsAccess) {
+					final I item, final String srcPath, final String dstPath, final OpType opType) {
+		if (fsAccess) {
 			return NS_URI_BASE + super.dataUriPath(item, srcPath, dstPath, opType);
-		} else if(CREATE.equals(opType)) {
+		} else if (CREATE.equals(opType)) {
 			return OBJ_URI_BASE;
 		} else {
 			return OBJ_URI_BASE + super.dataUriPath(item, srcPath, dstPath, opType);
@@ -225,9 +216,8 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final String tokenUriPath(
-		final I item, final String srcPath, final String dstPath, final OpType opType
-	) {
-		if(CREATE.equals(opType)) {
+					final I item, final String srcPath, final String dstPath, final OpType opType) {
+		if (CREATE.equals(opType)) {
 			return SUBTENANT_URI_BASE;
 		} else {
 			return SUBTENANT_URI_BASE + '/' + item.name();
@@ -236,28 +226,25 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final String pathUriPath(
-		final I item, final String srcPath, final String dstPath, final OpType opType
-	) {
+					final I item, final String srcPath, final String dstPath, final OpType opType) {
 		throw new AssertionError("Not implemented yet");
 	}
 
 	@Override
-	protected final void applyMetaDataHeaders(final HttpHeaders httpHeaders) {
-	}
+	protected final void applyMetaDataHeaders(final HttpHeaders httpHeaders) {}
 
 	@Override
 	protected final void applyAuthHeaders(
-		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
-		final Credential credential
-	) {
+					final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
+					final Credential credential) {
 		final String authToken;
 		final String uid;
 		final String secret;
-		if(credential != null) {
+		if (credential != null) {
 			authToken = authTokens.get(credential);
 			uid = credential.getUid();
 			secret = credential.getSecret();
-		} else if(this.credential != null) {
+		} else if (this.credential != null) {
 			authToken = authTokens.get(this.credential);
 			uid = this.credential.getUid();
 			secret = this.credential.getSecret();
@@ -267,15 +254,15 @@ extends HttpStorageDriverBase<I, O> {
 			secret = null;
 		}
 
-		if(uid != null && !uid.isEmpty()) {
-			if(authToken != null && !authToken.isEmpty() && !dstUriPath.equals(SUBTENANT_URI_BASE)) {
+		if (uid != null && !uid.isEmpty()) {
+			if (authToken != null && !authToken.isEmpty() && !dstUriPath.equals(SUBTENANT_URI_BASE)) {
 				httpHeaders.set(KEY_X_EMC_UID, authToken + '/' + uid);
 			} else {
 				httpHeaders.set(KEY_X_EMC_UID, uid);
 			}
 		}
 
-		if(secret != null && !secret.isEmpty()) {
+		if (secret != null && !secret.isEmpty()) {
 			final var mac = MAC_BY_SECRET.get().computeIfAbsent(secret, GET_MAC_BY_SECRET);
 			final var canonicalForm = getCanonical(httpHeaders, httpMethod, dstUriPath);
 			final byte sigData[] = mac.doFinal(canonicalForm.getBytes());
@@ -284,18 +271,17 @@ extends HttpStorageDriverBase<I, O> {
 	}
 
 	protected String getCanonical(
-		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath
-	) {
+					final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath) {
 		final var buffCanonical = BUFF_CANONICAL.get();
 		buffCanonical.setLength(0); // reset/clear
 		buffCanonical.append(httpMethod.name());
 
-		for(final var headerName : HEADERS_CANONICAL) {
-			if(httpHeaders.contains(headerName)) {
-				for(final var headerValue : httpHeaders.getAll(headerName)) {
+		for (final var headerName : HEADERS_CANONICAL) {
+			if (httpHeaders.contains(headerName)) {
+				for (final var headerValue : httpHeaders.getAll(headerName)) {
 					buffCanonical.append('\n').append(headerValue);
 				}
-			} else if(sharedHeaders != null && sharedHeaders.contains(headerName)) {
+			} else if (sharedHeaders != null && sharedHeaders.contains(headerName)) {
 				buffCanonical.append('\n').append(sharedHeaders.get(headerName));
 			} else {
 				buffCanonical.append('\n');
@@ -307,29 +293,29 @@ extends HttpStorageDriverBase<I, O> {
 		// x-emc-*
 		String headerName;
 		Map<String, String> sortedHeaders = new TreeMap<>();
-		if(sharedHeaders != null) {
-			for(final var header : sharedHeaders) {
+		if (sharedHeaders != null) {
+			for (final var header : sharedHeaders) {
 				headerName = header.getKey().toLowerCase();
-				if(headerName.startsWith(PREFIX_KEY_X_EMC) && !headerName.equals(KEY_X_EMC_SIGNATURE)) {
+				if (headerName.startsWith(PREFIX_KEY_X_EMC) && !headerName.equals(KEY_X_EMC_SIGNATURE)) {
 					sortedHeaders.put(headerName, header.getValue());
 				}
 			}
 		}
-		for(final var header : httpHeaders) {
+		for (final var header : httpHeaders) {
 			headerName = header.getKey().toLowerCase();
-			if(headerName.startsWith(PREFIX_KEY_X_EMC) && !headerName.equals(KEY_X_EMC_SIGNATURE)) {
+			if (headerName.startsWith(PREFIX_KEY_X_EMC) && !headerName.equals(KEY_X_EMC_SIGNATURE)) {
 				sortedHeaders.put(headerName, header.getValue());
 			}
 		}
-		for(final var sortedHeader : sortedHeaders.entrySet()) {
+		for (final var sortedHeader : sortedHeaders.entrySet()) {
 			buffCanonical
-				.append('\n')
-				.append(sortedHeader.getKey())
-				.append(':')
-				.append(sortedHeader.getValue());
+							.append('\n')
+							.append(sortedHeader.getKey())
+							.append(':')
+							.append(sortedHeader.getValue());
 		}
 
-		if(Loggers.MSG.isTraceEnabled()) {
+		if (Loggers.MSG.isTraceEnabled()) {
 			Loggers.MSG.trace("Canonical representation:\n{}", buffCanonical);
 		}
 
@@ -338,8 +324,7 @@ extends HttpStorageDriverBase<I, O> {
 
 	@Override
 	protected final void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
-	throws URISyntaxException {
-	}
+					throws URISyntaxException {}
 
 	@Override
 	public final String toString() {

@@ -14,36 +14,35 @@ import org.apache.logging.log4j.Level;
 
 public abstract class ExtensionBase extends InstallableJarResources implements Extension {
 
-  @Override
-  public final Config defaults(final Path appHomePath) {
+	@Override
+	public final Config defaults(final Path appHomePath) {
 
-    final SchemaProvider schemaProvider = schemaProvider();
-    final Map<String, Object> schema;
-    if (schemaProvider == null) {
-      schema = null;
-    } else {
-      try {
-        schema = schemaProvider.schema();
-      } catch (final Exception e) {
-        LogUtil.exception(Level.WARN, e, "{}: failed to load the schema", schemaProvider);
-        return null;
-      }
-    }
+		final SchemaProvider schemaProvider = schemaProvider();
+		final Map<String, Object> schema;
+		if (schemaProvider == null) {
+			schema = null;
+		} else {
+			try {
+				schema = schemaProvider.schema();
+			} catch (final Exception e) {
+				LogUtil.exception(Level.WARN, e, "{}: failed to load the schema", schemaProvider);
+				return null;
+			}
+		}
 
-    final String defaultsFileName = defaultsFileName();
-    if (defaultsFileName == null) {
-      return null;
-    }
-    final File defaultsFile =
-        Paths.get(appHomePath.toString(), DIR_CONFIG, defaultsFileName).toFile();
-    try {
-      return ConfigUtil.loadConfig(defaultsFile, schema);
-    } catch (final Exception e) {
-      LogUtil.exception(
-          Level.WARN, e, "Failed to load the defaults config from \"{}\"", defaultsFile);
-      return null;
-    }
-  }
+		final String defaultsFileName = defaultsFileName();
+		if (defaultsFileName == null) {
+			return null;
+		}
+		final File defaultsFile = Paths.get(appHomePath.toString(), DIR_CONFIG, defaultsFileName).toFile();
+		try {
+			return ConfigUtil.loadConfig(defaultsFile, schema);
+		} catch (final Exception e) {
+			LogUtil.exception(
+							Level.WARN, e, "Failed to load the defaults config from \"{}\"", defaultsFile);
+			return null;
+		}
+	}
 
-  protected abstract String defaultsFileName();
+	protected abstract String defaultsFileName();
 }

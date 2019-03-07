@@ -3,14 +3,14 @@ package com.emc.mongoose.base.data;
 /** Created by andrey on 26.06.15. */
 public class DataSizeException extends DataVerificationException {
 
-  private final long expected;
+	private final long expected;
 
-  public DataSizeException(final long expected, final long actual) {
-    super(actual);
-    this.expected = expected;
-  }
+	public DataSizeException(final long expected, final long actual) {
+		super(actual);
+		this.expected = expected;
+	}
 
-  public long getExpected() {
-    return expected;
-  }
+	public long getExpected() {
+		return expected;
+	}
 }

@@ -26,57 +26,51 @@ import java.util.List;
 public abstract class ResponseContentUtil {
 
 	public static void verifyChunk(
-		final DataOperation dataOp, final long countBytesDone, final ByteBuf contentChunk, final int chunkSize
-	) throws IOException {
+					final DataOperation dataOp, final long countBytesDone, final ByteBuf contentChunk, final int chunkSize) throws IOException {
 		final List<Range> byteRanges = dataOp.fixedRanges();
 		final DataItem item = dataOp.item();
 		try {
-			if(byteRanges != null && !byteRanges.isEmpty()) {
+			if (byteRanges != null && !byteRanges.isEmpty()) {
 				verifyChunkDataAndSize(dataOp, item, countBytesDone, contentChunk, chunkSize, byteRanges);
-			} else if(dataOp.hasMarkedRanges()) {
+			} else if (dataOp.hasMarkedRanges()) {
 				verifyChunkDataAndSize(
-					dataOp, item, countBytesDone, contentChunk, chunkSize, dataOp.markedRangesMaskPair()
-				);
+								dataOp, item, countBytesDone, contentChunk, chunkSize, dataOp.markedRangesMaskPair());
 			} else {
-				if(item.isUpdated()){
+				if (item.isUpdated()) {
 					verifyChunkUpdatedData(dataOp, item, countBytesDone, contentChunk, chunkSize);
 				} else {
-					if(chunkSize > item.size() - countBytesDone) {
+					if (chunkSize > item.size() - countBytesDone) {
 						throw new DataSizeException(item.size(), countBytesDone + chunkSize);
 					}
 					verifyChunkData(item, contentChunk, 0, chunkSize);
 				}
 				dataOp.countBytesDone(countBytesDone + chunkSize);
 			}
-		} catch(final DataVerificationException e) {
+		} catch (final DataVerificationException e) {
 			final DataItem dataItem = dataOp.item();
 			dataOp.countBytesDone(e.getOffset());
 			dataOp.status(Operation.Status.RESP_FAIL_CORRUPT);
-			if(e instanceof DataSizeException) {
+			if (e instanceof DataSizeException) {
 				try {
 					Loggers.MSG.debug(
-						"{}: invalid size, expected: {}, actual: {} ", dataItem.name(), dataItem.size(), e.getOffset()
-					);
-				} catch(final IOException ignored) {
-				}
-			} else if(e instanceof DataCorruptionException) {
+									"{}: invalid size, expected: {}, actual: {} ", dataItem.name(), dataItem.size(), e.getOffset());
+				} catch (final IOException ignored) {}
+			} else if (e instanceof DataCorruptionException) {
 				final DataCorruptionException ee = (DataCorruptionException) e;
 				Loggers.MSG.debug(
-					"{}: content mismatch @ offset {}, expected: {}, actual: {} ", dataItem.name(), ee.getOffset(),
-					String.format("\"0x%X\"", (int) (ee.expected & 0xFF)),
-					String.format("\"0x%X\"", (int) (ee.actual & 0xFF))
-				);
+								"{}: content mismatch @ offset {}, expected: {}, actual: {} ", dataItem.name(), ee.getOffset(),
+								String.format("\"0x%X\"", (int) (ee.expected & 0xFF)),
+								String.format("\"0x%X\"", (int) (ee.actual & 0xFF)));
 			}
 		}
 	}
 
 	private static void verifyChunkDataAndSize(
-		final DataOperation dataOp, final DataItem dataItem, final long countBytesDone, final ByteBuf chunkData,
-		final int chunkSize, final List<Range> byteRanges
-	) throws DataCorruptionException, IOException {
+					final DataOperation dataOp, final DataItem dataItem, final long countBytesDone, final ByteBuf chunkData,
+					final int chunkSize, final List<Range> byteRanges) throws DataCorruptionException, IOException {
 
 		final long rangesSizeSum = dataOp.markedRangesSize();
-		if(chunkSize > rangesSizeSum - countBytesDone) {
+		if (chunkSize > rangesSizeSum - countBytesDone) {
 			throw new DataSizeException(dataOp.markedRangesSize(), countBytesDone + chunkSize);
 		}
 		final long baseItemSize = dataItem.size();
@@ -94,16 +88,16 @@ public abstract class ResponseContentUtil {
 		int chunkOffset = 0;
 		int n;
 
-		while(chunkOffset < chunkSize) {
+		while (chunkOffset < chunkSize) {
 			currRangeIdx = dataOp.currRangeIdx();
 			byteRange = byteRanges.get(currRangeIdx);
 			currOffset = byteRange.getBeg();
 			rangeEnd = byteRange.getEnd();
-			if(currOffset == -1) {
+			if (currOffset == -1) {
 				// last "rangeEnd" bytes
 				currOffset = baseItemSize - rangeEnd;
 				rangeSize = rangeEnd;
-			} else if(rangeEnd == -1) {
+			} else if (rangeEnd == -1) {
 				// start @ offset equal to "currOffset"
 				rangeSize = baseItemSize - currOffset;
 			} else {
@@ -119,7 +113,7 @@ public abstract class ResponseContentUtil {
 			cellEnd = Math.min(baseItemSize, rangeOffset(n + 1));
 			// get the found cell data item (updated or not)
 			currRange = dataItem.slice(cellOffset, cellEnd - cellOffset);
-			if(dataItem.isRangeUpdated(n)) {
+			if (dataItem.isRangeUpdated(n)) {
 				currRange.layer(dataItem.layer() + 1);
 			}
 			// set the cell data item internal position to (current offset - cell's offset)
@@ -130,9 +124,9 @@ public abstract class ResponseContentUtil {
 			chunkOffset += n;
 			rangeBytesDone += n;
 
-			if(rangeBytesDone == rangeSize) {
+			if (rangeBytesDone == rangeSize) {
 				// current byte range verification is finished
-				if(currRangeIdx == byteRanges.size() - 1) {
+				if (currRangeIdx == byteRanges.size() - 1) {
 					// current byte range was last in the list
 					dataOp.countBytesDone(rangesSizeSum);
 					break;
@@ -146,11 +140,10 @@ public abstract class ResponseContentUtil {
 	}
 
 	private static void verifyChunkDataAndSize(
-		final DataOperation dataOp, final DataItem dataItem, final long countBytesDone, final ByteBuf chunkData,
-		final int chunkSize, final BitSet markedRangesMaskPair[]
-	) throws DataCorruptionException, IOException {
+					final DataOperation dataOp, final DataItem dataItem, final long countBytesDone, final ByteBuf chunkData,
+					final int chunkSize, final BitSet markedRangesMaskPair[]) throws DataCorruptionException, IOException {
 
-		if(chunkSize > dataOp.markedRangesSize() - countBytesDone) {
+		if (chunkSize > dataOp.markedRangesSize() - countBytesDone) {
 			throw new DataSizeException(dataOp.markedRangesSize(), countBytesDone + chunkSize);
 		}
 
@@ -162,13 +155,11 @@ public abstract class ResponseContentUtil {
 		int chunkOffset = 0;
 		int n;
 
-		while(chunkOffset < chunkSize) {
+		while (chunkOffset < chunkSize) {
 			currRangeIdx = dataOp.currRangeIdx();
-			if(!markedRangesMaskPair[0].get(currRangeIdx) && !markedRangesMaskPair[1].get(currRangeIdx)) {
-				if(
-					-1 == markedRangesMaskPair[0].nextSetBit(currRangeIdx)
-						&& -1 == markedRangesMaskPair[1].nextSetBit(currRangeIdx)
-				) {
+			if (!markedRangesMaskPair[0].get(currRangeIdx) && !markedRangesMaskPair[1].get(currRangeIdx)) {
+				if (-1 == markedRangesMaskPair[0].nextSetBit(currRangeIdx)
+								&& -1 == markedRangesMaskPair[1].nextSetBit(currRangeIdx)) {
 					dataOp.countBytesDone(dataOp.markedRangesSize());
 					return;
 				}
@@ -184,12 +175,10 @@ public abstract class ResponseContentUtil {
 			chunkOffset += n;
 			rangeBytesDone += n;
 
-			if(rangeBytesDone == rangeSize) {
+			if (rangeBytesDone == rangeSize) {
 				// current byte range verification is finished
-				if(
-					-1 == markedRangesMaskPair[0].nextSetBit(currRangeIdx + 1)
-						&& -1 == markedRangesMaskPair[1].nextSetBit(currRangeIdx + 1)
-				) {
+				if (-1 == markedRangesMaskPair[0].nextSetBit(currRangeIdx + 1)
+								&& -1 == markedRangesMaskPair[1].nextSetBit(currRangeIdx + 1)) {
 					// current byte range was last in the list
 					dataOp.countBytesDone(dataOp.markedRangesSize());
 					return;
@@ -203,22 +192,21 @@ public abstract class ResponseContentUtil {
 	}
 
 	private static void verifyChunkUpdatedData(
-		final DataOperation dataOp, final DataItem item, final long countBytesDone, final ByteBuf chunkData,
-		final int chunkSize
-	) throws DataCorruptionException, IOException {
+					final DataOperation dataOp, final DataItem item, final long countBytesDone, final ByteBuf chunkData,
+					final int chunkSize) throws DataCorruptionException, IOException {
 
 		int chunkCountDone = 0, remainingSize;
 		long nextRangeOffset;
 		int currRangeIdx;
 		DataItem currRange;
 
-		while(chunkCountDone < chunkSize) {
+		while (chunkCountDone < chunkSize) {
 
 			currRangeIdx = dataOp.currRangeIdx();
 			nextRangeOffset = rangeOffset(currRangeIdx + 1);
-			if(countBytesDone + chunkCountDone == nextRangeOffset) {
-				if(nextRangeOffset < item.size()) {
-					currRangeIdx ++;
+			if (countBytesDone + chunkCountDone == nextRangeOffset) {
+				if (nextRangeOffset < item.size()) {
+					currRangeIdx++;
 					nextRangeOffset = rangeOffset(currRangeIdx + 1);
 					dataOp.currRangeIdx(currRangeIdx);
 				} else {
@@ -229,27 +217,24 @@ public abstract class ResponseContentUtil {
 
 			try {
 				remainingSize = (int) Math.min(
-					chunkSize - chunkCountDone, nextRangeOffset - countBytesDone - chunkCountDone
-				);
+								chunkSize - chunkCountDone, nextRangeOffset - countBytesDone - chunkCountDone);
 				verifyChunkData(currRange, chunkData, chunkCountDone, remainingSize);
 				chunkCountDone += remainingSize;
-			} catch(final DataCorruptionException e) {
+			} catch (final DataCorruptionException e) {
 				throw new DataCorruptionException(
-					rangeOffset(dataOp.currRangeIdx()) + e.getOffset(), e.expected, e.actual
-				);
+								rangeOffset(dataOp.currRangeIdx()) + e.getOffset(), e.expected, e.actual);
 			}
 		}
 	}
 
 	private static void verifyChunkData(
-		final DataItem item, final ByteBuf chunkData, final int chunkOffset, final int remainingSize
-	) throws DataCorruptionException, IOException {
+					final DataItem item, final ByteBuf chunkData, final int chunkOffset, final int remainingSize) throws DataCorruptionException, IOException {
 
 		// fill the expected data buffer to compare with a chunk
 		final ByteBuffer bb = DirectMemUtil.getThreadLocalReusableBuff(remainingSize);
 		bb.limit(remainingSize);
 		int n = 0;
-		while(n < remainingSize) {
+		while (n < remainingSize) {
 			n += item.read(bb);
 		}
 		bb.flip();
@@ -260,15 +245,15 @@ public abstract class ResponseContentUtil {
 		int buffPos = 0;
 		int chunkPos = chunkOffset;
 
-		if(buff.writerIndex() - remainingSize < buffPos || chunkData.writerIndex() - remainingSize < chunkPos) {
+		if (buff.writerIndex() - remainingSize < buffPos || chunkData.writerIndex() - remainingSize < chunkPos) {
 			fastEquals = false;
 		} else {
 			final int longCount = remainingSize >>> 3;
 			final int byteCount = remainingSize & 7;
 
 			// assuming the same order (big endian)
-			for(int i = longCount; i > 0; i --) {
-				if(buff.getLong(buffPos) != chunkData.getLong(chunkPos)) {
+			for (int i = longCount; i > 0; i--) {
+				if (buff.getLong(buffPos) != chunkData.getLong(chunkPos)) {
 					fastEquals = false;
 					break;
 				}
@@ -276,29 +261,29 @@ public abstract class ResponseContentUtil {
 				chunkPos += 8;
 			}
 
-			if(fastEquals) {
-				for(int i = byteCount; i > 0; i --) {
-					if(buff.getByte(buffPos) != chunkData.getByte(chunkPos)) {
+			if (fastEquals) {
+				for (int i = byteCount; i > 0; i--) {
+					if (buff.getByte(buffPos) != chunkData.getByte(chunkPos)) {
 						fastEquals = false;
 						break;
 					}
-					buffPos ++;
-					chunkPos ++;
+					buffPos++;
+					chunkPos++;
 				}
 			}
 		}
 
-		if(fastEquals) {
+		if (fastEquals) {
 			buff.release();
 			return;
 		}
 
 		// slow byte by byte compare if fast one fails to find the exact mismatch position
 		byte expected, actual;
-		for(int i = 0; i < remainingSize; i ++) {
+		for (int i = 0; i < remainingSize; i++) {
 			expected = buff.getByte(i);
 			actual = chunkData.getByte(chunkOffset + i);
-			if(expected != actual) {
+			if (expected != actual) {
 				buff.release();
 				throw new DataCorruptionException(i, expected, actual);
 			}

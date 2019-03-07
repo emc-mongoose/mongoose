@@ -5,7 +5,7 @@ package com.emc.mongoose.base.exception;
  * java.lang.RuntimeException} in order to be passed on the uppermost level of the stacktrace.
  */
 public class InterruptRunException extends RuntimeException {
-  public InterruptRunException(final Throwable cause) {
-    super(cause);
-  }
+	public InterruptRunException(final Throwable cause) {
+		super(cause);
+	}
 }

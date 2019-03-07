@@ -3,12 +3,13 @@ package com.emc.mongoose.base.supply;
 /** Created by kurila on 11.03.16. */
 public interface PatternDefinedSupplier extends BatchSupplier<String> {
 
-  /** Special characters */
-  char PATTERN_CHAR = '%';
+	/** Special characters */
+	char PATTERN_CHAR = '%';
 
-  char FORMAT_BRACKETS[] = {'{', '}'};
+	char FORMAT_BRACKETS[] = {'{', '}'
+	};
 
-  String getPattern();
+	String getPattern();
 
-  String format(final StringBuilder result);
+	String format(final StringBuilder result);
 }

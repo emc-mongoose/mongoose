@@ -7,15 +7,14 @@ import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
 import com.github.akurilov.confuse.Config;
 
-public interface StorageDriverFactory<
-        I extends Item, O extends Operation<I>, T extends StorageDriver<I, O>>
-    extends Extension {
+public interface StorageDriverFactory<I extends Item, O extends Operation<I>, T extends StorageDriver<I, O>>
+				extends Extension {
 
-  T create(
-      final String stepId,
-      final DataInput dataInput,
-      final Config storageConfig,
-      final boolean verifyFlag,
-      final int batchSize)
-      throws OmgShootMyFootException, InterruptedException;
+	T create(
+					final String stepId,
+					final DataInput dataInput,
+					final Config storageConfig,
+					final boolean verifyFlag,
+					final int batchSize)
+					throws OmgShootMyFootException, InterruptedException;
 }

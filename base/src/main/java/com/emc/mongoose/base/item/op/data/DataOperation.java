@@ -9,38 +9,38 @@ import java.util.List;
 /** Created by kurila on 11.07.16. */
 public interface DataOperation<I extends DataItem> extends Operation<I> {
 
-  @Override
-  I item();
+	@Override
+	I item();
 
-  void markRandomRanges(final int count);
+	void markRandomRanges(final int count);
 
-  boolean hasMarkedRanges();
+	boolean hasMarkedRanges();
 
-  long markedRangesSize();
+	long markedRangesSize();
 
-  BitSet[] markedRangesMaskPair();
+	BitSet[] markedRangesMaskPair();
 
-  List<Range> fixedRanges();
+	List<Range> fixedRanges();
 
-  int randomRangesCount();
+	int randomRangesCount();
 
-  List<I> srcItemsToConcat();
+	List<I> srcItemsToConcat();
 
-  int currRangeIdx();
+	int currRangeIdx();
 
-  void currRangeIdx(final int i);
+	void currRangeIdx(final int i);
 
-  DataItem currRange();
+	DataItem currRange();
 
-  DataItem currRangeUpdate();
+	DataItem currRangeUpdate();
 
-  long countBytesDone();
+	long countBytesDone();
 
-  void countBytesDone(long n);
+	void countBytesDone(long n);
 
-  long respDataTimeStart();
+	long respDataTimeStart();
 
-  void startDataResponse() throws IllegalStateException;
+	void startDataResponse() throws IllegalStateException;
 
-  long dataLatency();
+	long dataLatency();
 }

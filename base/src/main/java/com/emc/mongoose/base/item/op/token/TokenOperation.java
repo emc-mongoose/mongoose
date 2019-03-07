@@ -6,14 +6,14 @@ import com.emc.mongoose.base.item.op.Operation;
 /** Created by kurila on 11.07.16. */
 public interface TokenOperation<I extends TokenItem> extends Operation<I> {
 
-  @Override
-  I item();
+	@Override
+	I item();
 
-  long countBytesDone();
+	long countBytesDone();
 
-  void countBytesDone(long n);
+	void countBytesDone(long n);
 
-  long respDataTimeStart();
+	long respDataTimeStart();
 
-  void startDataResponse();
+	void startDataResponse();
 }

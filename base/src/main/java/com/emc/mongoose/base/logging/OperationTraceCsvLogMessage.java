@@ -12,16 +12,16 @@ import org.apache.logging.log4j.message.AsynchronouslyFormattable;
  */
 @AsynchronouslyFormattable
 public final class OperationTraceCsvLogMessage<I extends Item, O extends Operation<I>>
-    extends LogMessageBase {
+				extends LogMessageBase {
 
-  private final OperationTraceRecord<I, O> opTraceRec;
+	private final OperationTraceRecord<I, O> opTraceRec;
 
-  public OperationTraceCsvLogMessage(final O opResult) {
-    opTraceRec = new OperationTraceRecord<>(opResult);
-  }
+	public OperationTraceCsvLogMessage(final O opResult) {
+		opTraceRec = new OperationTraceRecord<>(opResult);
+	}
 
-  @Override
-  public final void formatTo(final StringBuilder strb) {
-    opTraceRec.format(strb);
-  }
+	@Override
+	public final void formatTo(final StringBuilder strb) {
+		opTraceRec.format(strb);
+	}
 }

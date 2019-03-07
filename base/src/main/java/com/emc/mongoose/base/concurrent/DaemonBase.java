@@ -14,41 +14,41 @@ import java.util.logging.Logger;
  */
 public abstract class DaemonBase extends AsyncRunnableBase implements Daemon {
 
-  private static final Logger LOG = Logger.getLogger(DaemonBase.class.getSimpleName());
-  private static final Queue<WeakReference<Daemon>> REGISTRY = new ConcurrentLinkedQueue<>();
+	private static final Logger LOG = Logger.getLogger(DaemonBase.class.getSimpleName());
+	private static final Queue<WeakReference<Daemon>> REGISTRY = new ConcurrentLinkedQueue<>();
 
-  private final WeakReference<Daemon> daemonRef;
+	private final WeakReference<Daemon> daemonRef;
 
-  protected DaemonBase() {
-    daemonRef = new WeakReference<>(this);
-    REGISTRY.add(daemonRef);
-  }
+	protected DaemonBase() {
+		daemonRef = new WeakReference<>(this);
+		REGISTRY.add(daemonRef);
+	}
 
-  @Override
-  public final void close() throws IOException {
-    super.close();
-    REGISTRY.remove(daemonRef);
-  }
+	@Override
+	public final void close() throws IOException {
+		super.close();
+		REGISTRY.remove(daemonRef);
+	}
 
-  public static void closeAll() throws InterruptRunException {
-    InterruptRunException ex = null;
-    synchronized (REGISTRY) {
-      for (final WeakReference<Daemon> daemonRef : REGISTRY) {
-        final Daemon daemon = daemonRef.get();
-        try {
-          if (daemon != null && !daemon.isClosed()) {
-            daemon.close();
-          }
-        } catch (final InterruptRunException e) {
-          ex = e;
-        } catch (final Throwable cause) {
-          LOG.log(Level.WARNING, "Failed to close the daemon instance", cause);
-        }
-      }
-      REGISTRY.clear();
-    }
-    if (ex != null) {
-      throw ex;
-    }
-  }
+	public static void closeAll() throws InterruptRunException {
+		InterruptRunException ex = null;
+		synchronized (REGISTRY) {
+			for (final WeakReference<Daemon> daemonRef : REGISTRY) {
+				final Daemon daemon = daemonRef.get();
+				try {
+					if (daemon != null && !daemon.isClosed()) {
+						daemon.close();
+					}
+				} catch (final InterruptRunException e) {
+					ex = e;
+				} catch (final Throwable cause) {
+					LOG.log(Level.WARNING, "Failed to close the daemon instance", cause);
+				}
+			}
+			REGISTRY.clear();
+		}
+		if (ex != null) {
+			throw ex;
+		}
+	}
 }

@@ -17,26 +17,25 @@ import io.netty.handler.codec.http.HttpHeaders;
  Created by kurila on 11.11.16.
  */
 public final class AtmosResponseHandler<I extends Item, O extends Operation<I>>
-extends HttpResponseHandlerBase<I, O> {
-	
+				extends HttpResponseHandlerBase<I, O> {
+
 	private final boolean fsAccess;
-	
+
 	public AtmosResponseHandler(
-		final HttpStorageDriverBase<I, O> driver, final boolean verifyFlag,
-		final boolean fsAccess
-	) {
+					final HttpStorageDriverBase<I, O> driver, final boolean verifyFlag,
+					final boolean fsAccess) {
 		super(driver, verifyFlag);
 		this.fsAccess = fsAccess;
 	}
-	
+
 	@Override
 	protected final void handleResponseHeaders(final Channel channel, final O op, final HttpHeaders respHeaders) {
-		if(!fsAccess) {
+		if (!fsAccess) {
 			final String location = respHeaders.get(HttpHeaderNames.LOCATION);
-			if(location != null && !location.isEmpty()) {
-				if(location.startsWith(NS_URI_BASE)) {
+			if (location != null && !location.isEmpty()) {
+				if (location.startsWith(NS_URI_BASE)) {
 					op.item().name(location.substring(NS_URI_BASE.length()));
-				} else if(location.startsWith(OBJ_URI_BASE)) {
+				} else if (location.startsWith(OBJ_URI_BASE)) {
 					op.item().name(location.substring(OBJ_URI_BASE.length()));
 				} else {
 					op.item().name(location);

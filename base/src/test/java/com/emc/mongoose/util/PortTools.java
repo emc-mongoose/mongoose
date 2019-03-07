@@ -8,28 +8,29 @@ import java.util.regex.Pattern;
 /** Created by olga on 08.07.15. */
 public interface PortTools {
 
-  String FMT_PATTERN_CONN = "\\s+ESTABLISHED";
+	String FMT_PATTERN_CONN = "\\s+ESTABLISHED";
 
-  static Scanner getNetstatOutput() throws IOException {
-    final String[] netstatCommand = {"netstat", "-an"};
-    final Process netstatProcess = Runtime.getRuntime().exec(netstatCommand);
-    return new Scanner(netstatProcess.getInputStream(), "IBM850").useDelimiter("\\n");
-  }
+	static Scanner getNetstatOutput() throws IOException {
+		final String[] netstatCommand = {"netstat", "-an"
+		};
+		final Process netstatProcess = Runtime.getRuntime().exec(netstatCommand);
+		return new Scanner(netstatProcess.getInputStream(), "IBM850").useDelimiter("\\n");
+	}
 
-  static int getConnectionCount(final String nodeAddrWithPort) throws IOException {
-    int countConnections = 0;
-    final Pattern patternConn = Pattern.compile(nodeAddrWithPort + FMT_PATTERN_CONN);
-    try (final Scanner netstatOutputScanner = getNetstatOutput()) {
-      String line;
-      Matcher m;
-      while (netstatOutputScanner.hasNext()) {
-        line = netstatOutputScanner.next();
-        m = patternConn.matcher(line);
-        if (m.find()) {
-          countConnections++;
-        }
-      }
-    }
-    return countConnections;
-  }
+	static int getConnectionCount(final String nodeAddrWithPort) throws IOException {
+		int countConnections = 0;
+		final Pattern patternConn = Pattern.compile(nodeAddrWithPort + FMT_PATTERN_CONN);
+		try (final Scanner netstatOutputScanner = getNetstatOutput()) {
+			String line;
+			Matcher m;
+			while (netstatOutputScanner.hasNext()) {
+				line = netstatOutputScanner.next();
+				m = patternConn.matcher(line);
+				if (m.find()) {
+					countConnections++;
+				}
+			}
+		}
+		return countConnections;
+	}
 }

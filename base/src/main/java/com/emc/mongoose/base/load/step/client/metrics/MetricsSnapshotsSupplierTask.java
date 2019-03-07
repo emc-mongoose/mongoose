@@ -6,4 +6,4 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public interface MetricsSnapshotsSupplierTask
-    extends Supplier<List<? extends AllMetricsSnapshot>>, Fiber {}
+				extends Supplier<List<? extends AllMetricsSnapshot>>, Fiber {}

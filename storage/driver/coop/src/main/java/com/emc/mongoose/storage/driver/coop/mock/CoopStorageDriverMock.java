@@ -19,53 +19,50 @@ import java.io.IOException;
 import java.util.List;
 
 public class CoopStorageDriverMock<I extends Item, O extends Operation<I>>
-extends CoopStorageDriverBase<I, O> {
+				extends CoopStorageDriverBase<I, O> {
 
 	private final Random rnd = new Random();
 
 	public CoopStorageDriverMock(
-		final String testStepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-		final int batchSize
-	) throws OmgShootMyFootException {
+					final String testStepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+					final int batchSize) throws OmgShootMyFootException {
 		super(testStepId, dataInput, storageConfig, verifyFlag, batchSize);
 	}
 
 	@Override
 	protected boolean submit(final O op)
-	throws IllegalStateException {
+					throws IllegalStateException {
 		op.startRequest();
 		op.finishRequest();
 		op.startResponse();
-		if(op instanceof DataOperation) {
+		if (op instanceof DataOperation) {
 			final DataOperation dataOp = (DataOperation) op;
 			final DataItem dataItem = dataOp.item();
-			switch(dataOp.type()) {
-				case CREATE:
-					try {
-						dataOp.countBytesDone(dataItem.size());
-					} catch(final IOException ignored) {
-					}
-					break;
-				case READ:
-					dataOp.startDataResponse();
-					break;
-				case UPDATE:
-					final List<Range> fixedRanges = dataOp.fixedRanges();
-					if(fixedRanges == null || fixedRanges.isEmpty()) {
-						if(dataOp.hasMarkedRanges()) {
-							dataOp.countBytesDone(dataOp.markedRangesSize());
-						} else {
-							try {
-								dataOp.countBytesDone(dataItem.size());
-							} catch(final IOException ignored) {
-							}
-						}
-					} else {
+			switch (dataOp.type()) {
+			case CREATE:
+				try {
+					dataOp.countBytesDone(dataItem.size());
+				} catch (final IOException ignored) {}
+				break;
+			case READ:
+				dataOp.startDataResponse();
+				break;
+			case UPDATE:
+				final List<Range> fixedRanges = dataOp.fixedRanges();
+				if (fixedRanges == null || fixedRanges.isEmpty()) {
+					if (dataOp.hasMarkedRanges()) {
 						dataOp.countBytesDone(dataOp.markedRangesSize());
+					} else {
+						try {
+							dataOp.countBytesDone(dataItem.size());
+						} catch (final IOException ignored) {}
 					}
-					break;
-				default:
-					break;
+				} else {
+					dataOp.countBytesDone(dataOp.markedRangesSize());
+				}
+				break;
+			default:
+				break;
 			}
 		}
 		op.finishResponse();
@@ -76,8 +73,8 @@ extends CoopStorageDriverBase<I, O> {
 
 	@Override
 	protected int submit(final List<O> ops, final int from, final int to)
-	throws InterruptRunException, IllegalStateException {
-		for(int i = from; i < to; i ++) {
+					throws InterruptRunException, IllegalStateException {
+		for (int i = from; i < to; i++) {
 			submit(ops.get(i));
 		}
 		return to - from;
@@ -85,8 +82,8 @@ extends CoopStorageDriverBase<I, O> {
 
 	@Override
 	protected int submit(final List<O> ops)
-	throws InterruptRunException, IllegalStateException {
-		for(final O op: ops) {
+					throws InterruptRunException, IllegalStateException {
+		for (final O op : ops) {
 			submit(op);
 		}
 		return ops.size();
@@ -104,9 +101,8 @@ extends CoopStorageDriverBase<I, O> {
 
 	@Override
 	public List<I> list(
-		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
-		final I lastPrevItem, final int count
-	) throws IOException {
+					final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
+					final I lastPrevItem, final int count) throws IOException {
 		return null;
 	}
 

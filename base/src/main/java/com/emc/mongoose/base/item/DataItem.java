@@ -16,59 +16,59 @@ import java.util.BitSet;
 /** Created by kurila on 11.07.16. */
 public interface DataItem extends Item, SeekableByteChannel {
 
-  double LOG2 = Math.log(2);
+	double LOG2 = Math.log(2);
 
-  DataInput dataInput();
+	DataInput dataInput();
 
-  void dataInput(final DataInput dataInput);
+	void dataInput(final DataInput dataInput);
 
-  void reset();
+	void reset();
 
-  int layer();
+	int layer();
 
-  void layer(final int layerNum);
+	void layer(final int layerNum);
 
-  void size(final long size);
+	void size(final long size);
 
-  long offset();
+	long offset();
 
-  void offset(final long offset);
+	void offset(final long offset);
 
-  <D extends DataItem> D slice(final long from, final long size);
+	<D extends DataItem> D slice(final long from, final long size);
 
-  /**
-   * @return The number of bytes written, possibly zero
-   * @throws NonWritableChannelException If this channel was not opened for writing
-   * @throws ClosedChannelException If this channel is closed
-   * @throws AsynchronousCloseException If another thread closes this channel while the write
-   *     operation is in progress
-   * @throws ClosedByInterruptException If another thread interrupts the current thread while the
-   *     write operation is in progress, thereby closing the channel and setting the current
-   *     thread's interrupt status
-   * @throws IOException If some other I/O error occurs
-   */
-  long writeToSocketChannel(final WritableByteChannel chanDst, final long maxCount)
-      throws IOException;
+	/**
+	 * @return The number of bytes written, possibly zero
+	 * @throws NonWritableChannelException If this channel was not opened for writing
+	 * @throws ClosedChannelException If this channel is closed
+	 * @throws AsynchronousCloseException If another thread closes this channel while the write
+	 *     operation is in progress
+	 * @throws ClosedByInterruptException If another thread interrupts the current thread while the
+	 *     write operation is in progress, thereby closing the channel and setting the current
+	 *     thread's interrupt status
+	 * @throws IOException If some other I/O error occurs
+	 */
+	long writeToSocketChannel(final WritableByteChannel chanDst, final long maxCount)
+					throws IOException;
 
-  long writeToFileChannel(final FileChannel chanDst, final long maxCount) throws IOException;
+	long writeToFileChannel(final FileChannel chanDst, final long maxCount) throws IOException;
 
-  void verify(final ByteBuffer inBuff) throws DataCorruptionException;
+	void verify(final ByteBuffer inBuff) throws DataCorruptionException;
 
-  static int rangeCount(final long size) {
-    return (int) Math.ceil(Math.log(size + 1) / LOG2);
-  }
+	static int rangeCount(final long size) {
+		return (int) Math.ceil(Math.log(size + 1) / LOG2);
+	}
 
-  static long rangeOffset(final int i) {
-    return (1 << i) - 1;
-  }
+	static long rangeOffset(final int i) {
+		return (1 << i) - 1;
+	}
 
-  long rangeSize(int rangeIdx);
+	long rangeSize(int rangeIdx);
 
-  boolean isUpdated();
+	boolean isUpdated();
 
-  boolean isRangeUpdated(final int rangeIdx);
+	boolean isRangeUpdated(final int rangeIdx);
 
-  int updatedRangesCount();
+	int updatedRangesCount();
 
-  void commitUpdatedRanges(final BitSet[] updatingRangesMask);
+	void commitUpdatedRanges(final BitSet[] updatingRangesMask);
 }

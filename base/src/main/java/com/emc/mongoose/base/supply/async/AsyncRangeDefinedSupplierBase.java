@@ -16,97 +16,97 @@ import java.util.List;
  * @param <T> - type of value that is produced by the input
  */
 public abstract class AsyncRangeDefinedSupplierBase<T>
-    implements Initializable, RangeDefinedSupplier<T> {
+				implements Initializable, RangeDefinedSupplier<T> {
 
-  protected final Random rnd;
-  private final T minValue;
-  private final T range;
-  private final BatchSupplier<T> newValueSupplier;
+	protected final Random rnd;
+	private final T minValue;
+	private final T range;
+	private final BatchSupplier<T> newValueSupplier;
 
-  protected AsyncRangeDefinedSupplierBase(
-      final FibersExecutor executor, final long seed, final T minValue, final T maxValue)
-      throws NullPointerException {
-    this.rnd = new Random(seed);
-    this.minValue = minValue;
-    this.range = computeRange(minValue, maxValue);
-    this.newValueSupplier =
-        new AsyncValueUpdatingSupplier<>(
-            executor,
-            minValue,
-            new InitCallable<T>() {
-              //
-              @Override
-              public boolean isInitialized() {
-                return AsyncRangeDefinedSupplierBase.this.isInitialized();
-              }
-              //
-              @Override
-              public T call() throws Exception {
-                return rangeValue();
-              }
-            });
-  }
+	protected AsyncRangeDefinedSupplierBase(
+					final FibersExecutor executor, final long seed, final T minValue, final T maxValue)
+					throws NullPointerException {
+		this.rnd = new Random(seed);
+		this.minValue = minValue;
+		this.range = computeRange(minValue, maxValue);
+		this.newValueSupplier = new AsyncValueUpdatingSupplier<>(
+						executor,
+						minValue,
+						new InitCallable<T>() {
+							//
+							@Override
+							public boolean isInitialized() {
+								return AsyncRangeDefinedSupplierBase.this.isInitialized();
+							}
 
-  protected abstract T computeRange(final T minValue, final T maxValue);
+							//
+							@Override
+							public T call() throws Exception {
+								return rangeValue();
+							}
+						});
+	}
 
-  protected abstract T rangeValue();
+	protected abstract T computeRange(final T minValue, final T maxValue);
 
-  protected abstract T singleValue();
+	protected abstract T rangeValue();
 
-  /**
-   * An implementation of this method should specify how to get a String presentation of a clean
-   * input-produced value
-   *
-   * @param value - a clean input-produced value
-   * @return a String presentation of the value
-   */
-  protected abstract String toString(final T value);
+	protected abstract T singleValue();
 
-  protected final T minValue() {
-    return minValue;
-  }
+	/**
+	 * An implementation of this method should specify how to get a String presentation of a clean
+	 * input-produced value
+	 *
+	 * @param value - a clean input-produced value
+	 * @return a String presentation of the value
+	 */
+	protected abstract String toString(final T value);
 
-  protected final T range() {
-    return range;
-  }
+	protected final T minValue() {
+		return minValue;
+	}
 
-  /** @return - a clean input-produced value */
-  @Override
-  public final T value() {
-    return newValueSupplier.get();
-  }
+	protected final T range() {
+		return range;
+	}
 
-  @Override
-  public final String get() {
-    return toString(value());
-  }
+	/** @return - a clean input-produced value */
+	@Override
+	public final T value() {
+		return newValueSupplier.get();
+	}
 
-  @Override
-  public final int get(final List<String> buffer, final int limit) {
-    int count = 0;
-    for (; count < limit; count++) {
-      buffer.add(get());
-    }
-    return count;
-  }
+	@Override
+	public final String get() {
+		return toString(value());
+	}
 
-  @Override
-  public final long skip(final long count) {
-    return newValueSupplier.skip(count);
-  }
+	@Override
+	public final int get(final List<String> buffer, final int limit) {
+		int count = 0;
+		for (; count < limit; count++) {
+			buffer.add(get());
+		}
+		return count;
+	}
 
-  @Override
-  public final void reset() {
-    newValueSupplier.reset();
-  }
+	@Override
+	public final long skip(final long count) {
+		return newValueSupplier.skip(count);
+	}
 
-  @Override
-  public boolean isInitialized() {
-    return true;
-  }
+	@Override
+	public final void reset() {
+		newValueSupplier.reset();
+	}
 
-  @Override
-  public final void close() throws IOException {
-    newValueSupplier.close();
-  }
+	@Override
+	public boolean isInitialized() {
+		return true;
+	}
+
+	@Override
+	public final void close() throws IOException {
+		newValueSupplier.close();
+	}
 }

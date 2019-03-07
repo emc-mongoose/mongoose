@@ -14,12 +14,10 @@ import java.util.Map;
  Created by kurila on 30.09.16.
  */
 public interface NettyStorageDriver<I extends Item, O extends Operation<I>>
-extends StorageDriver<I, O> {
+				extends StorageDriver<I, O> {
 
 	enum Transport {
-		NIO,
-		EPOLL,
-		KQUEUE
+		NIO, EPOLL, KQUEUE
 	}
 
 	Map<Transport, String> IO_EXECUTOR_IMPLS = new HashMap<Transport, String>() {
@@ -37,7 +35,7 @@ extends StorageDriver<I, O> {
 			put(Transport.KQUEUE, "io.netty.channel.kqueue.KQueueSocketChannel");
 		}
 	};
-	
+
 	AttributeKey<Operation> ATTR_KEY_OPERATION = AttributeKey.valueOf("op");
 
 	void complete(final Channel channel, final O op);

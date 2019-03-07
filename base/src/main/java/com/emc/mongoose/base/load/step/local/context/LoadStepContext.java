@@ -12,19 +12,19 @@ import java.io.IOException;
 /** Created on 11.07.16. */
 public interface LoadStepContext<I extends Item, O extends Operation<I>> extends Daemon, Output<O> {
 
-  void operationsResultsOutput(final Output<O> opsResultsOutput);
+	void operationsResultsOutput(final Output<O> opsResultsOutput);
 
-  int activeOpCount();
+	int activeOpCount();
 
-  boolean isDone();
+	boolean isDone();
 
-  default Input<O> getInput() {
-    throw new AssertionError("Shouldn't be invoked");
-  }
+	default Input<O> getInput() {
+		throw new AssertionError("Shouldn't be invoked");
+	}
 
-  @Override
-  AsyncRunnable stop() throws InterruptRunException;
+	@Override
+	AsyncRunnable stop() throws InterruptRunException;
 
-  @Override
-  void close() throws InterruptRunException, IOException;
+	@Override
+	void close() throws InterruptRunException, IOException;
 }

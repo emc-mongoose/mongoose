@@ -21,10 +21,10 @@ public interface AtmosApi {
 	String KEY_SUBTENANT_ID = "subtenantID";
 
 	AsciiString HEADERS_CANONICAL[] = {
-		//HttpHeaderNames.CONTENT_MD5,
-		HttpHeaderNames.CONTENT_TYPE,
-		HttpHeaderNames.RANGE,
-		HttpHeaderNames.DATE
+			//HttpHeaderNames.CONTENT_MD5,
+			HttpHeaderNames.CONTENT_TYPE,
+			HttpHeaderNames.RANGE,
+			HttpHeaderNames.DATE
 	};
 
 }

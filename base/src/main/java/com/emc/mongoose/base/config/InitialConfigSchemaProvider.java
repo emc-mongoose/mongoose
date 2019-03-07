@@ -9,17 +9,17 @@ import java.io.InputStream;
 
 public final class InitialConfigSchemaProvider extends JsonSchemaProviderBase {
 
-  @Override
-  public final String id() {
-    return APP_NAME;
-  }
+	@Override
+	public final String id() {
+		return APP_NAME;
+	}
 
-  @Override
-  protected final InputStream schemaInputStream() throws IOException {
-    return getClass().getResource("/config-schema.json").openStream();
-  }
+	@Override
+	protected final InputStream schemaInputStream() throws IOException {
+		return getClass().getResource("/config-schema.json").openStream();
+	}
 
-  public static SchemaProvider provider() {
-  	return new InitialConfigSchemaProvider();
-  }
+	public static SchemaProvider provider() {
+		return new InitialConfigSchemaProvider();
+	}
 }

@@ -10,26 +10,26 @@ import java.util.Map;
 /** Created by kurila on 14.07.16. */
 public interface OperationsBuilder<I extends Item, O extends Operation<I>> extends Closeable {
 
-  int originIndex();
+	int originIndex();
 
-  OpType opType();
+	OpType opType();
 
-  OperationsBuilder<I, O> opType(final OpType opType);
+	OperationsBuilder<I, O> opType(final OpType opType);
 
-  String inputPath();
+	String inputPath();
 
-  OperationsBuilder<I, O> inputPath(final String inputPath);
+	OperationsBuilder<I, O> inputPath(final String inputPath);
 
-  OperationsBuilder<I, O> outputPathSupplier(final BatchSupplier<String> ops);
+	OperationsBuilder<I, O> outputPathSupplier(final BatchSupplier<String> ops);
 
-  OperationsBuilder<I, O> uidSupplier(final BatchSupplier<String> uidSupplier);
+	OperationsBuilder<I, O> uidSupplier(final BatchSupplier<String> uidSupplier);
 
-  OperationsBuilder<I, O> secretSupplier(final BatchSupplier<String> secretSupplier);
+	OperationsBuilder<I, O> secretSupplier(final BatchSupplier<String> secretSupplier);
 
-  OperationsBuilder<I, O> credentialsMap(final Map<String, String> credentials);
+	OperationsBuilder<I, O> credentialsMap(final Map<String, String> credentials);
 
-  O buildOp(final I item) throws IOException, IllegalArgumentException;
+	O buildOp(final I item) throws IOException, IllegalArgumentException;
 
-  void buildOps(final List<I> items, final List<O> buff)
-      throws IOException, IllegalArgumentException;
+	void buildOps(final List<I> items, final List<O> buff)
+					throws IOException, IllegalArgumentException;
 }

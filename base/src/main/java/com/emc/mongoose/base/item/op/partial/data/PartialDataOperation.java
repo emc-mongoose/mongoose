@@ -9,11 +9,11 @@ import com.emc.mongoose.base.item.op.partial.PartialOperation;
 
 /** Created by andrey on 25.11.16. */
 public interface PartialDataOperation<I extends DataItem>
-    extends DataOperation<I>, PartialOperation<I> {
+				extends DataOperation<I>, PartialOperation<I> {
 
-  @Override
-  I item();
+	@Override
+	I item();
 
-  @Override
-  CompositeDataOperation<I> parent();
+	@Override
+	CompositeDataOperation<I> parent();
 }

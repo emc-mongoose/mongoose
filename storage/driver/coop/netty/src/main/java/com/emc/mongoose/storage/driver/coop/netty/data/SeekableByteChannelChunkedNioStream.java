@@ -11,12 +11,12 @@ import java.nio.channels.SeekableByteChannel;
  Created by andrey on 24.04.17.
  */
 public final class SeekableByteChannelChunkedNioStream
-extends ChunkedNioStream {
+				extends ChunkedNioStream {
 
 	private final long sizeToTransfer;
 
 	public SeekableByteChannelChunkedNioStream(final SeekableByteChannel sbc)
-	throws IOException {
+					throws IOException {
 		this(sbc, sbc.size());
 	}
 

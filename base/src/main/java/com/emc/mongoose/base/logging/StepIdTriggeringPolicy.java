@@ -17,32 +17,32 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 @Plugin(name = "StepIdTriggeringPolicy", category = Core.CATEGORY_NAME, printObject = true)
 public final class StepIdTriggeringPolicy extends AbstractTriggeringPolicy {
 
-  private RollingFileManager manager;
-  private String lastStepId = null;
+	private RollingFileManager manager;
+	private String lastStepId = null;
 
-  @PluginFactory
-  public static StepIdTriggeringPolicy createPolicy() {
-    return new StepIdTriggeringPolicy();
-  }
+	@PluginFactory
+	public static StepIdTriggeringPolicy createPolicy() {
+		return new StepIdTriggeringPolicy();
+	}
 
-  @Override
-  public final void initialize(final RollingFileManager manager) {
-    this.manager = manager;
-  }
+	@Override
+	public final void initialize(final RollingFileManager manager) {
+		this.manager = manager;
+	}
 
-  @Override
-  public final boolean isTriggeringEvent(final LogEvent logEvent) {
-    final String stepId = logEvent.getContextData().getValue(KEY_STEP_ID);
-    if (null == stepId) {
-      return false;
-    }
-    ThreadContext.put(KEY_STEP_ID, stepId);
-    if (stepId.equals(lastStepId)) {
-      return false;
-    } else {
-      lastStepId = stepId;
-      manager.getFileName();
-      return true;
-    }
-  }
+	@Override
+	public final boolean isTriggeringEvent(final LogEvent logEvent) {
+		final String stepId = logEvent.getContextData().getValue(KEY_STEP_ID);
+		if (null == stepId) {
+			return false;
+		}
+		ThreadContext.put(KEY_STEP_ID, stepId);
+		if (stepId.equals(lastStepId)) {
+			return false;
+		} else {
+			lastStepId = stepId;
+			manager.getFileName();
+			return true;
+		}
+	}
 }
