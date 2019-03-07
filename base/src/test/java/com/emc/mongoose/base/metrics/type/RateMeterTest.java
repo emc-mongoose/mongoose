@@ -13,7 +13,7 @@ public class RateMeterTest {
   private static final int SLEEP_MILLISEC = 1000;
   private static final int COUNT_BYTES_1 = 1234;
   private static final int COUNT_BYTES_2 = 567;
-  private static final double ACCURACY = 0.05;
+  private static final double ACCURACY = 0.1;
 
   @Test
   public void test() throws InterruptedException {
