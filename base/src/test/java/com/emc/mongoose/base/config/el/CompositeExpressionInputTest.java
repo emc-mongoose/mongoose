@@ -38,6 +38,18 @@ public class CompositeExpressionInputTest {
 	}
 
 	@Test
+	public void testSelfReferenceInCompositeExpression()
+	throws Exception {
+		final var data = "Foo${this.expr()}Bar#{this.expr()}";
+		final var in = CompositeExpressionInputBuilder.newInstance()
+			.expression(data)
+			.build();
+		TimeUnit.MILLISECONDS.sleep(100);
+		final var result = in.get();
+		assertEquals(data, result);
+	}
+
+	@Test
 	public void testVararg() throws Exception {
 		final var inputBuilder = CompositeExpressionInputBuilder.newInstance();
 		var in = inputBuilder
@@ -119,21 +131,6 @@ public class CompositeExpressionInputTest {
 		TimeUnit.SECONDS.sleep(1); // wait, maybe the value will change...
 		final var t3 = Long.parseLong(in.get());
 		assertEquals(t1, t3); // no, it has not been changed
-		in.close();
-	}
-
-	@Test
-	public void testCompositeExpression()
-					throws Exception {
-		final var in = CompositeExpressionInputBuilder.newInstance()
-						.expression("prefix%{time:millisSinceEpoch()}foo${rnd.nextInt(42)}bar${this.last() + 1}%{-1}_#{date:formatNowRfc1123()}#{this.last() + 1}%{0}suffix")
-						.build();
-		TimeUnit.SECONDS.sleep(1);
-		System.out.println(in.get());
-		TimeUnit.SECONDS.sleep(1);
-		System.out.println(in.get());
-		TimeUnit.SECONDS.sleep(1);
-		System.out.println(in.get());
 		in.close();
 	}
 }

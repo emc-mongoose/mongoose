@@ -51,7 +51,11 @@ The [requirements 2-5](#3-requirements) are implemented as the
 
 ## 4.1. Formal Syntax
 
-EBNF notation:
+Too meet the requirement #6 the whole input string should be a sequence of segments. Any segment may be a constant
+string or an expression. The segment evaluation result is a constant string or an expression evaluation result. To
+evaluate the value of the whole input the segments evaluation results are being concatenated sequentially.
+
+In the EBNF notation:
 
 ```ebnf
 SEGMENTS                  = SEGMENT*
@@ -59,7 +63,7 @@ SEGMENT                   = CONST_STRING | EXPRESSION
 EXPRESSION                = (ASYNC_EXPR | SYNC_EXPR) \[ INIT_EXPR ]
 ASYNC_EXPR                = "#" EXPR_BODY_WITH_BOUNDARIES
 SYNC_EXPR                 = "$" EXPR_BODY_WITH_BOUNDARIES
-INIT_EXPR                 = "%" EXPR_BODY_WITH_BOUNDARIES
+CONST_EXPR                 = "%" EXPR_BODY_WITH_BOUNDARIES
 EXPR_BODY_WITH_BOUNDARIES = "{" EXPR_BODY "}"
 ```
 
@@ -67,6 +71,19 @@ EXPR_BODY_WITH_BOUNDARIES = "{" EXPR_BODY "}"
 |----------------|-------------|
 | `CONST_STRING` | Any sequence of any symbols except `#{`/`${`/`%{` |
 | `EXPR_BODY`    | The expression body which shouldn't contain `}` symbols or any nested expressions |
+
+For example the input string:
+`prefix%{42}${this.last() + 1}%{pi * e}_#{date:formatNowIso8601}suffix`
+will be split into the following sequence of segments:
+1. `prefix`: constant string
+2. `%{42}`: constant value expression
+3. `${this.last() + 1}%{pi * e}`: synchronous expression with an initial value supplied by the constant value expression
+4. `_`: constant string
+5. `#{date:formatNowIso8601}`: asynchronous expression
+6. `suffix`: constant string
+
+The given input string will yield the result like:
+`prefix428.539734_2019-03-07T15:23:46,461suffix`
 
 ## 4.2. Expression Types
 
@@ -108,6 +125,10 @@ The synchronous expression is specified by the marker `#`:
 
 The expression above will yield the date formatted using RFC1123 standard. The value will change sometimes irrespective
 to the access.
+
+**Warning**:
+> The expression above may return `null` initially (before its 1st evaluation). To avoid this, set the initial value
+> too: `#{date:formatNowRfc1123()}%{date:formatNowRfc1123()}`
 
 ## 4.3. Initial Value
 
@@ -172,7 +193,7 @@ There are some useful static Java methods mapped into the expression language:
 * [math:sqrt(double x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#sqrt(double))
 * [math:tan(double x)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Math.html#tan(double))
 * [path:random(int width, int depth)](#431-random-path-generator)
-* [string:format(string pattern, args...)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html#format(java.lang.String,java.lang.Object...))
+* [string:format(string pattern, args...)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Formatter.html#format(java.lang.String,java.lang.Object...))
 * [string:join(string delimeter, string elements...)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html#join(java.lang.CharSequence,java.lang.CharSequence...))
 * [time:millisSinceEpoch()](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#currentTimeMillis())
 * [time:nanos()](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#nanoTime())

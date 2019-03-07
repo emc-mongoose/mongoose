@@ -11,7 +11,7 @@ Use  the command line arguments either load step configurations in the scenario 
 				// An user may place here a key-value pair which will be used as HTTP header.
 				"headers": {
 					"Connection": "Keep-Alive",
-					"Date": "%{date:formatNowRfc1123()}#{date:formatNowRfc1123()}",
+					"Date": "#{date:formatNowRfc1123()}%{date:formatNowRfc1123()}",
 					"User-Agent": "mongoose/5.0.0"
 				},
 				"uri": {

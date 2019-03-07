@@ -344,27 +344,27 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 	protected void applyDynamicHeaders(final HttpHeaders httpHeaders) {
 		String headerName;
 		String headerValue;
-		Input<String> headerNameSupplier;
-		Input<String> headerValueSupplier;
+		Input<String> headerNameInput;
+		Input<String> headerValueInput;
 		for (final var nextHeader : dynamicHeaders.entrySet()) {
 			headerName = nextHeader.getKey();
 			// header name is a generator pattern
-			headerNameSupplier = headerNameInputs.computeIfAbsent(headerName, EXPR_INPUT_FUNC);
-			if (headerNameSupplier == null) {
+			headerNameInput = headerNameInputs.computeIfAbsent(headerName, EXPR_INPUT_FUNC);
+			if (headerNameInput == null) {
 				continue;
 			}
 			// spin while header name generator is not ready
-			while (null == (headerName = headerNameSupplier.get())) {
+			while (null == (headerName = headerNameInput.get())) {
 				LockSupport.parkNanos(1_000_000);
 			}
 			headerValue = nextHeader.getValue();
 			// header value is a generator pattern
-			headerValueSupplier = headerValueInputs.computeIfAbsent(headerValue, EXPR_INPUT_FUNC);
-			if (headerValueSupplier == null) {
+			headerValueInput = headerValueInputs.computeIfAbsent(headerValue, EXPR_INPUT_FUNC);
+			if (headerValueInput == null) {
 				continue;
 			}
 			// spin while header value generator is not ready
-			while (null == (headerValue = headerValueSupplier.get())) {
+			while (null == (headerValue = headerValueInput.get())) {
 				LockSupport.parkNanos(1_000_000);
 			}
 			// put the generated header value into the request
