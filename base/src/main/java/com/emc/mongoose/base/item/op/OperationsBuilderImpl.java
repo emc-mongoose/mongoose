@@ -125,7 +125,7 @@ public class OperationsBuilderImpl<I extends Item, O extends Operation<I>>
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		inputPath = null;
 		try {
 			if (outputPathInput != null) {

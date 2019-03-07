@@ -2,17 +2,16 @@ package com.emc.mongoose.storage.driver.coop.netty.http;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
-import static com.emc.mongoose.base.config.el.ExpressionInputBuilder.ASYNC_EXPR_START_MARKER;
-import static com.emc.mongoose.base.config.el.ExpressionInputBuilder.SYNC_EXPR_START_MARKER;
 import static com.emc.mongoose.base.item.DataItem.rangeCount;
 import static com.emc.mongoose.base.item.DataItem.rangeOffset;
 import static com.emc.mongoose.base.item.op.Operation.SLASH;
-import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
+import static com.github.akurilov.commons.io.el.ExpressionInput.ASYNC_MARKER;
+import static com.github.akurilov.commons.io.el.ExpressionInput.INIT_MARKER;
+import static com.github.akurilov.commons.io.el.ExpressionInput.SYNC_MARKER;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import com.emc.mongoose.base.config.ConstantValueInputImpl;
-import com.emc.mongoose.base.config.el.AsyncExpressionInput;
-import com.emc.mongoose.base.config.el.ExpressionInputBuilder;
+import com.emc.mongoose.base.config.el.CompositeExpressionInputBuilder;
 import com.emc.mongoose.base.data.DataInput;
 import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.exception.OmgShootMyFootException;
@@ -30,7 +29,6 @@ import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverBase;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.io.Input;
-import com.github.akurilov.commons.io.el.ExpressionInput;
 import com.github.akurilov.confuse.Config;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -78,20 +76,10 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 				extends NettyStorageDriverBase<I, O> implements HttpStorageDriver<I, O> {
 
 	private static final String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
-	private static final Function<String, Input<String>> EXPR_INPUT_FUNC = expr -> {
-		final var exprInput = ExpressionInputBuilder.newInstance()
-						.type(String.class)
-						.expression(expr)
-						.<String, ExpressionInput<String>> build();
-		if (exprInput instanceof AsyncExpressionInput) {
-			try {
-				((AsyncExpressionInput) exprInput).start();
-			} catch (final Exception e) {
-				throwUnchecked(e);
-			}
-		}
-		return exprInput;
-	};
+	private static final Function<String, Input<String>> EXPR_INPUT_FUNC = expr ->
+		CompositeExpressionInputBuilder.newInstance()
+			.expression(expr)
+			.build();
 	private final Map<String, Input<String>> headerNameInputs = new ConcurrentHashMap<>();
 	private final Map<String, Input<String>> headerValueInputs = new ConcurrentHashMap<>();
 	protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
@@ -112,10 +100,13 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 		for (final var header : headersMap.entrySet()) {
 			final var headerKey = header.getKey();
 			final var headerValue = header.getValue();
-			if (headerKey.contains(ASYNC_EXPR_START_MARKER)
-							|| headerKey.contains(SYNC_EXPR_START_MARKER)
-							|| headerValue.contains(ASYNC_EXPR_START_MARKER)
-							|| headerValue.contains(SYNC_EXPR_START_MARKER)) {
+			if (headerKey.contains(ASYNC_MARKER)
+				|| headerKey.contains(SYNC_MARKER)
+				|| headerKey.contains(INIT_MARKER)
+				|| headerValue.contains(ASYNC_MARKER)
+				|| headerValue.contains(SYNC_MARKER)
+				|| headerValue.contains(INIT_MARKER)
+			) {
 				dynamicHeaders.put(headerKey, headerValue);
 			} else {
 				sharedHeaders.add(headerKey, headerValue);

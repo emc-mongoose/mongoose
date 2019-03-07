@@ -6,10 +6,7 @@ import com.github.akurilov.fiber4j.Fiber;
 public interface AsyncExpressionInput<T> extends ExpressionInput<T>, Fiber {
 
 	/**
-	* The method does nothing. It's disabled in order to protect the last value from concurrent
-	* update (not safe).
-	*
-	* @return null
+	* @return last value, without re-evaluation
 	*/
 	@Override
 	T call();

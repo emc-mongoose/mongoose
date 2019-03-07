@@ -306,8 +306,7 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 			}
 		}
 		// ops builder is instantiated by the load generator builder which forgets it so the load
-		// generator should
-		// close it
+		// generator should close it
 		opsBuilder.close();
 	}
 

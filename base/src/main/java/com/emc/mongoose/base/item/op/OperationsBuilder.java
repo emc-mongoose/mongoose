@@ -3,13 +3,12 @@ package com.emc.mongoose.base.item.op;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.storage.Credential;
 import com.github.akurilov.commons.io.Input;
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 /** Created by kurila on 14.07.16. */
-public interface OperationsBuilder<I extends Item, O extends Operation<I>> extends Closeable {
+public interface OperationsBuilder<I extends Item, O extends Operation<I>> extends AutoCloseable {
 
 	int originIndex();
 
@@ -31,4 +30,7 @@ public interface OperationsBuilder<I extends Item, O extends Operation<I>> exten
 
 	void buildOps(final List<I> items, final List<O> buff)
 					throws IOException, IllegalArgumentException;
+
+	@Override
+	void close();
 }

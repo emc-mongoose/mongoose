@@ -38,8 +38,26 @@ configuration options based on [Java Unified Expression Language](http://juel.so
 2. The expression result should be refreshing in background constantly in case of asynchronous evaluation
 3. The JUEL syntax should be extended to support the initial/seed value setting
 4. The expression should be able to use the result of the previous evaluation (self referencing)
+5. The expression should be able to invoke custom functions and access custom variables
+6. The expression should be able to consist of parts: prefixes/suffixes and multiple independent expressions
 
 # 4. Approach
+
+The [requirements 2-5](#3-requirements) are implemented as the
+[JUEL extension in the *java-commons* library](https://github.com/akurilov/java-commons/blob/master/src/test/java/com/github/akurilov/commons/io/el/ExpressionInputTest.java).
+
+## 4.1. Formal Syntax
+
+BNF notation:
+```ebnf
+SEGMENTS ::= SEGMENT*
+SEGMENT ::= CONSTANT_STRING | EXPRESSION
+EXPRESSION := (ASYNC_EXPRESSION | SYNC_EXPRESSION) \[ INIT_EXPRESSION ]
+ASYNC_EXPRESSION := "#" EXPRESSION_BODY_WITH_BOUNDARIES
+SYNC_EXPRESSION := "$" EXPRESSION_BODY_WITH_BOUNDARIES
+INIT_EXPRESSION := "%" EXPRESSION_BODY_WITH_BOUNDARIES
+EXPRESSION_BODY_WITH_BOUNDARIES := "{" EXPRESSION_BODY "}"
+```
 
 ## 4.1. Synchronous And Asynchronous Evaluation
 

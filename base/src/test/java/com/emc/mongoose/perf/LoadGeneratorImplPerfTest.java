@@ -1,7 +1,7 @@
 package com.emc.mongoose.perf;
 
 import com.emc.mongoose.base.config.ConstantValueInputImpl;
-import com.emc.mongoose.base.config.el.ExpressionInputBuilder;
+import com.emc.mongoose.base.config.el.CompositeExpressionInputBuilder;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.DataItemFactoryImpl;
 import com.emc.mongoose.base.item.DataItemImpl;
@@ -153,8 +153,7 @@ public class LoadGeneratorImplPerfTest {
 						.length(12)
 						.build();
 		final Input itemInput = new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
-		final Input pathInput = ExpressionInputBuilder.newInstance()
-						.type(String.class)
+		final Input pathInput = CompositeExpressionInputBuilder.newInstance()
 						.expression("${path:random(16, 2)}")
 						.build();
 		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)

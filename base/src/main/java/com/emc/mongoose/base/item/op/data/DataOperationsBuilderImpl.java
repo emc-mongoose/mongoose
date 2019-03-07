@@ -191,7 +191,7 @@ public class DataOperationsBuilderImpl<I extends DataItem, O extends DataOperati
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		super.close();
 		if (srcItemsForConcat != null) {
 			srcItemsForConcat.clear();

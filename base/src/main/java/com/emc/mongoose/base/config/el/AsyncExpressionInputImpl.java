@@ -23,7 +23,7 @@ class AsyncExpressionInputImpl<T> extends ExclusiveFiberBase implements AsyncExp
 
 	@Override
 	public final T call() {
-		return null;
+		return last();
 	}
 
 	@Override
@@ -55,11 +55,6 @@ class AsyncExpressionInputImpl<T> extends ExclusiveFiberBase implements AsyncExp
 	@Override
 	public String expr() {
 		return input.expr();
-	}
-
-	@Override
-	public Class<T> type() {
-		return input.type();
 	}
 
 	@Override
