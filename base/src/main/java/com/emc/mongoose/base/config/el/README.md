@@ -4,13 +4,16 @@
 2. [Limitations](#2-limitations)<br/>
 3. [Requirements](#3-requirements)<br/>
 4. [Approach](#4-approach)<br/>
-4.1. [Synchronous And Asynchronous Evaluation](#41-synchronous-and-asynchronous-evaluation)<br/>
-4.2. [Initial Value](#42-initial-value)<br/>
-4.3. [Types Summary](#43-types-summary)<br/>
+4.1. [Formal Syntax](#41-formal-syntax)<br/>
+4.2. [Expression Types](#42-expression-types)<br/>
+4.2.1. [Constant](#421-constant)<br/>
+4.2.2. [Synchronous](#422-synchronous)<br/>
+4.2.3. [Asynchronous](#423-asynchronous)<br/>
+4.3. [Initial Value](#43-initial-value)<br/>
 4.4. [Built-in Functions](#44-built-in-functions)<br/>
 4.4.1. [Random Path](#441-random-path)<br/>
 4.5. [Built-in Values](#45-built-in-values)<br/>
-4.5.1. [Self-referencing](#451-self-referencing)<br/>
+4.5.1. [Self Reference](#451-self-reference)<br/>
 5. [Configuration](#5-configuration)<br/>
 5.1. [Variable Items Output Path](#51-variable-items-output-path)<br/>
 5.2. [HTTP request headers and queries](#52-http-request-headers-and-queries)<br/>
@@ -49,6 +52,7 @@ The [requirements 2-5](#3-requirements) are implemented as the
 ## 4.1. Formal Syntax
 
 EBNF notation:
+
 ```ebnf
 SEGMENTS                  = SEGMENT*
 SEGMENT                   = CONST_STRING | EXPRESSION
@@ -61,67 +65,72 @@ EXPR_BODY_WITH_BOUNDARIES = "{" EXPR_BODY "}"
 
 | Token          | Description |
 |----------------|-------------|
-| `CONST_STRING` | Any sequence of characters which doesn't contain `#{`/`${`/`%{` |
+| `CONST_STRING` | Any sequence of any symbols except `#{`/`${`/`%{` |
 | `EXPR_BODY`    | The expression body which shouldn't contain `}` symbols or any nested expressions |
 
-## 4.1. Synchronous And Asynchronous Evaluation
+## 4.2. Expression Types
 
-JUEL supports both immediate (synchronous) and deferred (asynchronous) evaluation ways.
+### 4.2.1. Constant
 
-* **Synchronous**
-The expression is being evaluated on every invocation. The synchronous evaluation is useful if:
-    * The evaluation complexity is low enough
-    * The evaluation is non-blocking
-    * The different value on each invocation is strictly required.
-* **Asynchronous**
+The expression is being evaluated only once upon instantiation. It's specified by the marker `%`.
+
+| Expression           | Yields |
+|----------------------|--------|
+| `%{42}`              | 42
+| `%{rnd.nextInt(42)}` | A random integer in the range of \[0; 42)
+
+The constant expression is useful also to supply a constant [initial value](#43-initial-value) for any other types of
+expressions.
+
+### 4.2.2. Synchronous
+
+The expression is being evaluated on every access. The synchronous evaluation is useful if:
+* The evaluation complexity is low enough
+* The evaluation is non-blocking
+* The different value on each invocation is strictly required
+
+The synchronous expression is specified by the marker `$`:
+
+`${time:millisSinceEpoch()}`
+
+The expression above will yield different timestamp every time.
+
+### 4.2.3. Asynchronous
+
 The expression is being evaluated constantly in the background fiber. Requesting the expression value frequently is
 expected to yield a sequence of the same value. The asynchronous evaluation is most useful when:
-    * The recalculation cost is too high
-    * The values consumer doesn't require different value each time
+* The recalculation cost is too high
+* The values consumer doesn't require different value each time
 
-The symbols `$` (synchronous) and `#` (async) are used in the JUEL standard to distinguish between the synchronous and
-asynchronous evaluation.
+The synchronous expression is specified by the marker `#`:
 
-## 4.2. Initial Value
+`#{date:formatNowRfc1123()}`
+
+The expression above will yield the date formatted using RFC1123 standard. The value will change sometimes irrespective
+to the access.
+
+## 4.3. Initial Value
 
 The JUEL standard doesn't allow the initial value setting. However, this is required for the self-referencing
-functionality. The pattern
+functionality. The constant value expression
 
 `%{<INIT_EXPRESSION>}`
 
-should be used right before the expression to set the initial value.
+should be used right after an expression to set the initial value.
 
 For example, the expression:
 
-`%{-1}${this.last() + 1}`
+`${this.last() + 1}%{-1}`
 
 will produce the following sequence of values: 0, 1, 2, ...
 
-### 4.2.1. Initial Value Expression
+**Note**:
+> The [self reference](#451-self-reference) is used in the example above to access the previous expression evaluation
+> value
 
-The useful thing is that the initial value is also an expression which is being evaluated *once* to provide the
-constant initial value:
+The expression may be used to supply an initial value:
 
-`%{rnd.nextInt(42)}#{this.last() + 1}`
-
-### 4.2.2. Constant Value Expression
-
-Some expressions actually are being evaluated only once and then the resulting value is reused without changes:
-
-`%{rnd.nextInt(42)}${this.last()}`
-
-For performance considerations such expression shouldn't be evaluated every time to get a constant value. To do this,
-the following specific syntax should be used:
-
-`%{rnd.nextInt(42)}`
-
-## 4.3. Types Summary
-
-| Marker | Evaluation                    | May be used as initial value expression for another one
-|--------|-------------------------------|-------|
-| `$`    | On every access (synchronous) | false |
-| `#`    | In the background (async)     | false |
-| `%`    | Once only                     | true  |
+`#{this.last() + 1}%{rnd.nextInt(42)}`
 
 ## 4.4. Built-in Functions
 
@@ -184,7 +193,7 @@ specifies the maximum count of the directories per one level and depth specifies
 | `rnd` | Random | The random number generator
 | `this` | [ExpressionInput](https://github.com/akurilov/java-commons/blob/master/src/main/java/com/github/akurilov/commons/io/el/ExpressionInput.java) | The expression input instance (self referencing)
 
-### 4.5.1. Self Referencing
+### 4.5.1. Self Reference
 
 There are `this` among the built-in values. This is designed for the self referencing purposes. This allows to make an
 expression evaluating the next value using the previous evaluation result. For example, the expression:
