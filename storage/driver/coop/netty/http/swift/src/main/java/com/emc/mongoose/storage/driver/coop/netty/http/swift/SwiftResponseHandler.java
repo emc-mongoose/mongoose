@@ -18,6 +18,7 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.AttributeKey;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -37,7 +38,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
   private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER =
       AttributeKey.valueOf("boundary_marker");
 
-  private String cutChunck = "";
+  private byte[] cutChunck = new byte[] {};
 
   public SwiftResponseHandler(final HttpStorageDriverBase<I, O> driver, final boolean verifyFlag) {
     super(driver, verifyFlag);
@@ -101,15 +102,37 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
   ByteBuf removeHeaders(final Channel channel, final O op, final ByteBuf contentChunk) {
     final String boundaryMarker = channel.attr(ATTR_KEY_BOUNDARY_MARKER).get();
     final int chunckSize = contentChunk.readableBytes();
-    final byte[] bytes = new byte[chunckSize];
+    final int cutChunkSize = cutChunck.length;
+    final byte[] bytesChunk = new byte[cutChunkSize + chunckSize];
+    System.arraycopy(cutChunck, 0, bytesChunk, 0, cutChunkSize);
     while (contentChunk.readerIndex() < chunckSize) {
-      bytes[contentChunk.readerIndex()] = contentChunk.readByte();
+      bytesChunk[cutChunkSize - 1 + contentChunk.readerIndex()] = contentChunk.readByte();
     }
-    String s = cutChunck + new String(bytes);
+    byte[] newBytesChunk = new byte[cutChunkSize + chunckSize];
+    String s = new String(bytesChunk);
+    Pattern p = Pattern.compile(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker));
+    Matcher m = p.matcher(s);
+    final List<int[]> contentRangeIdxs = new ArrayList();
+    if (m.find()) {
+      int startIndex = 0;
+      int endIndex;
+      final int count = m.groupCount();
+      for (int i = 0; i < count; ++i) {
+        endIndex = m.start(i);
+        contentRangeIdxs.add(new int[] {startIndex, endIndex});
+        startIndex = m.end(i);
+      }
+      endIndex = newBytesChunk.length - 1;
+      contentRangeIdxs.add(new int[] {startIndex, endIndex});
+    }
+    // TODO: get sum of all ranges
+    // TODO: create new bytesArray [sum of all ranges]
+    // TODO: copy all ranges to new bytesArray
+    for (final int[] range : contentRangeIdxs) {}
+
     s =
         s.replaceAll(
             String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker, boundaryMarker), "");
-    // TODO kochuv : check the end
     s = cuteEnd(s);
     return Unpooled.copiedBuffer(s.getBytes());
   }
