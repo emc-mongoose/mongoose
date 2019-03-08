@@ -36,11 +36,11 @@ public interface ScenarioUtil {
 	}
 
 	/**
-	* Tries to instantiate the script engine for the given script file
-	*
-	* @param scenarioPath the path to the script
-	* @return the script engine resolved either <code>null</code>
-	*/
+	 * Tries to instantiate the script engine for the given script file
+	 *
+	 * @param scenarioPath the path to the script
+	 * @return the script engine resolved either <code>null</code>
+	 */
 	static ScriptEngine scriptEngineByFilePath(final Path scenarioPath, final ClassLoader clsLoader) {
 
 		ScriptEngine se = null;
@@ -101,11 +101,11 @@ public interface ScenarioUtil {
 	}
 
 	/**
-	* Expose the step types to the given script engine using the given configuration
-	*
-	* @param se the script engine
-	* @param config the configuration
-	*/
+	 * Expose the step types to the given script engine using the given configuration
+	 *
+	 * @param se the script engine
+	 * @param config the configuration
+	 */
 	static void registerStepTypes(
 					final ScriptEngine se,
 					final List<Extension> extensions,

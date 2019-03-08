@@ -125,10 +125,10 @@ public abstract class LoadStepBase extends DaemonBase implements LoadStep, Runna
 	protected abstract void doStartWrapped() throws InterruptRunException;
 
 	/**
-	* Initializes the actual configuration and metrics contexts
-	*
-	* @throws IllegalStateException if initialization fails
-	*/
+	 * Initializes the actual configuration and metrics contexts
+	 *
+	 * @throws IllegalStateException if initialization fails
+	 */
 	protected abstract void init() throws InterruptRunException, IllegalStateException;
 
 	protected abstract void initMetrics(

@@ -204,9 +204,9 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>> extends
 	}
 
 	/**
-	* @return true if the configured failures threshold is reached and the step should be stopped,
-	*     false otherwise
-	*/
+	 * @return true if the configured failures threshold is reached and the step should be stopped,
+	 *     false otherwise
+	 */
 	private boolean isFailThresholdReached() {
 		final AllMetricsSnapshot allMetricsSnapshot = metricsCtx.lastSnapshot();
 		final long failCountSum = allMetricsSnapshot.failsSnapshot().count();
