@@ -18,7 +18,6 @@ public class RateMeterTest {
 	private static final double ACCURACY = 0.1;
 
 	@Test
-	@Ignore
 	public void test() throws InterruptedException {
 		final RateMeter<RateMetricSnapshot> meter = new RateMeterImpl(Clock.systemUTC(), "SOME_RATE");
 		final long t0 = System.currentTimeMillis();
