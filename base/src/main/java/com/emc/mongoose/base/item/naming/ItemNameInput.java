@@ -2,6 +2,8 @@ package com.emc.mongoose.base.item.naming;
 
 import com.github.akurilov.commons.io.Input;
 
+import java.util.List;
+
 public interface ItemNameInput
 				extends Input<String> {
 
@@ -10,6 +12,12 @@ public interface ItemNameInput
 	enum ItemNamingType {
 		RANDOM, SERIAL,
 	}
+
+	@Override
+	String get();
+
+	@Override
+	int get(final List<String> buffer, final int limit);
 
 	interface Builder {
 

@@ -84,7 +84,7 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 		this.recycleFlag = recycleFlag;
 		this.shuffleFlag = shuffleFlag;
 		this.rnd = shuffleFlag ? new Random() : null;
-		final String ioStr = opsBuilder.opType().toString();
+		final var ioStr = opsBuilder.opType().toString();
 		name = Character.toUpperCase(ioStr.charAt(0))
 						+ ioStr.substring(1).toLowerCase()
 						+ (countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "")
@@ -96,9 +96,9 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 	protected final void invokeTimed(final long startTimeNanos) throws InterruptRunException {
 
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
-		final CircularBuffer<O> opBuff = threadLocalOpBuff.get();
-		int pendingOpCount = opBuff.size();
-		int n = batchSize - pendingOpCount;
+		final var opBuff = threadLocalOpBuff.get();
+		var pendingOpCount = opBuff.size();
+		var n = batchSize - pendingOpCount;
 
 		try {
 
@@ -118,11 +118,11 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 					if (inputLock.tryLock()) {
 						try {
 							// find the remaining count of the ops to generate
-							final long remainingOpCount = countLimit - generatedOpCount();
+							final var remainingOpCount = countLimit - generatedOpCount();
 							if (remainingOpCount > 0) {
 								// make the limit not more than batch size
 								n = (int) Math.min(remainingOpCount, n);
-								final List<I> items = getItems(itemInput, n);
+								final var items = getItems(itemInput, n);
 								if (items == null) {
 									itemInputFinishFlag = true;
 									Loggers.MSG.debug(
@@ -150,8 +150,8 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 					n = pendingOpCount;
 
 					// acquire the permit for all the throttles
-					for (int i = 0; i < throttles.length; i++) {
-						final Object throttle = throttles[i];
+					for (var i = 0; i < throttles.length; i++) {
+						final var throttle = throttles[i];
 						if (throttle instanceof Throttle) {
 							n = ((Throttle) throttle).tryAcquire(n);
 						} else if (throttle instanceof IndexThrottle) {
@@ -165,7 +165,7 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 					if (n > 0) {
 						if (n == 1) { // single mode branch
 							try {
-								final O op = opBuff.get(0);
+								final var op = opBuff.get(0);
 								if (opOutput.put(op)) {
 									outputOpCounter.increment();
 									if (pendingOpCount == 1) {

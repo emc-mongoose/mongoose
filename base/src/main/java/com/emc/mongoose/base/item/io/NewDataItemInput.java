@@ -25,7 +25,7 @@ public final class NewDataItemInput<D extends DataItem> extends NewItemInput<D>
 
 	@Override
 	public final int get(final List<D> buffer, final int maxCount) {
-		for (int i = 0; i < maxCount; i++) {
+		for (var i = 0; i < maxCount; i++) {
 			buffer.add(itemFactory.getItem(itemNameInput.get(), itemNameInput.lastId(), dataSize.get()));
 		}
 		return maxCount;

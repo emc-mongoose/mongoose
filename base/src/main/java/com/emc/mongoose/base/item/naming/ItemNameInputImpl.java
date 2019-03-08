@@ -26,19 +26,29 @@ public final class ItemNameInputImpl
 		return lastId;
 	}
 
+	private void eval() {
+		lastId = idFunction.applyAsLong(lastId);
+	}
+
+	private String convert() {
+		if (prefix == null) {
+			return Long.toString(lastId, radix);
+		} else {
+			return prefix + Long.toString(lastId, radix);
+		}
+	}
+
 	@Override
 	public final String get() {
-		if (prefix == null) {
-			return Long.toString(idFunction.applyAsLong(lastId), radix);
-		} else {
-			return prefix + Long.toString(idFunction.applyAsLong(lastId), radix);
-		}
+		eval();
+		return convert();
 	}
 
 	@Override
 	public final int get(final List<String> buffer, final int limit) {
 		for (var i = 0; i < limit; i++) {
-			buffer.add(get());
+			eval();
+			buffer.add(convert());
 		}
 		return limit;
 	}

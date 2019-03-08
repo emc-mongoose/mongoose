@@ -7,7 +7,6 @@ import com.emc.mongoose.base.metrics.snapshot.RateMetricSnapshot;
 import java.time.Clock;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /** @author veronika K. on 16.10.18 */
