@@ -25,10 +25,10 @@ public final class MetricsAggregatorImpl extends AsyncRunnableBase implements Me
 	public MetricsAggregatorImpl(final String loadStepId, final List<LoadStep> stepSlices) {
 		this.loadStepId = loadStepId;
 		snapshotSuppliers = stepSlices
-			.stream()
-			.map(MetricsSnapshotsSupplierTaskImpl::new)
-			.collect(Collectors.toList())
-			.toArray(new MetricsSnapshotsSupplierTask[]{});
+						.stream()
+						.map(MetricsSnapshotsSupplierTaskImpl::new)
+						.collect(Collectors.toList())
+						.toArray(new MetricsSnapshotsSupplierTask[]{});
 		count = snapshotSuppliers.length;
 	}
 
@@ -37,12 +37,12 @@ public final class MetricsAggregatorImpl extends AsyncRunnableBase implements Me
 		List<? extends AllMetricsSnapshot> snapshots;
 		AllMetricsSnapshot snapshot;
 		final List<AllMetricsSnapshot> snapshotsByIndex = new ArrayList<>(count);
-		for(var i = 0; i < count; i ++) {
+		for (var i = 0; i < count; i++) {
 			supplyTask = snapshotSuppliers[i];
 			snapshots = supplyTask.get();
-			if(originIndex < snapshots.size()) {
+			if (originIndex < snapshots.size()) {
 				snapshot = snapshots.get(originIndex);
-				if(null != snapshot) {
+				if (null != snapshot) {
 					snapshotsByIndex.add(snapshot);
 				}
 			}
@@ -84,12 +84,12 @@ public final class MetricsAggregatorImpl extends AsyncRunnableBase implements Me
 
 	@Override
 	protected final void doClose() {
-		for(var i = 0; i < count; i ++) {
+		for (var i = 0; i < count; i++) {
 			try (final var logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 				snapshotSuppliers[i].close();
 			} catch (final IOException e) {
 				LogUtil.exception(
-					Level.WARN, e, "{}: failed to close the metrics snapshot supplier", loadStepId);
+								Level.WARN, e, "{}: failed to close the metrics snapshot supplier", loadStepId);
 			}
 			snapshotSuppliers[i] = null;
 		}

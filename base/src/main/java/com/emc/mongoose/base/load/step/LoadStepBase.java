@@ -2,7 +2,6 @@ package com.emc.mongoose.base.load.step;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import com.emc.mongoose.base.concurrent.DaemonBase;
@@ -25,7 +24,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import org.apache.logging.log4j.Level;
 
 public abstract class LoadStepBase extends DaemonBase implements LoadStep, Runnable {
@@ -62,11 +60,11 @@ public abstract class LoadStepBase extends DaemonBase implements LoadStep, Runna
 		AllMetricsSnapshot snapshot;
 		final var count = metricsContexts.size();
 		final List<AllMetricsSnapshot> metricsSnapshots = new ArrayList<>(count);
-		for(var i = 0; i < count; i ++) {
+		for (var i = 0; i < count; i++) {
 			ctx = metricsContexts.get(i);
-			if(null != ctx) {
+			if (null != ctx) {
 				snapshot = ctx.lastSnapshot();
-				if(null != snapshot) {
+				if (null != snapshot) {
 					metricsSnapshots.add(snapshot);
 				}
 			}
