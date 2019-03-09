@@ -77,7 +77,7 @@ Use  the command line arguments either load step configurations in the scenario 
 		"batch": {
 			// The count of the items/tasks processed by a single invocation.
 			// It may be useful to set to 1 for MPU or DLO tests
-			"size": 4096
+			"size": 32768
 		},
 		"op": {
 			"limit": {
