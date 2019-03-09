@@ -65,7 +65,7 @@ public final class MetricsAggregatorImpl extends AsyncRunnableBase implements Me
 						.parallelStream()
 						.forEach(
 										snapshotsSupplier -> {
-											try (final Instance logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+											try (final var logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 												snapshotsSupplier.stop();
 											} catch (final IOException e) {
 												LogUtil.exception(
@@ -81,7 +81,7 @@ public final class MetricsAggregatorImpl extends AsyncRunnableBase implements Me
 						.parallelStream()
 						.forEach(
 										snapshotsSupplier -> {
-											try (final Instance logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+											try (final var logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 												snapshotsSupplier.close();
 											} catch (final IOException e) {
 												LogUtil.exception(
