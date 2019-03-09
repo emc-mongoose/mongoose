@@ -58,7 +58,20 @@ public abstract class LoadStepBase extends DaemonBase implements LoadStep, Runna
 
 	@Override
 	public final List<? extends AllMetricsSnapshot> metricsSnapshots() {
-		return metricsContexts.stream().map(MetricsContext::lastSnapshot).collect(Collectors.toList());
+		MetricsContext ctx;
+		AllMetricsSnapshot snapshot;
+		final var count = metricsContexts.size();
+		final List<AllMetricsSnapshot> metricsSnapshots = new ArrayList<>(count);
+		for(var i = 0; i < count; i ++) {
+			ctx = metricsContexts.get(i);
+			if(null != ctx) {
+				snapshot = ctx.lastSnapshot();
+				if(null != snapshot) {
+					metricsSnapshots.add(snapshot);
+				}
+			}
+		}
+		return metricsSnapshots;
 	}
 
 	@Override
@@ -94,15 +107,15 @@ public abstract class LoadStepBase extends DaemonBase implements LoadStep, Runna
 
 		init();
 
-		try (final Instance logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+		try (final var logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 
 			doStartWrapped();
 
-			final int svcThreadCount = config.intVal("load-service-threads");
+			final var svcThreadCount = config.intVal("load-service-threads");
 			ServiceTaskExecutor.INSTANCE.setThreadCount(svcThreadCount);
 
 			final long t;
-			final Object loadStepLimitTimeRaw = config.val("load-step-limit-time");
+			final var loadStepLimitTimeRaw = config.val("load-step-limit-time");
 			if (loadStepLimitTimeRaw instanceof String) {
 				t = TimeUtil.getTimeInSeconds((String) loadStepLimitTimeRaw);
 			} else {

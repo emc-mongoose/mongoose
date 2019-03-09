@@ -113,8 +113,8 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 	@SuppressWarnings("unchecked")
 	public void refreshLastSnapshot() {
 
-		final List<AllMetricsSnapshot> snapshots = snapshotsSupplier.get();
-		final int snapshotsCount = snapshots.size();
+		final var snapshots = snapshotsSupplier.get();
+		final var snapshotsCount = snapshots.size();
 
 		if (snapshotsCount > 0) { // do nothing otherwise
 
@@ -127,7 +127,7 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 
 			if (snapshotsCount == 1) { // single
 
-				final AllMetricsSnapshot snapshot = snapshots.get(0);
+				final var snapshot = snapshots.get(0);
 				successSnapshot = snapshot.successSnapshot();
 				failsSnapshot = snapshot.failsSnapshot();
 				bytesSnapshot = snapshot.byteSnapshot();
@@ -143,8 +143,8 @@ public class DistributedMetricsContextImpl<S extends DistributedAllMetricsSnapsh
 				final List<RateMetricSnapshot> succSnapshots = new ArrayList<>();
 				final List<RateMetricSnapshot> failSnapshots = new ArrayList<>();
 				final List<RateMetricSnapshot> byteSnapshots = new ArrayList<>();
-				for (int i = 0; i < snapshotsCount; i++) {
-					final AllMetricsSnapshot snapshot = snapshots.get(i);
+				for (var i = 0; i < snapshotsCount; i++) {
+					final var snapshot = snapshots.get(i);
 					durSnapshots.add(snapshot.durationSnapshot());
 					latSnapshots.add(snapshot.latencySnapshot());
 					succSnapshots.add(snapshot.successSnapshot());

@@ -2,7 +2,6 @@ package com.emc.mongoose.base.load.step.client.metrics;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import com.emc.mongoose.base.load.step.LoadStep;
@@ -11,39 +10,49 @@ import com.emc.mongoose.base.metrics.snapshot.AllMetricsSnapshot;
 import com.github.akurilov.commons.concurrent.AsyncRunnableBase;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.Level;
 
 public final class MetricsAggregatorImpl extends AsyncRunnableBase implements MetricsAggregator {
 
 	private final String loadStepId;
-	private final Map<LoadStep, MetricsSnapshotsSupplierTask> snapshotSuppliers;
+	private final MetricsSnapshotsSupplierTask[] snapshotSuppliers;
+	private final int count;
 
 	public MetricsAggregatorImpl(final String loadStepId, final List<LoadStep> stepSlices) {
 		this.loadStepId = loadStepId;
-		snapshotSuppliers = stepSlices.stream()
-						.collect(Collectors.toMap(Function.identity(), MetricsSnapshotsSupplierTaskImpl::new));
+		snapshotSuppliers = stepSlices
+			.stream()
+			.map(MetricsSnapshotsSupplierTaskImpl::new)
+			.collect(Collectors.toList())
+			.toArray(new MetricsSnapshotsSupplierTask[]{});
+		count = snapshotSuppliers.length;
 	}
 
 	public final List<AllMetricsSnapshot> metricsSnapshotsByIndex(final int originIndex) {
-		return snapshotSuppliers.values().stream()
-						.map(Supplier::get)
-						.filter(Objects::nonNull)
-						.map(
-										metricsSnapshots -> originIndex < metricsSnapshots.size() ? metricsSnapshots.get(originIndex) : null)
-						.filter(Objects::nonNull)
-						.collect(Collectors.toList());
+		MetricsSnapshotsSupplierTask supplyTask;
+		List<? extends AllMetricsSnapshot> snapshots;
+		AllMetricsSnapshot snapshot;
+		final List<AllMetricsSnapshot> snapshotsByIndex = new ArrayList<>(count);
+		for(var i = 0; i < count; i ++) {
+			supplyTask = snapshotSuppliers[i];
+			snapshots = supplyTask.get();
+			if(originIndex < snapshots.size()) {
+				snapshot = snapshots.get(originIndex);
+				if(null != snapshot) {
+					snapshotsByIndex.add(snapshot);
+				}
+			}
+		}
+		return snapshotsByIndex;
 	}
 
 	@Override
 	protected final void doStart() {
-		snapshotSuppliers
-						.values()
+		Arrays.stream(snapshotSuppliers)
 						.forEach(
 										snapshotsSupplier -> {
 											try (final var logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
@@ -60,12 +69,11 @@ public final class MetricsAggregatorImpl extends AsyncRunnableBase implements Me
 
 	@Override
 	protected final void doStop() {
-		snapshotSuppliers
-						.values()
-						.parallelStream()
+		Arrays.stream(snapshotSuppliers)
+						.parallel()
 						.forEach(
 										snapshotsSupplier -> {
-											try (final Instance logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+											try (final var logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 												snapshotsSupplier.stop();
 											} catch (final IOException e) {
 												LogUtil.exception(
@@ -76,18 +84,14 @@ public final class MetricsAggregatorImpl extends AsyncRunnableBase implements Me
 
 	@Override
 	protected final void doClose() {
-		snapshotSuppliers
-						.values()
-						.parallelStream()
-						.forEach(
-										snapshotsSupplier -> {
-											try (final Instance logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
-												snapshotsSupplier.close();
-											} catch (final IOException e) {
-												LogUtil.exception(
-																Level.WARN, e, "{}: failed to close the metrics snapshot supplier", loadStepId);
-											}
-										});
-		snapshotSuppliers.clear();
+		for(var i = 0; i < count; i ++) {
+			try (final var logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+				snapshotSuppliers[i].close();
+			} catch (final IOException e) {
+				LogUtil.exception(
+					Level.WARN, e, "{}: failed to close the metrics snapshot supplier", loadStepId);
+			}
+			snapshotSuppliers[i] = null;
+		}
 	}
 }

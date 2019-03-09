@@ -29,10 +29,11 @@ public class MetricsContextImpl<S extends AllMetricsSnapshotImpl> extends Metric
 	private final RateMeter<RateMetricSnapshot> throughputSuccess, throughputFail, reqBytes;
 	private volatile TimingMetricSnapshot reqDurSnapshot, respLatSnapshot;
 	private volatile ConcurrencyMetricSnapshot actualConcurrencySnapshot;
+	private volatile long lastSnapshotsUpdateTs = 0;
 	private final IntSupplier actualConcurrencyGauge;
 	private final ReadWriteLock timingLock = new ReentrantReadWriteLock();
 	private final Lock timingLockUpdate = timingLock.readLock();
-	private final Lock timingLockRefresh = timingLock.writeLock();
+	private final Lock timingsUpdateLock = timingLock.writeLock();
 
 	public MetricsContextImpl(
 					final String id,
@@ -69,7 +70,7 @@ public class MetricsContextImpl<S extends AllMetricsSnapshotImpl> extends Metric
 		actualConcurrency = new ConcurrencyMeterImpl(MetricsConstants.METRIC_NAME_CONC);
 		actualConcurrencySnapshot = actualConcurrency.snapshot();
 		//
-		final Clock clock = Clock.systemUTC();
+		final var clock = Clock.systemUTC();
 		//
 		throughputSuccess = new RateMeterImpl(clock, MetricsConstants.METRIC_NAME_SUCC);
 		//
@@ -110,9 +111,9 @@ public class MetricsContextImpl<S extends AllMetricsSnapshotImpl> extends Metric
 					final long count, final long bytes, final long durationValues[], final long latencyValues[]) {
 		throughputSuccess.update(count);
 		reqBytes.update(bytes);
-		final int timingsLen = Math.min(durationValues.length, latencyValues.length);
+		final var timingsLen = Math.min(durationValues.length, latencyValues.length);
 		long duration, latency;
-		for (int i = 0; i < timingsLen; ++i) {
+		for (var i = 0; i < timingsLen; ++i) {
 			duration = durationValues[i];
 			latency = latencyValues[i];
 			updateTimings(latency, duration);
@@ -126,9 +127,9 @@ public class MetricsContextImpl<S extends AllMetricsSnapshotImpl> extends Metric
 	public final void markPartSucc(
 					final long bytes, final long durationValues[], final long latencyValues[]) {
 		reqBytes.update(bytes);
-		final int timingsLen = Math.min(durationValues.length, latencyValues.length);
+		final var timingsLen = Math.min(durationValues.length, latencyValues.length);
 		long duration, latency;
-		for (int i = 0; i < timingsLen; ++i) {
+		for (var i = 0; i < timingsLen; ++i) {
 			duration = durationValues[i];
 			latency = latencyValues[i];
 			updateTimings(latency, duration);
@@ -180,8 +181,9 @@ public class MetricsContextImpl<S extends AllMetricsSnapshotImpl> extends Metric
 	@SuppressWarnings("unchecked")
 	public void refreshLastSnapshot() {
 		final var currentTimeMillis = System.currentTimeMillis();
-		if (currentTimeMillis - lastOutputTs() > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
-			refreshTimings();
+		if (currentTimeMillis - lastSnapshotsUpdateTs > DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS) {
+			lastSnapshotsUpdateTs = currentTimeMillis;
+			updateTimings();
 			actualConcurrency.update(actualConcurrencyGauge.getAsInt());
 			actualConcurrencySnapshot = actualConcurrency.snapshot();
 		}
@@ -196,13 +198,13 @@ public class MetricsContextImpl<S extends AllMetricsSnapshotImpl> extends Metric
 		super.refreshLastSnapshot();
 	}
 
-	private void refreshTimings() {
-		if (timingLockRefresh.tryLock()) {
+	private void updateTimings() {
+		if (timingsUpdateLock.tryLock()) {
 			try {
 				reqDurSnapshot = reqDuration.snapshot();
 				respLatSnapshot = respLatency.snapshot();
 			} finally {
-				timingLockRefresh.unlock();
+				timingsUpdateLock.unlock();
 			}
 		}
 	}
