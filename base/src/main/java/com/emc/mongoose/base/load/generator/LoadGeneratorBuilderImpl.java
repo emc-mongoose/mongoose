@@ -3,19 +3,23 @@ package com.emc.mongoose.base.load.generator;
 import static com.emc.mongoose.base.Constants.M;
 import static com.emc.mongoose.base.item.DataItem.rangeCount;
 import static com.emc.mongoose.base.storage.driver.StorageDriver.BUFF_SIZE_MIN;
-import static com.emc.mongoose.base.supply.PatternDefinedSupplier.PATTERN_CHAR;
+import static com.github.akurilov.commons.io.el.ExpressionInput.ASYNC_MARKER;
+import static com.github.akurilov.commons.io.el.ExpressionInput.INIT_MARKER;
+import static com.github.akurilov.commons.io.el.ExpressionInput.SYNC_MARKER;
 
+import com.emc.mongoose.base.config.ConstantValueInputImpl;
+import com.emc.mongoose.base.config.el.CompositeExpressionInputBuilder;
 import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.exception.OmgShootMyFootException;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.DataItemFactoryImpl;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
-import com.emc.mongoose.base.item.ItemNameSupplier;
-import com.emc.mongoose.base.item.ItemNamingType;
 import com.emc.mongoose.base.item.ItemType;
 import com.emc.mongoose.base.item.TransferConvertBuffer;
 import com.emc.mongoose.base.item.io.ItemInputFactory;
+import com.emc.mongoose.base.item.naming.ItemNameInput;
+import com.emc.mongoose.base.item.naming.ItemNameInput.ItemNamingType;
 import com.emc.mongoose.base.item.io.NewDataItemInput;
 import com.emc.mongoose.base.item.io.NewItemInput;
 import com.emc.mongoose.base.item.op.OpType;
@@ -28,10 +32,8 @@ import com.emc.mongoose.base.item.op.token.TokenOperationsBuilderImpl;
 import com.emc.mongoose.base.logging.LogContextThreadFactory;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
+import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.base.storage.driver.StorageDriver;
-import com.emc.mongoose.base.supply.BatchSupplier;
-import com.emc.mongoose.base.supply.ConstantStringSupplier;
-import com.emc.mongoose.base.supply.RangePatternDefinedSupplier;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.commons.concurrent.throttle.Throttle;
@@ -40,7 +42,6 @@ import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
-import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,7 +53,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
@@ -146,21 +146,19 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 
 	@SuppressWarnings("unchecked")
 	public T build() throws InterruptRunException, OmgShootMyFootException {
-
 		// prepare
 		final OperationsBuilder<I, O> opsBuilder;
 		if (loadConfig == null) {
 			throw new OmgShootMyFootException("Load config is not set");
 		}
-		final Config opConfig = loadConfig.configVal("op");
-		final long countLimit = opConfig.longVal("limit-count");
-		final boolean shuffleFlag = opConfig.boolVal("shuffle");
+		final var opConfig = loadConfig.configVal("op");
+		final var countLimit = opConfig.longVal("limit-count");
+		final var shuffleFlag = opConfig.boolVal("shuffle");
 		if (itemConfig == null) {
 			throw new OmgShootMyFootException("Item config is not set");
 		}
-		final Config inputConfig = itemConfig.configVal("input");
-		final Config rangesConfig = itemConfig.configVal("data-ranges");
-
+		final var inputConfig = itemConfig.configVal("input");
+		final var rangesConfig = itemConfig.configVal("data-ranges");
 		if (itemType == null) {
 			throw new OmgShootMyFootException("Item type is not set");
 		}
@@ -169,7 +167,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		}
 		// init the op builder
 		if (ItemType.DATA.equals(itemType)) {
-			final List<String> fixedRangesConfig = rangesConfig.listVal("fixed");
+			final var fixedRangesConfig = rangesConfig.<String> listVal("fixed");
 			final List<Range> fixedRanges;
 			if (fixedRangesConfig == null) {
 				fixedRanges = Collections.EMPTY_LIST;
@@ -177,7 +175,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 				fixedRanges = fixedRangesConfig.stream().map(Range::new).collect(Collectors.toList());
 			}
 			final long sizeThreshold;
-			final Object sizeThresholdRaw = rangesConfig.val("threshold");
+			final var sizeThresholdRaw = rangesConfig.val("threshold");
 			if (sizeThresholdRaw instanceof String) {
 				sizeThreshold = SizeInBytes.toFixedSize((String) sizeThresholdRaw);
 			} else {
@@ -192,60 +190,43 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		} else {
 			opsBuilder = (OperationsBuilder<I, O>) new TokenOperationsBuilderImpl(originIndex);
 		}
-
 		// determine the operations type
-		final OpType opType = OpType.valueOf(opConfig.stringVal("type").toUpperCase());
+		final var opType = OpType.valueOf(opConfig.stringVal("type").toUpperCase());
 		opsBuilder.opType(opType);
-
 		// determine the input path
-		String itemInputPath = inputConfig.stringVal("path");
+		var itemInputPath = inputConfig.stringVal("path");
 		if (itemInputPath != null && itemInputPath.indexOf('/') != 0) {
 			itemInputPath = '/' + itemInputPath;
 		}
 		opsBuilder.inputPath(itemInputPath);
-
 		// determine the output path
-		final BatchSupplier<String> outputPathSupplier;
+		final Input<String> outputPathSupplier;
 		if (OpType.CREATE.equals(opType) && ItemType.DATA.equals(itemType)) {
 			outputPathSupplier = getOutputPathSupplier();
 		} else {
 			outputPathSupplier = null;
 		}
-		opsBuilder.outputPathSupplier(outputPathSupplier);
-
+		opsBuilder.outputPathInput(outputPathSupplier);
 		// init the credentials, multi-user case support
-		final BatchSupplier<String> uidSupplier;
 		if (authConfig == null) {
 			throw new OmgShootMyFootException("Storage auth config is not set");
 		}
-		final String uid = authConfig.stringVal("uid");
-		if (uid == null) {
-			uidSupplier = null;
-		} else if (-1 != uid.indexOf(PATTERN_CHAR)) {
-			uidSupplier = new RangePatternDefinedSupplier(uid);
-		} else {
-			uidSupplier = new ConstantStringSupplier(uid);
-		}
-		opsBuilder.uidSupplier(uidSupplier);
-
-		final String authFile = authConfig.stringVal("file");
+		final var authFile = authConfig.stringVal("file");
 		if (authFile != null && !authFile.isEmpty()) {
-			final Map<String, String> credentials = loadCredentials(authFile, (long) M);
-			opsBuilder.credentialsMap(credentials);
+			final var credentials = loadCredentialsByPath(authFile, (long) M);
+			opsBuilder.credentialsByPath(credentials);
 		} else {
-			final BatchSupplier<String> secretSupplier;
-			final String secret = authConfig.stringVal("secret");
-			if (secret == null) {
-				secretSupplier = null;
+			final var uid = authConfig.stringVal("uid");
+			final var secret = authConfig.stringVal("secret");
+			if (null == uid && null == secret) {
+				opsBuilder.credentialInput(new ConstantValueInputImpl<>(Credential.NONE));
 			} else {
-				secretSupplier = new ConstantStringSupplier(secret);
+				opsBuilder.credentialInput(
+								new ConstantValueInputImpl<>(Credential.getInstance(uid, secret)));
 			}
-
-			opsBuilder.secretSupplier(secretSupplier);
 		}
-
 		// init the items input
-		final String itemInputFile = inputConfig.stringVal("file");
+		final var itemInputFile = inputConfig.stringVal("file");
 		if (itemInput == null) {
 			if ((itemInputFile == null || itemInputFile.isEmpty())
 							&& (itemInputPath == null || itemInputPath.isEmpty())) {
@@ -265,17 +246,16 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 				sizeEstimate = BUFF_SIZE_MIN;
 			}
 		}
-
 		// check for the copy mode
 		if (OpType.CREATE.equals(opType)
 						&& ItemType.DATA.equals(itemType)
 						&& !(itemInput instanceof NewItemInput)) {
 			// intercept the items input for the storage side concatenation support
-			final String itemDataRangesConcatConfig = rangesConfig.stringVal("concat");
+			final var itemDataRangesConcatConfig = rangesConfig.stringVal("concat");
 			if (itemDataRangesConcatConfig != null) {
-				final Range srcItemsCountRange = new Range(itemDataRangesConcatConfig);
-				final long srcItemsCountMin = srcItemsCountRange.getBeg();
-				final long srcItemsCountMax = srcItemsCountRange.getEnd();
+				final var srcItemsCountRange = new Range(itemDataRangesConcatConfig);
+				final var srcItemsCountMin = srcItemsCountRange.getBeg();
+				final var srcItemsCountMax = srcItemsCountRange.getEnd();
 				if (srcItemsCountMin < 0) {
 					throw new OmgShootMyFootException(
 									"Source data items count min value should be more than 0");
@@ -291,9 +271,8 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 				} finally {
 					try {
 						itemInput.close();
-					} catch (final IOException ignored) {}
+					} catch (final Exception ignored) {}
 				}
-
 				// shoot the foot
 				if (srcItemsCount == 0) {
 					throw new OmgShootMyFootException(
@@ -313,7 +292,6 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 													+ " is less than configured max "
 													+ srcItemsCountMax);
 				}
-
 				// it's safe to cast to int here because the values will not be more than
 				// srcItemsCount which is not more than the integer limit
 				((DataOperationsBuilder) opsBuilder)
@@ -322,7 +300,6 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 				itemInput = newItemInput();
 			}
 		}
-
 		// adjust the storage drivers for the estimated transfer size
 		if (opOutput == null) {
 			throw new OmgShootMyFootException("Load operations output is not set");
@@ -330,14 +307,12 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		if (sizeEstimate > 0 && ItemType.DATA.equals(itemType) && opOutput instanceof StorageDriver) {
 			((StorageDriver) opOutput).adjustIoBuffers(sizeEstimate, opType);
 		}
-
-		final boolean recycleFlag = opConfig.boolVal("recycle");
-		final boolean retryFlag = opConfig.boolVal("retry");
-		final int recycleLimit = opConfig.intVal("limit-recycle");
+		final var recycleFlag = opConfig.boolVal("recycle");
+		final var retryFlag = opConfig.boolVal("retry");
+		final var recycleLimit = opConfig.intVal("limit-recycle");
 		if (recycleLimit < 1) {
 			throw new OmgShootMyFootException("Recycle limit should be > 0");
 		}
-
 		return (T) new LoadGeneratorImpl<>(
 						itemInput,
 						opsBuilder,
@@ -355,40 +330,48 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 					final OpType opType,
 					final Input<DataItem> itemInput)
 					throws InterruptRunException {
-		long sizeThreshold = 0;
-		int randomRangesCount = 0;
+		var sizeThreshold = 0L;
+		var randomRangesCount = 0;
 		List<Range> fixedRanges = null;
 		if (dataOpBuilder != null) {
 			sizeThreshold = dataOpBuilder.sizeThreshold();
 			randomRangesCount = dataOpBuilder.randomRangesCount();
 			fixedRanges = dataOpBuilder.fixedRanges();
 		}
-
-		long itemSize = 0;
-		final int maxCount = 0x100;
-		final List<DataItem> items = new ArrayList<>(maxCount);
-		int n = 0;
+		var itemSize = 0L;
+		final var maxCount = 0x100;
+		final var items = (List<DataItem>) new ArrayList<DataItem>(maxCount);
+		var n = 0;
 		try {
 			while (n < maxCount) {
 				n += itemInput.get(items, maxCount - n);
 			}
-		} catch (final EOFException ignored) {} catch (final IOException e) {
-			LogUtil.exception(Level.WARN, e, "Failed to estimate the average data item size");
+		} catch (final Exception e) {
+			if (e instanceof IOException) {
+				if (!(e instanceof EOFException)) {
+					LogUtil.exception(Level.WARN, e, "Failed to estimate the average data item size");
+				}
+			} else {
+				throw e;
+			}
 		} finally {
 			try {
 				itemInput.reset();
-			} catch (final IOException e) {
-				LogUtil.exception(Level.WARN, e, "Failed reset the items input");
+			} catch (final Exception e) {
+				if (e instanceof IOException) {
+					LogUtil.exception(Level.WARN, e, "Failed reset the items input");
+				} else {
+					throw e;
+				}
 			}
 		}
-
-		long sumSize = 0;
-		long minSize = Long.MAX_VALUE;
-		long maxSize = Long.MIN_VALUE;
+		var sumSize = 0L;
+		var minSize = Long.MAX_VALUE;
+		var maxSize = Long.MIN_VALUE;
 		long nextSize;
 		if (n > 0) {
 			try {
-				for (int i = 0; i < n; i++) {
+				for (var i = 0; i < n; i++) {
 					nextSize = items.get(i).size();
 					sumSize += nextSize;
 					if (nextSize < minSize) {
@@ -403,7 +386,6 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 			}
 			itemSize = minSize == maxSize ? sumSize / n : (minSize + maxSize) / 2;
 		}
-
 		switch (opType) {
 		case CREATE:
 			return Math.min(itemSize, sizeThreshold);
@@ -414,7 +396,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 			} else if (fixedRanges != null && !fixedRanges.isEmpty()) {
 				long sizeSum = 0;
 				long rangeSize;
-				for (final Range byteRange : fixedRanges) {
+				for (final var byteRange : fixedRanges) {
 					rangeSize = byteRange.getSize();
 					if (rangeSize == -1) {
 						rangeSize = byteRange.getEnd() - byteRange.getBeg() + 1;
@@ -432,34 +414,39 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		}
 	}
 
-	private BatchSupplier<String> getOutputPathSupplier() throws OmgShootMyFootException {
-		final BatchSupplier<String> pathSupplier;
-		String path = itemConfig.stringVal("output-path");
-		if (path == null || path.isEmpty()) {
-			path = LogUtil.getDateTimeStamp();
-		}
-		if (-1 == path.indexOf(PATTERN_CHAR)) {
-			pathSupplier = new ConstantStringSupplier(path);
+	private Input<String> getOutputPathSupplier() {
+		final Input<String> pathInput;
+		final var path = itemConfig.stringVal("output-path");
+		if (path.contains(ASYNC_MARKER) || path.contains(SYNC_MARKER) || path.contains(INIT_MARKER)) {
+			pathInput = CompositeExpressionInputBuilder.newInstance()
+							.expression(path)
+							.build();
 		} else {
-			pathSupplier = new RangePatternDefinedSupplier(path);
+			pathInput = new ConstantValueInputImpl<>(path);
 		}
-		return pathSupplier;
+		return pathInput;
 	}
 
 	private Input<I> newItemInput() throws OmgShootMyFootException {
-		final Config namingConfig = itemConfig.configVal("naming");
-		final ItemNamingType namingType = ItemNamingType.valueOf(namingConfig.stringVal("type").toUpperCase());
-		final String namingPrefix = namingConfig.stringVal("prefix");
-		final int namingLength = namingConfig.intVal("length");
-		final int namingRadix = namingConfig.intVal("radix");
-		final long namingOffset = namingConfig.longVal("offset");
-		final ItemNameSupplier itemNameInput = new ItemNameSupplier(namingType, namingPrefix, namingLength, namingRadix, namingOffset);
+		final var namingConfig = itemConfig.configVal("naming");
+		final var length = namingConfig.intVal("length");
+		final var offset = namingConfig.longVal("offset");
+		final var prefix = namingConfig.stringVal("prefix");
+		final var radix = namingConfig.intVal("radix");
+		final var type = ItemNamingType.valueOf(namingConfig.stringVal("type").toUpperCase());
+		final var itemNameInput = ItemNameInput.Builder.newInstance()
+						.length(length)
+						.offset(offset)
+						.prefix(prefix)
+						.radix(radix)
+						.type(type)
+						.build();
 		if (itemFactory == null) {
 			throw new OmgShootMyFootException("Item factory is not set");
 		}
 		if (itemFactory instanceof DataItemFactoryImpl) {
 			final SizeInBytes itemDataSize;
-			final Object itemDataSizeRaw = itemConfig.val("data-size");
+			final var itemDataSizeRaw = itemConfig.val("data-size");
 			if (itemDataSizeRaw instanceof String) {
 				itemDataSize = new SizeInBytes((String) itemDataSizeRaw);
 			} else {
@@ -472,42 +459,36 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		return itemInput;
 	}
 
-	private static Map<String, String> loadCredentials(final String file, final long countLimit)
-					throws OmgShootMyFootException {
-		final Map<String, String> credentials = new HashMap<>();
-		try (final BufferedReader br = Files.newBufferedReader(Paths.get(file))) {
+	private static Map<String, Credential> loadCredentialsByPath(
+					final String file, final long countLimit) {
+		final var credByPath = (Map<String, Credential>) new HashMap<String, Credential>();
+		try (final var br = Files.newBufferedReader(Paths.get(file))) {
 			String line;
 			String parts[];
-			int firstCommaPos;
 			long count = 0;
 			while (null != (line = br.readLine()) && count < countLimit) {
-				firstCommaPos = line.indexOf(',');
-				if (-1 == firstCommaPos) {
-					Loggers.ERR.warn("Invalid credentials line: \"{}\"", line);
-				} else {
-					parts = line.split(",", 2);
-					credentials.put(parts[0], parts[1]);
-					count++;
-				}
+				parts = line.split(",", 3);
+				credByPath.put(parts[0], Credential.getInstance(parts[1], parts[2]));
+				count++;
 			}
-			Loggers.MSG.info("Loaded {} credential pairs from the file \"{}\"", credentials.size(), file);
-		} catch (final IOException e) {
+			Loggers.MSG.info("Loaded {} credential pairs from the file \"{}\"", credByPath.size(), file);
+		} catch (final Exception e) {
 			LogUtil.exception(Level.WARN, e, "Failed to load the credentials from the file \"{}\"", file);
 		}
-		return credentials;
+		return credByPath;
 	}
 
 	private static <I extends Item> int loadSrcItems(
 					final Input<I> itemInput, final List<I> itemBuff, final int countLimit)
 					throws InterruptRunException {
-		final LongAdder loadedCount = new LongAdder();
-		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(
+		final var loadedCount = new LongAdder();
+		final var executor = Executors.newScheduledThreadPool(
 						2, new LogContextThreadFactory("loadSrcItemsWorker", true));
-		final CountDownLatch finishLatch = new CountDownLatch(1);
+		final var finishLatch = new CountDownLatch(1);
 		try {
 			executor.submit(
 							() -> {
-								int n = 0;
+								var n = 0;
 								int m;
 								try {
 									while (n < countLimit) {
@@ -520,10 +501,14 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 											n += m;
 										}
 									}
-								} catch (final EOFException e) {
-									Loggers.MSG.info("Loaded {} items, end of items input", n);
-								} catch (final IOException e) {
-									LogUtil.exception(Level.WARN, e, "Loaded {} items, I/O failure occurred", n);
+								} catch (final Exception e) {
+									if (e instanceof EOFException) {
+										Loggers.MSG.info("Loaded {} items, end of items input", n);
+									} else if (e instanceof IOException) {
+										LogUtil.exception(Level.WARN, e, "Loaded {} items, I/O failure occurred", n);
+									} else {
+										throw e;
+									}
 								} finally {
 									finishLatch.countDown();
 								}
@@ -539,7 +524,6 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		} finally {
 			executor.shutdownNow();
 		}
-
 		return loadedCount.intValue();
 	}
 }

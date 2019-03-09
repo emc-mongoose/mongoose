@@ -21,8 +21,8 @@ import java.util.BitSet;
 import java.util.List;
 
 /**
- Created by andrey on 10.02.17.
- */
+Created by andrey on 10.02.17.
+*/
 public abstract class ResponseContentUtil {
 
 	public static void verifyChunk(

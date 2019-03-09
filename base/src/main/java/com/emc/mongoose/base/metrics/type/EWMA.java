@@ -4,10 +4,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * Copied from dropwizard metrics library 4.0.3
- *
- * @author veronika K. on 26.09.18
- */
+* Copied from dropwizard metrics library 4.0.3
+*
+* @author veronika K. on 26.09.18
+*/
 public final class EWMA implements LoadAverage {
 
 	private volatile boolean initialized = false;
@@ -16,12 +16,12 @@ public final class EWMA implements LoadAverage {
 	private final double alpha, interval;
 
 	/**
-	 * Create a new EWMA with a specific smoothing constant.
-	 *
-	 * @param alpha the smoothing constant
-	 * @param interval the expected tick interval
-	 * @param intervalUnit the time unit of the tick interval
-	 */
+	* Create a new EWMA with a specific smoothing constant.
+	*
+	* @param alpha the smoothing constant
+	* @param interval the expected tick interval
+	* @param intervalUnit the time unit of the tick interval
+	*/
 	public EWMA(final double alpha, final long interval, final TimeUnit intervalUnit) {
 		this.interval = intervalUnit.toNanos(interval);
 		this.alpha = alpha;

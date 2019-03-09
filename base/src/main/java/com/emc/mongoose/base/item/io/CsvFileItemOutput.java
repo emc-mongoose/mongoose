@@ -1,5 +1,6 @@
 package com.emc.mongoose.base.item.io;
 
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
 
@@ -27,12 +28,13 @@ public class CsvFileItemOutput<I extends Item> extends CsvItemOutput<I> implemen
 	}
 
 	@Override
-	public CsvFileItemInput<I> getInput() throws IOException {
+	public CsvFileItemInput<I> getInput() {
 		try {
 			return new CsvFileItemInput<>(itemsFilePath, itemFactory);
-		} catch (final NoSuchMethodException e) {
-			throw new IOException(e);
+		} catch (final NoSuchMethodException | IOException e) {
+			throwUnchecked(e);
 		}
+		return null;
 	}
 
 	@Override
@@ -41,7 +43,7 @@ public class CsvFileItemOutput<I extends Item> extends CsvItemOutput<I> implemen
 	}
 
 	@Override
-	public final Path getFilePath() {
+	public final Path filePath() {
 		return itemsFilePath;
 	}
 }

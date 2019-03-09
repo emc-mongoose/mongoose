@@ -11,8 +11,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- Created by kurila on 30.09.16.
- */
+Created by kurila on 30.09.16.
+*/
 public interface NettyStorageDriver<I extends Item, O extends Operation<I>>
 				extends StorageDriver<I, O> {
 

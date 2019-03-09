@@ -11,9 +11,9 @@ import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 
 /**
- * Created by kurila on 30.06.17. Note that the instances are not thread safe so they will work only
- * in case of async logger is used.
- */
+* Created by kurila on 30.06.17. Note that the instances are not thread safe so they will work only
+* in case of async logger is used.
+*/
 @Plugin(name = "StepIdTriggeringPolicy", category = Core.CATEGORY_NAME, printObject = true)
 public final class StepIdTriggeringPolicy extends AbstractTriggeringPolicy {
 

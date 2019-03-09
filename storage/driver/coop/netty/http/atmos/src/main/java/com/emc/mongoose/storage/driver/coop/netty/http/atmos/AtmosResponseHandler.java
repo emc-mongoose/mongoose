@@ -14,8 +14,8 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 
 /**
- Created by kurila on 11.11.16.
- */
+Created by kurila on 11.11.16.
+*/
 public final class AtmosResponseHandler<I extends Item, O extends Operation<I>>
 				extends HttpResponseHandlerBase<I, O> {
 

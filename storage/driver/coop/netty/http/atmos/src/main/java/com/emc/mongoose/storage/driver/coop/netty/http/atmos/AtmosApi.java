@@ -4,8 +4,8 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.util.AsciiString;
 
 /**
- Created by kurila on 11.11.16.
- */
+Created by kurila on 11.11.16.
+*/
 public interface AtmosApi {
 
 	String URI_BASE = "/rest";

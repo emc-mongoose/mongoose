@@ -115,7 +115,7 @@ public class MultipleRandomUpdateAndMultipleFixedReadTest {
 		try {
 			Files.delete(Paths.get(HOST_ITEM_OUTPUT_FILE));
 		} catch (final Exception ignored) {}
-		final List<String> env = System.getenv().entrySet().stream()
+		final var env = System.getenv().entrySet().stream()
 						.map(e -> e.getKey() + "=" + e.getValue())
 						.collect(Collectors.toList());
 		env.add("COUNT_LIMIT=" + EXPECTED_COUNT);
@@ -126,7 +126,7 @@ public class MultipleRandomUpdateAndMultipleFixedReadTest {
 		case ATMOS:
 		case S3:
 		case SWIFT:
-			final HttpStorageMockContainer storageMock = new HttpStorageMockContainer(
+			final var storageMock = new HttpStorageMockContainer(
 							HttpStorageMockContainer.DEFAULT_PORT,
 							false,
 							null,

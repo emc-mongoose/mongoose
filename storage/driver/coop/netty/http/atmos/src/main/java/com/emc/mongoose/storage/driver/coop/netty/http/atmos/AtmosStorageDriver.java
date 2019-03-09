@@ -38,7 +38,6 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
-
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
@@ -52,12 +51,9 @@ import java.util.TreeMap;
 import java.util.function.Function;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
 import org.apache.logging.log4j.Level;
 
-/**
- * Created by kurila on 11.11.16.
- */
+/** Created by kurila on 11.11.16. */
 public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
 				extends HttpStorageDriverBase<I, O> {
 
@@ -84,8 +80,12 @@ public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
 	protected final boolean fsAccess;
 
 	public AtmosStorageDriver(
-					final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-					final int batchSize) throws OmgShootMyFootException, InterruptedException {
+					final String stepId,
+					final DataInput dataInput,
+					final Config storageConfig,
+					final boolean verifyFlag,
+					final int batchSize)
+					throws OmgShootMyFootException, InterruptedException {
 		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 		final var httpConfig = storageConfig.configVal("net-http");
 		fsAccess = httpConfig.boolVal("fsAccess");
@@ -105,22 +105,23 @@ public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
 					throws InterruptRunException {
 
 		final var nodeAddr = storageNodeAddrs[0];
+		final var uriQuery = uriQuery();
+		final var uri = uriQuery == null || uriQuery.isEmpty() ? SUBTENANT_URI_BASE : SUBTENANT_URI_BASE + uriQuery;
 		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		// reqHeaders.set(KEY_X_EMC_DATE, reqHeaders.get(HttpHeaderNames.DATE));
 		if (fsAccess) {
 			reqHeaders.set(KEY_X_EMC_FILESYSTEM_ACCESS_ENABLED, Boolean.toString(fsAccess));
 		}
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		applyAuthHeaders(reqHeaders, HttpMethod.PUT, SUBTENANT_URI_BASE, credential);
+		applyAuthHeaders(reqHeaders, HttpMethod.PUT, uri, credential);
 
 		final FullHttpRequest getSubtenantReq = new DefaultFullHttpRequest(
 						HttpVersion.HTTP_1_1,
 						HttpMethod.PUT,
-						SUBTENANT_URI_BASE,
+						uri,
 						Unpooled.EMPTY_BUFFER,
 						reqHeaders,
 						EmptyHttpHeaders.INSTANCE);
@@ -151,8 +152,12 @@ public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
 
 	@Override
 	public final List<I> list(
-					final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
-					final I lastPrevItem, final int count)
+					final ItemFactory<I> itemFactory,
+					final String path,
+					final String prefix,
+					final int idRadix,
+					final I lastPrevItem,
+					final int count)
 					throws IOException {
 		return null;
 	}
@@ -235,7 +240,9 @@ public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
 
 	@Override
 	protected final void applyAuthHeaders(
-					final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath,
+					final HttpHeaders httpHeaders,
+					final HttpMethod httpMethod,
+					final String dstUriPath,
 					final Credential credential) {
 		final String authToken;
 		final String uid;

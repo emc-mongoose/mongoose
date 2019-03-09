@@ -10,14 +10,15 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
 /**
- * Created by andrey on 24.07.17. The data input able to produce the layer of different data using
- * the given layer index. Also caches the layers using the layers count limit to not to exhaust the
- * available memory. The allocated off-heap memory is calculated as layersCacheCountLimit *
- * layerSize (worst case)
- */
+* Created by andrey on 24.07.17. The data input able to produce the layer of different data using
+* the given layer index. Also caches the layers using the layers count limit to not to exhaust the
+* available memory. The allocated off-heap memory is calculated as layersCacheCountLimit *
+* layerSize (worst case)
+*/
 public class CachedDataInput extends DataInputBase {
 
 	private int layersCacheCountLimit;
+	@SuppressWarnings("ThreadLocalNotStaticFinal")
 	private final ThreadLocal<Int2ObjectOpenHashMap<MappedByteBuffer>> thrLocLayersCache = new ThreadLocal<>();
 
 	public CachedDataInput() {
@@ -47,19 +48,18 @@ public class CachedDataInput extends DataInputBase {
 		if (layerIndex == 0) {
 			return inputBuff;
 		}
-
-		Int2ObjectOpenHashMap<MappedByteBuffer> layersCache = thrLocLayersCache.get();
+		var layersCache = thrLocLayersCache.get();
 		if (layersCache == null) {
 			layersCache = new Int2ObjectOpenHashMap<>(layersCacheCountLimit - 1);
 			thrLocLayersCache.set(layersCache);
 		}
 
 		// check if layer exists
-		MappedByteBuffer layer = layersCache.get(layerIndex - 1);
+		var layer = layersCache.get(layerIndex - 1);
 		if (layer == null) {
 			// check if it's necessary to free the space first
-			int layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
-			final int layerSize = inputBuff.capacity();
+			var layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
+			final var layerSize = inputBuff.capacity();
 			if (layersCountToFree > 0) {
 				for (final int i : layersCache.keySet()) {
 					layer = layersCache.remove(i);
@@ -74,7 +74,7 @@ public class CachedDataInput extends DataInputBase {
 			}
 			// generate the layer
 			layer = (MappedByteBuffer) ByteBuffer.allocateDirect(layerSize);
-			final long layerSeed = Long.reverseBytes((xorShift(getInitialSeed()) << layerIndex) ^ layerIndex);
+			final var layerSeed = Long.reverseBytes((xorShift(getInitialSeed()) << layerIndex) ^ layerIndex);
 			generateData(layer, layerSeed);
 			layersCache.put(layerIndex - 1, layer);
 		}
@@ -83,7 +83,7 @@ public class CachedDataInput extends DataInputBase {
 
 	public void close() throws IOException {
 		super.close();
-		final Int2ObjectMap<MappedByteBuffer> layersCache = thrLocLayersCache.get();
+		final var layersCache = (Int2ObjectMap<MappedByteBuffer>) thrLocLayersCache.get();
 		if (layersCache != null) {
 			layersCache.clear();
 			thrLocLayersCache.set(null);

@@ -1,7 +1,7 @@
 # Introduction
 
 In the new major version of Mongoose the new distributed mode architecture is introduced. Any *distributed load step*
-execution may be initiated from any node from the given set. Then the chosen node becomes an temparary *entry node*.
+execution may be initiated from any node from the given set. Then the chosen node becomes an temporary *entry node*.
 There may be also *additional nodes* involved in the given distributed load step. All necessary input is prepared
 (*sliced*) and distributed among the nodes before the actual load step start to get rid of the redundant interaction
 via the network during the load step execution. The additional nodes are being polled periodically to synchronize the
@@ -96,16 +96,16 @@ Example:
 * item-naming-length: 2
 * item-naming-offset: 0
 * item-naming-radix: 10
-* item-naming-scheme: asc
+* item-naming-type: serial
 * load-op-limit-count: 18
 * load-step-node-addrs: A,B,C
 
 | Node    | Offset | Resulting Item Names |
 |---------|--------|----------------------|
-| <LOCAL> | 0      | 00, 04, 08, 12, 16   |
-| A       | 1      | 01, 05, 09, 13, 17   |
-| B       | 2      | 02, 06, 10, 14       |
-| C       | 3      | 03, 07, 11, 15       |
+| <LOCAL> | 0      | 01, 05, 09, 13, 17   |
+| A       | 1      | 02, 06, 10, 14, 18   |
+| B       | 2      | 03, 07, 11, 15       |
+| C       | 3      | 04, 08, 12, 16       |
 
 ### Configuration
 

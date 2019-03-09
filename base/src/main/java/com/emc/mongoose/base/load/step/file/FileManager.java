@@ -24,34 +24,34 @@ public interface FileManager {
 	Path TMP_DIR = Paths.get(System.getProperty("java.io.tmpdir"), "mongoose");
 
 	/**
-	 * Determine the file name for the given logger and step id pair
-	 *
-	 * @param loggerName
-	 * @param testStepId
-	 * @return the file name
-	 */
+	* Determine the file name for the given logger and step id pair
+	*
+	* @param loggerName
+	* @param testStepId
+	* @return the file name
+	*/
 	String logFileName(final String loggerName, final String testStepId) throws IOException;
 
 	/**
-	 * Generate the temporary file name
-	 *
-	 * @return the temporary file name
-	 */
+	* Generate the temporary file name
+	*
+	* @return the temporary file name
+	*/
 	String newTmpFileName() throws IOException;
 
 	/**
-	 * Read the next batch of bytes from the remote file
-	 *
-	 * @return The bytes been read, may return empty buffer in case of EOF
-	 * @throws EOFException if end of file is reached
-	 */
+	* Read the next batch of bytes from the remote file
+	*
+	* @return The bytes been read, may return empty buffer in case of EOF
+	* @throws EOFException if end of file is reached
+	*/
 	byte[] readFromFile(final String fileName, final long offset) throws IOException;
 
 	/**
-	 * Write some bytes to the remote file. Blocks until all the bytes are written.
-	 *
-	 * @param buff the bytes to write to the remote file another IOException
-	 */
+	* Write some bytes to the remote file. Blocks until all the bytes are written.
+	*
+	* @param buff the bytes to write to the remote file another IOException
+	*/
 	void writeToFile(final String fileName, final byte[] buff) throws IOException;
 
 	long fileSize(final String fileName) throws IOException;

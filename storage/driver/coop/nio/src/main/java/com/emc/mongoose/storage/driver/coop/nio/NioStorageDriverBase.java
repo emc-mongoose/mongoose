@@ -39,9 +39,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- Created by kurila on 19.07.16.
- The multi-threaded non-blocking I/O storage driver.
- */
+Created by kurila on 19.07.16.
+The multi-threaded non-blocking I/O storage driver.
+*/
 public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I>>
 				extends CoopStorageDriverBase<I, O>
 				implements NioStorageDriver<I, O> {
@@ -73,7 +73,7 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 		opBuffs = new CircularBuffer[ioWorkerCount];
 		opBuffLocks = new Lock[ioWorkerCount];
 		opBuffCapacity = Math.max(MIN_TASK_BUFF_CAPACITY, concurrencyLimit / ioWorkerCount);
-		for (int i = 0; i < ioWorkerCount; i++) {
+		for (var i = 0; i < ioWorkerCount; i++) {
 			opBuffs[i] = new CircularArrayBuffer<>(opBuffCapacity);
 			opBuffLocks[i] = new ReentrantLock();
 			ioFibers.add(new NioWorkerTask(IO_EXECUTOR, opBuffs[i], opBuffLocks[i]));
@@ -81,10 +81,10 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 	}
 
 	/**
-	 The class represents the non-blocking load operation execution algorithm.
-	 The load operation itself may correspond to a large data transfer so it can't be non-blocking.
-	 So the load operation may be invoked multiple times (in the reentrant manner).
-	 */
+	The class represents the non-blocking load operation execution algorithm.
+	The load operation itself may correspond to a large data transfer so it can't be non-blocking.
+	So the load operation may be invoked multiple times (in the reentrant manner).
+	*/
 	private final class NioWorkerTask
 					extends ExclusiveFiberBase {
 
@@ -179,11 +179,11 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 	}
 
 	/**
-	 Reentrant method which decorates the actual non-blocking create/read/etc I/O operation.
-	 May change the task status or not change if the I/O operation is not completed during this
-	 particular invocation
-	 @param op
-	 */
+	Reentrant method which decorates the actual non-blocking create/read/etc I/O operation.
+	May change the task status or not change if the I/O operation is not completed during this
+	particular invocation
+	@param op
+	*/
 	protected abstract void invokeNio(final O op);
 
 	@Override

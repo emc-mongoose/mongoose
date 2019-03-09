@@ -5,11 +5,11 @@ import com.emc.mongoose.base.item.op.Operation;
 import org.apache.logging.log4j.message.AsynchronouslyFormattable;
 
 /**
- * Created by andrey on 17.11.16.
- *
- * <p>StorageNode, ItemPath, OpTypeCode, StatusCode, ReqTimeStart[us], Duration[us],
- * RespLatency[us], DataLatency[us], TransferSize
- */
+* Created by andrey on 17.11.16.
+*
+* <p>StorageNode, ItemPath, OpTypeCode, StatusCode, ReqTimeStart[us], Duration[us],
+* RespLatency[us], DataLatency[us], TransferSize
+*/
 @AsynchronouslyFormattable
 public final class OperationTraceCsvLogMessage<I extends Item, O extends Operation<I>>
 				extends LogMessageBase {

@@ -16,10 +16,10 @@ public interface LoadGenerator<I extends Item, O extends Operation<I>> extends F
 	long generatedOpCount();
 
 	/**
-	 * Enqueues the task for further recycling
-	 *
-	 * @param op the task to recycle
-	 */
+	* Enqueues the task for further recycling
+	*
+	* @param op the task to recycle
+	*/
 	void recycle(final O op);
 
 	/** @return true if the internal recycle queue is empty, false otherwise */

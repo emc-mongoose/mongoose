@@ -25,8 +25,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- Created by andrey on 26.11.16.
- */
+Created by andrey on 26.11.16.
+*/
 public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 				extends HttpResponseHandlerBase<I, O> {
 
@@ -64,7 +64,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	
 	????
 	--ac9c12f841fa093d82ba80a402f6b62e--
-	 */
+	*/
 	protected final void handleResponseContentChunk(final Channel channel, final O op, final ByteBuf contentChunk)
 					throws IOException {
 		if (OpType.READ.equals(op.type())) {

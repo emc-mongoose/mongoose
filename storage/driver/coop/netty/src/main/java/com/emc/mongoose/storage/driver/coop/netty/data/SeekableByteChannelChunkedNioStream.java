@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 
 /**
- Created by andrey on 24.04.17.
- */
+Created by andrey on 24.04.17.
+*/
 public final class SeekableByteChannelChunkedNioStream
 				extends ChunkedNioStream {
 

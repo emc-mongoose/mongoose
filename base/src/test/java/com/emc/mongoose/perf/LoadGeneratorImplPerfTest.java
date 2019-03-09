@@ -1,25 +1,23 @@
 package com.emc.mongoose.perf;
 
+import com.emc.mongoose.base.config.ConstantValueInputImpl;
+import com.emc.mongoose.base.config.el.CompositeExpressionInputBuilder;
+import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.DataItemFactoryImpl;
 import com.emc.mongoose.base.item.DataItemImpl;
 import com.emc.mongoose.base.item.ItemFactory;
-import com.emc.mongoose.base.item.ItemNameSupplier;
-import com.emc.mongoose.base.item.ItemNamingType;
+import com.emc.mongoose.base.item.naming.ItemNameInput;
 import com.emc.mongoose.base.item.io.NewDataItemInput;
 import com.emc.mongoose.base.item.op.OpType;
-import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.item.op.OperationsBuilder;
 import com.emc.mongoose.base.item.op.data.DataOperationsBuilderImpl;
 import com.emc.mongoose.base.load.generator.LoadGenerator;
 import com.emc.mongoose.base.load.generator.LoadGeneratorImpl;
-import com.emc.mongoose.base.supply.ConstantStringSupplier;
-import com.emc.mongoose.base.supply.RangePatternDefinedSupplier;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.commons.io.collection.CircularListInput;
 import com.github.akurilov.commons.io.collection.ListInput;
 import com.github.akurilov.commons.system.SizeInBytes;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,89 +32,26 @@ public class LoadGeneratorImplPerfTest {
 
 	private static final int TIME_LIMIT = 30;
 
-	private static class CountingOutput<T> implements Output<T> {
-
-		private final LongAdder counter;
-
-		CountingOutput(final LongAdder counter) {
-			this.counter = counter;
-		}
-
-		@Override
-		public boolean put(final T item) throws IOException {
-			counter.increment();
-			return true;
-		}
-
-		@Override
-		public int put(final List<T> buffer, final int from, final int to) throws IOException {
-			counter.add(to - from);
-			return to - from;
-		}
-
-		@Override
-		public int put(final List<T> buffer) throws IOException {
-			counter.add(buffer.size());
-			return buffer.size();
-		}
-
-		@Override
-		public Input<T> getInput() throws IOException {
-			return null;
-		}
-
-		@Override
-		public void close() throws IOException {}
-	}
-
-	private static final class RecyclingAndCountingOutput<T> extends CountingOutput<T> {
-
-		LoadGenerator loadGenerator;
-
-		RecyclingAndCountingOutput(final LongAdder counter) {
-			super(counter);
-		}
-
-		@Override
-		public boolean put(final T item) throws IOException {
-			loadGenerator.recycle((Operation) item);
-			return super.put(item);
-		}
-
-		@Override
-		public int put(final List<T> buffer, final int from, final int to) throws IOException {
-			for (int i = from; i < to; i++) {
-				loadGenerator.recycle((Operation) buffer.get(i));
-			}
-			return super.put(buffer, from, to);
-		}
-
-		@Override
-		public int put(final List<T> buffer) throws IOException {
-			for (int i = 0; i < buffer.size(); i++) {
-				loadGenerator.recycle((Operation) buffer.get(i));
-			}
-			return super.put(buffer);
-		}
-	}
-
 	@Test
 	public final void testNewDataItems() throws Exception {
 
-		final LongAdder counter = new LongAdder();
+		final var counter = new LongAdder();
 
-		final SizeInBytes itemSize = new SizeInBytes(0);
-		final ItemFactory itemFactory = new DataItemFactoryImpl();
-		final ItemNameSupplier itemNameInput = new ItemNameSupplier(ItemNamingType.RANDOM, null, 13, Character.MAX_RADIX, 0);
-		final Input itemInput = new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
-		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
+		final var itemSize = new SizeInBytes(0);
+		final var itemFactory = (ItemFactory<DataItem>) new DataItemFactoryImpl();
+		final var itemNameInput = (ItemNameInput) ItemNameInput.Builder.newInstance()
+						.type(ItemNameInput.ItemNamingType.RANDOM)
+						.radix(Character.MAX_RADIX)
+						.length(12)
+						.build();
+		final var itemInput = (Input) new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
+		final var opsBuilder = (OperationsBuilder) new DataOperationsBuilderImpl(0)
 						.opType(OpType.CREATE)
-						.outputPathSupplier(new ConstantStringSupplier("/default"))
-						.uidSupplier(null)
-						.secretSupplier(null);
-		final boolean shuffleFlag = false;
+						.outputPathInput(new ConstantValueInputImpl<>("/default"))
+						.credentialInput(null);
+		final var shuffleFlag = false;
 
-		try (final LoadGenerator loadGenerator = new LoadGeneratorImpl<>(
+		try (final var loadGenerator = (LoadGenerator) new LoadGeneratorImpl<>(
 						itemInput,
 						opsBuilder,
 						Collections.emptyList(),
@@ -135,20 +70,22 @@ public class LoadGeneratorImplPerfTest {
 	@Test
 	public final void testNewDataItemsWithAscNames() throws Exception {
 
-		final LongAdder counter = new LongAdder();
-
-		final SizeInBytes itemSize = new SizeInBytes(0);
-		final ItemFactory itemFactory = new DataItemFactoryImpl();
-		final ItemNameSupplier itemNameInput = new ItemNameSupplier(ItemNamingType.ASC, null, 10, 10, 0);
-		final Input itemInput = new NewDataItemInput(itemFactory, itemNameInput, itemSize);
-		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
+		final var counter = new LongAdder();
+		final var itemSize = new SizeInBytes(0);
+		final var itemFactory = (ItemFactory) new DataItemFactoryImpl();
+		final var itemNameInput = (ItemNameInput) ItemNameInput.Builder.newInstance()
+						.type(ItemNameInput.ItemNamingType.SERIAL)
+						.radix(10)
+						.length(10)
+						.build();
+		final var itemInput = (Input) new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
+		final var opsBuilder = (OperationsBuilder) new DataOperationsBuilderImpl(0)
 						.opType(OpType.CREATE)
-						.outputPathSupplier(new ConstantStringSupplier("/default"))
-						.uidSupplier(null)
-						.secretSupplier(null);
-		final boolean shuffleFlag = false;
+						.outputPathInput(new ConstantValueInputImpl<>("/default"))
+						.credentialInput(null);
+		final var shuffleFlag = false;
 
-		try (final LoadGenerator loadGenerator = new LoadGeneratorImpl(
+		try (final var loadGenerator = (LoadGenerator) new LoadGeneratorImpl(
 						itemInput,
 						opsBuilder,
 						Collections.emptyList(),
@@ -172,13 +109,16 @@ public class LoadGeneratorImplPerfTest {
 
 		final SizeInBytes itemSize = new SizeInBytes(0);
 		final ItemFactory itemFactory = new DataItemFactoryImpl();
-		final ItemNameSupplier itemNameInput = new ItemNameSupplier(ItemNamingType.RANDOM, null, 13, Character.MAX_RADIX, 0);
-		final Input itemInput = new NewDataItemInput(itemFactory, itemNameInput, itemSize);
+		final var itemNameInput = (ItemNameInput) ItemNameInput.Builder.newInstance()
+						.type(ItemNameInput.ItemNamingType.RANDOM)
+						.radix(Character.MAX_RADIX)
+						.length(12)
+						.build();
+		final Input itemInput = new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
 		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
 						.opType(OpType.CREATE)
-						.outputPathSupplier(new ConstantStringSupplier("/default"))
-						.uidSupplier(new ConstantStringSupplier("wuser1@sanity.local"))
-						.secretSupplier(new ConstantStringSupplier("secret"));
+						.outputPathInput(new ConstantValueInputImpl<>("/default"))
+						.credentialInput(null);
 		final boolean shuffleFlag = false;
 
 		try (final LoadGenerator loadGenerator = new LoadGeneratorImpl(
@@ -207,13 +147,19 @@ public class LoadGeneratorImplPerfTest {
 
 		final SizeInBytes itemSize = new SizeInBytes(0);
 		final ItemFactory itemFactory = new DataItemFactoryImpl();
-		final ItemNameSupplier itemNameInput = new ItemNameSupplier(ItemNamingType.RANDOM, null, 13, Character.MAX_RADIX, 0);
-		final Input itemInput = new NewDataItemInput(itemFactory, itemNameInput, itemSize);
+		final var itemNameInput = (ItemNameInput) ItemNameInput.Builder.newInstance()
+						.type(ItemNameInput.ItemNamingType.RANDOM)
+						.radix(Character.MAX_RADIX)
+						.length(12)
+						.build();
+		final Input itemInput = new NewDataItemInput<>(itemFactory, itemNameInput, itemSize);
+		final Input pathInput = CompositeExpressionInputBuilder.newInstance()
+						.expression("${path:random(16, 2)}")
+						.build();
 		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
 						.opType(OpType.CREATE)
-						.outputPathSupplier(new RangePatternDefinedSupplier("$p{16;2}"))
-						.uidSupplier(null)
-						.secretSupplier(null);
+						.outputPathInput(pathInput)
+						.credentialInput(null);
 		final boolean shuffleFlag = false;
 
 		try (final LoadGenerator loadGenerator = new LoadGeneratorImpl(
@@ -248,9 +194,8 @@ public class LoadGeneratorImplPerfTest {
 		final Input itemInput = new CircularListInput(items);
 		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
 						.opType(OpType.READ)
-						.outputPathSupplier(null)
-						.uidSupplier(null)
-						.secretSupplier(null);
+						.outputPathInput(null)
+						.credentialInput(null);
 		final boolean shuffleFlag = false;
 
 		try (final LoadGenerator loadGenerator = new LoadGeneratorImpl(
@@ -284,9 +229,8 @@ public class LoadGeneratorImplPerfTest {
 		final Input itemInput = new CircularListInput(items);
 		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
 						.opType(OpType.READ)
-						.outputPathSupplier(null)
-						.uidSupplier(null)
-						.secretSupplier(null);
+						.outputPathInput(null)
+						.credentialInput(null);
 		final boolean shuffleFlag = true;
 
 		try (final LoadGenerator loadGenerator = new LoadGeneratorImpl(
@@ -321,9 +265,8 @@ public class LoadGeneratorImplPerfTest {
 		final Input itemInput = new ListInput(items);
 		final OperationsBuilder opsBuilder = new DataOperationsBuilderImpl(0)
 						.opType(OpType.READ)
-						.outputPathSupplier(null)
-						.uidSupplier(null)
-						.secretSupplier(null);
+						.outputPathInput(null)
+						.credentialInput(null);
 		final boolean shuffleFlag = false;
 
 		try (final Output taskOutput = new RecyclingAndCountingOutput(counter)) {

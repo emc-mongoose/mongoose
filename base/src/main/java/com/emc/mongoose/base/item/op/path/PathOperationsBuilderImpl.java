@@ -2,7 +2,6 @@ package com.emc.mongoose.base.item.op.path;
 
 import com.emc.mongoose.base.item.PathItem;
 import com.emc.mongoose.base.item.op.OperationsBuilderImpl;
-import com.emc.mongoose.base.storage.Credential;
 import java.io.IOException;
 import java.util.List;
 
@@ -17,25 +16,19 @@ public class PathOperationsBuilderImpl<I extends PathItem, O extends PathOperati
 	@Override
 	@SuppressWarnings("unchecked")
 	public O buildOp(final I pathItem) throws IOException {
-		final String uid;
-		return (O) new PathOperationImpl<>(
-						originIndex,
-						opType,
-						pathItem,
-						Credential.getInstance(uid = getNextUid(), getNextSecret(uid)));
+		final String outputPath = getNextOutputPath();
+		return (O) new PathOperationImpl<>(originIndex, opType, pathItem, getNextCredential(outputPath));
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public void buildOps(final List<I> items, final List<O> buff) throws IOException {
-		String uid;
+		String outputPath;
 		for (final I nextItem : items) {
+			outputPath = getNextOutputPath();
 			buff.add(
 							(O) new PathOperationImpl<>(
-											originIndex,
-											opType,
-											nextItem,
-											Credential.getInstance(uid = getNextUid(), getNextSecret(uid))));
+											originIndex, opType, nextItem, getNextCredential(outputPath)));
 		}
 	}
 }

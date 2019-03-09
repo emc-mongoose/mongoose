@@ -7,7 +7,7 @@ Items input is a source of the items which should be used to perform the load op
 The items once created with Mongoose may be stored into the output CSV file. This file may be reused on input for
 other load operations, such as a `copy`, `read`, `update`, `delete` and `noop`.
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-input-file=items.csv ...
+java mongoose-<VERSION>.jar --item-input-file=items.csv ...
 ```
 
 ## 2. Item Path Listing Input
@@ -15,7 +15,7 @@ java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-input
 In some cases the items list file is not available. The items list may be obtained on the fly from the *storage path*
 listing.
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-input-path=/path_to_list ...
+java mongoose-<VERSION>.jar --item-input-path=/path_to_list ...
 ```
 **Note**:
 > It may be useful to combine this option with `noop` to enumerate the items on the storage located in the specified
@@ -37,18 +37,16 @@ A new items generator may use custom items naming scheme.
 
 Random new items names are used by default
 
-##### 3.1.1.2. Ascending
+##### 3.1.1.2. Serial
 
 Generate new item ids in the ascending order:
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-naming-type=asc ...
+java mongoose-<VERSION>.jar --item-naming-type=serial --item-naming-step=1 ...
 ```
-
-##### 3.1.1.3. Descending
 
 Generate new item ids in the descending order:
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-naming-type=desc ...
+java mongoose-<VERSION>.jar --item-naming-type=serial --item-naming-step=-1 ...
 ```
 
 #### 3.1.2. Prefix
@@ -56,7 +54,7 @@ java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-namin
 The prefix option may be used to prepend some value for each new item.
 
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-naming-prefix=item_prefix_ ...
+java mongoose-<VERSION>.jar --item-naming-prefix=item_prefix_ ...
 ```
 
 #### 3.1.3. Radix
@@ -64,7 +62,7 @@ java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-namin
 The radix option is used to encode the source number into the id. The radix should be in the range of \[2; 36].
 
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-naming-radix=16 ...
+java mongoose-<VERSION>.jar --item-naming-radix=16 ...
 ```
 
 #### 3.1.4. Offset
@@ -73,7 +71,7 @@ The offset configuration option is useful when ascending/descending ids order is
 specified offset.
 
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-naming-offset=9876543210 ...
+java mongoose-<VERSION>.jar --item-naming-offset=9876543210 ...
 ```
 
 #### 3.1.5. Length
@@ -82,6 +80,6 @@ The length option determines the id length for the new item ids. The minor bits 
 truncated.
 
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --item-naming-lenth=15 ...
+java mongoose-<VERSION>.jar --item-naming-lenth=15 ...
 ```
 

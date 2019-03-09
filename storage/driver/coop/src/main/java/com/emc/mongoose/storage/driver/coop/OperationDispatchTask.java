@@ -23,8 +23,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Created by andrey on 23.08.17.
- */
+* Created by andrey on 23.08.17.
+*/
 public final class OperationDispatchTask<I extends Item, O extends Operation<I>>
 				extends ExclusiveFiberBase {
 

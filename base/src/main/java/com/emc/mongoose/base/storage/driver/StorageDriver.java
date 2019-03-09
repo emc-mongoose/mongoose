@@ -17,7 +17,6 @@ import com.github.akurilov.commons.concurrent.AsyncRunnable;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.io.Output;
 import com.github.akurilov.confuse.Config;
-import java.io.EOFException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -42,14 +41,13 @@ public interface StorageDriver<I extends Item, O extends Operation<I>>
 					throws InterruptRunException, IOException;
 
 	@Override
-	boolean put(final O op) throws InterruptRunException, EOFException, IOException;
+	boolean put(final O op) throws InterruptRunException;
 
 	@Override
-	int put(final List<O> ops, final int from, final int to)
-					throws InterruptRunException, EOFException, IOException;
+	int put(final List<O> ops, final int from, final int to) throws InterruptRunException;
 
 	@Override
-	int put(final List<O> ops) throws InterruptRunException, EOFException, IOException;
+	int put(final List<O> ops) throws InterruptRunException;
 
 	boolean hasRemainingResults();
 
@@ -78,19 +76,19 @@ public interface StorageDriver<I extends Item, O extends Operation<I>>
 	void close() throws InterruptRunException, IOException;
 
 	/**
-	 * @param extensions the resolved runtime extensions
-	 * @param storageConfig storage sub-config (also specifies the particular storage driver type)
-	 * @param dataInput the data input used to produce/reproduce the data
-	 * @param verifyFlag verify the data on read or not
-	 * @param stepId scenario step id for logging purposes
-	 * @param <I> item type
-	 * @param <O> load operation type
-	 * @param <T> storage driver type
-	 * @return the storage driver instance
-	 * @throws IllegalArgumentException if load config either storage config is null
-	 * @throws InterruptedException may be thrown by a specific storage driver constructor
-	 * @throws OmgShootMyFootException if no storage driver implementation was found
-	 */
+	* @param extensions the resolved runtime extensions
+	* @param storageConfig storage sub-config (also specifies the particular storage driver type)
+	* @param dataInput the data input used to produce/reproduce the data
+	* @param verifyFlag verify the data on read or not
+	* @param stepId scenario step id for logging purposes
+	* @param <I> item type
+	* @param <O> load operation type
+	* @param <T> storage driver type
+	* @return the storage driver instance
+	* @throws IllegalArgumentException if load config either storage config is null
+	* @throws InterruptedException may be thrown by a specific storage driver constructor
+	* @throws OmgShootMyFootException if no storage driver implementation was found
+	*/
 	@SuppressWarnings("unchecked")
 	static <I extends Item, O extends Operation<I>, T extends StorageDriver<I, O>> T instance(
 					final List<Extension> extensions,

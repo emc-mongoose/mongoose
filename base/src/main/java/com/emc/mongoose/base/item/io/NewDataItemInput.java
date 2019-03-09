@@ -1,11 +1,10 @@
 package com.emc.mongoose.base.item.io;
 
 import com.emc.mongoose.base.item.DataItem;
-import com.emc.mongoose.base.item.IdStringInput;
 import com.emc.mongoose.base.item.ItemFactory;
+import com.emc.mongoose.base.item.naming.ItemNameInput;
 import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.system.SizeInBytes;
-import java.io.IOException;
 import java.util.List;
 
 public final class NewDataItemInput<D extends DataItem> extends NewItemInput<D>
@@ -14,20 +13,20 @@ public final class NewDataItemInput<D extends DataItem> extends NewItemInput<D>
 	private final SizeInBytes dataSize;
 
 	public NewDataItemInput(
-					final ItemFactory<D> itemFactory, final IdStringInput idInput, final SizeInBytes dataSize) {
-		super(itemFactory, idInput);
+					final ItemFactory<D> itemFactory, final ItemNameInput itemNameInput, final SizeInBytes dataSize) {
+		super(itemFactory, itemNameInput);
 		this.dataSize = dataSize;
 	}
 
 	@Override
-	public final D get() throws IOException {
-		return itemFactory.getItem(idInput.get(), idInput.getAsLong(), dataSize.get());
+	public final D get() {
+		return itemFactory.getItem(itemNameInput.get(), itemNameInput.lastId(), dataSize.get());
 	}
 
 	@Override
-	public final int get(final List<D> buffer, final int maxCount) throws IOException {
-		for (int i = 0; i < maxCount; i++) {
-			buffer.add(itemFactory.getItem(idInput.get(), idInput.getAsLong(), dataSize.get()));
+	public final int get(final List<D> buffer, final int maxCount) {
+		for (var i = 0; i < maxCount; i++) {
+			buffer.add(itemFactory.getItem(itemNameInput.get(), itemNameInput.lastId(), dataSize.get()));
 		}
 		return maxCount;
 	}

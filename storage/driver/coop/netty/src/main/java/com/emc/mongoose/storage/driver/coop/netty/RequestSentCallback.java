@@ -9,8 +9,8 @@ import io.netty.util.concurrent.FutureListener;
 import org.apache.logging.log4j.Level;
 
 /**
- Created by andrey on 15.12.16.
- */
+Created by andrey on 15.12.16.
+*/
 public final class RequestSentCallback
 				implements FutureListener<Void> {
 

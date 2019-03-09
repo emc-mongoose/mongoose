@@ -19,7 +19,6 @@ import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FiberBase;
 import java.io.EOFException;
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -85,7 +84,7 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 		this.recycleFlag = recycleFlag;
 		this.shuffleFlag = shuffleFlag;
 		this.rnd = shuffleFlag ? new Random() : null;
-		final String ioStr = opsBuilder.opType().toString();
+		final var ioStr = opsBuilder.opType().toString();
 		name = Character.toUpperCase(ioStr.charAt(0))
 						+ ioStr.substring(1).toLowerCase()
 						+ (countLimit > 0 && countLimit < Long.MAX_VALUE ? Long.toString(countLimit) : "")
@@ -97,9 +96,9 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 	protected final void invokeTimed(final long startTimeNanos) throws InterruptRunException {
 
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
-		final CircularBuffer<O> opBuff = threadLocalOpBuff.get();
-		int pendingOpCount = opBuff.size();
-		int n = batchSize - pendingOpCount;
+		final var opBuff = threadLocalOpBuff.get();
+		var pendingOpCount = opBuff.size();
+		var n = batchSize - pendingOpCount;
 
 		try {
 
@@ -119,11 +118,11 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 					if (inputLock.tryLock()) {
 						try {
 							// find the remaining count of the ops to generate
-							final long remainingOpCount = countLimit - generatedOpCount();
+							final var remainingOpCount = countLimit - generatedOpCount();
 							if (remainingOpCount > 0) {
 								// make the limit not more than batch size
 								n = (int) Math.min(remainingOpCount, n);
-								final List<I> items = getItems(itemInput, n);
+								final var items = getItems(itemInput, n);
 								if (items == null) {
 									itemInputFinishFlag = true;
 									Loggers.MSG.debug(
@@ -151,8 +150,8 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 					n = pendingOpCount;
 
 					// acquire the permit for all the throttles
-					for (int i = 0; i < throttles.length; i++) {
-						final Object throttle = throttles[i];
+					for (var i = 0; i < throttles.length; i++) {
+						final var throttle = throttles[i];
 						if (throttle instanceof Throttle) {
 							n = ((Throttle) throttle).tryAcquire(n);
 						} else if (throttle instanceof IndexThrottle) {
@@ -166,7 +165,7 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 					if (n > 0) {
 						if (n == 1) { // single mode branch
 							try {
-								final O op = opBuff.get(0);
+								final var op = opBuff.get(0);
 								if (opOutput.put(op)) {
 									outputOpCounter.increment();
 									if (pendingOpCount == 1) {
@@ -175,11 +174,13 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 										opBuff.remove(0);
 									}
 								}
-							} catch (final EOFException e) {
-								Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
-								outputFinishFlag = true;
-							} catch (final IOException e) {
-								LogUtil.exception(Level.ERROR, e, "{}: operation output failure", name);
+							} catch (final Exception e) {
+								if (e instanceof EOFException) {
+									Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
+									outputFinishFlag = true;
+								} else {
+									LogUtil.exception(Level.ERROR, e, "{}: operation output failure", name);
+								}
 							}
 						} else { // batch mode branch
 							try {
@@ -190,16 +191,12 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 								} else {
 									opBuff.clear();
 								}
-							} catch (final EOFException e) {
-								Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
-								outputFinishFlag = true;
-							} catch (final RemoteException e) {
-								final Throwable cause = e.getCause();
-								if (cause instanceof EOFException) {
+							} catch (final Exception e) {
+								if (e instanceof EOFException) {
 									Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
 									outputFinishFlag = true;
 								} else {
-									LogUtil.trace(Loggers.ERR, Level.ERROR, cause, "Unexpected failure");
+									LogUtil.trace(Loggers.ERR, Level.ERROR, e, "Unexpected failure");
 								}
 							}
 						}
@@ -227,8 +224,10 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 		final List<I> items = new ArrayList<>(n); // prepare the items buffer
 		try {
 			itemInput.get(items, n); // get the items from the input
-		} catch (final EOFException e) {
-			return null;
+		} catch (final Exception e) {
+			if (e instanceof EOFException) {
+				return null;
+			}
 		}
 		return items;
 	}
@@ -307,8 +306,7 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 			}
 		}
 		// ops builder is instantiated by the load generator builder which forgets it so the load
-		// generator should
-		// close it
+		// generator should close it
 		opsBuilder.close();
 	}
 

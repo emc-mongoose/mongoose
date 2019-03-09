@@ -62,7 +62,7 @@ public final class StorageItemInput<I extends Item> extends BufferingInputBase<I
 	}
 
 	@Override
-	public final void reset() throws IOException {
+	public final void reset() {
 		super.reset();
 		poisonedFlag = false;
 	}

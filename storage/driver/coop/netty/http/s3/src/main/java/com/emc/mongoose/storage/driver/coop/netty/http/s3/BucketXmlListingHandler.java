@@ -14,8 +14,8 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.util.List;
 
 /**
- Created by andrey on 02.12.16.
- */
+Created by andrey on 02.12.16.
+*/
 public final class BucketXmlListingHandler<I extends Item>
 				extends DefaultHandler {
 

@@ -288,10 +288,15 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>> extends
 						if (!opsResultsOutput.put(opResult)) {
 							Loggers.ERR.warn("Failed to output the I/O result");
 						}
-					} catch (final EOFException e) {
-						LogUtil.exception(Level.DEBUG, e, "Load operations results destination end of input");
-					} catch (final IOException e) {
-						LogUtil.exception(Level.WARN, e, "Failed to put the load operation to the destination");
+					} catch (final Exception e) {
+						if (e instanceof EOFException) {
+							LogUtil.exception(Level.DEBUG, e, "Load operations results destination end of input");
+						} else if (e instanceof IOException) {
+							LogUtil.exception(
+											Level.WARN, e, "Failed to put the load operation to the destination");
+						} else {
+							throw e;
+						}
 					}
 				}
 				metricsCtx.markSucc(countBytesDone, reqDuration, respLatency);
@@ -354,11 +359,16 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>> extends
 							if (!opsResultsOutput.put(opResult)) {
 								Loggers.ERR.warn("Failed to output the op result");
 							}
-						} catch (final EOFException e) {
-							LogUtil.exception(Level.DEBUG, e, "Load operations results destination end of input");
-						} catch (final IOException e) {
-							LogUtil.exception(
-											Level.WARN, e, "Failed to put the load operation result to the destination");
+						} catch (final Exception e) {
+							if (e instanceof EOFException) {
+								LogUtil.exception(
+												Level.DEBUG, e, "Load operations results destination end of input");
+							} else if (e instanceof IOException) {
+								LogUtil.exception(
+												Level.WARN, e, "Failed to put the load operation result to the destination");
+							} else {
+								throw e;
+							}
 						}
 					}
 					metricsCtx.markSucc(countBytesDone, reqDuration, respLatency);
@@ -461,8 +471,12 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>> extends
 							}
 							Loggers.MSG.debug("{}: closing method unblocked", id);
 						}
-					} catch (final IOException e) {
-						LogUtil.exception(Level.WARN, e, "{}: failed to output the latest results", id);
+					} catch (final Exception e) {
+						if (e instanceof IOException) {
+							LogUtil.exception(Level.WARN, e, "{}: failed to output the latest results", id);
+						} else {
+							throw e;
+						}
 					}
 				}
 			} catch (final InterruptedException e) {
@@ -477,8 +491,6 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>> extends
 			try {
 				opsResultsOutput.put((O) null);
 				Loggers.MSG.debug("{}: poisoned the items output", id);
-			} catch (final IOException e) {
-				LogUtil.exception(Level.WARN, e, "{}: failed to poison the results output", id);
 			} catch (final NullPointerException e) {
 				LogUtil.exception(
 								Level.ERROR,
@@ -486,6 +498,12 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>> extends
 								"{}: results output \"{}\" failed to eat the poison",
 								id,
 								opsResultsOutput);
+			} catch (final Exception e) {
+				if (e instanceof IOException) {
+					LogUtil.exception(Level.WARN, e, "{}: failed to poison the results output", id);
+				} else {
+					throw e;
+				}
 			}
 		}
 

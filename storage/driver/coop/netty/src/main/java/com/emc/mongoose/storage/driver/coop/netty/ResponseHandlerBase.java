@@ -21,9 +21,9 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 
 /**
- Created by kurila on 04.10.16.
- Contains the content validation functionality
- */
+Created by kurila on 04.10.16.
+Contains the content validation functionality
+*/
 public abstract class ResponseHandlerBase<M, I extends Item, O extends Operation<I>>
 				extends SimpleChannelInboundHandler<M> {
 

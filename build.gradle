@@ -27,7 +27,7 @@ ext {
 		fastutil           : "8.2.2",
 		fiber4j            : "1.1.0",
 		jackson            : "2.9.8",
-		javaCommons        : "2.2.3",
+		javaCommons        : "2.3.5",
 		javassist          : "3.23.1-GA",
 		jetty              : "9.4.14.v20181114",
 		junit              : "4.12",
@@ -510,7 +510,7 @@ task robotest(type: DockerWaitContainer, dependsOn: dockerStartContainerRobotest
 
 spotless {
 	format "misc", {
-		target "**/*.gradle", "**/*.json", "**/*.js", "**/*.groovy", "**/*.py", "**/*.scala"
+		target "**/*.gradle", "**/*.js", "**/*.groovy", "**/*.py", "**/*.scala"
 		indentWithTabs()
 		endWithNewline()
 	}

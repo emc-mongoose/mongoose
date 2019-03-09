@@ -9,7 +9,6 @@ import com.emc.mongoose.base.env.Extension;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.DataItemFactoryImpl;
 import com.emc.mongoose.base.item.ItemFactory;
-import com.emc.mongoose.base.item.ItemNamingType;
 import com.emc.mongoose.base.item.ItemType;
 import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.item.op.Operation;
@@ -21,9 +20,7 @@ import com.github.akurilov.commons.io.collection.LimitedQueueBuffer;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 import com.github.akurilov.confuse.impl.BasicConfig;
-import java.io.BufferedWriter;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +38,7 @@ public class LoadGeneratorBuilderImplTest {
 
 	static {
 		try {
-			final List<Map<String, Object>> configSchemas = Extension.load(Thread.currentThread().getContextClassLoader()).stream()
+			final var configSchemas = Extension.load(Thread.currentThread().getContextClassLoader()).stream()
 							.map(Extension::schemaProvider)
 							.filter(Objects::nonNull)
 							.map(
@@ -67,27 +64,28 @@ public class LoadGeneratorBuilderImplTest {
 	@Test
 	public void multiBucketPerUserTest() throws Exception {
 
-		final Path credentialsFilePath = Files.createTempFile(getClass().getSimpleName(), ".csv");
+		final var credentialsFilePath = Files.createTempFile(getClass().getSimpleName(), ".csv");
 		credentialsFilePath.toFile().deleteOnExit();
-		final int bucketCount = 100;
-		final int opCount = 10000;
-		final String prefixUid = "user-";
-		final String prefixSecret = "secret-";
-		final String prefixBucket = "bucket-";
-		try (final BufferedWriter bw = Files.newBufferedWriter(credentialsFilePath)) {
-			for (int i = 0; i < bucketCount; i++) {
-				bw.append(prefixUid)
-								.append(i < 10 ? "0" : "")
+		final var bucketCount = 100;
+		final var opCount = 10000;
+		final var prefixUid = "user-";
+		final var prefixSecret = "secret-";
+		final var prefixBucket = "bucket-";
+		try (final var bw = Files.newBufferedWriter(credentialsFilePath)) {
+			for (var i = 0; i < bucketCount; i++) {
+				bw.append(prefixBucket)
+								.append(Integer.toString(i))
+								.append(',')
+								.append(prefixUid)
 								.append(Integer.toString(i))
 								.append(',')
 								.append(prefixSecret)
-								.append(i < 10 ? "0" : "")
 								.append(Integer.toString(i));
 				bw.newLine();
 			}
 		}
-		final int seed = 314159265;
-		final Map<String, Object> options = new HashMap<String, Object>() {
+		final var seed = 314159265;
+		final Map<String, Object> options = new HashMap<>() {
 			{
 				put("item-data-ranges-concat", null);
 				put("item-data-ranges-fixed", null);
@@ -95,12 +93,12 @@ public class LoadGeneratorBuilderImplTest {
 				put("item-data-ranges-threshold", 0);
 				put("item-data-size", "1MB");
 				put("item-input-path", null);
-				put("item-naming-length", 13);
-				put("item-naming-offset", 0);
+				put("item-naming-length", 12);
+				put("item-naming-offset", 0L);
 				put("item-naming-prefix", null);
 				put("item-naming-radix", 36);
-				put("item-naming-type", ItemNamingType.RANDOM.name().toLowerCase());
-				put("item-output-path", prefixBucket + "%d(" + seed + "){00}[0-99]");
+				put("item-naming-type", "random");
+				put("item-output-path", prefixBucket + "${rnd.nextLong(100)}%{" + seed + "}");
 				put("load-batch-size", opCount);
 				put("load-op-limit-count", opCount);
 				put("load-op-limit-recycle", 1_000_000);
@@ -109,12 +107,11 @@ public class LoadGeneratorBuilderImplTest {
 				put("load-op-shuffle", false);
 				put("load-op-type", OpType.CREATE.name().toLowerCase());
 				put("storage-auth-file", credentialsFilePath.toAbsolutePath().toString());
-				put("storage-auth-uid", prefixUid + "%d(" + seed + "){00}[0-99]");
 			}
 		};
-		final Config config = new BasicConfig("-", CONFIG_SCHEMA);
+		final var config = (Config) new BasicConfig("-", CONFIG_SCHEMA);
 		options.forEach(config::val);
-		final ItemFactory itemFactory = new DataItemFactoryImpl();
+		final var itemFactory = (ItemFactory) new DataItemFactoryImpl();
 		final List<DataOperation<DataItem>> ops = new ArrayList<>(opCount);
 
 		try (final IoBuffer<DataOperation<DataItem>> opBuff = new LimitedQueueBuffer<>(new ArrayBlockingQueue<>(opCount));
@@ -141,12 +138,12 @@ public class LoadGeneratorBuilderImplTest {
 		String uid;
 		String secret;
 		String suffix;
-		int n;
-		final Frequency freq = new Frequency();
+		long n;
+		final var freq = new Frequency();
 		for (final Operation op : ops) {
 			bucket = op.dstPath();
 			suffix = bucket.substring(prefixBucket.length());
-			n = Integer.parseInt(suffix);
+			n = Long.parseLong(suffix);
 			assertTrue(n >= 0);
 			assertTrue(n < bucketCount);
 			freq.addValue(n);
@@ -157,8 +154,8 @@ public class LoadGeneratorBuilderImplTest {
 			assertEquals(prefixSecret + suffix, secret);
 		}
 		ops.clear();
-		final int expectedFreq = opCount / bucketCount;
-		for (int i = 0; i < bucketCount; i++) {
+		final var expectedFreq = opCount / bucketCount;
+		for (var i = 0; i < bucketCount; i++) {
 			assertEquals(expectedFreq, freq.getCount(i), expectedFreq / 3);
 		}
 	}

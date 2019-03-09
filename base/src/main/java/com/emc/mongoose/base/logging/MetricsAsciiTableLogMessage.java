@@ -4,7 +4,6 @@ import static com.emc.mongoose.base.Constants.MIB;
 import static com.emc.mongoose.base.env.DateUtil.FMT_DATE_METRICS_TABLE;
 import static com.emc.mongoose.base.logging.LogUtil.RESET;
 import static com.emc.mongoose.base.logging.LogUtil.getFailureRatioAnsiColorCode;
-import static org.apache.commons.lang.SystemUtils.LINE_SEPARATOR;
 
 import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.metrics.context.MetricsContext;
@@ -14,10 +13,12 @@ import java.util.Set;
 import org.apache.commons.lang.text.StrBuilder;
 
 /**
- * Created by kurila on 18.05.17. Not thread safe, relies on the MetricsManager's (caller) exclusive
- * invocation lock
- */
+* Created by kurila on 18.05.17. Not thread safe, relies on the MetricsManager's (caller) exclusive
+* invocation lock
+*/
 public class MetricsAsciiTableLogMessage extends LogMessageBase {
+
+	private static final String LINE_SEPARATOR = System.lineSeparator();
 
 	public static final String TABLE_HEADER = "------------------------------------------------------------------------------------------------------------------------"
 					+ LINE_SEPARATOR
@@ -42,13 +43,13 @@ public class MetricsAsciiTableLogMessage extends LogMessageBase {
 	@Override
 	public final void formatTo(final StringBuilder buffer) {
 		if (formattedMsg == null) {
-			final StrBuilder strb = new StrBuilder();
+			final var strb = new StrBuilder();
 			AllMetricsSnapshot snapshot;
 			long succCount;
 			long failCount;
 			OpType opType;
 			boolean stdOutColorFlag;
-			for (final MetricsContext metricsCtx : metrics) {
+			for (final var metricsCtx : metrics) {
 				snapshot = metricsCtx.lastSnapshot();
 				if (snapshot != null) {
 					succCount = snapshot.successSnapshot().count();

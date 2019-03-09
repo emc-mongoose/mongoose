@@ -1,5 +1,7 @@
 package com.emc.mongoose.base.item.io;
 
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
+
 import com.emc.mongoose.base.Constants;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
@@ -16,21 +18,20 @@ import java.util.List;
 import org.apache.logging.log4j.Level;
 
 /**
- * The data item input using CSV file containing the human-readable data item records as the source
- */
+* The data item input using CSV file containing the human-readable data item records as the source
+*/
 public class CsvItemInput<I extends Item> implements Input<I> {
 
 	protected BufferedReader itemsSrc;
 	protected final ItemFactory<I> itemFactory;
 
 	/**
-	 * @param in the input stream to get the data item records from
-	 * @param itemFactory the concrete item factory used to parse the records
-	 * @throws IOException
-	 * @throws NoSuchMethodException
-	 */
-	public CsvItemInput(final InputStream in, final ItemFactory<I> itemFactory)
-					throws IOException, NoSuchMethodException {
+	* @param in the input stream to get the data item records from
+	* @param itemFactory the concrete item factory used to parse the records
+	* @throws IOException
+	* @throws NoSuchMethodException
+	*/
+	public CsvItemInput(final InputStream in, final ItemFactory<I> itemFactory) {
 		this(
 						new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8), Constants.MIB),
 						itemFactory);
@@ -46,28 +47,40 @@ public class CsvItemInput<I extends Item> implements Input<I> {
 	}
 
 	@Override
-	public long skip(final long itemsCount) throws IOException {
+	public long skip(final long itemsCount) {
 		long i = 0;
-		while (i < itemsCount && null != itemsSrc.readLine()) {
-			i++;
+		try {
+			while (i < itemsCount && null != itemsSrc.readLine()) {
+				i++;
+			}
+		} catch (final IOException e) {
+			throwUnchecked(e);
 		}
 		return i;
 	}
 
 	@Override
-	public I get() throws IOException {
-		final String nextLine = itemsSrc.readLine();
+	public I get() {
 		try {
-			return nextLine == null ? null : itemFactory.getItem(nextLine);
-		} catch (final IllegalArgumentException e) {
-			LogUtil.trace(
-							Loggers.ERR, Level.WARN, e, "Failed to build the item from the string \"{}\"", nextLine);
-			return null;
+			final String nextLine = itemsSrc.readLine();
+			try {
+				return nextLine == null ? null : itemFactory.getItem(nextLine);
+			} catch (final IllegalArgumentException e) {
+				LogUtil.trace(
+								Loggers.ERR,
+								Level.WARN,
+								e,
+								"Failed to build the item from the string \"{}\"",
+								nextLine);
+			}
+		} catch (final IOException e) {
+			throwUnchecked(e);
 		}
+		return null;
 	}
 
 	@Override
-	public int get(final List<I> buffer, final int limit) throws IOException {
+	public int get(final List<I> buffer, final int limit) {
 		int i = 0;
 		String nextLine = null;
 		try {
@@ -86,23 +99,33 @@ public class CsvItemInput<I extends Item> implements Input<I> {
 		} catch (final IllegalArgumentException e) {
 			LogUtil.trace(
 							Loggers.ERR, Level.WARN, e, "Failed to build the item from the string \"{}\"", nextLine);
+		} catch (final IOException e) {
+			throwUnchecked(e);
 		}
 		return i;
 	}
 
 	/**
-	 * Most probably will cause an IOException due to missing mark
-	 *
-	 * @throws IOException
-	 */
+	* Most probably will cause an IOException due to missing mark
+	*
+	* @throws IOException
+	*/
 	@Override
-	public void reset() throws IOException {
-		itemsSrc.reset();
+	public void reset() {
+		try {
+			itemsSrc.reset();
+		} catch (final IOException e) {
+			throwUnchecked(e);
+		}
 	}
 
 	@Override
-	public void close() throws IOException {
-		itemsSrc.close();
+	public void close() {
+		try {
+			itemsSrc.close();
+		} catch (final IOException e) {
+			throwUnchecked(e);
+		}
 	}
 
 	@Override

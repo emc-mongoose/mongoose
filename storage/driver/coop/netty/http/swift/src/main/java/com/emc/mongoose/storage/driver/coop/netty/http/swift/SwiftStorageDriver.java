@@ -17,6 +17,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import com.emc.mongoose.base.config.IllegalArgumentNameException;
 import com.emc.mongoose.base.data.DataInput;
+import com.emc.mongoose.base.env.DateUtil;
 import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.exception.OmgShootMyFootException;
 import com.emc.mongoose.base.item.DataItem;
@@ -31,7 +32,6 @@ import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpStorageDriverBase;
 import com.github.akurilov.confuse.Config;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -48,7 +48,6 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.netty.handler.codec.http.HttpVersion;
-
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,12 +56,9 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.LockSupport;
-
 import org.apache.logging.log4j.Level;
 
-/**
- Created by andrey on 07.10.16.
- */
+/** Created by andrey on 07.10.16. */
 public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 				extends HttpStorageDriverBase<I, O> {
 
@@ -72,8 +68,12 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 	private final String namespacePath;
 
 	public SwiftStorageDriver(
-					final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-					final int batchSize) throws OmgShootMyFootException, InterruptedException {
+					final String stepId,
+					final DataInput dataInput,
+					final Config storageConfig,
+					final boolean verifyFlag,
+					final int batchSize)
+					throws OmgShootMyFootException, InterruptedException {
 		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 		final Config httpConfig = storageConfig.configVal("net-http");
 		versioning = httpConfig.boolVal("versioning");
@@ -84,20 +84,25 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 	}
 
 	@Override
-	protected final String requestNewPath(final String path)
-					throws InterruptRunException {
+	protected final String requestNewPath(final String path) throws InterruptRunException {
 		// check the destination container if it exists w/ HEAD request
-		final String nodeAddr = storageNodeAddrs[0];
-		HttpHeaders reqHeaders = new DefaultHttpHeaders();
+		final var nodeAddr = storageNodeAddrs[0];
+		final var containerUri = namespacePath + (path.startsWith(SLASH) ? path : SLASH + path);
+		final var uriQuery = uriQuery();
+		final var reqUri = uriQuery == null || uriQuery.isEmpty() ? containerUri : containerUri + uriQuery;
+		var reqHeaders = (HttpHeaders) new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		applySharedHeaders(reqHeaders);
-		final String containerUri = namespacePath + (path.startsWith(SLASH) ? path : SLASH + path);
-		final Credential credential = pathToCredMap.getOrDefault(path, this.credential);
-		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, containerUri, credential);
+		applyDynamicHeaders(reqHeaders);
+		final var credential = pathToCredMap.getOrDefault(path, this.credential);
+		applyAuthHeaders(reqHeaders, HttpMethod.HEAD, reqUri, credential);
 		final FullHttpRequest checkContainerReq = new DefaultFullHttpRequest(
-						HttpVersion.HTTP_1_1, HttpMethod.HEAD, containerUri, Unpooled.EMPTY_BUFFER, reqHeaders,
+						HttpVersion.HTTP_1_1,
+						HttpMethod.HEAD,
+						reqUri,
+						Unpooled.EMPTY_BUFFER,
+						reqHeaders,
 						EmptyHttpHeaders.INSTANCE);
 		final FullHttpResponse checkContainerResp;
 		try {
@@ -109,17 +114,18 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 			return null;
 		}
 		final boolean containerExists, versioningEnabled;
-		final HttpResponseStatus checkContainerRespStatus = checkContainerResp.status();
+		final var checkContainerRespStatus = checkContainerResp.status();
 		if (HttpStatusClass.SUCCESS.equals(checkContainerRespStatus.codeClass())) {
 			Loggers.MSG.info("Container \"{}\" already exists", path);
 			containerExists = true;
-			final String versionsLocation = checkContainerResp.headers().get(KEY_X_VERSIONS_LOCATION);
+			final var versionsLocation = checkContainerResp.headers().get(KEY_X_VERSIONS_LOCATION);
 			versioningEnabled = versionsLocation != null && !versionsLocation.isEmpty();
 		} else if (HttpResponseStatus.NOT_FOUND.equals(checkContainerRespStatus)) {
 			containerExists = false;
 			versioningEnabled = false;
 		} else {
-			Loggers.ERR.warn("Unexpected container checking response: {}", checkContainerRespStatus.toString());
+			Loggers.ERR.warn(
+							"Unexpected container checking response: {}", checkContainerRespStatus.toString());
 			checkContainerResp.release();
 			return null;
 		}
@@ -129,24 +135,29 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 			reqHeaders = new DefaultHttpHeaders();
 			reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 			reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-			reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 			applySharedHeaders(reqHeaders);
+			applyDynamicHeaders(reqHeaders);
 			if (versioning) {
 				reqHeaders.set(KEY_X_VERSIONS_LOCATION, DEFAULT_VERSIONS_LOCATION);
 			}
-			applyAuthHeaders(reqHeaders, HttpMethod.PUT, containerUri, credential);
+			applyAuthHeaders(reqHeaders, HttpMethod.PUT, reqUri, credential);
 			final FullHttpRequest putContainerReq = new DefaultFullHttpRequest(
-							HttpVersion.HTTP_1_1, HttpMethod.PUT, containerUri, Unpooled.EMPTY_BUFFER, reqHeaders,
+							HttpVersion.HTTP_1_1,
+							HttpMethod.PUT,
+							reqUri,
+							Unpooled.EMPTY_BUFFER,
+							reqHeaders,
 							EmptyHttpHeaders.INSTANCE);
 			final FullHttpResponse putContainerResp;
 			try {
 				putContainerResp = executeHttpRequest(putContainerReq);
 				try {
-					final HttpResponseStatus putContainerRespStatus = putContainerResp.status();
+					final var putContainerRespStatus = putContainerResp.status();
 					if (HttpStatusClass.SUCCESS.equals(putContainerRespStatus.codeClass())) {
 						Loggers.MSG.info("Container \"{}\" created", path);
 					} else {
-						Loggers.ERR.warn("Create/update container response: {}", putContainerRespStatus.toString());
+						Loggers.ERR.warn(
+										"Create/update container response: {}", putContainerRespStatus.toString());
 						return null;
 					}
 				} finally {
@@ -165,22 +176,27 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 	@Override
 	protected final String requestNewAuthToken(final Credential credential)
 					throws InterruptRunException {
-		final String nodeAddr = storageNodeAddrs[0];
-		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
+		final var nodeAddr = storageNodeAddrs[0];
+		final var reqHeaders = (HttpHeaders) new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
-		final String uid = credential == null ? this.credential.getUid() : credential.getUid();
+		reqHeaders.set(HttpHeaderNames.DATE, DateUtil.formatNowRfc1123());
+		final var uid = credential == null ? this.credential.getUid() : credential.getUid();
 		if (uid != null && !uid.isEmpty()) {
 			reqHeaders.set(KEY_X_AUTH_USER, uid);
 		}
-		final String secret = credential == null ? this.credential.getSecret() : credential.getSecret();
+		final var secret = credential == null ? this.credential.getSecret() : credential.getSecret();
 		if (secret != null && !secret.isEmpty()) {
 			reqHeaders.set(KEY_X_AUTH_KEY, secret);
 		}
 		reqHeaders.set(HttpHeaderNames.ACCEPT, "*/*");
 		final FullHttpRequest getAuthTokenReq = new DefaultFullHttpRequest(
-						HttpVersion.HTTP_1_1, HttpMethod.GET, AUTH_URI, Unpooled.EMPTY_BUFFER, reqHeaders, EmptyHttpHeaders.INSTANCE);
+						HttpVersion.HTTP_1_1,
+						HttpMethod.GET,
+						AUTH_URI,
+						Unpooled.EMPTY_BUFFER,
+						reqHeaders,
+						EmptyHttpHeaders.INSTANCE);
 		final FullHttpResponse getAuthTokenResp;
 		try {
 			getAuthTokenResp = executeHttpRequest(getAuthTokenReq);
@@ -190,52 +206,61 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
 		}
-		final String authTokenValue = getAuthTokenResp.headers().get(KEY_X_AUTH_TOKEN);
+		final var authTokenValue = getAuthTokenResp.headers().get(KEY_X_AUTH_TOKEN);
 		getAuthTokenResp.release();
 		return authTokenValue;
 	}
 
 	@Override
 	public final List<I> list(
-					final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
-					final I lastPrevItem, final int count) throws InterruptRunException, IOException {
-		final int countLimit = count < 1 || count > MAX_LIST_LIMIT ? MAX_LIST_LIMIT : count;
-		final String nodeAddr = storageNodeAddrs[0];
-		final HttpHeaders reqHeaders = new DefaultHttpHeaders();
+					final ItemFactory<I> itemFactory,
+					final String path,
+					final String prefix,
+					final int idRadix,
+					final I lastPrevItem,
+					final int count)
+					throws InterruptRunException, IOException {
+		final var countLimit = count < 1 || count > MAX_LIST_LIMIT ? MAX_LIST_LIMIT : count;
+		final var nodeAddr = storageNodeAddrs[0];
+		final var reqHeaders = (HttpHeaders) new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		reqHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		reqHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		applyDynamicHeaders(reqHeaders);
 		applySharedHeaders(reqHeaders);
-		final StringBuilder queryBuilder = CONTAINER_LIST_QUERY.get();
-		queryBuilder.setLength(0);
-		queryBuilder.append(namespacePath).append(path).append("?format=json");
+		final var uriBuilder = CONTAINER_LIST_QUERY.get();
+		uriBuilder.setLength(0);
+		uriBuilder.append(namespacePath).append(path).append("?format=json");
 		if (prefix != null && !prefix.isEmpty()) {
-			queryBuilder.append("&prefix=").append(prefix);
+			uriBuilder.append("&prefix=").append(prefix);
 		}
 		if (lastPrevItem != null) {
-			String lastItemName = lastPrevItem.name();
+			var lastItemName = lastPrevItem.name();
 			if (lastItemName.contains("/")) {
 				lastItemName = lastItemName.substring(lastItemName.lastIndexOf('/') + 1);
 			}
-			queryBuilder.append("&marker=").append(lastItemName);
+			uriBuilder.append("&marker=").append(lastItemName);
 		}
-		queryBuilder.append("&limit=").append(countLimit);
-		final String query = queryBuilder.toString();
+		uriBuilder.append("&limit=").append(countLimit);
+		final var uri = uriBuilder.toString();
 		authTokens.computeIfAbsent(credential, requestAuthTokenFunc);
-		applyAuthHeaders(reqHeaders, HttpMethod.GET, query, credential);
+		applyAuthHeaders(reqHeaders, HttpMethod.GET, uri, credential);
 		final FullHttpRequest checkBucketReq = new DefaultFullHttpRequest(
-						HttpVersion.HTTP_1_1, HttpMethod.GET, query, Unpooled.EMPTY_BUFFER, reqHeaders, EmptyHttpHeaders.INSTANCE);
+						HttpVersion.HTTP_1_1,
+						HttpMethod.GET,
+						uri,
+						Unpooled.EMPTY_BUFFER,
+						reqHeaders,
+						EmptyHttpHeaders.INSTANCE);
 		final List<I> buff = new ArrayList<>(countLimit);
 		try {
-			final FullHttpResponse listResp = executeHttpRequest(checkBucketReq);
+			final var listResp = executeHttpRequest(checkBucketReq);
 			try {
-				final HttpResponseStatus respStatus = listResp.status();
+				final var respStatus = listResp.status();
 				if (HttpStatusClass.SUCCESS.equals(respStatus.codeClass())) {
 					if (HttpResponseStatus.NO_CONTENT.equals(respStatus)) {
 						throw new EOFException();
 					} else {
-						final ByteBuf listRespContent = listResp.content();
+						final var listRespContent = listResp.content();
 						try (final InputStream contentStream = new ByteBufInputStream(listRespContent)) {
 							parseContainerListing(buff, contentStream, path, itemFactory, idRadix);
 						}
@@ -256,19 +281,18 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected final boolean submit(final O op)
-					throws InterruptRunException, IllegalStateException {
+	protected final boolean submit(final O op) throws InterruptRunException, IllegalStateException {
 		if (!isStarted()) {
 			throw new IllegalStateException();
 		}
 		if (op instanceof CompositeDataOperation) {
-			final CompositeDataOperation compositeOp = (CompositeDataOperation) op;
+			final var compositeOp = (CompositeDataOperation) op;
 			if (compositeOp.allSubOperationsDone()) {
 				return super.submit(op);
 			} else {
 				final List<O> subOps = compositeOp.subOperations();
-				final int n = subOps.size();
-				for (int i = 0; i < n; i += super.submit(subOps, i, n)) {
+				final var n = subOps.size();
+				for (var i = 0; i < n; i += super.submit(subOps, i, n)) {
 					LockSupport.parkNanos(1);
 				}
 				return true;
@@ -286,29 +310,32 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 			throw new IllegalStateException();
 		}
 		O nextOp;
-		for (int i = from; i < to; i++) {
+		for (var i = from; i < to; i++) {
 			nextOp = ops.get(i);
 			if (nextOp instanceof CompositeDataOperation) {
-				final CompositeDataOperation compositeOp = (CompositeDataOperation) nextOp;
+				final var compositeOp = (CompositeDataOperation) nextOp;
 				if (compositeOp.allSubOperationsDone()) {
 					if (!super.submit(nextOp)) {
 						return i - from;
 					}
 				} else {
-					final List<O> subOps = compositeOp.subOperations();
-					final int n = subOps.size();
+					final var subOps = (List<O>) compositeOp.subOperations();
+					final var n = subOps.size();
 					if (n > 0) {
 						// NOTE: blocking sub-ops submission
 						while (!super.submit(subOps.get(0))) {
 							LockSupport.parkNanos(1);
 						}
 						try {
-							for (int j = 1; j < n; j++) {
+							for (var j = 1; j < n; j++) {
 								childOpQueue.put(subOps.get(j));
 							}
 						} catch (final InterruptedException e) {
-							LogUtil.exception(Level.DEBUG, e,
-											"{}: interrupted while enqueueing the child sub-operations", toString());
+							LogUtil.exception(
+											Level.DEBUG,
+											e,
+											"{}: interrupted while enqueueing the child sub-operations",
+											toString());
 							throw new InterruptRunException(e);
 						}
 					} else {
@@ -328,14 +355,15 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 	protected final HttpRequest httpRequest(final O op, final String nodeAddr)
 					throws URISyntaxException {
 		final HttpRequest httpRequest;
-		final OpType opType = op.type();
+		final var opType = op.type();
 		if (op instanceof CompositeDataOperation) {
 			if (CREATE.equals(opType)) {
-				final CompositeDataOperation compositeDataOp = (CompositeDataOperation) op;
+				final var compositeDataOp = (CompositeDataOperation) op;
 				if (compositeDataOp.allSubOperationsDone()) {
 					httpRequest = manifestCreateRequest(compositeDataOp, nodeAddr);
 				} else { // this is the initial state of the task
-					throw new AssertionError("Initial request for the composite load operation is not allowed");
+					throw new AssertionError(
+									"Initial request for the composite load operation is not allowed");
 				}
 			} else {
 				throw new AssertionError("Non-create composite load operations are not implemented yet");
@@ -380,48 +408,53 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 
 	private HttpRequest manifestCreateRequest(
 					final CompositeDataOperation compositeDataOp, final String nodeAddr) {
-		final I item = (I) compositeDataOp.item();
-		final String srcPath = compositeDataOp.srcPath();
-		final String uriPath = dataUriPath(item, srcPath, compositeDataOp.dstPath(), CREATE);
-		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		final var item = (I) compositeDataOp.item();
+		final var srcPath = compositeDataOp.srcPath();
+		final var uriPath = dataUriPath(item, srcPath, compositeDataOp.dstPath(), CREATE);
+		final var uriQuery = uriQuery();
+		final var uri = uriQuery == null || uriQuery.isEmpty() ? uriPath : uriPath + uriQuery;
+		final var httpHeaders = (HttpHeaders) new DefaultHttpHeaders();
 		if (nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
 		httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, 0);
-		final String objManifestPath = super.dataUriPath(item, srcPath, compositeDataOp.dstPath(), CREATE);
-		httpHeaders.set(KEY_X_OBJECT_MANIFEST,
+		final var objManifestPath = super.dataUriPath(item, srcPath, compositeDataOp.dstPath(), CREATE);
+		httpHeaders.set(
+						KEY_X_OBJECT_MANIFEST,
 						(objManifestPath.startsWith("/") ? objManifestPath.substring(1) : objManifestPath) + "/");
-		final HttpMethod httpMethod = HttpMethod.PUT;
-		final HttpRequest httpRequest = new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
+		final var httpMethod = HttpMethod.PUT;
+		final var httpRequest = (HttpRequest) new DefaultHttpRequest(HTTP_1_1, httpMethod, uri, httpHeaders);
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, compositeDataOp.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uri, compositeDataOp.credential());
 		return httpRequest;
 	}
 
 	private HttpRequest uploadPartRequest(
 					final PartialDataOperation partialDataOp, final String nodeAddr) {
-		final I item = (I) partialDataOp.item();
-		final String srcPath = partialDataOp.srcPath();
-		final String partNumStr = Integer.toString(partialDataOp.partNumber() + 1);
-		final String uriPath = dataUriPath(item, srcPath, partialDataOp.dstPath(), CREATE) + "/" +
-						PART_NUM_MASK.substring(partNumStr.length()) + partNumStr;
-		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		final var item = (I) partialDataOp.item();
+		final var srcPath = partialDataOp.srcPath();
+		final var partNumStr = Integer.toString(partialDataOp.partNumber() + 1);
+		final var uriPath = dataUriPath(item, srcPath, partialDataOp.dstPath(), CREATE)
+						+ "/"
+						+ PART_NUM_MASK.substring(partNumStr.length())
+						+ partNumStr;
+		final var uriQuery = uriQuery();
+		final var uri = uriQuery == null || uriQuery.isEmpty() ? uriPath : uriPath + uriQuery;
+		final var httpHeaders = (HttpHeaders) new DefaultHttpHeaders();
 		if (nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
-		final HttpMethod httpMethod = HttpMethod.PUT;
-		final HttpRequest httpRequest = new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
+		final var httpMethod = HttpMethod.PUT;
+		final var httpRequest = (HttpRequest) new DefaultHttpRequest(HTTP_1_1, httpMethod, uri, httpHeaders);
 		try {
 			httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, ((DataItem) item).size());
 		} catch (final IOException ignored) {}
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, partialDataOp.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uri, partialDataOp.credential());
 		return httpRequest;
 	}
 
@@ -446,7 +479,7 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 	@Override
 	protected final String pathUriPath(
 					final I item, final String srcPath, final String dstPath, final OpType opType) {
-		final String itemName = item.name();
+		final var itemName = item.name();
 		if (itemName.startsWith(SLASH)) {
 			return namespacePath + itemName;
 		} else {
@@ -459,7 +492,10 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 
 	@Override
 	protected final void applyAuthHeaders(
-					final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath, final Credential credential) {
+					final HttpHeaders httpHeaders,
+					final HttpMethod httpMethod,
+					final String dstUriPath,
+					final Credential credential) {
 		final String authToken;
 		final String uid;
 		final String secret;
@@ -493,7 +529,9 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 					throws URISyntaxException {
 		httpHeaders.set(
 						KEY_X_COPY_FROM,
-						srcPath != null && !srcPath.isEmpty() && srcPath.startsWith(namespacePath) ? srcPath.substring(namespacePath.length()) : srcPath);
+						srcPath != null && !srcPath.isEmpty() && srcPath.startsWith(namespacePath)
+										? srcPath.substring(namespacePath.length())
+										: srcPath);
 	}
 
 	@Override

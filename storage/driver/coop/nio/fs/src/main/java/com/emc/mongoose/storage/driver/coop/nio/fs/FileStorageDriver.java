@@ -38,8 +38,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- Created by kurila on 19.07.16.
- */
+Created by kurila on 19.07.16.
+*/
 public final class FileStorageDriver<I extends Item, O extends Operation<I>>
 				extends NioStorageDriverBase<I, O>
 				implements NioStorageDriver<I, O> {

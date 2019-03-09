@@ -151,8 +151,12 @@ public final class ItemInputFileSlicer implements AutoCloseable {
 			// get the next batch of items
 			try {
 				n = itemInput.get(itemsBuff, batchSize);
-			} catch (final EOFException e) {
-				break;
+			} catch (final Exception e) {
+				if (e instanceof EOFException) {
+					break;
+				} else {
+					throw e;
+				}
 			}
 
 			if (n > 0) {

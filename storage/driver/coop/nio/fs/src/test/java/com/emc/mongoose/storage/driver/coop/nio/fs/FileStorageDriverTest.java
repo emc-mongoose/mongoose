@@ -19,8 +19,8 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- Created by andrey on 02.12.16.
- */
+Created by andrey on 02.12.16.
+*/
 public class FileStorageDriverTest {
 
 	private static Path TMP_DIR_PATH = null;

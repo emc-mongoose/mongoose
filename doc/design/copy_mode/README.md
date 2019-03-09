@@ -7,10 +7,10 @@ sent while copying the objects so these requests may be significantly faster tha
 
 ## 1. Limitations
 
-* Works only if the input path is different from the output one
-* Copying the containers (Swift) is not supported
-* Copying the buckets (S3) is not supported
-* Copying the objects (Atmos) while using /rest/object interface is not supported yet
+1. Works only if the input path is different from the output one
+2. Copying the containers (Swift) is not supported
+3. Copying the buckets (S3) is not supported
+4. Copying the objects (Atmos) while using /rest/object interface is not supported yet
 
 ## 2. Approach
 

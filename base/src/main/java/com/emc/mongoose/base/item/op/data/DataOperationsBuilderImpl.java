@@ -6,7 +6,6 @@ import static com.github.akurilov.commons.system.SizeInBytes.formatFixedSize;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.op.OperationsBuilderImpl;
 import com.emc.mongoose.base.item.op.composite.data.CompositeDataOperationImpl;
-import com.emc.mongoose.base.storage.Credential;
 import com.github.akurilov.commons.collection.Range;
 import com.github.akurilov.commons.math.Random;
 import java.io.IOException;
@@ -84,6 +83,7 @@ public class DataOperationsBuilderImpl<I extends DataItem, O extends DataOperati
 	@SuppressWarnings("unchecked")
 	public O buildOp(final I dataItem) throws IOException, IllegalArgumentException {
 		final String uid;
+		final String outputPath = getNextOutputPath();
 		if (dataItem.size() > sizeThreshold) {
 			if (randomRangesCount > 0 || (fixedRanges != null && fixedRanges.size() > 0)) {
 				throw new IllegalArgumentException(
@@ -94,8 +94,8 @@ public class DataOperationsBuilderImpl<I extends DataItem, O extends DataOperati
 							opType,
 							dataItem,
 							inputPath,
-							getNextOutputPath(),
-							Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
+							outputPath,
+							getNextCredential(outputPath),
 							fixedRanges,
 							randomRangesCount,
 							sizeThreshold);
@@ -105,8 +105,8 @@ public class DataOperationsBuilderImpl<I extends DataItem, O extends DataOperati
 							opType,
 							dataItem,
 							inputPath,
-							getNextOutputPath(),
-							Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
+							outputPath,
+							getNextCredential(outputPath),
 							fixedRanges,
 							randomRangesCount,
 							getNextSrcItemsForConcat());
@@ -124,8 +124,8 @@ public class DataOperationsBuilderImpl<I extends DataItem, O extends DataOperati
 							opType,
 							dataItem,
 							inputPath,
-							getNextOutputPath(),
-							Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
+							outputPath,
+							getNextCredential(outputPath),
 							fixedRanges,
 							randomRangesCount);
 		}
@@ -136,7 +136,9 @@ public class DataOperationsBuilderImpl<I extends DataItem, O extends DataOperati
 	public void buildOps(final List<I> items, final List<O> buff)
 					throws IOException, IllegalArgumentException {
 		String uid;
+		String outputPath;
 		for (final I nextItem : items) {
+			outputPath = getNextOutputPath();
 			if (nextItem.size() > sizeThreshold) {
 				if (randomRangesCount > 0 || (fixedRanges != null && fixedRanges.size() > 0)) {
 					throw new IllegalArgumentException(
@@ -148,8 +150,8 @@ public class DataOperationsBuilderImpl<I extends DataItem, O extends DataOperati
 												opType,
 												nextItem,
 												inputPath,
-												getNextOutputPath(),
-												Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
+												outputPath,
+												getNextCredential(outputPath),
 												fixedRanges,
 												randomRangesCount,
 												sizeThreshold));
@@ -160,8 +162,8 @@ public class DataOperationsBuilderImpl<I extends DataItem, O extends DataOperati
 												opType,
 												nextItem,
 												inputPath,
-												getNextOutputPath(),
-												Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
+												outputPath,
+												getNextCredential(outputPath),
 												fixedRanges,
 												randomRangesCount,
 												getNextSrcItemsForConcat()));
@@ -180,8 +182,8 @@ public class DataOperationsBuilderImpl<I extends DataItem, O extends DataOperati
 												opType,
 												nextItem,
 												inputPath,
-												getNextOutputPath(),
-												Credential.getInstance(uid = getNextUid(), getNextSecret(uid)),
+												outputPath,
+												getNextCredential(outputPath),
 												fixedRanges,
 												randomRangesCount));
 			}
@@ -189,7 +191,7 @@ public class DataOperationsBuilderImpl<I extends DataItem, O extends DataOperati
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		super.close();
 		if (srcItemsForConcat != null) {
 			srcItemsForConcat.clear();

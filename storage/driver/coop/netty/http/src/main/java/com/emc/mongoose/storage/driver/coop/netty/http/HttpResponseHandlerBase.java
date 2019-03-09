@@ -37,8 +37,8 @@ import org.apache.logging.log4j.Level;
 import java.io.IOException;
 
 /**
- Created by kurila on 05.09.16.
- */
+Created by kurila on 05.09.16.
+*/
 public abstract class HttpResponseHandlerBase<I extends Item, O extends Operation<I>>
 				extends ResponseHandlerBase<HttpObject, I, O> {
 

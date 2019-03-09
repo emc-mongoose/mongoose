@@ -3,6 +3,7 @@ package com.emc.mongoose.base.metrics.type;
 import static org.junit.Assert.assertEquals;
 
 import com.emc.mongoose.base.metrics.snapshot.RateMetricSnapshot;
+
 import java.time.Clock;
 import java.util.concurrent.TimeUnit;
 

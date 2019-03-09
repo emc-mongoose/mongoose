@@ -5,10 +5,13 @@ import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.base.item.DataItem.rangeCount;
 import static com.emc.mongoose.base.item.DataItem.rangeOffset;
 import static com.emc.mongoose.base.item.op.Operation.SLASH;
-import static com.emc.mongoose.base.supply.PatternDefinedSupplier.PATTERN_CHAR;
+import static com.github.akurilov.commons.io.el.ExpressionInput.ASYNC_MARKER;
+import static com.github.akurilov.commons.io.el.ExpressionInput.INIT_MARKER;
+import static com.github.akurilov.commons.io.el.ExpressionInput.SYNC_MARKER;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
+import com.emc.mongoose.base.config.ConstantValueInputImpl;
+import com.emc.mongoose.base.config.el.CompositeExpressionInputBuilder;
 import com.emc.mongoose.base.data.DataInput;
 import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.exception.OmgShootMyFootException;
@@ -23,11 +26,9 @@ import com.emc.mongoose.base.item.op.data.DataOperation;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.base.storage.Credential;
-import com.emc.mongoose.base.supply.BatchSupplier;
-import com.emc.mongoose.base.supply.ConstantStringSupplier;
-import com.emc.mongoose.base.supply.async.AsyncPatternDefinedSupplier;
 import com.emc.mongoose.storage.driver.coop.netty.NettyStorageDriverBase;
 import com.github.akurilov.commons.collection.Range;
+import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.confuse.Config;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -52,6 +53,7 @@ import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.nio.channels.ClosedChannelException;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -60,34 +62,27 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 
 /**
- * Created by kurila on 29.07.16. Netty-based concurrent HTTP client executing the submitted load
- * operations.
- */
+* Created by kurila on 29.07.16. Netty-based concurrent HTTP client executing the submitted load
+* operations.
+*/
 public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<I>>
 				extends NettyStorageDriverBase<I, O> implements HttpStorageDriver<I, O> {
 
 	private static final String CLS_NAME = HttpStorageDriverBase.class.getSimpleName();
-	private static final Function<String, BatchSupplier<String>> ASYNC_PATTERN_SUPPLIER_FUNC = pattern -> {
-		try {
-			return new AsyncPatternDefinedSupplier(ServiceTaskExecutor.INSTANCE, pattern);
-		} catch (final OmgShootMyFootException e) {
-			LogUtil.exception(Level.ERROR, e, "Failed to create the pattern defined input");
-			return null;
-		}
-	};
-	private final Map<String, BatchSupplier<String>> headerNameInputs = new ConcurrentHashMap<>();
-	private final Map<String, BatchSupplier<String>> headerValueInputs = new ConcurrentHashMap<>();
-	protected final AsyncCurrentDateSupplier dateSupplier = new AsyncCurrentDateSupplier(ServiceTaskExecutor.INSTANCE);
+	private static final Function<String, Input<String>> EXPR_INPUT_FUNC = expr -> CompositeExpressionInputBuilder.newInstance()
+					.expression(expr)
+					.build();
+	private final Map<String, Input<String>> headerNameInputs = new ConcurrentHashMap<>();
+	private final Map<String, Input<String>> headerValueInputs = new ConcurrentHashMap<>();
 	protected final HttpHeaders sharedHeaders = new DefaultHttpHeaders();
-	protected final HttpHeaders dynamicHeaders = new DefaultHttpHeaders();
-	private final BatchSupplier<String> uriQueryInput;
+	protected final Map<String, String> dynamicHeaders = new HashMap<>();
+	private final Input<String> uriQueryInput;
 	protected final ChannelFutureListener httpReqSentCallback = this::sendHttpRequestComplete;
 
 	protected HttpStorageDriverBase(
@@ -98,25 +93,30 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 					final int batchSize)
 					throws OmgShootMyFootException, InterruptedException {
 		super(testStepId, itemDataInput, storageConfig, verifyFlag, batchSize);
-		final Config httpConfig = storageConfig.configVal("net-http");
-		final Map<String, String> headersMap = httpConfig.mapVal("headers");
-		for (final Map.Entry<String, String> header : headersMap.entrySet()) {
-			final String headerKey = header.getKey();
-			final String headerValue = header.getValue();
-			if (-1 < (headerKey).indexOf(PATTERN_CHAR) || -1 < headerValue.indexOf(PATTERN_CHAR)) {
-				dynamicHeaders.add(headerKey, headerValue);
+		final var httpConfig = storageConfig.configVal("net-http");
+		final var headersMap = httpConfig.<String> mapVal("headers");
+		for (final var header : headersMap.entrySet()) {
+			final var headerKey = header.getKey();
+			final var headerValue = header.getValue();
+			if (headerKey.contains(ASYNC_MARKER)
+							|| headerKey.contains(SYNC_MARKER)
+							|| headerKey.contains(INIT_MARKER)
+							|| headerValue.contains(ASYNC_MARKER)
+							|| headerValue.contains(SYNC_MARKER)
+							|| headerValue.contains(INIT_MARKER)) {
+				dynamicHeaders.put(headerKey, headerValue);
 			} else {
 				sharedHeaders.add(headerKey, headerValue);
 			}
 		}
-		final Map<String, String> uriArgs = httpConfig.mapVal("uri-args");
-		final String uriQueryPattern = uriArgs.entrySet().stream()
+		final var uriArgs = httpConfig.<String> mapVal("uri-args");
+		final var uriQueryExpr = uriArgs.entrySet().stream()
 						.map(entry -> entry.getKey() + '=' + entry.getValue())
 						.collect(Collectors.joining("&"));
-		if (uriQueryPattern.length() > 0) {
-			uriQueryInput = new ConstantStringSupplier("");
+		if (uriQueryExpr.length() > 0) {
+			uriQueryInput = EXPR_INPUT_FUNC.apply('?' + uriQueryExpr);
 		} else {
-			uriQueryInput = ASYNC_PATTERN_SUPPLIER_FUNC.apply("?" + uriQueryPattern);
+			uriQueryInput = new ConstantValueInputImpl("");
 		}
 	}
 
@@ -174,9 +174,9 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 	}
 
 	protected HttpRequest httpRequest(final O op, final String nodeAddr) throws URISyntaxException {
-		final I item = op.item();
-		final OpType opType = op.type();
-		final String srcPath = op.srcPath();
+		final var item = op.item();
+		final var opType = op.type();
+		final var srcPath = op.srcPath();
 		final HttpMethod httpMethod;
 		final String uriPath;
 		if (item instanceof DataItem) {
@@ -191,12 +191,13 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 		} else {
 			throw new AssertionError("Unsupported item class: " + item.getClass().getName());
 		}
-		final HttpHeaders httpHeaders = new DefaultHttpHeaders();
+		final var uriQuery = uriQuery();
+		final var uri = uriQuery == null || uriQuery.isEmpty() ? uriPath : uriPath + uriQuery;
+		final var httpHeaders = (HttpHeaders) new DefaultHttpHeaders();
 		if (nodeAddr != null) {
 			httpHeaders.set(HttpHeaderNames.HOST, nodeAddr);
 		}
-		httpHeaders.set(HttpHeaderNames.DATE, dateSupplier.get());
-		final HttpRequest httpRequest = new DefaultHttpRequest(HTTP_1_1, httpMethod, uriPath, httpHeaders);
+		final var httpRequest = (HttpRequest) new DefaultHttpRequest(HTTP_1_1, httpMethod, uri, httpHeaders);
 		switch (opType) {
 		case CREATE:
 			if (srcPath == null || srcPath.isEmpty()) {
@@ -219,7 +220,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 			}
 			break;
 		case UPDATE:
-			final DataOperation dataOp = (DataOperation) op;
+			final var dataOp = (DataOperation) op;
 			httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, dataOp.markedRangesSize());
 			applyRangesHeaders(httpHeaders, dataOp);
 			break;
@@ -334,7 +335,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 	}
 
 	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
-		for (final Map.Entry<String, String> sharedHeader : sharedHeaders) {
+		for (final var sharedHeader : sharedHeaders) {
 			httpHeaders.add(sharedHeader.getKey(), sharedHeader.getValue());
 		}
 	}
@@ -342,35 +343,31 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 	protected void applyDynamicHeaders(final HttpHeaders httpHeaders) {
 		String headerName;
 		String headerValue;
-		BatchSupplier<String> headerNameSupplier;
-		BatchSupplier<String> headerValueSupplier;
-		for (final Map.Entry<String, String> nextHeader : dynamicHeaders) {
+		Input<String> headerNameInput;
+		Input<String> headerValueInput;
+		for (final var nextHeader : dynamicHeaders.entrySet()) {
 			headerName = nextHeader.getKey();
 			// header name is a generator pattern
-			headerNameSupplier = headerNameInputs.computeIfAbsent(headerName, ASYNC_PATTERN_SUPPLIER_FUNC);
-			if (headerNameSupplier == null) {
+			headerNameInput = headerNameInputs.computeIfAbsent(headerName, EXPR_INPUT_FUNC);
+			if (headerNameInput == null) {
 				continue;
 			}
 			// spin while header name generator is not ready
-			while (null == (headerName = headerNameSupplier.get())) {
-				LockSupport.parkNanos(1_000_000);
-			}
+			headerName = headerNameInput.get();
 			headerValue = nextHeader.getValue();
 			// header value is a generator pattern
-			headerValueSupplier = headerValueInputs.computeIfAbsent(headerValue, ASYNC_PATTERN_SUPPLIER_FUNC);
-			if (headerValueSupplier == null) {
+			headerValueInput = headerValueInputs.computeIfAbsent(headerValue, EXPR_INPUT_FUNC);
+			if (headerValueInput == null) {
 				continue;
 			}
 			// spin while header value generator is not ready
-			while (null == (headerValue = headerValueSupplier.get())) {
-				LockSupport.parkNanos(1_000_000);
-			}
+			headerValue = headerValueInput.get();
 			// put the generated header value into the request
 			httpHeaders.set(headerName, headerValue);
 		}
 	}
 
-	protected String uriQuery() {
+	protected final String uriQuery() {
 		return uriQueryInput.get();
 	}
 
@@ -432,8 +429,9 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 	@Override
 	protected void doClose() throws IOException {
 		super.doClose();
-		uriQueryInput.close();
-		dateSupplier.close();
+		try {
+			uriQueryInput.close();
+		} catch (final Exception ignored) {}
 		sharedHeaders.clear();
 		dynamicHeaders.clear();
 		headerNameInputs
@@ -442,7 +440,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 										headerNameInput -> {
 											try {
 												headerNameInput.close();
-											} catch (final IOException ignored) {}
+											} catch (final Exception ignored) {}
 										});
 		headerNameInputs.clear();
 		headerValueInputs
@@ -451,7 +449,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 										headerValueInput -> {
 											try {
 												headerValueInput.close();
-											} catch (final IOException ignored) {}
+											} catch (final Exception ignored) {}
 										});
 		headerValueInputs.clear();
 	}

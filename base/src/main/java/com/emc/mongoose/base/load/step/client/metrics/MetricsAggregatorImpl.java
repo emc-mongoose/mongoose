@@ -2,7 +2,6 @@ package com.emc.mongoose.base.load.step.client.metrics;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import com.emc.mongoose.base.load.step.LoadStep;
@@ -65,7 +64,7 @@ public final class MetricsAggregatorImpl extends AsyncRunnableBase implements Me
 						.parallelStream()
 						.forEach(
 										snapshotsSupplier -> {
-											try (final Instance logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+											try (final var logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 												snapshotsSupplier.stop();
 											} catch (final IOException e) {
 												LogUtil.exception(
@@ -81,7 +80,7 @@ public final class MetricsAggregatorImpl extends AsyncRunnableBase implements Me
 						.parallelStream()
 						.forEach(
 										snapshotsSupplier -> {
-											try (final Instance logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+											try (final var logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 												snapshotsSupplier.close();
 											} catch (final IOException e) {
 												LogUtil.exception(

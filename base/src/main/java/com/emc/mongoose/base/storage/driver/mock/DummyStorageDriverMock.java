@@ -1,5 +1,7 @@
 package com.emc.mongoose.base.storage.driver.mock;
 
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
+
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
@@ -39,9 +41,9 @@ public final class DummyStorageDriverMock<I extends Item, O extends Operation<I>
 	}
 
 	@Override
-	public final boolean put(final O task) throws IOException {
+	public final boolean put(final O task) {
 		if (!isStarted()) {
-			throw new EOFException();
+			throwUnchecked(new EOFException());
 		}
 		checkStateFor(task);
 		if (opsResultsQueue.offer(task)) {
@@ -54,9 +56,9 @@ public final class DummyStorageDriverMock<I extends Item, O extends Operation<I>
 	}
 
 	@Override
-	public final int put(final List<O> tasks, final int from, final int to) throws IOException {
+	public final int put(final List<O> tasks, final int from, final int to) {
 		if (!isStarted()) {
-			throw new EOFException();
+			throwUnchecked(new EOFException());
 		}
 		int i = from;
 		O nextTask;
@@ -76,9 +78,9 @@ public final class DummyStorageDriverMock<I extends Item, O extends Operation<I>
 	}
 
 	@Override
-	public final int put(final List<O> tasks) throws IOException {
+	public final int put(final List<O> tasks) {
 		if (!isStarted()) {
-			throw new EOFException();
+			throwUnchecked(new EOFException());
 		}
 		int n = 0;
 		for (final O nextOp : tasks) {
@@ -103,7 +105,7 @@ public final class DummyStorageDriverMock<I extends Item, O extends Operation<I>
 		return !opsResultsQueue.isEmpty();
 	}
 
-	private void checkStateFor(final O op) throws IOException {
+	private void checkStateFor(final O op) {
 		op.reset();
 		op.startRequest();
 		op.finishRequest();
@@ -113,7 +115,9 @@ public final class DummyStorageDriverMock<I extends Item, O extends Operation<I>
 			final DataItem dataItem = dataOp.item();
 			switch (dataOp.type()) {
 			case CREATE:
-				dataOp.countBytesDone(dataItem.size());
+				try {
+					dataOp.countBytesDone(dataItem.size());
+				} catch (final IOException ignored) {}
 				break;
 			case READ:
 				dataOp.startDataResponse();
@@ -123,7 +127,9 @@ public final class DummyStorageDriverMock<I extends Item, O extends Operation<I>
 					if (dataOp.hasMarkedRanges()) {
 						dataOp.countBytesDone(dataOp.markedRangesSize());
 					} else {
-						dataOp.countBytesDone(dataItem.size());
+						try {
+							dataOp.countBytesDone(dataItem.size());
+						} catch (final IOException ignored) {}
 					}
 				} else {
 					dataOp.countBytesDone(dataOp.markedRangesSize());
@@ -139,22 +145,22 @@ public final class DummyStorageDriverMock<I extends Item, O extends Operation<I>
 	}
 
 	@Override
-	public final Input<O> getInput() throws IOException {
+	public final Input<O> getInput() {
 		return this;
 	}
 
 	@Override
-	public final O get() throws EOFException, IOException {
+	public final O get() {
 		return opsResultsQueue.poll();
 	}
 
 	@Override
-	public final int get(final List<O> buffer, final int limit) throws IOException {
+	public final int get(final List<O> buffer, final int limit) {
 		return opsResultsQueue.drainTo(buffer, limit);
 	}
 
 	@Override
-	public final long skip(final long count) throws IOException {
+	public final long skip(final long count) {
 		int n = (int) Math.min(count, Integer.MAX_VALUE);
 		final List<O> tmpBuff = new ArrayList<>(n);
 		n = opsResultsQueue.drainTo(tmpBuff, n);

@@ -7,8 +7,8 @@ import io.netty.util.AttributeKey;
 import java.nio.charset.StandardCharsets;
 
 /**
- Created by kurila on 02.08.16.
- */
+Created by kurila on 02.08.16.
+*/
 public interface AmzS3Api {
 
 	String PREFIX_KEY_X_AMZ = "x-amz-";

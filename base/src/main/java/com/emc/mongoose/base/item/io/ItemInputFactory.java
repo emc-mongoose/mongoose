@@ -71,11 +71,11 @@ public interface ItemInputFactory {
 					final StorageDriver<I, O> storageDriver) {
 		Input<I> itemInput = null;
 		try {
-			final Config namingConfig = itemConfig.configVal("naming");
-			final String namingPrefix = namingConfig.stringVal("prefix");
-			final int namingRadix = namingConfig.intVal("radix");
+			final var namingConfig = itemConfig.configVal("naming");
+			final var prefix = namingConfig.stringVal("prefix");
+			final var radix = namingConfig.intVal("radix");
 			itemInput = new StorageItemInput<>(
-							storageDriver, batchSize, itemFactory, itemInputPath, namingPrefix, namingRadix);
+							storageDriver, batchSize, itemFactory, itemInputPath, prefix, radix);
 		} catch (final IllegalStateException | IllegalArgumentException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to initialize the data input");
 		}

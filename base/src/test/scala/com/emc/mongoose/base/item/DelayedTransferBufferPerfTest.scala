@@ -1,6 +1,5 @@
 package com.emc.mongoose.base.item
 
-import com.emc.mongoose.base.item.op.data.{DataOperation, DataOperationsBuilderImpl}
 import com.github.akurilov.commons.io.Input
 import com.github.akurilov.commons.system.SizeInBytes
 import org.junit._
@@ -9,12 +8,13 @@ import java.util
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
 
-import com.emc.mongoose.base.item.io.{DelayedTransferConvertBuffer, NewDataItemInput}
-import com.emc.mongoose.base.item.op.{OpType, OperationsBuilder}
+import com.emc.mongoose.base.config.ConstantValueInputImpl
 import com.emc.mongoose.base.item.op.data.{DataOperation, DataOperationsBuilderImpl}
-import com.emc.mongoose.base.supply.ConstantStringSupplier
 import com.emc.mongoose.base.item.io.{DelayedTransferConvertBuffer, NewDataItemInput}
+import com.emc.mongoose.base.item.naming.ItemNameInputImpl
 import com.emc.mongoose.base.item.op.{OpType, OperationsBuilder}
+import com.emc.mongoose.base.storage.Credential
+import it.unimi.dsi.fastutil.longs.Long2LongFunction
 import org.junit.Assert.fail
 
 final class DelayedTransferBufferPerfTest {
@@ -30,17 +30,21 @@ final class DelayedTransferBufferPerfTest {
 	@Before @throws[Exception]
 	def setUp(): Unit = {
 		itemInput = new NewDataItemInput[DataItem](
-			ItemType getItemFactory ItemType.DATA,
-			new ItemNameSupplier(ItemNamingType.ASC, null, 13, Character.MAX_RADIX, 0),
+			ItemType getItemFactory (ItemType DATA),
+			new ItemNameInputImpl(
+				new Long2LongFunction {
+					override def get(v: Long): Long = v + 1
+				},
+				12, null, Character.MAX_RADIX
+			),
 			new SizeInBytes(0)
 		)
 		ioTaskBuilder = new DataOperationsBuilderImpl[DataItem, DataOperation[DataItem]](0)
-		ioTaskBuilder.opType(OpType.NOOP)
-		ioTaskBuilder.outputPathSupplier(new ConstantStringSupplier("/default"))
-		ioTaskBuilder.uidSupplier(new ConstantStringSupplier("uid1"))
-		ioTaskBuilder.secretSupplier(new ConstantStringSupplier("secret1"))
+		ioTaskBuilder opType(OpType NOOP)
+		ioTaskBuilder outputPathInput new ConstantValueInputImpl[String]("/default")
+		ioTaskBuilder credentialInput new ConstantValueInputImpl[Credential](Credential getInstance("uid1", "secret1"))
 		buff = new DelayedTransferConvertBuffer[DataItem, DataOperation[DataItem]](
-			BUFF_CAPACITY, 0, TimeUnit.SECONDS
+			BUFF_CAPACITY, 0, TimeUnit SECONDS
 		)
 	}
 
@@ -72,7 +76,7 @@ final class DelayedTransferBufferPerfTest {
 					ioTaskBuff.clear()
 				}
 			} catch {
-				case e: Exception => e.printStackTrace(System.err)
+				case e: Exception => e printStackTrace System.err
 			}
 		})
 
@@ -89,7 +93,7 @@ final class DelayedTransferBufferPerfTest {
 				}
 			} catch {
 				case ignored: EOFException =>
-				case e: Exception => e.printStackTrace(System.err)
+				case e: Exception => e printStackTrace System.err
 			}
 		})
 

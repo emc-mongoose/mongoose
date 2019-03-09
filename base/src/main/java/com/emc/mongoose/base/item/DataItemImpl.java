@@ -18,11 +18,11 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
 /**
- * Created by kurila on 09.05.14. A data item which may produce uniformly distributed
- * non-compressible content. Uses UniformDataSource as a ring buffer. Not thread safe. Note: the
- * {@link java.nio.channels.ReadableByteChannel#read(ByteBuffer)} method implementation will not
- * return 0 or -1 (endless)
- */
+* Created by kurila on 09.05.14. A data item which may produce uniformly distributed
+* non-compressible content. Uses UniformDataSource as a ring buffer. Not thread safe. Note: the
+* {@link java.nio.channels.ReadableByteChannel#read(ByteBuffer)} method implementation will not
+* return 0 or -1 (endless)
+*/
 public class DataItemImpl extends ItemImpl implements DataItem {
 	//
 	private static final String FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",

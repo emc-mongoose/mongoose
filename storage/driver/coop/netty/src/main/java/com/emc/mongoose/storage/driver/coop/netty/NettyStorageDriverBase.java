@@ -390,12 +390,12 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
 	}
 
 	/**
-	 * Note that the particular implementation should also invoke the {@link #sendRequestData(Channel,
-	 * Operation)} method to send the actual payload (if any).
-	 *
-	 * @param channel the channel to send request to
-	 * @param op the load operation describing the item and the operation type to perform
-	 */
+	* Note that the particular implementation should also invoke the {@link #sendRequestData(Channel,
+	* Operation)} method to send the actual payload (if any).
+	*
+	* @param channel the channel to send request to
+	* @param op the load operation describing the item and the operation type to perform
+	*/
 	protected abstract void sendRequest(final Channel channel, final O op);
 
 	protected final void sendRequestData(final Channel channel, final O op) throws IOException {

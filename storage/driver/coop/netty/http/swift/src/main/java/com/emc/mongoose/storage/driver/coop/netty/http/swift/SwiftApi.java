@@ -16,8 +16,8 @@ import java.io.InputStream;
 import java.util.List;
 
 /**
- Created by andrey on 07.10.16.
- */
+Created by andrey on 07.10.16.
+*/
 public interface SwiftApi {
 
 	String KEY_X_AUTH_KEY = "X-Auth-Key";

@@ -10,8 +10,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Modifies the async runnable to make sure that all instances are closed even if an user hits ^C
- */
+* Modifies the async runnable to make sure that all instances are closed even if an user hits ^C
+*/
 public abstract class DaemonBase extends AsyncRunnableBase implements Daemon {
 
 	private static final Logger LOG = Logger.getLogger(DaemonBase.class.getSimpleName());

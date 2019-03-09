@@ -1,5 +1,6 @@
 package com.emc.mongoose.base.item.io;
 
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static java.lang.System.nanoTime;
 
 import com.emc.mongoose.base.item.Item;
@@ -40,16 +41,16 @@ public final class DelayedTransferConvertBuffer<I extends Item, O extends Operat
 	}
 
 	/**
-	 * Block until the free space in the buff is available
-	 *
-	 * @param ioResult
-	 * @return always true
-	 * @throws IOException
-	 */
+	* Block until the free space in the buff is available
+	*
+	* @param ioResult
+	* @return always true
+	* @throws IOException
+	*/
 	@Override
-	public final boolean put(final O ioResult) throws EOFException, IOException {
+	public final boolean put(final O ioResult) {
 		if (poisonedFlag) {
-			throw new EOFException(this.toString() + ": has been poisoned before");
+			throwUnchecked(new EOFException(this.toString() + ": has been poisoned before"));
 		}
 		if (ioResult == null) {
 			Loggers.MSG.debug("{}: poisoned", this);
@@ -72,19 +73,18 @@ public final class DelayedTransferConvertBuffer<I extends Item, O extends Operat
 	}
 
 	/**
-	 * Block until all the items from the given range are consumed
-	 *
-	 * @param ioResults
-	 * @param from
-	 * @param to
-	 * @return
-	 * @throws IOException
-	 */
+	* Block until all the items from the given range are consumed
+	*
+	* @param ioResults
+	* @param from
+	* @param to
+	* @return
+	* @throws IOException
+	*/
 	@Override
-	public final int put(final List<O> ioResults, final int from, final int to)
-					throws EOFException, IOException {
+	public final int put(final List<O> ioResults, final int from, final int to) {
 		if (poisonedFlag) {
-			throw new EOFException(this + ": has been poisoned before");
+			throwUnchecked(new EOFException(this + ": has been poisoned before"));
 		}
 		int n;
 		O ioResult;
@@ -116,32 +116,32 @@ public final class DelayedTransferConvertBuffer<I extends Item, O extends Operat
 	}
 
 	/**
-	 * Block until all the given items are consumed
-	 *
-	 * @param ioResults
-	 * @return
-	 * @throws IOException
-	 */
+	* Block until all the given items are consumed
+	*
+	* @param ioResults
+	* @return
+	* @throws IOException
+	*/
 	@Override
-	public final int put(final List<O> ioResults) throws IOException {
+	public final int put(final List<O> ioResults) {
 		return put(ioResults, 0, ioResults.size());
 	}
 
 	/** Don't use this method, it will cause the assertion error */
 	@Override
-	public final Input<O> getInput() throws IOException {
+	public final Input<O> getInput() {
 		throw new AssertionError();
 	}
 
 	@Override
-	public final I get() throws EOFException, IOException {
+	public final I get() {
 
 		I item = null;
 
 		if (lock.tryLock()) {
 			try {
 				if (ioResultsBuffSize == 0 && poisonedFlag) {
-					throw new EOFException();
+					throwUnchecked(new EOFException());
 				}
 
 				O nextIoResult;
@@ -180,14 +180,14 @@ public final class DelayedTransferConvertBuffer<I extends Item, O extends Operat
 	}
 
 	@Override
-	public final int get(final List<I> buffer, final int limit) throws IOException {
+	public final int get(final List<I> buffer, final int limit) {
 
 		int n = 0;
 
 		if (lock.tryLock()) {
 			try {
 				if (ioResultsBuffSize == 0 && poisonedFlag) {
-					throw new EOFException();
+					throwUnchecked(new EOFException());
 				}
 
 				O nextIoResult;
@@ -229,7 +229,7 @@ public final class DelayedTransferConvertBuffer<I extends Item, O extends Operat
 	}
 
 	@Override
-	public final long skip(final long count) throws IOException {
+	public final long skip(final long count) {
 		long n = 0;
 		if (lock.tryLock()) {
 			try {
@@ -246,7 +246,7 @@ public final class DelayedTransferConvertBuffer<I extends Item, O extends Operat
 	}
 
 	@Override
-	public final void reset() throws IOException {
+	public final void reset() {
 		throw new AssertionError("Unable to reset this input");
 	}
 

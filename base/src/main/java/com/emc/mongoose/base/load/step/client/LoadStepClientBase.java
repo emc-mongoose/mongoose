@@ -162,12 +162,12 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 								new ItemInputFileSlicer(id(), fileMgrs, configSlices, itemInput, batchSize));
 				Loggers.MSG.debug("{}: item input file slicer initialized", id());
 			}
-		} catch (final IOException e) {
-			LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", id());
 		} catch (final OmgShootMyFootException e) {
 			LogUtil.exception(Level.ERROR, e, "{}: failed to init the storage driver", id());
 		} catch (final InterruptedException e) {
 			throw new InterruptRunException(e);
+		} catch (final Exception e) {
+			LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", id());
 		}
 		final String itemOutputFile = config.stringVal("item-output-file");
 		if (itemOutputFile != null && !itemOutputFile.isEmpty()) {

@@ -37,16 +37,16 @@ public interface DataItem extends Item, SeekableByteChannel {
 	<D extends DataItem> D slice(final long from, final long size);
 
 	/**
-	 * @return The number of bytes written, possibly zero
-	 * @throws NonWritableChannelException If this channel was not opened for writing
-	 * @throws ClosedChannelException If this channel is closed
-	 * @throws AsynchronousCloseException If another thread closes this channel while the write
-	 *     operation is in progress
-	 * @throws ClosedByInterruptException If another thread interrupts the current thread while the
-	 *     write operation is in progress, thereby closing the channel and setting the current
-	 *     thread's interrupt status
-	 * @throws IOException If some other I/O error occurs
-	 */
+	* @return The number of bytes written, possibly zero
+	* @throws NonWritableChannelException If this channel was not opened for writing
+	* @throws ClosedChannelException If this channel is closed
+	* @throws AsynchronousCloseException If another thread closes this channel while the write
+	*     operation is in progress
+	* @throws ClosedByInterruptException If another thread interrupts the current thread while the
+	*     write operation is in progress, thereby closing the channel and setting the current
+	*     thread's interrupt status
+	* @throws IOException If some other I/O error occurs
+	*/
 	long writeToSocketChannel(final WritableByteChannel chanDst, final long maxCount)
 					throws IOException;
 

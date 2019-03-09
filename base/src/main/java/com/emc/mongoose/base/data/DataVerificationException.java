@@ -1,9 +1,7 @@
 package com.emc.mongoose.base.data;
 
-import java.io.IOException;
-
 /** Created by andrey on 26.06.15. */
-public abstract class DataVerificationException extends IOException {
+public abstract class DataVerificationException extends RuntimeException {
 
 	private final long offset;
 

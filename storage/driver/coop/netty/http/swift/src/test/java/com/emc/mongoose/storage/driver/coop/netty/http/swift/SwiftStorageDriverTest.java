@@ -38,6 +38,7 @@ import io.netty.handler.codec.http.HttpVersion;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -90,7 +91,13 @@ public class SwiftStorageDriverTest
 			config.val("storage-net-node-port", 9024);
 			config.val("storage-net-node-connAttemptsLimit", 0);
 			config.val("storage-net-http-versioning", true);
-			config.val("storage-net-http-headers", Collections.EMPTY_MAP);
+			config.val(
+							"storage-net-http-headers",
+							new HashMap<String, String>() {
+								{
+									put("Date", "#{date:formatNowRfc1123()}%{date:formatNowRfc1123()}");
+								}
+							});
 			config.val("storage-net-http-uri-args", Collections.EMPTY_MAP);
 			config.val("storage-auth-uid", CREDENTIAL.getUid());
 			config.val("storage-auth-token", AUTH_TOKEN);

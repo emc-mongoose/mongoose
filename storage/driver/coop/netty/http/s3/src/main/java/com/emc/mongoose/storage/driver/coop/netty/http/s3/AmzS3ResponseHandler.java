@@ -25,8 +25,8 @@ import java.util.regex.Pattern;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- Created by andrey on 25.11.16.
- */
+Created by andrey on 25.11.16.
+*/
 public final class AmzS3ResponseHandler<I extends Item, O extends Operation<I>>
 				extends HttpResponseHandlerBase<I, O> {
 
