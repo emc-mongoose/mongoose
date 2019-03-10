@@ -20,7 +20,7 @@ description = "Mongoose is a high-load storage performance testing tool"
 ext {
 	depVersion = [
 		confuse            : "1.2.1",
-		confuseIoJson      : "1.1.0",
+		confuseIoYaml      : "1.0.0",
 		commonsCodec       : "1.11",
 		commonsLang        : "2.6",
 		disruptor          : "3.4.2",

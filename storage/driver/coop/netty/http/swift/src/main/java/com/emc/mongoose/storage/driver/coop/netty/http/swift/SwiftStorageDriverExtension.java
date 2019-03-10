@@ -10,7 +10,7 @@ import static com.emc.mongoose.base.Constants.APP_NAME;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
-import com.github.akurilov.confuse.io.json.JsonSchemaProviderBase;
+import com.github.akurilov.confuse.io.yaml.YamlSchemaProviderBase;
 
 import java.io.InputStream;
 import java.util.Arrays;
@@ -41,7 +41,7 @@ public class SwiftStorageDriverExtension<I extends Item, O extends Operation<I>,
 
 	@Override
 	public final SchemaProvider schemaProvider() {
-		return new JsonSchemaProviderBase() {
+		return new YamlSchemaProviderBase() {
 			@Override
 			protected final InputStream schemaInputStream() {
 				return getClass().getResourceAsStream("/config-schema-storage-swift.json");
