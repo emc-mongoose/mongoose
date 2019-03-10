@@ -17,7 +17,7 @@ public final class InitialConfigSchemaProvider extends YamlSchemaProviderBase {
 
 	@Override
 	protected final InputStream schemaInputStream() throws IOException {
-		return getClass().getResource("/config-schema.json").openStream();
+		return getClass().getResource("/config-schema.yaml").openStream();
 	}
 
 	public static SchemaProvider provider() {

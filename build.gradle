@@ -1,5 +1,4 @@
-import groovy.json.JsonSlurper
-import groovy.json.JsonParserType
+//import org.yaml.snakeyaml.Yaml
 
 buildscript {
 	repositories {
@@ -254,11 +253,13 @@ allprojects {
 }
 
 String defineVersion() {
-	def configFilePath = [ rootProject.rootDir, "base", "src", "main", "resources", "config", "defaults.json", ]
-		.join(File.separator);
-	def inputFile = new File(configFilePath)
-	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
-	json.run.version
+//	def configFilePath = [ rootProject.rootDir, "base", "src", "main", "resources", "config", "defaults.yaml", ]
+//		.join(File.separator);
+//	def inputFile = new File(configFilePath)
+//	def parser = new Yaml()
+//	def y = parser.load(inputFile.text)
+//	y.run.version
+	return "5.0.0"
 }
 
 task mongooseVersion {
