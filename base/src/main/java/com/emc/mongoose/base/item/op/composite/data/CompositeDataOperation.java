@@ -8,6 +8,6 @@ import java.util.List;
 /** Created by andrey on 25.11.16. */
 public interface CompositeDataOperation<I extends DataItem> extends CompositeOperation<I> {
 
-  @Override
-  List<? extends PartialDataOperation<I>> subOperations();
+	@Override
+	List<? extends PartialDataOperation<I>> subOperations();
 }

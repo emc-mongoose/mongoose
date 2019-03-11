@@ -43,14 +43,17 @@ public class DataItemImpl extends ItemImpl implements DataItem {
   protected long size = 0;
   //
   protected final BitSet modifiedRangesMask = new BitSet(Long.SIZE);
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
   public DataItemImpl() {
     super();
   }
+
   //
   public DataItemImpl(final String value) throws IllegalArgumentException {
     this(value, value.indexOf(','));
   }
+
   //
   private DataItemImpl(final String value, final int firstCommaPos)
       throws IllegalArgumentException {
@@ -103,14 +106,17 @@ public class DataItemImpl extends ItemImpl implements DataItem {
       throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
     }
   }
+
   //
   public DataItemImpl(final long offset, final long size) {
     this(Long.toString(offset, Character.MAX_RADIX), offset, size, 0);
   }
+
   //
   public DataItemImpl(final String name, final long offset, final long size) {
     this(name, offset, size, 0);
   }
+
   //
   public DataItemImpl(final long offset, final long size, final int layerNum) {
     this();
@@ -118,6 +124,7 @@ public class DataItemImpl extends ItemImpl implements DataItem {
     this.offset = offset;
     this.size = size;
   }
+
   //
   public DataItemImpl(final String name, final long offset, final long size, final int layerNum) {
     super(name);
@@ -125,6 +132,7 @@ public class DataItemImpl extends ItemImpl implements DataItem {
     this.offset = offset;
     this.size = size;
   }
+
   //
   public DataItemImpl(
       final DataItemImpl baseDataItem,
@@ -182,49 +190,58 @@ public class DataItemImpl extends ItemImpl implements DataItem {
                 : Hex.encodeHexString(modifiedRangesMask.toByteArray()))
         .toString();
   }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
   @Override
   public final DataInput dataInput() {
     return dataInput;
   }
+
   //
   @Override
   public final void dataInput(final DataInput dataInput) {
     this.dataInput = dataInput;
     this.dataInputSize = dataInput.getSize();
   }
+
   //
   @Override
   public void reset() {
     super.reset();
     position = 0;
   }
+
   //
   @Override
   public final int layer() {
     return layerNum;
   }
+
   //
   @Override
   public final void layer(final int layerNum) {
     this.layerNum = layerNum;
   }
+
   //
   @Override
   public final void size(final long size) {
     this.size = size;
   }
+
   //
   @Override
   public final long offset() {
     return offset;
   }
+
   //
   @Override
   public final void offset(final long offset) {
     this.offset = offset < 0 ? Long.MAX_VALUE + offset + 1 : offset;
     position = 0;
   }
+
   //
   @Override
   public DataItemImpl slice(final long from, final long partSize) {
@@ -240,27 +257,32 @@ public class DataItemImpl extends ItemImpl implements DataItem {
     }
     return dataItemSlice;
   }
+
   //
   public long position() {
     return position;
   }
+
   //
   @Override
   public final DataItemImpl position(final long position) {
     this.position = position;
     return this;
   }
+
   //
   @Override
   public long size() {
     return size;
   }
+
   //
   @Override
   public DataItemImpl truncate(final long size) {
     this.size = size;
     return this;
   }
+
   //
   @Override
   public final long rangeSize(final int i) {
@@ -295,16 +317,19 @@ public class DataItemImpl extends ItemImpl implements DataItem {
   public final int updatedRangesCount() {
     return modifiedRangesMask.cardinality();
   }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // ByteChannels implementation
   ////////////////////////////////////////////////////////////////////////////////////////////////
   @Override
   public final void close() {}
+
   //
   @Override
   public final boolean isOpen() {
     return true;
   }
+
   //
   @Override
   public final int read(final ByteBuffer dst) {
@@ -320,6 +345,7 @@ public class DataItemImpl extends ItemImpl implements DataItem {
     position += n;
     return n;
   }
+
   //
   @Override
   public final int write(final ByteBuffer src) throws DataCorruptionException, DataSizeException {
@@ -452,6 +478,7 @@ public class DataItemImpl extends ItemImpl implements DataItem {
     final DataItemImpl other = (DataItemImpl) o;
     return super.equals(other) && offset == other.offset;
   }
+
   //
   @Override
   public int hashCode() {

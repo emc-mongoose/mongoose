@@ -1,5 +1,7 @@
 package com.emc.mongoose.base.item.io;
 
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
+
 import com.emc.mongoose.base.item.DataItemFactory;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
@@ -13,6 +15,7 @@ import java.nio.file.Path;
 public class CsvFileItemInput<I extends Item> extends CsvItemInput<I> implements FileInput<I> {
   //
   protected final Path itemsFilePath;
+
   /**
    * @param itemsFilePath the input stream to get the data item records from
    * @param itemFactory the concrete item factory
@@ -24,6 +27,7 @@ public class CsvFileItemInput<I extends Item> extends CsvItemInput<I> implements
     super(Files.newBufferedReader(itemsFilePath, StandardCharsets.UTF_8), itemFactory);
     this.itemsFilePath = itemsFilePath;
   }
+
   //
   @Override
   public String toString() {
@@ -32,17 +36,23 @@ public class CsvFileItemInput<I extends Item> extends CsvItemInput<I> implements
         + itemsFilePath
         + ")";
   }
+
   //
   @Override
-  public final Path getFilePath() {
+  public final Path filePath() {
     return itemsFilePath;
   }
+
   //
   @Override
-  public void reset() throws IOException {
-    if (itemsSrc != null) {
-      itemsSrc.close();
+  public void reset() {
+    try {
+      if (itemsSrc != null) {
+        itemsSrc.close();
+      }
+      setItemsSrc(Files.newBufferedReader(itemsFilePath, StandardCharsets.UTF_8));
+    } catch (final IOException e) {
+      throwUnchecked(e);
     }
-    setItemsSrc(Files.newBufferedReader(itemsFilePath, StandardCharsets.UTF_8));
   }
 }

@@ -1,9 +1,9 @@
 package com.emc.mongoose.base.item.io;
 
 import com.emc.mongoose.base.item.DataItemFactory;
-import com.emc.mongoose.base.item.IdStringInput;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
+import com.emc.mongoose.base.item.naming.ItemNameInput;
 import com.github.akurilov.commons.io.Input;
 import java.io.IOException;
 import java.util.List;
@@ -12,22 +12,22 @@ import java.util.List;
 public class NewItemInput<I extends Item> implements Input<I> {
 
   protected final ItemFactory<I> itemFactory;
-  protected final IdStringInput idInput;
+  protected final ItemNameInput itemNameInput;
 
-  public NewItemInput(final ItemFactory<I> itemFactory, final IdStringInput idInput) {
+  public NewItemInput(final ItemFactory<I> itemFactory, final ItemNameInput itemNameInput) {
     this.itemFactory = itemFactory;
-    this.idInput = idInput;
+    this.itemNameInput = itemNameInput;
   }
 
   @Override
-  public I get() throws IOException {
-    return itemFactory.getItem(idInput.get());
+  public I get() {
+    return itemFactory.getItem(itemNameInput.get());
   }
 
   @Override
-  public int get(final List<I> buffer, final int maxCount) throws IOException {
-    for (int i = 0; i < maxCount; i++) {
-      buffer.add(itemFactory.getItem(idInput.get()));
+  public int get(final List<I> buffer, final int maxCount) {
+    for (var i = 0; i < maxCount; i++) {
+      buffer.add(itemFactory.getItem(itemNameInput.get()));
     }
     return maxCount;
   }
@@ -39,18 +39,18 @@ public class NewItemInput<I extends Item> implements Input<I> {
    * @throws IOException doesn't throw
    */
   @Override
-  public final long skip(final long itemsCount) throws IOException {
-    return idInput.skip(itemsCount);
+  public final long skip(final long itemsCount) {
+    return itemNameInput.skip(itemsCount);
   }
 
   @Override
-  public final void reset() throws IOException {
-    idInput.reset();
+  public final void reset() {
+    itemNameInput.reset();
   }
 
   @Override
-  public final void close() throws IOException {
-    idInput.close();
+  public final void close() throws Exception {
+    itemNameInput.close();
   }
 
   @Override

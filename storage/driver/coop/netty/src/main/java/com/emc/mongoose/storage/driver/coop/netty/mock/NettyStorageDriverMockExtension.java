@@ -14,22 +14,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class NettyStorageDriverMockExtension<
-	I extends Item, O extends Operation<I>, T extends NettyStorageDriverMock<I, O>
->
-extends ExtensionBase
-implements StorageDriverFactory<I, O, T> {
+public class NettyStorageDriverMockExtension<I extends Item, O extends Operation<I>, T extends NettyStorageDriverMock<I, O>>
+				extends ExtensionBase
+				implements StorageDriverFactory<I, O, T> {
 
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
-		Arrays.asList(
-		)
-	);
+					Arrays.asList());
 
 	@Override
 	public T create(
-		final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-		final int batchSize
-	) throws OmgShootMyFootException, InterruptedException {
+					final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+					final int batchSize) throws OmgShootMyFootException, InterruptedException {
 		return (T) new NettyStorageDriverMock<I, O>(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 	}
 

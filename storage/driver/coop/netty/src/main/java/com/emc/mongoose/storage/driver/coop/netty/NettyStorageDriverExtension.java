@@ -12,7 +12,7 @@ import java.util.List;
 import static com.emc.mongoose.base.Constants.APP_NAME;
 
 public final class NettyStorageDriverExtension
-extends ExtensionBase {
+				extends ExtensionBase {
 
 	private static final SchemaProvider SCHEMA_PROVIDER = new JsonSchemaProviderBase() {
 
@@ -30,10 +30,8 @@ extends ExtensionBase {
 	private static final String DEFAULTS_FILE_NAME = "defaults-storage-net.json";
 
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
-		Arrays.asList(
-			"config/" + DEFAULTS_FILE_NAME
-		)
-	);
+					Arrays.asList(
+									"config/" + DEFAULTS_FILE_NAME));
 
 	@Override
 	public final SchemaProvider schemaProvider() {

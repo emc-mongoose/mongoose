@@ -33,7 +33,6 @@ import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
 import io.prometheus.client.exporter.MetricsServlet;
 import java.io.IOException;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,7 +54,7 @@ public final class Main {
 
   public static void main(final String... args) {
 
-  	final var coreResources = new CoreResourcesToInstall();
+    final var coreResources = new CoreResourcesToInstall();
     final var appHomePath = coreResources.appHomePath();
     final var initialStepId = "none-" + LogUtil.getDateTimeStamp();
     LogUtil.init(appHomePath.toString(), initialStepId);
@@ -65,7 +64,8 @@ public final class Main {
       // load the defaults
       final var defaultConfig = loadDefaultConfig(appHomePath);
       // extensions
-      try (final var extClsLoader = Extension.extClassLoader(Paths.get(appHomePath.toString(), DIR_EXT).toFile())) {
+      try (final var extClsLoader =
+          Extension.extClassLoader(Paths.get(appHomePath.toString(), DIR_EXT).toFile())) {
         final var extensions = Extension.load(extClsLoader);
         // install the extensions
         installExtensions(extensions, appHomePath);

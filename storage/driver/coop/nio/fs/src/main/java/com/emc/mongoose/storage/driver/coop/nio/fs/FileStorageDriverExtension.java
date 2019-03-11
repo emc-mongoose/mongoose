@@ -14,28 +14,24 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class FileStorageDriverExtension<
-	I extends Item, O extends Operation<I>, T extends FileStorageDriver<I, O>
->
-extends ExtensionBase
-implements StorageDriverFactory<I, O, T> {
+public class FileStorageDriverExtension<I extends Item, O extends Operation<I>, T extends FileStorageDriver<I, O>>
+				extends ExtensionBase
+				implements StorageDriverFactory<I, O, T> {
 
 	private static final String NAME = "fs";
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
-		Arrays.asList(
-		)
-	);
+					Arrays.asList());
 
 	@Override
 	public String id() {
 		return NAME;
 	}
 
-	@Override @SuppressWarnings("unchecked")
+	@Override
+	@SuppressWarnings("unchecked")
 	public T create(
-		final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-		final int batchSize
-	) throws OmgShootMyFootException, InterruptedException {
+					final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
+					final int batchSize) throws OmgShootMyFootException, InterruptedException {
 		return (T) new FileStorageDriver<I, O>(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 	}
 

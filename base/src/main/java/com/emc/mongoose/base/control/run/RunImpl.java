@@ -35,9 +35,9 @@ public final class RunImpl implements Run {
   public final void run() {
     Loggers.SCENARIO.log(Level.INFO, scenario);
     try {
-		scriptEngine.eval(scenario);
-	} catch(final InterruptRunException e) {
-    	Loggers.MSG.info("Scenario run \"{}\" interrupted", timestamp);
+      scriptEngine.eval(scenario);
+    } catch (final InterruptRunException e) {
+      Loggers.MSG.info("Scenario run \"{}\" interrupted", timestamp);
     } catch (final ScriptException e) {
       LogUtil.trace(
           Loggers.ERR,

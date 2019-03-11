@@ -40,13 +40,13 @@ public abstract class InstallableJarResources implements Installable {
       int n;
 
       try (final var in = resourceStream(srcFilePath)) {
-      	if(in == null) {
-      		Loggers.ERR.warn("Resource file \"{}\" not found, skipping", srcFilePath);
-		} else {
-			while (-1 < (n = in.read(buff))) {
-			  checksumCalc.update(buff, 0, n);
-			}
-      	}
+        if (in == null) {
+          Loggers.ERR.warn("Resource file \"{}\" not found, skipping", srcFilePath);
+        } else {
+          while (-1 < (n = in.read(buff))) {
+            checksumCalc.update(buff, 0, n);
+          }
+        }
       } catch (final EOFException ok) {
       } catch (final IOException e) {
         LogUtil.exception(Level.WARN, e, "Failed to read the src file \"{}\"", srcFilePath);

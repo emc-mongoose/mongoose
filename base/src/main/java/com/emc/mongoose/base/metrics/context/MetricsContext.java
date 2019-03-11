@@ -6,75 +6,75 @@ import com.github.akurilov.commons.system.SizeInBytes;
 
 /** Created by andrey on 14.07.16. */
 public interface MetricsContext<S extends AllMetricsSnapshot>
-    extends AutoCloseable, Comparable<MetricsContext<S>> {
+				extends AutoCloseable, Comparable<MetricsContext<S>> {
 
-  int DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
-  int DEFAULT_RESERVOIR_SIZE = 1028;
+	int DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
+	int DEFAULT_RESERVOIR_SIZE = 1028;
 
-  // these are useful as labels/tags
-  String id();
+	// these are useful as labels/tags
+	String id();
 
-  OpType opType();
+	OpType opType();
 
-  int concurrencyLimit();
+	int concurrencyLimit();
 
-  SizeInBytes itemDataSize();
-  // metrics accounting methods
+	SizeInBytes itemDataSize();
+	// metrics accounting methods
 
-  void markSucc(final long bytes, final long duration, final long latency);
+	void markSucc(final long bytes, final long duration, final long latency);
 
-  void markPartSucc(final long bytes, final long duration, final long latency);
+	void markPartSucc(final long bytes, final long duration, final long latency);
 
-  void markSucc(
-      final long count, final long bytes, final long durationValues[], final long latencyValues[]);
+	void markSucc(
+					final long count, final long bytes, final long durationValues[], final long latencyValues[]);
 
-  void markPartSucc(final long bytes, final long durationValues[], final long latencyValues[]);
+	void markPartSucc(final long bytes, final long durationValues[], final long latencyValues[]);
 
-  void markFail();
+	void markFail();
 
-  void markFail(final long count);
+	void markFail(final long count);
 
-  void start();
+	void start();
 
-  boolean isStarted();
+	boolean isStarted();
 
-  long startTimeStamp();
+	long startTimeStamp();
 
-  void refreshLastSnapshot();
+	void refreshLastSnapshot();
 
-  S lastSnapshot();
+	S lastSnapshot();
 
-  // threshold-related accounting methods below
+	// threshold-related accounting methods below
 
-  int concurrencyThreshold();
+	int concurrencyThreshold();
 
-  boolean thresholdStateEntered();
+	boolean thresholdStateEntered();
 
-  void enterThresholdState() throws IllegalStateException;
+	void enterThresholdState() throws IllegalStateException;
 
-  boolean thresholdStateExited();
+	boolean thresholdStateExited();
 
-  MetricsContext thresholdMetrics();
+	MetricsContext thresholdMetrics();
 
-  void exitThresholdState() throws IllegalStateException;
-  // output configuration methods below
+	void exitThresholdState() throws IllegalStateException;
+	// output configuration methods below
 
-  boolean stdOutColorEnabled();
+	boolean stdOutColorEnabled();
 
-  boolean avgPersistEnabled();
+	boolean avgPersistEnabled();
 
-  boolean sumPersistEnabled();
+	boolean sumPersistEnabled();
 
-  long outputPeriodMillis();
+	long outputPeriodMillis();
 
-  long lastOutputTs();
+	long lastOutputTs();
 
-  void lastOutputTs(final long ts);
+	void lastOutputTs(final long ts);
 
-  long elapsedTimeMillis();
+	long elapsedTimeMillis();
 
-  String comment();
+	String comment();
 
-  @Override
-  void close();
+	@Override
+	void close();
 }

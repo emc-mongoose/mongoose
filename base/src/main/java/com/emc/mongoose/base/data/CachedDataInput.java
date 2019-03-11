@@ -18,6 +18,8 @@ import java.nio.MappedByteBuffer;
 public class CachedDataInput extends DataInputBase {
 
   private int layersCacheCountLimit;
+
+  @SuppressWarnings("ThreadLocalNotStaticFinal")
   private final ThreadLocal<Int2ObjectOpenHashMap<MappedByteBuffer>> thrLocLayersCache =
       new ThreadLocal<>();
 
@@ -48,19 +50,18 @@ public class CachedDataInput extends DataInputBase {
     if (layerIndex == 0) {
       return inputBuff;
     }
-
-    Int2ObjectOpenHashMap<MappedByteBuffer> layersCache = thrLocLayersCache.get();
+    var layersCache = thrLocLayersCache.get();
     if (layersCache == null) {
       layersCache = new Int2ObjectOpenHashMap<>(layersCacheCountLimit - 1);
       thrLocLayersCache.set(layersCache);
     }
 
     // check if layer exists
-    MappedByteBuffer layer = layersCache.get(layerIndex - 1);
+    var layer = layersCache.get(layerIndex - 1);
     if (layer == null) {
       // check if it's necessary to free the space first
-      int layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
-      final int layerSize = inputBuff.capacity();
+      var layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
+      final var layerSize = inputBuff.capacity();
       if (layersCountToFree > 0) {
         for (final int i : layersCache.keySet()) {
           layer = layersCache.remove(i);
@@ -75,7 +76,7 @@ public class CachedDataInput extends DataInputBase {
       }
       // generate the layer
       layer = (MappedByteBuffer) ByteBuffer.allocateDirect(layerSize);
-      final long layerSeed =
+      final var layerSeed =
           Long.reverseBytes((xorShift(getInitialSeed()) << layerIndex) ^ layerIndex);
       generateData(layer, layerSeed);
       layersCache.put(layerIndex - 1, layer);
@@ -85,7 +86,7 @@ public class CachedDataInput extends DataInputBase {
 
   public void close() throws IOException {
     super.close();
-    final Int2ObjectMap<MappedByteBuffer> layersCache = thrLocLayersCache.get();
+    final var layersCache = (Int2ObjectMap<MappedByteBuffer>) thrLocLayersCache.get();
     if (layersCache != null) {
       layersCache.clear();
       thrLocLayersCache.set(null);

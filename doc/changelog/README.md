@@ -1,7 +1,8 @@
 # Contents
 
 ## 2019
-* [4.2.0](#anchor-420) TBD
+* [5.0.0](#anchor-500) TBD
+* ~~4.1.2~~
 * [4.1.1](#anchor-411) 2019-01-16
 
 ## 2018
@@ -60,23 +61,31 @@
 * [0.1.4](#anchor-014) 09/17/14
 * [0.1.3](#anchor-013) 08/15/14
 
-# 4.2.0
+# 5.0.0
 
 ## New Features and Enhancements
 
 ### Functional
 
-1. TBD
+1. [Expression Language](../../base/src/main/java/com/emc/mongoose/config/el/README.md) is based on the JSR-341
+standard.
+2. Custom URI query for the HTTP requests.
+3. S3 V4 authentication.
+4. Swift V2 authentication support.
 
 ### Non-functional
 
-1. [Migration to Java 11](java11/).
+1. [Migration to Java 11](java11/) caused the significant performance improvement and allowed the developers to use the
+cutting edge language features.
+2. Use YAML instead of JSON in all configuration files. Issue [link](https://mongoose-issues.atlassian.net/browse/GOOSE-1327).
+3. Handle the unhappy cases more correctly. Issue [link](https://mongoose-issues.atlassian.net/browse/GOOSE-1319).
 
 ## Fixed Bugs
 
 | Id | Description |
 |----|-------------|
-| TBD | TBD |
+| [GOOSE-1279](https://mongoose-issues.atlassian.net/browse/GOOSE-1279) | Negative actual concurrency reporting |
+| [GOOSE-1319](https://mongoose-issues.atlassian.net/browse/GOOSE-1316) | Swift storage driver: handle multi byte ranges read responses correctly |
 
 # 4.1.1
 

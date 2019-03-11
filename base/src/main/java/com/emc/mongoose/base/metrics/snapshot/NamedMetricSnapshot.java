@@ -4,5 +4,5 @@ import java.io.Serializable;
 
 public interface NamedMetricSnapshot extends Serializable {
 
-  String name();
+	String name();
 }

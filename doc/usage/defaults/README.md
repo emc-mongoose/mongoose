@@ -2,7 +2,7 @@
 
 Mongoose uses the assumed defaults when run. It makes Mongoose quite simple to use, allowing *just to run* it:
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose
+java --jar mongoose-<VERSION>.jar
 ```
 
 ## 1. Input
@@ -28,7 +28,7 @@ Load.run();
 
 This behaviour may be overriden by supplying the custom scenario file name via CLI arguments:
 ```bash
-java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --run-scenario=custom_scenario_file.js
+java -jar mongoose-<VERSION>.jar --run-scenario=custom_scenario_file.js
 ```
 
 ## 2. Output
@@ -51,12 +51,12 @@ java --module-path mongoose-<VERSION>.jar --module com.emc.mongoose --run-scenar
 | Item size | 1MB
 | Item payload | Random bytes, defined by the default seed value
 | Item input | New items generator
-| Item naming | Random ids, no prefix, radix = 36, id length = 12
+| Item input names | Random ids, no prefix, radix = 36, name length = 12
 | Item output file | None, the items info will not be persisted by default
-| Item output storage path | Not specified, generate on the fly using a timestamp
+| Item output storage path | The value will be generate once on the fly using a timestamp
 | Load type | Create
 | Load step id | Not specified, generate on the fly using a timestamp
-| Load step limits | None, infinite (until an user interrupts)
+| Load step limits | None, infinite (until a user interrupts)
 | Load step type | *Linear*
 
 ## 4. Storage

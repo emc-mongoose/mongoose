@@ -1,10 +1,10 @@
 package com.emc.mongoose.storage.driver.coop.netty.http;
 
 /**
- Created by kurila on 11.11.16.
- */
+Created by kurila on 11.11.16.
+*/
 public interface EmcConstants {
-	
+
 	String PREFIX_KEY_X_EMC = "x-emc-";
 	String KEY_X_EMC_MULTIPART_COPY = PREFIX_KEY_X_EMC + "multipart-copy";
 	String KEY_X_EMC_DATE = PREFIX_KEY_X_EMC + "date";

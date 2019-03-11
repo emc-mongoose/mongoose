@@ -1,5 +1,7 @@
 package com.emc.mongoose.base.item.io;
 
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
+
 import com.emc.mongoose.base.env.FsUtil;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
@@ -22,16 +24,20 @@ public final class ItemInfoFileOutput<I extends Item, O extends Operation> imple
   }
 
   @Override
-  public final boolean put(final O ioResult) throws IOException {
+  public final boolean put(final O ioResult) {
     if (ioResult == null) { // poison
-      close();
+      try {
+        close();
+      } catch (final Exception e) {
+        throwUnchecked(e);
+      }
       return true;
     }
     return itemInfoOutput.put(ioResult.item().toString());
   }
 
   @Override
-  public final int put(final List<O> ioResults, final int from, final int to) throws IOException {
+  public final int put(final List<O> ioResults, final int from, final int to) {
     final int n = to - from;
     final List<String> itemsInfo = new ArrayList<>(n);
     O ioResult;
@@ -41,7 +47,11 @@ public final class ItemInfoFileOutput<I extends Item, O extends Operation> imple
         try {
           return itemInfoOutput.put(itemsInfo, 0, i);
         } finally {
-          close();
+          try {
+            close();
+          } catch (final Exception e) {
+            throwUnchecked(e);
+          }
         }
       }
       itemsInfo.add(ioResult.item().toString());
@@ -50,14 +60,18 @@ public final class ItemInfoFileOutput<I extends Item, O extends Operation> imple
   }
 
   @Override
-  public final int put(final List<O> ioResults) throws IOException {
+  public final int put(final List<O> ioResults) {
     final List<String> itemsInfo = new ArrayList<>(ioResults.size());
     for (final O nextIoResult : ioResults) {
       if (nextIoResult == null) { // poison
         try {
           return itemInfoOutput.put(itemsInfo);
         } finally {
-          close();
+          try {
+            close();
+          } catch (final Exception e) {
+            throwUnchecked(e);
+          }
         }
       }
       itemsInfo.add(nextIoResult.item().toString());
@@ -66,12 +80,12 @@ public final class ItemInfoFileOutput<I extends Item, O extends Operation> imple
   }
 
   @Override
-  public final Input<O> getInput() throws IOException {
+  public final Input<O> getInput() {
     throw new AssertionError();
   }
 
   @Override
-  public final void close() throws IOException {
+  public final void close() throws Exception {
     itemInfoOutput.close();
   }
 }

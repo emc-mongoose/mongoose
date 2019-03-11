@@ -12,7 +12,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
 import org.apache.commons.lang.StringUtils;
 
 public final class CoreResourcesToInstall extends InstallableJarResources {
@@ -95,10 +94,12 @@ public final class CoreResourcesToInstall extends InstallableJarResources {
   public CoreResourcesToInstall() {
     final Config bundledDefaults;
     try {
-      final var schema = SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
+      final var schema =
+          SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
       bundledDefaults = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
     } catch (final Exception e) {
-      throw new IllegalStateException("Failed to load the bundled default config from the resources", e);
+      throw new IllegalStateException(
+          "Failed to load the bundled default config from the resources", e);
     }
     final var appVersion = bundledDefaults.stringVal("run-version");
     final var msg = " " + APP_NAME + " v " + appVersion + " ";

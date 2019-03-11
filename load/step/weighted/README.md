@@ -41,7 +41,7 @@ weights sum.
 var weightedWriteConfig = {
     ...
     "load": {
-        "generator": {
+        "op": {
             "weight": 20
         }
     },
@@ -50,7 +50,7 @@ var weightedWriteConfig = {
 var weightedReadConfig = {
     ...
     "load": {
-        "generator": {
+        "op": {
             "weight": 80
         },
         "type": "read"

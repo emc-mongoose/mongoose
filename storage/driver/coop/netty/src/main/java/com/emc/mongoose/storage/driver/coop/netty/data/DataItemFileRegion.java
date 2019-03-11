@@ -9,15 +9,15 @@ import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
 
 public class DataItemFileRegion
-extends AbstractReferenceCounted
-implements FileRegion {
-	
+				extends AbstractReferenceCounted
+				implements FileRegion {
+
 	protected final DataItem dataItem;
 	protected final long baseItemSize;
 	protected long doneByteCount = 0;
 
 	public DataItemFileRegion(final DataItem dataItem)
-	throws IOException {
+					throws IOException {
 		this.dataItem = dataItem;
 		this.baseItemSize = dataItem.size();
 	}
@@ -45,7 +45,7 @@ implements FileRegion {
 
 	@Override
 	public long transferTo(final WritableByteChannel target, final long position)
-	throws IOException {
+					throws IOException {
 		dataItem.position(position);
 		doneByteCount += dataItem.writeToSocketChannel(target, baseItemSize - position);
 		return doneByteCount;
@@ -62,7 +62,7 @@ implements FileRegion {
 		super.retain(increment);
 		return this;
 	}
-	
+
 	@Override
 	public FileRegion touch() {
 		return touch(this);
@@ -74,6 +74,5 @@ implements FileRegion {
 	}
 
 	@Override
-	protected void deallocate() {
-	}
+	protected void deallocate() {}
 }

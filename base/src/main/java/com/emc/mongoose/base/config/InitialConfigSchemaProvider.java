@@ -20,6 +20,6 @@ public final class InitialConfigSchemaProvider extends JsonSchemaProviderBase {
   }
 
   public static SchemaProvider provider() {
-  	return new InitialConfigSchemaProvider();
+    return new InitialConfigSchemaProvider();
   }
 }

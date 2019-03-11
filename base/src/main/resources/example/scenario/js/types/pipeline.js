@@ -20,7 +20,7 @@ var sharedConfig = {
 var readConfig = {
 	"load": {
 		"op": {
-		  "type": "read"
+		"type": "read"
 		}
 	}
 };
@@ -34,7 +34,7 @@ var deleteConfig = {
 	},
 	"load": {
 		"op": {
-		  "type": "delete"
+		"type": "delete"
 		}
 	}
 };

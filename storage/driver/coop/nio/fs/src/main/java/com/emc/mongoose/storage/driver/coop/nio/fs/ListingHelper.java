@@ -18,7 +18,7 @@ public interface ListingHelper {
 	DirectoryStream.Filter<Path> ACCEPT_ALL_PATHS_FILTER = entry -> true;
 
 	final class PrefixDirectoryStreamFilter
-		implements DirectoryStream.Filter<Path> {
+					implements DirectoryStream.Filter<Path> {
 
 		private final PathMatcher pathPrefixMatcher;
 
@@ -28,23 +28,20 @@ public interface ListingHelper {
 
 		@Override
 		public final boolean accept(final Path entry)
-		throws IOException {
+						throws IOException {
 			return pathPrefixMatcher.matches(entry.getFileName());
 		}
 	}
 
 	static <I extends Item> List<I> list(
-		final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
-		final I lastPrevItem, final int count
-	) throws IOException {
+					final ItemFactory<I> itemFactory, final String path, final String prefix, final int idRadix,
+					final I lastPrevItem, final int count) throws IOException {
 
-		final DirectoryStream.Filter<Path> filter = (prefix == null || prefix.isEmpty()) ?
-			ACCEPT_ALL_PATHS_FILTER : new PrefixDirectoryStreamFilter(prefix);
+		final DirectoryStream.Filter<Path> filter = (prefix == null || prefix.isEmpty()) ? ACCEPT_ALL_PATHS_FILTER : new PrefixDirectoryStreamFilter(prefix);
 		final List<I> buff = new ArrayList<>(count);
 
-		try(
-			final DirectoryStream<Path> dirStream = FsConstants.FS_PROVIDER.newDirectoryStream(Paths.get(path), filter)
-		) {
+		try (
+						final DirectoryStream<Path> dirStream = FsConstants.FS_PROVIDER.newDirectoryStream(Paths.get(path), filter)) {
 			final int prefixLength = (prefix == null || prefix.isEmpty()) ? 0 : prefix.length();
 
 			File nextFile;
@@ -53,7 +50,7 @@ public interface ListingHelper {
 
 			final String lastPrevItemName;
 			boolean lastPrevItemNameFound;
-			if(lastPrevItem == null) {
+			if (lastPrevItem == null) {
 				lastPrevItemName = null;
 				lastPrevItemNameFound = true;
 			} else {
@@ -61,32 +58,32 @@ public interface ListingHelper {
 				lastPrevItemNameFound = false;
 			}
 
-			for(final Path nextPath : dirStream) {
+			for (final Path nextPath : dirStream) {
 				nextFile = new File(nextPath.toString());
 				nextFileName = nextFile.getAbsolutePath();
-				if(lastPrevItemNameFound) {
+				if (lastPrevItemNameFound) {
 					try {
 						final long offset;
-						if(prefixLength > 0) {
+						if (prefixLength > 0) {
 							// only items with the prefix are passed so it's safe
 							offset = Long.parseLong(nextFileName.substring(prefixLength), idRadix);
 						} else {
 							offset = Long.parseLong(nextFileName, idRadix);
 						}
 						nextItem = itemFactory.getItem(nextFile.getAbsolutePath(), offset, nextFile.length());
-					} catch(final NumberFormatException e) {
+					} catch (final NumberFormatException e) {
 						// try to not use the offset (read verification should be disabled)
 						nextItem = itemFactory.getItem(nextFile.getAbsolutePath(), 0, nextFile.length());
 					}
 					buff.add(nextItem);
-					if(count == buff.size()) {
+					if (count == buff.size()) {
 						break;
 					}
 				} else {
 					lastPrevItemNameFound = nextFileName.equals(lastPrevItemName);
 				}
 			}
-		} catch(final DirectoryIteratorException e) {
+		} catch (final DirectoryIteratorException e) {
 			throw e.getCause(); // according the JDK documentation
 		}
 

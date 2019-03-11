@@ -20,7 +20,7 @@ public class SingleItemInput<T extends Item> implements Input<T> {
 
   @Override
   public final int get(final List<T> buffer, final int limit) {
-    for (int i = 0; i < limit; i++) {
+    for (var i = 0; i < limit; i++) {
       buffer.add(item);
     }
     return limit;

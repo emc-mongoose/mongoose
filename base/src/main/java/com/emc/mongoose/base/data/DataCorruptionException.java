@@ -4,6 +4,7 @@ package com.emc.mongoose.base.data;
 public class DataCorruptionException extends DataVerificationException {
   //
   public final byte expected, actual;
+
   //
   public DataCorruptionException(final long relOffset, final byte expected, final byte actual) {
     super(relOffset);

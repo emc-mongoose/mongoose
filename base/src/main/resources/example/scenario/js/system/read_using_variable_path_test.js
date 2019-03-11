@@ -22,7 +22,7 @@ PreconditionLoad
 				},
 				"output": {
 					"file": ITEM_LIST_FILE,
-					"path": ITEM_OUTPUT_PATH + "/%p{16;2}"
+					"path": ITEM_OUTPUT_PATH + "${path:random(16, 2)"
 				}
 			},
 			"load": {

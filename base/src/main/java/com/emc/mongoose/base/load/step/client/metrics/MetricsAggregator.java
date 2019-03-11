@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface MetricsAggregator extends AsyncRunnable {
 
-  List<AllMetricsSnapshot> metricsSnapshotsByIndex(final int originIndex);
+	List<AllMetricsSnapshot> metricsSnapshotsByIndex(final int originIndex);
 }

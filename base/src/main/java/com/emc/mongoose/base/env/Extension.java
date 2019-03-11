@@ -15,10 +15,7 @@ import java.util.ServiceLoader;
 import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
-/**
- * Extension is an @see {@link Installable} with the configuration and the
- * configuration schema.
- */
+/** Extension is an @see {@link Installable} with the configuration and the configuration schema. */
 public interface Extension extends Installable {
 
   Logger LOG = Logger.getLogger(Extension.class.getSimpleName());
