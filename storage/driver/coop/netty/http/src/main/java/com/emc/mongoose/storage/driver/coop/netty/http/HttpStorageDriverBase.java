@@ -7,6 +7,7 @@ import static com.emc.mongoose.base.item.DataItem.rangeOffset;
 import static com.emc.mongoose.base.item.op.Operation.SLASH;
 import static com.emc.mongoose.base.supply.PatternDefinedSupplier.PATTERN_CHAR;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static java.lang.System.currentTimeMillis;
 
 import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.base.data.DataInput;
@@ -322,6 +323,7 @@ implements HttpStorageDriver<I, O> {
 	}
 
 	protected void applySharedHeaders(final HttpHeaders httpHeaders) {
+		httpHeaders.add("X-Timestamp", currentTimeMillis());
 		for(final Map.Entry<String, String> sharedHeader : sharedHeaders) {
 			httpHeaders.add(sharedHeader.getKey(), sharedHeader.getValue());
 		}
