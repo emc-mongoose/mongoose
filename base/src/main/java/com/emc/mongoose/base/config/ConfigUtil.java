@@ -44,7 +44,8 @@ public interface ConfigUtil {
 	}
 
 	static Map<String, Object> configTree(final Config config) {
-		final var configTree = config.mapVal(null);
+		final var configCopy = (Config) new BasicConfig(config);
+		final var configTree = configCopy.mapVal(null);
 		for(final var e: configTree.entrySet()) {
 			final var key = e.getKey();
 			final var val = e.getValue();
