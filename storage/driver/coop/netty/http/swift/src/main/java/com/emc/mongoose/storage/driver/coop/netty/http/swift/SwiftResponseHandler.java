@@ -110,8 +110,8 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
     }
     byte[] newBytesChunk = new byte[cutChunkSize + chunckSize];
     String s = new String(bytesChunk);
-    Pattern p = Pattern.compile(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker));
-    Matcher m = p.matcher(s);
+    final Pattern p = Pattern.compile(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker));
+    final Matcher m = p.matcher(s);
     final List<int[]> contentRangeIdxs = new ArrayList();
     if (m.find()) {
       int startIndex = 0;
@@ -128,6 +128,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
     // TODO: get sum of all ranges
     // TODO: create new bytesArray [sum of all ranges]
     // TODO: copy all ranges to new bytesArray
+
     for (final int[] range : contentRangeIdxs) {}
 
     s =
