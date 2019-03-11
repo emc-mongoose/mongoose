@@ -1,0 +1,4 @@
+---
+storage:
+  driver:
+    type: dummy-mock

@@ -1,6 +1,7 @@
 package com.emc.mongoose.base.config;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -42,9 +43,22 @@ public interface ConfigUtil {
 		return writerWithPrettyPrinter(mapper);
 	}
 
+	static Map<String, Object> configTree(final Config config) {
+		final var configTree = config.mapVal(null);
+		for(final var e: configTree.entrySet()) {
+			final var key = e.getKey();
+			final var val = e.getValue();
+			if(val instanceof Config) {
+				configTree.replace(key, configTree((Config) val));
+			}
+		}
+		return configTree;
+	}
+
 	static String toString(final Config config) {
 		try {
-			return configWriter().writeValueAsString(config);
+			final var configTree = configTree(config);
+			return configWriter().writeValueAsString(configTree);
 		} catch (final JsonProcessingException e) {
 			throw new RuntimeException(e);
 		}
@@ -52,12 +66,16 @@ public interface ConfigUtil {
 
 	static Config loadConfig(final File file, final Map<String, Object> schema)
 					throws NoSuchMethodException, IOException {
-		return readConfigMapper(schema).readValue(file, BasicConfig.class);
+		final Map<String, Object> configTree = readConfigMapper(schema)
+			.readValue(file, new TypeReference<Map<String, Object>>() {{}});
+		return new BasicConfig("-", schema, configTree);
 	}
 
 	static Config loadConfig(final String content, final Map<String, Object> schema)
 					throws NoSuchMethodException, IOException {
-		return readConfigMapper(schema).readValue(content, BasicConfig.class);
+		final Map<String, Object> configTree = readConfigMapper(schema)
+			.readValue(content, new TypeReference<Map<String, Object>>() {{}});
+		return new BasicConfig("-", schema, configTree);
 	}
 
 	static Config merge(final String pathSep, final List<Config> configs) {

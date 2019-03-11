@@ -18,7 +18,7 @@ public final class NettyStorageDriverExtension
 
 		@Override
 		protected final InputStream schemaInputStream() {
-			return getClass().getResourceAsStream("/config-schema-storage-net.json");
+			return getClass().getResourceAsStream("/config-schema-storage-net.yaml");
 		}
 
 		@Override
@@ -27,7 +27,7 @@ public final class NettyStorageDriverExtension
 		}
 	};
 
-	private static final String DEFAULTS_FILE_NAME = "defaults-storage-net.json";
+	private static final String DEFAULTS_FILE_NAME = "defaults-storage-net.yaml";
 
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
 					Arrays.asList(

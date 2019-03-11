@@ -26,7 +26,7 @@ public final class WeightedLoadStepExtension<T extends WeightedLoadStepLocal, U 
 
 		@Override
 		protected final InputStream schemaInputStream() {
-			return getClass().getResourceAsStream("/config-schema-load-generator-weight.json");
+			return getClass().getResourceAsStream("/config-schema-load-generator-weight.yaml");
 		}
 
 		@Override
@@ -35,7 +35,7 @@ public final class WeightedLoadStepExtension<T extends WeightedLoadStepLocal, U 
 		}
 	};
 
-	private static final String DEFAULTS_FILE_NAME = "defaults-load-generator-weight.json";
+	private static final String DEFAULTS_FILE_NAME = "defaults-load-generator-weight.yaml";
 
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
 					Arrays.asList("config/" + DEFAULTS_FILE_NAME));

@@ -1,4 +1,4 @@
-//import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.Yaml
 
 buildscript {
 	repositories {
@@ -6,6 +6,11 @@ buildscript {
 		maven {
 			url "https://plugins.gradle.org/m2/"
 		}
+	}
+	dependencies {
+		classpath(
+			"org.yaml:snakeyaml:1.24",
+		)
 	}
 }
 
@@ -253,13 +258,12 @@ allprojects {
 }
 
 String defineVersion() {
-//	def configFilePath = [ rootProject.rootDir, "base", "src", "main", "resources", "config", "defaults.yaml", ]
-//		.join(File.separator);
-//	def inputFile = new File(configFilePath)
-//	def parser = new Yaml()
-//	def y = parser.load(inputFile.text)
-//	y.run.version
-	return "5.0.0"
+	def configFilePath = [ rootProject.rootDir, "base", "src", "main", "resources", "config", "defaults.yaml", ]
+		.join(File.separator);
+	def inputFile = new File(configFilePath)
+	def parser = new Yaml()
+	def y = parser.load(inputFile.text)
+	y.run.version
 }
 
 task mongooseVersion {

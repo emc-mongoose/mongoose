@@ -22,7 +22,7 @@ public class SwiftStorageDriverExtension<I extends Item, O extends Operation<I>,
 				implements StorageDriverFactory<I, O, T> {
 
 	private static final String NAME = "swift";
-	private static final String DEFAULTS_FILE_NAME = "defaults-storage-swift.json";
+	private static final String DEFAULTS_FILE_NAME = "defaults-storage-swift.yaml";
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
 					Arrays.asList(
 									"config/" + DEFAULTS_FILE_NAME));
@@ -44,7 +44,7 @@ public class SwiftStorageDriverExtension<I extends Item, O extends Operation<I>,
 		return new YamlSchemaProviderBase() {
 			@Override
 			protected final InputStream schemaInputStream() {
-				return getClass().getResourceAsStream("/config-schema-storage-swift.json");
+				return getClass().getResourceAsStream("/config-schema-storage-swift.yaml");
 			}
 
 			@Override

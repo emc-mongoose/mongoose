@@ -19,7 +19,7 @@ public final class HttpStorageDriverExtension
 
 		@Override
 		protected final InputStream schemaInputStream() {
-			return getClass().getResourceAsStream("/config-schema-storage-net-http.json");
+			return getClass().getResourceAsStream("/config-schema-storage-net-http.yaml");
 		}
 
 		@Override
@@ -28,7 +28,7 @@ public final class HttpStorageDriverExtension
 		}
 	};
 
-	private static final String DEFAULTS_FILE_NAME = "defaults-storage-net-http.json";
+	private static final String DEFAULTS_FILE_NAME = "defaults-storage-net-http.yaml";
 
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
 					Arrays.asList(
