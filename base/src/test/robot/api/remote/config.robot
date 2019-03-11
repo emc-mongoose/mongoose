@@ -22,4 +22,4 @@ Should Return Text
     ${expected_text} =  Get File  ${expected_file_name}
     ${resp} =  Get Request  mongoose_node  ${uri_path}
     Should Be Equal As Strings  ${resp.status_code}  200
-    Should Be Equal  ${expected_data}  ${resp.text}
+    Should Be Equal  ${expected_text}  ${resp.text}
