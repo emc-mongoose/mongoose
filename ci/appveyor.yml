@@ -29,7 +29,7 @@ before_test:
   - cmd: mkdir %PATH_TO_TEST_LOGS%
 
 test_script:
-  - cmd: robot --outputdir %PATH_TO_TEST_LOGS% --suite api.storage --include "fs" src\test\robot
+  - cmd: robot --outputdir %PATH_TO_TEST_LOGS% --suite api.storage --include "fs win" src\test\robot
 
 on_failure:
   - cmd: appveyor PushArtifact %PATH_TO_TEST_LOGS%\log.html
