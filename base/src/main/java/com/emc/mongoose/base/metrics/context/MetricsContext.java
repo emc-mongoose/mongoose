@@ -8,7 +8,7 @@ import com.github.akurilov.commons.system.SizeInBytes;
 public interface MetricsContext<S extends AllMetricsSnapshot>
 				extends AutoCloseable, Comparable<MetricsContext<S>> {
 
-	int DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS = 10;
+	int DEFAULT_SNAPSHOT_UPDATE_PERIOD_MILLIS = 100;
 	int DEFAULT_RESERVOIR_SIZE = 1028;
 
 	// these are useful as labels/tags

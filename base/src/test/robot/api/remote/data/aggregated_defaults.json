@@ -126,7 +126,7 @@
   },
   "load" : {
     "batch" : {
-      "size" : 4096
+      "size" : 32768
     },
     "op" : {
       "limit" : {
