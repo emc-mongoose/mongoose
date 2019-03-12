@@ -433,12 +433,14 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		final var offset = namingConfig.longVal("offset");
 		final var prefix = namingConfig.stringVal("prefix");
 		final var radix = namingConfig.intVal("radix");
+		final var step = namingConfig.intVal("step");
 		final var type = ItemNamingType.valueOf(namingConfig.stringVal("type").toUpperCase());
 		final var itemNameInput = ItemNameInput.Builder.newInstance()
 						.length(length)
 						.offset(offset)
 						.prefix(prefix)
 						.radix(radix)
+						.step(step)
 						.type(type)
 						.build();
 		if (itemFactory == null) {
