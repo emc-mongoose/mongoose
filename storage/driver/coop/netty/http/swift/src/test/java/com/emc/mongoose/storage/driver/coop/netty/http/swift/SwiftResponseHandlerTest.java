@@ -21,7 +21,7 @@ public class SwiftResponseHandlerTest {
           + "\r\nContent-Type: application/octet-stream"
           + "\r\nContent-Range: bytes 5-9/10\n\r\n\r"
           + "aaaaa"
-          + "\r\n--3d07fbbddf4041880c931c29e43cb6c4--";
+          + "\r\n--3d07fbbddf4041880c931c29e43cb6c4--\r\n";
 
   private static final String PART_1_HTTP_RESPONSE =
       ""
@@ -37,7 +37,7 @@ public class SwiftResponseHandlerTest {
           + "cation/octet-stream"
           + "\r\nContent-Range: bytes 5-9/10\n\r\n\r"
           + "aaaaa"
-          + "\r\n--3d07fbbddf4041880c931c29e43cb6c4--";
+          + "\r\n--3d07fbbddf4041880c931c29e43cb6c4--\r\n";
 
   private static final String EXPECTED_CONTENT = "\naaa\naaaaaaa";
   private static final String BOUNDARY = "--3d07fbbddf4041880c931c29e43cb6c4";

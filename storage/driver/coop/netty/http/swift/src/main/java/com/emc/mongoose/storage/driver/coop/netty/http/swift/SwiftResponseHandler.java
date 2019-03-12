@@ -23,6 +23,7 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Created by andrey on 26.11.16.
@@ -36,7 +37,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	private static final String HEADER_PATTERN = "(Content-Type:).*[\\s]*(Content-Range:).*";
 
 	private static final String HEADER_WITH_BOUNDARY_PATTERN =
-		"[\\s]{2}((%1$s)[\\s]*(" + HEADER_PATTERN + ")|(%1$s--))[\\s]{4}";
+		"[\\s]{2}((%1$s)[\\s]*(" + HEADER_PATTERN + ")|(%1$s--))[\\s]{2,4}";
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER =
 		AttributeKey.valueOf("boundary_marker");
 
@@ -110,22 +111,23 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		final byte[] rawBytesChunk = new byte[cutChunkSize + rawSize];
 		System.arraycopy(cutChunck, 0, rawBytesChunk, 0, cutChunkSize);
 		while (contentChunk.readerIndex() < rawSize) {
-			rawBytesChunk[cutChunkSize - 1 + contentChunk.readerIndex()] = contentChunk.readByte();
+			rawBytesChunk[cutChunkSize + contentChunk.readerIndex()] = contentChunk.readByte();
 		}
 		String s = new String(rawBytesChunk);
 		final Pattern p = Pattern
 			.compile(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker));
-		final Matcher m = p.matcher(s);
+		final Matcher matcher = p.matcher(s);
 		final List<int[]> contentRangeIdxs = new ArrayList();
-		if (m.find()) {
+		final List results = matcher.results().collect(Collectors.toList());
+		if (matcher.find()) {
 			int startIndex = 0;
 			int endIndex;
-			final int count = m.groupCount();
+			final int count = matcher.groupCount();
 			for (int i = 0; i < count; ++i) {
-				endIndex = m.start(i);
+				endIndex = matcher.start(i);
 				contentRangeIdxs
 					.add(new int[]{startIndex, endIndex}); //TODO replace on {start,size}
-				startIndex = m.end(i);
+				startIndex = matcher.end(i);
 			}
 			endIndex = rawBytesChunk.length - 1;
 			contentRangeIdxs.add(new int[]{startIndex, endIndex});
