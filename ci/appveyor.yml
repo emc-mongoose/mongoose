@@ -12,6 +12,7 @@ build_script:
   - cmd: gradlew.bat clean dist
 
 before_test:
+  - ps: python -m pip install --upgrade pip
   - ps: pip install -U virtualenv
   - ps: pip install -U requests
   - ps: pip install -U robotframework
