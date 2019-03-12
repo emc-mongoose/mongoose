@@ -1,6 +1,7 @@
 package com.emc.mongoose.base.load.generator;
 
 import static com.emc.mongoose.base.Constants.M;
+import static com.emc.mongoose.base.config.el.Language.withLanguage;
 import static com.emc.mongoose.base.item.DataItem.rangeCount;
 import static com.emc.mongoose.base.storage.driver.StorageDriver.BUFF_SIZE_MIN;
 import static com.github.akurilov.commons.io.el.ExpressionInput.ASYNC_MARKER;
@@ -435,10 +436,10 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		long seed = 0;
 		try {
 			seed = TypeUtil.typeConvert(seedRaw, long.class);
-		} catch(final ClassCastException e) {
+		} catch(final ClassCastException | NumberFormatException e) {
 			if(seedRaw instanceof String) {
 				try(
-					final var in = ExpressionInput.builder()
+					final var in = withLanguage(ExpressionInput.builder())
 						.expression((String) seedRaw)
 						.<ExpressionInput<Long>>build()
 				) {

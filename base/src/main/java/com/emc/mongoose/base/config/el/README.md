@@ -70,7 +70,7 @@ EXPR_BODY_WITH_BOUNDARIES = "{" EXPR_BODY "}"
 | Token          | Description |
 |----------------|-------------|
 | `CONST_STRING` | Any sequence of any symbols except `#{`/`${`/`%{` |
-| `EXPR_BODY`    | The expression body which shouldn't contain `}` symbols or any nested expressions |
+| `EXPR_BODY`    | The expression body which shouldn't contain `}` symbols neither any nested expressions |
 
 For example the input string:
 `prefix%{42}${this.last() + 1}%{pi * e}_#{date:formatNowIso8601}suffix`
@@ -232,12 +232,22 @@ supplies the new 64-bit random integer on each evaluation.
 
 # 5. Configuration
 
-## 5.1. Variable Items Output Path
+## 5.1. Item Naming
+
+There are two options responsible for the new items naming which support the expression values:
+
+* `item-naming-prefix`
+* `item-naming-seed`
+
+*Note*:
+> The `item-naming-seed` value may be an integer either a *non-composite* expression evaluating an integer value.
+
+## 5.2. Variable Items Output Path
 
 The `item-output-path` configuration option value may be an expression to generate the new path value for each new item
 operation.
 
-## 5.2. HTTP Request Headers And Queries
+## 5.4. HTTP Request Headers And Queries
 
 See the specific [HTTP storage driver documentation](storage/driver/coop/netty/http/README.md) for the details.
 

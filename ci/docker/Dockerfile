@@ -36,7 +36,7 @@ RUN apk --update add --no-cache ca-certificates curl openssl binutils xz \
     && apk del binutils \
     && rm -rf /tmp/${GLIBC_VER}.apk /tmp/gcc /tmp/gcc-libs.tar.xz /tmp/libz /tmp/libz.tar.xz /var/cache/apk/*
 
-COPY --from=build build/jre /opt/mongoose
+COPY --from=build /build/jre /opt/mongoose
 
 ADD build/libs/mongoose-*.jar /opt/mongoose/
 ADD ci/docker/entrypoint.sh /opt/mongoose/entrypoint.sh

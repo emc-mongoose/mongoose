@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static com.emc.mongoose.base.config.el.Language.withLanguage;
 import static com.emc.mongoose.base.item.naming.ItemNameInput.ItemNamingType.SERIAL;
 
 public interface ConfigSliceUtil {
@@ -95,10 +96,10 @@ public interface ConfigSliceUtil {
 				long srcNamingSeed;
 				try {
 					srcNamingSeed = TypeUtil.typeConvert(srcNamingSeedRaw, long.class);
-				} catch(final ClassCastException e) {
+				} catch(final ClassCastException | NumberFormatException e) {
 					if(srcNamingSeedRaw instanceof String) {
 						try(
-							final var in = ExpressionInput.builder()
+							final var in = withLanguage(ExpressionInput.builder())
 								.expression((String) srcNamingSeedRaw)
 								.<ExpressionInput<Long>>build()
 						) {
@@ -117,7 +118,7 @@ public interface ConfigSliceUtil {
 						"Item naming slicing: slice #{}, offset: {}, step: {}", i, srcNamingSeed + i,
 						srcNamingStep * sliceCount
 					);
-					configSlice.val("item-naming-seed", srcNamingSeed + i);
+					configSlice.val("item-naming-seed", srcNamingSeed + i * srcNamingStep);
 					configSlice.val("item-naming-step", srcNamingStep * sliceCount);
 				}
 			}

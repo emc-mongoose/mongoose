@@ -1,5 +1,10 @@
 package com.emc.mongoose.base.item.naming;
 
+import com.emc.mongoose.base.config.ConstantValueInputImpl;
+import com.emc.mongoose.base.config.el.CompositeExpressionInputBuilder;
+import com.github.akurilov.commons.io.Input;
+import com.github.akurilov.commons.io.el.ExpressionInput;
+
 import static com.emc.mongoose.base.item.naming.ItemNameInput.ItemNamingType;
 import static com.emc.mongoose.base.item.naming.ItemNameInput.ItemNamingType.RANDOM;
 import static com.github.akurilov.commons.math.MathUtil.xorShift;
@@ -57,11 +62,19 @@ public final class ItemNameInputBuilder
 	@Override
 	public <T extends ItemNameInput> T build() {
 		final var maxId = (long) pow(radix, length);
+		Input<String> prefixInput;
+		if(prefix == null) {
+			prefixInput = new ConstantValueInputImpl<>("");
+		} else {
+			prefixInput = CompositeExpressionInputBuilder.newInstance()
+				.expression(prefix)
+				.build();
+		}
 		switch (type) {
 		case RANDOM:
-			return (T) new ItemNameInputImpl((x) -> xorShift(x) % maxId, seed, prefix, radix);
+			return (T) new ItemNameInputImpl((x) -> xorShift(x) % maxId, seed, prefixInput, radix);
 		case SERIAL:
-			return (T) new ItemNameInputImpl((x) -> (x + step) % maxId, seed, prefix, radix);
+			return (T) new ItemNameInputImpl((x) -> (x + step) % maxId, seed, prefixInput, radix);
 		}
 		return null;
 	}

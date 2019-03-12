@@ -34,7 +34,7 @@ reference.
 | item-input-path                                | String | null | The source path which may be used as items input if not "item-input-file" is specified. Also used for the copy mode as the path containing the items to be copied into the output path. |
 | item-naming-length                             | Integer > 0 | 12 | The name length for the new items. Has effect only in the case of create (if not partial) load
 | item-naming-seed                               | Integer or Expression | %{math:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos()))} | The initial id for the new item ids
-| item-naming-prefix                             | String | null | The name prefix for the processed items. A correct value is neccessary to pass the content verification in the case of read load.
+| item-naming-prefix                             | String or Expression | null | The name prefix for the processed items. A correct value is neccessary to pass the content verification in the case of read load.
 | item-naming-radix                              | Integer >= 2 | 36 | The radix for the item ids. May be in the range of 2..36. A correct value is neccessary to pass the content verification in the case of read load.
 | item-naming-step                               | Integer | 1 | The item naming step. Makes sense in case of "serial" naming type. Negative values cause descending order.
 | item-naming-type                               | Enum | random | Specifies the new items naming order. Has effect only in the case of create load. "serial": the new items are named in a sequential order, "random": the new items are named randomly |

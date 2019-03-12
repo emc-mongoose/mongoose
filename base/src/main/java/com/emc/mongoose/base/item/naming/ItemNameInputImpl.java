@@ -1,5 +1,6 @@
 package com.emc.mongoose.base.item.naming;
 
+import com.github.akurilov.commons.io.Input;
 import it.unimi.dsi.fastutil.longs.Long2LongFunction;
 
 import java.util.List;
@@ -10,15 +11,16 @@ public final class ItemNameInputImpl
 	private final long initialId;
 	private final Long2LongFunction idFunction;
 	private volatile long lastId;
-	private final String prefix;
+	private final Input<String> prefixInput;
 	private final int radix;
 
 	public ItemNameInputImpl(
-					final Long2LongFunction idFunction, final long offset, final String prefix, final int radix) {
+		final Long2LongFunction idFunction, final long offset, final Input<String> prefixInput, final int radix
+	) {
 		this.initialId = offset;
 		this.lastId = initialId;
 		this.idFunction = idFunction;
-		this.prefix = prefix;
+		this.prefixInput = prefixInput;
 		this.radix = radix;
 	}
 
@@ -32,11 +34,7 @@ public final class ItemNameInputImpl
 	}
 
 	private String convert() {
-		if (prefix == null) {
-			return Long.toString(lastId, radix);
-		} else {
-			return prefix + Long.toString(lastId, radix);
-		}
+		return prefixInput.get() + Long.toString(lastId, radix);
 	}
 
 	@Override
@@ -68,5 +66,8 @@ public final class ItemNameInputImpl
 	}
 
 	@Override
-	public final void close() {}
+	public final void close()
+	throws Exception {
+		prefixInput.close();
+	}
 }
