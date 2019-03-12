@@ -1,7 +1,10 @@
 # Contents
 
-## 2018
+## 2019
+* [4.1.4](#anchor-414) 2019-03-12
 * [4.1.1](#anchor-411) 2019-01-16
+
+## 2018
 * [4.1.0](#anchor-410) 2018-12-12
 * [4.0.3](#anchor-403) 2018-11-28
 * [4.0.2](#anchor-402) 2018-11-13
@@ -56,6 +59,14 @@
 * [0.1.5](#anchor-015) 09/22/14
 * [0.1.4](#anchor-014) 09/17/14
 * [0.1.3](#anchor-013) 08/15/14
+
+# 4.1.4
+
+## Fixed Bugs
+
+| Id | Description |
+|----|-------------|
+| [GOOSE-1335](https://mongoose-issues.atlassian.net/browse/GOOSE-1335) | Prometheus parsing error on Mongoose metrics |
 
 # 4.1.1
 
