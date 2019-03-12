@@ -189,7 +189,7 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 	}
 
 	private void initAndStartMetricsAggregator() {
-		try (final Instance logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+		try (final var logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 			metricsAggregator = new MetricsAggregatorImpl(id(), stepSlices);
 			metricsAggregator.start();
 		} catch (final Exception e) {
