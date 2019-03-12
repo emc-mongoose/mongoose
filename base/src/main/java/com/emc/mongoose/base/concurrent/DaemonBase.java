@@ -33,8 +33,8 @@ public abstract class DaemonBase extends AsyncRunnableBase implements Daemon {
 	public static void closeAll() throws InterruptRunException {
 		InterruptRunException ex = null;
 		synchronized (REGISTRY) {
-			for (final WeakReference<Daemon> daemonRef : REGISTRY) {
-				final Daemon daemon = daemonRef.get();
+			for (final var daemonRef : REGISTRY) {
+				final var daemon = daemonRef.get();
 				try {
 					if (daemon != null && !daemon.isClosed()) {
 						daemon.close();
