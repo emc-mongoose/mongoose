@@ -85,8 +85,8 @@ public class MetricsManagerImpl extends ExclusiveFiberBase implements MetricsMan
 						final long lastOutputTs = metricsCtx.lastOutputTs();
 						final long nextOutputTs = System.currentTimeMillis();
 						if (outputPeriodMillis > 0 && nextOutputTs - lastOutputTs >= outputPeriodMillis) {
-							selectedMetrics.add(metricsCtx);
 							metricsCtx.lastOutputTs(nextOutputTs);
+							selectedMetrics.add(metricsCtx);
 							if (metricsCtx.avgPersistEnabled()) {
 								Loggers.METRICS_FILE.info(
 												new MetricsCsvLogMessage(
