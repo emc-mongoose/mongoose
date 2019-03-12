@@ -55,7 +55,7 @@ load:
       time: 0
     node:
       addrs: []
-      port: 9020
+      port: 1099
 
 output:
   color: true
