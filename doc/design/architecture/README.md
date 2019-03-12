@@ -127,7 +127,7 @@ pools for these types of tasks.
 ## 3.1. Service Tasks
 
 Each Mongoose process shares the global service tasks executor (FibersExecutor instance). By default the count of
-the service tasks executor's threads is equal to the count of the available CPU cores. An user may set the different
+the service tasks executor's threads is equal to the count of the available CPU cores. A user may set the different
 count of these threads using the configuration option load-service-threads.
 
 ## 3.2. Load Operations

@@ -51,7 +51,7 @@ using the particular scenario language method.
 
 ## 2. DSL
 
-Generally, to define a scenario an user should:
+Generally, to define a scenario a user should:
 1. Define at least one load step in the script
 2. Invoke the defined steps using method ```run``` either ```start```
 
@@ -345,7 +345,7 @@ the language.
 
 Javascript is the default scripting language which should be used for
 the custom user scenarios. Other scripting languages are not supported.
-An user may use deprecated JSON scenarios either JSR-223 compliant
+n user may use deprecated JSON scenarios either JSR-223 compliant
 scripting language at his/her own risk.
 
 #### 3.1.1. External Command

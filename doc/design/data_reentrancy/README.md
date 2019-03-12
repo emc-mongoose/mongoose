@@ -125,7 +125,7 @@ The new approach addresses the following issues:
 
 2. The configured ranges count is ***N*** and ranges count to update per request is ***n***.
 
-   An user is able to control "average updates density" which may be calculated as:
+   A user is able to control "average updates density" which may be calculated as:
 
    ![](http://latex.codecogs.com/png.latex?%5Cdpi%7B100%7D%20%5Clarge%20%5Crho%20%3D%20%5Cfrac%7Bn%7D%7BN%7D)
 

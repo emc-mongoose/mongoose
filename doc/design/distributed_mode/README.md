@@ -60,7 +60,7 @@ node.
 
 | # | Description
 |---|------------
-| 1 | An user is able to specify the ***additional nodes***. The total count of the nodes involved in a run will be the count of the additional nodes specified **plus 1**. This is due to the local entry node is involved in the test executin also.
+| 1 | A user is able to specify the ***additional nodes***. The total count of the nodes involved in a run will be the count of the additional nodes specified **plus 1**. This is due to the local entry node is involved in the test executin also.
 
 ## Detailed
 
@@ -87,25 +87,42 @@ the remote side. Then these files are used as items input files by the remote si
 
 #### Item Naming Scheme
 
-New configuration parameter `item-naming-step` is required to support a load step slicing in case of a non-random item
+Mongoose generates new items with the reproducible names. The new item names sequence is defined by the `item-naming-*`
+set of configuration options. In the distributed mode this will cause the item names collision (each node will generate
+the same sequence of the new item names). The approach to avoid the collision depends on the particular item naming 
+scheme.
+
+##### Random
+
+The seed/step value is not being sliced in the distributed mode in case of `random` item naming scheme. A user should
+take care about the seed value: it should be different on each node. The good practice is to use some entropy, like
+timestamp in nanoseconds.
+
+##### Serial
+
+The configuration parameter `item-naming-step` is required to support a load step slicing in case of a `serial` item
 naming scheme. The default `item-naming-step` parameter value is 1. In the distributed mode the value is equal to the
-count of the slave nodes involved in the test.
+count of the additional nodes involved in the test.
 
 Example:
 
 * item-naming-length: 2
 * item-naming-offset: 0
 * item-naming-radix: 10
+* item-naming-step: 1
 * item-naming-type: serial
 * load-op-limit-count: 18
 * load-step-node-addrs: A,B,C
 
-| Node    | Offset | Resulting Item Names |
+The total count of the nodes becomes 4, and the `item-naming-step` parameter value for each particular node is 
+multiplied by this factor (becomes 4 also).  
+
+| Node    | Seed   | Resulting Item Names |
 |---------|--------|----------------------|
-| <LOCAL> | 0      | 01, 05, 09, 13, 17   |
-| A       | 1      | 02, 06, 10, 14, 18   |
-| B       | 2      | 03, 07, 11, 15       |
-| C       | 3      | 04, 08, 12, 16       |
+| <LOCAL> | 0      | 1, 5, 9, 13, 17   |
+| A       | 1      | 2, 6, 10, 14, 18   |
+| B       | 2      | 3, 7, 11, 15       |
+| C       | 3      | 4, 8, 12, 16       |
 
 ### Configuration
 
