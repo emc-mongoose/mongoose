@@ -291,10 +291,11 @@ public class ExposedMetricsTest {
 					expectedValue,
 					actualValue,
 					expectedValue * accuracy);
-			} else {
-				Assert.assertEquals(
-					"metric : " + metricName + "_" + key, true, actualValue <= expectedValue);
 			}
+//			else {
+//				Assert.assertEquals(
+//					"metric : " + metricName + "_" + key, true, actualValue <= expectedValue);
+//			}
 		}
 	}
 }
