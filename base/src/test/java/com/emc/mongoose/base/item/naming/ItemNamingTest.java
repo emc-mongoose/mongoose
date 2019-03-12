@@ -24,14 +24,14 @@ public class ItemNamingTest {
 		) {
 			assertEquals("l84y9", in.get());
 			assertEquals("b4nnpm0nlt", in.get());
-			assertEquals("-1xxfsxb3qow5p", in.get());
-			assertEquals("13f6twqbo4jl", in.get());
-			assertEquals("2z93lwtnxz", in.get());
-			assertEquals("3bsivtfoeemd", in.get());
-			assertEquals("16moga32zmljt", in.get());
-			assertEquals("2gp4nnrp44c", in.get());
-			assertEquals("-itlu64hnudd0", in.get());
-			assertEquals("fbvm63fl258s", in.get());
+			assertEquals("1xxfsxb3qow5p", in.get());
+			assertEquals("13f6twrd4lr3", in.get());
+			assertEquals("j6b66dggi1", in.get());
+			assertEquals("3ilqcpam2j6w", in.get());
+			assertEquals("16mm0z6qsh3s8", in.get());
+			assertEquals("28w3hpfrwuz", in.get());
+			assertEquals("1e7tjj0vhz3rp", in.get());
+			assertEquals("7j7u4icn21am", in.get());
 		}
 	}
 
@@ -64,23 +64,23 @@ public class ItemNamingTest {
 	throws Exception {
 		try(
 			final var in = ItemNameInput.Builder.newInstance()
-				.prefix("prefix")
+				.prefix("prefix-")
 				.radix(10)
-				.seed(1)
+				.seed(10)
 				.step(-2)
 				.type(ItemNameInput.ItemNamingType.SERIAL)
 				.build()
 		) {
-			assertEquals("prefix-1", in.get());
-			assertEquals("prefix-3", in.get());
-			assertEquals("prefix-5", in.get());
-			assertEquals("prefix-7", in.get());
-			assertEquals("prefix-9", in.get());
-			assertEquals("prefix-11", in.get());
-			assertEquals("prefix-13", in.get());
-			assertEquals("prefix-15", in.get());
-			assertEquals("prefix-17", in.get());
-			assertEquals("prefix-19", in.get());
+			assertEquals("prefix-8", in.get());
+			assertEquals("prefix-6", in.get());
+			assertEquals("prefix-4", in.get());
+			assertEquals("prefix-2", in.get());
+			assertEquals("prefix-0", in.get());
+			assertEquals("prefix-2", in.get());
+			assertEquals("prefix-0", in.get());
+			assertEquals("prefix-2", in.get());
+			assertEquals("prefix-0", in.get());
+			assertEquals("prefix-2", in.get());
 		}
 	}
 

@@ -72,9 +72,9 @@ public final class ItemNameInputBuilder
 		}
 		switch (type) {
 		case RANDOM:
-			return (T) new ItemNameInputImpl((x) -> xorShift(x) % maxId, seed, prefixInput, radix);
+			return (T) new ItemNameInputImpl((x) -> abs(xorShift(x) % maxId), seed, prefixInput, radix);
 		case SERIAL:
-			return (T) new ItemNameInputImpl((x) -> (x + step) % maxId, seed, prefixInput, radix);
+			return (T) new ItemNameInputImpl((x) -> abs((x + step) % maxId), seed, prefixInput, radix);
 		}
 		return null;
 	}

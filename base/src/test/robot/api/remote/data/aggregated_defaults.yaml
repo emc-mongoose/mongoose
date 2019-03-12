@@ -44,7 +44,7 @@ item:
     radix: 36
     length: 12
     step: 1
-    seed: "%{math:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos()))}"
+    seed: "%{int64:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos()))}"
     type: "random"
     prefix: null
 run:
