@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,7 @@ public class ExposedMetricsTest {
 	private static final String CONTEXT = "/metrics";
 	private static final int ITERATION_COUNT = 10;
 	private static final Double TIMING_ACCURACY = 0.0001;
-	private static final Double RATE_ACCURACY = 0.2;
+	private static final double ELAPSED_TIME_ACCURACY = 0.1;
 	private static final int MARK_DUR = 1_100_000; // dur must be more than lat (dur > lat)
 	private static final int MARK_LAT = 1_000_000;
 	private static final String[] CONCURRENCY_METRICS = {"mean", "last"};
@@ -61,7 +62,7 @@ public class ExposedMetricsTest {
 	private static final String[] OPS_METRICS = {"count", "rate_mean", "rate_last"};
 	private static final String[] BYTES_METRICS = {"count", "rate_mean", "rate_last"};
 	private static final Double[] QUANTILE_VALUES = {0.25, 0.5, 0.75};
-	private static final List<String> nodeList = Arrays.asList("127.0.0.1:1099");
+	private static final List<String> nodeList = Collections.singletonList("127.0.0.1:1099");
 	private final String STEP_ID = ExposedMetricsTest.class.getSimpleName();
 	private final OpType OP_TYPE = OpType.CREATE;
 	private final IntSupplier nodeCountSupplier = () -> 1;
@@ -84,38 +85,36 @@ public class ExposedMetricsTest {
 		context.addServlet(new ServletHolder(new MetricsServlet()), CONTEXT);
 		server.start();
 		//
-		metricsContext =
-			MetricsContextImpl.builder()
-				.id(STEP_ID)
-				.opType(OP_TYPE)
-				.actualConcurrencyGauge(() -> 1)
-				.concurrencyLimit(CONCURRENCY_LIMIT)
-				.concurrencyThreshold(CONCURRENCY_THRESHOLD)
-				.itemDataSize(ITEM_DATA_SIZE)
-				.outputPeriodSec(UPDATE_INTERVAL_SEC)
-				.stdOutColorFlag(true)
-				.comment("")
-				.build();
-		snapshotsSupplier = () -> Arrays.asList(metricsContext.lastSnapshot());
+		metricsContext = MetricsContextImpl.builder()
+			.id(STEP_ID)
+			.opType(OP_TYPE)
+			.actualConcurrencyGauge(() -> 1)
+			.concurrencyLimit(CONCURRENCY_LIMIT)
+			.concurrencyThreshold(CONCURRENCY_THRESHOLD)
+			.itemDataSize(ITEM_DATA_SIZE)
+			.outputPeriodSec(UPDATE_INTERVAL_SEC)
+			.stdOutColorFlag(true)
+			.comment("")
+			.build();
+		snapshotsSupplier = () -> Collections.singletonList(metricsContext.lastSnapshot());
 		metricsContext.start();
 		//
-		distributedMetricsContext =
-			DistributedMetricsContextImpl.builder()
-				.id(STEP_ID)
-				.opType(OP_TYPE)
-				.nodeCountSupplier(nodeCountSupplier)
-				.concurrencyLimit(CONCURRENCY_LIMIT)
-				.concurrencyThreshold(CONCURRENCY_THRESHOLD)
-				.itemDataSize(ITEM_DATA_SIZE)
-				.outputPeriodSec(UPDATE_INTERVAL_SEC)
-				.stdOutColorFlag(true)
-				.avgPersistFlag(true)
-				.sumPersistFlag(true)
-				.snapshotsSupplier(snapshotsSupplier)
-				.quantileValues(Arrays.asList(QUANTILE_VALUES))
-				.nodeAddrs(nodeList)
-				.comment("")
-				.build();
+		distributedMetricsContext = DistributedMetricsContextImpl.builder()
+			.id(STEP_ID)
+			.opType(OP_TYPE)
+			.nodeCountSupplier(nodeCountSupplier)
+			.concurrencyLimit(CONCURRENCY_LIMIT)
+			.concurrencyThreshold(CONCURRENCY_THRESHOLD)
+			.itemDataSize(ITEM_DATA_SIZE)
+			.outputPeriodSec(UPDATE_INTERVAL_SEC)
+			.stdOutColorFlag(true)
+			.avgPersistFlag(true)
+			.sumPersistFlag(true)
+			.snapshotsSupplier(snapshotsSupplier)
+			.quantileValues(Arrays.asList(QUANTILE_VALUES))
+			.nodeAddrs(nodeList)
+			.comment("")
+			.build();
 		distributedMetricsContext.start();
 	}
 
@@ -134,10 +133,10 @@ public class ExposedMetricsTest {
 		//
 		testHelpLine(result);
 		//
-		final Map tmp = new HashMap();
+		final Map expected = new HashMap();
 		final long elapsedTimeMillis = TimeUnit.MICROSECONDS.toSeconds(MARK_DUR * ITERATION_COUNT);
-		tmp.put("value", (double) elapsedTimeMillis);
-		testMetric(result, METRIC_NAME_TIME, tmp, RATE_ACCURACY);
+		expected.put("value", (double) elapsedTimeMillis);
+		testMetric(result, METRIC_NAME_TIME, expected, ELAPSED_TIME_ACCURACY);
 		//
 		testTimingMetric(result, MARK_DUR, METRIC_NAME_DUR);
 		testTimingMetric(result, MARK_LAT, METRIC_NAME_LAT);
@@ -163,11 +162,11 @@ public class ExposedMetricsTest {
 			METRIC_NAME_TIME
 		};
 		for (final String n : names) {
-			final Pattern p =
-				Pattern.compile(
-					String.format("# HELP %1$s[\\s]*# TYPE %1$s", String.format(METRIC_FORMAT, n)));
+			final Pattern p = Pattern.compile(
+				String.format("# HELP %1$s[\\s]*# TYPE %1$s", String.format(METRIC_FORMAT, n)));
 			final Matcher m = p.matcher(result);
-			Assert.assertTrue(m.find());
+			final boolean found = m.find();
+			Assert.assertTrue(found);
 		}
 	}
 
@@ -217,11 +216,12 @@ public class ExposedMetricsTest {
 			count *= markValue;
 			rateMetrics = BYTES_METRICS;
 		}
-		final Double[] values = {count, markValue, markValue};
+		final Double[] values = {count, markValue, markValue
+		};
 		for (int i = 0; i < rateMetrics.length; ++i) {
 			expectedValues.put(rateMetrics[i], values[i]);
 		}
-		testMetric(stdOut, name, expectedValues, RATE_ACCURACY);
+		testMetric(stdOut, name, expectedValues, false);
 	}
 
 	private void testConcurrencyMetric(
@@ -241,8 +241,8 @@ public class ExposedMetricsTest {
 		final StringBuilder stringBuilder = new StringBuilder();
 		final URL url = new URL(urlPath);
 		final URLConnection conn = url.openConnection();
-		try (final BufferedReader br =
-			new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+		try (final BufferedReader br = new BufferedReader(
+			new InputStreamReader(conn.getInputStream()))) {
 			br.lines().forEach(l -> stringBuilder.append(l).append("\n"));
 		}
 		return stringBuilder.toString();
@@ -253,19 +253,48 @@ public class ExposedMetricsTest {
 		final String metricName,
 		final Map<String, Double> expectedValues,
 		final double accuracy) {
+		testMetric(resultOutput, metricName, expectedValues, true, accuracy);
+	}
+
+	private void testMetric(
+		final String resultOutput,
+		final String metricName,
+		final Map<String, Double> expectedValues,
+		final boolean compareEquality) {
+		testMetric(resultOutput, metricName, expectedValues, compareEquality, 0);
+	}
+
+	private void testMetric(
+		final String resultOutput,
+		final String metricName,
+		final Map<String, Double> expectedValues) {
+		testMetric(resultOutput, metricName, expectedValues, true, 0);
+	}
+
+	private void testMetric(
+		final String resultOutput,
+		final String metricName,
+		final Map<String, Double> expectedValues,
+		final boolean compareEquality,
+		final double accuracy) {
 		for (final String key : expectedValues.keySet()) {
-			final Pattern p =
-				Pattern.compile(String.format(METRIC_FORMAT, metricName, key) + "\\{.+\\} .+");
+			final Pattern p = Pattern
+				.compile(String.format(METRIC_FORMAT, metricName) + "_" + key + "\\{.+\\} .+");
 			final Matcher m = p.matcher(resultOutput);
 			final boolean found = m.find();
 			Assert.assertTrue(found);
-			final Double actualValue = Double.valueOf(m.group().split("}")[1]);
-			final Double expectedValue = Double.valueOf(expectedValues.get(key));
-			Assert.assertEquals(
-				"metric : " + metricName + "_" + key,
-				expectedValue,
-				actualValue,
-				expectedValue * accuracy);
+			final double actualValue = Double.valueOf(m.group().split("}")[1]);
+			final double expectedValue = Double.valueOf(expectedValues.get(key));
+			if (compareEquality) {
+				Assert.assertEquals(
+					"metric : " + metricName + "_" + key,
+					expectedValue,
+					actualValue,
+					expectedValue * accuracy);
+			} else {
+				Assert.assertEquals(
+					"metric : " + metricName + "_" + key, true, actualValue <= expectedValue);
+			}
 		}
 	}
 }
