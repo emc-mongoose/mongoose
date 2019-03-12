@@ -9,10 +9,10 @@ output:
       - 0.5
       - 0.75
     average:
-      period: false
+      period: 10s
       table:
         header:
-          period: 20
+          period: true
       persist: true
     trace:
       persist: false

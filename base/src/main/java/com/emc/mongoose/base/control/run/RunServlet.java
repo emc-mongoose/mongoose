@@ -63,7 +63,7 @@ public class RunServlet extends HttpServlet {
 
 		final Part defaultsPart;
 		final Part scenarioPart;
-		final String contentTypeHeaderValue = req.getHeader(HttpHeader.CONTENT_TYPE.toString());
+		final var contentTypeHeaderValue = req.getHeader(HttpHeader.CONTENT_TYPE.toString());
 		if (contentTypeHeaderValue != null
 						&& contentTypeHeaderValue.startsWith(MULTIPART_FORM_DATA.toString())) {
 			defaultsPart = req.getPart(PART_KEY_DEFAULTS);
@@ -73,13 +73,13 @@ public class RunServlet extends HttpServlet {
 			scenarioPart = null;
 		}
 		try {
-			final Config defaults = mergeIncomingWithLocalConfig(defaultsPart, resp, aggregatedConfigWithArgs);
-			final String scenario = getIncomingScenarioOrDefault(scenarioPart, appHomePath);
+			final var defaults = mergeIncomingWithLocalConfig(defaultsPart, resp, aggregatedConfigWithArgs);
+			final var scenario = getIncomingScenarioOrDefault(scenarioPart, appHomePath);
 
 			// expose the base configuration and the step types
 			ScenarioUtil.configure(scriptEngine, extensions, defaults, metricsMgr);
 			//
-			final Run run = new RunImpl(defaults.stringVal("run-comment"), scenario, scriptEngine);
+			final var run = (Run) new RunImpl(defaults.stringVal("run-comment"), scenario, scriptEngine);
 			try {
 				scenarioExecutor.execute(run);
 				resp.setStatus(HttpServletResponse.SC_ACCEPTED);
@@ -119,11 +119,11 @@ public class RunServlet extends HttpServlet {
 
 	void applyForActiveRunIfAny(
 					final HttpServletResponse resp, final BiConsumer<Run, HttpServletResponse> action) {
-		final Runnable activeTask = scenarioExecutor.task();
+		final var activeTask = scenarioExecutor.task();
 		if (null == activeTask) {
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		} else if (activeTask instanceof Run) {
-			final Run activeRun = (Run) activeTask;
+			final var activeRun = (Run) activeTask;
 			action.accept(activeRun, resp);
 		} else {
 			Loggers.ERR.warn("The scenario executor runs an alien task: {}", activeTask);
@@ -136,14 +136,14 @@ public class RunServlet extends HttpServlet {
 					final HttpServletResponse resp,
 					final BiConsumer<Run, Long> runRespTimestampConsumer)
 					throws IOException {
-		final String reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.toString())).stream()
+		final var reqTimestampRawValue = Collections.list(req.getHeaders(HttpHeader.IF_MATCH.toString())).stream()
 						.findAny()
 						.orElse(null);
 		if (null == reqTimestampRawValue) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing header: " + HttpHeader.IF_MATCH);
 		} else {
 			try {
-				final long reqTimestamp = Long.parseLong(reqTimestampRawValue, 0x10);
+				final var reqTimestamp = Long.parseLong(reqTimestampRawValue, 0x10);
 				applyForActiveRunIfAny(
 								resp, (run, resp_) -> runRespTimestampConsumer.accept(run, reqTimestamp));
 			} catch (final NumberFormatException e) {
@@ -193,7 +193,7 @@ public class RunServlet extends HttpServlet {
 		if (defaultsPart == null) {
 			configResult = aggregatedConfigWithArgs;
 		} else {
-			final Config configIncoming = configFromPart(defaultsPart, resp, aggregatedConfigWithArgs.schema());
+			final var configIncoming = configFromPart(defaultsPart, resp, aggregatedConfigWithArgs.schema());
 			if (configIncoming == null) {
 				configResult = aggregatedConfigWithArgs;
 			} else {
@@ -212,7 +212,7 @@ public class RunServlet extends HttpServlet {
 					throws IOException, NoSuchMethodException, InvalidValuePathException,
 					InvalidValueTypeException {
 		final String rawDefaultsData;
-		try (final BufferedReader br = new BufferedReader(new InputStreamReader(defaultsPart.getInputStream()))) {
+		try (final var br = new BufferedReader(new InputStreamReader(defaultsPart.getInputStream()))) {
 			rawDefaultsData = br.lines().collect(Collectors.joining("\n"));
 		}
 		return ConfigUtil.loadConfig(rawDefaultsData, configSchema);
@@ -224,7 +224,7 @@ public class RunServlet extends HttpServlet {
 		if (scenarioPart == null) {
 			scenarioResult = ScenarioUtil.defaultScenario(appHomePath);
 		} else {
-			try (final BufferedReader br = new BufferedReader(new InputStreamReader(scenarioPart.getInputStream()))) {
+			try (final var br = new BufferedReader(new InputStreamReader(scenarioPart.getInputStream()))) {
 				scenarioResult = br.lines().collect(Collectors.joining("\n"));
 			}
 		}
