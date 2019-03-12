@@ -3,12 +3,12 @@ package com.emc.mongoose.base.config.el;
 import com.emc.mongoose.base.env.DateUtil;
 import com.github.akurilov.commons.io.el.ExpressionInput;
 import com.github.akurilov.commons.math.MathUtil;
+import com.github.akurilov.commons.math.Random;
 
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 public interface Language {
 

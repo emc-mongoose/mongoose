@@ -114,8 +114,8 @@ public interface ConfigSliceUtil {
 				final var srcNamingStep = namingConfig.intVal("step");
 				for(var i = 0; i < sliceCount; i ++) {
 					final var configSlice = configSlices.get(i);
-					Loggers.MSG.info(
-						"Item naming slicing: slice #{}, offset: {}, step: {}", i, srcNamingSeed + i,
+					Loggers.MSG.debug(
+						"Item naming slicing: slice #{}, seed: {}, step: {}", i, srcNamingSeed + i * srcNamingStep,
 						srcNamingStep * sliceCount
 					);
 					configSlice.val("item-naming-seed", srcNamingSeed + i * srcNamingStep);
