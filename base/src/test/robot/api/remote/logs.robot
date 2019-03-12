@@ -57,7 +57,7 @@ Should Delete logs
 
 *** Keywords ***
 Make Start Request Payload
-    ${defaults_data} =  Get Binary File  ${DATA_DIR}/logs_test_defaults.json
+    ${defaults_data} =  Get Binary File  ${DATA_DIR}/logs_test_defaults.yaml
     ${scenario_data} =  Get Binary File  ${DATA_DIR}/scenario_dummy.js
     &{data} =  Create Dictionary  defaults=${defaults_data}  scenario=${scenario_data}
     [Return]  ${data}

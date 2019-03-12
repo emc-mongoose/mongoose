@@ -24,4 +24,4 @@ has the same MD5 checksum.
 hook. The extension inherits the basic installer functionality to copy the specific files for the given extension.
 
 6. Each extension provides its own defaults configuration (if any) from the installed file
-(usually `<USER_HOME_DIR>/.mongoose/<VERSION>/config/defaults****.json`).
+(usually `<USER_HOME_DIR>/.mongoose/<VERSION>/config/defaults****.yaml`).

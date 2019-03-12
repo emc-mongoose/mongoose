@@ -9,7 +9,7 @@ import com.emc.mongoose.base.metrics.MetricsManager;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
 
-import com.github.akurilov.confuse.io.json.JsonSchemaProviderBase;
+import com.github.akurilov.confuse.io.yaml.YamlSchemaProviderBase;
 
 import java.io.InputStream;
 import java.util.Arrays;
@@ -22,11 +22,11 @@ public final class PipelineLoadStepExtension<T extends PipelineLoadStepLocal, U 
 
 	public static final String TYPE = "PipelineLoad";
 
-	private static final SchemaProvider SCHEMA_PROVIDER = new JsonSchemaProviderBase() {
+	private static final SchemaProvider SCHEMA_PROVIDER = new YamlSchemaProviderBase() {
 
 		@Override
 		protected final InputStream schemaInputStream() {
-			return getClass().getResourceAsStream("/config-schema-item-output-delay.json");
+			return getClass().getResourceAsStream("/config-schema-item-output-delay.yaml");
 		}
 
 		@Override
@@ -35,7 +35,7 @@ public final class PipelineLoadStepExtension<T extends PipelineLoadStepLocal, U 
 		}
 	};
 
-	private static final String DEFAULTS_FILE_NAME = "defaults-item-output-delay.json";
+	private static final String DEFAULTS_FILE_NAME = "defaults-item-output-delay.yaml";
 
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
 					Arrays.asList("config/" + DEFAULTS_FILE_NAME));

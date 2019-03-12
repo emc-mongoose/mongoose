@@ -10,7 +10,7 @@ import static com.emc.mongoose.base.Constants.APP_NAME;
 
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.SchemaProvider;
-import com.github.akurilov.confuse.io.json.JsonSchemaProviderBase;
+import com.github.akurilov.confuse.io.yaml.YamlSchemaProviderBase;
 
 import java.io.InputStream;
 import java.util.Arrays;
@@ -22,7 +22,7 @@ public class AtmosStorageDriverExtension<I extends Item, O extends Operation<I>,
 				implements StorageDriverFactory<I, O, T> {
 
 	private static final String NAME = "atmos";
-	private static final String DEFAULTS_FILE_NAME = "defaults-storage-atmos.json";
+	private static final String DEFAULTS_FILE_NAME = "defaults-storage-atmos.yaml";
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
 					Arrays.asList(
 									"config/" + DEFAULTS_FILE_NAME));
@@ -41,10 +41,10 @@ public class AtmosStorageDriverExtension<I extends Item, O extends Operation<I>,
 
 	@Override
 	public final SchemaProvider schemaProvider() {
-		return new JsonSchemaProviderBase() {
+		return new YamlSchemaProviderBase() {
 			@Override
 			protected final InputStream schemaInputStream() {
-				return getClass().getResourceAsStream("/config-schema-storage-atmos.json");
+				return getClass().getResourceAsStream("/config-schema-storage-atmos.yaml");
 			}
 
 			@Override

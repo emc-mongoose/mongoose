@@ -29,8 +29,8 @@ public class ConfigServletTest {
 	}
 
 	private static final Config CONFIG = new BasicConfig("-", SCHEMA);
-	private static final String EXPECTED_CONFIG_JSON = "{\n  \"key\" : \"value\"\n}";
-	private static final String EXPECTED_SCHEMA_JSON = "{\n  \"key\" : \"any\"\n}";
+	private static final String EXPECTED_CONFIG_JSON = "---\nkey: \"value\"";
+	private static final String EXPECTED_SCHEMA_JSON = "---\nkey: \"any\"";
 
 	static {
 		CONFIG.val("key", "value");
