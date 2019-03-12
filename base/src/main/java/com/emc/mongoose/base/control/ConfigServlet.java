@@ -47,7 +47,6 @@ public class ConfigServlet extends HttpServlet {
 		resp.setStatus(HttpServletResponse.SC_OK);
 		final var respWriter = resp.getWriter();
 		respWriter.print(schemaStr);
-		respWriter.println();
 	}
 
 	private void getConfig(final HttpServletResponse resp) throws IOException {
