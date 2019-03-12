@@ -15,7 +15,7 @@ public final class ItemNameInputBuilder
 	private volatile int radix = Character.MAX_RADIX;
 	private volatile String prefix = null;
 	private volatile int length = 12;
-	private volatile long offset = 0;
+	private volatile long seed = 0;
 	private volatile int step = 1;
 
 	@Override
@@ -43,8 +43,8 @@ public final class ItemNameInputBuilder
 	}
 
 	@Override
-	public final ItemNameInputBuilder offset(final long offset) {
-		this.offset = offset;
+	public final ItemNameInputBuilder seed(final long seed) {
+		this.seed = seed;
 		return this;
 	}
 
@@ -59,10 +59,9 @@ public final class ItemNameInputBuilder
 		final var maxId = (long) pow(radix, length);
 		switch (type) {
 		case RANDOM:
-			final var seed = abs(Long.reverse(currentTimeMillis()) ^ Long.reverseBytes(nanoTime()));
-			return (T) new ItemNameInputImpl((x) -> abs(xorShift(x) % maxId), seed, prefix, radix);
+			return (T) new ItemNameInputImpl((x) -> xorShift(x) % maxId, seed, prefix, radix);
 		case SERIAL:
-			return (T) new ItemNameInputImpl((x) -> abs((x + step) % maxId), offset, prefix, radix);
+			return (T) new ItemNameInputImpl((x) -> (x + step) % maxId, seed, prefix, radix);
 		}
 		return null;
 	}

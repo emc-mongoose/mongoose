@@ -327,3 +327,6 @@ aliasing:
   - name: "test-step-limit-time"
     deprecated: true
     target: "load-step-limit-time"
+  - name: "item-naming-offset"
+    deprecated: true
+    target: "item-naming-seed"

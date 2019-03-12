@@ -41,7 +41,7 @@ item:
     radix: "int"
     length: "int"
     step: "int"
-    offset: "long"
+    seed: "any"
     type: "string"
     prefix: "string"
 run:

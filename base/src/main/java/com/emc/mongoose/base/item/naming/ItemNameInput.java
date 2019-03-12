@@ -10,7 +10,7 @@ public interface ItemNameInput
 	long lastId();
 
 	enum ItemNamingType {
-		RANDOM, SERIAL,
+		RANDOM, SERIAL
 	}
 
 	@Override
@@ -29,7 +29,7 @@ public interface ItemNameInput
 
 		<T extends Builder> T length(final int length);
 
-		<T extends Builder> T offset(final long offset);
+		<T extends Builder> T seed(final long offset);
 
 		<T extends Builder> T step(final int step);
 

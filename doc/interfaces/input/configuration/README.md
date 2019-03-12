@@ -6,8 +6,8 @@
 1.2.1. [Time](#121-time)<br/>
 1.2.2. [Size](#122-size)<br/>
 1.2.3. [Dictionary](#123-dictionary)<br/>
-2. [Parameterization](#2-parameterization)<br/>
-3. [Aliasing](#3-aliasing)<br/>
+1.2.4. [Expression](#124-expression)<br/>
+2. [Aliasing](#2-aliasing)<br/>
 
 ## 1. Overview
 
@@ -33,13 +33,13 @@ reference.
 | item-input-file                                | Path | null | The source file for the items to process. If null the behavior depends on the load type. |
 | item-input-path                                | String | null | The source path which may be used as items input if not "item-input-file" is specified. Also used for the copy mode as the path containing the items to be copied into the output path. |
 | item-naming-length                             | Integer > 0 | 12 | The name length for the new items. Has effect only in the case of create (if not partial) load
-| item-naming-offset                             | Integer | 0 | The start id for the new item ids. Makes sense only in case of "serial" naming type.
+| item-naming-seed                               | Integer or Expression | %{math:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos()))} | The initial id for the new item ids
 | item-naming-prefix                             | String | null | The name prefix for the processed items. A correct value is neccessary to pass the content verification in the case of read load.
 | item-naming-radix                              | Integer >= 2 | 36 | The radix for the item ids. May be in the range of 2..36. A correct value is neccessary to pass the content verification in the case of read load.
 | item-naming-step                               | Integer | 1 | The item naming step. Makes sense in case of "serial" naming type. Negative values cause descending order.
 | item-naming-type                               | Enum | random | Specifies the new items naming order. Has effect only in the case of create load. "serial": the new items are named in a sequential order, "random": the new items are named randomly |
 | item-output-file                               | Path | null | Specified the target file for the items processed successfully. If null the items info is not saved.
-| item-output-path                               | String | %{date:format(\"yyyyMMdd.HHmmss.SSS\").format(date:from(time:millisSinceEpoch())} | The target path. By default the expression will once generate the constant value equal to the timestamp.
+| item-output-path                               | String or Expression | %{date:format(\"yyyyMMdd.HHmmss.SSS\").format(date:from(time:millisSinceEpoch())} | The target path. By default the expression will once generate the constant value equal to the timestamp.
 | item-type                                      | Enum | data | The type of the item to use, the possible values are: "data", "path", "token". In case of filesystem "data" means files and "path" means directories
 | load-batch-size                                | Integer >= 1| 4096 | The count of the items/operations processed by a single invocation. It may be useful to set to 1 for MPU or DLO tests
 | load-op-limit-count                            | Integer >= 0 | 0 | The maximum number of the load operations to execute for a load step. 0 means infinite
@@ -132,12 +132,12 @@ The configuration parameters supporting the time type:
 Some configuration values support the dictionary type. Don't use the command line arguments for the dictionary values
 setting.
 
-## 2. Parameterization
+##### 1.2.4. Expression
 
-Since v5.0.0 the [expression language](base/src/main/java/com/emc/mongoose/config/el/README.md) is used to specify the
-dynamic values.
+The [expression language](base/src/main/java/com/emc/mongoose/config/el/README.md) allows to assign the dynamic values 
+to some configuration parameters.
 
-## 3. Aliasing
+## 2. Aliasing
 
 The configuration aliasing is used primarily for backward compatibility to map old configuration paths to the new ones.
 Also there's a shortcut alias for the load operation types:

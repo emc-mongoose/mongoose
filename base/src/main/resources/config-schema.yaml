@@ -23,7 +23,7 @@ item:
     prefix: string
     radix: int
     step: int
-    offset: long
+    seed: any
     length: int
   output:
     file: string

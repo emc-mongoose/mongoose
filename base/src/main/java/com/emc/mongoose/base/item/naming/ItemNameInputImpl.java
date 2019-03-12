@@ -16,6 +16,7 @@ public final class ItemNameInputImpl
 	public ItemNameInputImpl(
 					final Long2LongFunction idFunction, final long offset, final String prefix, final int radix) {
 		this.initialId = offset;
+		this.lastId = initialId;
 		this.idFunction = idFunction;
 		this.prefix = prefix;
 		this.radix = radix;

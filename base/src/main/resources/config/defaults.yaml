@@ -20,7 +20,7 @@ item:
     path: null
   naming:
     length: 12
-    offset: 0
+    seed: "%{math:xor(int64:reverse(time:millisSinceEpoch()), int64:reverseBytes(time:nanos()))}"
     prefix: null
     radix: 36
     step: 1
@@ -309,3 +309,6 @@ aliasing:
 - name: "test-step-limit-time"
   deprecated: true
   target: "load-step-limit-time"
+- name: "item-naming-offset"
+  deprecated: true
+  target: "item-naming-seed"
