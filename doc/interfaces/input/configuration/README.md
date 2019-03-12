@@ -12,7 +12,7 @@
 ## 1. Overview
 
 All the configuration values have the default values which may be seen
-in the file ```<MONGOOSE_DIR>/config/defaults.json```. The file contains
+in the file ```<MONGOOSE_DIR>/config/defaults.yaml```. The file contains
 the comments so it's quite self-descriptive and may be used as quick
 reference.
 

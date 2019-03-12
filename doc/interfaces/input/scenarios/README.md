@@ -78,7 +78,7 @@ steps.
 
     Configure the load step. Merge the specified configuration parameters dictionary with already existing step's
     configuration. An argument should be a dictionary with a structure equivalent to the configuration structure (see
-    `<USER_HOME_DIR>/.mongoose/<VERSION>/config/defaults.json` file for the reference). Returns the copied instance with
+    `<USER_HOME_DIR>/.mongoose/<VERSION>/config/defaults.yaml` file for the reference). Returns the copied instance with
     the new configuration.
 
 2. ```append(config)```
@@ -383,7 +383,7 @@ Load.run();
 
 The ```config``` method appends the configuration structure element to the step.
 An argument should be a dictionary/map with a structure equivalent to the configuration structure
-(see `<MONGOOSE_DIR>/config/defaults.json` file for the reference). Subsequent calls merge the
+(see `<MONGOOSE_DIR>/config/defaults.yaml` file for the reference). Subsequent calls merge the
 configurations (see the [details](#21222-custom)). **Returns** the new step instance of the same
 type so the call may be included into the call chain.
 
@@ -428,7 +428,7 @@ WeightedLoad
 
 The ```config``` method appends the configuration structure element to the step.
 An argument should be a dictionary/map with a structure equivalent to the configuration structure
-(see `<MONGOOSE_DIR>/config/defaults.json` file for the reference). Subsequent calls on the same
+(see `<MONGOOSE_DIR>/config/defaults.yaml` file for the reference). Subsequent calls on the same
 step appends the configuration structure to the list. **Returns** the new step instance of the same
 type so the call may be included into the call chain.
 
@@ -517,7 +517,7 @@ should be set externally.
 The ```config``` method appends the configuration structure element to
 the step. An argument should be a dictionary/map with a structure
 equivalent to the configuration structure (see
-`<USER_HOME_DIR>/.mongoose/<VERSION>/config/defaults.json` file for the
+`<USER_HOME_DIR>/.mongoose/<VERSION>/config/defaults.yaml` file for the
 reference). Subsequent calls on the same step appends the configuration
 structure to the list. **Returns** the new step instance of the same
 type so the call may be included into the call chain.

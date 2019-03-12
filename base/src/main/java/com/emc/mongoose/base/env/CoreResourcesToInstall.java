@@ -20,7 +20,7 @@ public final class CoreResourcesToInstall extends InstallableJarResources {
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
 					Arrays.asList(
 									// initial configuration/defaults file
-									"config/defaults.json",
+									"config/defaults.yaml",
 									// custom content example files
 									"example/content/textexample",
 									"example/content/zerobytes",

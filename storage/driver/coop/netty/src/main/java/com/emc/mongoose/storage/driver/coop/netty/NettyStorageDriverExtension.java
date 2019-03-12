@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.driver.coop.netty;
 
 import com.emc.mongoose.base.env.ExtensionBase;
 import com.github.akurilov.confuse.SchemaProvider;
-import com.github.akurilov.confuse.io.json.JsonSchemaProviderBase;
+import com.github.akurilov.confuse.io.yaml.YamlSchemaProviderBase;
 
 import java.io.InputStream;
 import java.util.Arrays;
@@ -14,11 +14,11 @@ import static com.emc.mongoose.base.Constants.APP_NAME;
 public final class NettyStorageDriverExtension
 				extends ExtensionBase {
 
-	private static final SchemaProvider SCHEMA_PROVIDER = new JsonSchemaProviderBase() {
+	private static final SchemaProvider SCHEMA_PROVIDER = new YamlSchemaProviderBase() {
 
 		@Override
 		protected final InputStream schemaInputStream() {
-			return getClass().getResourceAsStream("/config-schema-storage-net.json");
+			return getClass().getResourceAsStream("/config-schema-storage-net.yaml");
 		}
 
 		@Override
@@ -27,7 +27,7 @@ public final class NettyStorageDriverExtension
 		}
 	};
 
-	private static final String DEFAULTS_FILE_NAME = "defaults-storage-net.json";
+	private static final String DEFAULTS_FILE_NAME = "defaults-storage-net.yaml";
 
 	private static final List<String> RES_INSTALL_FILES = Collections.unmodifiableList(
 					Arrays.asList(

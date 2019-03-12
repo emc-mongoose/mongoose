@@ -12,7 +12,7 @@ public interface Constants {
 	String DIR_EXAMPLE = "example";
 	String DIR_EXT = "ext";
 	String DIR_EXAMPLE_SCENARIO = DIR_EXAMPLE + File.separator + "scenario";
-	String PATH_DEFAULTS = DIR_CONFIG + "/" + "defaults.json";
+	String PATH_DEFAULTS = DIR_CONFIG + "/" + "defaults.yaml";
 	String KEY_HOME_DIR = "home_dir";
 	String KEY_STEP_ID = "step_id";
 	String KEY_CLASS_NAME = "class_name";

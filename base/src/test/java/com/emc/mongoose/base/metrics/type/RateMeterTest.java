@@ -20,24 +20,19 @@ public class RateMeterTest {
 	@Test
 	public void test() throws InterruptedException {
 		final RateMeter<RateMetricSnapshot> meter = new RateMeterImpl(Clock.systemUTC(), "SOME_RATE");
-		final long t0 = System.currentTimeMillis();
+		final var t0 = System.currentTimeMillis();
 		meter.update(COUNT_BYTES_1);
 		TimeUnit.MILLISECONDS.sleep(SLEEP_MILLISEC);
-		final long t1 = System.currentTimeMillis();
-		final RateMetricSnapshot snapshot1 = meter.snapshot();
+		final var t1 = System.currentTimeMillis();
+		final var snapshot1 = meter.snapshot();
 		assertEquals(1000.0 * COUNT_BYTES_1 / (t1 - t0), snapshot1.mean(), 2.0);
 		assertEquals(1000.0 * COUNT_BYTES_1 / (t1 - t0), snapshot1.last(), 2.0);
 		meter.update(COUNT_BYTES_2);
 		TimeUnit.MILLISECONDS.sleep(SLEEP_MILLISEC);
-		final long t2 = System.currentTimeMillis();
-		final RateMetricSnapshot snapshot2 = meter.snapshot();
-		assertEquals(
-						1000.0 * (COUNT_BYTES_1 + COUNT_BYTES_2) / (t2 - t0),
-						snapshot2.mean(),
-						snapshot2.mean() * ACCURACY);
-		assertEquals(
-						1000.0 * (COUNT_BYTES_1 + COUNT_BYTES_2) / (t2 - t0),
-						snapshot2.last(),
-						snapshot2.last() * ACCURACY);
+		final var t2 = System.currentTimeMillis();
+		final var snapshot2 = meter.snapshot();
+		final var expectedRate = 1000.0 * (COUNT_BYTES_1 + COUNT_BYTES_2) / (t2 - t0);
+		assertEquals(expectedRate, snapshot2.mean(), expectedRate * ACCURACY);
+		assertEquals(expectedRate, snapshot2.last(), expectedRate * ACCURACY);
 	}
 }

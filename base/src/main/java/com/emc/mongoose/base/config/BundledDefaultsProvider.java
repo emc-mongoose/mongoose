@@ -3,10 +3,10 @@ package com.emc.mongoose.base.config;
 import static com.emc.mongoose.base.Constants.APP_NAME;
 import static com.emc.mongoose.base.Constants.PATH_DEFAULTS;
 
-import com.github.akurilov.confuse.io.json.JsonConfigProviderBase;
+import com.github.akurilov.confuse.io.yaml.YamlConfigProviderBase;
 import java.io.InputStream;
 
-public class BundledDefaultsProvider extends JsonConfigProviderBase {
+public class BundledDefaultsProvider extends YamlConfigProviderBase {
 
 	@Override
 	protected final InputStream configInputStream() {

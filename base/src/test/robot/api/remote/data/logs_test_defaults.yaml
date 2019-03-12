@@ -1,0 +1,8 @@
+---
+load:
+  step:
+    id: robotest
+output:
+  metrics:
+    trace:
+      persist: true
