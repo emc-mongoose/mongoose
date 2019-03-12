@@ -21,11 +21,9 @@ import static com.emc.mongoose.metrics.MetricsConstants.METRIC_NAME_TIME;
 import static io.prometheus.client.Collector.MetricFamilySamples.Sample;
 
 /**
- @author veronika K. on 10.10.18
+ * @author veronika K. on 10.10.18
  */
-public class PrometheusMetricsExporterImpl
-	extends Collector
-	implements PrometheusMetricsExporter {
+public class PrometheusMetricsExporterImpl extends Collector implements PrometheusMetricsExporter {
 
 	private final List<String> labelValues = new ArrayList<>();
 	private final List<String> labelNames = new ArrayList<>();
@@ -39,7 +37,7 @@ public class PrometheusMetricsExporterImpl
 
 	@Override
 	public PrometheusMetricsExporterImpl quantile(final double value) {
-		if(value < 1.0 && value >= 0.0) {
+		if (value < 1.0 && value >= 0.0) {
 			quantileValues.add(value);
 		} else {
 			throw new IllegalArgumentException("Invalid quantiele value : " + value);
@@ -49,7 +47,7 @@ public class PrometheusMetricsExporterImpl
 
 	@Override
 	public PrometheusMetricsExporterImpl quantiles(final double[] values) {
-		for(int i = 0; i < values.length; ++ i) {
+		for (int i = 0; i < values.length; ++i) {
 			quantile(values[i]);
 		}
 		return this;
@@ -57,7 +55,7 @@ public class PrometheusMetricsExporterImpl
 
 	@Override
 	public PrometheusMetricsExporterImpl quantiles(final List<Double> values) {
-		for(int i = 0; i < values.size(); ++ i) {
+		for (int i = 0; i < values.size(); ++i) {
 			quantile(values.get(i));
 		}
 		return this;
@@ -72,7 +70,7 @@ public class PrometheusMetricsExporterImpl
 
 	@Override
 	public PrometheusMetricsExporterImpl labels(final String[] names, final String[] values) {
-		if(names.length != values.length) {
+		if (names.length != values.length) {
 			throw new IllegalArgumentException(
 				"The number of label names("
 					+ names.length
@@ -95,7 +93,7 @@ public class PrometheusMetricsExporterImpl
 	public List<MetricFamilySamples> collect() {
 		final List<MetricFamilySamples> mfsList = new ArrayList<>();
 		final DistributedAllMetricsSnapshot snapshot = metricsContext.lastSnapshot();
-		if(snapshot != null) {
+		if (snapshot != null) {
 			collectSnapshot(snapshot.durationSnapshot(), mfsList);
 			collectSnapshot(snapshot.latencySnapshot(), mfsList);
 			collectSnapshot(snapshot.concurrencySnapshot(), mfsList);
@@ -108,33 +106,31 @@ public class PrometheusMetricsExporterImpl
 	}
 
 	private void collectElapsedTime(
-		final double timeMillis, final List<MetricFamilySamples> mfsList
-	) {
+		final double timeMillis, final List<MetricFamilySamples> mfsList) {
 		mfsList.add(
 			new MetricFamilySamples(
-				"" + this.hashCode(),
+				String.format(METRIC_FORMAT, METRIC_NAME_TIME),
 				Type.GAUGE,
 				help,
 				Collections.singletonList(
-					newSample(METRIC_NAME_TIME, "value", timeMillis / Constants.K))
-			));
+					newSample(METRIC_NAME_TIME, "value", timeMillis / Constants.K))));
 	}
 
 	private void collectSnapshot(
-		final NamedMetricSnapshot snapshot, final List<MetricFamilySamples> mfsList
-	) {
+		final NamedMetricSnapshot snapshot, final List<MetricFamilySamples> mfsList) {
 		final List<Sample> samples = new ArrayList<>();
-		if(snapshot instanceof TimingMetricSnapshot) {
+		if (snapshot instanceof TimingMetricSnapshot) {
 			samples.addAll(collect((TimingMetricSnapshot) snapshot));
-		} else if(snapshot instanceof RateMetricSnapshot) {
+		} else if (snapshot instanceof RateMetricSnapshot) {
 			samples.addAll(collect((RateMetricSnapshot) snapshot));
-		} else if(snapshot instanceof ConcurrencyMetricSnapshot) {
+		} else if (snapshot instanceof ConcurrencyMetricSnapshot) {
 			samples.addAll(collect((ConcurrencyMetricSnapshot) snapshot));
 		} else {
 			Loggers.ERR.warn("Unexpected metric snapshot type: {}", snapshot.getClass());
 		}
 		final MetricFamilySamples mfs =
-			new MetricFamilySamples("" + this.hashCode(), Type.GAUGE, help, samples);
+			new MetricFamilySamples(
+				String.format(METRIC_FORMAT, snapshot.name()), Type.GAUGE, help, samples);
 		mfsList.add(mfs);
 	}
 
@@ -155,13 +151,12 @@ public class PrometheusMetricsExporterImpl
 		samples.add(newSample(metricName, "sum", metric.sum() / Constants.M));
 		samples.add(newSample(metricName, "mean", metric.mean() / Constants.M));
 		samples.add(newSample(metricName, "min", metric.min() / Constants.M));
-		for(int i = 0; i < quantileValues.size(); ++ i) {
+		for (int i = 0; i < quantileValues.size(); ++i) {
 			samples.add(
 				newSample(
 					metricName,
-					"quantile_" + quantileValues.get(i),
-					snapshot.quantile(quantileValues.get(i)) / Constants.M
-				));
+					"quantile_" + quantileValues.get(i).toString().replaceAll("\\.", "_"),
+					snapshot.quantile(quantileValues.get(i)) / Constants.M));
 		}
 		samples.add(newSample(metricName, "max", metric.max() / Constants.M));
 		return samples;
@@ -176,9 +171,11 @@ public class PrometheusMetricsExporterImpl
 	}
 
 	private Sample newSample(
-		final String metricName, final String aggregationType, final double value
-	) {
+		final String metricName, final String aggregationType, final double value) {
 		return new Sample(
-			String.format(METRIC_FORMAT, metricName, aggregationType), labelNames, labelValues, value);
+			String.format(METRIC_FORMAT, metricName) + "_" + aggregationType,
+			labelNames,
+			labelValues,
+			value);
 	}
 }

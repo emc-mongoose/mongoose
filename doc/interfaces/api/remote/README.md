@@ -189,55 +189,55 @@ curl http://localhost:9999/metrics
 ->
 
 ```
-# HELP 1307966895
-# TYPE 1307966895 gauge
-mongoose_duration_count{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 2981.0
-mongoose_duration_sum{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 0.060955
-mongoose_duration_mean{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 2.044783629654478E-5
-mongoose_duration_min{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 2.0E-6
-mongoose_duration_quantile_0.25{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 2.0E-6
-mongoose_duration_quantile_0.5{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 1.3E-5
-mongoose_duration_quantile_0.75{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 2.4E-5
-mongoose_duration_max{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 0.006222
-# HELP 1307966895
-# TYPE 1307966895 gauge
-mongoose_latency_count{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 2981.0
-mongoose_latency_sum{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 0.030096
-mongoose_latency_mean{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 1.0095940959409595E-5
-mongoose_latency_min{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 1.0E-6
-mongoose_latency_quantile_0.25{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 1.0E-6
-mongoose_latency_quantile_0.5{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 1.0E-6
-mongoose_latency_quantile_0.75{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 1.2E-5
-mongoose_latency_max{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 0.004095
-# HELP 1307966895
-# TYPE 1307966895 gauge
-mongoose_concurrency_mean{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 0.0
-mongoose_concurrency_last{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 0.0
-# HELP 1307966895
-# TYPE 1307966895 gauge
-mongoose_byte_count{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 2.8076968771584E13
-mongoose_byte_rate_mean{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 1.3369985129325715E12
-mongoose_byte_rate_last{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 1.3782652842567793E12
-# HELP 1307966895
-# TYPE 1307966895 gauge
-mongoose_success_op_count{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 2.6776284E7
-mongoose_success_op_rate_mean{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 1275061.142857143
-mongoose_success_op_rate_last{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 1314416.2024255102
-# HELP 1307966895
-# TYPE 1307966895 gauge
-mongoose_failed_op_count{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 0.0
-mongoose_failed_op_rate_mean{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 0.0
-mongoose_failed_op_rate_last{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 0.0
-# HELP 1307966895
-# TYPE 1307966895 gauge
-mongoose_elapsed_time_value{load_step_id="robotest",load_op_type="CREATE",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1544351424363",node_list="[]",user_comment="",} 21.442
+# HELP mongoose_duration
+# TYPE mongoose_duration gauge
+mongoose_duration_count{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 559.0
+mongoose_duration_sum{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 0.083571
+mongoose_duration_mean{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 1.4950089445438282E-4
+mongoose_duration_min{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 2.0E-6
+mongoose_duration_quantile_0_25{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 2.0E-6
+mongoose_duration_quantile_0_5{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 6.0E-6
+mongoose_duration_quantile_0_75{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 9.0E-6
+mongoose_duration_max{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 0.011517
+# HELP mongoose_latency
+# TYPE mongoose_latency gauge
+mongoose_latency_count{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 559.0
+mongoose_latency_sum{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 0.029502
+mongoose_latency_mean{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 5.2776386404293386E-5
+mongoose_latency_min{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 1.0E-6
+mongoose_latency_quantile_0_25{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 1.0E-6
+mongoose_latency_quantile_0_5{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 1.0E-6
+mongoose_latency_quantile_0_75{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 5.0E-6
+mongoose_latency_max{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 0.011512
+# HELP mongoose_concurrency
+# TYPE mongoose_concurrency gauge
+mongoose_concurrency_mean{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 0.0
+mongoose_concurrency_last{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 0.0
+# HELP mongoose_byte
+# TYPE mongoose_byte gauge
+mongoose_byte_count{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 2.628929978368E12
+mongoose_byte_rate_mean{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 8.763099927893334E11
+mongoose_byte_rate_last{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 7.021527038085463E11
+# HELP mongoose_success_op
+# TYPE mongoose_success_op gauge
+mongoose_success_op_count{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 2507143.0
+mongoose_success_op_rate_mean{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 835714.3333333334
+mongoose_success_op_rate_last{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 669624.9998174155
+# HELP mongoose_failed_op
+# TYPE mongoose_failed_op gauge
+mongoose_failed_op_count{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 0.0
+mongoose_failed_op_rate_mean{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 0.0
+mongoose_failed_op_rate_last{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 0.0
+# HELP mongoose_elapsed_time
+# TYPE mongoose_elapsed_time gauge
+mongoose_elapsed_time_value{load_step_id="linear_20190304.123915.606",load_op_type="READ",storage_driver_limit_concurrency="1",item_data_size="1MB",start_time="1551703155695",node_list="[]",user_comment="",} 3.778
 ```
 
 # 5. Configuration
 
 | Option | Type | Default Value | Description
 |:--|:--|:--|:--|
-| output-metrics-quantiles | List of numbers each in the range (0; 1] | 0.25,0.5,0.75 | The quantile values to calculate and report for the timing metrics (duration/latency)
+| output-metrics-quantiles | List of numbers each in the range (0; 1] | [0.25,0.5,0.75] | The quantile values to calculate and report for the timing metrics (duration/latency)
 | run-node | Boolean | `false` | Run in the mode node. Should be enabled to serve the Remote API
 | run-port | Integer in the range (0; 65536) | 9999 | The port to listen the Remote API requests
 
@@ -302,7 +302,7 @@ and 3 Primitive Types: Timing, Rate, Concurrency. Depends on the type of metric,
 
 ### 6.1.1. Custom Quantiles
 To specify the value of the required quantiles, use the `--output-metrics-quantiles` parameter.
-By default `--output-metrics-quantiles=0.25,0.5,0.75`.
+By default `output-metrics-quantiles=[0.25,0.5,0.75]`.
 
 ### 6.1.2. Labels
 Each metric contains also the following labels/tags:
