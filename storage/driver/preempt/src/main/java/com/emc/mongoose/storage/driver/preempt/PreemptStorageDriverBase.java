@@ -3,8 +3,7 @@ package com.emc.mongoose.storage.driver.preempt;
 import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.emc.mongoose.base.data.DataInput;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.item.op.Operation.Status;
@@ -30,7 +29,7 @@ public abstract class PreemptStorageDriverBase<I extends Item, O extends Operati
 					final DataInput itemDataInput,
 					final Config storageConfig,
 					final boolean verifyFlag)
-					throws OmgShootMyFootException {
+					throws IllegalConfigurationException {
 		super(stepId, itemDataInput, storageConfig, verifyFlag);
 		if (ioWorkerCount != concurrencyLimit) {
 			throw new IllegalArgumentException(
@@ -52,7 +51,7 @@ public abstract class PreemptStorageDriverBase<I extends Item, O extends Operati
 	}
 
 	@Override
-	public final boolean put(final O op) throws InterruptRunException {
+	public final boolean put(final O op)  {
 		try {
 			ioExecutor.execute(wrapToBlocking(op));
 			return true;
@@ -66,7 +65,7 @@ public abstract class PreemptStorageDriverBase<I extends Item, O extends Operati
 
 	@Override
 	public final int put(final List<O> ops, final int from, final int to)
-					throws InterruptRunException {
+					 {
 		if (!isStarted() || ioExecutor.isShutdown() || ioExecutor.isTerminated()) {
 			throwUnchecked(new EOFException());
 		}
@@ -81,11 +80,11 @@ public abstract class PreemptStorageDriverBase<I extends Item, O extends Operati
 	}
 
 	@Override
-	public final int put(final List<O> ops) throws InterruptRunException {
+	public final int put(final List<O> ops)  {
 		return put(ops, 0, ops.size());
 	}
 
-	private Runnable wrapToBlocking(final O op) throws InterruptRunException {
+	private Runnable wrapToBlocking(final O op)  {
 		if (prepare(op)) {
 			return () -> {
 				execute(op);
@@ -137,7 +136,7 @@ public abstract class PreemptStorageDriverBase<I extends Item, O extends Operati
 	}
 
 	@Override
-	protected void doStop() throws InterruptRunException {
+	protected void doStop()  {
 		Loggers.MSG.debug("{}: interrupting...", toString());
 		try {
 			if (ioExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
@@ -147,7 +146,7 @@ public abstract class PreemptStorageDriverBase<I extends Item, O extends Operati
 			}
 		} catch (final InterruptedException e) {
 			ioExecutor.shutdownNow();
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} finally {
 			Loggers.MSG.debug("{}: interrupted", toString());
 		}

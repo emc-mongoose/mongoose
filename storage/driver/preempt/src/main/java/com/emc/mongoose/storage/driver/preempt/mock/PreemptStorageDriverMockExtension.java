@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.preempt.mock;
 
 import com.emc.mongoose.base.env.ExtensionBase;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.data.DataInput;
 import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.item.Item;
@@ -30,7 +30,7 @@ public class PreemptStorageDriverMockExtension<I extends Item, O extends Operati
 	@SuppressWarnings("unchecked")
 	public T create(
 					final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-					final int batchSize) throws OmgShootMyFootException, InterruptedException {
+					final int batchSize) throws IllegalConfigurationException, InterruptedException {
 		return (T) new PreemptStorageDriverMock<>(stepId, dataInput, storageConfig, verifyFlag);
 	}
 

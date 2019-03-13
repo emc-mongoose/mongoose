@@ -1,7 +1,6 @@
 package com.emc.mongoose.base.load.generator;
 
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
 import com.emc.mongoose.base.item.ItemType;
@@ -36,5 +35,5 @@ public interface LoadGeneratorBuilder<I extends Item, O extends Operation<I>, T 
 
 	LoadGeneratorBuilder<I, O, T> addThrottle(final IndexThrottle throttle);
 
-	T build() throws InterruptRunException, OmgShootMyFootException, IOException;
+	T build() throws IllegalConfigurationException, IOException;
 }

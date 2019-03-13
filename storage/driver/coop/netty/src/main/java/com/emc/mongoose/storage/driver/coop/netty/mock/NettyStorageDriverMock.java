@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.netty.mock;
 
 import com.emc.mongoose.base.data.DataInput;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
+
 public final class NettyStorageDriverMock<I extends Item, O extends Operation<I>>
 				extends NettyStorageDriverBase<I, O> {
 
@@ -32,7 +34,7 @@ public final class NettyStorageDriverMock<I extends Item, O extends Operation<I>
 					final Config storageConfig,
 					final boolean verifyFlag,
 					final int batchSize)
-					throws OmgShootMyFootException, InterruptedException {
+					throws IllegalConfigurationException, InterruptedException {
 		super(stepId, itemDataInput, storageConfig, verifyFlag, batchSize);
 	}
 
@@ -78,6 +80,7 @@ public final class NettyStorageDriverMock<I extends Item, O extends Operation<I>
 		try {
 			reqSentCallback.operationComplete(channel.newSucceededFuture());
 		} catch (final Exception e) {
+			throwUncheckedIfInterrupted(e);
 			e.printStackTrace(System.err);
 		}
 		op.finishRequest();

@@ -1,6 +1,5 @@
 package com.emc.mongoose.base.load.step.client;
 
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.load.step.file.FileManager;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
@@ -15,6 +14,9 @@ import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.Level;
 
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
+
 public final class ItemDataInputFileSlicer implements AutoCloseable {
 
 	private final String loadStepId;
@@ -27,14 +29,14 @@ public final class ItemDataInputFileSlicer implements AutoCloseable {
 					final String itemDataInputFile,
 					final int batchSize) {
 		this.loadStepId = loadStepId;
-		final int sliceCount = configSlices.size();
+		final var sliceCount = configSlices.size();
 		itemDataInputFileSlices = new HashMap<>(sliceCount);
-		for (int i = 0; i < sliceCount; i++) {
+		for (var i = 0; i < sliceCount; i++) {
 			try {
-				final FileManager fileMgr = fileMgrs.get(i);
-				final String itemDataInputFileName = fileMgr.newTmpFileName();
+				final var fileMgr = fileMgrs.get(i);
+				final var itemDataInputFileName = fileMgr.newTmpFileName();
 				itemDataInputFileSlices.put(fileMgr, itemDataInputFileName);
-				final Config configSlice = configSlices.get(i);
+				final var configSlice = configSlices.get(i);
 				configSlice.val("item-data-input-file", itemDataInputFileName);
 			} catch (final Exception e) {
 				LogUtil.exception(
@@ -48,9 +50,8 @@ public final class ItemDataInputFileSlicer implements AutoCloseable {
 			distributeData(itemDataInputFile, batchSize);
 		} catch (final IOException e) {
 			LogUtil.exception(Level.WARN, e, "{}: failed to use the item input", loadStepId);
-		} catch (final InterruptRunException e) {
-			throw e;
 		} catch (final Throwable cause) {
+			throwUncheckedIfInterrupted(cause);
 			LogUtil.exception(Level.ERROR, cause, "{}: unexpected failure", loadStepId);
 		}
 	}
@@ -62,11 +63,12 @@ public final class ItemDataInputFileSlicer implements AutoCloseable {
 						.parallelStream()
 						.forEach(
 										entry -> {
-											final FileManager fileMgr = entry.getKey();
-											final String itemDataInputFileName = entry.getValue();
+											final var fileMgr = entry.getKey();
+											final var itemDataInputFileName = entry.getValue();
 											try {
 												fileMgr.deleteFile(itemDataInputFileName);
 											} catch (final Exception e) {
+												throwUncheckedIfInterrupted(e);
 												LogUtil.exception(
 																Level.WARN,
 																e,

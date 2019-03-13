@@ -2,10 +2,11 @@ package com.emc.mongoose.base.load.step.client;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.load.step.LoadStep;
 import com.emc.mongoose.base.load.step.LoadStepManagerService;
 import com.emc.mongoose.base.load.step.service.LoadStepService;
@@ -43,6 +44,7 @@ public interface LoadStepSliceUtil {
 		try {
 			stepSvcName = stepMgrSvc.getStepService(stepTypeName, configSlice, ctxConfigs);
 		} catch (final Exception e) {
+			throwUncheckedIfInterrupted(e);
 			LogUtil.exception(
 							Level.ERROR, e, "Failed to start the new scenario step service @ {}", nodeAddrWithPort);
 			return null;
@@ -68,9 +70,8 @@ public interface LoadStepSliceUtil {
 		return stepSvc;
 	}
 
-	static boolean await(final LoadStep stepSlice, final long timeout, final TimeUnit timeUnit)
-					throws InterruptRunException {
-		try (final Instance logCtx = put(KEY_STEP_ID, stepSlice.id())
+	static boolean await(final LoadStep stepSlice, final long timeout, final TimeUnit timeUnit) {
+		try (final var logCtx = put(KEY_STEP_ID, stepSlice.id())
 						.put(KEY_CLASS_NAME, LoadStepClientBase.class.getSimpleName())) {
 			long commFailCount = 0;
 			while (true) {
@@ -90,9 +91,10 @@ public interface LoadStepSliceUtil {
 				}
 			}
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} catch (final RemoteException ignored) {
 			return false;
 		}
+		return false;
 	}
 }

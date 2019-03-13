@@ -4,6 +4,7 @@ import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.logging.LogUtil;
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.item.op.Operation.Status.INTERRUPTED;
 import static com.emc.mongoose.base.item.op.Operation.Status.FAIL_IO;
 import static com.emc.mongoose.base.item.op.Operation.Status.FAIL_UNKNOWN;
@@ -56,8 +57,8 @@ public abstract class ResponseHandlerBase<M, I extends Item, O extends Operation
 	@SuppressWarnings("unchecked")
 	public final void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause)
 					throws IOException {
-		final Channel channel = ctx.channel();
-		final O op = (O) channel.attr(NettyStorageDriver.ATTR_KEY_OPERATION).get();
+		final var channel = ctx.channel();
+		final var op = (O) channel.attr(NettyStorageDriver.ATTR_KEY_OPERATION).get();
 		if (op != null) {
 			if (driver.isStarted() || driver.isShutdown()) {
 				LogUtil.exception(Level.WARN, cause, "Premature channel closure");
@@ -72,6 +73,7 @@ public abstract class ResponseHandlerBase<M, I extends Item, O extends Operation
 				try {
 					driver.complete(channel, op);
 				} catch (final Exception e) {
+					throwUncheckedIfInterrupted(e);
 					LogUtil.exception(Level.DEBUG, e, "Failed to complete the load operation");
 				}
 			}

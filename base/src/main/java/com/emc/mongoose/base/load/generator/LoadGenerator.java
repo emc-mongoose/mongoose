@@ -1,6 +1,5 @@
 package com.emc.mongoose.base.load.generator;
 
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
 import com.github.akurilov.fiber4j.Fiber;
@@ -26,5 +25,5 @@ public interface LoadGenerator<I extends Item, O extends Operation<I>> extends F
 	boolean isNothingToRecycle();
 
 	@Override
-	void close() throws IOException, InterruptRunException;
+	void close() throws IOException;
 }

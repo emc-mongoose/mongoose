@@ -2,13 +2,14 @@ package com.emc.mongoose.storage.driver.coop.netty;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.item.DataItem.rangeCount;
 import static com.emc.mongoose.base.item.op.Operation.Status.SUCC;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static com.github.akurilov.netty.connection.pool.NonBlockingConnPool.ATTR_KEY_NODE;
 
 import com.emc.mongoose.base.data.DataInput;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.OpType;
@@ -74,7 +75,7 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
 					final Config storageConfig,
 					final boolean verifyFlag,
 					final int batchSize)
-					throws OmgShootMyFootException, InterruptedException {
+					throws IllegalConfigurationException, InterruptedException {
 
 		super(stepId, itemDataInput, storageConfig, verifyFlag, batchSize);
 
@@ -266,13 +267,13 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
 			} catch (final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to pre-create the connections");
 			} catch (final InterruptedException e) {
-				throw new InterruptRunException(e);
+				throwUnchecked(e);
 			}
 		}
 	}
 
 	@Override
-	protected boolean submit(final O op) throws InterruptRunException, IllegalStateException {
+	protected boolean submit(final O op) throws IllegalStateException {
 
 		ThreadContext.put(KEY_STEP_ID, stepId);
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
@@ -305,6 +306,7 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
 				op.status(Operation.Status.FAIL_IO);
 				complete(null, op);
 			} catch (final Throwable thrown) {
+				throwUncheckedIfInterrupted(thrown);
 				LogUtil.exception(Level.WARN, thrown, "Failed to submit the load operation");
 				op.status(Operation.Status.FAIL_UNKNOWN);
 				complete(null, op);
@@ -318,7 +320,7 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
 	@Override
 	@SuppressWarnings("unchecked")
 	protected int submit(final List<O> ops, final int from, final int to)
-					throws InterruptRunException, IllegalStateException {
+					throws IllegalStateException {
 
 		if (ops.size() == 0) {
 			return 0;
@@ -373,6 +375,7 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
 				concurrencyThrottle.release(permits - n - 1);
 			}
 		} catch (final Throwable thrown) {
+			throwUncheckedIfInterrupted(thrown);
 			LogUtil.exception(Level.WARN, thrown, "Failed to submit the load operations");
 			nextOp.status(Operation.Status.FAIL_UNKNOWN);
 			complete(null, nextOp);
@@ -385,7 +388,7 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
 
 	@Override
 	protected final int submit(final List<O> ops)
-					throws InterruptRunException, IllegalStateException {
+					throws IllegalStateException {
 		return submit(ops, 0, ops.size());
 	}
 
@@ -582,7 +585,7 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
 	}
 
 	@Override
-	protected final void doStop() throws InterruptRunException, IllegalStateException {
+	protected final void doStop() throws IllegalStateException {
 		try (final var ctx = CloseableThreadContext.put(KEY_STEP_ID, stepId).put(KEY_CLASS_NAME, CLS_NAME)) {
 			try {
 				Loggers.MSG.debug("{}: shutdown the I/O executor", toString());
@@ -595,7 +598,7 @@ public abstract class NettyStorageDriverBase<I extends Item, O extends Operation
 				}
 			} catch (final InterruptedException e) {
 				LogUtil.exception(Level.WARN, e, "Graceful I/O workers shutdown was interrupted");
-				throw new InterruptRunException(e);
+				throwUnchecked(e);
 			}
 		}
 	}

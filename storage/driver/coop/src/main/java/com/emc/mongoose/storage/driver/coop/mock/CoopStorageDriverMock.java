@@ -1,8 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.mock;
 
 import com.emc.mongoose.base.data.DataInput;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
@@ -25,7 +24,7 @@ public class CoopStorageDriverMock<I extends Item, O extends Operation<I>>
 
 	public CoopStorageDriverMock(
 					final String testStepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-					final int batchSize) throws OmgShootMyFootException {
+					final int batchSize) throws IllegalConfigurationException {
 		super(testStepId, dataInput, storageConfig, verifyFlag, batchSize);
 	}
 
@@ -73,7 +72,7 @@ public class CoopStorageDriverMock<I extends Item, O extends Operation<I>>
 
 	@Override
 	protected int submit(final List<O> ops, final int from, final int to)
-					throws InterruptRunException, IllegalStateException {
+					throws IllegalStateException {
 		for (int i = from; i < to; i++) {
 			submit(ops.get(i));
 		}
@@ -82,7 +81,7 @@ public class CoopStorageDriverMock<I extends Item, O extends Operation<I>>
 
 	@Override
 	protected int submit(final List<O> ops)
-					throws InterruptRunException, IllegalStateException {
+					throws IllegalStateException {
 		for (final O op : ops) {
 			submit(op);
 		}

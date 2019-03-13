@@ -5,8 +5,7 @@ import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
 
 import com.emc.mongoose.base.concurrent.DaemonBase;
 import com.emc.mongoose.base.data.DataInput;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.item.op.data.DataOperation;
@@ -51,7 +50,7 @@ public abstract class StorageDriverBase<I extends Item, O extends Operation<I>> 
 					final DataInput itemDataInput,
 					final Config storageConfig,
 					final boolean verifyFlag)
-					throws OmgShootMyFootException {
+					throws IllegalConfigurationException {
 
 		this.itemDataInput = itemDataInput;
 		final Config driverConfig = storageConfig.configVal("driver");
@@ -83,12 +82,12 @@ public abstract class StorageDriverBase<I extends Item, O extends Operation<I>> 
 		}
 	}
 
-	protected abstract String requestNewPath(final String path) throws InterruptRunException;
+	protected abstract String requestNewPath(final String path) ;
 
 	protected abstract String requestNewAuthToken(final Credential credential)
-					throws InterruptRunException;
+					;
 
-	protected boolean prepare(final O op) throws InterruptRunException {
+	protected boolean prepare(final O op)  {
 		op.reset();
 		if (op instanceof DataOperation) {
 			((DataOperation) op).item().dataInput(itemDataInput);
@@ -167,7 +166,7 @@ public abstract class StorageDriverBase<I extends Item, O extends Operation<I>> 
 	}
 
 	@Override
-	protected void doClose() throws InterruptRunException, IOException, IllegalStateException {
+	protected void doClose() throws IOException, IllegalStateException {
 		try (final CloseableThreadContext.Instance logCtx = CloseableThreadContext.put(KEY_STEP_ID, stepId)
 						.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())) {
 			itemDataInput.close();

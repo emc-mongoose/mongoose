@@ -1,7 +1,6 @@
 package com.emc.mongoose.base.load.step.local.context;
 
 import com.emc.mongoose.base.concurrent.Daemon;
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
 import com.github.akurilov.commons.concurrent.AsyncRunnable;
@@ -23,8 +22,8 @@ public interface LoadStepContext<I extends Item, O extends Operation<I>> extends
 	}
 
 	@Override
-	AsyncRunnable stop() throws InterruptRunException;
+	AsyncRunnable stop() ;
 
 	@Override
-	void close() throws InterruptRunException, IOException;
+	void close() throws IOException;
 }

@@ -2,11 +2,12 @@ package com.emc.mongoose.base.load.step.client;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.load.step.client.LoadStepClient.OUTPUT_PROGRESS_PERIOD_MILLIS;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.load.step.file.FileManager;
 import com.emc.mongoose.base.load.step.service.file.FileManagerService;
 import com.emc.mongoose.base.logging.LogContextThreadFactory;
@@ -78,12 +79,13 @@ public class OpTraceLogFileAggregator implements Closeable {
 												.filter(entry -> entry.getKey() instanceof FileManagerService)
 												.forEach(
 																entry -> {
-																	final FileManager fileMgr = entry.getKey();
-																	final String remoteIoTraceLogFileName = entry.getValue();
+																	final var fileMgr = entry.getKey();
+																	final var remoteIoTraceLogFileName = entry.getValue();
 																	transferToLocal(fileMgr, remoteIoTraceLogFileName, byteCounter);
 																	try {
 																		fileMgr.deleteFile(remoteIoTraceLogFileName);
 																	} catch (final Exception e) {
+																		throwUncheckedIfInterrupted(e);
 																		LogUtil.exception(
 																						Level.WARN,
 																						e,
@@ -109,7 +111,7 @@ public class OpTraceLogFileAggregator implements Closeable {
 		try {
 			finishLatch.await();
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} finally {
 			executor.shutdownNow();
 			Loggers.MSG.info(

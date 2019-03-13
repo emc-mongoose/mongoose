@@ -1,7 +1,6 @@
 package com.emc.mongoose.base.load.step;
 
 import com.emc.mongoose.base.concurrent.Daemon;
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.metrics.snapshot.AllMetricsSnapshot;
 import com.github.akurilov.commons.concurrent.AsyncRunnable;
 import java.io.IOException;
@@ -19,17 +18,17 @@ public interface LoadStep extends Daemon {
 	List<? extends AllMetricsSnapshot> metricsSnapshots() throws RemoteException;
 
 	@Override
-	AsyncRunnable start() throws InterruptRunException, RemoteException;
+	AsyncRunnable start() throws RemoteException;
 
 	@Override
-	AsyncRunnable await() throws InterruptRunException, InterruptedException, RemoteException;
+	AsyncRunnable await() throws InterruptedException, RemoteException;
 
 	@Override
 	boolean await(final long timeout, final TimeUnit timeUnit)
-					throws InterruptRunException, InterruptedException, RemoteException;
+					throws InterruptedException, RemoteException;
 
 	@Override
-	AsyncRunnable stop() throws InterruptRunException, RemoteException;
+	AsyncRunnable stop() throws RemoteException;
 
-	void close() throws InterruptRunException, IOException;
+	void close() throws IOException;
 }

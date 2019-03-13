@@ -3,10 +3,11 @@ package com.emc.mongoose.base.logging;
 import static com.emc.mongoose.base.Constants.KEY_HOME_DIR;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.base.Constants.LOCALE_DEFAULT;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.env.DateUtil.TZ_UTC;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.emc.mongoose.base.concurrent.DaemonBase;
-import com.emc.mongoose.base.exception.InterruptRunException;
 import java.util.Calendar;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -70,12 +71,11 @@ public interface LogUtil {
 		}
 	}
 
-	static void shutdown() throws InterruptRunException {
+	static void shutdown()  {
 		try {
 			DaemonBase.closeAll();
-		} catch (final InterruptRunException e) {
-			throw e;
 		} catch (final Throwable cause) {
+			throwUncheckedIfInterrupted(cause);
 			cause.printStackTrace(System.err);
 		} finally {
 			LogManager.shutdown();

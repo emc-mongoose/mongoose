@@ -1,6 +1,5 @@
 package com.emc.mongoose.base.concurrent;
 
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.logging.LogContextThreadFactory;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
@@ -9,6 +8,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import org.apache.logging.log4j.Level;
+
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 public final class SingleTaskExecutorImpl implements Runnable, SingleTaskExecutor {
 
@@ -44,9 +46,8 @@ public final class SingleTaskExecutorImpl implements Runnable, SingleTaskExecuto
 			} else {
 				try {
 					task.run();
-				} catch (final InterruptRunException e) {
-					throw e;
 				} catch (final Throwable cause) {
+					throwUncheckedIfInterrupted(cause);
 					LogUtil.trace(Loggers.ERR, Level.ERROR, cause, "Unexpected task execution failure");
 				} finally {
 					taskRef.set(null);

@@ -2,19 +2,20 @@ package com.emc.mongoose.storage.driver.coop.netty.http;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.item.DataItem.rangeCount;
 import static com.emc.mongoose.base.item.DataItem.rangeOffset;
 import static com.emc.mongoose.base.item.op.Operation.SLASH;
 import static com.github.akurilov.commons.io.el.ExpressionInput.ASYNC_MARKER;
 import static com.github.akurilov.commons.io.el.ExpressionInput.INIT_MARKER;
 import static com.github.akurilov.commons.io.el.ExpressionInput.SYNC_MARKER;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import com.emc.mongoose.base.config.ConstantValueInputImpl;
 import com.emc.mongoose.base.config.el.CompositeExpressionInputBuilder;
 import com.emc.mongoose.base.data.DataInput;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.PathItem;
@@ -91,7 +92,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 					final Config storageConfig,
 					final boolean verifyFlag,
 					final int batchSize)
-					throws OmgShootMyFootException, InterruptedException {
+					throws IllegalConfigurationException, InterruptedException {
 		super(testStepId, itemDataInput, storageConfig, verifyFlag, batchSize);
 		final var httpConfig = storageConfig.configVal("net-http");
 		final var headersMap = httpConfig.<String> mapVal("headers");
@@ -152,6 +153,9 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 			}
 		} catch (final NoSuchElementException e) {
 			throw new ConnectException("Channel pipeline is empty: connectivity related failure");
+		} catch(final InterruptedException e) {
+			throwUnchecked(e);
+			return null;
 		} catch (final Exception e) {
 			if (e instanceof ClosedChannelException) {
 				throw new ConnectException("Connection is closed: " + e.toString());
@@ -384,9 +388,9 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 
 	@Override
 	protected final void sendRequest(final Channel channel, final O op) {
-		final String nodeAddr = op.nodeAddr();
+		final var nodeAddr = op.nodeAddr();
 		try {
-			final HttpRequest httpRequest = httpRequest(op, nodeAddr);
+			final var httpRequest = httpRequest(op, nodeAddr);
 			if (channel == null) {
 				return;
 			} else {
@@ -404,6 +408,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 		} catch (final URISyntaxException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to build the request URI");
 		} catch (final Throwable e) {
+			throwUncheckedIfInterrupted(e);
 			if (!isStopped() && !isClosed()) {
 				LogUtil.trace(Loggers.ERR, Level.ERROR, e, "Send HTTP request failure");
 			}
@@ -422,7 +427,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 			op.status(Status.FAIL_IO);
 			complete(future.channel(), (O) op);
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		}
 	};
 

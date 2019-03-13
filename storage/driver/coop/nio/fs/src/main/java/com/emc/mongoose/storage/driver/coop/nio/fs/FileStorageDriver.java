@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.driver.coop.nio.fs;
 import com.emc.mongoose.base.data.DataCorruptionException;
 import com.emc.mongoose.base.data.DataInput;
 import com.emc.mongoose.base.data.DataSizeException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
+
 /**
 Created by kurila on 19.07.16.
 */
@@ -50,15 +52,15 @@ public final class FileStorageDriver<I extends Item, O extends Operation<I>>
 
 	public FileStorageDriver(
 					final String stepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-					final int batchSize) throws OmgShootMyFootException {
+					final int batchSize) throws IllegalConfigurationException {
 		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 		requestAuthTokenFunc = null; // do not use
 	}
 
 	private <F extends DataItem, D extends DataOperation<F>> FileChannel openDstFile(final D dataOp) {
-		final String fileItemName = dataOp.item().name();
-		final OpType opType = dataOp.type();
-		final String dstPath = dataOp.dstPath();
+		final var fileItemName = dataOp.item().name();
+		final var opType = dataOp.type();
+		final var dstPath = dataOp.dstPath();
 		final Path itemPath;
 		try {
 			if (dstPath == null || dstPath.isEmpty() || fileItemName.startsWith(dstPath)) {
@@ -79,7 +81,7 @@ public final class FileStorageDriver<I extends Item, O extends Operation<I>>
 			dataOp.status(Operation.Status.FAIL_IO);
 			LogUtil.exception(Level.DEBUG, e, "Failed to open the output channel for the path \"{}\"", dstPath);
 		} catch (final FileSystemException e) {
-			final long freeSpace = (new File(e.getFile())).getFreeSpace();
+			final var freeSpace = (new File(e.getFile())).getFreeSpace();
 			if (freeSpace > 0) {
 				dataOp.status(Operation.Status.FAIL_IO);
 				LogUtil.exception(Level.DEBUG, e, "Failed to open the output channel for the path \"{}\"", dstPath);
@@ -91,6 +93,7 @@ public final class FileStorageDriver<I extends Item, O extends Operation<I>>
 			dataOp.status(Operation.Status.FAIL_IO);
 			LogUtil.exception(Level.DEBUG, e, "Failed to open the output channel for the path \"{}\"", dstPath);
 		} catch (final Throwable cause) {
+			throwUncheckedIfInterrupted(cause);
 			dataOp.status(Operation.Status.FAIL_UNKNOWN);
 			LogUtil.exception(Level.WARN, cause, "Failed to open the output channel for the path \"{}\"", dstPath);
 		}
@@ -275,6 +278,7 @@ public final class FileStorageDriver<I extends Item, O extends Operation<I>>
 			LogUtil.exception(Level.WARN, e, op.toString());
 			op.status(Operation.Status.FAIL_IO);
 		} catch (final Throwable e) {
+			throwUncheckedIfInterrupted(e);
 			if (!isClosed()) { // shared content source may be already closed from the load generator
 				LogUtil.trace(Loggers.ERR, Level.ERROR, e, "File I/O invocation failure");
 				op.status(Operation.Status.FAIL_UNKNOWN);
