@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
-import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -106,64 +105,62 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	}
 
 	ByteBuf removeHeaders(final Channel channel, final O op, final ByteBuf contentChunk) {
-		final String boundaryMarker = channel.attr(ATTR_KEY_BOUNDARY_MARKER).get();
-		final int rawSize = contentChunk.readableBytes();
-		final int cutChunkSize = cutChunck.length;
-		final byte[] rawBytesChunk = new byte[cutChunkSize + rawSize];
+		final var boundaryMarker = channel.attr(ATTR_KEY_BOUNDARY_MARKER).get();
+		final var rawSize = contentChunk.readableBytes();
+		final var cutChunkSize = cutChunck.length;
+		final var rawBytesChunk = new byte[cutChunkSize + rawSize];
 		System.arraycopy(cutChunck, 0, rawBytesChunk, 0, cutChunkSize);
 		while (contentChunk.readerIndex() < rawSize) {
 			rawBytesChunk[cutChunkSize + contentChunk.readerIndex()] = contentChunk.readByte();
 		}
-		String s = new String(rawBytesChunk);
-		final Pattern p = Pattern
-			.compile(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker));
-		final Matcher matcher = p.matcher(s);
-		final List<int[]> contentRangeIdxs = new ArrayList();
-		final List<MatchResult> results = matcher.results().collect(Collectors.toList());
+		String tmp = new String(rawBytesChunk);
+		final var p = Pattern.compile(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker));
+		final var matcher = p.matcher(tmp);
+		final var contentRangeIdxs = new ArrayList<int[]>();
+		final var results = matcher.results().collect(Collectors.toList());
 		int startIndex = 0;
 		int endIndex;
-		for (final var result : results){
+		for (final var result : results) {
 			endIndex = result.start();
-			contentRangeIdxs.add(new int[]{startIndex, endIndex}); //TODO ??? replace on {start,size}
+			//TODO ??? replace on {start,size}
+			contentRangeIdxs.add(new int[]{startIndex, endIndex});
 			startIndex = result.end();
 		}
 		endIndex = rawBytesChunk.length;
 		contentRangeIdxs.add(new int[]{startIndex, endIndex});
-		int newContentSize = 0;
-		for (final int[] range : contentRangeIdxs) { //TODO: refactor
+		var newContentSize = 0;
+		for (final var range : contentRangeIdxs) { //TODO: refactor
 			newContentSize += range[1] - range[0];
 		}
-		final byte[] bytesChunk = new byte[newContentSize];
+		final var bytesChunk = new byte[newContentSize];
 		int lastIdx = 0; //index in bytesChunk
-		for (final int[] range : contentRangeIdxs) { //TODO: refactor
-			final int rangeSize = range[1] - range[0];
+		for (final var range : contentRangeIdxs) { //TODO: refactor
+			final var rangeSize = range[1] - range[0];
 			System.arraycopy(rawBytesChunk, range[0], bytesChunk, lastIdx, rangeSize);
 			lastIdx += rangeSize;
 		}
 
-		final byte[] bytesChunkWithoutEnd = cuteEnd(bytesChunk);
+		final var bytesChunkWithoutEnd = cuteEnd(bytesChunk);
 		return Unpooled.copiedBuffer(bytesChunkWithoutEnd);
 	}
 
 	private byte[] cuteEnd(final byte[] bytesChunk) {
-		String tmpString = new String(bytesChunk);
-		String cutString = "";
+		final var tmpString = new String(bytesChunk);
+		var cutString = "";
 		final byte[] newBytesChunk;
-		if (tmpString.substring(tmpString.length() - 1) == "-") {
+		if (tmpString.substring(tmpString.length() - 1).equals("-")) {
 			cutString = "-";
 		}
-		if (tmpString.substring(tmpString.length() - 2) == "--") {
+		if (tmpString.substring(tmpString.length() - 2).equals("--")) {
 			cutString = "--";
 		}
-		final Pattern pattern = Pattern.compile("[\\s]{2}--(.|\\s)*");
-		final Matcher matcher = pattern.matcher(tmpString);
+		final var pattern = Pattern.compile("[\\s]{2}--(.|\\s)*");
+		final var matcher = pattern.matcher(tmpString);
 		if (matcher.find()) {
-			// TODO kochuv: may be without count?
-			final int count = matcher.groupCount();
-			cutString = matcher.group(count - 1);
+			cutString = matcher.group(matcher.groupCount() - 1);
 		}
 		cutChunck = cutString.getBytes(); //cutString includes only writable chars
-		final int newSize = bytesChunk.length - cutString.length();
+		final var newSize = bytesChunk.length - cutString.length();
 		newBytesChunk = new byte[newSize];
 		System.arraycopy(bytesChunk, 0, newBytesChunk, 0, newSize);
 		return newBytesChunk;
