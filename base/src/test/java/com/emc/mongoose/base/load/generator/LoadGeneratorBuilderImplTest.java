@@ -94,9 +94,10 @@ public class LoadGeneratorBuilderImplTest {
 				put("item-data-size", "1MB");
 				put("item-input-path", null);
 				put("item-naming-length", 12);
-				put("item-naming-offset", 0L);
+				put("item-naming-seed", 0L);
 				put("item-naming-prefix", null);
 				put("item-naming-radix", 36);
+				put("item-naming-step", 1);
 				put("item-naming-type", "random");
 				put("item-output-path", prefixBucket + "${rnd.nextLong(100)}%{" + seed + "}");
 				put("load-batch-size", opCount);

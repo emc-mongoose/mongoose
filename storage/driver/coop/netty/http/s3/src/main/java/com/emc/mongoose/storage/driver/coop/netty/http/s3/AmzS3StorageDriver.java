@@ -1,13 +1,13 @@
 package com.emc.mongoose.storage.driver.coop.netty.http.s3;
 
 import static com.emc.mongoose.base.item.op.Operation.SLASH;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.emc.mongoose.base.data.DataInput;
 import com.emc.mongoose.base.env.DateUtil;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
@@ -87,7 +87,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 					final Config storageConfig,
 					final boolean verifyFlag,
 					final int batchSize)
-					throws OmgShootMyFootException, InterruptedException {
+					throws IllegalConfigurationException, InterruptedException {
 		super(stepId, itemDataInput, storageConfig, verifyFlag, batchSize);
 		final var httpConfig = storageConfig.configVal("net-http");
 		fsAccess = httpConfig.boolVal("fsAccess");
@@ -96,7 +96,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 	}
 
 	@Override
-	protected String requestNewPath(final String path) throws InterruptRunException {
+	protected String requestNewPath(final String path)  {
 		final var bucketUri = path.startsWith(SLASH) ? path : SLASH + path;
 		final var uriQuery = uriQuery();
 		final var uri = uriQuery == null || uriQuery.isEmpty() ? bucketUri : bucketUri + uriQuery;
@@ -116,11 +116,11 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 						Unpooled.EMPTY_BUFFER,
 						reqHeaders,
 						EmptyHttpHeaders.INSTANCE);
-		final FullHttpResponse checkBucketResp;
+		FullHttpResponse checkBucketResp = null;
 		try {
 			checkBucketResp = executeHttpRequest(checkBucketReq);
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} catch (final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -153,17 +153,17 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			final FullHttpResponse putBucketResp;
 			try {
 				putBucketResp = executeHttpRequest(putBucketReq);
+				if (!HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
+					Loggers.ERR.warn("The bucket creating response is: {}", putBucketResp.status().toString());
+					return null;
+				}
+				putBucketResp.release();
 			} catch (final InterruptedException e) {
-				throw new InterruptRunException(e);
+				throwUnchecked(e);
 			} catch (final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
 			}
-			if (!HttpStatusClass.SUCCESS.equals(putBucketResp.status().codeClass())) {
-				Loggers.ERR.warn("The bucket creating response is: {}", putBucketResp.status().toString());
-				return null;
-			}
-			putBucketResp.release();
 		}
 
 		// check the bucket versioning state
@@ -195,7 +195,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 				}
 			}
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} catch (final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}
@@ -244,7 +244,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			}
 			putBucketVersioningResp.release();
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} catch (final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}
@@ -263,7 +263,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 					final int idRadix,
 					final I lastPrevItem,
 					final int count)
-					throws InterruptRunException, IOException {
+					throws IOException {
 		final var countLimit = count < 1 || count > AmzS3Api.MAX_KEYS_LIMIT ? AmzS3Api.MAX_KEYS_LIMIT : count;
 		final var nodeAddr = storageNodeAddrs[0];
 		final var reqHeaders = new DefaultHttpHeaders();
@@ -326,7 +326,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 				listResp.release();
 			}
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} catch (final SAXException | ParserConfigurationException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to init the XML response parser");
 		} catch (final ConnectException e) {

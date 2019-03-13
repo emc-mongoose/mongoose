@@ -13,13 +13,13 @@ import static com.emc.mongoose.storage.driver.coop.netty.http.swift.SwiftApi.KEY
 import static com.emc.mongoose.storage.driver.coop.netty.http.swift.SwiftApi.MAX_LIST_LIMIT;
 import static com.emc.mongoose.storage.driver.coop.netty.http.swift.SwiftApi.URI_BASE;
 import static com.emc.mongoose.storage.driver.coop.netty.http.swift.SwiftApi.parseContainerListing;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import com.emc.mongoose.base.config.IllegalArgumentNameException;
 import com.emc.mongoose.base.data.DataInput;
 import com.emc.mongoose.base.env.DateUtil;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
@@ -73,7 +73,7 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 					final Config storageConfig,
 					final boolean verifyFlag,
 					final int batchSize)
-					throws OmgShootMyFootException, InterruptedException {
+					throws IllegalConfigurationException, InterruptedException {
 		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 		final Config httpConfig = storageConfig.configVal("net-http");
 		versioning = httpConfig.boolVal("versioning");
@@ -84,7 +84,7 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 	}
 
 	@Override
-	protected final String requestNewPath(final String path) throws InterruptRunException {
+	protected final String requestNewPath(final String path)  {
 		// check the destination container if it exists w/ HEAD request
 		final var nodeAddr = storageNodeAddrs[0];
 		final var containerUri = namespacePath + (path.startsWith(SLASH) ? path : SLASH + path);
@@ -104,11 +104,11 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 						Unpooled.EMPTY_BUFFER,
 						reqHeaders,
 						EmptyHttpHeaders.INSTANCE);
-		final FullHttpResponse checkContainerResp;
+		FullHttpResponse checkContainerResp = null;
 		try {
 			checkContainerResp = executeHttpRequest(checkContainerReq);
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} catch (final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -164,7 +164,7 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 					putContainerResp.release();
 				}
 			} catch (final InterruptedException e) {
-				throw new InterruptRunException(e);
+				throwUnchecked(e);
 			} catch (final ConnectException e) {
 				LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 				return null;
@@ -175,7 +175,7 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 
 	@Override
 	protected final String requestNewAuthToken(final Credential credential)
-					throws InterruptRunException {
+					 {
 		final var nodeAddr = storageNodeAddrs[0];
 		final var reqHeaders = (HttpHeaders) new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);
@@ -197,11 +197,11 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 						Unpooled.EMPTY_BUFFER,
 						reqHeaders,
 						EmptyHttpHeaders.INSTANCE);
-		final FullHttpResponse getAuthTokenResp;
+		FullHttpResponse getAuthTokenResp = null;
 		try {
 			getAuthTokenResp = executeHttpRequest(getAuthTokenReq);
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} catch (final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 			return null;
@@ -219,7 +219,7 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 					final int idRadix,
 					final I lastPrevItem,
 					final int count)
-					throws InterruptRunException, IOException {
+					throws IOException {
 		final var countLimit = count < 1 || count > MAX_LIST_LIMIT ? MAX_LIST_LIMIT : count;
 		final var nodeAddr = storageNodeAddrs[0];
 		final var reqHeaders = (HttpHeaders) new DefaultHttpHeaders();
@@ -272,7 +272,7 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 				listResp.release();
 			}
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} catch (final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}
@@ -281,7 +281,7 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected final boolean submit(final O op) throws InterruptRunException, IllegalStateException {
+	protected final boolean submit(final O op) throws IllegalStateException {
 		if (!isStarted()) {
 			throw new IllegalStateException();
 		}
@@ -305,7 +305,7 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 	@Override
 	@SuppressWarnings("unchecked")
 	protected final int submit(final List<O> ops, final int from, final int to)
-					throws InterruptRunException, IllegalStateException {
+					throws IllegalStateException {
 		if (!isStarted()) {
 			throw new IllegalStateException();
 		}
@@ -336,7 +336,7 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 											e,
 											"{}: interrupted while enqueueing the child sub-operations",
 											toString());
-							throw new InterruptRunException(e);
+							throwUnchecked(e);
 						}
 					} else {
 						throw new AssertionError("Composite load operation yields 0 sub-operations");

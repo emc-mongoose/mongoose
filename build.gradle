@@ -1,5 +1,4 @@
-import groovy.json.JsonSlurper
-import groovy.json.JsonParserType
+import org.yaml.snakeyaml.Yaml
 
 buildscript {
 	repositories {
@@ -7,6 +6,11 @@ buildscript {
 		maven {
 			url "https://plugins.gradle.org/m2/"
 		}
+	}
+	dependencies {
+		classpath(
+			"org.yaml:snakeyaml:1.24",
+		)
 	}
 }
 
@@ -20,7 +24,7 @@ description = "Mongoose is a high-load storage performance testing tool"
 ext {
 	depVersion = [
 		confuse            : "1.2.1",
-		confuseIoJson      : "1.1.0",
+		confuseIoYaml      : "1.0.0",
 		commonsCodec       : "1.11",
 		commonsLang        : "2.6",
 		disruptor          : "3.4.2",
@@ -254,11 +258,12 @@ allprojects {
 }
 
 String defineVersion() {
-	def configFilePath = [ rootProject.rootDir, "base", "src", "main", "resources", "config", "defaults.json", ]
+	def configFilePath = [ rootProject.rootDir, "base", "src", "main", "resources", "config", "defaults.yaml", ]
 		.join(File.separator);
 	def inputFile = new File(configFilePath)
-	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
-	json.run.version
+	def parser = new Yaml()
+	def y = parser.load(inputFile.text)
+	y.run.version
 }
 
 task mongooseVersion {

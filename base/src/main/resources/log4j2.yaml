@@ -1,0 +1,217 @@
+---
+Configuration:
+  status: info
+  name: mongoose
+  monitorInterval: 1000
+  packages: com.emc.mongoose.base.logging
+  shutdownHook: enable
+  shutdownTimeout: 10000
+  appenders:
+    Console:
+    - name: stdout
+      follow: true
+      PatternLayout:
+        alwaysWriteExceptions: false
+        pattern: "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-30.-30X{class_name} %-30.-30t %m%n}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=black bright, DEBUG=black, TRACE=black}"
+      Filters:
+        ThresholdFilter:
+          level: INFO
+          onMatch: ACCEPT
+          onMismatch: DENY
+    - name: metricsStdout
+      follow: true
+      PatternLayout:
+        alwaysWriteExceptions: false
+        pattern: "%highlight{%m}{FATAL=red bold, ERROR=red, WARN=yellow, INFO=normal, DEBUG=black, TRACE=black}"
+    RollingRandomAccessFile:
+    - name: msgFile
+      fileName: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}messages.log"
+      filePattern: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}messages.log"
+      Policies:
+        StepIdTriggeringPolicy: {}
+      DirectWriteRolloverStrategy: {}
+      PatternLayout:
+        pattern: "%d{ISO8601}{GMT+0} | %p | %X{class_name} | %t | %m%n"
+    - name: 3rdPartyFile
+      fileName: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}3rdparty.log"
+      filePattern: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}3rdparty.log"
+      Policies:
+        StepIdTriggeringPolicy: {}
+      DirectWriteRolloverStrategy: {}
+      PatternLayout:
+        pattern: "%d{ISO8601}{GMT+0} | %p | %c{1.} | %t | %m%n"
+      Filters:
+        BurstFilter:
+          rate: 100
+          maxBurst: 1000
+    - name: errFile
+      fileName: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}errors.log"
+      filePattern: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}errors.log"
+      Policies:
+        StepIdTriggeringPolicy: {}
+      DirectWriteRolloverStrategy: {}
+      PatternLayout:
+        pattern: "%d{ISO8601}{GMT+0} | %p | %X{class_name} | %t | %m%n"
+      Filters:
+        BurstFilter:
+          rate: 100
+          maxBurst: 1000
+    - name: metricsFile
+      fileName: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}metrics.csv"
+      filePattern: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}metrics.csv"
+      Policies:
+        StepIdTriggeringPolicy: {}
+      DirectWriteRolloverStrategy: {}
+      PatternLayout:
+        header: "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,StepDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n"
+        pattern: "%m%n"
+    - name: metricsThresholdFile
+      fileName: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}metrics.threshold.csv"
+      filePattern: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}metrics.threshold.csv"
+      Policies:
+        StepIdTriggeringPolicy: {}
+      DirectWriteRolloverStrategy: {}
+      PatternLayout:
+        header: "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,StepDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n"
+        pattern: "%m%n"
+    - name: metricsFileTotal
+      fileName: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}metrics.total.csv"
+      filePattern: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}metrics.total.csv"
+      Policies:
+        StepIdTriggeringPolicy: {}
+      DirectWriteRolloverStrategy: {}
+      PatternLayout:
+        header: "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,StepDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n"
+        pattern: "%m%n"
+    - name: metricsThresholdFileTotal
+      fileName: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}metrics.threshold.total.csv"
+      filePattern: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}metrics.threshold.total.csv"
+      Policies:
+        StepIdTriggeringPolicy: {}
+      DirectWriteRolloverStrategy: {}
+      PatternLayout:
+        header: "DateTimeISO8601,OpType,Concurrency,NodeCount,ConcurrencyCurr,ConcurrencyMean,CountSucc,CountFail,Size,StepDuration[s],DurationSum[s],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s],DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us]\n"
+        pattern: "%m%n"
+    - name: opTraceFile
+      fileName: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}op.trace.csv"
+      filePattern: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}op.trace.csv"
+      Policies:
+        StepIdTriggeringPolicy: {}
+      DirectWriteRolloverStrategy: {}
+      PatternLayout:
+        pattern: "%m"
+    - name: cliFile
+      fileName: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}cli.args.log"
+      filePattern: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}cli.args.log"
+      Policies:
+        StepIdTriggeringPolicy: {}
+      DirectWriteRolloverStrategy: {}
+      SyslogLayout: {}
+    - name: cfgFile
+      fileName: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}config.yaml"
+      filePattern: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}config.yaml"
+      Policies:
+        StepIdTriggeringPolicy: {}
+      DirectWriteRolloverStrategy: {}
+      SyslogLayout: {}
+    - name: scenarioFile
+      fileName: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}scenario.txt"
+      filePattern: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}scenario.txt"
+      Policies:
+        StepIdTriggeringPolicy: {}
+      DirectWriteRolloverStrategy: {}
+      SyslogLayout: {}
+    - name: partsUploadFile
+      fileName: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}${ctx:step_id}${sys:file.separator}parts.upload.csv"
+      filePattern: "${ctx:home_dir}${sys:file.separator}log${sys:file.separator}$${ctx:step_id}${sys:file.separator}parts.upload.csv"
+      Policies:
+        StepIdTriggeringPolicy: {}
+      DirectWriteRolloverStrategy: {}
+      PatternLayout:
+        header: "ItemPath,UploadId,RespLatency[us]%n"
+        pattern: "%m%n"
+  Loggers:
+    root:
+      Level: INFO
+      AppenderRef:
+        ref: 3rdPartyFile
+      additivity: false
+    logger:
+    - name: io.netty.util.concurrent.DefaultPromise.rejectedExecution
+      level: FATAL
+      AppenderRef:
+        ref: 3rdPartyFile
+      additivity: false
+    - name: io.netty.channel.AbstractChannel
+      level: ERROR
+      AppenderRef:
+        ref: 3rdPartyFile
+      additivity: false
+    - name: com.emc.mongoose.base.logging.Cli
+      level: INFO
+      AppenderRef:
+        ref: cliFile
+      additivity: false
+    - name: com.emc.mongoose.base.logging.Config
+      level: INFO
+      AppenderRef:
+        ref: cfgFile
+      additivity: false
+    - name: com.emc.mongoose.base.logging.Errors
+      level: DEBUG
+      AppenderRef:
+        - ref: stdout
+        - ref: errFile
+      additivity: false
+    - name: com.emc.mongoose.base.logging.OpTraces
+      level: INFO
+      AppenderRef:
+        ref: opTraceFile
+      additivity: false
+    - name: com.emc.mongoose.base.logging.metrics.File
+      level: INFO
+      AppenderRef:
+        ref: metricsFile
+      additivity: false
+    - name: com.emc.mongoose.base.logging.metrics.FileTotal
+      level: INFO
+      AppenderRef:
+        ref: metricsFileTotal
+      additivity: false
+    - name: com.emc.mongoose.base.logging.metrics.StdOut
+      level: INFO
+      AppenderRef:
+        ref: metricsStdout
+      additivity: false
+    - name: com.emc.mongoose.base.logging.metrics.threshold.File
+      level: INFO
+      AppenderRef:
+        ref: metricsThresholdFile
+      additivity: false
+    - name: com.emc.mongoose.base.logging.metrics.threshold.FileTotal
+      level: INFO
+      AppenderRef:
+        ref: metricsThresholdFileTotal
+      additivity: false
+    - name: com.emc.mongoose.base.logging.Messages
+      level: DEBUG
+      AppenderRef:
+        - ref: stdout
+        - ref: msgFile
+      additivity: false
+    - name: com.emc.mongoose.base.logging.Multipart
+      level: DEBUG
+      AppenderRef:
+        ref: partsUploadFile
+      additivity: false
+    - name: com.emc.mongoose.base.logging.Scenario
+      level: INFO
+      AppenderRef:
+        ref: scenarioFile
+      additivity: false
+    - name: com.github.akurilov
+      level: WARN
+      AppenderRef:
+        - ref: stdout
+        - ref: msgFile
+      additivity: false

@@ -75,7 +75,7 @@ curl GET http://localhost:9999/config/schema
 Start a new scenario run:
 ```bash
 curl -v -X POST \
-    -F defaults=@base/src/test/robot/api/remote/data/aggregated_defaults.json \
+    -F defaults=@base/src/test/robot/api/remote/data/aggregated_defaults.yaml \
     -F scenario=@base/src/test/robot/api/remote/data/scenario_dummy.js \
     http://localhost:9999/run
 ```
@@ -89,7 +89,7 @@ Also, the partial defaults configuration may be supplied too:
 ```bash
 curl -v -X POST \
     -H "Content-Type:multipart/form-data" \
-    -F "defaults={\"storage\":{\"driver\":{\"type\":\"dummy-mock\"}}};type=application/json" \
+    -F "defaults=storage:{driver:{type:\"dummy-mock\"}}};type=application/yaml" \
     http://localhost:9999/run
 ```
 > **Note**: use this example above as the most simple way to start via the remote API.

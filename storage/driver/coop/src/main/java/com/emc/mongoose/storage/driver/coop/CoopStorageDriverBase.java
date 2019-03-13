@@ -6,8 +6,7 @@ import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.base.data.DataInput;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.item.op.composite.CompositeOperation;
@@ -42,7 +41,7 @@ public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<
 					final Config storageConfig,
 					final boolean verifyFlag,
 					final int batchSize)
-					throws OmgShootMyFootException {
+					throws IllegalConfigurationException {
 		super(testStepId, dataInput, storageConfig, verifyFlag);
 		final var inQueueLimit = storageConfig.intVal("driver-limit-queue-input");
 		this.childOpQueue = new ArrayBlockingQueue<>(inQueueLimit);
@@ -58,7 +57,7 @@ public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<
 	}
 
 	@Override
-	public final boolean put(final O op) throws InterruptRunException {
+	public final boolean put(final O op)  {
 		if (!isStarted()) {
 			throwUnchecked(new EOFException());
 		}
@@ -72,7 +71,7 @@ public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<
 
 	@Override
 	public final int put(final List<O> ops, final int from, final int to)
-					throws InterruptRunException {
+					 {
 		if (!isStarted()) {
 			throwUnchecked(new EOFException());
 		}
@@ -92,7 +91,7 @@ public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<
 	}
 
 	@Override
-	public final int put(final List<O> ops) throws InterruptRunException {
+	public final int put(final List<O> ops)  {
 		if (!isStarted()) {
 			throwUnchecked(new EOFException());
 		}
@@ -141,13 +140,13 @@ public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<
 		}
 	}
 
-	protected abstract boolean submit(final O op) throws InterruptRunException, IllegalStateException;
+	protected abstract boolean submit(final O op) throws IllegalStateException;
 
 	protected abstract int submit(final List<O> ops, final int from, final int to)
-					throws InterruptRunException, IllegalStateException;
+					throws IllegalStateException;
 
 	protected abstract int submit(final List<O> ops)
-					throws InterruptRunException, IllegalStateException;
+					throws IllegalStateException;
 
 	@SuppressWarnings("unchecked")
 	protected final boolean handleCompleted(final O op) {
@@ -196,7 +195,7 @@ public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<
 	}
 
 	@Override
-	protected void doClose() throws InterruptRunException, IOException, IllegalStateException {
+	protected void doClose() throws IOException, IllegalStateException {
 		try (final var logCtx = CloseableThreadContext.put(KEY_STEP_ID, stepId)
 						.put(KEY_CLASS_NAME, StorageDriverBase.class.getSimpleName())) {
 			super.doClose();

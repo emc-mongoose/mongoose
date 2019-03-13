@@ -38,9 +38,9 @@ Mongoose uses the [Apache Log4J2](http://logging.apache.org/log4j/2.x/) library 
 overwhelming majority of its output due to
 [high performance capabilities](http://logging.apache.org/log4j/2.x/performance.html).
 
-The Log4J2 configuration is bundled into the `mongoose.jar` resources as `log4j2.json` file and
-is not designated to be changed by user since v3.5. Also the `log4j2.component.properties` file
-bundled into that jar to specify the additional options tuning the logging subsystem performance.
+The Log4J2 configuration is bundled into the `mongoose.jar` resources as `log4j2.yaml`. Also the
+`log4j2.component.properties` file bundled into that jar to specify the additional options tuning the logging subsystem
+performance.
 
 ### 1.1.1 Load Step Id
 
@@ -63,21 +63,21 @@ The most of log messages are written to the output files using dynamic output fi
 In order to configure logging, can be used custom log4j2 config. This may be necessary to disable warnings or logging certain files.
 Use parameter `Dlog4j.configurationFile` for this:
 ```bash
-java -Dlog4j.configurationFile=/path/to/custom/config/log4j2.json -jar mongoose-<VERSION>.jar
+java -Dlog4j.configurationFile=/path/to/custom/config/log4j2.yaml -jar mongoose-<VERSION>.jar
 ```
-An example of a default configuration [here](base/src/main/resources/log4j2.json).
+An example of a default configuration [here](base/src/main/resources/log4j2.yaml).
 
 ##### 1.1.4.1. Docker Custom Logging
 
 The custom docker image should be built with the modified *entrypoint* for custom logging configuration. The additional property
-`-Dlog4j.configurationFile=/path/in/container/custom-log4j2.json` should be added:
+`-Dlog4j.configurationFile=/path/in/container/custom-log4j2.yaml` should be added:
 
 ```bash
 #!/bin/sh
 umask 0000
 export JAVA_HOME=/opt/mongoose
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${JAVA_HOME}/bin
-java -Dlog4j.configurationFile=/path/in/container/custom-log4j2.json -jar /opt/mongoose/mongoose.jar "$@"
+java -Dlog4j.configurationFile=/path/in/container/custom-log4j2.yaml -jar /opt/mongoose/mongoose.jar "$@"
 ```
 
 > default [entrypoint](docker/entrypoint.sh) 
@@ -86,7 +86,7 @@ and run container with following command:
 
 ```bash
 docker run \
-    -ti -v /path/on/host/custom-log4j2json:/path/in/container/custom-log4j2.json \
+    -ti -v /path/on/host/custom-log4j2config:/path/in/container/custom-log4j2.yaml \
     -v /path/on/host/custom-entrypoint.sh:/path/in/container/custom-entrypoint.sh \
     --entrypoint /path/in/container/custom-entrypoint.sh \
     --network host \
@@ -105,7 +105,7 @@ file.
 ### 1.2.2. Configuration Dump
 
 The configuration (defaults after the CLI arguments applied) is logged
-once per run into the `config.json` log file.
+once per run into the `config.yaml` log file.
 
 ### 1.2.3. Scenario Dump
 

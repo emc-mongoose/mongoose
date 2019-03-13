@@ -493,7 +493,7 @@ TODO
 
     3. Mongoose [[Components|v3.3 Components]] are available in the Maven Central Repo.
 
-        This will allow to use to embed any Mongoose functionality into an user application.
+        This will allow to use to embed any Mongoose functionality into a user application.
 
 2. **Configuration layout change**
 
@@ -635,8 +635,8 @@ TODO
 ## Essential Differences from 2.x.x
 
 * Configured concurrent connection count (in the case of a non-FS storage driver) is shared between all the configured storage nodes. So if it's configured concurrency level of N1 and the count of the storage nodes is N2 then the total concurrent connection count is still N1 (before 3.0.0 it was N1 x N2).
-* I/O trace logging is disabled by default by performance considerations. An user should manually modify the logging configuration file to enable the I/O trace logging.
-* Processed items logging is disabled by default by performance considerations. An user should manually specify the item output file if needed.
+* I/O trace logging is disabled by default by performance considerations. A user should manually modify the logging configuration file to enable the I/O trace logging.
+* Processed items logging is disabled by default by performance considerations. A user should manually specify the item output file if needed.
 * Content verification on read is disabled by default by performance considerations.
 
 ## Other Notable Changes
@@ -716,9 +716,9 @@ Mongoose 2.x is no more compatible with previous versions. That was done to perf
 
 The new version of Mongoose is expected to be
 
-Scriptable by an User
+Scriptable by a User
 Supporting new use cases such as "Mixed Load" and "Weighted Load"
-Including the reach set of predefined example scenarios for an user reference.
+Including the reach set of predefined example scenarios for a user reference.
 Also, web GUI is temporary unavailable for the new version as far as it requires an additional work.
 
 New Features and Enhancements

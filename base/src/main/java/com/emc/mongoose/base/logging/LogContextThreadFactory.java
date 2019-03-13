@@ -1,8 +1,9 @@
 package com.emc.mongoose.base.logging;
 
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.github.akurilov.commons.concurrent.ContextAwareThreadFactory;
 import java.util.Map;
 import java.util.logging.Level;
@@ -36,11 +37,10 @@ public final class LogContextThreadFactory extends ContextAwareThreadFactory {
 
 		@Override
 		public final void run() {
-			try (final Instance ctx = CloseableThreadContext.putAll(threadContext)) {
+			try (final var ctx = CloseableThreadContext.putAll(threadContext)) {
 				super.run();
-			} catch (final InterruptRunException e) {
-				throw e;
 			} catch (final Throwable cause) {
+				throwUncheckedIfInterrupted(cause);
 				LOG.log(Level.SEVERE, "Unhandled thread failure", cause);
 			}
 		}

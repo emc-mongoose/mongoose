@@ -1,8 +1,9 @@
 package com.emc.mongoose.base.load.step.client;
 
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.load.step.client.LoadStepClient.OUTPUT_PROGRESS_PERIOD_MILLIS;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.load.step.file.FileManager;
 import com.emc.mongoose.base.load.step.service.file.FileManagerService;
@@ -36,20 +37,20 @@ public final class ItemInputFileSlicer implements AutoCloseable {
 					final List<FileManager> fileMgrs,
 					final List<Config> configSlices,
 					final Input<I> itemInput,
-					final int batchSize)
-					throws InterruptRunException {
+					final int batchSize) {
 		this.loadStepId = loadStepId;
-		final int sliceCount = configSlices.size();
+		final var sliceCount = configSlices.size();
 		itemInputFileSlices = new HashMap<>(sliceCount);
 		this.fileMgrs = fileMgrs;
-		for (int i = 0; i < sliceCount; i++) {
+		for (var i = 0; i < sliceCount; i++) {
 			try {
-				final FileManager fileMgr = fileMgrs.get(i);
-				final String itemInputFileName = fileMgr.newTmpFileName();
+				final var fileMgr = fileMgrs.get(i);
+				final var itemInputFileName = fileMgr.newTmpFileName();
 				itemInputFileSlices.put(fileMgr, itemInputFileName);
-				final Config configSlice = configSlices.get(i);
+				final var configSlice = configSlices.get(i);
 				configSlice.val("item-input-file", itemInputFileName);
 			} catch (final Exception e) {
+				throwUncheckedIfInterrupted(e);
 				LogUtil.exception(
 								Level.ERROR, e, "Failed to get the item input file name for the step slice #" + i);
 			}
@@ -60,9 +61,8 @@ public final class ItemInputFileSlicer implements AutoCloseable {
 			scatterItems(itemInput, batchSize);
 		} catch (final IOException e) {
 			LogUtil.exception(Level.WARN, e, "{}: failed to use the item input", loadStepId);
-		} catch (final InterruptRunException e) {
-			throw e;
 		} catch (final Throwable cause) {
+			throwUncheckedIfInterrupted(cause);
 			LogUtil.exception(Level.ERROR, cause, "{}: unexpected failure", loadStepId);
 		}
 	}
@@ -74,11 +74,12 @@ public final class ItemInputFileSlicer implements AutoCloseable {
 						.parallelStream()
 						.forEach(
 										entry -> {
-											final FileManager fileMgr = entry.getKey();
-											final String itemInputFileName = entry.getValue();
+											final var fileMgr = entry.getKey();
+											final var itemInputFileName = entry.getValue();
 											try {
 												fileMgr.deleteFile(itemInputFileName);
 											} catch (final Exception e) {
+												throwUncheckedIfInterrupted(e);
 												LogUtil.exception(
 																Level.WARN,
 																e,
@@ -92,7 +93,7 @@ public final class ItemInputFileSlicer implements AutoCloseable {
 	}
 
 	private <I extends Item> void scatterItems(final Input<I> itemInput, final int batchSize)
-					throws InterruptRunException, IOException {
+					throws IOException {
 
 		Loggers.MSG.info("{}: slice the item input \"{}\"...", loadStepId, itemInput);
 
@@ -132,7 +133,7 @@ public final class ItemInputFileSlicer implements AutoCloseable {
 					final Map<FileManager, ByteArrayOutputStream> itemsOutByteBuffs,
 					final Map<FileManager, ObjectOutputStream> itemsOutputs,
 					final int batchSize)
-					throws InterruptRunException, IOException {
+					throws IOException {
 
 		final int sliceCount = itemsOutByteBuffs.size();
 		final List<I> itemsBuff = new ArrayList<>(batchSize);
@@ -152,6 +153,7 @@ public final class ItemInputFileSlicer implements AutoCloseable {
 			try {
 				n = itemInput.get(itemsBuff, batchSize);
 			} catch (final Exception e) {
+				throwUncheckedIfInterrupted(e);
 				if (e instanceof EOFException) {
 					break;
 				} else {

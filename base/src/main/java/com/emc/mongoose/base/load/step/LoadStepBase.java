@@ -2,7 +2,8 @@ package com.emc.mongoose.base.load.step;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import com.emc.mongoose.base.concurrent.DaemonBase;
@@ -10,7 +11,6 @@ import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
 import com.emc.mongoose.base.config.ConfigUtil;
 import com.emc.mongoose.base.config.TimeUtil;
 import com.emc.mongoose.base.env.Extension;
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import org.apache.logging.log4j.Level;
 
 public abstract class LoadStepBase extends DaemonBase implements LoadStep, Runnable {
@@ -58,11 +57,24 @@ public abstract class LoadStepBase extends DaemonBase implements LoadStep, Runna
 
 	@Override
 	public final List<? extends AllMetricsSnapshot> metricsSnapshots() {
-		return metricsContexts.stream().map(MetricsContext::lastSnapshot).collect(Collectors.toList());
+		MetricsContext ctx;
+		AllMetricsSnapshot snapshot;
+		final var count = metricsContexts.size();
+		final List<AllMetricsSnapshot> metricsSnapshots = new ArrayList<>(count);
+		for (var i = 0; i < count; i++) {
+			ctx = metricsContexts.get(i);
+			if (null != ctx) {
+				snapshot = ctx.lastSnapshot();
+				if (null != snapshot) {
+					metricsSnapshots.add(snapshot);
+				}
+			}
+		}
+		return metricsSnapshots;
 	}
 
 	@Override
-	public final void run() throws InterruptRunException {
+	public final void run() {
 		try {
 			start();
 			try {
@@ -73,36 +85,33 @@ public abstract class LoadStepBase extends DaemonBase implements LoadStep, Runna
 		} catch (final IllegalStateException e) {
 			LogUtil.exception(Level.ERROR, e, "Failed to start \"{}\"", toString());
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
-		} catch (final InterruptRunException e) {
-			throw e;
+			throwUnchecked(e);
 		} catch (final Throwable cause) {
 			LogUtil.exception(Level.ERROR, cause, "Load step execution failure \"{}\"", toString());
 		} finally {
 			try {
 				close();
-			} catch (final InterruptRunException e) {
-				throw e;
 			} catch (final Exception e) {
+				throwUncheckedIfInterrupted(e);
 				LogUtil.trace(Loggers.ERR, Level.WARN, e, "Failed to close \"{}\"", toString());
 			}
 		}
 	}
 
 	@Override
-	protected void doStart() throws InterruptRunException, IllegalStateException {
+	protected void doStart() throws IllegalStateException {
 
 		init();
 
-		try (final Instance logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+		try (final var logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 
 			doStartWrapped();
 
-			final int svcThreadCount = config.intVal("load-service-threads");
+			final var svcThreadCount = config.intVal("load-service-threads");
 			ServiceTaskExecutor.INSTANCE.setThreadCount(svcThreadCount);
 
 			final long t;
-			final Object loadStepLimitTimeRaw = config.val("load-step-limit-time");
+			final var loadStepLimitTimeRaw = config.val("load-step-limit-time");
 			if (loadStepLimitTimeRaw instanceof String) {
 				t = TimeUtil.getTimeInSeconds((String) loadStepLimitTimeRaw);
 			} else {
@@ -113,23 +122,22 @@ public abstract class LoadStepBase extends DaemonBase implements LoadStep, Runna
 			}
 			startTimeSec = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
-		} catch (final InterruptRunException e) {
-			throw e;
 		} catch (final Throwable cause) {
+			throwUncheckedIfInterrupted(cause);
 			LogUtil.exception(Level.WARN, cause, "{} step failed to start", id());
 		}
 
 		metricsContexts.stream().peek(MetricsContext::start).forEach(metricsMgr::register);
 	}
 
-	protected abstract void doStartWrapped() throws InterruptRunException;
+	protected abstract void doStartWrapped();
 
 	/**
 	 * Initializes the actual configuration and metrics contexts
 	 *
 	 * @throws IllegalStateException if initialization fails
 	 */
-	protected abstract void init() throws InterruptRunException, IllegalStateException;
+	protected abstract void init() throws IllegalStateException;
 
 	protected abstract void initMetrics(
 					final int originIndex,
@@ -140,7 +148,7 @@ public abstract class LoadStepBase extends DaemonBase implements LoadStep, Runna
 					final boolean outputColorFlag);
 
 	@Override
-	protected void doStop() throws InterruptRunException {
+	protected void doStop() {
 
 		metricsContexts.forEach(metricsMgr::unregister);
 

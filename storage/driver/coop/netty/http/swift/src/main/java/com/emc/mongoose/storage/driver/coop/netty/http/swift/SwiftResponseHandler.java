@@ -18,6 +18,8 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.AttributeKey;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
@@ -113,7 +115,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		while (contentChunk.readerIndex() < rawSize) {
 			rawBytesChunk[cutChunkSize + contentChunk.readerIndex()] = contentChunk.readByte();
 		}
-		String tmp = new String(rawBytesChunk);
+		final var tmp = new String(rawBytesChunk, StandardCharsets.UTF_8);
 		final var p = Pattern.compile(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker));
 		final var matcher = p.matcher(tmp);
 		final var contentRangeIdxs = new ArrayList<int[]>();
@@ -140,12 +142,12 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 			lastIdx += rangeSize;
 		}
 
-		final var bytesChunkWithoutEnd = cuteEnd(bytesChunk);
+		final var bytesChunkWithoutEnd = cutEnd(bytesChunk);
 		return Unpooled.copiedBuffer(bytesChunkWithoutEnd);
 	}
 
-	private byte[] cuteEnd(final byte[] bytesChunk) {
-		final var tmpString = new String(bytesChunk);
+	private byte[] cutEnd(final byte[] bytesChunk) {
+		final var tmpString = new String(bytesChunk, StandardCharsets.UTF_8);
 		var cutString = "";
 		final byte[] newBytesChunk;
 		if (tmpString.substring(tmpString.length() - 1).equals("-")) {

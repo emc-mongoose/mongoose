@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.driver.preempt.mock;
 
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.data.DataInput;
 import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.item.op.Operation;
@@ -25,7 +25,8 @@ public class PreemptStorageDriverMock<I extends Item, O extends Operation<I>>
 	private final Random rnd = new Random();
 
 	public PreemptStorageDriverMock(
-					final String stepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag) throws OmgShootMyFootException {
+					final String stepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag) throws
+		IllegalConfigurationException {
 		super(stepId, itemDataInput, storageConfig, verifyFlag);
 	}
 

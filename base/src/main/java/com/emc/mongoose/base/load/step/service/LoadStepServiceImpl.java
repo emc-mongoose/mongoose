@@ -6,7 +6,6 @@ import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import com.emc.mongoose.base.env.Extension;
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.load.step.LoadStepFactory;
 import com.emc.mongoose.base.load.step.LoadStep;
 import com.emc.mongoose.base.logging.Loggers;
@@ -90,7 +89,7 @@ public final class LoadStepServiceImpl extends ServiceBase implements LoadStepSe
 
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
-					throws InterruptRunException, IllegalStateException, InterruptedException {
+					throws IllegalStateException, InterruptedException {
 		try (final Instance logCtx = put(KEY_CLASS_NAME, getClass().getSimpleName()).put(KEY_STEP_ID, localLoadStep.id())) {
 			return localLoadStep.await(timeout, timeUnit);
 		} catch (final RemoteException ignored) {}

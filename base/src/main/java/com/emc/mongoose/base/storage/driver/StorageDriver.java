@@ -6,8 +6,7 @@ import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
 import com.emc.mongoose.base.concurrent.Daemon;
 import com.emc.mongoose.base.data.DataInput;
 import com.emc.mongoose.base.env.Extension;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
 import com.emc.mongoose.base.item.op.OpType;
@@ -22,7 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.CloseableThreadContext;
-import org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 /** Created on 11.07.16. */
 public interface StorageDriver<I extends Item, O extends Operation<I>>
@@ -38,16 +36,16 @@ public interface StorageDriver<I extends Item, O extends Operation<I>>
 					final int idRadix,
 					final I lastPrevItem,
 					final int count)
-					throws InterruptRunException, IOException;
+					throws IOException;
 
 	@Override
-	boolean put(final O op) throws InterruptRunException;
+	boolean put(final O op) ;
 
 	@Override
-	int put(final List<O> ops, final int from, final int to) throws InterruptRunException;
+	int put(final List<O> ops, final int from, final int to) ;
 
 	@Override
-	int put(final List<O> ops) throws InterruptRunException;
+	int put(final List<O> ops) ;
 
 	boolean hasRemainingResults();
 
@@ -70,10 +68,10 @@ public interface StorageDriver<I extends Item, O extends Operation<I>>
 	void adjustIoBuffers(final long avgTransferSize, final OpType opType);
 
 	@Override
-	AsyncRunnable stop() throws InterruptRunException;
+	AsyncRunnable stop() ;
 
 	@Override
-	void close() throws InterruptRunException, IOException;
+	void close() throws IOException;
 
 	/**
 	* @param extensions the resolved runtime extensions
@@ -87,7 +85,7 @@ public interface StorageDriver<I extends Item, O extends Operation<I>>
 	* @return the storage driver instance
 	* @throws IllegalArgumentException if load config either storage config is null
 	* @throws InterruptedException may be thrown by a specific storage driver constructor
-	* @throws OmgShootMyFootException if no storage driver implementation was found
+	* @throws IllegalConfigurationException if no storage driver implementation was found
 	*/
 	@SuppressWarnings("unchecked")
 	static <I extends Item, O extends Operation<I>, T extends StorageDriver<I, O>> T instance(
@@ -97,26 +95,26 @@ public interface StorageDriver<I extends Item, O extends Operation<I>>
 					final boolean verifyFlag,
 					final int batchSize,
 					final String stepId)
-					throws IllegalArgumentException, InterruptedException, OmgShootMyFootException {
-		try (final Instance ctx = CloseableThreadContext.put(KEY_STEP_ID, stepId)
+					throws IllegalArgumentException, InterruptedException, IllegalConfigurationException {
+		try (final var ctx = CloseableThreadContext.put(KEY_STEP_ID, stepId)
 						.put(KEY_CLASS_NAME, StorageDriver.class.getSimpleName())) {
 
 			if (storageConfig == null) {
 				throw new IllegalArgumentException("Null storage config");
 			}
 
-			final List<StorageDriverFactory<I, O, T>> factories = extensions.stream()
+			final var factories = extensions.stream()
 							.filter(ext -> ext instanceof StorageDriverFactory)
 							.map(factory -> (StorageDriverFactory<I, O, T>) factory)
 							.collect(Collectors.toList());
 
-			final String driverType = storageConfig.stringVal("driver-type");
+			final var driverType = storageConfig.stringVal("driver-type");
 
-			final StorageDriverFactory<I, O, T> selectedFactory = factories.stream()
+			final var selectedFactory = factories.stream()
 							.filter(factory -> driverType.equals(factory.id()))
 							.findFirst()
 							.orElseThrow(
-											() -> new OmgShootMyFootException(
+											() -> new IllegalConfigurationException(
 															"Failed to create the storage driver for the type \""
 																			+ driverType
 																			+ "\", available types: "

@@ -75,24 +75,24 @@ Should Return Scenario Run State
 
 *** Keywords ***
 Make Start Request Payload Full
-    ${defaults_data} =  Get Binary File  ${DATA_DIR}/aggregated_defaults.json
+    ${defaults_data} =  Get Binary File  ${DATA_DIR}/aggregated_defaults.yaml
     ${scenario_data} =  Get Binary File  ${DATA_DIR}/scenario_dummy.js
     &{data} =  Create Dictionary  defaults=${defaults_data}  scenario=${scenario_data}
     [Return]  ${data}
 
 Make Start Request Payload Invalid
-    ${defaults_data} =  Get Binary File  ${DATA_DIR}/aggregated_defaults_invalid.json
+    ${defaults_data} =  Get Binary File  ${DATA_DIR}/aggregated_defaults_invalid.yaml
     ${scenario_data} =  Get Binary File  ${DATA_DIR}/scenario_dummy.js
     &{data} =  Create Dictionary  defaults=${defaults_data}  scenario=${scenario_data}
     [Return]  ${data}
 
 Make Start Request Payload Without Scenario Part
-    ${defaults_data} =  Get Binary File  ${DATA_DIR}/aggregated_defaults.json
+    ${defaults_data} =  Get Binary File  ${DATA_DIR}/aggregated_defaults.yaml
     &{data} =  Create Dictionary  defaults=${defaults_data}
     [Return]  ${data}
 
 Make Start Request Payload With Partial Config
-    ${defaults_data} =  Get Binary File  ${DATA_DIR}/partial_defaults.json
+    ${defaults_data} =  Get Binary File  ${DATA_DIR}/partial_defaults.yaml
     &{data} =  Create Dictionary  defaults=${defaults_data}
     [Return]  ${data}
 

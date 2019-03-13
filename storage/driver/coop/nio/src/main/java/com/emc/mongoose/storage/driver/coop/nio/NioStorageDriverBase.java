@@ -1,8 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.nio;
 
 import com.emc.mongoose.base.data.DataInput;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.logging.LogUtil;
@@ -10,6 +9,7 @@ import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.storage.driver.coop.CoopStorageDriverBase;
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.item.op.Operation.Status.ACTIVE;
 import static com.emc.mongoose.base.item.op.Operation.Status.INTERRUPTED;
 import static com.emc.mongoose.base.item.op.Operation.Status.PENDING;
@@ -25,7 +25,9 @@ import com.github.akurilov.fiber4j.Fiber;
 import com.github.akurilov.fiber4j.FibersExecutor;
 
 import org.apache.logging.log4j.CloseableThreadContext;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.message.ThreadDumpMessage;
@@ -59,9 +61,9 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 	@SuppressWarnings("unchecked")
 	public NioStorageDriverBase(
 					final String testStepId, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-					final int batchSize) throws OmgShootMyFootException {
+					final int batchSize) throws IllegalConfigurationException {
 		super(testStepId, dataInput, storageConfig, verifyFlag, batchSize);
-		final int confWorkerCount = storageConfig.intVal("driver-threads");
+		final var confWorkerCount = storageConfig.intVal("driver-threads");
 		if (confWorkerCount > 0) {
 			ioWorkerCount = confWorkerCount;
 		} else if (concurrencyLimit > 0) {
@@ -108,7 +110,7 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 			opBuffSize = opBuff.size();
 			if (opBuffSize > 0) {
 				try {
-					for (int i = 0; i < opBuffSize; i++) {
+					for (var i = 0; i < opBuffSize; i++) {
 						op = opBuff.get(i);
 						// if timeout, put the op into the temporary buffer
 						if (System.nanoTime() - startTimeNanos >= SOFT_DURATION_LIMIT_NANOS) {
@@ -142,13 +144,14 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 						}
 					}
 				} catch (final Throwable cause) {
+					throwUncheckedIfInterrupted(cause);
 					LogUtil.exception(Level.ERROR, cause, "I/O worker failure");
 				} finally {
 					// put the active operations back into the buffer
 					opBuff.clear();
 					opBuffSize = opLocalBuff.size();
 					if (opBuffSize > 0) {
-						for (int i = 0; i < opBuffSize; i++) {
+						for (var i = 0; i < opBuffSize; i++) {
 							opBuff.add(opLocalBuff.get(i));
 						}
 						opLocalBuff.clear();
@@ -161,7 +164,7 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 		protected final void doStop() {
 			opBuffSize = opBuff.size();
 			Loggers.MSG.debug("Finish {} remaining active load operations finally", opBuffSize);
-			for (int i = 0; i < opBuffSize; i++) {
+			for (var i = 0; i < opBuffSize; i++) {
 				op = opBuff.get(i);
 				if (ACTIVE.equals(op.status())) {
 					op.status(INTERRUPTED);
@@ -190,7 +193,7 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 	protected final void doStart()
 					throws IllegalStateException {
 		super.doStart();
-		for (final Fiber ioFiber : ioFibers) {
+		for (final var ioFiber : ioFibers) {
 			try {
 				ioFiber.start();
 			} catch (final IOException ignored) {}
@@ -201,7 +204,7 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 	protected final void doShutdown()
 					throws IllegalStateException {
 		super.doShutdown();
-		for (final Fiber ioFiber : ioFibers) {
+		for (final var ioFiber : ioFibers) {
 			try {
 				ioFiber.shutdown();
 			} catch (final IOException ignored) {}
@@ -212,7 +215,7 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 	protected final void doStop()
 					throws IllegalStateException {
 		super.doStop();
-		for (final Fiber ioFiber : ioFibers) {
+		for (final var ioFiber : ioFibers) {
 			try {
 				ioFiber.stop();
 			} catch (final IOException ignored) {}
@@ -225,7 +228,7 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 		CircularBuffer<O> opBuff;
 		Lock opBuffLock;
 		int j;
-		for (int i = 0; i < ioWorkerCount; i++) {
+		for (var i = 0; i < ioWorkerCount; i++) {
 			if (!isStarted()) {
 				throw new IllegalStateException();
 			}
@@ -250,11 +253,11 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 					throws IllegalStateException {
 		CircularBuffer<O> opBuff;
 		Lock opBuffLock;
-		int j = from;
+		var j = from;
 		int k;
 		int n;
 		int m;
-		for (int i = 0; i < ioWorkerCount; i++) {
+		for (var i = 0; i < ioWorkerCount; i++) {
 			if (!isStarted()) {
 				throw new IllegalStateException();
 			}
@@ -296,7 +299,7 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 
 	@Override
 	protected void doClose()
-					throws IOException, InterruptRunException {
+					throws IOException {
 
 		ioFibers.forEach(
 						fiber -> {
@@ -308,8 +311,8 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 						});
 		ioFibers.clear();
 
-		for (int i = 0; i < ioWorkerCount; i++) {
-			try (final Instance logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
+		for (var i = 0; i < ioWorkerCount; i++) {
+			try (final var logCtx = CloseableThreadContext.put(KEY_CLASS_NAME, CLS_NAME)) {
 				if (opBuffLocks[i].tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 					try {
 						opBuffs[i].clear();
@@ -320,7 +323,7 @@ public abstract class NioStorageDriverBase<I extends Item, O extends Operation<I
 					Loggers.ERR.debug(new ThreadDumpMessage("Failed to obtain the load operations buff lock in time"));
 				}
 			} catch (final InterruptedException e) {
-				throw new InterruptRunException(e);
+				throwUnchecked(e);
 			}
 			opBuffs[i] = null;
 		}

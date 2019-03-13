@@ -2,8 +2,7 @@ package com.emc.mongoose.load.step.pipeline;
 
 import com.emc.mongoose.base.config.TimeUtil;
 import com.emc.mongoose.base.env.Extension;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.data.DataInput;
 import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.item.op.Operation;
@@ -34,6 +33,8 @@ import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
 import com.github.akurilov.confuse.exceptions.InvalidValueTypeException;
 import com.github.akurilov.confuse.impl.BasicConfig;
+
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static com.github.akurilov.confuse.Config.deepToMap;
 
 import org.apache.logging.log4j.Level;
@@ -58,7 +59,7 @@ public class PipelineLoadStepLocal
 
 	@Override
 	protected void init()
-					throws InterruptRunException {
+					 {
 
 		final String autoStepId = "pipeline_" + LogUtil.getDateTimeStamp();
 		final Config stepConfig = config.configVal("load-step");
@@ -72,12 +73,12 @@ public class PipelineLoadStepLocal
 
 			final Map<String, Object> mergedConfigTree = reduceForest(
 							Arrays.asList(deepToMap(config), deepToMap(ctxConfigs.get(originIndex))));
-			final Config subConfig;
+			Config subConfig = null;
 			try {
 				subConfig = new BasicConfig(config.pathSep(), config.schema(), mergedConfigTree);
 			} catch (final InvalidValueTypeException | InvalidValuePathException e) {
 				LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
-				throw new InterruptRunException(e);
+				throwUnchecked(e);
 			}
 			final Config loadConfig = subConfig.configVal("load");
 			final Config opConfig = loadConfig.configVal("op");
@@ -181,13 +182,13 @@ public class PipelineLoadStepLocal
 							}
 						}
 
-					} catch (final OmgShootMyFootException e) {
+					} catch (final IllegalConfigurationException e) {
 						throw new IllegalStateException("Failed to initialize the load generator", e);
 					}
-				} catch (final OmgShootMyFootException e) {
+				} catch (final IllegalConfigurationException e) {
 					throw new IllegalStateException("Failed to initialize the storage driver", e);
 				} catch (final InterruptedException e) {
-					throw new InterruptRunException(e);
+					throwUnchecked(e);
 				}
 			} catch (final IOException e) {
 				throw new IllegalStateException("Failed to initialize the data input", e);

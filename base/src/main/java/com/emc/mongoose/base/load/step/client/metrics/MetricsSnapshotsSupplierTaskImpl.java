@@ -10,6 +10,8 @@ import com.github.akurilov.fiber4j.FibersExecutor;
 import java.util.List;
 import org.apache.logging.log4j.Level;
 
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
+
 public final class MetricsSnapshotsSupplierTaskImpl extends ExclusiveFiberBase
 				implements MetricsSnapshotsSupplierTask {
 
@@ -31,6 +33,7 @@ public final class MetricsSnapshotsSupplierTaskImpl extends ExclusiveFiberBase
 		try {
 			snapshotsByOrigin = loadStep.metricsSnapshots();
 		} catch (final Exception e) {
+			throwUncheckedIfInterrupted(e);
 			LogUtil.exception(Level.INFO, e, "Failed to fetch the metrics snapshots from \"{}\"", loadStep);
 			if (failedBeforeFlag) {
 				LogUtil.exception(

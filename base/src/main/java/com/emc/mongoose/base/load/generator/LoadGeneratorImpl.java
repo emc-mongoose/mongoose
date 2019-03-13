@@ -1,9 +1,10 @@
 package com.emc.mongoose.base.load.generator;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.item.op.OperationsBuilder;
@@ -93,7 +94,7 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 	}
 
 	@Override
-	protected final void invokeTimed(final long startTimeNanos) throws InterruptRunException {
+	protected final void invokeTimed(final long startTimeNanos) {
 
 		ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 		final var opBuff = threadLocalOpBuff.get();
@@ -175,6 +176,7 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 									}
 								}
 							} catch (final Exception e) {
+								throwUncheckedIfInterrupted(e);
 								if (e instanceof EOFException) {
 									Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
 									outputFinishFlag = true;
@@ -192,6 +194,7 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 									opBuff.clear();
 								}
 							} catch (final Exception e) {
+								throwUncheckedIfInterrupted(e);
 								if (e instanceof EOFException) {
 									Loggers.MSG.debug("{}: finish due to output's EOF, {}", name, e);
 									outputFinishFlag = true;
@@ -206,9 +209,9 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 				outputFinishFlag = true;
 			}
 
-		} catch (final EOFException ok) {} catch (final InterruptRunException e) {
-			throw e;
+		} catch (final EOFException ok) {
 		} catch (final Throwable t) {
+			throwUncheckedIfInterrupted(t);
 			LogUtil.trace(Loggers.ERR, Level.ERROR, t, "{}: unexpected failure", name);
 		} finally {
 			if (isFinished()) {
@@ -219,12 +222,12 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 		}
 	}
 
-	private static <I extends Item> List<I> getItems(final Input<I> itemInput, final int n)
-					throws InterruptRunException, IOException {
+	private static <I extends Item> List<I> getItems(final Input<I> itemInput, final int n) {
 		final List<I> items = new ArrayList<>(n); // prepare the items buffer
 		try {
 			itemInput.get(items, n); // get the items from the input
 		} catch (final Exception e) {
+			throwUncheckedIfInterrupted(e);
 			if (e instanceof EOFException) {
 				return null;
 			}
@@ -290,7 +293,7 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 	}
 
 	@Override
-	protected final void doClose() throws InterruptRunException, IOException {
+	protected final void doClose() {
 		recycleQueue.clear();
 		// the item input may be instantiated by the load generator builder which has no reference to it
 		// so the load
@@ -300,7 +303,7 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 				inputLock.tryLock(Fiber.WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS);
 				itemInput.close();
 			} catch (final InterruptedException e) {
-				throw new InterruptRunException(e);
+				throwUnchecked(e);
 			} catch (final Exception e) {
 				LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", toString());
 			}

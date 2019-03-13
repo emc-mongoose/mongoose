@@ -6,7 +6,7 @@ public interface DirIoHelper {
 
 	static File createParentDir(final String parentPath) {
 		try {
-			final File parentDir = FsConstants.FS.getPath(parentPath).toFile();
+			final var parentDir = FsConstants.FS.getPath(parentPath).toFile();
 			if (!parentDir.exists()) {
 				parentDir.mkdirs();
 			}

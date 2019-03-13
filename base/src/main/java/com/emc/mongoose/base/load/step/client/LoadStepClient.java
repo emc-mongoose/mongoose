@@ -1,6 +1,5 @@
 package com.emc.mongoose.base.load.step.client;
 
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.load.step.LoadStep;
 import java.util.Map;
 
@@ -16,7 +15,7 @@ public interface LoadStepClient extends LoadStep {
 	 * @throws IllegalStateException if was called after any append(...) call
 	 */
 	<T extends LoadStepClient> T config(final Map<String, Object> config)
-					throws InterruptRunException, IllegalStateException;
+					throws IllegalStateException;
 
 	/**
 	 * Append the load step context. The actual behavior depends on the particular step type
@@ -25,6 +24,5 @@ public interface LoadStepClient extends LoadStep {
 	 *     implementation
 	 * @return <b>new/copied</b> step instance with the appended context
 	 */
-	<T extends LoadStepClient> T append(final Map<String, Object> context)
-					throws InterruptRunException;
+	<T extends LoadStepClient> T append(final Map<String, Object> context);
 }

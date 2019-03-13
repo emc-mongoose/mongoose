@@ -3,21 +3,20 @@ package com.emc.mongoose.base.logging;
 import static com.emc.mongoose.base.Constants.KEY_HOME_DIR;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.base.Constants.LOCALE_DEFAULT;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.env.DateUtil.TZ_UTC;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.emc.mongoose.base.concurrent.DaemonBase;
-import com.emc.mongoose.base.exception.InterruptRunException;
 import java.util.Calendar;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractOutputStreamAppender;
 import org.apache.logging.log4j.core.util.datetime.DatePrinter;
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
-import org.apache.logging.log4j.message.Message;
 
 /** Created by kurila on 06.05.14. */
 public interface LogUtil {
@@ -62,9 +61,9 @@ public interface LogUtil {
 	}
 
 	static void flushAll() {
-		final LoggerContext logCtx = ((LoggerContext) LogManager.getContext());
-		for (final org.apache.logging.log4j.core.Logger logger : logCtx.getLoggers()) {
-			for (final Appender appender : logger.getAppenders().values()) {
+		final var logCtx = ((LoggerContext) LogManager.getContext());
+		for (final var logger : logCtx.getLoggers()) {
+			for (final var appender : logger.getAppenders().values()) {
 				if (appender instanceof AbstractOutputStreamAppender) {
 					((AbstractOutputStreamAppender) appender).getManager().flush();
 				}
@@ -72,12 +71,11 @@ public interface LogUtil {
 		}
 	}
 
-	static void shutdown() throws InterruptRunException {
+	static void shutdown()  {
 		try {
 			DaemonBase.closeAll();
-		} catch (final InterruptRunException e) {
-			throw e;
 		} catch (final Throwable cause) {
+			throwUncheckedIfInterrupted(cause);
 			cause.printStackTrace(System.err);
 		} finally {
 			LogManager.shutdown();
@@ -109,13 +107,13 @@ public interface LogUtil {
 		if (Loggers.ERR.isTraceEnabled()) {
 			trace(Loggers.ERR, level, e, msgPattern, args);
 		} else {
-			final StringBuilder msgBuilder = THR_LOC_MSG_BUILDER.get();
+			final var msgBuilder = THR_LOC_MSG_BUILDER.get();
 			msgBuilder.setLength(0);
 			msgBuilder.append(msgPattern).append("\n\tCAUSE: ").append(e);
-			for (Throwable cause = e.getCause(); cause != null; cause = cause.getCause()) {
+			for (var cause = e.getCause(); cause != null; cause = cause.getCause()) {
 				msgBuilder.append("\n\tCAUSE: ").append(cause.toString());
 			}
-			final Message msg = Loggers.ERR.getMessageFactory().newMessage(msgBuilder.toString(), args);
+			final var msg = Loggers.ERR.getMessageFactory().newMessage(msgBuilder.toString(), args);
 			Loggers.ERR.log(level, msg);
 		}
 	}

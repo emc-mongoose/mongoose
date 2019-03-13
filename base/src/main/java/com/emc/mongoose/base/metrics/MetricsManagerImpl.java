@@ -2,11 +2,12 @@ package com.emc.mongoose.base.metrics;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.metrics.MetricsConstants.METRIC_LABELS;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.base.logging.MetricsAsciiTableLogMessage;
@@ -85,8 +86,8 @@ public class MetricsManagerImpl extends ExclusiveFiberBase implements MetricsMan
 						final long lastOutputTs = metricsCtx.lastOutputTs();
 						final long nextOutputTs = System.currentTimeMillis();
 						if (outputPeriodMillis > 0 && nextOutputTs - lastOutputTs >= outputPeriodMillis) {
-							selectedMetrics.add(metricsCtx);
 							metricsCtx.lastOutputTs(nextOutputTs);
+							selectedMetrics.add(metricsCtx);
 							if (metricsCtx.avgPersistEnabled()) {
 								Loggers.METRICS_FILE.info(
 												new MetricsCsvLogMessage(
@@ -100,7 +101,9 @@ public class MetricsManagerImpl extends ExclusiveFiberBase implements MetricsMan
 					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
 					selectedMetrics.clear();
 				}
-			} catch (final ConcurrentModificationException ignored) {} catch (final Throwable cause) {
+			} catch (final ConcurrentModificationException ignored) {
+			} catch (final Throwable cause) {
+				throwUncheckedIfInterrupted(cause);
 				LogUtil.exception(Level.DEBUG, cause, "Metrics manager failure");
 			} finally {
 				outputLock.unlock();
@@ -121,7 +124,7 @@ public class MetricsManagerImpl extends ExclusiveFiberBase implements MetricsMan
 			startIfNotStarted();
 			allMetrics.add(metricsCtx);
 			if (metricsCtx instanceof DistributedMetricsContext) {
-				final DistributedMetricsContext distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
+				final var distributedMetricsCtx = (DistributedMetricsContext) metricsCtx;
 				final String[] labelValues = {
 						metricsCtx.id(),
 						metricsCtx.opType().name(),
@@ -140,6 +143,7 @@ public class MetricsManagerImpl extends ExclusiveFiberBase implements MetricsMan
 			}
 			Loggers.MSG.debug("Metrics context \"{}\" registered", metricsCtx);
 		} catch (final Exception e) {
+			throwUncheckedIfInterrupted(e);
 			LogUtil.exception(
 							Level.WARN,
 							e,
@@ -191,7 +195,7 @@ public class MetricsManagerImpl extends ExclusiveFiberBase implements MetricsMan
 						}
 					}
 				} catch (final InterruptedException e) {
-					throw new InterruptRunException(e);
+					throwUnchecked(e);
 				} finally {
 					try {
 						outputLock.unlock();
