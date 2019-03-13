@@ -4,7 +4,8 @@
 
 * API version: 2006-03-01
 * Authentification:
-    * Uid/secret key pair to sign each request
+    * [v2](https://docs.aws.amazon.com/general/latest/gr/signature-version-2.html) (by default)
+    * [v4](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)
 * SSL/TLS
 * Item types:
     * `data` (--> "object")
