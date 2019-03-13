@@ -15,6 +15,7 @@ import java.util.Map;
 import org.apache.logging.log4j.Level;
 
 import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 public final class ItemDataInputFileSlicer implements AutoCloseable {
 

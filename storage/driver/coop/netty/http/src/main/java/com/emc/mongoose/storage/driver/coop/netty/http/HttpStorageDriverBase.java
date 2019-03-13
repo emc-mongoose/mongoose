@@ -153,7 +153,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 			}
 		} catch (final NoSuchElementException e) {
 			throw new ConnectException("Channel pipeline is empty: connectivity related failure");
-		} catch (final InterruptedException e) {
+		} catch(final InterruptedException e) {
 			throwUnchecked(e);
 			return null;
 		} catch (final Exception e) {

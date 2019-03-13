@@ -104,7 +104,7 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 	private static List<String> remoteNodeAddrs(final Config config) {
 		final var nodeConfig = config.configVal("load-step-node");
 		final var nodePort = nodeConfig.intVal("port");
-		final var nodeAddrs = nodeConfig.<String> listVal("addrs");
+		final var nodeAddrs = nodeConfig.<String>listVal("addrs");
 		return nodeAddrs == null || nodeAddrs.isEmpty()
 						? Collections.EMPTY_LIST
 						: nodeAddrs.stream()

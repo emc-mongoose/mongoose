@@ -57,7 +57,7 @@ public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<
 	}
 
 	@Override
-	public final boolean put(final O op) {
+	public final boolean put(final O op)  {
 		if (!isStarted()) {
 			throwUnchecked(new EOFException());
 		}
@@ -70,7 +70,8 @@ public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<
 	}
 
 	@Override
-	public final int put(final List<O> ops, final int from, final int to) {
+	public final int put(final List<O> ops, final int from, final int to)
+					 {
 		if (!isStarted()) {
 			throwUnchecked(new EOFException());
 		}
@@ -90,7 +91,7 @@ public abstract class CoopStorageDriverBase<I extends Item, O extends Operation<
 	}
 
 	@Override
-	public final int put(final List<O> ops) {
+	public final int put(final List<O> ops)  {
 		if (!isStarted()) {
 			throwUnchecked(new EOFException());
 		}

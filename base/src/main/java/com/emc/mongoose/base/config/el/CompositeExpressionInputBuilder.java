@@ -1,6 +1,7 @@
 package com.emc.mongoose.base.config.el;
 
 import com.github.akurilov.commons.io.collection.CompositeStringInput;
+
 import java.lang.reflect.Method;
 
 public interface CompositeExpressionInputBuilder {

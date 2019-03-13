@@ -58,7 +58,8 @@ public class PipelineLoadStepLocal
 	}
 
 	@Override
-	protected void init() {
+	protected void init()
+					 {
 
 		final String autoStepId = "pipeline_" + LogUtil.getDateTimeStamp();
 		final Config stepConfig = config.configVal("load-step");

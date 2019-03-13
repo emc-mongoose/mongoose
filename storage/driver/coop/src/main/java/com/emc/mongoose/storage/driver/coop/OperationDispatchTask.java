@@ -110,7 +110,8 @@ public final class OperationDispatchTask<I extends Item, O extends Operation<I>>
 	}
 
 	@Override
-	protected final void doClose() {
+	protected final void doClose()
+					 {
 		try {
 			if (buffLock.tryLock(WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 				buff.clear();

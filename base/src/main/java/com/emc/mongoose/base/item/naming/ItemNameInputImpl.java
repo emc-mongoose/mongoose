@@ -67,7 +67,7 @@ public final class ItemNameInputImpl
 
 	@Override
 	public final void close()
-					throws Exception {
+	throws Exception {
 		prefixInput.close();
 	}
 }
