@@ -10,6 +10,7 @@ import com.emc.mongoose.base.item.op.data.DataOperation;
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpResponseHandlerBase;
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpStorageDriverBase;
 import com.github.akurilov.commons.collection.Range;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -17,6 +18,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.AttributeKey;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -27,8 +29,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Created by andrey on 26.11.16.
- */
+Created by andrey on 26.11.16.
+*/
 public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 				extends HttpResponseHandlerBase<I, O> {
 
@@ -60,8 +62,8 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	}
 
 	/*
-	  Boundary marker: ac9c12f841fa093d82ba80a402f6b62e
-	  Content:
+	Boundary marker: ac9c12f841fa093d82ba80a402f6b62e
+	Content:
 	--ac9c12f841fa093d82ba80a402f6b62e
 	Content-Type: application/octet-stream
 	Content-Range: bytes 0-0/10240
@@ -73,9 +75,9 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	
 	????
 	--ac9c12f841fa093d82ba80a402f6b62e--
-	   */
-	protected final void handleResponseContentChunk(
-					final Channel channel, final O op, final ByteBuf contentChunk) throws IOException {
+	*/
+	protected final void handleResponseContentChunk(final Channel channel, final O op, final ByteBuf contentChunk)
+					throws IOException {
 		if (OpType.READ.equals(op.type())) {
 			if (op instanceof DataOperation) {
 				final DataOperation<? extends DataItem> dataOp = (DataOperation<? extends DataItem>) op;
