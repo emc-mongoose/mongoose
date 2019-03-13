@@ -21,7 +21,7 @@ config = {
 		},
 		"auth" : {
 			"uid" : "test:tester",
-			"secret" : "jongaevaicei"
+			"secret" : "queighahseux"
 		}
 	},
 	"load": {
