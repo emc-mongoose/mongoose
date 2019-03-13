@@ -235,7 +235,7 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uriPath, op.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uriPath, op.credential(), item);
 		return httpRequest;
 	}
 
@@ -381,7 +381,8 @@ public abstract class HttpStorageDriverBase<I extends Item, O extends Operation<
 					final HttpHeaders httpHeaders,
 					final HttpMethod httpMethod,
 					final String dstUriPath,
-					final Credential credential);
+					final Credential credential,
+					final I item);
 
 	protected abstract void applyCopyHeaders(final HttpHeaders httpHeaders, final String srcPath)
 					throws URISyntaxException;

@@ -51,4 +51,9 @@ public interface AmzS3Api {
 	String QNAME_ITEM_ID = "Key";
 	String QNAME_ITEM_SIZE = "Size";
 	String QNAME_IS_TRUNCATED = "IsTruncated";
+
+	enum SigningProcess {
+		V2,
+		V4,
+	}
 }

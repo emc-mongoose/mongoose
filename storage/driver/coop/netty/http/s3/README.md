@@ -45,6 +45,7 @@ java -jar mongoose-<VERSION>.jar \
 
 | Name                                           | Type         | Default Value    | Description                                      |
 |:-----------------------------------------------|:-------------|:-----------------|:-------------------------------------------------|
+| storage-auth-version                           | String       | 2                | The S3 signing process version to use 
 | storage-net-http-fsAccess                      | Flag | false | Specifies whether filesystem access is enabled or not
 | storage-net-http-versioning                    | Flag | false | Specifies whether the versioning storage feature is used or not
 

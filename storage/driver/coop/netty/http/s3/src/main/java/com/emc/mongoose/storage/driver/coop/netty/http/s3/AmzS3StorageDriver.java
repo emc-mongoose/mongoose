@@ -19,6 +19,7 @@ import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.base.storage.Credential;
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpStorageDriverBase;
+import static com.emc.mongoose.storage.driver.coop.netty.http.s3.AmzS3Api.SigningProcess;
 import com.github.akurilov.confuse.Config;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
@@ -78,6 +79,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		}
 	};
 
+	protected final SigningProcess signingVersion;
 	protected final boolean fsAccess;
 	protected final boolean versioning;
 
@@ -89,6 +91,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 					final int batchSize)
 					throws IllegalConfigurationException, InterruptedException {
 		super(stepId, itemDataInput, storageConfig, verifyFlag, batchSize);
+		signingVersion = SigningProcess.valueOf('V' + storageConfig.stringVal("auth-version").toUpperCase());
 		final var httpConfig = storageConfig.configVal("net-http");
 		fsAccess = httpConfig.boolVal("fsAccess");
 		versioning = httpConfig.boolVal("versioning");
@@ -420,7 +423,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uri, op.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uri, op.credential(), item);
 		return httpRequest;
 	}
 
@@ -445,7 +448,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uri, partialDataOp.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uri, partialDataOp.credential(), item);
 		return httpRequest;
 	}
 
@@ -489,7 +492,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 		applyMetaDataHeaders(httpHeaders);
 		applyDynamicHeaders(httpHeaders);
 		applySharedHeaders(httpHeaders);
-		applyAuthHeaders(httpHeaders, httpMethod, uri, mpuTask.credential());
+		applyAuthHeaders(httpHeaders, httpMethod, uri, mpuTask.credential(), item);
 		return httpRequest;
 	}
 
@@ -533,7 +536,8 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 					final HttpHeaders httpHeaders,
 					final HttpMethod httpMethod,
 					final String dstUriPath,
-					final Credential credential) {
+					final Credential credential,
+					final I item) {
 		final String uid;
 		final String secret;
 		if (credential != null) {
@@ -556,7 +560,18 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 						AmzS3Api.AUTH_PREFIX + uid + ':' + BASE64_ENCODER.encodeToString(sigData));
 	}
 
-	protected String getCanonical(
+	protected String getCanonical(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath) {
+		switch(signingVersion) {
+			case V2:
+				return getCanonicalV2(httpHeaders, httpMethod, dstUriPath);
+			case V4:
+				return getCanonicalV4(httpHeaders, httpMethod, dstUriPath);
+			default:
+				throw new AssertionError();
+		}
+	}
+
+	protected String getCanonicalV2(
 					final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath) {
 		final var buffCanonical = BUFF_CANONICAL.get();
 		buffCanonical.setLength(0); // reset/clear
@@ -602,6 +617,11 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 			Loggers.MSG.trace("Canonical representation:\n{}", buffCanonical);
 		}
 		return buffCanonical.toString();
+	}
+
+	protected String getCanonicalV4(
+		final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String dstUriPath) {
+
 	}
 
 	@Override
