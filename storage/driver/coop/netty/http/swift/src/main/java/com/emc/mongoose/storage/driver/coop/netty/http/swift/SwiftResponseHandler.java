@@ -38,7 +38,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	private static final String HEADER_PATTERN = "(Content-Type:).*[\\s]*(Content-Range:).*";
 
 	private static final String HEADER_WITH_BOUNDARY_PATTERN =
-		"[\\s]{2}((%1$s)[\\s]*(" + HEADER_PATTERN + ")|(%1$s--))[\\s]{2,4}";
+		"[\\s]{2}((%1$s)[\\s]*(" + HEADER_PATTERN + ")[\\s]{4}|(%1$s--)[\\s]*)";
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER =
 		AttributeKey.valueOf("boundary_marker");
 
@@ -127,7 +127,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 			contentRangeIdxs.add(new int[]{startIndex, endIndex}); //TODO replace on {start,size}
 			startIndex = result.end();
 		}
-		endIndex = rawBytesChunk.length - 1;
+		endIndex = rawBytesChunk.length;
 		contentRangeIdxs.add(new int[]{startIndex, endIndex});
 		//
 		//
@@ -153,11 +153,9 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		final byte[] newBytesChunk;
 		if (tmpString.substring(tmpString.length() - 1) == "-") {
 			cutString = "-";
-			//TODO remove
 		}
 		if (tmpString.substring(tmpString.length() - 2) == "--") {
 			cutString = "--";
-			//TODO remove
 		}
 		final Pattern pattern = Pattern.compile("[\\s]{2}--(.|\\s)*");
 		final Matcher matcher = pattern.matcher(tmpString);
@@ -167,7 +165,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 			cutString = matcher.group(count - 1);
 		}
 		cutChunck = cutString.getBytes(); //cutString includes only writable chars
-		final int newSize = bytesChunk.length - cutString.length() + 1;
+		final int newSize = bytesChunk.length - cutString.length();
 		newBytesChunk = new byte[newSize];
 		System.arraycopy(bytesChunk, 0, newBytesChunk, 0, newSize);
 		return newBytesChunk;
