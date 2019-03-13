@@ -25,7 +25,8 @@ public class PreemptStorageDriverMock<I extends Item, O extends Operation<I>>
 	private final Random rnd = new Random();
 
 	public PreemptStorageDriverMock(
-					final String stepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag) throws IllegalConfigurationException {
+					final String stepId, final DataInput itemDataInput, final Config storageConfig, final boolean verifyFlag) throws
+		IllegalConfigurationException {
 		super(stepId, itemDataInput, storageConfig, verifyFlag);
 	}
 
