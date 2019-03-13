@@ -96,7 +96,7 @@ public class AmzS3StorageDriver<I extends Item, O extends Operation<I>>
 	}
 
 	@Override
-	protected String requestNewPath(final String path)  {
+	protected String requestNewPath(final String path) {
 		final var bucketUri = path.startsWith(SLASH) ? path : SLASH + path;
 		final var uriQuery = uriQuery();
 		final var uri = uriQuery == null || uriQuery.isEmpty() ? bucketUri : bucketUri + uriQuery;

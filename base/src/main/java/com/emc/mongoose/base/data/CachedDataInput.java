@@ -17,84 +17,82 @@ import java.nio.MappedByteBuffer;
  */
 public class CachedDataInput extends DataInputBase {
 
-  private int layersCacheCountLimit;
+	private int layersCacheCountLimit;
 
-  @SuppressWarnings("ThreadLocalNotStaticFinal")
-  private final ThreadLocal<Int2ObjectOpenHashMap<MappedByteBuffer>> thrLocLayersCache =
-      new ThreadLocal<>();
+	@SuppressWarnings("ThreadLocalNotStaticFinal")
+	private final ThreadLocal<Int2ObjectOpenHashMap<MappedByteBuffer>> thrLocLayersCache = new ThreadLocal<>();
 
-  public CachedDataInput() {
-    super();
-  }
+	public CachedDataInput() {
+		super();
+	}
 
-  public CachedDataInput(final MappedByteBuffer initialLayer, final int layersCacheCountLimit) {
-    super(initialLayer);
-    if (layersCacheCountLimit < 1) {
-      throw new IllegalArgumentException("Cache limit value should be more than 1");
-    }
-    this.layersCacheCountLimit = layersCacheCountLimit;
-  }
+	public CachedDataInput(final MappedByteBuffer initialLayer, final int layersCacheCountLimit) {
+		super(initialLayer);
+		if (layersCacheCountLimit < 1) {
+			throw new IllegalArgumentException("Cache limit value should be more than 1");
+		}
+		this.layersCacheCountLimit = layersCacheCountLimit;
+	}
 
-  public CachedDataInput(final CachedDataInput other) {
-    super(other);
-    this.layersCacheCountLimit = other.layersCacheCountLimit;
-  }
+	public CachedDataInput(final CachedDataInput other) {
+		super(other);
+		this.layersCacheCountLimit = other.layersCacheCountLimit;
+	}
 
-  private long getInitialSeed() {
-    return inputBuff.getLong(0);
-  }
+	private long getInitialSeed() {
+		return inputBuff.getLong(0);
+	}
 
-  @Override
-  public final MappedByteBuffer getLayer(final int layerIndex) throws OutOfMemoryError {
+	@Override
+	public final MappedByteBuffer getLayer(final int layerIndex) throws OutOfMemoryError {
 
-    if (layerIndex == 0) {
-      return inputBuff;
-    }
-    var layersCache = thrLocLayersCache.get();
-    if (layersCache == null) {
-      layersCache = new Int2ObjectOpenHashMap<>(layersCacheCountLimit - 1);
-      thrLocLayersCache.set(layersCache);
-    }
+		if (layerIndex == 0) {
+			return inputBuff;
+		}
+		var layersCache = thrLocLayersCache.get();
+		if (layersCache == null) {
+			layersCache = new Int2ObjectOpenHashMap<>(layersCacheCountLimit - 1);
+			thrLocLayersCache.set(layersCache);
+		}
 
-    // check if layer exists
-    var layer = layersCache.get(layerIndex - 1);
-    if (layer == null) {
-      // check if it's necessary to free the space first
-      var layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
-      final var layerSize = inputBuff.capacity();
-      if (layersCountToFree > 0) {
-        for (final int i : layersCache.keySet()) {
-          layer = layersCache.remove(i);
-          if (layer != null) {
-            layersCountToFree--;
-            if (layersCountToFree == 0) {
-              break;
-            }
-          }
-        }
-        layersCache.trim();
-      }
-      // generate the layer
-      layer = (MappedByteBuffer) ByteBuffer.allocateDirect(layerSize);
-      final var layerSeed =
-          Long.reverseBytes((xorShift(getInitialSeed()) << layerIndex) ^ layerIndex);
-      generateData(layer, layerSeed);
-      layersCache.put(layerIndex - 1, layer);
-    }
-    return layer;
-  }
+		// check if layer exists
+		var layer = layersCache.get(layerIndex - 1);
+		if (layer == null) {
+			// check if it's necessary to free the space first
+			var layersCountToFree = layersCacheCountLimit - layersCache.size() + 1;
+			final var layerSize = inputBuff.capacity();
+			if (layersCountToFree > 0) {
+				for (final int i : layersCache.keySet()) {
+					layer = layersCache.remove(i);
+					if (layer != null) {
+						layersCountToFree--;
+						if (layersCountToFree == 0) {
+							break;
+						}
+					}
+				}
+				layersCache.trim();
+			}
+			// generate the layer
+			layer = (MappedByteBuffer) ByteBuffer.allocateDirect(layerSize);
+			final var layerSeed = Long.reverseBytes((xorShift(getInitialSeed()) << layerIndex) ^ layerIndex);
+			generateData(layer, layerSeed);
+			layersCache.put(layerIndex - 1, layer);
+		}
+		return layer;
+	}
 
-  public void close() throws IOException {
-    super.close();
-    final var layersCache = (Int2ObjectMap<MappedByteBuffer>) thrLocLayersCache.get();
-    if (layersCache != null) {
-      layersCache.clear();
-      thrLocLayersCache.set(null);
-    }
-  }
+	public void close() throws IOException {
+		super.close();
+		final var layersCache = (Int2ObjectMap<MappedByteBuffer>) thrLocLayersCache.get();
+		if (layersCache != null) {
+			layersCache.clear();
+			thrLocLayersCache.set(null);
+		}
+	}
 
-  @Override
-  public final String toString() {
-    return Long.toHexString(getInitialSeed()) + ',' + Integer.toHexString(inputBuff.capacity());
-  }
+	@Override
+	public final String toString() {
+		return Long.toHexString(getInitialSeed()) + ',' + Integer.toHexString(inputBuff.capacity());
+	}
 }

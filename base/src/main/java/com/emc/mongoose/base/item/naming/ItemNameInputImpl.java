@@ -15,8 +15,7 @@ public final class ItemNameInputImpl
 	private final int radix;
 
 	public ItemNameInputImpl(
-		final Long2LongFunction idFunction, final long offset, final Input<String> prefixInput, final int radix
-	) {
+					final Long2LongFunction idFunction, final long offset, final Input<String> prefixInput, final int radix) {
 		this.initialId = offset;
 		this.lastId = initialId;
 		this.idFunction = idFunction;
@@ -67,7 +66,7 @@ public final class ItemNameInputImpl
 
 	@Override
 	public final void close()
-	throws Exception {
+					throws Exception {
 		prefixInput.close();
 	}
 }

@@ -5,7 +5,6 @@ import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.base.Constants.LOCALE_DEFAULT;
 import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.env.DateUtil.TZ_UTC;
-import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.emc.mongoose.base.concurrent.DaemonBase;
 import java.util.Calendar;
@@ -71,7 +70,7 @@ public interface LogUtil {
 		}
 	}
 
-	static void shutdown()  {
+	static void shutdown() {
 		try {
 			DaemonBase.closeAll();
 		} catch (final Throwable cause) {

@@ -35,15 +35,15 @@ public final class RunImpl implements Run {
 		Loggers.SCENARIO.log(Level.INFO, scenario);
 		try {
 			scriptEngine.eval(scenario);
-		} catch(final ScriptException e) {
+		} catch (final ScriptException e) {
 			LogUtil.trace(
-				Loggers.ERR,
-				Level.ERROR,
-				e,
-				"\nScenario failed, line #{}, column #{}:\n{}",
-				e.getLineNumber(),
-				e.getColumnNumber(),
-				e.getMessage());
+							Loggers.ERR,
+							Level.ERROR,
+							e,
+							"\nScenario failed, line #{}, column #{}:\n{}",
+							e.getLineNumber(),
+							e.getColumnNumber(),
+							e.getMessage());
 		}
 	}
 }

@@ -1,7 +1,5 @@
 package com.emc.mongoose.base.load.step.client;
 
-import com.emc.mongoose.base.item.ItemType;
-import com.emc.mongoose.base.item.naming.ItemNameInput;
 import com.emc.mongoose.base.item.naming.ItemNameInput.ItemNamingType;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
@@ -90,40 +88,36 @@ public interface ConfigSliceUtil {
 		try {
 			final var namingConfig = configSlices.get(0).configVal("item-naming");
 			final var namingType = ItemNamingType.valueOf(namingConfig.stringVal("type").toUpperCase());
-			if(SERIAL.equals(namingType)) {
+			if (SERIAL.equals(namingType)) {
 				final var sliceCount = configSlices.size();
 				final var srcNamingSeedRaw = namingConfig.val("seed");
 				long srcNamingSeed;
 				try {
 					srcNamingSeed = TypeUtil.typeConvert(srcNamingSeedRaw, long.class);
-				} catch(final ClassCastException | NumberFormatException e) {
-					if(srcNamingSeedRaw instanceof String) {
-						try(
-							final var in = withLanguage(ExpressionInput.builder())
-								.expression((String) srcNamingSeedRaw)
-								.<ExpressionInput<Long>>build()
-						) {
+				} catch (final ClassCastException | NumberFormatException e) {
+					if (srcNamingSeedRaw instanceof String) {
+						try (
+										final var in = withLanguage(ExpressionInput.builder())
+														.expression((String) srcNamingSeedRaw)
+														.<ExpressionInput<Long>> build()) {
 							srcNamingSeed = in.get();
 						}
 					} else {
 						throw new Exception(
-							"Item naming seed value (" + srcNamingSeedRaw + ") should be an integer either expression"
-						);
+										"Item naming seed value (" + srcNamingSeedRaw + ") should be an integer either expression");
 					}
 				}
 				final var srcNamingStep = namingConfig.intVal("step");
-				for(var i = 0; i < sliceCount; i ++) {
+				for (var i = 0; i < sliceCount; i++) {
 					final var configSlice = configSlices.get(i);
 					Loggers.MSG.debug(
-						"Item naming slicing: slice #{}, seed: {}, step: {}", i, srcNamingSeed + i * srcNamingStep,
-						srcNamingStep * sliceCount
-					);
+									"Item naming slicing: slice #{}, seed: {}, step: {}", i, srcNamingSeed + i * srcNamingStep,
+									srcNamingStep * sliceCount);
 					configSlice.val("item-naming-seed", srcNamingSeed + i * srcNamingStep);
 					configSlice.val("item-naming-step", srcNamingStep * sliceCount);
 				}
 			}
-		} catch(final NoSuchElementException ignored) {
-		} catch(final Exception e) {
+		} catch (final NoSuchElementException ignored) {} catch (final Exception e) {
 			LogUtil.exception(Level.ERROR, e, "Item naming slicing failure");
 		}
 	}

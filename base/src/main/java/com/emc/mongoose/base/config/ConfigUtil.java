@@ -46,10 +46,10 @@ public interface ConfigUtil {
 	static Map<String, Object> configTree(final Config config) {
 		final var configCopy = (Config) new BasicConfig(config);
 		final var configTree = configCopy.mapVal(null);
-		for(final var e: configTree.entrySet()) {
+		for (final var e : configTree.entrySet()) {
 			final var key = e.getKey();
 			final var val = e.getValue();
-			if(val instanceof Config) {
+			if (val instanceof Config) {
 				configTree.replace(key, configTree((Config) val));
 			}
 		}
@@ -68,14 +68,18 @@ public interface ConfigUtil {
 	static Config loadConfig(final File file, final Map<String, Object> schema)
 					throws NoSuchMethodException, IOException {
 		final Map<String, Object> configTree = readConfigMapper(schema)
-			.readValue(file, new TypeReference<Map<String, Object>>() {{}});
+						.readValue(file, new TypeReference<Map<String, Object>>() {
+							{}
+						});
 		return new BasicConfig("-", schema, configTree);
 	}
 
 	static Config loadConfig(final String content, final Map<String, Object> schema)
 					throws NoSuchMethodException, IOException {
 		final Map<String, Object> configTree = readConfigMapper(schema)
-			.readValue(content, new TypeReference<Map<String, Object>>() {{}});
+						.readValue(content, new TypeReference<Map<String, Object>>() {
+							{}
+						});
 		return new BasicConfig("-", schema, configTree);
 	}
 

@@ -13,41 +13,37 @@ import org.junit.Test;
  */
 public class SwiftResponseHandlerTest {
 
-	private static final String HTTP_RESPONSE =
-		""
-			+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
-			+ "\r\nContent-Type: application/octet-stream"
-			+ "\r\nContent-Range: bytes 0-4/10\n\r\n\r"
-			+ "\naaa\naa"
-			+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
-			+ "\r\nContent-Type: application/octet-stream"
-			+ "\r\nContent-Range: bytes 5-9/10\n\r\n\r"
-			+ "aaaaa"
-			+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4--\r\n";
+	private static final String HTTP_RESPONSE = ""
+					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
+					+ "\r\nContent-Type: application/octet-stream"
+					+ "\r\nContent-Range: bytes 0-4/10\n\r\n\r"
+					+ "\naaa\naa"
+					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
+					+ "\r\nContent-Type: application/octet-stream"
+					+ "\r\nContent-Range: bytes 5-9/10\n\r\n\r"
+					+ "aaaaa"
+					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4--\r\n";
 
-	private static final String PART_1_HTTP_RESPONSE =
-		""
-			+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
-			+ "\r\nContent-Type: application/octet-stream"
-			+ "\r\nContent-Range: bytes 0-4/10\n\r\n\r"
-			+ "\naaa\naa"
-			+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
-			+ "\r\nContent-Type: appli";
+	private static final String PART_1_HTTP_RESPONSE = ""
+					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
+					+ "\r\nContent-Type: application/octet-stream"
+					+ "\r\nContent-Range: bytes 0-4/10\n\r\n\r"
+					+ "\naaa\naa"
+					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
+					+ "\r\nContent-Type: appli";
 
-	private static final String PART_2_HTTP_RESPONSE =
-		""
-			+ "cation/octet-stream"
-			+ "\r\nContent-Range: bytes 5-9/10\n\r\n\r"
-			+ "aaaaa"
-			+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4--\r\n";
+	private static final String PART_2_HTTP_RESPONSE = ""
+					+ "cation/octet-stream"
+					+ "\r\nContent-Range: bytes 5-9/10\n\r\n\r"
+					+ "aaaaa"
+					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4--\r\n";
 
 	private static final String EXPECTED_CONTENT = "\naaa\naaaaaaa";
 	private static final String BOUNDARY = "--3d07fbbddf4041880c931c29e43cb6c4";
 	private static final EmbeddedChannel channel = new EmbeddedChannel(); // channel mock
-	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER =
-		AttributeKey.valueOf("boundary_marker");
+	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey.valueOf("boundary_marker");
 	private static final SwiftResponseHandler responseHandler = new SwiftResponseHandler(null,
-		true);
+					true);
 
 	static {
 		channel.attr(ATTR_KEY_BOUNDARY_MARKER).set(BOUNDARY);

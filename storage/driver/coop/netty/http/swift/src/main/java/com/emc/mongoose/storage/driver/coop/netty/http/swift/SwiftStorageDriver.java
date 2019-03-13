@@ -84,7 +84,7 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 	}
 
 	@Override
-	protected final String requestNewPath(final String path)  {
+	protected final String requestNewPath(final String path) {
 		// check the destination container if it exists w/ HEAD request
 		final var nodeAddr = storageNodeAddrs[0];
 		final var containerUri = namespacePath + (path.startsWith(SLASH) ? path : SLASH + path);
@@ -174,8 +174,7 @@ public class SwiftStorageDriver<I extends Item, O extends Operation<I>>
 	}
 
 	@Override
-	protected final String requestNewAuthToken(final Credential credential)
-					 {
+	protected final String requestNewAuthToken(final Credential credential) {
 		final var nodeAddr = storageNodeAddrs[0];
 		final var reqHeaders = (HttpHeaders) new DefaultHttpHeaders();
 		reqHeaders.set(HttpHeaderNames.HOST, nodeAddr);

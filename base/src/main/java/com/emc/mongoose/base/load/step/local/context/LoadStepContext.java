@@ -22,7 +22,7 @@ public interface LoadStepContext<I extends Item, O extends Operation<I>> extends
 	}
 
 	@Override
-	AsyncRunnable stop() ;
+	AsyncRunnable stop();
 
 	@Override
 	void close() throws IOException;

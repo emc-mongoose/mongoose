@@ -13,7 +13,6 @@ import com.emc.mongoose.base.load.step.LoadStepBase;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
 import com.emc.mongoose.base.metrics.MetricsManager;
-import com.emc.mongoose.base.metrics.context.MetricsContext;
 import com.emc.mongoose.base.metrics.context.MetricsContextImpl;
 import com.github.akurilov.commons.system.SizeInBytes;
 import com.github.akurilov.confuse.Config;
@@ -123,7 +122,7 @@ public abstract class LoadStepLocalBase extends LoadStepBase {
 	}
 
 	@Override
-	protected final void doStop()  {
+	protected final void doStop() {
 		stepContexts.forEach(LoadStepContext::stop);
 		super.doStop();
 	}

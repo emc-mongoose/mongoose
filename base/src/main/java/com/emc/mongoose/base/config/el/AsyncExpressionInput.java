@@ -5,7 +5,7 @@ import com.github.akurilov.fiber4j.Fiber;
 
 public interface AsyncExpressionInput<T> extends ExpressionInput<T>, Fiber {
 
-  /** @return last value, without re-evaluation */
-  @Override
-  T call();
+	/** @return last value, without re-evaluation */
+	@Override
+	T call();
 }

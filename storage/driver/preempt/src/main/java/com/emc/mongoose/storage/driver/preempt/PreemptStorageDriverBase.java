@@ -51,7 +51,7 @@ public abstract class PreemptStorageDriverBase<I extends Item, O extends Operati
 	}
 
 	@Override
-	public final boolean put(final O op)  {
+	public final boolean put(final O op) {
 		try {
 			ioExecutor.execute(wrapToBlocking(op));
 			return true;
@@ -64,8 +64,7 @@ public abstract class PreemptStorageDriverBase<I extends Item, O extends Operati
 	}
 
 	@Override
-	public final int put(final List<O> ops, final int from, final int to)
-					 {
+	public final int put(final List<O> ops, final int from, final int to) {
 		if (!isStarted() || ioExecutor.isShutdown() || ioExecutor.isTerminated()) {
 			throwUnchecked(new EOFException());
 		}
@@ -80,11 +79,11 @@ public abstract class PreemptStorageDriverBase<I extends Item, O extends Operati
 	}
 
 	@Override
-	public final int put(final List<O> ops)  {
+	public final int put(final List<O> ops) {
 		return put(ops, 0, ops.size());
 	}
 
-	private Runnable wrapToBlocking(final O op)  {
+	private Runnable wrapToBlocking(final O op) {
 		if (prepare(op)) {
 			return () -> {
 				execute(op);
@@ -136,7 +135,7 @@ public abstract class PreemptStorageDriverBase<I extends Item, O extends Operati
 	}
 
 	@Override
-	protected void doStop()  {
+	protected void doStop() {
 		Loggers.MSG.debug("{}: interrupting...", toString());
 		try {
 			if (ioExecutor.awaitTermination(1, TimeUnit.SECONDS)) {

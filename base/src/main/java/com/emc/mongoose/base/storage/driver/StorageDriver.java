@@ -39,13 +39,13 @@ public interface StorageDriver<I extends Item, O extends Operation<I>>
 					throws IOException;
 
 	@Override
-	boolean put(final O op) ;
+	boolean put(final O op);
 
 	@Override
-	int put(final List<O> ops, final int from, final int to) ;
+	int put(final List<O> ops, final int from, final int to);
 
 	@Override
-	int put(final List<O> ops) ;
+	int put(final List<O> ops);
 
 	boolean hasRemainingResults();
 
@@ -68,7 +68,7 @@ public interface StorageDriver<I extends Item, O extends Operation<I>>
 	void adjustIoBuffers(final long avgTransferSize, final OpType opType);
 
 	@Override
-	AsyncRunnable stop() ;
+	AsyncRunnable stop();
 
 	@Override
 	void close() throws IOException;

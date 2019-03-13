@@ -434,21 +434,19 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		long seed = 0;
 		try {
 			seed = TypeUtil.typeConvert(seedRaw, long.class);
-		} catch(final ClassCastException | NumberFormatException e) {
-			if(seedRaw instanceof String) {
-				try(
-					final var in = withLanguage(ExpressionInput.builder())
-						.expression((String) seedRaw)
-						.<ExpressionInput<Long>>build()
-				) {
+		} catch (final ClassCastException | NumberFormatException e) {
+			if (seedRaw instanceof String) {
+				try (
+								final var in = withLanguage(ExpressionInput.builder())
+												.expression((String) seedRaw)
+												.<ExpressionInput<Long>> build()) {
 					seed = in.get();
-				} catch(final Exception ee) {
+				} catch (final Exception ee) {
 					LogUtil.exception(Level.WARN, e, "Item naming seed expression (\"{}\") failure", seedRaw);
 				}
 			} else {
 				throw new IllegalStateException(
-					"Item naming seed (" + seedRaw + ") should be an integer either an expression"
-				);
+								"Item naming seed (" + seedRaw + ") should be an integer either an expression");
 			}
 		}
 		final var prefix = namingConfig.stringVal("prefix");

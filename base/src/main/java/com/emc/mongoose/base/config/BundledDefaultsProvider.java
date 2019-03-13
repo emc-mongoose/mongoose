@@ -8,13 +8,13 @@ import java.io.InputStream;
 
 public class BundledDefaultsProvider extends YamlConfigProviderBase {
 
-  @Override
-  protected final InputStream configInputStream() {
-    return getClass().getResourceAsStream("/" + PATH_DEFAULTS);
-  }
+	@Override
+	protected final InputStream configInputStream() {
+		return getClass().getResourceAsStream("/" + PATH_DEFAULTS);
+	}
 
-  @Override
-  public final String id() {
-    return APP_NAME;
-  }
+	@Override
+	public final String id() {
+		return APP_NAME;
+	}
 }
