@@ -5,7 +5,7 @@ config = {
         "data" : {
             "size" : "10MB",
             "input" : {
-            	"file" : "content.txt"
+            	"file" : "content_random_2"
             }
         }
     },
@@ -21,7 +21,7 @@ config = {
 		},
 		"auth" : {
 			"uid" : "test:tester",
-			"secret" : "tuadehoozaid"
+			"secret" : "jongaevaicei"
 		}
 	},
 	"load": {

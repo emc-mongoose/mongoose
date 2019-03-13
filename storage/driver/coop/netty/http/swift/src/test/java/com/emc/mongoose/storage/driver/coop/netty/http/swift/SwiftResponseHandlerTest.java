@@ -46,46 +46,45 @@ public class SwiftResponseHandlerTest {
 	private static final EmbeddedChannel channel = new EmbeddedChannel(); // channel mock
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER =
 		AttributeKey.valueOf("boundary_marker");
+	private static final SwiftResponseHandler responseHandler = new SwiftResponseHandler(null,
+		true);
 
 	static {
 		channel.attr(ATTR_KEY_BOUNDARY_MARKER).set(BOUNDARY);
 	}
 
+	private ByteBuf readFromChannel(final EmbeddedChannel channel) {
+		return Unpooled.copiedBuffer(channel.readOutbound().toString().getBytes());
+	}
+
 	@Test
 	public void fullContentTest() throws IOException {
 		channel.writeOutbound(HTTP_RESPONSE);
-		final ByteBuf expectedContent = Unpooled.copiedBuffer(EXPECTED_CONTENT.getBytes());
-		final ByteBuf contentChunk =
-			Unpooled.copiedBuffer(channel.readOutbound().toString().getBytes());
-		final SwiftResponseHandler responseHandler = new SwiftResponseHandler(null, true);
-		final ByteBuf newContentChunk = responseHandler.removeHeaders(channel, null, contentChunk);
+		final var expectedContent = Unpooled.copiedBuffer(EXPECTED_CONTENT.getBytes());
+		final var contentChunk = readFromChannel(channel);
+		final var newContentChunk = responseHandler.removeHeaders(channel, null, contentChunk);
 
 		Assert.assertEquals(expectedContent.array().length, newContentChunk.array().length);
 		while (expectedContent.isReadable()) {
-			final byte a = expectedContent.readByte();
-			final byte b = newContentChunk.readByte();
+			final var a = expectedContent.readByte();
+			final var b = newContentChunk.readByte();
 			Assert.assertEquals(a, b);
 		}
 	}
 
 	@Test
 	public void partContentTest() throws IOException {
-		final SwiftResponseHandler responseHandler = new SwiftResponseHandler(null, true);
-		final ByteBuf expectedContent = Unpooled.copiedBuffer(EXPECTED_CONTENT.getBytes());
+		final var expectedContent = Unpooled.copiedBuffer(EXPECTED_CONTENT.getBytes());
 
 		channel.writeOutbound(PART_1_HTTP_RESPONSE);
-		final ByteBuf contentChunk1 =
-			Unpooled.copiedBuffer(channel.readOutbound().toString().getBytes());
-		final ByteBuf newContentChunk1 = responseHandler
-			.removeHeaders(channel, null, contentChunk1);
+		final var contentChunk1 = readFromChannel(channel);
+		final var newContentChunk1 = responseHandler.removeHeaders(channel, null, contentChunk1);
 
 		channel.writeOutbound(PART_2_HTTP_RESPONSE);
-		final ByteBuf contentChunk2 =
-			Unpooled.copiedBuffer(channel.readOutbound().toString().getBytes());
-		final ByteBuf newContentChunk2 = responseHandler
-			.removeHeaders(channel, null, contentChunk2);
+		final var contentChunk2 = readFromChannel(channel);
+		final var newContentChunk2 = responseHandler.removeHeaders(channel, null, contentChunk2);
 
-		final ByteBuf fullContentChunk = Unpooled.copiedBuffer(newContentChunk1, newContentChunk2);
+		final var fullContentChunk = Unpooled.copiedBuffer(newContentChunk1, newContentChunk2);
 
 		Assert.assertEquals(expectedContent.array().length, fullContentChunk.array().length);
 		while (expectedContent.isReadable()) {

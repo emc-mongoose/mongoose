@@ -38,7 +38,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	private static final String HEADER_PATTERN = "(Content-Type:).*[\\s]*(Content-Range:).*";
 
 	private static final String HEADER_WITH_BOUNDARY_PATTERN =
-		"[\\s]{2}((%1$s)[\\s]*(" + HEADER_PATTERN + ")[\\s]{4}|(%1$s--)[\\s]*)";
+		"[\\s]{2}((%1$s)[\\s]*(" + HEADER_PATTERN + ")|(%1$s--))[\\s]{2,4}";
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER =
 		AttributeKey.valueOf("boundary_marker");
 
@@ -124,20 +124,18 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		int endIndex;
 		for (final var result : results){
 			endIndex = result.start();
-			contentRangeIdxs.add(new int[]{startIndex, endIndex}); //TODO replace on {start,size}
+			contentRangeIdxs.add(new int[]{startIndex, endIndex}); //TODO ??? replace on {start,size}
 			startIndex = result.end();
 		}
 		endIndex = rawBytesChunk.length;
 		contentRangeIdxs.add(new int[]{startIndex, endIndex});
-		//
-		//
 		int newContentSize = 0;
-		for (final int[] range : contentRangeIdxs) { //TODO: replace on stream
+		for (final int[] range : contentRangeIdxs) { //TODO: refactor
 			newContentSize += range[1] - range[0];
 		}
 		final byte[] bytesChunk = new byte[newContentSize];
 		int lastIdx = 0; //index in bytesChunk
-		for (final int[] range : contentRangeIdxs) { //TODO: replace on stream
+		for (final int[] range : contentRangeIdxs) { //TODO: refactor
 			final int rangeSize = range[1] - range[0];
 			System.arraycopy(rawBytesChunk, range[0], bytesChunk, lastIdx, rangeSize);
 			lastIdx += rangeSize;
