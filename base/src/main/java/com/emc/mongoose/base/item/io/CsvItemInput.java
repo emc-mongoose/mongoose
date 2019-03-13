@@ -18,19 +18,19 @@ import java.util.List;
 import org.apache.logging.log4j.Level;
 
 /**
- * The data item input using CSV file containing the human-readable data item records as the source
- */
+* The data item input using CSV file containing the human-readable data item records as the source
+*/
 public class CsvItemInput<I extends Item> implements Input<I> {
 
 	protected BufferedReader itemsSrc;
 	protected final ItemFactory<I> itemFactory;
 
 	/**
-	 * @param in the input stream to get the data item records from
-	 * @param itemFactory the concrete item factory used to parse the records
-	 * @throws IOException
-	 * @throws NoSuchMethodException
-	 */
+	* @param in the input stream to get the data item records from
+	* @param itemFactory the concrete item factory used to parse the records
+	* @throws IOException
+	* @throws NoSuchMethodException
+	*/
 	public CsvItemInput(final InputStream in, final ItemFactory<I> itemFactory) {
 		this(
 						new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8), Constants.MIB),
@@ -106,10 +106,10 @@ public class CsvItemInput<I extends Item> implements Input<I> {
 	}
 
 	/**
-	 * Most probably will cause an IOException due to missing mark
-	 *
-	 * @throws IOException
-	 */
+	* Most probably will cause an IOException due to missing mark
+	*
+	* @throws IOException
+	*/
 	@Override
 	public void reset() {
 		try {

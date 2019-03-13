@@ -10,15 +10,14 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
 /**
- * Created by andrey on 24.07.17. The data input able to produce the layer of different data using
- * the given layer index. Also caches the layers using the layers count limit to not to exhaust the
- * available memory. The allocated off-heap memory is calculated as layersCacheCountLimit *
- * layerSize (worst case)
- */
+* Created by andrey on 24.07.17. The data input able to produce the layer of different data using
+* the given layer index. Also caches the layers using the layers count limit to not to exhaust the
+* available memory. The allocated off-heap memory is calculated as layersCacheCountLimit *
+* layerSize (worst case)
+*/
 public class CachedDataInput extends DataInputBase {
 
 	private int layersCacheCountLimit;
-
 	@SuppressWarnings("ThreadLocalNotStaticFinal")
 	private final ThreadLocal<Int2ObjectOpenHashMap<MappedByteBuffer>> thrLocLayersCache = new ThreadLocal<>();
 

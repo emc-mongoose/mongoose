@@ -33,11 +33,11 @@ public class NewItemInput<I extends Item> implements Input<I> {
 	}
 
 	/**
-	 * Skips the specified count of the new item ids
-	 *
-	 * @param itemsCount count of items which should be skipped from the beginning
-	 * @throws IOException doesn't throw
-	 */
+	* Skips the specified count of the new item ids
+	*
+	* @param itemsCount count of items which should be skipped from the beginning
+	* @throws IOException doesn't throw
+	*/
 	@Override
 	public final long skip(final long itemsCount) {
 		return itemNameInput.skip(itemsCount);

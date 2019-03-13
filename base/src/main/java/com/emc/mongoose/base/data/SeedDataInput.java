@@ -6,9 +6,9 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
 /**
- * Created by kurila on 23.07.14. A uniform data input for producing uniform data items. Implemented
- * as finite buffer of pseudo random bytes.
- */
+* Created by kurila on 23.07.14. A uniform data input for producing uniform data items. Implemented
+* as finite buffer of pseudo random bytes.
+*/
 public final class SeedDataInput extends CachedDataInput {
 
 	public SeedDataInput() {

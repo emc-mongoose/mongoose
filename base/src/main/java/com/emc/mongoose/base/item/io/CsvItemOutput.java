@@ -14,9 +14,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * The data item output writing into the specified file human-readable data item records using the
- * CSV format
- */
+* The data item output writing into the specified file human-readable data item records using the
+* CSV format
+*/
 public abstract class CsvItemOutput<I extends Item> implements Output<I> {
 	//
 	protected final ItemFactory<I> itemFactory;

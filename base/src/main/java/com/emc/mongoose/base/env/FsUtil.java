@@ -1,6 +1,7 @@
 package com.emc.mongoose.base.env;
 
 import com.emc.mongoose.base.logging.Loggers;
+import java.io.File;
 import java.nio.file.Path;
 
 public interface FsUtil {

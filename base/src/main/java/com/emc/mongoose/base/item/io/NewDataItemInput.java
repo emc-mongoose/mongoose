@@ -13,9 +13,7 @@ public final class NewDataItemInput<D extends DataItem> extends NewItemInput<D>
 	private final SizeInBytes dataSize;
 
 	public NewDataItemInput(
-					final ItemFactory<D> itemFactory,
-					final ItemNameInput itemNameInput,
-					final SizeInBytes dataSize) {
+					final ItemFactory<D> itemFactory, final ItemNameInput itemNameInput, final SizeInBytes dataSize) {
 		super(itemFactory, itemNameInput);
 		this.dataSize = dataSize;
 	}

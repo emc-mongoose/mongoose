@@ -17,11 +17,11 @@ public class CsvFileItemInput<I extends Item> extends CsvItemInput<I> implements
 	protected final Path itemsFilePath;
 
 	/**
-	 * @param itemsFilePath the input stream to get the data item records from
-	 * @param itemFactory the concrete item factory
-	 * @throws IOException
-	 * @throws NoSuchMethodException
-	 */
+	* @param itemsFilePath the input stream to get the data item records from
+	* @param itemFactory the concrete item factory
+	* @throws IOException
+	* @throws NoSuchMethodException
+	*/
 	public CsvFileItemInput(final Path itemsFilePath, final ItemFactory<I> itemFactory)
 					throws IOException, NoSuchMethodException {
 		super(Files.newBufferedReader(itemsFilePath, StandardCharsets.UTF_8), itemFactory);

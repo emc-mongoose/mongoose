@@ -41,12 +41,12 @@ public final class DelayedTransferConvertBuffer<I extends Item, O extends Operat
 	}
 
 	/**
-	 * Block until the free space in the buff is available
-	 *
-	 * @param ioResult
-	 * @return always true
-	 * @throws IOException
-	 */
+	* Block until the free space in the buff is available
+	*
+	* @param ioResult
+	* @return always true
+	* @throws IOException
+	*/
 	@Override
 	public final boolean put(final O ioResult) {
 		if (poisonedFlag) {
@@ -73,14 +73,14 @@ public final class DelayedTransferConvertBuffer<I extends Item, O extends Operat
 	}
 
 	/**
-	 * Block until all the items from the given range are consumed
-	 *
-	 * @param ioResults
-	 * @param from
-	 * @param to
-	 * @return
-	 * @throws IOException
-	 */
+	* Block until all the items from the given range are consumed
+	*
+	* @param ioResults
+	* @param from
+	* @param to
+	* @return
+	* @throws IOException
+	*/
 	@Override
 	public final int put(final List<O> ioResults, final int from, final int to) {
 		if (poisonedFlag) {
@@ -116,12 +116,12 @@ public final class DelayedTransferConvertBuffer<I extends Item, O extends Operat
 	}
 
 	/**
-	 * Block until all the given items are consumed
-	 *
-	 * @param ioResults
-	 * @return
-	 * @throws IOException
-	 */
+	* Block until all the given items are consumed
+	*
+	* @param ioResults
+	* @return
+	* @throws IOException
+	*/
 	@Override
 	public final int put(final List<O> ioResults) {
 		return put(ioResults, 0, ioResults.size());
