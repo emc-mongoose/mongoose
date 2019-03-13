@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -118,20 +119,18 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 			.compile(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker));
 		final Matcher matcher = p.matcher(s);
 		final List<int[]> contentRangeIdxs = new ArrayList();
-		final List results = matcher.results().collect(Collectors.toList());
-		if (matcher.find()) {
-			int startIndex = 0;
-			int endIndex;
-			final int count = matcher.groupCount();
-			for (int i = 0; i < count; ++i) {
-				endIndex = matcher.start(i);
-				contentRangeIdxs
-					.add(new int[]{startIndex, endIndex}); //TODO replace on {start,size}
-				startIndex = matcher.end(i);
-			}
-			endIndex = rawBytesChunk.length - 1;
-			contentRangeIdxs.add(new int[]{startIndex, endIndex});
+		final List<MatchResult> results = matcher.results().collect(Collectors.toList());
+		int startIndex = 0;
+		int endIndex;
+		for (final var result : results){
+			endIndex = result.start();
+			contentRangeIdxs.add(new int[]{startIndex, endIndex}); //TODO replace on {start,size}
+			startIndex = result.end();
 		}
+		endIndex = rawBytesChunk.length - 1;
+		contentRangeIdxs.add(new int[]{startIndex, endIndex});
+		//
+		//
 		int newContentSize = 0;
 		for (final int[] range : contentRangeIdxs) { //TODO: replace on stream
 			newContentSize += range[1] - range[0];
