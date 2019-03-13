@@ -2,13 +2,14 @@ package com.emc.mongoose.base.load.step.local.context;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.github.akurilov.commons.concurrent.AsyncRunnable.State.SHUTDOWN;
 import static com.github.akurilov.commons.concurrent.AsyncRunnable.State.STARTED;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import com.emc.mongoose.base.concurrent.DaemonBase;
 import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.item.op.Operation.Status;
@@ -289,6 +290,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>> extends
 							Loggers.ERR.warn("Failed to output the I/O result");
 						}
 					} catch (final Exception e) {
+						throwUncheckedIfInterrupted(e);
 						if (e instanceof EOFException) {
 							LogUtil.exception(Level.DEBUG, e, "Load operations results destination end of input");
 						} else if (e instanceof IOException) {
@@ -360,6 +362,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>> extends
 								Loggers.ERR.warn("Failed to output the op result");
 							}
 						} catch (final Exception e) {
+							throwUncheckedIfInterrupted(e);
 							if (e instanceof EOFException) {
 								LogUtil.exception(
 												Level.DEBUG, e, "Load operations results destination end of input");
@@ -430,7 +433,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>> extends
 	}
 
 	@Override
-	protected final void doStop() throws InterruptRunException, IllegalStateException {
+	protected final void doStop() throws IllegalStateException {
 
 		driver.stop();
 		Loggers.MSG.debug(
@@ -451,17 +454,17 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>> extends
 		try {
 			resultsTransferTask.await();
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} catch (final Exception e) {
 			LogUtil.exception(Level.WARN, e, "Failed to await the results transfer task to finish");
 		}
 
 		if (latestSuccOpResultByItem != null && opsResultsOutput != null) {
 			try {
-				final int ioResultCount = latestSuccOpResultByItem.size();
+				final var ioResultCount = latestSuccOpResultByItem.size();
 				Loggers.MSG.info(
 								"{}: please wait while performing {} I/O results output...", id, ioResultCount);
-				for (final O latestOpResult : latestSuccOpResultByItem.values()) {
+				for (final var latestOpResult : latestSuccOpResultByItem.values()) {
 					try {
 						if (!opsResultsOutput.put(latestOpResult)) {
 							Loggers.ERR.debug(
@@ -480,7 +483,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>> extends
 					}
 				}
 			} catch (final InterruptedException e) {
-				throw new InterruptRunException(e);
+				throwUnchecked(e);
 			} finally {
 				Loggers.MSG.info("{}: I/O results output done", id);
 			}
@@ -511,7 +514,7 @@ public class LoadStepContextImpl<I extends Item, O extends Operation<I>> extends
 	}
 
 	@Override
-	protected final void doClose() throws InterruptRunException {
+	protected final void doClose()  {
 		try (final Instance logCtx = CloseableThreadContext.put(KEY_STEP_ID, id)
 						.put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 			try {

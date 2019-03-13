@@ -1,12 +1,13 @@
 package com.emc.mongoose.base.load.step.client;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.load.step.client.LoadStepClient.OUTPUT_PROGRESS_PERIOD_MILLIS;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import com.emc.mongoose.base.env.FsUtil;
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.load.step.file.FileManager;
 import com.emc.mongoose.base.load.step.service.file.FileManagerService;
 import com.emc.mongoose.base.logging.LogContextThreadFactory;
@@ -45,10 +46,10 @@ public final class ItemOutputFileAggregator implements AutoCloseable {
 					final String itemOutputFile) {
 		this.loadStepId = loadStepId;
 		this.itemOutputFile = itemOutputFile;
-		final int sliceCount = fileMgrs.size();
+		final var sliceCount = fileMgrs.size();
 		this.itemOutputFileSlices = new HashMap<>(sliceCount);
-		for (int i = 0; i < sliceCount; i++) {
-			final FileManager fileMgr = fileMgrs.get(i);
+		for (var i = 0; i < sliceCount; i++) {
+			final var fileMgr = fileMgrs.get(i);
 			if (i == 0) {
 				if (fileMgr instanceof FileManagerService) {
 					throw new AssertionError("File manager @ index #" + i + " shouldn't be a service");
@@ -56,12 +57,13 @@ public final class ItemOutputFileAggregator implements AutoCloseable {
 			} else {
 				if (fileMgr instanceof FileManagerService) {
 					try {
-						final String remoteItemOutputFileName = fileMgr.newTmpFileName();
+						final var remoteItemOutputFileName = fileMgr.newTmpFileName();
 						configSlices.get(i).val("item-output-file", remoteItemOutputFileName);
 						itemOutputFileSlices.put(fileMgr, remoteItemOutputFileName);
 						Loggers.MSG.debug(
 										"\"{}\": new tmp item output file \"{}\"", fileMgr, remoteItemOutputFileName);
 					} catch (final Exception e) {
+						throwUncheckedIfInterrupted(e);
 						LogUtil.exception(
 										Level.ERROR,
 										e,
@@ -85,15 +87,15 @@ public final class ItemOutputFileAggregator implements AutoCloseable {
 	}
 
 	private void collectToLocal() {
-		final LongAdder byteCounter = new LongAdder();
-		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(
+		final var byteCounter = new LongAdder();
+		final var executor = Executors.newScheduledThreadPool(
 						2, new LogContextThreadFactory("collectItemOutputFileWorker", true));
-		final CountDownLatch finishLatch = new CountDownLatch(1);
-		final Path itemOutputPath = Paths.get(itemOutputFile);
+		final var finishLatch = new CountDownLatch(1);
+		final var itemOutputPath = Paths.get(itemOutputFile);
 		FsUtil.createParentDirsIfNotExist(itemOutputPath);
 		executor.submit(
 						() -> {
-							try (final OutputStream localItemOutput = Files.newOutputStream(itemOutputPath, FileManager.APPEND_OPEN_OPTIONS)) {
+							try (final var localItemOutput = Files.newOutputStream(itemOutputPath, FileManager.APPEND_OPEN_OPTIONS)) {
 								final Lock localItemOutputLock = new ReentrantLock();
 								itemOutputFileSlices
 												.entrySet()
@@ -102,8 +104,8 @@ public final class ItemOutputFileAggregator implements AutoCloseable {
 												.filter(entry -> entry.getKey() instanceof FileManagerService)
 												.forEach(
 																entry -> {
-																	final FileManager fileMgr = entry.getKey();
-																	final String remoteItemOutputFileName = entry.getValue();
+																	final var fileMgr = entry.getKey();
+																	final var remoteItemOutputFileName = entry.getValue();
 																	transferToLocal(
 																					fileMgr,
 																					remoteItemOutputFileName,
@@ -113,6 +115,7 @@ public final class ItemOutputFileAggregator implements AutoCloseable {
 																	try {
 																		fileMgr.deleteFile(remoteItemOutputFileName);
 																	} catch (final Exception e) {
+																		throwUncheckedIfInterrupted(e);
 																		LogUtil.exception(
 																						Level.WARN,
 																						e,
@@ -145,7 +148,7 @@ public final class ItemOutputFileAggregator implements AutoCloseable {
 		try {
 			finishLatch.await();
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} finally {
 			executor.shutdownNow();
 			Loggers.MSG.info(
@@ -162,7 +165,7 @@ public final class ItemOutputFileAggregator implements AutoCloseable {
 					final Lock localItemOutputLock,
 					final LongAdder byteCounter) {
 		long transferredByteCount = 0;
-		try (final Instance logCtx = put(KEY_CLASS_NAME, ItemOutputFileAggregator.class.getSimpleName())) {
+		try (final var logCtx = put(KEY_CLASS_NAME, ItemOutputFileAggregator.class.getSimpleName())) {
 			byte buff[];
 			while (true) {
 				buff = fileMgr.readFromFile(remoteItemOutputFileName, transferredByteCount);

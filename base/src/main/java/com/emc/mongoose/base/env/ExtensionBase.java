@@ -1,6 +1,7 @@
 package com.emc.mongoose.base.env;
 
 import static com.emc.mongoose.base.Constants.DIR_CONFIG;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 
 import com.emc.mongoose.base.config.ConfigUtil;
 import com.emc.mongoose.base.logging.LogUtil;
@@ -17,7 +18,7 @@ public abstract class ExtensionBase extends InstallableJarResources implements E
 	@Override
 	public final Config defaults(final Path appHomePath) {
 
-		final SchemaProvider schemaProvider = schemaProvider();
+		final var schemaProvider = schemaProvider();
 		final Map<String, Object> schema;
 		if (schemaProvider == null) {
 			schema = null;
@@ -30,14 +31,15 @@ public abstract class ExtensionBase extends InstallableJarResources implements E
 			}
 		}
 
-		final String defaultsFileName = defaultsFileName();
+		final var defaultsFileName = defaultsFileName();
 		if (defaultsFileName == null) {
 			return null;
 		}
-		final File defaultsFile = Paths.get(appHomePath.toString(), DIR_CONFIG, defaultsFileName).toFile();
+		final var defaultsFile = Paths.get(appHomePath.toString(), DIR_CONFIG, defaultsFileName).toFile();
 		try {
 			return ConfigUtil.loadConfig(defaultsFile, schema);
 		} catch (final Exception e) {
+			throwUncheckedIfInterrupted(e);
 			LogUtil.exception(
 							Level.WARN, e, "Failed to load the defaults config from \"{}\"", defaultsFile);
 			return null;

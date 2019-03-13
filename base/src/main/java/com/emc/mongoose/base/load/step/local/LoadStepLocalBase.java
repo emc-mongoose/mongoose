@@ -2,11 +2,11 @@ package com.emc.mongoose.base.load.step.local;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import com.emc.mongoose.base.env.Extension;
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.load.step.local.context.LoadStepContext;
 import com.emc.mongoose.base.load.step.LoadStepBase;
@@ -59,8 +59,8 @@ public abstract class LoadStepLocalBase extends LoadStepBase {
 					final Config metricsConfig,
 					final SizeInBytes itemDataSize,
 					final boolean outputColorFlag) {
-		final int index = metricsContexts.size();
-		final MetricsContext metricsCtx = MetricsContextImpl.builder()
+		final var index = metricsContexts.size();
+		final var metricsCtx = MetricsContextImpl.builder()
 						.id(id())
 						.opType(opType)
 						.actualConcurrencyGauge(() -> stepContexts.get(index).activeOpCount())
@@ -87,7 +87,7 @@ public abstract class LoadStepLocalBase extends LoadStepBase {
 
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
-					throws InterruptRunException, IllegalStateException {
+					throws IllegalStateException {
 
 		final long timeoutMillis = timeout > 0 ? timeUnit.toMillis(timeout) : Long.MAX_VALUE;
 		final long startTimeMillis = System.currentTimeMillis();
@@ -113,7 +113,7 @@ public abstract class LoadStepLocalBase extends LoadStepBase {
 							break;
 						}
 					} catch (final InterruptedException e) {
-						throw new InterruptRunException(e);
+						throwUnchecked(e);
 					} catch (final RemoteException ignored) {}
 				}
 			}
@@ -123,12 +123,12 @@ public abstract class LoadStepLocalBase extends LoadStepBase {
 	}
 
 	@Override
-	protected final void doStop() throws InterruptRunException {
+	protected final void doStop()  {
 		stepContexts.forEach(LoadStepContext::stop);
 		super.doStop();
 	}
 
-	protected final void doClose() throws InterruptRunException, IOException {
+	protected final void doClose() throws IOException {
 		super.doClose();
 		stepContexts
 						.parallelStream()

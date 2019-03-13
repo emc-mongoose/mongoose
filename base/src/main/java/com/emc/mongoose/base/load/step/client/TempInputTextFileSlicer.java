@@ -2,12 +2,13 @@ package com.emc.mongoose.base.load.step.client;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.load.step.client.LoadStepClient.OUTPUT_PROGRESS_PERIOD_MILLIS;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.load.step.file.FileManager;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
@@ -44,16 +45,16 @@ public final class TempInputTextFileSlicer implements AutoCloseable {
 					final String configPath,
 					final List<Config> configSlices,
 					final int batchSize)
-					throws InterruptRunException {
+					 {
 		this.loadStepId = loadStepId;
-		final int sliceCount = configSlices.size();
+		final var sliceCount = configSlices.size();
 		fileSlices = new HashMap<>(sliceCount);
-		for (int i = 0; i < sliceCount; i++) {
+		for (var i = 0; i < sliceCount; i++) {
 			try {
-				final FileManager fileMgr = fileMgrs.get(i);
-				final String fileName = fileMgr.newTmpFileName();
+				final var fileMgr = fileMgrs.get(i);
+				final var fileName = fileMgr.newTmpFileName();
 				fileSlices.put(fileMgr, fileName);
-				final Config configSlice = configSlices.get(i);
+				final var configSlice = configSlices.get(i);
 				configSlice.val(configPath, fileName);
 			} catch (final Exception e) {
 				LogUtil.exception(
@@ -61,7 +62,7 @@ public final class TempInputTextFileSlicer implements AutoCloseable {
 			}
 		}
 
-		try (final Instance logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
+		try (final var logCtx = put(KEY_STEP_ID, loadStepId).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 			Loggers.MSG.info(
 							"{}: scatter the lines from the input text file \"{}\"...", loadStepId, srcFileName);
 			scatterLines(srcFileName, sliceCount, fileMgrs, fileSlices, batchSize);
@@ -69,9 +70,8 @@ public final class TempInputTextFileSlicer implements AutoCloseable {
 							"{}: scatter the lines from the input text file \"{}\" finished",
 							loadStepId,
 							srcFileName);
-		} catch (final InterruptRunException e) {
-			throw e;
 		} catch (final Throwable cause) {
+			throwUncheckedIfInterrupted(cause);
 			LogUtil.exception(
 							Level.ERROR,
 							cause,
@@ -88,11 +88,12 @@ public final class TempInputTextFileSlicer implements AutoCloseable {
 						.parallelStream()
 						.forEach(
 										entry -> {
-											final FileManager fileMgr = entry.getKey();
-											final String fileName = entry.getValue();
+											final var fileMgr = entry.getKey();
+											final var fileName = entry.getValue();
 											try {
 												fileMgr.deleteFile(fileName);
 											} catch (final Exception e) {
+												throwUncheckedIfInterrupted(e);
 												LogUtil.exception(
 																Level.WARN,
 																e,
@@ -111,22 +112,22 @@ public final class TempInputTextFileSlicer implements AutoCloseable {
 					final List<FileManager> fileMgrs,
 					final Map<FileManager, String> fileSlices,
 					final int batchSize)
-					throws InterruptRunException, IOException {
+					throws IOException {
 
-		final AtomicBoolean inputFinishFlag = new AtomicBoolean(false);
+		final var inputFinishFlag = new AtomicBoolean(false);
 		final List<BlockingQueue<String>> lineQueues = new ArrayList<>(sliceCount);
-		for (int i = 0; i < sliceCount; i++) {
+		for (var i = 0; i < sliceCount; i++) {
 			lineQueues.add(new ArrayBlockingQueue<>(batchSize));
 		}
 
 		final List<AsyncRunnable> tasks = new ArrayList<>(sliceCount + 1);
 		tasks.add(new ReadTask(inputFinishFlag, lineQueues, srcFileName, sliceCount));
 
-		final CountDownLatch writeFinishCountDown = new CountDownLatch(sliceCount);
-		for (int i = 0; i < sliceCount; i++) {
-			final BlockingQueue<String> lineQueue = lineQueues.get(i);
-			final FileManager fileMgr = fileMgrs.get(i);
-			final String dstFileName = fileSlices.get(fileMgr);
+		final var writeFinishCountDown = new CountDownLatch(sliceCount);
+		for (var i = 0; i < sliceCount; i++) {
+			final var lineQueue = lineQueues.get(i);
+			final var fileMgr = fileMgrs.get(i);
+			final var dstFileName = fileSlices.get(fileMgr);
 			tasks.add(
 							new WriteTask(
 											inputFinishFlag, writeFinishCountDown, lineQueue, fileMgr, dstFileName, batchSize));
@@ -142,7 +143,7 @@ public final class TempInputTextFileSlicer implements AutoCloseable {
 		try {
 			writeFinishCountDown.await();
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} finally {
 			tasks.forEach(
 							task -> {
@@ -281,12 +282,12 @@ public final class TempInputTextFileSlicer implements AutoCloseable {
 
 		@Override
 		protected final void invokeTimedExclusively(final long startTimeNanos) {
-			final int n = lineQueue.drainTo(lines, batchSize);
+			final var n = lineQueue.drainTo(lines, batchSize);
 			if (n == 0 && inputFinishFlag.get()) {
 				stop();
 			} else {
 				try {
-					for (int i = 0; i < n; i++) {
+					for (var i = 0; i < n; i++) {
 						linesWriter.write(lines.get(i));
 						linesWriter.newLine();
 					}

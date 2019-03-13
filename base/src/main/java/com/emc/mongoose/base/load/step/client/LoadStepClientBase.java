@@ -2,19 +2,17 @@ package com.emc.mongoose.base.load.step.client;
 
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.config.ConfigUtil.flatten;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import com.emc.mongoose.base.config.AliasingUtil;
 import com.emc.mongoose.base.data.DataInput;
 import com.emc.mongoose.base.env.Extension;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
-import com.emc.mongoose.base.item.Item;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.io.ItemInputFactory;
 import com.emc.mongoose.base.item.op.OpType;
-import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.load.step.LoadStep;
 import com.emc.mongoose.base.load.step.LoadStepBase;
 import com.emc.mongoose.base.load.step.LoadStepFactory;
@@ -28,7 +26,6 @@ import com.emc.mongoose.base.metrics.context.DistributedMetricsContext;
 import com.emc.mongoose.base.metrics.context.DistributedMetricsContextImpl;
 import com.emc.mongoose.base.metrics.snapshot.AllMetricsSnapshot;
 import com.emc.mongoose.base.storage.driver.StorageDriver;
-import com.github.akurilov.commons.io.Input;
 import com.github.akurilov.commons.net.NetUtil;
 import com.github.akurilov.commons.reflection.TypeUtil;
 import com.github.akurilov.commons.system.SizeInBytes;
@@ -69,7 +66,7 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 	private MetricsAggregator metricsAggregator = null;
 
 	@Override
-	protected final void doStartWrapped() throws InterruptRunException, IllegalArgumentException {
+	protected final void doStartWrapped() throws IllegalArgumentException {
 		try (final var logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 			// need to set the once generated step id
 			config.val("load-step-id", id());
@@ -123,8 +120,7 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 		nodeAddrs.stream().map(FileManagerClient::resolve).forEachOrdered(fileMgrsDst::add);
 	}
 
-	private void addFileClients(final Config config, final List<Config> configSlices)
-					throws InterruptRunException {
+	private void addFileClients(final Config config, final List<Config> configSlices) {
 		final var loadConfig = config.configVal("load");
 		final var batchSize = loadConfig.intVal("batch-size");
 		final var storageConfig = config.configVal("storage");
@@ -162,10 +158,10 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 								new ItemInputFileSlicer(id(), fileMgrs, configSlices, itemInput, batchSize));
 				Loggers.MSG.debug("{}: item input file slicer initialized", id());
 			}
-		} catch (final OmgShootMyFootException e) {
+		} catch (final IllegalConfigurationException e) {
 			LogUtil.exception(Level.ERROR, e, "{}: failed to init the storage driver", id());
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} catch (final Exception e) {
 			LogUtil.exception(Level.WARN, e, "{}: failed to close the item input", id());
 		}
@@ -202,7 +198,7 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 					final List<Config> configSlices,
 					final List<List<Config>> ctxConfigsSlices,
 					final MetricsManager metricsManager)
-					throws InterruptRunException {
+					 {
 		final String stepTypeName;
 		try {
 			stepTypeName = getTypeName();
@@ -225,9 +221,10 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 			if (stepSlice != null) {
 				try {
 					stepSlice.start();
-				} catch (final InterruptRunException e) {
-					throw e;
 				} catch (final Exception e) {
+					if(e instanceof InterruptedException) {
+						throwUnchecked(e);
+					}
 					LogUtil.exception(
 									Level.ERROR, e, "{}: failed to start the step slice \"{}\"", id(), stepSlice);
 				}
@@ -374,7 +371,7 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 
 	@Override
 	public final boolean await(final long timeout, final TimeUnit timeUnit)
-					throws InterruptRunException, IllegalStateException, InterruptedException {
+	throws IllegalStateException, InterruptedException {
 		final var stepSliceCount = stepSlices.size();
 		try (final var logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 			if (0 == stepSliceCount) {
@@ -393,11 +390,13 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 												try {
 													return stepSlice.await(timeout, timeUnit);
 												} catch (final InterruptedException e) {
-													throw new InterruptRunException(e);
+													throwUnchecked(e);
 												} catch (final RemoteException e) {
 													return false;
 												}
-											})
+												return false;
+											}
+							)
 							.reduce((flag1, flag2) -> flag1 && flag2)
 							.orElse(false);
 		} finally {
@@ -406,7 +405,7 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 	}
 
 	@Override
-	protected final void doStop() throws InterruptRunException {
+	protected final void doStop()  {
 		stepSlices
 						.parallelStream()
 						.forEach(
@@ -414,9 +413,8 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 											try (final var logCtx = put(KEY_STEP_ID, stepSlice.id())
 															.put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 												stepSlice.stop();
-											} catch (final InterruptRunException e) {
-												throw e;
 											} catch (final Exception e) {
+												throwUncheckedIfInterrupted(e);
 												LogUtil.trace(
 																Loggers.ERR,
 																Level.WARN,
@@ -435,7 +433,7 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 	}
 
 	@Override
-	protected final void doClose() throws InterruptRunException, IOException {
+	protected final void doClose() throws IOException {
 		try (final var logCtx = put(KEY_STEP_ID, id()).put(KEY_CLASS_NAME, getClass().getSimpleName())) {
 			super.doClose();
 			if (null != metricsAggregator) {
@@ -449,9 +447,8 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 												try {
 													stepSlice.close();
 													Loggers.MSG.debug("{}: step slice \"{}\" closed", id(), stepSlice);
-												} catch (final InterruptRunException e) {
-													throw e;
 												} catch (final Exception e) {
+													throwUncheckedIfInterrupted(e);
 													LogUtil.exception(
 																	Level.WARN,
 																	e,
@@ -466,9 +463,8 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 							itemDataInputFileSlicer -> {
 								try {
 									itemDataInputFileSlicer.close();
-								} catch (final InterruptRunException e) {
-									throw e;
 								} catch (final Exception e) {
+									throwUncheckedIfInterrupted(e);
 									LogUtil.exception(
 													Level.WARN,
 													e,
@@ -482,9 +478,8 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 							itemInputFileSlicer -> {
 								try {
 									itemInputFileSlicer.close();
-								} catch (final InterruptRunException e) {
-									throw e;
 								} catch (final Exception e) {
+									throwUncheckedIfInterrupted(e);
 									LogUtil.exception(
 													Level.WARN,
 													e,
@@ -500,9 +495,8 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 											itemOutputFileAggregator -> {
 												try {
 													itemOutputFileAggregator.close();
-												} catch (final InterruptRunException e) {
-													throw e;
 												} catch (final Exception e) {
+													throwUncheckedIfInterrupted(e);
 													LogUtil.exception(
 																	Level.WARN,
 																	e,
@@ -518,9 +512,8 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 											opTraceLogFileAggregator -> {
 												try {
 													opTraceLogFileAggregator.close();
-												} catch (final InterruptRunException e) {
-													throw e;
 												} catch (final Exception e) {
+													throwUncheckedIfInterrupted(e);
 													LogUtil.exception(
 																	Level.WARN,
 																	e,
@@ -534,9 +527,8 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 							storageAuthFileSlicer -> {
 								try {
 									storageAuthFileSlicer.close();
-								} catch (final InterruptRunException e) {
-									throw e;
 								} catch (final Exception e) {
+									throwUncheckedIfInterrupted(e);
 									LogUtil.exception(
 													Level.WARN,
 													e,
@@ -551,7 +543,7 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 
 	@Override
 	public final <T extends LoadStepClient> T config(final Map<String, Object> configMap)
-					throws InterruptRunException {
+					 {
 		if (ctxConfigs != null) {
 			throw new IllegalStateException("config(...) should be invoked before any append(...) call");
 		}
@@ -569,14 +561,14 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 			aliasedArgs.forEach(configCopy::val); // merge
 		} catch (final Exception e) {
 			LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		}
 		return copyInstance(configCopy, null);
 	}
 
 	@Override
 	public final <T extends LoadStepClient> T append(final Map<String, Object> context)
-					throws InterruptRunException {
+					 {
 		final List<Config> ctxConfigsCopy;
 		if (ctxConfigs == null) {
 			ctxConfigsCopy = new ArrayList<>(1);
@@ -592,7 +584,7 @@ public abstract class LoadStepClientBase extends LoadStepBase implements LoadSte
 			aliasedArgs.forEach(ctxConfig::val); // merge
 		} catch (final Exception e) {
 			LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		}
 		ctxConfigsCopy.add(ctxConfig);
 		return copyInstance(config, ctxConfigsCopy);

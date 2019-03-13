@@ -12,11 +12,11 @@ import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.NS_
 import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.OBJ_URI_BASE;
 import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.SIGN_METHOD;
 import static com.emc.mongoose.storage.driver.coop.netty.http.atmos.AtmosApi.SUBTENANT_URI_BASE;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.emc.mongoose.base.data.DataInput;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
 import com.emc.mongoose.base.item.op.OpType;
@@ -85,7 +85,7 @@ public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
 					final Config storageConfig,
 					final boolean verifyFlag,
 					final int batchSize)
-					throws OmgShootMyFootException, InterruptedException {
+					throws IllegalConfigurationException, InterruptedException {
 		super(stepId, dataInput, storageConfig, verifyFlag, batchSize);
 		final var httpConfig = storageConfig.configVal("net-http");
 		fsAccess = httpConfig.boolVal("fsAccess");
@@ -101,8 +101,7 @@ public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
 	}
 
 	@Override
-	protected final String requestNewAuthToken(final Credential credential)
-					throws InterruptRunException {
+	protected final String requestNewAuthToken(final Credential credential) {
 
 		final var nodeAddr = storageNodeAddrs[0];
 		final var uriQuery = uriQuery();
@@ -142,7 +141,7 @@ public class AtmosStorageDriver<I extends Item, O extends Operation<I>>
 				getSubtenantResp.release();
 			}
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} catch (final ConnectException e) {
 			LogUtil.exception(Level.WARN, e, "Failed to connect to the storage node");
 		}

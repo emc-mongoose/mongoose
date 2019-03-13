@@ -1,12 +1,12 @@
 package com.emc.mongoose.storage.driver.coop;
 
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
 import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.github.akurilov.commons.collection.CircularArrayBuffer;
 import com.github.akurilov.commons.collection.CircularBuffer;
@@ -111,7 +111,7 @@ public final class OperationDispatchTask<I extends Item, O extends Operation<I>>
 
 	@Override
 	protected final void doClose()
-					throws InterruptRunException {
+					 {
 		try {
 			if (buffLock.tryLock(WARN_DURATION_LIMIT_NANOS, TimeUnit.NANOSECONDS)) {
 				buff.clear();
@@ -119,7 +119,7 @@ public final class OperationDispatchTask<I extends Item, O extends Operation<I>>
 				Loggers.ERR.warn("BufferLock timeout on close");
 			}
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		}
 	}
 }

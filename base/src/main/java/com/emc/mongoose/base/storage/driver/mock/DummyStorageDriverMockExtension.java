@@ -2,7 +2,7 @@ package com.emc.mongoose.base.storage.driver.mock;
 
 import com.emc.mongoose.base.data.DataInput;
 import com.emc.mongoose.base.env.ExtensionBase;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.storage.driver.StorageDriverFactory;
@@ -35,7 +35,7 @@ public final class DummyStorageDriverMockExtension<I extends Item, O extends Ope
 					final Config storageConfig,
 					final boolean verifyFlag,
 					final int batchSize)
-					throws OmgShootMyFootException {
+					throws IllegalConfigurationException {
 		return (T) new DummyStorageDriverMock<I, O>(storageConfig);
 	}
 

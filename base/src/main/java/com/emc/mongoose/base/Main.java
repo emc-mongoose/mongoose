@@ -4,6 +4,7 @@ import static com.emc.mongoose.base.Constants.APP_NAME;
 import static com.emc.mongoose.base.Constants.DIR_EXT;
 import static com.emc.mongoose.base.Constants.MIB;
 import static com.emc.mongoose.base.Constants.PATH_DEFAULTS;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.config.CliArgUtil.allCliArgs;
 
 import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
@@ -18,7 +19,6 @@ import com.emc.mongoose.base.control.run.RunImpl;
 import com.emc.mongoose.base.control.run.RunServlet;
 import com.emc.mongoose.base.env.CoreResourcesToInstall;
 import com.emc.mongoose.base.env.Extension;
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.load.step.ScenarioUtil;
 import com.emc.mongoose.base.load.step.service.LoadStepManagerServiceImpl;
 import com.emc.mongoose.base.load.step.service.file.FileManagerServiceImpl;
@@ -75,6 +75,7 @@ public final class Main {
 					// parse the CLI args and apply them to the config instance
 					configWithArgs = applyArgsToConfig(args, fullDefaultConfig, initialStepId);
 				} catch (final Exception e) {
+					throwUncheckedIfInterrupted(e);
 					LogUtil.exception(Level.ERROR, e, "Failed to load the defaults");
 					throw e;
 				}
@@ -87,7 +88,7 @@ public final class Main {
 					runScenario(configWithArgs, extensions, extClsLoader, metricsMgr, appHomePath);
 				}
 			}
-		} catch (final InterruptedException | InterruptRunException e) {
+		} catch (final InterruptedException e) {
 			Loggers.MSG.debug("Interrupted", e);
 		} catch (final Exception e) {
 			LogUtil.trace(Loggers.ERR, Level.FATAL, e, "Unexpected failure");
@@ -206,7 +207,7 @@ public final class Main {
 				fileMgrSvc.start();
 				scenarioStepSvc.start();
 				scenarioStepSvc.await();
-			} catch (final InterruptedException | InterruptRunException e) {
+			} catch (final InterruptedException e) {
 				throw e;
 			} catch (final Throwable cause) {
 				LogUtil.trace(Loggers.ERR, Level.FATAL, cause, "Run node failure");

@@ -1,6 +1,5 @@
 package com.emc.mongoose.base.item.io;
 
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.item.DataItemFactory;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
@@ -8,7 +7,6 @@ import com.emc.mongoose.base.item.op.Operation;
 import com.emc.mongoose.base.storage.driver.StorageDriver;
 import com.github.akurilov.commons.io.collection.BufferingInputBase;
 import java.io.IOException;
-import java.util.List;
 
 /** Created by andrey on 02.12.16. */
 public final class StorageItemInput<I extends Item> extends BufferingInputBase<I> {
@@ -37,14 +35,14 @@ public final class StorageItemInput<I extends Item> extends BufferingInputBase<I
 	}
 
 	@Override
-	protected final int loadMoreItems(final I lastItem) throws InterruptRunException, IOException {
+	protected final int loadMoreItems(final I lastItem) throws IOException {
 		if (poisonedFlag) {
 			return 0;
 		}
-		final List<I> newItems = storageDriver.list(itemFactory, path, prefix, idRadix, lastItem, capacity);
-		final int n = newItems.size();
+		final var newItems = storageDriver.list(itemFactory, path, prefix, idRadix, lastItem, capacity);
+		final var n = newItems.size();
 		I nextItem;
-		for (int i = 0; i < n; i++) {
+		for (var i = 0; i < n; i++) {
 			nextItem = newItems.get(i);
 			if (null == nextItem) {
 				poisonedFlag = true;

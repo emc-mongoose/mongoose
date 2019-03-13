@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.driver.coop.nio.mock;
 
 import com.emc.mongoose.base.data.DataInput;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.item.ItemFactory;
@@ -24,7 +24,7 @@ public class NioStorageDriverMock<I extends Item, O extends Operation<I>>
 
 	public NioStorageDriverMock(
 					final String testSteoName, final DataInput dataInput, final Config storageConfig, final boolean verifyFlag,
-					final int batchSize) throws OmgShootMyFootException {
+					final int batchSize) throws IllegalConfigurationException {
 		super(testSteoName, dataInput, storageConfig, verifyFlag, batchSize);
 	}
 

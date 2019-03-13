@@ -2,6 +2,7 @@ package com.emc.mongoose.base.env;
 
 import static com.emc.mongoose.base.Constants.APP_NAME;
 import static com.emc.mongoose.base.Constants.USER_HOME;
+import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.config.CliArgUtil.ARG_PATH_SEP;
 
 import com.emc.mongoose.base.config.BundledDefaultsProvider;
@@ -97,6 +98,7 @@ public final class CoreResourcesToInstall extends InstallableJarResources {
 			final var schema = SchemaProvider.resolveAndReduce(APP_NAME, Thread.currentThread().getContextClassLoader());
 			bundledDefaults = new BundledDefaultsProvider().config(ARG_PATH_SEP, schema);
 		} catch (final Exception e) {
+			throwUncheckedIfInterrupted(e);
 			throw new IllegalStateException("Failed to load the bundled default config from the resources", e);
 		}
 		final var appVersion = bundledDefaults.stringVal("run-version");

@@ -7,11 +7,11 @@ import static com.emc.mongoose.base.storage.driver.StorageDriver.BUFF_SIZE_MIN;
 import static com.github.akurilov.commons.io.el.ExpressionInput.ASYNC_MARKER;
 import static com.github.akurilov.commons.io.el.ExpressionInput.INIT_MARKER;
 import static com.github.akurilov.commons.io.el.ExpressionInput.SYNC_MARKER;
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.emc.mongoose.base.config.ConstantValueInputImpl;
 import com.emc.mongoose.base.config.el.CompositeExpressionInputBuilder;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.item.DataItem;
 import com.emc.mongoose.base.item.DataItemFactoryImpl;
 import com.emc.mongoose.base.item.Item;
@@ -115,8 +115,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public LoadGeneratorBuilderImpl<I, O, T> itemInput(final Input<I> itemInput)
-					throws InterruptRunException {
+	public LoadGeneratorBuilderImpl<I, O, T> itemInput(final Input<I> itemInput) {
 		this.itemInput = itemInput;
 		// pipeline transfer buffer is not resettable
 		if (!(itemInput instanceof TransferConvertBuffer)) {
@@ -147,25 +146,25 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 	}
 
 	@SuppressWarnings("unchecked")
-	public T build() throws InterruptRunException, OmgShootMyFootException {
+	public T build() throws IllegalConfigurationException {
 		// prepare
 		final OperationsBuilder<I, O> opsBuilder;
 		if (loadConfig == null) {
-			throw new OmgShootMyFootException("Load config is not set");
+			throw new IllegalConfigurationException("Load config is not set");
 		}
 		final var opConfig = loadConfig.configVal("op");
 		final var countLimit = opConfig.longVal("limit-count");
 		final var shuffleFlag = opConfig.boolVal("shuffle");
 		if (itemConfig == null) {
-			throw new OmgShootMyFootException("Item config is not set");
+			throw new IllegalConfigurationException("Item config is not set");
 		}
 		final var inputConfig = itemConfig.configVal("input");
 		final var rangesConfig = itemConfig.configVal("data-ranges");
 		if (itemType == null) {
-			throw new OmgShootMyFootException("Item type is not set");
+			throw new IllegalConfigurationException("Item type is not set");
 		}
 		if (originIndex < 0) {
-			throw new OmgShootMyFootException("No origin index is set");
+			throw new IllegalConfigurationException("No origin index is set");
 		}
 		// init the op builder
 		if (ItemType.DATA.equals(itemType)) {
@@ -211,7 +210,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		opsBuilder.outputPathInput(outputPathSupplier);
 		// init the credentials, multi-user case support
 		if (authConfig == null) {
-			throw new OmgShootMyFootException("Storage auth config is not set");
+			throw new IllegalConfigurationException("Storage auth config is not set");
 		}
 		final var authFile = authConfig.stringVal("file");
 		if (authFile != null && !authFile.isEmpty()) {
@@ -237,7 +236,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 				itemInput = ItemInputFactory.createItemInput(itemConfig, batchSize, (StorageDriver<I, O>) opOutput);
 			}
 			if (itemInput == null) {
-				throw new OmgShootMyFootException("No item input available");
+				throw new IllegalConfigurationException("No item input available");
 			}
 			if (ItemType.DATA.equals(itemType)) {
 				sizeEstimate = estimateTransferSize(
@@ -259,11 +258,11 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 				final var srcItemsCountMin = srcItemsCountRange.getBeg();
 				final var srcItemsCountMax = srcItemsCountRange.getEnd();
 				if (srcItemsCountMin < 0) {
-					throw new OmgShootMyFootException(
+					throw new IllegalConfigurationException(
 									"Source data items count min value should be more than 0");
 				}
 				if (srcItemsCountMax == 0 || srcItemsCountMax < srcItemsCountMin) {
-					throw new OmgShootMyFootException(
+					throw new IllegalConfigurationException(
 									"Source data items count max value should be more than 0 and not less than min value");
 				}
 				final List<I> srcItemsBuff = new ArrayList<>((int) M);
@@ -277,18 +276,18 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 				}
 				// shoot the foot
 				if (srcItemsCount == 0) {
-					throw new OmgShootMyFootException(
+					throw new IllegalConfigurationException(
 									"Available source items count " + srcItemsCount + " should be more than 0");
 				}
 				if (srcItemsCount < srcItemsCountMin) {
-					throw new OmgShootMyFootException(
+					throw new IllegalConfigurationException(
 									"Available source items count "
 													+ srcItemsCount
 													+ " is less than configured min "
 													+ srcItemsCountMin);
 				}
 				if (srcItemsCount < srcItemsCountMax) {
-					throw new OmgShootMyFootException(
+					throw new IllegalConfigurationException(
 									"Available source items count "
 													+ srcItemsCount
 													+ " is less than configured max "
@@ -304,7 +303,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		}
 		// adjust the storage drivers for the estimated transfer size
 		if (opOutput == null) {
-			throw new OmgShootMyFootException("Load operations output is not set");
+			throw new IllegalConfigurationException("Load operations output is not set");
 		}
 		if (sizeEstimate > 0 && ItemType.DATA.equals(itemType) && opOutput instanceof StorageDriver) {
 			((StorageDriver) opOutput).adjustIoBuffers(sizeEstimate, opType);
@@ -313,7 +312,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		final var retryFlag = opConfig.boolVal("retry");
 		final var recycleLimit = opConfig.intVal("limit-recycle");
 		if (recycleLimit < 1) {
-			throw new OmgShootMyFootException("Recycle limit should be > 0");
+			throw new IllegalConfigurationException("Recycle limit should be > 0");
 		}
 		return (T) new LoadGeneratorImpl<>(
 						itemInput,
@@ -330,8 +329,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 	private static long estimateTransferSize(
 					final DataOperationsBuilder dataOpBuilder,
 					final OpType opType,
-					final Input<DataItem> itemInput)
-					throws InterruptRunException {
+					final Input<DataItem> itemInput) {
 		var sizeThreshold = 0L;
 		var randomRangesCount = 0;
 		List<Range> fixedRanges = null;
@@ -429,7 +427,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 		return pathInput;
 	}
 
-	private Input<I> newItemInput() throws OmgShootMyFootException {
+	private Input<I> newItemInput() throws IllegalConfigurationException {
 		final var namingConfig = itemConfig.configVal("naming");
 		final var length = namingConfig.intVal("length");
 		final var seedRaw = namingConfig.val("seed");
@@ -448,7 +446,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 					LogUtil.exception(Level.WARN, e, "Item naming seed expression (\"{}\") failure", seedRaw);
 				}
 			} else {
-				throw new OmgShootMyFootException(
+				throw new IllegalStateException(
 					"Item naming seed (" + seedRaw + ") should be an integer either an expression"
 				);
 			}
@@ -466,7 +464,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 						.type(type)
 						.build();
 		if (itemFactory == null) {
-			throw new OmgShootMyFootException("Item factory is not set");
+			throw new IllegalConfigurationException("Item factory is not set");
 		}
 		if (itemFactory instanceof DataItemFactoryImpl) {
 			final SizeInBytes itemDataSize;
@@ -503,8 +501,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 	}
 
 	private static <I extends Item> int loadSrcItems(
-					final Input<I> itemInput, final List<I> itemBuff, final int countLimit)
-					throws InterruptRunException {
+					final Input<I> itemInput, final List<I> itemBuff, final int countLimit) {
 		final var loadedCount = new LongAdder();
 		final var executor = Executors.newScheduledThreadPool(
 						2, new LogContextThreadFactory("loadSrcItemsWorker", true));
@@ -544,7 +541,7 @@ public class LoadGeneratorBuilderImpl<I extends Item, O extends Operation<I>, T 
 							TimeUnit.SECONDS);
 			finishLatch.await();
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} finally {
 			executor.shutdownNow();
 		}

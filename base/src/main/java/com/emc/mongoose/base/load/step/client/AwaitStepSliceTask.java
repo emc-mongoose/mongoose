@@ -1,7 +1,6 @@
 package com.emc.mongoose.base.load.step.client;
 
 import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
-import com.emc.mongoose.base.exception.InterruptRunException;
 import com.emc.mongoose.base.load.step.LoadStep;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.emc.mongoose.base.logging.Loggers;
@@ -10,6 +9,8 @@ import java.rmi.RemoteException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.Level;
+
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 public class AwaitStepSliceTask extends ExclusiveFiberBase {
 
@@ -44,7 +45,7 @@ public class AwaitStepSliceTask extends ExclusiveFiberBase {
 							"Failed to invoke the remote await method on the step slice \"{}\"",
 							stepSlice);
 		} catch (final InterruptedException e) {
-			throw new InterruptRunException(e);
+			throwUnchecked(e);
 		} catch (final IllegalStateException e) {
 			LogUtil.exception(Level.WARN, e, "{}: failure in the await method", loadStepId);
 		}

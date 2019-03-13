@@ -1,8 +1,7 @@
 package com.emc.mongoose.load.step.weighted;
 
 import com.emc.mongoose.base.env.Extension;
-import com.emc.mongoose.base.exception.InterruptRunException;
-import com.emc.mongoose.base.exception.OmgShootMyFootException;
+import com.emc.mongoose.base.config.IllegalConfigurationException;
 import com.emc.mongoose.base.data.DataInput;
 import com.emc.mongoose.base.item.op.OpType;
 import com.emc.mongoose.base.item.Item;
@@ -27,7 +26,7 @@ import com.github.akurilov.commons.concurrent.throttle.IndexThrottle;
 import com.github.akurilov.commons.concurrent.throttle.RateThrottle;
 import com.github.akurilov.commons.concurrent.throttle.SequentialWeightsThrottle;
 import static com.github.akurilov.commons.collection.TreeUtil.reduceForest;
-
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 import static com.github.akurilov.confuse.Config.deepToMap;
 import com.github.akurilov.confuse.Config;
 import com.github.akurilov.confuse.exceptions.InvalidValuePathException;
@@ -61,7 +60,7 @@ public class WeightedLoadStepLocal
 
 	@Override
 	protected void init()
-					throws InterruptRunException {
+					 {
 
 		final String autoStepId = "weighted_" + LogUtil.getDateTimeStamp();
 		final Config stepConfig = config.configVal("load-step");
@@ -76,12 +75,12 @@ public class WeightedLoadStepLocal
 		for (int originIndex = 0; originIndex < subStepCount; originIndex++) {
 			final Map<String, Object> mergedConfigTree = reduceForest(
 							Arrays.asList(deepToMap(config), deepToMap(ctxConfigs.get(originIndex))));
-			final Config subConfig;
+			Config subConfig = null;
 			try {
 				subConfig = new BasicConfig(config.pathSep(), config.schema(), mergedConfigTree);
 			} catch (final InvalidValueTypeException | InvalidValuePathException e) {
 				LogUtil.exception(Level.FATAL, e, "Scenario syntax error");
-				throw new InterruptRunException(e);
+				throwUnchecked(e);
 			}
 			subConfigs.add(subConfig);
 			final int weight = subConfig.intVal("load-op-weight");
@@ -181,13 +180,13 @@ public class WeightedLoadStepLocal
 																"items info won't be persisted");
 							}
 						}
-					} catch (final OmgShootMyFootException e) {
+					} catch (final IllegalConfigurationException e) {
 						throw new IllegalStateException("Failed to initialize the load generator", e);
 					}
-				} catch (final OmgShootMyFootException e) {
+				} catch (final IllegalConfigurationException e) {
 					throw new IllegalStateException("Failed to initialize the storage driver", e);
 				} catch (final InterruptedException e) {
-					throw new InterruptRunException(e);
+					throwUnchecked(e);
 				}
 			} catch (final IOException e) {
 				throw new IllegalStateException("Failed to initialize the data input", e);
