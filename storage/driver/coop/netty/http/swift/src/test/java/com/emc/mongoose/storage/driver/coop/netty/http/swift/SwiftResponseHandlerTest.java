@@ -4,6 +4,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.util.AttributeKey;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -65,6 +68,20 @@ public class SwiftResponseHandlerTest {
 			final var a = expectedContent.readByte();
 			final var b = newContentChunk.readByte();
 			Assert.assertEquals(a, b);
+		}
+	}
+
+	@Test
+	public void generateFile(){
+		try {
+			File file = new File("/home/user/mongoose/content_random_3.txt");
+			if (file.createNewFile()) {
+				FileOutputStream fw = new FileOutputStream("/home/user/mongoose/content_random_3.txt");
+				fw.write(new byte[]{-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3});
+				fw.flush();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
