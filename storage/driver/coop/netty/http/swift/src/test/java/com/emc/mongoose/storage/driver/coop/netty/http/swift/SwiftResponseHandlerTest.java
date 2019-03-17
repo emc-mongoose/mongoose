@@ -4,7 +4,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.util.AttributeKey;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Random;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -78,8 +81,7 @@ public class SwiftResponseHandlerTest {
 
 	@Test
 	public void unicodeContentTest() throws IOException {
-		final byte[] content = new byte[]{-3, -3, -3, -3
-		};
+		final byte[] content = new byte[]{-3, -3, -3, -3};
 		channel.writeOutbound(HTTP_RESPONSE_START);
 		channel.writeOutbound(content);
 		channel.writeOutbound(HTTP_RESPONSE_END);
@@ -94,6 +96,24 @@ public class SwiftResponseHandlerTest {
 			final var a = expectedContent.readByte();
 			final var b = newContentChunk.readByte();
 			Assert.assertEquals(a, b);
+		}
+	}
+
+	@Test
+	public void generateFile() {
+		try {
+			final String path = "/home/user/mongoose/unicode_content_2.txt";
+			File file = new File(path);
+			if (file.createNewFile()) {
+				FileOutputStream fw = new FileOutputStream(path);
+//				final byte[] bytes = new byte[]{-3,-17,-3,-17,-3,-17,-3,-17,-3,-17,-3,-17,-3};
+				final byte[] bytes = new byte[10];
+				new Random().nextBytes(bytes);
+				fw.write(bytes);
+				fw.flush();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 

@@ -3,9 +3,10 @@ swift_item_list = "swift_item_list.csv"
 config = {
 	"item": {
 		"data" : {
-			"size" : "10MB",
+			"size" : "10",
+//			"size" : "10MB",
 			"input" : {
-				"file" : "unicode_content.txt"
+				"file" : "unicode_content_2.txt"
 //				"file" : ""
 			}
 		}
@@ -41,8 +42,8 @@ read_config = {
 			},
 			"data" : {
 				"ranges" : {
-//					"fixed" : new java.util.ArrayList([ "0-4","5-9" ])
-					"random" : 10
+					"fixed" : new java.util.ArrayList([ "0-4","5-9" ])
+//					"random" : 10
 				},
 				"verify" : true
 			}
