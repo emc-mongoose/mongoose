@@ -113,7 +113,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		while (contentChunk.readerIndex() < rawSize) {
 			rawBytesChunk[cutChunkSize + contentChunk.readerIndex()] = contentChunk.readByte();
 		}
-		final var tmp = new String(rawBytesChunk, StandardCharsets.UTF_8);
+		final var tmp = new String(rawBytesChunk, StandardCharsets.US_ASCII);
 		final var p = Pattern.compile(String.format(HEADER_WITH_BOUNDARY_PATTERN, boundaryMarker));
 		final var matcher = p.matcher(tmp);
 		final var contentRangeIdxs = new ArrayList<int[]>();
@@ -147,7 +147,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	}
 
 	private byte[] cutEnd(final byte[] bytesChunk) {
-		final var tmpString = new String(bytesChunk, StandardCharsets.UTF_8);
+		final var tmpString = new String(bytesChunk, StandardCharsets.US_ASCII);
 		var cutString = "";
 		final byte[] newBytesChunk;
 		if (tmpString.substring(tmpString.length() - 1).equals("-")) {
