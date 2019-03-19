@@ -105,6 +105,12 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	}
 
 	ByteBuf removeHeaders(final Channel channel, final O op, final ByteBuf contentChunk) {
+		//		try {
+		//			System.out.println("\n\n\n" + ((DataOperation) op).fixedRanges());
+		//			System.out.println(((DataOperation) op).markedRangesMaskPair()[0] + "\n\n\n");
+		//		} catch (final Exception e){
+		//		}
+		//
 		final var boundaryMarker = channel.attr(ATTR_KEY_BOUNDARY_MARKER).get();
 		final var rawSize = contentChunk.readableBytes();
 		final var cutChunkSize = cutChunck.length;
