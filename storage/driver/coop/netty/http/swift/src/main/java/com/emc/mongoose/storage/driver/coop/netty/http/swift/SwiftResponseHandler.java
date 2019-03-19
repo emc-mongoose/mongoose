@@ -40,8 +40,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 
 	private static final String HEADER_WITH_BOUNDARY_PATTERN = "[\\s]{2}((%1$s)[\\s]*(" + HEADER_PATTERN + ")|(%1$s--))[\\s]{2,4}";
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey.valueOf("boundary_marker");
-
-	private byte[] cutChunck = new byte[]{};
+	private static final AttributeKey<String> ATTR_KEY_CUT_CHUNK = AttributeKey.valueOf("cut_chunk");
 
 	public SwiftResponseHandler(final HttpStorageDriverBase<I, O> driver,
 					final boolean verifyFlag) {
@@ -105,17 +104,13 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	}
 
 	ByteBuf removeHeaders(final Channel channel, final O op, final ByteBuf contentChunk) {
-		//		try {
-		//			System.out.println("\n\n\n" + ((DataOperation) op).fixedRanges());
-		//			System.out.println(((DataOperation) op).markedRangesMaskPair()[0] + "\n\n\n");
-		//		} catch (final Exception e){
-		//		}
-		//
 		final var boundaryMarker = channel.attr(ATTR_KEY_BOUNDARY_MARKER).get();
 		final var rawSize = contentChunk.readableBytes();
-		final var cutChunkSize = cutChunck.length;
+		final var attrValue = channel.attr(ATTR_KEY_CUT_CHUNK).get();
+		final var cutChunk = (attrValue == null) ? new byte[]{} : attrValue.getBytes();
+		final var cutChunkSize = cutChunk.length;
 		final var rawBytesChunk = new byte[cutChunkSize + rawSize];
-		System.arraycopy(cutChunck, 0, rawBytesChunk, 0, cutChunkSize);
+		System.arraycopy(cutChunk, 0, rawBytesChunk, 0, cutChunkSize);
 		while (contentChunk.readerIndex() < rawSize) {
 			rawBytesChunk[cutChunkSize + contentChunk.readerIndex()] = contentChunk.readByte();
 		}
@@ -148,11 +143,11 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 			lastIdx += rangeSize;
 		}
 
-		final var bytesChunkWithoutEnd = cutEnd(bytesChunk);
+		final var bytesChunkWithoutEnd = cutEnd(bytesChunk, channel);
 		return Unpooled.copiedBuffer(bytesChunkWithoutEnd);
 	}
 
-	private byte[] cutEnd(final byte[] bytesChunk) {
+	private byte[] cutEnd(final byte[] bytesChunk, final Channel channel) {
 		final var tmpString = new String(bytesChunk, StandardCharsets.US_ASCII);
 		var cutString = "";
 		final byte[] newBytesChunk;
@@ -167,7 +162,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		if (matcher.find()) {
 			cutString = matcher.group(matcher.groupCount() - 1);
 		}
-		cutChunck = cutString.getBytes(); //cutString includes only writable chars
+		channel.attr(ATTR_KEY_CUT_CHUNK).set(cutString); //cutString includes only writable chars
 		final var newSize = bytesChunk.length - cutString.length();
 		newBytesChunk = new byte[newSize];
 		System.arraycopy(bytesChunk, 0, newBytesChunk, 0, newSize);
