@@ -37,6 +37,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	private static final String HEADER_PATTERN = "(Content-Type:).*[\\s]*(Content-Range:).*";
 
 	private static final String HEADER_WITH_BOUNDARY_PATTERN = "[\\s]{2}((%1$s)[\\s]*(" + HEADER_PATTERN + ")|(%1$s--))[\\s]{2,4}";
+	private static final Pattern END_PATTERN = Pattern.compile("[\\s]{2}([-]\\Z|[-]{2}\\Z|[-]{2}(.|\\s)*)");
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey
 					.valueOf("boundary_marker");
 	private static final AttributeKey<String> ATTR_KEY_CUT_CHUNK = AttributeKey
@@ -152,8 +153,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		final var tmpString = new String(bytesChunk, StandardCharsets.US_ASCII);
 		final byte[] newBytesChunk;
 		// "-" or "--" or "--***"
-		final var pattern = Pattern.compile("[\\s]{2}([-]\\Z|[-]{2}\\Z|[-]{2}(.|\\s)*)");
-		final var matcher = pattern.matcher(tmpString);
+		final var matcher = END_PATTERN.matcher(tmpString);
 		final var lastMatchResult = matcher.results().reduce((f, s) -> s).orElse(null);
 		if (lastMatchResult == null || lastMatchResult.end() != (tmpString.length())) {
 			return bytesChunk;
