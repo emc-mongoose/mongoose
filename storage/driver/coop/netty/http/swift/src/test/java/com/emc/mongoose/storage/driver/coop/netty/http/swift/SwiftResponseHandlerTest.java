@@ -17,50 +17,47 @@ import org.junit.Test;
  */
 public class SwiftResponseHandlerTest {
 
+	private static final String HTTP_RESPONSE_START = ""
+		+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
+		+ "\r\nContent-Type: application/octet-stream"
+		+ "\r\nContent-Range: bytes 0-4/10\n\r\n\r";
+
+	private static final String HTTP_RESPONSE_END = ""
+		+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4--\r\n";
+
 	private static final String HTTP_RESPONSE = ""
-					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
-					+ "\r\nContent-Type: application/octet-stream"
-					+ "\r\nContent-Range: bytes 0-4/10\n\r\n\r"
-					+ "\naaa\naa"
-					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
-					+ "\r\nContent-Type: application/octet-stream"
-					+ "\r\nContent-Range: bytes 5-9/10\n\r\n\r"
-					+ "aaaaa"
-					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4--\r\n";
+		+ HTTP_RESPONSE_START
+		+ "\naaa\naa"
+		+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
+		+ "\r\nContent-Type: application/octet-stream"
+		+ "\r\nContent-Range: bytes 5-9/10\n\r\n\r"
+		+ "aaaaa"
+		+ HTTP_RESPONSE_END;
 
 	private static final String PART_1_HTTP_RESPONSE = ""
-					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
-					+ "\r\nContent-Type: application/octet-stream"
-					+ "\r\nContent-Range: bytes 0-4/10\n\r\n\r"
-					+ "\naaa\naa"
-					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
-					+ "\r\nContent-Type: appli";
+		+ HTTP_RESPONSE_START
+		+ "\naaa\naa"
+		+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
+		+ "\r\nContent-Type: appli";
 
 	private static final String PART_2_HTTP_RESPONSE = ""
-					+ "cation/octet-stream"
-					+ "\r\nContent-Range: bytes 5-9/10\n\r\n\r"
-					+ "aaaaa"
-					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4--\r\n";
-
-	private static final String HTTP_RESPONSE_START = ""
-					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
-					+ "\r\nContent-Type: application/octet-stream"
-					+ "\r\nContent-Range: bytes 0-4/10\n\r\n\r";
-	private static final String HTTP_RESPONSE_END = ""
-					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4--\r\n";
+		+ "cation/octet-stream"
+		+ "\r\nContent-Range: bytes 5-9/10\n\r\n\r"
+		+ "aaaaa"
+		+ HTTP_RESPONSE_END;
 
 	private static final String EXPECTED_CONTENT = "\naaa\naaaaaaa";
 	private static final String BOUNDARY = "--3d07fbbddf4041880c931c29e43cb6c4";
 	private static final EmbeddedChannel channel = new EmbeddedChannel(); // channel mock
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey
-					.valueOf("boundary_marker");
+		.valueOf("boundary_marker");
 	private static final AttributeKey<String> ATTR_KEY_CUT_CHUNK = AttributeKey
 		.valueOf("cut_chunk");
 	private static final SwiftResponseHandler responseHandler = new SwiftResponseHandler(null,
-					true);
+		true);
 
 	@Before
-	public void setUp(){
+	public void setUp() {
 		channel.attr(ATTR_KEY_BOUNDARY_MARKER).set(BOUNDARY);
 		channel.attr(ATTR_KEY_CUT_CHUNK).set("");
 	}
@@ -77,7 +74,7 @@ public class SwiftResponseHandlerTest {
 	}
 
 	private void assertEqualsByBytes(final ByteBuf expectedContent,
-					final ByteBuf actualContent) {
+		final ByteBuf actualContent) {
 		while (expectedContent.isReadable()) {
 			final var a = expectedContent.readByte();
 			final var b = actualContent.readByte();
@@ -104,8 +101,8 @@ public class SwiftResponseHandlerTest {
 		channel.writeOutbound(expectedContent);
 		channel.writeOutbound(HTTP_RESPONSE_END);
 		final var rawActualContent = Unpooled.copiedBuffer(readFromChannel(channel),
-						readFromChannel(channel),
-						readFromChannel(channel));
+			readFromChannel(channel),
+			readFromChannel(channel));
 		final var actualContent = responseHandler.removeHeaders(channel, null, rawActualContent);
 
 		Assert.assertEquals(expectedContent.array().length, actualContent.array().length);
@@ -128,27 +125,5 @@ public class SwiftResponseHandlerTest {
 
 		Assert.assertEquals(expectedContent.array().length, fullContentChunk.array().length);
 		assertEqualsByBytes(expectedContent, fullContentChunk);
-	}
-
-	//---------------------------------------------------------------------------
-	//---------------------------------------------------------------------------
-	//---------------------------------------------------------------------------
-
-	@Test
-	public void generateFile() {
-		try {
-			final String path = "/home/user/mongoose/unicode_content_2.txt";
-			File file = new File(path);
-			if (file.createNewFile()) {
-				FileOutputStream fw = new FileOutputStream(path);
-				//				final byte[] bytes = new byte[]{-3,-17,-3,-17,-3,-17,-3,-17,-3,-17,-3,-17,-3};
-				final byte[] bytes = new byte[10];
-				new Random().nextBytes(bytes);
-				fw.write(bytes);
-				fw.flush();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 }
