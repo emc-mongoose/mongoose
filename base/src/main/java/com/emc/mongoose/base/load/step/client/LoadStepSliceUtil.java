@@ -4,7 +4,6 @@ import static com.emc.mongoose.base.Constants.KEY_CLASS_NAME;
 import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import com.emc.mongoose.base.load.step.LoadStep;

@@ -209,8 +209,7 @@ public class LoadGeneratorImpl<I extends Item, O extends Operation<I>> extends F
 				outputFinishFlag = true;
 			}
 
-		} catch (final EOFException ok) {
-		} catch (final Throwable t) {
+		} catch (final EOFException ok) {} catch (final Throwable t) {
 			throwUncheckedIfInterrupted(t);
 			LogUtil.trace(Loggers.ERR, Level.ERROR, t, "{}: unexpected failure", name);
 		} finally {

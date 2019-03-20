@@ -1,8 +1,6 @@
 package com.emc.mongoose.base.logging;
 
 import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
-import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 
 import com.github.akurilov.commons.concurrent.ContextAwareThreadFactory;
 import java.util.Map;

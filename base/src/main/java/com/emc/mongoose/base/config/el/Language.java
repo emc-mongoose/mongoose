@@ -57,16 +57,16 @@ public interface Language {
 				put("math:tan", Math.class.getMethod("tan", double.class));
 				put("path:random", RandomPath.class.getMethod("get", int.class, int.class));
 				put("string:format",
-					Language.class.getMethod(
-						"format", new Class[]{String.class, Object[].class
-						}));
+								Language.class.getMethod(
+												"format", new Class[]{String.class, Object[].class
+				}));
 				put(
-					"string:join",
-					String.class.getMethod("join", new Class[]{CharSequence.class, CharSequence[].class
-					}));
+								"string:join",
+								String.class.getMethod("join", new Class[]{CharSequence.class, CharSequence[].class
+				}));
 				put("time:millisSinceEpoch", System.class.getMethod("currentTimeMillis"));
 				put("time:nanos", System.class.getMethod("nanoTime"));
-			} catch(final NoSuchMethodException e) {
+			} catch (final NoSuchMethodException e) {
 				throw new AssertionError(e);
 			}
 		}
@@ -83,27 +83,30 @@ public interface Language {
 	final class Value {
 		final Object value;
 		final Class type;
+
 		Value(final Object value, final Class type) {
 			this.value = value;
 			this.type = type;
 		}
 	}
 
-	Map<String, Value> VALUES = new HashMap<>() {{
-		put("e", new Value(Math.E, double.class));
-		put("lineSep", new Value(System.lineSeparator(), String.class));
-		put("pathSep", new Value(File.pathSeparator, String.class));
-		put("pi", new Value(Math.PI, double.class));
-		put("rnd", new Value(new Random(), Random.class));
-	}};
+	Map<String, Value> VALUES = new HashMap<>() {
+		{
+			put("e", new Value(Math.E, double.class));
+			put("lineSep", new Value(System.lineSeparator(), String.class));
+			put("pathSep", new Value(File.pathSeparator, String.class));
+			put("pi", new Value(Math.PI, double.class));
+			put("rnd", new Value(new Random(), Random.class));
+		}
+	};
 
 	static ExpressionInput.Builder withLanguage(final ExpressionInput.Builder builder) {
-		for(final var func: Language.FUNCTIONS.entrySet()) {
+		for (final var func : Language.FUNCTIONS.entrySet()) {
 			final var name = func.getKey().split(Language.FUNC_NAME_SEPARATOR);
 			final var method = func.getValue();
 			builder.function(name[0], name[1], method);
 		}
-		for(final var val: Language.VALUES.entrySet()) {
+		for (final var val : Language.VALUES.entrySet()) {
 			final var name = val.getKey();
 			final var v = val.getValue();
 			builder.value(name, v.value, v.type);

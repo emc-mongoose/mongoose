@@ -2,7 +2,7 @@ package com.emc.mongoose.base.config;
 
 /** Created by kurila on 14.07.16. */
 public class IllegalConfigurationException
-	extends IllegalStateException {
+				extends IllegalStateException {
 
 	public IllegalConfigurationException() {
 		super();

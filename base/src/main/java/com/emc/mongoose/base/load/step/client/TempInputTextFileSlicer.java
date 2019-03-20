@@ -5,7 +5,6 @@ import static com.emc.mongoose.base.Constants.KEY_STEP_ID;
 import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.load.step.client.LoadStepClient.OUTPUT_PROGRESS_PERIOD_MILLIS;
 import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
-import static org.apache.logging.log4j.CloseableThreadContext.Instance;
 import static org.apache.logging.log4j.CloseableThreadContext.put;
 
 import com.emc.mongoose.base.concurrent.ServiceTaskExecutor;
@@ -44,8 +43,7 @@ public final class TempInputTextFileSlicer implements AutoCloseable {
 					final List<FileManager> fileMgrs,
 					final String configPath,
 					final List<Config> configSlices,
-					final int batchSize)
-					 {
+					final int batchSize) {
 		this.loadStepId = loadStepId;
 		final var sliceCount = configSlices.size();
 		fileSlices = new HashMap<>(sliceCount);

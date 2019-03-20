@@ -101,8 +101,7 @@ public class MetricsManagerImpl extends ExclusiveFiberBase implements MetricsMan
 					Loggers.METRICS_STD_OUT.info(new MetricsAsciiTableLogMessage(selectedMetrics));
 					selectedMetrics.clear();
 				}
-			} catch (final ConcurrentModificationException ignored) {
-			} catch (final Throwable cause) {
+			} catch (final ConcurrentModificationException ignored) {} catch (final Throwable cause) {
 				throwUncheckedIfInterrupted(cause);
 				LogUtil.exception(Level.DEBUG, cause, "Metrics manager failure");
 			} finally {

@@ -82,12 +82,11 @@ public abstract class StorageDriverBase<I extends Item, O extends Operation<I>> 
 		}
 	}
 
-	protected abstract String requestNewPath(final String path) ;
+	protected abstract String requestNewPath(final String path);
 
-	protected abstract String requestNewAuthToken(final Credential credential)
-					;
+	protected abstract String requestNewAuthToken(final Credential credential);
 
-	protected boolean prepare(final O op)  {
+	protected boolean prepare(final O op) {
 		op.reset();
 		if (op instanceof DataOperation) {
 			((DataOperation) op).item().dataInput(itemDataInput);

@@ -2,7 +2,6 @@ package com.emc.mongoose.base.load.step.client;
 
 import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import static com.emc.mongoose.base.load.step.client.LoadStepClient.OUTPUT_PROGRESS_PERIOD_MILLIS;
-import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
 
 import com.emc.mongoose.base.item.Item;
 import com.emc.mongoose.base.load.step.file.FileManager;

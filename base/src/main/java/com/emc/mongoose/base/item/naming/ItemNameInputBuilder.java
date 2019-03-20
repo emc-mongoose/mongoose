@@ -3,15 +3,12 @@ package com.emc.mongoose.base.item.naming;
 import com.emc.mongoose.base.config.ConstantValueInputImpl;
 import com.emc.mongoose.base.config.el.CompositeExpressionInputBuilder;
 import com.github.akurilov.commons.io.Input;
-import com.github.akurilov.commons.io.el.ExpressionInput;
 
 import static com.emc.mongoose.base.item.naming.ItemNameInput.ItemNamingType;
 import static com.emc.mongoose.base.item.naming.ItemNameInput.ItemNamingType.RANDOM;
 import static com.github.akurilov.commons.math.MathUtil.xorShift;
 import static java.lang.Math.abs;
 import static java.lang.Math.pow;
-import static java.lang.System.currentTimeMillis;
-import static java.lang.System.nanoTime;
 
 public final class ItemNameInputBuilder
 				implements ItemNameInput.Builder {
@@ -63,12 +60,12 @@ public final class ItemNameInputBuilder
 	public <T extends ItemNameInput> T build() {
 		final var maxId = (long) pow(radix, length);
 		Input<String> prefixInput;
-		if(prefix == null) {
+		if (prefix == null) {
 			prefixInput = new ConstantValueInputImpl<>("");
 		} else {
 			prefixInput = CompositeExpressionInputBuilder.newInstance()
-				.expression(prefix)
-				.build();
+							.expression(prefix)
+							.build();
 		}
 		switch (type) {
 		case RANDOM:

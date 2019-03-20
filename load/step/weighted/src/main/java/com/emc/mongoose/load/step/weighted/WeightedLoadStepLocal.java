@@ -59,8 +59,7 @@ public class WeightedLoadStepLocal
 	}
 
 	@Override
-	protected void init()
-					 {
+	protected void init() {
 
 		final String autoStepId = "weighted_" + LogUtil.getDateTimeStamp();
 		final Config stepConfig = config.configVal("load-step");

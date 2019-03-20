@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Random;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -53,11 +54,15 @@ public class SwiftResponseHandlerTest {
 	private static final EmbeddedChannel channel = new EmbeddedChannel(); // channel mock
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey
 					.valueOf("boundary_marker");
+	private static final AttributeKey<String> ATTR_KEY_CUT_CHUNK = AttributeKey
+		.valueOf("cut_chunk");
 	private static final SwiftResponseHandler responseHandler = new SwiftResponseHandler(null,
 					true);
 
-	static {
+	@Before
+	public void setUp(){
 		channel.attr(ATTR_KEY_BOUNDARY_MARKER).set(BOUNDARY);
+		channel.attr(ATTR_KEY_CUT_CHUNK).set("");
 	}
 
 	private ByteBuf readFromChannel(final EmbeddedChannel channel) {

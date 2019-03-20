@@ -10,7 +10,6 @@ import com.emc.mongoose.base.item.op.data.DataOperation;
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpResponseHandlerBase;
 import com.emc.mongoose.storage.driver.coop.netty.http.HttpStorageDriverBase;
 import com.github.akurilov.commons.collection.Range;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -18,7 +17,6 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.AttributeKey;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -29,27 +27,30 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
-Created by andrey on 26.11.16.
-*/
+ * Created by andrey on 26.11.16.
+ */
 public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
-				extends HttpResponseHandlerBase<I, O> {
+	extends HttpResponseHandlerBase<I, O> {
 
 	private static final Pattern BOUNDARY_VALUE_PATTERN = Pattern.compile(
-					VALUE_MULTIPART_BYTERANGES + ";" + HttpHeaderValues.BOUNDARY + "=([0-9a-f]+)");
+		VALUE_MULTIPART_BYTERANGES + ";" + HttpHeaderValues.BOUNDARY + "=([0-9a-f]+)");
 	private static final String HEADER_PATTERN = "(Content-Type:).*[\\s]*(Content-Range:).*";
 
-	private static final String HEADER_WITH_BOUNDARY_PATTERN = "[\\s]{2}((%1$s)[\\s]*(" + HEADER_PATTERN + ")|(%1$s--))[\\s]{2,4}";
-	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey.valueOf("boundary_marker");
-	private static final AttributeKey<String> ATTR_KEY_CUT_CHUNK = AttributeKey.valueOf("cut_chunk");
+	private static final String HEADER_WITH_BOUNDARY_PATTERN =
+		"[\\s]{2}((%1$s)[\\s]*(" + HEADER_PATTERN + ")|(%1$s--))[\\s]{2,4}";
+	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey
+		.valueOf("boundary_marker");
+	private static final AttributeKey<String> ATTR_KEY_CUT_CHUNK = AttributeKey
+		.valueOf("cut_chunk");
 
 	public SwiftResponseHandler(final HttpStorageDriverBase<I, O> driver,
-					final boolean verifyFlag) {
+		final boolean verifyFlag) {
 		super(driver, verifyFlag);
 	}
 
 	@Override
 	protected final void handleResponseHeaders(
-					final Channel channel, final O op, final HttpHeaders respHeaders) {
+		final Channel channel, final O op, final HttpHeaders respHeaders) {
 		final String contentType = respHeaders.get(HttpHeaderNames.CONTENT_TYPE);
 		if (contentType != null) {
 			final Matcher boundaryMatcher = BOUNDARY_VALUE_PATTERN.matcher(contentType);
@@ -75,15 +76,16 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	????
 	--ac9c12f841fa093d82ba80a402f6b62e--
 	*/
-	protected final void handleResponseContentChunk(final Channel channel, final O op, final ByteBuf contentChunk)
-					throws IOException {
+	protected final void handleResponseContentChunk(final Channel channel, final O op,
+		final ByteBuf contentChunk)
+		throws IOException {
 		if (OpType.READ.equals(op.type())) {
 			if (op instanceof DataOperation) {
 				final DataOperation<? extends DataItem> dataOp = (DataOperation<? extends DataItem>) op;
 				final BitSet[] markedRangesMaskPair = dataOp.markedRangesMaskPair();
 				// if the count of marked byte ranges > 1
 				if (1 < markedRangesMaskPair[0].cardinality() + markedRangesMaskPair[1]
-								.cardinality()) {
+					.cardinality()) {
 					final ByteBuf newContentChunk = removeHeaders(channel, op, contentChunk);
 					super.handleResponseContentChunk(channel, op, newContentChunk);
 				} else {
@@ -106,7 +108,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	ByteBuf removeHeaders(final Channel channel, final O op, final ByteBuf contentChunk) {
 		final var boundaryMarker = channel.attr(ATTR_KEY_BOUNDARY_MARKER).get();
 		final var rawSize = contentChunk.readableBytes();
-		final var attrValue = channel.attr(ATTR_KEY_CUT_CHUNK).get();
+		final var attrValue = channel.attr(ATTR_KEY_CUT_CHUNK).getAndSet("");
 		final var cutChunk = (attrValue == null) ? new byte[]{} : attrValue.getBytes();
 		final var cutChunkSize = cutChunk.length;
 		final var rawBytesChunk = new byte[cutChunkSize + rawSize];
@@ -132,12 +134,12 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		contentRangeIdxs.add(new int[]{startIndex, endIndex
 		});
 		var newContentSize = 0;
-		for (final var range : contentRangeIdxs) { //TODO: refactor
+		for (final var range : contentRangeIdxs) {
 			newContentSize += range[1] - range[0];
 		}
 		final var bytesChunk = new byte[newContentSize];
 		int lastIdx = 0; //index in bytesChunk
-		for (final var range : contentRangeIdxs) { //TODO: refactor
+		for (final var range : contentRangeIdxs) {
 			final var rangeSize = range[1] - range[0];
 			System.arraycopy(rawBytesChunk, range[0], bytesChunk, lastIdx, rangeSize);
 			lastIdx += rangeSize;
@@ -149,19 +151,16 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 
 	private byte[] cutEnd(final byte[] bytesChunk, final Channel channel) {
 		final var tmpString = new String(bytesChunk, StandardCharsets.US_ASCII);
-		var cutString = "";
 		final byte[] newBytesChunk;
-		if (tmpString.substring(tmpString.length() - 1).equals("-")) {
-			cutString = "-";
-		}
-		if (tmpString.substring(tmpString.length() - 2).equals("--")) {
-			cutString = "--";
-		}
-		final var pattern = Pattern.compile("[\\s]{2}--(.|\\s)*");
+		// "-" or "--" or "--***"
+		final var pattern = Pattern.compile("[\\s]{2}([-]\\Z|[-]{2}\\Z|[-]{2}(.|\\s)*)");
 		final var matcher = pattern.matcher(tmpString);
-		if (matcher.find()) {
-			cutString = matcher.group(matcher.groupCount() - 1);
+		final var lastMatchResult = matcher.results().reduce((f, s) -> s).orElse(null);
+		if (lastMatchResult == null || lastMatchResult.end() != (tmpString.length())) {
+			return bytesChunk;
 		}
+		final var cutString = tmpString
+			.substring(lastMatchResult.start(), lastMatchResult.end());
 		channel.attr(ATTR_KEY_CUT_CHUNK).set(cutString); //cutString includes only writable chars
 		final var newSize = bytesChunk.length - cutString.length();
 		newBytesChunk = new byte[newSize];

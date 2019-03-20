@@ -6,8 +6,6 @@ import static com.emc.mongoose.base.Exceptions.throwUncheckedIfInterrupted;
 import com.emc.mongoose.base.config.ConfigUtil;
 import com.emc.mongoose.base.logging.LogUtil;
 import com.github.akurilov.confuse.Config;
-import com.github.akurilov.confuse.SchemaProvider;
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
