@@ -125,7 +125,8 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		for (final var result : results) {
 			endIndex = result.start();
 			//TODO ??? replace on {start,size}
-			contentRangeIdxs.add(new int[]{startIndex, endIndex});
+			contentRangeIdxs.add(new int[]{startIndex, endIndex
+			});
 			startIndex = result.end();
 		}
 		endIndex = rawBytesChunk.length;
