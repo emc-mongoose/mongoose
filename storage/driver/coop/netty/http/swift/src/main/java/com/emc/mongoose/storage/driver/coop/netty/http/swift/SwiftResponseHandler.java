@@ -34,10 +34,10 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 
 	private static final Pattern BOUNDARY_VALUE_PATTERN = Pattern.compile(
 					VALUE_MULTIPART_BYTERANGES + ";" + HttpHeaderValues.BOUNDARY + "=([0-9a-f]+)");
-	private static final String HEADER_PATTERN = "(Content-Type:).*[\\s]*(Content-Range:).*";
+	private static final String HEADER_PATTERN = "(Content-Type:).+[\\s]+(Content-Range:).+";
 
-	private static final String HEADER_WITH_BOUNDARY_PATTERN = "[\\s]{2}((%1$s)[\\s]*(" + HEADER_PATTERN + ")|(%1$s--))[\\s]{2,4}";
-	private static final Pattern END_PATTERN = Pattern.compile("[\\s]{2}([-]\\Z|[-]{2}\\Z|[-]{2}(.|\\s)*)");
+	private static final String HEADER_WITH_BOUNDARY_PATTERN = "[\\s]{2}((%1$s)[\\s]+(" + HEADER_PATTERN + ")\\r\\n|(%1$s--))\\r\\n";
+	private static final Pattern END_PATTERN = Pattern.compile("(\\r\\Z|\\r\\n([-]\\Z|[-]{2}\\Z|[-]{2}(.|\\s)*))");
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey
 					.valueOf("boundary_marker");
 	private static final AttributeKey<String> ATTR_KEY_CUT_CHUNK = AttributeKey
@@ -57,6 +57,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 			if (boundaryMatcher.find()) {
 				final String boundaryMarker = "--" + boundaryMatcher.group(1);
 				channel.attr(ATTR_KEY_BOUNDARY_MARKER).set(boundaryMarker);
+				channel.attr(ATTR_KEY_CUT_CHUNK).set(""); //override old value
 			}
 		}
 	}
@@ -151,7 +152,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	private byte[] cutEnd(final byte[] bytesChunk, final Channel channel) {
 		final var tmpString = new String(bytesChunk, StandardCharsets.US_ASCII);
 		final byte[] newBytesChunk;
-		// "-" or "--" or "--***"
+		// "\r" or "\r\n" or "\r\n-" or "\r\n--" or "\r\n--***"
 		final var matcher = END_PATTERN.matcher(tmpString);
 		final var lastMatchResult = matcher.results().reduce((f, s) -> s).orElse(null);
 		if (lastMatchResult == null || lastMatchResult.end() != (tmpString.length())) {

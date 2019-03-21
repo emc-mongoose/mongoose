@@ -17,7 +17,7 @@ public class SwiftResponseHandlerTest {
 	private static final String HTTP_RESPONSE_START = ""
 					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
 					+ "\r\nContent-Type: application/octet-stream"
-					+ "\r\nContent-Range: bytes 0-4/10\n\r\n\r";
+					+ "\r\nContent-Range: bytes 0-4/10\r\n\r\n";
 
 	private static final String HTTP_RESPONSE_END = ""
 					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4--\r\n";
@@ -27,19 +27,31 @@ public class SwiftResponseHandlerTest {
 					+ "\naaa\naa"
 					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
 					+ "\r\nContent-Type: application/octet-stream"
-					+ "\r\nContent-Range: bytes 5-9/10\n\r\n\r"
+					+ "\r\nContent-Range: bytes 5-9/10\r\n\r\n"
 					+ "aaaaa"
 					+ HTTP_RESPONSE_END;
 
-	private static final String PART_1_HTTP_RESPONSE = ""
+	private static final String PART_1_HTTP_RESPONSE_1 = ""
 					+ HTTP_RESPONSE_START
 					+ "\naaa\naa"
 					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
 					+ "\r\nContent-Type: appli";
 
-	private static final String PART_2_HTTP_RESPONSE = ""
+	private static final String PART_2_HTTP_RESPONSE_1 = ""
 					+ "cation/octet-stream"
-					+ "\r\nContent-Range: bytes 5-9/10\n\r\n\r"
+					+ "\r\nContent-Range: bytes 5-9/10\r\n\r\n"
+					+ "aaaaa"
+					+ HTTP_RESPONSE_END;
+
+	private static final String PART_1_HTTP_RESPONSE_2 = ""
+					+ HTTP_RESPONSE_START
+					+ "\naaa\naa"
+					+ "\r\n--3d07fbbddf4041880c931c29e43cb6c4"
+					+ "\r\nContent-Type: application/octet-stream"
+					+ "\r\nContent-Range: bytes 0-4/10\r\n\r";
+
+	private static final String PART_2_HTTP_RESPONSE_2 = ""
+					+ "\n"
 					+ "aaaaa"
 					+ HTTP_RESPONSE_END;
 
@@ -107,14 +119,32 @@ public class SwiftResponseHandlerTest {
 	}
 
 	@Test
-	public void partContentTest() throws IOException {
+	public void partContentTest1() throws IOException {
 		final var expectedContent = Unpooled.copiedBuffer(EXPECTED_CONTENT.getBytes());
 
-		channel.writeOutbound(PART_1_HTTP_RESPONSE);
+		channel.writeOutbound(PART_1_HTTP_RESPONSE_1);
 		final var contentChunk1 = readFromChannel(channel);
 		final var newContentChunk1 = responseHandler.removeHeaders(channel, contentChunk1);
 
-		channel.writeOutbound(PART_2_HTTP_RESPONSE);
+		channel.writeOutbound(PART_2_HTTP_RESPONSE_1);
+		final var contentChunk2 = readFromChannel(channel);
+		final var newContentChunk2 = responseHandler.removeHeaders(channel, contentChunk2);
+
+		final var fullContentChunk = Unpooled.copiedBuffer(newContentChunk1, newContentChunk2);
+
+		Assert.assertEquals(expectedContent.array().length, fullContentChunk.array().length);
+		assertEqualsByBytes(expectedContent, fullContentChunk);
+	}
+
+	@Test
+	public void partContentTest2() throws IOException {
+		final var expectedContent = Unpooled.copiedBuffer(EXPECTED_CONTENT.getBytes());
+
+		channel.writeOutbound(PART_1_HTTP_RESPONSE_2);
+		final var contentChunk1 = readFromChannel(channel);
+		final var newContentChunk1 = responseHandler.removeHeaders(channel, contentChunk1);
+
+		channel.writeOutbound(PART_2_HTTP_RESPONSE_2);
 		final var contentChunk2 = readFromChannel(channel);
 		final var newContentChunk2 = responseHandler.removeHeaders(channel, contentChunk2);
 
