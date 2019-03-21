@@ -86,12 +86,12 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 				// if the count of marked byte ranges > 1
 				if (1 < markedRangesMaskPair[0].cardinality() + markedRangesMaskPair[1]
 								.cardinality()) {
-					final ByteBuf newContentChunk = removeHeaders(channel, op, contentChunk);
+					final ByteBuf newContentChunk = removeHeaders(channel, contentChunk);
 					super.handleResponseContentChunk(channel, op, newContentChunk);
 				} else {
 					final List<Range> fixedRanges = dataOp.fixedRanges();
 					if (fixedRanges != null && 1 < fixedRanges.size()) {
-						final ByteBuf newContentChunk = removeHeaders(channel, op, contentChunk);
+						final ByteBuf newContentChunk = removeHeaders(channel, contentChunk);
 						super.handleResponseContentChunk(channel, op, newContentChunk);
 					} else {
 						super.handleResponseContentChunk(channel, op, contentChunk);
@@ -105,7 +105,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		}
 	}
 
-	ByteBuf removeHeaders(final Channel channel, final O op, final ByteBuf contentChunk) {
+	ByteBuf removeHeaders(final Channel channel, final ByteBuf contentChunk) {
 		final var boundaryMarker = channel.attr(ATTR_KEY_BOUNDARY_MARKER).get();
 		final var rawSize = contentChunk.readableBytes();
 		final var attrValue = channel.attr(ATTR_KEY_CUT_CHUNK).getAndSet("");
@@ -125,7 +125,6 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 		int endIndex;
 		for (final var result : results) {
 			endIndex = result.start();
-			//TODO ??? replace on {start,size}
 			contentRangeIdxs.add(new int[]{startIndex, endIndex
 			});
 			startIndex = result.end();
