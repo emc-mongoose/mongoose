@@ -1,4 +1,5 @@
-import org.yaml.snakeyaml.Yaml
+import groovy.json.JsonSlurper
+import groovy.json.JsonParserType
 
 buildscript {
 	repositories {
@@ -7,16 +8,10 @@ buildscript {
 			url "https://plugins.gradle.org/m2/"
 		}
 	}
-	dependencies {
-		classpath(
-			"org.yaml:snakeyaml:1.24",
-		)
-	}
 }
 
 plugins {
 	id "com.bmuschko.docker-remote-api" version "4.0.5"
-	id "com.diffplug.gradle.spotless" version "3.18.0"
 }
 
 description = "Mongoose is a high-load storage performance testing tool"
@@ -24,14 +19,13 @@ description = "Mongoose is a high-load storage performance testing tool"
 ext {
 	depVersion = [
 		confuse            : "1.2.1",
-		confuseIoYaml      : "1.0.0",
+		confuseIoJson      : "1.1.0",
 		commonsCodec       : "1.11",
 		commonsLang        : "2.6",
 		disruptor          : "3.4.2",
-		fastutil           : "8.2.2",
 		fiber4j            : "1.1.0",
 		jackson            : "2.9.8",
-		javaCommons        : "2.3.5",
+		javaCommons        : "2.2.3",
 		javassist          : "3.23.1-GA",
 		jetty              : "9.4.14.v20181114",
 		junit              : "4.12",
@@ -41,7 +35,7 @@ ext {
 		tsdbMetrics        : "0.6.0",
 		nagaina            : "3.6.11",
 		netty              : "4.1.25.Final",
-		nettyConnectionPool: "1.2.1",
+		nettyConnectionPool: "1.1.0",
 		nettyTcNative      : "2.0.12.Final",
 	]
 	baseProject = project(":base")
@@ -78,7 +72,6 @@ allprojects {
 	apply plugin: "signing"
 
 	group = "com.github.emc-mongoose"
-	version = defineVersion()
 
 	sourceCompatibility = 11
 	targetCompatibility = 11
@@ -257,21 +250,6 @@ allprojects {
 	}
 }
 
-String defineVersion() {
-	def configFilePath = [ rootProject.rootDir, "base", "src", "main", "resources", "config", "defaults.yaml", ]
-		.join(File.separator);
-	def inputFile = new File(configFilePath)
-	def parser = new Yaml()
-	def y = parser.load(inputFile.text)
-	y.run.version
-}
-
-task mongooseVersion {
-	group = "versioning"
-	description = "Prints Mongoose version."
-	doLast { logger.quiet version }
-}
-
 void collectName(final Project p, final LinkedList<String> names) {
 	names.addFirst p.name
 	if(p.parent != null) {
@@ -338,7 +316,6 @@ jar {
 		attributes(
 			"Automatic-Module-Name": rootPkg,
 			"Implementation-Title": rootProject.name,
-			"Implementation-Version": version,
 			"Main-Class": "${rootPkg}.base.Main",
 		)
 	}
@@ -510,19 +487,5 @@ task robotest(type: DockerWaitContainer, dependsOn: dockerStartContainerRobotest
 		} else {
 			println "Robotests PASSED"
 		}
-	}
-}
-
-spotless {
-	format "misc", {
-		target "**/*.gradle", "**/*.js", "**/*.groovy", "**/*.py", "**/*.scala"
-		indentWithTabs()
-		endWithNewline()
-	}
-	java {
-		target "**/*.java"
-		endWithNewline()
-		removeUnusedImports()
-		eclipse().configFile "spotless.eclipseformat.xml"
 	}
 }
