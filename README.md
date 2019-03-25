@@ -4,7 +4,12 @@
 
 # Introduction
 
-| Repo | Description | Incl<br/>uded | Version | Status | Issues |
+Legacy [Mongoose](https://github.com/emc-mongoose/mongoose-base) repo, currently used for the default bundle which
+includes the basic functionalityu and some historically established extensions.
+
+# Components
+
+| Repo | Description | Included | Version | CI status | Issues |
 |------|-------------|---------------|---------|--------|--------|
 | [mongoose-**base**](https://github.com/emc-mongoose/mongoose-base) | Mongoose storage performance testing tool - base functionality | :heavy_check_mark: | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-base/maven-metadata.xml.svg?color=darkgreen&label=%20&style=flat-square) | [![CI status](https://gitlab.com/emc-mongoose/mongoose-base/badges/master/pipeline.svg)](https://gitlab.com/emc-mongoose/mongoose-base/commits/master) | https://mongoose-issues.atlassian.net/projects/BASE
 | [mongoose-load-step-**pipeline**](https://github.com/emc-mongoose/mongoose-load-step-pipeline) | Load operations pipeline (create,delay,read-then-update, for example), extension | :heavy_check_mark: |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-load-step-pipeline/maven-metadata.xml.svg?color=darkgreen&label=%20&style=flat-square) | [![CI status](https://gitlab.com/emc-mongoose/mongoose-load-step-pipeline/badges/master/pipeline.svg)](https://gitlab.com/emc-mongoose/mongoose-load-step-pipeline/commits/master) | https://mongoose-issues.atlassian.net/projects/BASE
