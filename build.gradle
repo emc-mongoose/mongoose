@@ -72,7 +72,6 @@ allprojects {
 	apply plugin: "signing"
 
 	group = "com.github.emc-mongoose"
-	version = defineVersion()
 
 	sourceCompatibility = 11
 	targetCompatibility = 11
@@ -251,20 +250,6 @@ allprojects {
 	}
 }
 
-String defineVersion() {
-	def configFilePath = [ rootProject.rootDir, "base", "src", "main", "resources", "config", "defaults.json", ]
-		.join(File.separator);
-	def inputFile = new File(configFilePath)
-	def json = new JsonSlurper().setType(JsonParserType.LAX).parseText(inputFile.text)
-	json.run.version
-}
-
-task mongooseVersion {
-	group = "versioning"
-	description = "Prints Mongoose version."
-	doLast { logger.quiet version }
-}
-
 void collectName(final Project p, final LinkedList<String> names) {
 	names.addFirst p.name
 	if(p.parent != null) {
@@ -331,7 +316,6 @@ jar {
 		attributes(
 			"Automatic-Module-Name": rootPkg,
 			"Implementation-Title": rootProject.name,
-			"Implementation-Version": version,
 			"Main-Class": "${rootPkg}.base.Main",
 		)
 	}
