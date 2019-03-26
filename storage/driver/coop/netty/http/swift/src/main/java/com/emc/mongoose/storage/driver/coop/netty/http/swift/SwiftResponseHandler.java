@@ -37,7 +37,7 @@ public final class SwiftResponseHandler<I extends Item, O extends Operation<I>>
 	private static final String HEADER_PATTERN = "(Content-Type:).+[\\s]+(Content-Range:).+";
 
 	private static final String HEADER_WITH_BOUNDARY_PATTERN = "[\\s]{2}((%1$s)[\\s]+(" + HEADER_PATTERN + ")\\r\\n|(%1$s--))\\r\\n";
-	private static final Pattern END_PATTERN = Pattern.compile("(\\r\\Z|\\r\\n([-]\\Z|[-]{2}\\Z|[-]{2}(.|\\s)*))");
+	private static final Pattern END_PATTERN = Pattern.compile("\\r(\\Z|\\n(\\Z|-(\\Z|-(\\Z|(.|\\s)*))))");
 	private static final AttributeKey<String> ATTR_KEY_BOUNDARY_MARKER = AttributeKey
 					.valueOf("boundary_marker");
 	private static final AttributeKey<String> ATTR_KEY_CUT_CHUNK = AttributeKey
