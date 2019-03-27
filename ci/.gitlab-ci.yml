@@ -60,18 +60,6 @@ build_docker_image:
   variables:
     DOCKERFILE: Dockerfile
   script:
-    - export BASE_VERSION=$(cat build.gradle | grep base | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
-    - export LOAD_STEP_PIPELINE_VERSION=$(cat build.gradle | grep loadStepPipeline | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
-    - export LOAD_STEP_WEIGHTED_VERSION=$(cat build.gradle | grep loadStepWeighted | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
-    - export STORAGE_DRIVER_COOP_VERSION=$(cat build.gradle | grep storageDriverCoop | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
-    - export STORAGE_DRIVER_PREEMPT_VERSION=$(cat build.gradle | grep storageDriverPreempt | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
-    - export STORAGE_DRIVER_NETTY_VERSION=$(cat build.gradle | grep storageDriverNetty | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
-    - export STORAGE_DRIVER_NIO_VERSION=$(cat build.gradle | grep storageDriverNio | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
-    - export STORAGE_DRIVER_FS_VERSION=$(cat build.gradle | grep storageDriverFs | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
-    - export STORAGE_DRIVER_HTTP_VERSION=$(cat build.gradle | grep storageDriverHttp | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
-    - export STORAGE_DRIVER_ATMOS_VERSION=$(cat build.gradle | grep storageDriverAtmos | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
-    - export STORAGE_DRIVER_S3_VERSION=$(cat build.gradle | grep storageDriverS3 | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
-    - export STORAGE_DRIVER_SWIFT_VERSION=$(cat build.gradle | grep storageDriverSwift | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
     - ./gradlew dockerBuildImage
     - export VERSION=$(cat build.gradle | grep version\ = | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
     - docker save ${IMAGE_NAME}:${VERSION} > ${IMAGE_FILE_NAME}
