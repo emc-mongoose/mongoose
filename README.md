@@ -9,7 +9,7 @@ includes the basic functionality and some historically established extensions.
 
 # Components
 
-| Repo | Description | Version | Continuous Integration Status | Issue Tracker Link |
+| Repo | Description | Latest Release | Continuous Integration Status | Issue Tracker Link |
 |------|-------------|---------|-------------------------------|--------|
 | [mongoose-**base**](https://github.com/emc-mongoose/mongoose-base) | Mongoose storage performance testing tool - base functionality | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-base/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-base.svg?label=%20&style=for-the-badge) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
 | [mongoose-**gui**](https://github.com/emc-mongoose/console) | Mongoose GUI web application | TBD | TBD | [GUI](https://mongoose-issues.atlassian.net/browse/GUI)
