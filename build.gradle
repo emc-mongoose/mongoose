@@ -25,22 +25,22 @@ description = "Mongoose is a high-load storage performance testing tool"
 group = "com.github.emc-mongoose"
 sourceCompatibility = 11
 targetCompatibility = 11
-version = "4.2.1"
+version = "4.2.2"
 
 ext {
 	depVersion = [
-		base                : "4.2.1",
-		loadStepPipeline    : "4.2.1",
-		loadStepWeighted    : "4.2.1",
-		storageDriverCoop   : "4.2.1",
-		storageDriverPreempt: "4.2.1",
-		storageDriverNetty  : "4.2.1",
-		storageDriverNio    : "4.2.1",
-		storageDriverHttp   : "4.2.1",
-		storageDriverFs     : "4.2.1",
-		storageDriverAtmos  : "4.2.1",
-		storageDriverS3     : "4.2.1",
-		storageDriverSwift  : "4.2.0",
+		base                : "4.2.2",
+		loadStepPipeline    : "4.2.2",
+		loadStepWeighted    : "4.2.2",
+		storageDriverCoop   : "4.2.2",
+		storageDriverPreempt: "4.2.2",
+		storageDriverNetty  : "4.2.2",
+		storageDriverNio    : "4.2.2",
+		storageDriverHttp   : "4.2.2",
+		storageDriverFs     : "4.2.2",
+		storageDriverAtmos  : "4.2.2",
+		storageDriverS3     : "4.2.2",
+		storageDriverSwift  : "4.2.2",
 	]
 	jarFileName = rootProject.name
 	javaHome = System.properties["java.home"]
