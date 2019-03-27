@@ -50,3 +50,26 @@ The following components are being included in the default bundle named "mongoos
 10. mongoose-storage-driver-**atmos**
 11. mongoose-storage-driver-**s3**
 12. mongoose-storage-driver-**swift**
+
+## Backward Compatibility Notes
+
+The extensions are not overriding the base default options. E.g. the default storage port is 7 and the default storage 
+driver is "dummy-mock". Override the defaults explicitly: 
+```bash 
+java -jar mongoose-bundle-<BUNDLE_VERSION>.jar \
+    --storage-driver-type=s3 \
+    --storage-net-node-port=9020
+```
+
+## Build
+
+```
+./gradlew clean jar
+ls -l build/libs
+```
+
+## Docker
+
+```
+docker run ... emcmongoose/mongoose[:<VERSION>] ...
+```

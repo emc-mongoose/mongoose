@@ -14,7 +14,6 @@ services:
 
 stages:
   - build
-  - test # unit/integration tests
   - build_docker_image
   - test_functional # functional containerized tests
   - deploy
@@ -57,93 +56,42 @@ build:
     paths:
       - build/libs/mongoose-*.jar
 
-test_unit:
-  stage: test
-  script:
-    - ./gradlew test
-
-test_integration:
-  stage: test
-  script:
-    - ./gradlew integrationTest
-  artifacts:
-    paths:
-      - base/build/reports/tests/integrationTest/*
-    when: on_failure
-
 build_docker_image:
   stage: build_docker_image
   variables:
     DOCKERFILE: Dockerfile
   script:
-    - docker build -f docker/${DOCKERFILE} -t ${IMAGE_NAME}:${CI_COMMIT_SHA} .
-    - docker save ${IMAGE_NAME}:${CI_COMMIT_SHA} > ${IMAGE_FILE_NAME}
+    - export BASE_VERSION=$(cat build.gradle | grep base | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - export LOAD_STEP_PIPELINE_VERSION=$(cat build.gradle | grep loadStepPipeline | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - export LOAD_STEP_WEIGHTED_VERSION=$(cat build.gradle | grep loadStepWeighted | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - export STORAGE_DRIVER_COOP_VERSION=$(cat build.gradle | grep storageDriverCoop | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - export STORAGE_DRIVER_PREEMPT_VERSION=$(cat build.gradle | grep storageDriverPreempt | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - export STORAGE_DRIVER_NETTY_VERSION=$(cat build.gradle | grep storageDriverNetty | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - export STORAGE_DRIVER_NIO_VERSION=$(cat build.gradle | grep storageDriverNio | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - export STORAGE_DRIVER_FS_VERSION=$(cat build.gradle | grep storageDriverFs | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - export STORAGE_DRIVER_HTTP_VERSION=$(cat build.gradle | grep storageDriverHttp | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - export STORAGE_DRIVER_ATMOS_VERSION=$(cat build.gradle | grep storageDriverAtmos | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - export STORAGE_DRIVER_S3_VERSION=$(cat build.gradle | grep storageDriverS3 | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - export STORAGE_DRIVER_SWIFT_VERSION=$(cat build.gradle | grep storageDriverSwift | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - ./gradlew dockerBuildImage
+    - export VERSION=$(cat build.gradle | grep version\ = | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - docker save ${IMAGE_NAME}:${VERSION} > ${IMAGE_FILE_NAME}
   artifacts:
     paths:
       - ${IMAGE_FILE_NAME}
 
-.test_robot:
-  stage: test_functional
-  variables:
-    HOST_WORKING_DIR: ${CI_PROJECT_DIR}
-    MONGOOSE_IMAGE_VERSION: ${CI_COMMIT_SHA}
-    PYTHONPATH: ${PYTHONPATH}:/usr/lib/python2.7/site-packages:base/src/test/robot/lib
-  before_script:
-    - apk add --no-cache --update python py-pip
-    - pip install -U virtualenv
-    - pip install -U requests
-    - pip install -U robotframework
-    - pip install -U robotframework-requests
-    - pip install -U robotframework-csvlibrary
-  script:
-    - export MONGOOSE_VERSION=$(cat base/src/main/resources/config/defaults.json | grep version | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
-    - export MONGOOSE_IMAGE_VERSION=${CI_COMMIT_SHA}
-    - docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-    - docker load < ${IMAGE_FILE_NAME}
-    - robot --outputdir base/build/robotest --suite ${SUITE} --include ${TEST} base/src/test/robot
-  after_script:
-    - rebot base/build/robotest/output.xml
-  artifacts:
-    paths:
-      - base/build/robotest/*.html
-    when: on_failure
-
-test_api_remote_logs:
-  extends: .test_robot
-  variables:
-    SUITE: api.remote
-    TEST: logs
-
-test_api_remote_config:
-  extends: .test_robot
-  variables:
-    SUITE: api.remote
-    TEST: config
-
-test_api_remote_run:
-  extends: .test_robot
-  variables:
-    SUITE: api.remote
-    TEST: run
-
-test_api_storage_s3:
-  extends: .test_robot
-  variables:
-    SUITE: api.storage
-    TEST: s3
-
-test_api_storage_swift:
-  extends: .test_robot
-  variables:
-    SUITE: api.storage
-    TEST: swift
-
-deploy_to_maven_repo:
+release_to_maven_repo:
   stage: deploy
-  script: # TODO
-    - echo TODO
+  script:
+    - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 -d | gpg --import --batch; fi
+    - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 -d | gpg --import-ownertrust --batch; fi
+    - mkdir /tmp/.gnupg
+    - if [ ! -z "$GPG_SECRING" ]; then echo $GPG_SECRING | base64 -d > /tmp/.gnupg/secring.gpg; fi
+    - ./gradlew -Psigning.keyId=${SIGNING_KEY_ID} -Psigning.password=${SIGNING_PASSWORD} -Psigning.secretKeyRingFile=/tmp/.gnupg/secring.gpg -PossrhUsername=${OSSRH_USERNAME} -PossrhPassword=${OSSRH_PASSWORD} publishToNexus closeAndReleaseRepository
   only:
-    - tags
+    - latest
+  except:
+    - branches
 
 deploy_to_docker_hub:
   stage: deploy

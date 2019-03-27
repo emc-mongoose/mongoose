@@ -8,18 +8,20 @@ buildscript {
 }
 
 plugins {
+	id "java"
+	id "scala"
+	id "signing"
+	id "maven-publish"
 	id "com.bmuschko.docker-remote-api" version "4.0.5"
+	id "com.diffplug.gradle.spotless" version "3.18.0"
+	id "io.codearte.nexus-staging" version "0.20.0"
+	id "de.marcphilipp.nexus-publish" version "0.2.0"
 }
 
 repositories {
-	jcenter()
 	mavenCentral()
+	jcenter()
 }
-
-apply plugin: "java"
-apply plugin: "maven"
-apply plugin: "scala"
-apply plugin: "signing"
 
 description = "Mongoose is a high-load storage performance testing tool"
 group = "com.github.emc-mongoose"
@@ -37,11 +39,12 @@ ext {
 		storageDriverNetty  : "4.2.3",
 		storageDriverNio    : "4.2.3",
 		storageDriverHttp   : "4.2.3",
-		storageDriverFs     : "4.2.3",
+		storageDriverFs     : "4.2.1",
 		storageDriverAtmos  : "4.2.3",
-		storageDriverS3     : "4.2.3",
-		storageDriverSwift  : "4.2.3",
+		storageDriverS3     : "4.2.1",
+		storageDriverSwift  : "4.2.0",
 	]
+	installResourcesFileName = "install_resources.txt"
 	jarFileName = rootProject.name
 	javaHome = System.properties["java.home"]
 	jreOutputDir = "${rootProject.buildDir}${File.separator}jre"
@@ -92,6 +95,31 @@ wrapper {
 	gradleVersion = "4.10.3"
 }
 
+task mergeInstallResourcesFile {
+	doLast {
+		def dstFile = new File("${project.buildDir}${File.separator}${installResourcesFileName}")
+		if(!dstFile.parentFile.exists()) {
+			dstFile.parentFile.mkdirs()
+		}
+		configurations.compile.copyRecursive().collect {
+			zipTree(it).filter {
+				it.toString().endsWith(installResourcesFileName)
+			} forEach {
+				it.readLines().forEach {
+					dstFile << it
+					dstFile << System.lineSeparator()
+				}
+			}
+		}
+		configurations.extension.copyRecursive().collect {
+			dstFile << "ext/${it.name}"
+			dstFile << System.lineSeparator()
+		}
+	}
+}
+
+jar.dependsOn += mergeInstallResourcesFile
+
 jar {
 	baseName = rootProject.name
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -112,6 +140,7 @@ jar {
 			"Main-Class": "${rootPkg}.base.Main",
 		)
 	}
+	from "${project.buildDir}${File.separator}${installResourcesFileName}"
 	from configurations.compile.copyRecursive().collect {
 		zipTree(it)
 	}
@@ -132,95 +161,111 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 	from javadoc.destinationDir
 }
 
+// Maven Central deployment ////////////////////////////////////////////////////////////////////////////////////////////
+
 artifacts {
 	archives jar
 	archives sourcesJar
 	archives javadocJar
 }
 
-// see http://central.sonatype.org/pages/gradle.html for details
-uploadArchives {
+nexusStaging {
+	packageGroup = project.group
+	username = project.hasProperty("ossrhUsername") ? project.property("ossrhUsername") : null
+	password = project.hasProperty("ossrhPassword") ? project.property("ossrhPassword") : null
+	numberOfRetries = 100
+	delayBetweenRetriesInMillis = 10000
+}
 
-	def ossrhUsername = project.hasProperty("ossrhUsername") ?
-		project.property("ossrhUsername") : null
-	def ossrhPassword = project.hasProperty("ossrhPassword") ?
-		project.property("ossrhPassword") : null
-
-	repositories {
-		mavenDeployer {
-			beforeDeployment {
-				MavenDeployment deployment -> signing.signPom(deployment)
-			}
-
-			repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-				authentication(userName: ossrhUsername, password: ossrhPassword)
-			}
-
-			snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-				authentication(userName: ossrhUsername, password: ossrhPassword)
-			}
-
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			artifactId = project.name
+			groupId = project.group
+			artifact jar
+			artifact javadocJar
+			artifact sourcesJar
 			pom {
-
-				groupId = rootProject.group
-				name = rootProject.name
-				artifactId = name
-
-				project {
-					description = rootProject.description
-
-					url "https://github.com/emc-mongoose/mongoose/wiki"
-
-					scm {
-						connection "https://github.com/emc-mongoose/mongoose.git"
-						developerConnection "https://github.com/emc-mongoose/mongoose.git"
-						url "https://github.com/emc-mongoose/mongoose.git"
+				name = project.name
+				description = project.description
+				url = "https://github.com/emc-mongoose/mongoose"
+				scm {
+					connection = "https://github.com/emc-mongoose/mongoose"
+					developerConnection = "https://github.com/emc-mongoose/mongoose.git"
+					url = "https://github.com/emc-mongoose/mongoose.git"
+				}
+				licenses {
+					license {
+						name = "The MIT License (MIT)"
+						url = "https://github.com/emc-mongoose/mongoose/LICENSE"
 					}
-
-					licenses {
-						license {
-							name "The MIT License (MIT)"
-							url "https://github.com/emc-mongoose/mongoose/wiki/License"
-						}
-					}
-
-					developers {
-						developer {
-							id "akurilov"
-							name "Andrey Kurilov"
-							email "akurilov123@gmail.com"
-						}
+				}
+				developers {
+					developer {
+						id = "akurilov"
+						name = "Andrey Kurilov"
+						email = "akurilov123@gmail.com"
 					}
 				}
 			}
 		}
 	}
+	repositories {
+		maven {
+			url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+			credentials {
+				username = project.hasProperty("ossrhUsername") ? project.property("ossrhUsername") : null
+				password = project.hasProperty("ossrhPassword") ? project.property("ossrhPassword") : null
+			}
+		}
+	}
 }
 
-assemble.dependsOn += jar
+signing {
+	sign publishing.publications
+}
+
+task releaseToMavenCentral {
+	dependsOn += publishToNexus
+	dependsOn += closeAndReleaseRepository
+}
 
 // Docker tasks ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 import com.bmuschko.gradle.docker.tasks.image.*
 import com.bmuschko.gradle.docker.tasks.container.*
 
-task dockerBuildImage(type: DockerBuildImage, dependsOn: jar) {
-	inputDir = rootProject.projectDir
+task dockerBuildImage(type: DockerBuildImage) {
+	inputDir = project.projectDir
+	buildArgs = [
+		"BASE_VERSION": depVersion.base,
+		"LOAD_STEP_PIPELINE_VERSION": depVersion.loadStepPipeline,
+		"LOAD_STEP_WEIGHTED_VERSION": depVersion.loadStepWeighted,
+		"STORAGE_DRIVER_COOP_VERSION": depVersion.storageDriverCoop,
+		"STORAGE_DRIVER_PREEMPT_VERSION": depVersion.storageDriverPreempt,
+		"STORAGE_DRIVER_NETTY_VERSION": depVersion.storageDriverNetty,
+		"STORAGE_DRIVER_NIO_VERSION": depVersion.storageDriverNio,
+		"STORAGE_DRIVER_FS_VERSION": depVersion.storageDriverFs,
+		"STORAGE_DRIVER_HTTP_VERSION": depVersion.storageDriverHttp,
+		"STORAGE_DRIVER_ATMOS_VERSION": depVersion.storageDriverAtmos,
+		"STORAGE_DRIVER_S3_VERSION": depVersion.storageDriverS3,
+		"STORAGE_DRIVER_SWIFT_VERSION": depVersion.storageDriverSwift,
+	]
 	dockerFile = project.file("ci${File.separator}docker${File.separator}Dockerfile")
-	imageId = "emcmongoose/mongoose"
+	imageId = "emcmongoose/mongoose".toString()
 	tags = [
-		"emcmongoose/mongoose:${version}".toString(),
+		"emcmongoose/mongoose:${version}",
 		"emcmongoose/mongoose:testing",
 	]
 }
 
-task dockerPushProductionImage(type: DockerPushImage, dependsOn: dockerBuildImage) {
-	imageName = "emcmongoose/mongoose"
+task dockerPushProductionImage(type: DockerPushImage) {
+	imageName = "emcmongoose/mongoose".toString()
 	tag = "emcmongoose/mongoose:${version}".toString()
 }
 
 task dockerPushTestingImage(type: DockerPushImage, dependsOn: dockerBuildImage) {
-	imageName = "emcmongoose/mongoose"
+	imageName = "emcmongoose/mongoose".toString()
 	tag = "emcmongoose/mongoose:testing".toString()
 }
 
@@ -241,15 +286,14 @@ task dockerCreateContainerRobotest(type: DockerCreateContainer, dependsOn: [dock
 	autoRemove = true
 	binds = [
 		"${rootProject.buildDir}": "/root/mongoose/build",
-		"/var/run/docker.sock"   : "/var/run/docker.sock",
+		"/var/run/docker.sock": "/var/run/docker.sock",
 	]
 	envVars = [
-		"HOST_WORKING_DIR"      : rootProject.projectDir.absolutePath,
-		"MONGOOSE_VERSION"      : version,
-		"MONGOOSE_IMAGE_VERSION": version,
-		"SERVICE_HOST"          : "localhost",
-		"SUITE"                 : System.getenv("SUITE"),
-		"TEST"                  : System.getenv("TEST"),
+		"HOST_WORKING_DIR": rootProject.projectDir.absolutePath,
+		"VERSION": version,
+		"SERVICE_HOST": "localhost",
+		"SUITE": System.getenv("SUITE"),
+		"TEST": System.getenv("TEST"),
 	]
 	imageId = dockerBuildImageRobotest.getImageId()
 	network = "host"
@@ -267,7 +311,7 @@ task robotest(type: DockerWaitContainer, dependsOn: dockerStartContainerRobotest
 	targetContainerId dockerCreateContainerRobotest.getContainerId()
 	timeout = 600 // 10 min w/o output -> fail on Travis CI
 	doLast {
-		if (0 != exitCode) {
+		if(0 != exitCode) {
 			throw new GradleException("Some robotests FAILED")
 		} else {
 			println "Robotests PASSED"
