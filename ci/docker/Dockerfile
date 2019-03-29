@@ -13,11 +13,7 @@ ARG STORAGE_DRIVER_ATMOS_VERSION
 ARG STORAGE_DRIVER_S3_VERSION
 ARG STORAGE_DRIVER_SWIFT_VERSION
 ADD ci/docker/entrypoint.sh /opt/mongoose/entrypoint.sh
-RUN echo "BASE_VERSION=${BASE_VERSION}" \
-	&& echo "LOAD_STEP_PIPELINE_VERSION=${LOAD_STEP_PIPELINE_VERSION}" \
-	&& echo "LOAD_STEP_WEIGHTED_VERSION=${LOAD_STEP_WEIGHTED_VERSION}" \
-	&& echo "STORAGE_DRIVER_COOP_VERSION=${STORAGE_DRIVER_COOP_VERSION}" \
-	&& mkdir -p $HOME/.mongoose/${BASE_VERSION}/ext \
+RUN mkdir -p $HOME/.mongoose/${BASE_VERSION}/ext \
 	&& chmod +x /opt/mongoose/entrypoint.sh \
 	&& curl http://repo.maven.apache.org/maven2/com/github/emc-mongoose/mongoose-load-step-pipeline/${LOAD_STEP_PIPELINE_VERSION}/mongoose-load-step-pipeline-${LOAD_STEP_PIPELINE_VERSION}.jar -o $HOME/.mongoose/${BASE_VERSION}/ext/mongoose-load-step-pipeline.jar \
 	&& curl http://repo.maven.apache.org/maven2/com/github/emc-mongoose/mongoose-load-step-weighted/${LOAD_STEP_WEIGHTED_VERSION}/mongoose-load-step-weighted-${LOAD_STEP_WEIGHTED_VERSION}.jar -o $HOME/.mongoose/${BASE_VERSION}/ext/mongoose-load-step-weighted.jar \

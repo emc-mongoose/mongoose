@@ -40,7 +40,6 @@ The *additional extension* components are not included
 | mongoose-storage-driver-**pulsar** | [Apache Pulsar](https://pulsar.apache.org/) storage driver | TODO
 | mongoose-storage-driver-**zookeeper** | [Apache Zookeeper](https://zookeeper.apache.org/) storage driver | TODO
 | mongoose-storage-driver-**bookkeeper** | [Apache BookKeeper](https://bookkeeper.apache.org/) storage driver | TODO
-| mongoose-storage-driver-**rocksdb** | [RocksDB](https://rocksdb.org/) storage driver | TODO
 | mongoose-storage-driver-**gcs** | [Google Cloud Storage](https://cloud.google.com/storage/docs/json_api/v1/) driver | TODO
 | mongoose-storage-driver-**graphql** | [GraphQL](https://graphql.org/) storage driver | TODO
 | mongoose-storage-driver-**jdbc** | [JDBC](https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/) storage driver | TODO
