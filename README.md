@@ -4,10 +4,13 @@
 
 # Introduction
 
-Legacy [Mongoose](https://github.com/emc-mongoose/mongoose-base) repo, currently used for the default bundle which
-includes the basic functionality and some historically established extensions.
+The repo contains the automation scripts to build/test/deploy the Mongoose backward compatibility bundle. Previously the
+repo contained the Mongoose sources for the basic functionality and some commonly used extensions. Currently it was
+split into the independent repos and the corresponding components. Each component has its own CI and versioning.
 
-# Components
+# Core Components
+
+The *core components* are included in this backward compatibility bunlde.
 
 | Repo | Description | Latest Release | Continuous Integration Status | Issue Tracker Link |
 |------|-------------|---------|-------------------------------|--------|
@@ -21,52 +24,54 @@ includes the basic functionality and some historically established extensions.
 | [mongoose-storage-driver-**nio**](https://github.com/emc-mongoose/mongoose-storage-driver-nio) | Non-blocking I/O storage driver primitive, extends the cooperative multitasking storage driver primitive |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-nio/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-nio.svg?label=%20&style=for-the-badge) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
 | [mongoose-storage-driver-**http**](https://github.com/emc-mongoose/mongoose-storage-driver-http) | HTTP storage driver primitive, extends the Netty-storage-driver-httpd storage driver primitive |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-http/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-http.svg?label=%20&style=for-the-badge) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
 | [mongoose-storage-driver-**fs**](https://github.com/emc-mongoose/mongoose-storage-driver-fs) | [VFS](https://www.oreilly.com/library/view/understanding-the-linux/0596005652/ch12s01.html) storage driver, extends the NIO storage driver primitive |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-fs/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-fs.svg?label=%20&style=for-the-badge) | [FS](https://mongoose-issues.atlassian.net/projects/FS)
-| [mongoose-storage-driver-**hdfs**](https://github.com/emc-mongoose/mongoose-storage-driver-hdfs) | [Apache HDFS](http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html) storage driver, extends the NIO storage driver primitive |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-hdfs/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-hdfs.svg?label=%20&style=for-the-badge) | [HDFS](https://mongoose-issues.atlassian.net/projects/HDFS)
 | [mongoose-storage-driver-**atmos**](https://github.com/emc-mongoose/mongoose-storage-driver-atmos) | [Dell EMC Atmos](https://poland.emc.com/collateral/software/data-sheet/h5770-atmos-ds.pdf) storage driver, extends the HTTP storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-atmos/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-atmos.svg?label=%20&style=for-the-badge) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
 | [mongoose-storage-driver-**s3**](https://github.com/emc-mongoose/mongoose-storage-driver-s3) | [Amazon S3](https://docs.aws.amazon.com/en_us/AmazonS3/latest/API/Welcome.html) storage driver, extends the HTTP storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-s3/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-s3.svg?label=%20&style=for-the-badge) | [S3](https://mongoose-issues.atlassian.net/projects/S3)
 | [mongoose-storage-driver-**swift**](https://github.com/emc-mongoose/mongoose-storage-driver-swift) | [OpenStack Swift](https://wiki.openstack.org/wiki/Swift) storage driver, extends the HTTP storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-swift/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-swift.svg?label=%20&style=for-the-badge) | [SWIFT](https://mongoose-issues.atlassian.net/projects/SWIFT)
+
+# Additional Extensions
+
+The *additional extension* components are not included
+
+| Repo | Description | Latest Release | Continuous Integration Status | Issue Tracker Link |
+|------|-------------|---------|-------------------------------|--------|
+| [mongoose-storage-driver-**hdfs**](https://github.com/emc-mongoose/mongoose-storage-driver-hdfs) | [Apache HDFS](http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html) storage driver, extends the NIO storage driver primitive |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-hdfs/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-hdfs.svg?label=%20&style=for-the-badge) | [HDFS](https://mongoose-issues.atlassian.net/projects/HDFS)
 | [mongoose-storage-driver-**pravega**](https://github.com/emc-mongoose/mongoose-storage-driver-pravega) | [Pravega](http://pravega.io) storage driver, extends the cooperative multitasking storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-pravega/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-pravega.svg?label=%20&style=for-the-badge) | [PRAVEGA](https://mongoose-issues.atlassian.net/projects/PRAVEGA)
 | [mongoose-storage-driver-**kafka**](https://github.com/emc-mongoose/mongoose-storage-driver-kafka) | [Apache Kafka](https://kafka.apache.org/) storage driver, extends the cooperative multitasking storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-kafka/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-kafka.svg?label=%20&style=for-the-badge) | [KAFKA](https://mongoose-issues.atlassian.net/projects/KAFKA)
 | mongoose-storage-driver-**pulsar** | [Apache Pulsar](https://pulsar.apache.org/) storage driver | TODO
 | mongoose-storage-driver-**zookeeper** | [Apache Zookeeper](https://zookeeper.apache.org/) storage driver | TODO
 | mongoose-storage-driver-**bookkeeper** | [Apache BookKeeper](https://bookkeeper.apache.org/) storage driver | TODO
-| mongoose-storage-driver-**rocksdb** | [RocksDB](https://rocksdb.org/) storage driver | TODO
 | mongoose-storage-driver-**gcs** | [Google Cloud Storage](https://cloud.google.com/storage/docs/json_api/v1/) driver | TODO
 | mongoose-storage-driver-**graphql** | [GraphQL](https://graphql.org/) storage driver | TODO
 | mongoose-storage-driver-**jdbc** | [JDBC](https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/) storage driver | TODO
 
-# Bundle
+# Backward Compatibility Notes
 
-The following components are being included in the default bundle named "mongoose" for the backward compatibility reasons:
-1. mongoose-base
-2. mongoose-load-step-**pipeline**
-3. mongoose-load-step-**weighted**
-4. mongoose-storage-driver-coop
-5. mongoose-storage-driver-preempt
-6. mongoose-storage-driver-nio
-7. mongoose-storage-driver-**fs**
-8. mongoose-storage-driver-netty
-9. mongoose-storage-driver-http
-10. mongoose-storage-driver-**atmos**
-11. mongoose-storage-driver-**s3**
-12. mongoose-storage-driver-**swift**
+* The extensions are not overriding the base default options when launched from the jar file. E.g. the default storage
+  port is 7 and the default storage driver is "dummy-mock". Override the defaults explicitly or consider using the
+  Docker image.
 
-## Backward Compatibility Notes
+* The base Mongoose version and this bundle version may differ. The base version is used to determine the logs output
+  path.
 
-The extensions are not overriding the base default options. E.g. the default storage port is 7 and the default storage 
-driver is "dummy-mock". Override the defaults explicitly: 
+Example:
 ```bash 
 java -jar mongoose-bundle-<BUNDLE_VERSION>.jar \
     --storage-driver-type=s3 \
     --storage-net-node-port=9020
 ```
 
-## Build
+# Build
 
 ```
 ./gradlew clean jar
 ls -l build/libs
 ```
+
+# Deploy
+
+## Bare Jar Download
+
+http://central.maven.org/maven2/com/github/emc-mongoose/mongoose/
 
 ## Docker
 
