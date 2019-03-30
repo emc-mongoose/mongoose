@@ -1,6 +1,3 @@
-import groovy.json.JsonSlurper
-import groovy.json.JsonParserType
-
 buildscript {
 	repositories {
 		mavenCentral()
@@ -11,41 +8,43 @@ buildscript {
 }
 
 plugins {
+	id "java"
+	id "scala"
+	id "signing"
+	id "maven-publish"
 	id "com.bmuschko.docker-remote-api" version "4.0.5"
+	id "com.diffplug.gradle.spotless" version "3.18.0"
+	id "io.codearte.nexus-staging" version "0.20.0"
+	id "de.marcphilipp.nexus-publish" version "0.2.0"
+}
+
+repositories {
+	mavenCentral()
+	jcenter()
 }
 
 description = "Mongoose is a high-load storage performance testing tool"
+group = "com.github.emc-mongoose"
+sourceCompatibility = 11
+targetCompatibility = 11
+version = "4.2.3"
 
 ext {
 	depVersion = [
-		confuse            : "1.2.1",
-		confuseIoJson      : "1.1.0",
-		commonsCodec       : "1.11",
-		commonsLang        : "2.6",
-		disruptor          : "3.4.2",
-		fiber4j            : "1.1.0",
-		jackson            : "2.9.8",
-		javaCommons        : "2.2.3",
-		javassist          : "3.23.1-GA",
-		jetty              : "9.4.14.v20181114",
-		junit              : "4.12",
-		scala              : "2.12.6",
-		slf4j              : "1.7.25",
-		log4j              : "2.8.2",
-		tsdbMetrics        : "0.6.0",
-		nagaina            : "3.6.11",
-		netty              : "4.1.25.Final",
-		nettyConnectionPool: "1.1.0",
-		nettyTcNative      : "2.0.12.Final",
+		base                : "4.2.3",
+		loadStepPipeline    : "4.2.3",
+		loadStepWeighted    : "4.2.3",
+		storageDriverCoop   : "4.2.3",
+		storageDriverPreempt: "4.2.3",
+		storageDriverNetty  : "4.2.3",
+		storageDriverNio    : "4.2.3",
+		storageDriverHttp   : "4.2.3",
+		storageDriverFs     : "4.2.1",
+		storageDriverAtmos  : "4.2.3",
+		storageDriverS3     : "4.2.1",
+		storageDriverSwift  : "4.2.0",
 	]
-	baseProject = project(":base")
-	extProjects = subprojects.findAll {
-		!it.path.equals(":base") &&
-			!it.path.equals(":load") &&
-			!it.path.equals(":load:step") &&
-			!it.path.equals(":storage") &&
-			!it.path.equals(":storage:driver")
-	}
+	installResourcesFileName = "install_resources.txt"
 	jarFileName = rootProject.name
 	javaHome = System.properties["java.home"]
 	jreOutputDir = "${rootProject.buildDir}${File.separator}jre"
@@ -53,287 +52,103 @@ ext {
 	modulesDepsFilePath = "${rootProject.buildDir}${File.separator}modules.deps"
 }
 
-allprojects {
-
-	buildscript {
-		repositories {
-			mavenCentral()
-		}
-	}
-
-	repositories {
-		jcenter()
-		mavenCentral()
-	}
-
-	apply plugin: "java"
-	apply plugin: "maven"
-	apply plugin: "scala"
-	apply plugin: "signing"
-
-	group = "com.github.emc-mongoose"
-
-	sourceCompatibility = 11
-	targetCompatibility = 11
-
-	configurations {
-		provided
-		testCompile {
-			extendsFrom(compileOnly, provided)
-		}
-	}
-
-	sourceSets {
-		main {
-			compileClasspath += configurations.provided
-		}
-	}
-
-	test {
-		useJUnit()
-		exclude "com/emc/mongoose/endurance/*"
-		exclude "com/emc/mongoose/integration/*"
-		exclude "com/emc/mongoose/params/*"
-		exclude "com/emc/mongoose/perf/*"
-		exclude "com/emc/mongoose/system/*"
-		exclude "com/emc/mongoose/util/*"
-		exclude "**/TemplateTest.*"
-		exclude "**/*PerfTest.*"
-		jvmArgs "-XX:MaxDirectMemorySize=2g"
-		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
-		maxHeapSize "2g"
-		testLogging {
-			events = [
-				"standardOut", "skipped", "started", "failed",
-			]
-			showExceptions = true
-			showStandardStreams = true
-		}
-	}
-
-	task perfTest(type: Test) {
-		useJUnit()
-		include "com/emc/mongoose/perf/*"
-		jvmArgs "-XX:MaxDirectMemorySize=2g"
-		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
-		maxHeapSize "2g"
-		testLogging {
-			events = [
-				"standardOut", "skipped", "started", "failed",
-			]
-			showExceptions = true
-			showStandardStreams = true
-		}
-	}
-
-	task integrationTest(type: Test) {
-		useJUnit()
-		include "com/emc/mongoose/integration/*"
-		exclude "**/RollingAppenderTest*"
-		jvmArgs "-XX:MaxDirectMemorySize=2g"
-		jvmArgs "-XX:+HeapDumpOnOutOfMemoryError"
-		maxHeapSize "2g"
-		testLogging {
-			events = [
-				"standardOut", "skipped", "started", "failed",
-			]
-			showExceptions = true
-			showStandardStreams = true
-		}
-	}
-
-	task systemTest(type: Test) {
-		useJUnit()
-		include "com/emc/mongoose/system/*"
-		maxHeapSize "1g"
-		testLogging {
-			events = [
-				"standardOut", "skipped", "started", "failed",
-			]
-			showExceptions = true
-			showStandardStreams = true
-		}
-	}
-
-	task enduranceTest(type: Test) {
-		useJUnit()
-		include "com/emc/mongoose/endurance/*"
-		maxHeapSize "1g"
-		testLogging {
-			events = [
-				"standardOut", "skipped", "started", "failed",
-			]
-			showExceptions = true
-			showStandardStreams = true
-		}
-	}
-
-	// travis deploy stage runs "./gradlew check" again which is unnecessary
-	check.dependsOn -= test
-
-	javadoc {
-		classpath += configurations.provided
-	}
-
-	signing {
-		required {
-			gradle.taskGraph.hasTask("uploadArchives")
-		}
-		sign configurations.archives
-	}
-
-	// see http://central.sonatype.org/pages/gradle.html for details
-	uploadArchives {
-
-		// upload base artifact and extensions
-		if(project != rootProject && !(project in extProjects)) {
-			return
-		}
-
-		LinkedList nameParts = new LinkedList()
-		collectName(project, nameParts)
-
-		def ossrhUsername = project.hasProperty("ossrhUsername") ?
-			project.property("ossrhUsername") : null
-		def ossrhPassword = project.hasProperty("ossrhPassword") ?
-			project.property("ossrhPassword") : null
-
-		repositories {
-			mavenDeployer {
-				beforeDeployment {
-					MavenDeployment deployment -> signing.signPom(deployment)
-				}
-
-				repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-					authentication(userName: ossrhUsername, password: ossrhPassword)
-				}
-
-				snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-					authentication(userName: ossrhUsername, password: ossrhPassword)
-				}
-
-				pom {
-
-					groupId = rootProject.group
-					name = nameParts.join("-")
-					artifactId = name
-
-					project {
-						description = rootProject.description
-
-						url "https://github.com/emc-mongoose/mongoose/wiki"
-
-						scm {
-							connection "https://github.com/emc-mongoose/mongoose.git"
-							developerConnection "https://github.com/emc-mongoose/mongoose.git"
-							url "https://github.com/emc-mongoose/mongoose.git"
-						}
-
-						licenses {
-							license {
-								name "The MIT License (MIT)"
-								url "https://github.com/emc-mongoose/mongoose/wiki/License"
-							}
-						}
-
-						developers {
-							developer {
-								id "akurilov"
-								name "Andrey Kurilov"
-								email "akurilov123@gmail.com"
-							}
-						}
-					}
-				}
-			}
-		}
+configurations {
+	extension {
+		extendsFrom(compileOnly)
 	}
 }
 
-void collectName(final Project p, final LinkedList<String> names) {
-	names.addFirst p.name
-	if(p.parent != null) {
-		collectName(p.parent, names)
-	}
+dependencies {
+	compile(
+		"${group}:mongoose-base:${depVersion.base}",
+	)
+	extension(
+		"${group}:mongoose-load-step-pipeline:${depVersion.loadStepPipeline}",
+		"${group}:mongoose-load-step-weighted:${depVersion.loadStepWeighted}",
+		"${group}:mongoose-storage-driver-coop:${depVersion.storageDriverCoop}",
+		"${group}:mongoose-storage-driver-preempt:${depVersion.storageDriverPreempt}",
+		"${group}:mongoose-storage-driver-netty:${depVersion.storageDriverNetty}",
+		"${group}:mongoose-storage-driver-nio:${depVersion.storageDriverNio}",
+		"${group}:mongoose-storage-driver-http:${depVersion.storageDriverHttp}",
+		"${group}:mongoose-storage-driver-fs:${depVersion.storageDriverFs}",
+		"${group}:mongoose-storage-driver-atmos:${depVersion.storageDriverAtmos}",
+		"${group}:mongoose-storage-driver-s3:${depVersion.storageDriverS3}",
+		"${group}:mongoose-storage-driver-swift:${depVersion.storageDriverSwift}",
+	)
 }
 
-subprojects {
+// travis deploy stage runs "./gradlew check" again which is unnecessary
+check.dependsOn -= test
 
-	jar {
+javadoc {
+	classpath += configurations.compile
+}
 
-		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-		manifest {
-			attributes(
-				"Implementation-Version": rootProject.version,
-			)
-		}
-
-		excludes = [
-			"**/*.css",
-			"**/*.html",
-			"META-INF/*.DSA",
-			"META-INF/*.LIST",
-			"META-INF/*.RSA",
-			"META-INF/*.SF",
-			"module-info.class",
-		]
+signing {
+	required {
+		gradle.taskGraph.hasTask("uploadArchives")
 	}
-
-	task sourcesJar(type: Jar, dependsOn: classes) {
-		LinkedList names = new LinkedList()
-		collectName(project, names)
-		baseName = names.join("-")
-		classifier = "sources"
-		from sourceSets.main.allSource
-	}
-
-	task javadocJar(type: Jar, dependsOn: javadoc) {
-		LinkedList names = new LinkedList()
-		collectName(project, names)
-		baseName = names.join("-")
-		classifier = "javadoc"
-		from javadoc.destinationDir
-	}
-
-	artifacts {
-		archives jar
-		archives sourcesJar
-		archives javadocJar
-	}
+	sign configurations.archives
 }
 
 wrapper {
 	gradleVersion = "4.10.3"
 }
 
-jar {
+task mergeInstallResourcesFile {
+	doLast {
+		def dstFile = new File("${project.buildDir}${File.separator}${installResourcesFileName}")
+		if(!dstFile.parentFile.exists()) {
+			dstFile.parentFile.mkdirs()
+		}
+		configurations.compile.copyRecursive().collect {
+			zipTree(it).filter {
+				it.toString().endsWith(installResourcesFileName)
+			} forEach {
+				it.readLines().forEach {
+					dstFile << it
+					dstFile << System.lineSeparator()
+				}
+			}
+		}
+		configurations.extension.copyRecursive().collect {
+			dstFile << "ext/${it.name}"
+			dstFile << System.lineSeparator()
+		}
+	}
+}
 
+jar.dependsOn += mergeInstallResourcesFile
+
+jar {
 	baseName = rootProject.name
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
+	excludes = [
+		"**/*.css",
+		"**/*.html",
+		"META-INF/*.DSA",
+		"META-INF/*.LIST",
+		"META-INF/*.RSA",
+		"META-INF/*.SF",
+		"module-info.class",
+	]
 	manifest {
 		attributes(
 			"Automatic-Module-Name": rootPkg,
 			"Implementation-Title": rootProject.name,
+			"Implementation-Version": version,
 			"Main-Class": "${rootPkg}.base.Main",
 		)
 	}
-
-	from baseProject.jar.outputs.files.collect {
+	from "${project.buildDir}${File.separator}${installResourcesFileName}"
+	from configurations.compile.copyRecursive().collect {
 		zipTree(it)
 	}
-
-	extProjects
-		.each {
-			final Project p = it
-			from(p.jar.outputs.files) {
-				into "${File.separator}ext"
-				rename {
-					fileName -> "${p.description}.jar"
-				}
-			}
+	into("${File.separator}ext") {
+		from configurations.extension.copyRecursive().collect {
+			it
 		}
+	}
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
@@ -346,72 +161,73 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 	from javadoc.destinationDir
 }
 
+// Maven Central deployment ////////////////////////////////////////////////////////////////////////////////////////////
+
 artifacts {
 	archives jar
 	archives sourcesJar
 	archives javadocJar
 }
 
-assemble.dependsOn += jar
-
-// Custom JRE //////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-def execute(cmd, dir = null) {
-	def stdOut = new StringBuilder(), stdErr = new StringBuilder()
-	def proc = dir == null ? cmd.execute() : cmd.execute([], dir)
-	proc.consumeProcessOutput(stdOut, stdErr)
-	proc.waitForOrKill(100_000)
-	println "${cmd}\n\t$stdErr"
-	stdOut.toString()
+nexusStaging {
+	packageGroup = project.group
+	username = project.hasProperty("ossrhUsername") ? project.property("ossrhUsername") : null
+	password = project.hasProperty("ossrhPassword") ? project.property("ossrhPassword") : null
+	numberOfRetries = 100
+	delayBetweenRetriesInMillis = 10000
 }
 
-task listAllModulesDeps(dependsOn: jar) {
-	doLast {
-		def modulesDepsFile = new File(modulesDepsFilePath)
-		modulesDepsFile.delete()
-		def projects = []
-		projects.add(baseProject)
-		projects.addAll(extProjects)
-		projects.each {
-			def cmd = [
-				"${javaHome}${File.separator}bin${File.separator}jdeps",
-				"--module-path ${javaHome}${File.separator}jmods",
-				"--list-deps ${it.jar.outputs.files.iterator().next()}",
-			].join(' ')
-			def deps = execute(cmd)
-				.takeWhile { it != '/' } + '\n'
-			modulesDepsFile.append(deps)
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			artifactId = project.name
+			groupId = project.group
+			artifact jar
+			artifact javadocJar
+			artifact sourcesJar
+			pom {
+				name = project.name
+				description = project.description
+				url = "https://github.com/emc-mongoose/mongoose"
+				scm {
+					connection = "https://github.com/emc-mongoose/mongoose"
+					developerConnection = "https://github.com/emc-mongoose/mongoose.git"
+					url = "https://github.com/emc-mongoose/mongoose.git"
+				}
+				licenses {
+					license {
+						name = "The MIT License (MIT)"
+						url = "https://github.com/emc-mongoose/mongoose/LICENSE"
+					}
+				}
+				developers {
+					developer {
+						id = "akurilov"
+						name = "Andrey Kurilov"
+						email = "akurilov123@gmail.com"
+					}
+				}
+			}
+		}
+	}
+	repositories {
+		maven {
+			url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+			credentials {
+				username = project.hasProperty("ossrhUsername") ? project.property("ossrhUsername") : null
+				password = project.hasProperty("ossrhPassword") ? project.property("ossrhPassword") : null
+			}
 		}
 	}
 }
 
-task dedupModulesDeps(dependsOn: listAllModulesDeps) {
-	doLast {
-		def deps = execute("sort -b -u ${modulesDepsFilePath}")
-			.lines()
-			.findAll { !it.isBlank() }
-			.join('\n')
-		def modulesDepsFile = new File(modulesDepsFilePath)
-		modulesDepsFile.delete()
-		modulesDepsFile.append(deps)
-	}
+signing {
+	sign publishing.publications
 }
 
-task jre(dependsOn: dedupModulesDeps) {
-	doLast {
-		def modulesToAdd = new File(modulesDepsFilePath)
-			.readLines()
-			*.trim()
-			.join(',')
-		execute(
-			[
-				"${javaHome}${File.separator}bin${File.separator}jlink",
-				"--no-header-files --no-man-pages --strip-debug --compress=2 --bind-services",
-				"--module-path ${javaHome}${File.separator}jmods --add-modules ${modulesToAdd}",
-				"--output ${jreOutputDir}",
-			].join(' ')
-		)
-	}
+task releaseToMavenCentral {
+	dependsOn += publishToNexus
+	dependsOn += closeAndReleaseRepository
 }
 
 // Docker tasks ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -419,23 +235,37 @@ task jre(dependsOn: dedupModulesDeps) {
 import com.bmuschko.gradle.docker.tasks.image.*
 import com.bmuschko.gradle.docker.tasks.container.*
 
-task dockerBuildImage(type: DockerBuildImage, dependsOn: jar) {
-	inputDir = rootProject.projectDir
+task dockerBuildImage(type: DockerBuildImage) {
+	inputDir = project.projectDir
+	buildArgs = [
+		"BASE_VERSION": depVersion.base,
+		"LOAD_STEP_PIPELINE_VERSION": depVersion.loadStepPipeline,
+		"LOAD_STEP_WEIGHTED_VERSION": depVersion.loadStepWeighted,
+		"STORAGE_DRIVER_COOP_VERSION": depVersion.storageDriverCoop,
+		"STORAGE_DRIVER_PREEMPT_VERSION": depVersion.storageDriverPreempt,
+		"STORAGE_DRIVER_NETTY_VERSION": depVersion.storageDriverNetty,
+		"STORAGE_DRIVER_NIO_VERSION": depVersion.storageDriverNio,
+		"STORAGE_DRIVER_FS_VERSION": depVersion.storageDriverFs,
+		"STORAGE_DRIVER_HTTP_VERSION": depVersion.storageDriverHttp,
+		"STORAGE_DRIVER_ATMOS_VERSION": depVersion.storageDriverAtmos,
+		"STORAGE_DRIVER_S3_VERSION": depVersion.storageDriverS3,
+		"STORAGE_DRIVER_SWIFT_VERSION": depVersion.storageDriverSwift,
+	]
 	dockerFile = project.file("ci${File.separator}docker${File.separator}Dockerfile")
-	imageId = "emcmongoose/mongoose"
+	imageId = "emcmongoose/mongoose".toString()
 	tags = [
-		"emcmongoose/mongoose:${version}".toString(),
+		"emcmongoose/mongoose:${version}",
 		"emcmongoose/mongoose:testing",
 	]
 }
 
-task dockerPushProductionImage(type: DockerPushImage, dependsOn: dockerBuildImage) {
-	imageName = "emcmongoose/mongoose"
+task dockerPushProductionImage(type: DockerPushImage) {
+	imageName = "emcmongoose/mongoose".toString()
 	tag = "emcmongoose/mongoose:${version}".toString()
 }
 
 task dockerPushTestingImage(type: DockerPushImage, dependsOn: dockerBuildImage) {
-	imageName = "emcmongoose/mongoose"
+	imageName = "emcmongoose/mongoose".toString()
 	tag = "emcmongoose/mongoose:testing".toString()
 }
 
@@ -460,8 +290,7 @@ task dockerCreateContainerRobotest(type: DockerCreateContainer, dependsOn: [dock
 	]
 	envVars = [
 		"HOST_WORKING_DIR": rootProject.projectDir.absolutePath,
-		"MONGOOSE_VERSION": version,
-		"MONGOOSE_IMAGE_VERSION": version,
+		"VERSION": version,
 		"SERVICE_HOST": "localhost",
 		"SUITE": System.getenv("SUITE"),
 		"TEST": System.getenv("TEST"),

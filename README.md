@@ -1,245 +1,80 @@
 [![Gitter chat](https://badges.gitter.im/emc-mongoose.png)](https://gitter.im/emc-mongoose)
-[![Issue Tracker](https://img.shields.io/badge/Issue-Tracker-red.svg)](https://mongoose-issues.atlassian.net/projects/GOOSE)
-[![CI status](https://gitlab.com/emcmongoose/mongoose/badges/master/pipeline.svg)](https://gitlab.com/emcmongoose/mongoose/commits/master)
-[![Tag](https://img.shields.io/github/tag/emc-mongoose/mongoose.svg)](https://github.com/emc-mongoose/mongoose/tags)
-[![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose/maven-metadata.xml.svg)](http://central.maven.org/maven2/com/github/emc-mongoose/mongoose)
-[![Sonatype Nexus (Releases)](https://img.shields.io/nexus/r/http/oss.sonatype.org/com.github.emc-mongoose/mongoose.svg)](http://oss.sonatype.org/com.github.emc-mongoose/mongoose)
+[![CI status](https://gitlab.com/emc-mongoose/mongoose/badges/master/pipeline.svg)](https://gitlab.com/emc-mongoose/mongoose/commits/master)
 [![Docker Pulls](https://img.shields.io/docker/pulls/emcmongoose/mongoose.svg)](https://hub.docker.com/r/emcmongoose/mongoose/)
 
-# Contents
+# Introduction
 
-1. [Overview](#1-overview)
-2. [Features](#2-features)<br/>
-&nbsp;&nbsp;2.1. [Comparison With Similar Tools](#21-comparison-with-similar-tools)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.1.1. [General](#211-general)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.1.2. [Purpose](#212-purpose)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.1.3. [Scalability](#213-scalability)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.1.4. [Input](#214-input)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.1.5. [Output](#215-output)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.1.6. [Load Generation Patterns](#216-load-generation-patterns)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.1.7. [Storages Support](#217-storages-support)<br/>
-&nbsp;&nbsp;2.2. [Scalability](#22-scalability)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.2.1. [Vertical](#221-vertical)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.2.2. [Horizontal](#222-horizontal)<br/>
-&nbsp;&nbsp;2.3. [Customization](#23-customization)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.3.1. [Flexible Configuration](#231-flexible-configuration)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.3.2. [Load Generation Patterns](#232-load-generation-patterns)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.3.3. [Scenarios](#233-scenarios)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.3.4. [Metrics Reporting](#234-metrics-reporting)<br/>
-&nbsp;&nbsp;2.4. [Extension](#24-extension)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.4.1. [Load Steps](#241-load-steps)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;2.4.2. [Storage Drivers](#242-storage-drivers)<br/>
-&nbsp;&nbsp;&nbsp;2.4.3. [Scenario Engine](#243-scenario-engine)<br/>
-3. Documentation<br/>
-&nbsp;&nbsp;3.1. [Deployment](doc/deployment)<br/>
-&nbsp;&nbsp;3.2. [Usage](doc/usage)<br/>
-&nbsp;&nbsp;3.2. [Troubleshooting](doc/troubleshooting)<br/>
-&nbsp;&nbsp;3.3. Storage Drivers<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.3.2. [S3](storage/driver/coop/netty/http/s3)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.3.3. [Atmos](storage/driver/coop/netty/http/atmos)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.3.4. [Swift](storage/driver/coop/netty/http/swift)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.3.5. [FS](storage/driver/coop/nio/fs)<br/>
-&nbsp;&nbsp;3.4. [Dependencies](doc/dependencies)<br/>
-&nbsp;&nbsp;3.5. [Interfaces](doc/interfaces#interfaces)<br/>
-&nbsp;&nbsp;&nbsp;3.5.1 [Input](doc/interfaces/input)<br/>
-&nbsp;&nbsp;&nbsp;3.5.2 [Output](doc/interfaces/output)<br/>
-&nbsp;&nbsp;&nbsp;3.5.3 [Remote API](doc/interfaces/api/remote)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.5.3.1 [Config API](doc/interfaces/api/remote#config)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.5.3.2 [Runs API](doc/interfaces/api/remote#run)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.5.3.3 [Logs API](doc/interfaces/api/remote#logs)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.5.3.4 [Metrics API](doc/interfaces/api/remote#metrics)<br/>
-&nbsp;&nbsp;&nbsp;3.5.4 Extentions <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.5.4.1 [Load Step Types](doc/interfaces/api/extensions/load_step)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.5.4.2 [Storage Drivers](doc/interfaces/api/extensions/storage_driver)<br/>
-&nbsp;&nbsp;3.6. Design<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.1. [Architecture](doc/design/architecture)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.2. [Distributed Mode](doc/design/distributed_mode)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.3. [Installer](src/main/java/com/emc/mongoose/base/env)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.4. [Recycle Mode](doc/design/recycle_mode)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.5. [Data Reentrancy](doc/design/data_reentrancy)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.6. [Byte Range Operations](doc/design/byte_range_operations)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.7. [Copy Mode](doc/design/copy_mode)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.8. [Pipeline Load](load/step/pipeline)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;3.7.9. [Weighted Load](load/step/weighted)<br/>
-&nbsp;&nbsp;3.8. [Contributing](CONTRIBUTING.md)<br/>
-&nbsp;&nbsp;3.9. [Changelog](doc/changelog)<br/>
+The repo contains the automation scripts to build/test/deploy the Mongoose backward compatibility bundle. Previously the
+repo contained the Mongoose sources for the basic functionality and some commonly used extensions. Currently it was
+split into the independent repos and the corresponding components. Each component has its own CI and versioning.
 
-# 1. Overview
+# Core Components
 
-Mongoose is a powerful storage performance testing tool.
+The *core components* are included in this backward compatibility bunlde.
 
-It is designed to be used for:
-* [Load Testing](https://en.wikipedia.org/wiki/Load_testing)
-* [Stress Testing](https://en.wikipedia.org/wiki/Stress_testing)
-* [Soak/Longevity/Endurance Testing](https://en.wikipedia.org/wiki/Soak_testing)
-* [Volume Testing](https://en.wikipedia.org/wiki/Volume_testing)
-* [Smoke](https://en.wikipedia.org/wiki/Smoke_testing_(software))/[Sanity](https://en.wikipedia.org/wiki/Sanity_check)
-  Testing
+| Repo | Description | Latest Release | Continuous Integration Status | Issue Tracker Link |
+|------|-------------|---------|-------------------------------|--------|
+| [mongoose-**base**](https://github.com/emc-mongoose/mongoose-base) | Mongoose storage performance testing tool - base functionality | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-base/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-base.svg?label=%20&style=for-the-badge) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
+| [mongoose-**gui**](https://github.com/emc-mongoose/console) | Mongoose GUI web application | TBD | TBD | [GUI](https://mongoose-issues.atlassian.net/browse/GUI)
+| [mongoose-load-step-**pipeline**](https://github.com/emc-mongoose/mongoose-load-step-pipeline) | Load operations pipeline (create,delay,read-then-update, for example), extension |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-load-step-pipeline/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-load-step-pipeline.svg?label=%20&style=for-the-badge) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
+| [mongoose-load-step-**weighted**](https://github.com/emc-mongoose/mongoose-load-step-weighted) | Weighted load extension, allowing to generate 20% write and 80% read operations, for example |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-load-step-weighted/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-load-step-weighted.svg?label=%20&style=for-the-badge) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
+| [mongoose-storage-driver-**coop**](https://github.com/emc-mongoose/mongoose-storage-driver-coop) | Cooperative multitasking storage driver primitive, utilizing [fibers](https://github.com/akurilov/fiber4j) |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-coop/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-coop.svg?label=%20&style=for-the-badge) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
+| [mongoose-storage-driver-**preempt**](https://github.com/emc-mongoose/mongoose-storage-driver-preempt) | Preemptive multitasking storage driver primitive, using thread-per-task approach for the I/O |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-preempt/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-preempt.svg?label=%20&style=for-the-badge) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
+| [mongoose-storage-driver-**netty**](https://github.com/emc-mongoose/mongoose-storage-driver-netty) | [Netty](https://netty.io/)-storage-driver-nettyd storage driver primitive, extends the cooperative multitasking storage driver primitive |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-netty/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-netty.svg?label=%20&style=for-the-badge) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
+| [mongoose-storage-driver-**nio**](https://github.com/emc-mongoose/mongoose-storage-driver-nio) | Non-blocking I/O storage driver primitive, extends the cooperative multitasking storage driver primitive |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-nio/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-nio.svg?label=%20&style=for-the-badge) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
+| [mongoose-storage-driver-**http**](https://github.com/emc-mongoose/mongoose-storage-driver-http) | HTTP storage driver primitive, extends the Netty-storage-driver-httpd storage driver primitive |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-http/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-http.svg?label=%20&style=for-the-badge) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
+| [mongoose-storage-driver-**fs**](https://github.com/emc-mongoose/mongoose-storage-driver-fs) | [VFS](https://www.oreilly.com/library/view/understanding-the-linux/0596005652/ch12s01.html) storage driver, extends the NIO storage driver primitive |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-fs/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-fs.svg?label=%20&style=for-the-badge) | [FS](https://mongoose-issues.atlassian.net/projects/FS)
+| [mongoose-storage-driver-**atmos**](https://github.com/emc-mongoose/mongoose-storage-driver-atmos) | [Dell EMC Atmos](https://poland.emc.com/collateral/software/data-sheet/h5770-atmos-ds.pdf) storage driver, extends the HTTP storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-atmos/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-atmos.svg?label=%20&style=for-the-badge) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
+| [mongoose-storage-driver-**s3**](https://github.com/emc-mongoose/mongoose-storage-driver-s3) | [Amazon S3](https://docs.aws.amazon.com/en_us/AmazonS3/latest/API/Welcome.html) storage driver, extends the HTTP storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-s3/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-s3.svg?label=%20&style=for-the-badge) | [S3](https://mongoose-issues.atlassian.net/projects/S3)
+| [mongoose-storage-driver-**swift**](https://github.com/emc-mongoose/mongoose-storage-driver-swift) | [OpenStack Swift](https://wiki.openstack.org/wiki/Swift) storage driver, extends the HTTP storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-swift/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-swift.svg?label=%20&style=for-the-badge) | [SWIFT](https://mongoose-issues.atlassian.net/projects/SWIFT)
 
-# 2. Features
+# Additional Extensions
 
-## 2.1. Comparison With Similar Tools
+The *additional extension* components are not included
 
-* [COSBench](https://github.com/intel-cloud/cosbench)
-* [LoadRunner](https://software.microfocus.com/en-us/products/loadrunner-load-testing/overview)
-* [Locust](https://locust.io/)
+| Repo | Description | Latest Release | Continuous Integration Status | Issue Tracker Link |
+|------|-------------|---------|-------------------------------|--------|
+| [mongoose-storage-driver-**hdfs**](https://github.com/emc-mongoose/mongoose-storage-driver-hdfs) | [Apache HDFS](http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html) storage driver, extends the NIO storage driver primitive |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-hdfs/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-hdfs.svg?label=%20&style=for-the-badge) | [HDFS](https://mongoose-issues.atlassian.net/projects/HDFS)
+| [mongoose-storage-driver-**pravega**](https://github.com/emc-mongoose/mongoose-storage-driver-pravega) | [Pravega](http://pravega.io) storage driver, extends the cooperative multitasking storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-pravega/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-pravega.svg?label=%20&style=for-the-badge) | [PRAVEGA](https://mongoose-issues.atlassian.net/projects/PRAVEGA)
+| [mongoose-storage-driver-**kafka**](https://github.com/emc-mongoose/mongoose-storage-driver-kafka) | [Apache Kafka](https://kafka.apache.org/) storage driver, extends the cooperative multitasking storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-kafka/maven-metadata.xml.svg?label=%20&style=for-the-badge) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-kafka.svg?label=%20&style=for-the-badge) | [KAFKA](https://mongoose-issues.atlassian.net/projects/KAFKA)
+| mongoose-storage-driver-**pulsar** | [Apache Pulsar](https://pulsar.apache.org/) storage driver | TODO
+| mongoose-storage-driver-**zookeeper** | [Apache Zookeeper](https://zookeeper.apache.org/) storage driver | TODO
+| mongoose-storage-driver-**bookkeeper** | [Apache BookKeeper](https://bookkeeper.apache.org/) storage driver | TODO
+| mongoose-storage-driver-**gcs** | [Google Cloud Storage](https://cloud.google.com/storage/docs/json_api/v1/) driver | TODO
+| mongoose-storage-driver-**graphql** | [GraphQL](https://graphql.org/) storage driver | TODO
+| mongoose-storage-driver-**jdbc** | [JDBC](https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/) storage driver | TODO
 
-### 2.1.1. General
-|                   | Mongoose  | COSBench | LoadRunner         | Locust |
-| ---               | :---:     | :---:    | :---:              | :---:  |
-|**License**        |[MIT License](../LICENSE)|[Apache 2.0](https://github.com/intel-cloud/cosbench/blob/master/LICENSE)|[Proprietary](https://en.wikipedia.org/wiki/LoadRunner)|[MIT License](https://github.com/locustio/locust/blob/master/LICENSE)|
-|**Open Source**    |:heavy_check_mark:|:heavy_check_mark:    |:x:|  :heavy_check_mark:|
+# Backward Compatibility Notes
 
-### 2.1.2. Purpose
-|                   | Mongoose  | COSBench | LoadRunner | Locust |
-| ---               | :---:     | :---:    | :---:      | :---:  |
-|**[Load testing](https://en.wikipedia.org/wiki/Load_testing)** |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
-|**[Stress testing](https://en.wikipedia.org/wiki/Stress_testing)** |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:| TBD |
-|**[Endurance testing](https://en.wikipedia.org/wiki/Soak_testing)**|:heavy_check_mark:| TBD |:heavy_check_mark:| TBD |
+* The extensions are not overriding the base default options when launched from the jar file. E.g. the default storage
+  port is 7 and the default storage driver is "dummy-mock". Override the defaults explicitly or consider using the
+  Docker image.
 
-### 2.1.3. Scalability
-|                                                    | Mongoose  | COSBench | LoadRunner | Locust |
-| ---                                                | :---:     | :---:    | :---:      | :---:  |
-|**Horizontal** (Distributed Mode)                 |:heavy_check_mark:|:heavy_check_mark:| TBD |:heavy_check_mark:|
-|**Vertical** (Max sustained concurrency per instance)| 1_048_576 |[1024](http://cosbench.1094679.n5.nabble.com/how-many-connections-users-can-cosbench-create-to-test-one-swift-storage-tp325p326.html)| TBD |[1_000_000](https://locust.io/)|
+* The base Mongoose version and this bundle version may differ. The base version is used to determine the logs output
+  path.
 
-### 2.1.4. Input
-|                  | Mongoose  | COSBench | LoadRunner | Locust |
-| ---              | :---:     | :---:    | :---:      | :---:  |
-|**GUI**           |:x:|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
-|**Parameterization**|:heavy_check_mark:| :heavy_check_mark: | TBD |:heavy_check_mark:(need to extend the functionality)|
-|**Script language**| Any [JSR-223](https://en.wikipedia.org/wiki/Scripting_for_the_Java_Platform) compatible |[XML](https://en.wikipedia.org/wiki/XML)|[ANSI C, Java, .Net, JS](https://en.wikipedia.org/wiki/LoadRunner)|[Python](https://en.wikipedia.org/wiki/Python)|
+Example:
+```bash 
+java -jar mongoose-bundle-<BUNDLE_VERSION>.jar \
+    --storage-driver-type=s3 \
+    --storage-net-node-port=9020
+```
 
-### 2.1.5. Output
-|                                        | Mongoose  | COSBench | LoadRunner | Locust |
-| ---                                    | :---:     | :---:    | :---:      | :---:  |
-|**Highest-resolution (per each op) metrics**|:heavy_check_mark:|:x:| TBD |:x:|
-|**Saturation concurrency measurement**  |:heavy_check_mark:|:x:| TBD |:x:|
+# Build
 
-### 2.1.6. Load Generation Patterns
-|                       | Mongoose  | COSBench | LoadRunner | Locust |
-| ---                   | :---:     | :---:    | :---:      | :---:  |
-|**[Weighted load](load/step/weighted)**|:heavy_check_mark:| :heavy_check_mark:| TBD |:x:|
-|**[Pipeline load](load/step/pipeline)**|:heavy_check_mark:| :x:| TBD |:x:|
-|**[Recycle mode](doc/design/recycle_mode)**|:heavy_check_mark: |:x:| TBD |:x:|
+```
+./gradlew clean jar
+ls -l build/libs
+```
 
-### 2.1.7. Storages Support
+# Deploy
 
-* **Note**: Locust and LoadRunner are not designed for the storage performance testing explicitly so they are excluded
-from the table below
+## Bare Jar Download
 
-|                                            | Mongoose  | COSBench |
-| ---                                        | :---:     | :---:    |
-|**Supported storages**                      |<ul><li>Amazon S3</li><li>EMC Atmos</li><li>OpenStack Swift</li><li>Filesystem</li><li>HDFS</li><ul>|<ul><li>Amazon S3</li><li>Amplidata</li><li>OpenStack Swift</li><li>Scality</li><li>Ceph</li><li>Google Cloud Storage</li><li>Aliyun OSS</li><ul>|
-|**Extensible to support custom storage API**|  :heavy_check_mark:   | :heavy_check_mark: |
+http://central.maven.org/maven2/com/github/emc-mongoose/mongoose/
 
+## Docker
 
-## 2.2. Scalability
-
-### 2.2.1. Vertical
-
-Using [fibers](https://github.com/akurilov/fiber4j) allows to sustain millions of concurrent operations easily without
-significant performance degradation.
-
-### 2.2.2. Horizontal
-
-The [distributed mode](doc/design/distributed_mode) in Mongoose was designed as P2P network. Each peer/node performs
-independently as much as possible. This eliminates the excess network interaction between the nodes which may be a
-bottleneck.
-
-## 2.3. Customization
-
-### 2.3.1. Flexible Configuration
-
-Supports the [parameterization](doc/interfaces/input/configuration#2-parameterization) and extension but remains type-safe and
-structure-safe.
-
-### 2.3.2. Load Generation Patterns
-
-* CRUD operations and the extensions: Noop, [Copy](doc/design/copy_mode), etc
-
-* [Parial Operations](doc/usage/load/operations/byte_ranges)
-
-* [Composite Operations](doc/usage/load/operations/composite)
-
-* Complex Load Steps
-    * [Pipeline Load](load/step/pipeline)
-    * [Weighted Load](load/step/weighted)
-* [Recycle Mode](doc/design/recycle_mode)
-
-* [Data Reentrancy](doc/design/data_reentrancy)
-
-  Allows to validate the data read back from the storage successfully even after the data items have been randomly
-  updated multiple times before
-
-* Custom Payload Data
-
-### 2.3.3. [Scenarios](doc/interfaces/input/scenarios)
-
-Scenaruis allow to organize the load steps in the required order and reuse the complex performance tests
-
-### 2.3.4. [Metrics Reporting](doc/interfaces/output#2-metrics)
-
-The metrics reported by Mongoose are designed to be most useful for the performance analysis. The following metrics are
-available:
-
-* Counts
-
-  * Items
-  * Bytes transferred
-  * Time
-    * Effective
-    * Elapsed
-
-* Rates
-
-  * Items per second
-  * Bytes per second
-
-* Timing distributions for:
-
-  * Operation durations
-  * Network latencies
-
-* Actual concurrency
-
-  It's possible to limit the rate and measure the sustained actual concurrency
-
-The *average* metrics output is being done periodically while a load step is running. The *summary* metrics output is
-done once when a load step is finished. Also, it's possible to obtain the highest precision metrics (for each operation,
-so called *I/O trace* records).
-
-## 2.4. [Extension](src/main/java/com/emc/mongoose/base/env)
-
-Mongoose is designed to be agnostic to the particular extensions implementations. This allows to support any storage,
-scenario language, different load step kinds.
-
-### 2.4.1. Load Steps
-
-A load step controls the load operations flow. Different load step implementations may do it in the different way. There
-are the available out-of-the-box:
-
-* [Linear](load/step/linear)
-  The most basic load step. All load operations have the same type.
-
-* [Pipeline](load/step/pipeline)
-  Executes a sequence of the different load operations for each item independently.
-
-* [Weighted](load/step/weighted)
-  Executes the load operations of different types sustaining the specified ratio (weights).
-
-### 2.4.2. Storage Drivers
-
-The actual load is being executed by the storage drivers. Mongoose supports some storage types out-of-the-box:
-* [Amazon S3](storage/driver/coop/netty/http/s3)
-* [EMC Atmos](storage/driver/coop/netty/http/atmos)
-* [OpenStack Swift](storage/driver/coop/netty/http/swift)
-* [Filesystem](storage/driver/coop/nio/fs)
-
-The following additional storage driver implementations are available:
-* [HDFS](https://github.com/emc-mongoose/mongoose-storage-driver-hdfs)
-
-### 2.4.3. Scenario Engine
-
-Any Mongoose scenario may be written using any JSR-223 compliant scripting language. Javascript support is available
-out-of-the-box.
+```
+docker run ... emcmongoose/mongoose[:<VERSION>] ...
+```
