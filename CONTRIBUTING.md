@@ -296,24 +296,24 @@ This hook will work automatically with any commit and format the code in the sam
 
 The threads are not used in the usual way (*fibers* are used instead for the multitasking purposes). Therefore, having
 an `InterruptedException` thrown means that the run was interrupted externally. To stop the run, it's necessary to pass
-the specific exception to the uppermost level of the call stack. However, the `InterruptedException` is a checked
-exception and usually couldn't be passed outward. The specific unchecked `InterruptRunException` is used for this
-purpose. This imposes the restrictions on the exceptions handling:
+the exception to the uppermost level of the call stack. However, the `InterruptedException` is a checked
+exception and usually couldn't be passed outward. The utility method 
+`com.github.akurilov.commons.lang.Exceptions#throwUnchecked` should be used for this:
 
-* If the `InterruptedException` is caught the `InterruptRunException` should be thrown:
-    ```java
+```java
+...
+import static com.github.akurilov.commons.lang.Exceptions.throwUnchecked;
+...
     try {
         foo(); // may throw an InterruptedException
     } catch(final InterruptedException e) {
-        throw new InterruptRunException(e);
+        throwUnchecked(e);
     }
-    ```
+```
 
-* The following exceptions catching should be avoided as far as the `InterruptRunException` may be swallowed
-occasionally:
-    1. `Throwable`
-    2. `Exception`
-    3. `RuntimeException`
+The following exceptions catching should be avoided as far as the `InterruptedException` may be swallowed occasionally:
+1. `Throwable`
+2. `Exception`
 
 ## 5.3. Performance
 Take care about the performance in the ***critical*** places:
