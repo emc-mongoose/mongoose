@@ -90,4 +90,6 @@ deploy_to_docker_hub:
     - docker tag ${IMAGE_NAME}:${CI_COMMIT_SHA} ${IMAGE_NAME}:latest
     - docker push ${IMAGE_NAME}:latest
   only:
-    - tags
+    - latest
+  except:
+    - branches
