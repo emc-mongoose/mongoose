@@ -19,7 +19,7 @@ stages:
   - deploy
 
 before_script:
-  - apk --update add --no-cache ca-certificates curl openssl binutils xz
+  - apk --update add --no-cache ca-certificates curl openssl binutils xz gnupg
   - curl -Lks https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.2%2B9/OpenJDK11U-jdk_x64_linux_hotspot_11.0.2_9.tar.gz -o /tmp/jdk11.tgz
   - tar xvf /tmp/jdk11.tgz -C /opt
   - rm -rf /tmp/jdk11.tgz
@@ -85,9 +85,11 @@ deploy_to_docker_hub:
   script:
     - docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
     - docker load < ${IMAGE_FILE_NAME}
-    - docker tag ${IMAGE_NAME}:${CI_COMMIT_SHA} ${IMAGE_NAME}:${CI_COMMIT_TAG}
-    - docker push ${IMAGE_NAME}:${CI_COMMIT_TAG}
-    - docker tag ${IMAGE_NAME}:${CI_COMMIT_SHA} ${IMAGE_NAME}:latest
+    - export VERSION=$(cat build.gradle | grep version\ = | sed -n 's/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+    - docker push ${IMAGE_NAME}:${VERSION}
+    - docker tag ${IMAGE_NAME}:${VERSION} ${IMAGE_NAME}:latest
     - docker push ${IMAGE_NAME}:latest
   only:
-    - tags
+    - latest
+  except:
+    - branches
