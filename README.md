@@ -1,4 +1,4 @@
-![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose/maven-metadata.xml.svg?label=%20)
+![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-bundle/maven-metadata.xml.svg?label=%20)
 [![CI status](https://gitlab.com/emc-mongoose/mongoose/badges/master/pipeline.svg)](https://gitlab.com/emc-mongoose/mongoose/commits/master)
 [![Docker Pulls](https://img.shields.io/docker/pulls/emcmongoose/mongoose.svg)](https://hub.docker.com/r/emcmongoose/mongoose/)
 [![Gitter chat](https://badges.gitter.im/emc-mongoose.png)](https://gitter.im/emc-mongoose)
