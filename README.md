@@ -30,7 +30,7 @@ The *core components* are included in this backward compatibility bunlde.
 
 # Additional Extensions
 
-The *additional extension* components are not included
+The *additional extension* are not included in this bundle.
 
 | Repo | Description | Latest Release | Continuous Integration Status | Issue Tracker Link |
 |------|-------------|---------|-------------------------------|--------|
