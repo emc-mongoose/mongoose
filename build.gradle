@@ -27,22 +27,22 @@ description = "Mongoose is a high-load storage performance testing tool"
 group = "com.github.emc-mongoose"
 sourceCompatibility = 11
 targetCompatibility = 11
-version = "4.2.7"
+version = "4.2.8"
 
 ext {
 	depVersion = [
 		base                : "4.2.7",
 		loadStepPipeline    : "4.2.7",
 		loadStepWeighted    : "4.2.7",
-		storageDriverCoop   : "4.2.10",
+		storageDriverCoop   : "4.2.11",
 		storageDriverPreempt: "4.2.7",
-		storageDriverNetty  : "4.2.7",
-		storageDriverNio    : "4.2.7",
-		storageDriverHttp   : "4.2.7",
-		storageDriverFs     : "4.2.7",
-		storageDriverAtmos  : "4.2.7",
-		storageDriverS3     : "4.2.7",
-		storageDriverSwift  : "4.2.7",
+		storageDriverNetty  : "4.2.8",
+		storageDriverNio    : "4.2.8",
+		storageDriverHttp   : "4.2.8",
+		storageDriverFs     : "4.2.8",
+		storageDriverAtmos  : "4.2.8",
+		storageDriverS3     : "4.2.8",
+		storageDriverSwift  : "4.2.8",
 	]
 	installResourcesFileName = "install_resources.txt"
 	jarFileName = rootProject.name

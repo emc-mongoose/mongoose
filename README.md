@@ -7,11 +7,12 @@
 
 The repo contains the automation scripts to build/test/deploy the Mongoose backward compatibility bundle. Previously the
 repo contained the Mongoose sources for the basic functionality and some commonly used extensions. Currently it was
-split into the independent repos and the corresponding components. Each component has its own CI and versioning.
+split into the independent repos and the corresponding components. Each component has its own CI and versioning. For the
+mongoose documentation refer this [link](https://github.com/emc-mongoose/mongoose-base/tree/master/doc).
 
 # Core Components
 
-The *core components* are included in this backward compatibility bunlde.
+The *core components* are included in this backward compatibility bundle.
 
 | Repo | Description | Latest Release | Continuous Integration Status | Issue Tracker Link |
 |------|-------------|---------|-------------------------------|--------|
