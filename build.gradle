@@ -31,18 +31,18 @@ version = "4.2.9"
 
 ext {
 	depVersion = [
-		base                : "4.2.7",
-		loadStepPipeline    : "4.2.7",
-		loadStepWeighted    : "4.2.7",
-		storageDriverCoop   : "4.2.7",
-		storageDriverPreempt: "4.2.7",
-		storageDriverNetty  : "4.2.7",
-		storageDriverNio    : "4.2.7",
-		storageDriverHttp   : "4.2.7",
-		storageDriverFs     : "4.2.7",
-		storageDriverAtmos  : "4.2.7",
-		storageDriverS3     : "4.2.7",
-		storageDriverSwift  : "4.2.7",
+		base                : "4.2.8",
+		loadStepPipeline    : "4.2.8",
+		loadStepWeighted    : "4.2.8",
+		storageDriverCoop   : "4.2.13",
+		storageDriverPreempt: "4.2.8",
+		storageDriverNetty  : "4.2.8",
+		storageDriverNio    : "4.2.8",
+		storageDriverHttp   : "4.2.8",
+		storageDriverFs     : "4.2.9",
+		storageDriverAtmos  : "4.2.9",
+		storageDriverS3     : "4.2.8",
+		storageDriverSwift  : "4.2.8",
 	]
 	installResourcesFileName = "install_resources.txt"
 	jarFileName = rootProject.name
