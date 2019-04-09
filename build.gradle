@@ -65,7 +65,6 @@ dependencies {
 		"${group}:mongoose-load-step-pipeline:${depVersion.loadStepPipeline}",
 		"${group}:mongoose-load-step-weighted:${depVersion.loadStepWeighted}",
 		"${group}:mongoose-storage-driver-coop:${depVersion.storageDriverCoop}",
-		"${group}:mongoose-storage-driver-preempt:${depVersion.storageDriverPreempt}",
 		"${group}:mongoose-storage-driver-netty:${depVersion.storageDriverNetty}",
 		"${group}:mongoose-storage-driver-nio:${depVersion.storageDriverNio}",
 		"${group}:mongoose-storage-driver-http:${depVersion.storageDriverHttp}",
