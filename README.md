@@ -60,7 +60,7 @@ java -jar mongoose-bundle-<BUNDLE_VERSION>.jar \
 
 # Build
 
-```
+```bash
 ./gradlew clean jar
 ls -l build/libs
 ```
@@ -73,6 +73,30 @@ http://central.maven.org/maven2/com/github/emc-mongoose/mongoose/
 
 ## Docker
 
-```
+```bash
 docker run ... emcmongoose/mongoose[:<VERSION>] ...
+```
+
+# Dependency
+
+The following dependency graph should be considered when running Mongoose w/o Docker and using some specific extension.
+For example, using the `mongoose-storage-driver-hdfs` extension will require to have the `mongoose-storage-driver-coop`
+and `mongoose-storage-driver-nio` extensions in the `~/.mongoose/<BASE_VERSION>/ext` directory (with proper versions).
+
+```
+mongoose-base
+    |___ mongoose-load-step-pipeline
+    |___ mongoose-load-step-weighted
+    |___ mongoose-storage-driver-coop
+    |       |___ mongoose-storage-driver-kafka
+    |       |___ mongoose-storage-driver-netty
+    |       |       |___ mongoose-storage-driver-http
+    |       |               |___ mongoose-storage-driver-atmos
+    |       |               |___ mongoose-storage-driver-s3
+    |       |               |___ mongoose-storage-driver-swift
+    |       |___ mongoose-storage-driver-nio
+    |       |       |___ mongoose-storage-driver-fs
+    |       |       |___ mongoose-storage-driver-hdfs
+    |       |___ mongoose-storage-driver-pravega
+    |___ mongoose-storage-driver-preempt
 ```
