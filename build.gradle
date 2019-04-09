@@ -27,18 +27,17 @@ description = "Mongoose is a high-load storage performance testing tool"
 group = "com.github.emc-mongoose"
 sourceCompatibility = 11
 targetCompatibility = 11
-version = "4.2.9"
+version = "4.2.8"
 
 ext {
 	depVersion = [
 		base                : "4.2.8",
 		loadStepPipeline    : "4.2.8",
 		loadStepWeighted    : "4.2.8",
-		storageDriverCoop   : "4.2.13",
-		storageDriverPreempt: "4.2.8",
-		storageDriverNetty  : "4.2.8",
-		storageDriverNio    : "4.2.8",
-		storageDriverHttp   : "4.2.8",
+		storageDriverCoop   : "4.2.16",
+		storageDriverNetty  : "4.2.12",
+		storageDriverNio    : "4.2.10",
+		storageDriverHttp   : "4.2.12",
 		storageDriverFs     : "4.2.9",
 		storageDriverAtmos  : "4.2.9",
 		storageDriverS3     : "4.2.8",
