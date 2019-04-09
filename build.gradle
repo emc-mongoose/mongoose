@@ -241,7 +241,6 @@ task dockerBuildImage(type: DockerBuildImage) {
 		"LOAD_STEP_PIPELINE_VERSION": depVersion.loadStepPipeline,
 		"LOAD_STEP_WEIGHTED_VERSION": depVersion.loadStepWeighted,
 		"STORAGE_DRIVER_COOP_VERSION": depVersion.storageDriverCoop,
-		"STORAGE_DRIVER_PREEMPT_VERSION": depVersion.storageDriverPreempt,
 		"STORAGE_DRIVER_NETTY_VERSION": depVersion.storageDriverNetty,
 		"STORAGE_DRIVER_NIO_VERSION": depVersion.storageDriverNio,
 		"STORAGE_DRIVER_FS_VERSION": depVersion.storageDriverFs,

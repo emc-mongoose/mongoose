@@ -4,7 +4,6 @@ ARG BASE_VERSION
 ARG LOAD_STEP_PIPELINE_VERSION
 ARG LOAD_STEP_WEIGHTED_VERSION
 ARG STORAGE_DRIVER_COOP_VERSION
-ARG STORAGE_DRIVER_PREEMPT_VERSION
 ARG STORAGE_DRIVER_NETTY_VERSION
 ARG STORAGE_DRIVER_NIO_VERSION
 ARG STORAGE_DRIVER_FS_VERSION
@@ -18,7 +17,6 @@ RUN mkdir -p $HOME/.mongoose/${BASE_VERSION}/ext \
 	&& curl http://repo.maven.apache.org/maven2/com/github/emc-mongoose/mongoose-load-step-pipeline/${LOAD_STEP_PIPELINE_VERSION}/mongoose-load-step-pipeline-${LOAD_STEP_PIPELINE_VERSION}.jar -o $HOME/.mongoose/${BASE_VERSION}/ext/mongoose-load-step-pipeline.jar \
 	&& curl http://repo.maven.apache.org/maven2/com/github/emc-mongoose/mongoose-load-step-weighted/${LOAD_STEP_WEIGHTED_VERSION}/mongoose-load-step-weighted-${LOAD_STEP_WEIGHTED_VERSION}.jar -o $HOME/.mongoose/${BASE_VERSION}/ext/mongoose-load-step-weighted.jar \
 	&& curl http://repo.maven.apache.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-coop/${STORAGE_DRIVER_COOP_VERSION}/mongoose-storage-driver-coop-${STORAGE_DRIVER_COOP_VERSION}.jar -o $HOME/.mongoose/${BASE_VERSION}/ext/mongoose-storage-driver-coop.jar \
-	&& curl http://repo.maven.apache.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-preempt/${STORAGE_DRIVER_PREEMPT_VERSION}/mongoose-storage-driver-preempt-${STORAGE_DRIVER_PREEMPT_VERSION}.jar -o $HOME/.mongoose/${BASE_VERSION}/ext/mongoose-storage-driver-preempt.jar \
 	&& curl http://repo.maven.apache.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-netty/${STORAGE_DRIVER_NETTY_VERSION}/mongoose-storage-driver-netty-${STORAGE_DRIVER_NETTY_VERSION}.jar -o $HOME/.mongoose/${BASE_VERSION}/ext/mongoose-storage-driver-netty.jar \
 	&& curl http://repo.maven.apache.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-nio/${STORAGE_DRIVER_NIO_VERSION}/mongoose-storage-driver-nio-${STORAGE_DRIVER_NIO_VERSION}.jar -o $HOME/.mongoose/${BASE_VERSION}/ext/mongoose-storage-driver-nio.jar \
 	&& curl http://repo.maven.apache.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-fs/${STORAGE_DRIVER_FS_VERSION}/mongoose-storage-driver-fs-${STORAGE_DRIVER_FS_VERSION}.jar -o $HOME/.mongoose/${BASE_VERSION}/ext/mongoose-storage-driver-fs.jar \
