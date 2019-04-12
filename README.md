@@ -69,7 +69,7 @@ ls -l build/libs
 
 ## Bare Jar Download
 
-http://central.maven.org/maven2/com/github/emc-mongoose/mongoose/
+http://central.maven.org/maven2/com/github/emc-mongoose/mongoose-bundle/
 
 ## Docker
 
