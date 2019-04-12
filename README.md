@@ -14,7 +14,7 @@ mongoose documentation refer this [link](https://github.com/emc-mongoose/mongoos
 
 The *core components* are included in this backward compatibility bundle.
 
-| Repo | Description | Latest Release | Continuous Integration Status | Issue Tracker Link |
+| Repo | Description | Latest Release | Integration Status | Issue Tracker Link |
 |------|-------------|---------|-------------------------------|--------|
 | [mongoose-**base**](https://github.com/emc-mongoose/mongoose-base) | Mongoose storage performance testing tool - base functionality | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-base/maven-metadata.xml.svg?label=%20) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-base.svg?label=%20) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
 | [mongoose-load-step-**pipeline**](https://github.com/emc-mongoose/mongoose-load-step-pipeline) | Load operations pipeline (create,delay,read-then-update, for example), extension |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-load-step-pipeline/maven-metadata.xml.svg?label=%20) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-load-step-pipeline.svg?label=%20) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
