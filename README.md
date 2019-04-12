@@ -32,7 +32,7 @@ The *core components* are included in this backward compatibility bundle.
 
 The *additional extension* are not included in this bundle.
 
-| Repo | Description | Latest Release | Continuous Integration Status | Issue Tracker Link |
+| Repo | Description | Latest Release | Integration Status | Issue Tracker Link |
 |------|-------------|---------|-------------------------------|--------|
 | [mongoose-**gui**](https://github.com/emc-mongoose/console) | Mongoose GUI web application | TBD | TBD | [GUI](https://mongoose-issues.atlassian.net/browse/GUI)
 | [mongoose-storage-driver-**preempt**](https://github.com/emc-mongoose/mongoose-storage-driver-preempt) | Preemptive multitasking storage driver primitive, using thread-per-task approach for the I/O |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-preempt/maven-metadata.xml.svg?label=%20) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-preempt.svg?label=%20) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
