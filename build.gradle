@@ -37,7 +37,7 @@ ext {
 		storageDriverCoop   : "4.2.17",
 		storageDriverNetty  : "4.2.13",
 		storageDriverNio    : "4.2.11",
-		storageDriverHttp   : "4.2.13",
+		storageDriverHttp   : "4.2.14",
 		storageDriverFs     : "4.2.10",
 		storageDriverAtmos  : "4.2.10",
 		storageDriverS3     : "4.2.9",
