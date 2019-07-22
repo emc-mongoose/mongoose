@@ -7,7 +7,7 @@
 
 The repo contains the automation scripts to build/test/deploy the Mongoose backward compatibility bundle. Previously the
 repo contained the Mongoose sources for the basic functionality and some commonly used extensions. Currently it was
-split into the independent repos and the corresponding components. Each component has its own CI and versioning. For the
+split into the independent repos and the corresponding components. Each component has its own documentation, CI versioning. For the
 mongoose documentation refer this [link](https://github.com/emc-mongoose/mongoose-base/tree/master/doc).
 
 # Core Components
@@ -39,8 +39,6 @@ The *additional extension* are not included in this bundle.
 | [mongoose-storage-driver-**hdfs**](https://github.com/emc-mongoose/mongoose-storage-driver-hdfs) | [Apache HDFS](http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html) storage driver, extends the NIO storage driver primitive |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-hdfs/maven-metadata.xml.svg?label=%20) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-hdfs.svg?label=%20) | [HDFS](https://mongoose-issues.atlassian.net/projects/HDFS)
 | [mongoose-storage-driver-**pravega**](https://github.com/emc-mongoose/mongoose-storage-driver-pravega) | [Pravega](http://pravega.io) storage driver, extends the cooperative multitasking storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-pravega/maven-metadata.xml.svg?label=%20) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-pravega.svg?label=%20) | [PRAVEGA](https://mongoose-issues.atlassian.net/projects/PRAVEGA)
 | [mongoose-storage-driver-**kafka**](https://github.com/emc-mongoose/mongoose-storage-driver-kafka) | [Apache Kafka](https://kafka.apache.org/) storage driver, extends the cooperative multitasking storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-kafka/maven-metadata.xml.svg?label=%20) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-kafka.svg?label=%20) | [KAFKA](https://mongoose-issues.atlassian.net/projects/KAFKA)
-| mongoose-storage-driver-**pulsar** | [Apache Pulsar](https://pulsar.apache.org/) storage driver | TODO
-| mongoose-storage-driver-**bookkeeper** | [Apache BookKeeper](https://bookkeeper.apache.org/) storage driver | TODO
 
 # Backward Compatibility Notes
 
@@ -88,15 +86,15 @@ mongoose-base
     |___ mongoose-load-step-pipeline
     |___ mongoose-load-step-weighted
     |___ mongoose-storage-driver-coop
-    |       |___ mongoose-storage-driver-kafka
     |       |___ mongoose-storage-driver-netty
     |       |       |___ mongoose-storage-driver-http
     |       |               |___ mongoose-storage-driver-atmos
     |       |               |___ mongoose-storage-driver-s3
     |       |               |___ mongoose-storage-driver-swift
     |       |___ mongoose-storage-driver-nio
-    |       |       |___ mongoose-storage-driver-fs
-    |       |       |___ mongoose-storage-driver-hdfs
-    |       |___ mongoose-storage-driver-pravega
+    |               |___ mongoose-storage-driver-fs
+    |               |___ mongoose-storage-driver-hdfs
     |___ mongoose-storage-driver-preempt
+            |___ mongoose-storage-driver-kafka
+            |___ mongoose-storage-driver-pravega
 ```

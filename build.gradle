@@ -30,19 +30,6 @@ targetCompatibility = 11
 version = "4.2.10"
 
 ext {
-	depVersion = [
-		base                : "4.2.12",
-		loadStepPipeline    : "4.2.9",
-		loadStepWeighted    : "4.2.9",
-		storageDriverCoop   : "4.2.18",
-		storageDriverNetty  : "4.2.14",
-		storageDriverNio    : "4.2.12",
-		storageDriverHttp   : "4.2.17",
-		storageDriverFs     : "4.2.11",
-		storageDriverAtmos  : "4.2.10",
-		storageDriverS3     : "4.2.10",
-		storageDriverSwift  : "4.2.10",
-	]
 	installResourcesFileName = "install_resources.txt"
 	jarFileName = rootProject.name
 	javaHome = System.properties["java.home"]
@@ -59,19 +46,19 @@ configurations {
 
 dependencies {
 	compile(
-		"${group}:mongoose-base:${depVersion.base}",
+		"${group}:mongoose-base:${baseVersion}",
 	)
 	extension(
-		"${group}:mongoose-load-step-pipeline:${depVersion.loadStepPipeline}",
-		"${group}:mongoose-load-step-weighted:${depVersion.loadStepWeighted}",
-		"${group}:mongoose-storage-driver-coop:${depVersion.storageDriverCoop}",
-		"${group}:mongoose-storage-driver-netty:${depVersion.storageDriverNetty}",
-		"${group}:mongoose-storage-driver-nio:${depVersion.storageDriverNio}",
-		"${group}:mongoose-storage-driver-http:${depVersion.storageDriverHttp}",
-		"${group}:mongoose-storage-driver-fs:${depVersion.storageDriverFs}",
-		"${group}:mongoose-storage-driver-atmos:${depVersion.storageDriverAtmos}",
-		"${group}:mongoose-storage-driver-s3:${depVersion.storageDriverS3}",
-		"${group}:mongoose-storage-driver-swift:${depVersion.storageDriverSwift}",
+		"${group}:mongoose-load-step-pipeline:${loadStepPipelineVersion}",
+		"${group}:mongoose-load-step-weighted:${loadStepWeightedVersion}",
+		"${group}:mongoose-storage-driver-coop:${storageDriverCoopVersion}",
+		"${group}:mongoose-storage-driver-netty:${storageDriverNettyVersion}",
+		"${group}:mongoose-storage-driver-nio:${storageDriverNioVersion}",
+		"${group}:mongoose-storage-driver-http:${storageDriverHttpVersion}",
+		"${group}:mongoose-storage-driver-fs:${storageDriverFsVersion}",
+		"${group}:mongoose-storage-driver-atmos:${storageDriverAtmosVersion}",
+		"${group}:mongoose-storage-driver-s3:${storageDriverS3Version}",
+		"${group}:mongoose-storage-driver-swift:${storageDriverSwiftVersion}",
 	)
 }
 
@@ -236,17 +223,17 @@ import com.bmuschko.gradle.docker.tasks.container.*
 task dockerBuildImage(type: DockerBuildImage) {
 	inputDir = project.projectDir
 	buildArgs = [
-		"BASE_VERSION": depVersion.base,
-		"LOAD_STEP_PIPELINE_VERSION": depVersion.loadStepPipeline,
-		"LOAD_STEP_WEIGHTED_VERSION": depVersion.loadStepWeighted,
-		"STORAGE_DRIVER_COOP_VERSION": depVersion.storageDriverCoop,
-		"STORAGE_DRIVER_NETTY_VERSION": depVersion.storageDriverNetty,
-		"STORAGE_DRIVER_NIO_VERSION": depVersion.storageDriverNio,
-		"STORAGE_DRIVER_FS_VERSION": depVersion.storageDriverFs,
-		"STORAGE_DRIVER_HTTP_VERSION": depVersion.storageDriverHttp,
-		"STORAGE_DRIVER_ATMOS_VERSION": depVersion.storageDriverAtmos,
-		"STORAGE_DRIVER_S3_VERSION": depVersion.storageDriverS3,
-		"STORAGE_DRIVER_SWIFT_VERSION": depVersion.storageDriverSwift,
+		"BASE_VERSION": baseVersion,
+		"LOAD_STEP_PIPELINE_VERSION": loadStepPipelineVersion,
+		"LOAD_STEP_WEIGHTED_VERSION": loadStepWeightedVersion,
+		"STORAGE_DRIVER_COOP_VERSION": storageDriverCoopVersion,
+		"STORAGE_DRIVER_NETTY_VERSION": storageDriverNettyVersion,
+		"STORAGE_DRIVER_NIO_VERSION": storageDriverNioVersion,
+		"STORAGE_DRIVER_FS_VERSION": storageDriverFsVersion,
+		"STORAGE_DRIVER_HTTP_VERSION": storageDriverHttpVersion,
+		"STORAGE_DRIVER_ATMOS_VERSION": storageDriverAtmosVersion,
+		"STORAGE_DRIVER_S3_VERSION": storageDriverS3Version,
+		"STORAGE_DRIVER_SWIFT_VERSION": storageDriverSwiftVersion,
 	]
 	dockerFile = project.file("ci${File.separator}docker${File.separator}Dockerfile")
 	imageId = "emcmongoose/mongoose".toString()
