@@ -10,9 +10,9 @@ repo contained the Mongoose sources for the basic functionality and some commonl
 split into the independent repos and the corresponding components. Each component has its own documentation, CI versioning. For the
 mongoose documentation refer this [link](https://github.com/emc-mongoose/mongoose-base/tree/master/doc).
 
-# Core Components
+# Bundle Contents
 
-The *core components* are included in this backward compatibility bundle.
+The components listed below are included in this backward compatibility bundle.
 
 | Repo | Description | Latest Release | Integration Status | Issue Tracker Link |
 |------|-------------|---------|-------------------------------|--------|
@@ -34,11 +34,18 @@ The *additional extension* are not included in this bundle.
 
 | Repo | Description | Latest Release | Integration Status | Issue Tracker Link |
 |------|-------------|---------|-------------------------------|--------|
-| [mongoose-**gui**](https://github.com/emc-mongoose/console) | Mongoose GUI web application | TBD | TBD | [GUI](https://mongoose-issues.atlassian.net/browse/GUI)
 | [mongoose-storage-driver-**preempt**](https://github.com/emc-mongoose/mongoose-storage-driver-preempt) | Preemptive multitasking storage driver primitive, using thread-per-task approach for the I/O |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-preempt/maven-metadata.xml.svg?label=%20) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-preempt.svg?label=%20) | [BASE](https://mongoose-issues.atlassian.net/projects/BASE)
 | [mongoose-storage-driver-**hdfs**](https://github.com/emc-mongoose/mongoose-storage-driver-hdfs) | [Apache HDFS](http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html) storage driver, extends the NIO storage driver primitive |  ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-hdfs/maven-metadata.xml.svg?label=%20) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-hdfs.svg?label=%20) | [HDFS](https://mongoose-issues.atlassian.net/projects/HDFS)
 | [mongoose-storage-driver-**pravega**](https://github.com/emc-mongoose/mongoose-storage-driver-pravega) | [Pravega](http://pravega.io) storage driver, extends the cooperative multitasking storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-pravega/maven-metadata.xml.svg?label=%20) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-pravega.svg?label=%20) | [PRAVEGA](https://mongoose-issues.atlassian.net/projects/PRAVEGA)
 | [mongoose-storage-driver-**kafka**](https://github.com/emc-mongoose/mongoose-storage-driver-kafka) | [Apache Kafka](https://kafka.apache.org/) storage driver, extends the cooperative multitasking storage driver primitive | ![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/emc-mongoose/mongoose-storage-driver-kafka/maven-metadata.xml.svg?label=%20) | ![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/emc-mongoose/mongoose-storage-driver-kafka.svg?label=%20) | [KAFKA](https://mongoose-issues.atlassian.net/projects/KAFKA)
+
+# Auxiliary Tools
+
+| Repo | Description | Latest Release | Integration Status | Issue Tracker Link |
+|------|-------------|---------|-------------------------------|--------|
+| [darzee](https://github.com/emc-mongoose/darzee) | Mongoose GUI web application | TBD | TBD | [GUI](https://mongoose-issues.atlassian.net/browse/GUI)
+| [mongoose-**helm**-charts](https://github.com/emc-mongoose/mongoose-helm-charts) | [Helm](https://helm.sh/) charts to easily deploy Mongoose in [K8s](https://kubernetes.io/) environment | TBD | TBD | [HELM](https://mongoose-issues.atlassian.net/projects/HELM/issues) 
+| [e2e-latency-generator](https://github.com/emc-mongoose/e2e-latency-generator) | The tool consuming the Mongoose's operations trace output data and producing the raw end-to-end latency data and heatmap chart | - | - | -
 
 # Backward Compatibility Notes
 
