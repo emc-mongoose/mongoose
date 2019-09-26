@@ -158,8 +158,8 @@ nexusStaging {
 	packageGroup = project.group
 	username = project.hasProperty("ossrhUsername") ? project.property("ossrhUsername") : null
 	password = project.hasProperty("ossrhPassword") ? project.property("ossrhPassword") : null
-	numberOfRetries = 100
-	delayBetweenRetriesInMillis = 10000
+	numberOfRetries = 200
+	delayBetweenRetriesInMillis = 50000
 }
 
 publishing {
