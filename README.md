@@ -100,8 +100,9 @@ mongoose-base
     |       |               |___ mongoose-storage-driver-s3
     |       |               |___ mongoose-storage-driver-swift
     |       |___ mongoose-storage-driver-nio
-    |               |___ mongoose-storage-driver-fs
-    |               |___ mongoose-storage-driver-hdfs
+    |       |       |___ mongoose-storage-driver-fs
+    |       |       |___ mongoose-storage-driver-hdfs
+    |       |___ mongoose-storage-driver-pulsar
     |___ mongoose-storage-driver-preempt
             |___ mongoose-storage-driver-kafka
             |___ mongoose-storage-driver-pravega
