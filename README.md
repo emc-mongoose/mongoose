@@ -47,6 +47,7 @@ The *additional extension* are not included in this bundle.
 | [darzee](https://github.com/emc-mongoose/darzee) | Mongoose GUI web application | TBD | TBD | [GUI](https://mongoose-issues.atlassian.net/browse/GUI)
 | [mongoose-helm-charts](https://github.com/emc-mongoose/mongoose-helm-charts) | [Helm](https://helm.sh/) charts to easily deploy Mongoose in [K8s](https://kubernetes.io/) environment | TBD | TBD | [HELM](https://mongoose-issues.atlassian.net/projects/HELM/issues) 
 | [e2e-latency-generator](https://github.com/emc-mongoose/e2e-latency-generator) | The tool consuming the Mongoose's operations trace output data and producing the raw end-to-end latency data and heatmap chart | - | - | -
+| [scenario-converter-3to4](https://github.com/emc-mongoose/scenario-converter-3to4) | This tool converts the Json-scenarios used in the Mongoose v3.* into new JavaScript-scenarios. | - | - | -
 
 # Backward Compatibility Notes
 
