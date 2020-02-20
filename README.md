@@ -3,7 +3,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/emcmongoose/mongoose.svg)](https://hub.docker.com/r/emcmongoose/mongoose/)
 [![Gitter chat](https://badges.gitter.im/emc-mongoose.png)](https://gitter.im/emc-mongoose)
 
-# Introduction
+# Mongoose Bundle
 
 The repo contains the automation scripts to build/test/deploy the Mongoose backward compatibility bundle. Previously the
 repo contained the Mongoose sources for the basic functionality and some commonly used extensions. Currently it was
@@ -65,7 +65,7 @@ java -jar mongoose-bundle-<BUNDLE_VERSION>.jar \
     --storage-net-node-port=9020
 ```
 
-# Build
+# Build bundle
 
 ```bash
 ./gradlew clean jar
