@@ -27,7 +27,7 @@ description = "Mongoose is a high-load storage performance testing tool"
 group = "com.github.emc-mongoose"
 sourceCompatibility = 11
 targetCompatibility = 11
-version = "4.2.15"
+version = "4.2.16"
 
 ext {
 	installResourcesFileName = "install_resources.txt"
