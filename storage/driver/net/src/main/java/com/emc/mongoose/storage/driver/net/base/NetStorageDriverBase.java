@@ -6,7 +6,7 @@ import com.github.akurilov.commons.concurrent.ThreadUtil;
 
 import com.github.akurilov.coroutines.Coroutine;
 
-import com.github.akurilov.netty.connection.pool.BasicMultiNodeConnPool;
+import com.github.akurilov.netty.connection.pool.MultiNodeConnPoolImpl;
 import com.github.akurilov.netty.connection.pool.NonBlockingConnPool;
 
 import static com.github.akurilov.netty.connection.pool.NonBlockingConnPool.ATTR_KEY_NODE;
@@ -211,9 +211,9 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
     }
 
     protected NonBlockingConnPool createConnectionPool() {
-        return new BasicMultiNodeConnPool(
-                concurrencyThrottle, storageNodeAddrs, bootstrap, this, storageNodePort,
-                connAttemptsLimit
+        return new MultiNodeConnPoolImpl(
+                storageNodeAddrs, bootstrap, this, storageNodePort,
+                connAttemptsLimit, 16, TimeUnit.MINUTES
         );
     }
 
@@ -293,8 +293,8 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
         super.doStart();
         if (concurrencyLevel > 0) {
             try {
-                connPool.preCreateConnections(concurrencyLevel);
-            } catch (final ConnectException e) {
+                connPool.preConnect(concurrencyLevel);
+            } catch (final ConnectException | InterruptedException e) {
                 LogUtil.exception(Level.WARN, e, "Failed to pre-create the connections");
             }
         }
