@@ -571,6 +571,7 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
         } catch (final IllegalStateException e) {
             LogUtil.exception(Level.DEBUG, e, "{}: invalid I/O task state", ioTask.toString());
         }
+        concurrencyThrottle.release();
         if (channel != null) {
             connPool.release(channel);
         }
