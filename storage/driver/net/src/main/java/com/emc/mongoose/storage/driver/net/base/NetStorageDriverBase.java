@@ -301,8 +301,7 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
     }
 
     @Override
-    protected boolean submit(final O ioTask)
-            throws IllegalStateException {
+    protected boolean submit(final O op) {
 
         ThreadContext.put(KEY_TEST_STEP_ID, stepId);
         ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
@@ -310,97 +309,116 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
         if (!isStarted()) {
             throw new IllegalStateException();
         }
-        try {
-            if (IoType.NOOP.equals(ioTask.getIoType())) {
-                if (concurrencyThrottle.tryAcquire()) {
-                    ioTask.startRequest();
-                    sendRequest(null, null, ioTask);
-                    ioTask.finishRequest();
+        if (concurrencyThrottle.tryAcquire()) {
+            try {
+                if (IoType.NOOP.equals(op.getIoType())) {
+                    op.startRequest();
+                    sendRequest(null, null, op);
+                    op.finishRequest();
                     concurrencyThrottle.release();
-                    ioTask.setStatus(SUCC);
-                    ioTask.startResponse();
-                    complete(null, ioTask);
+                    op.setStatus(SUCC);
+                    op.startResponse();
+                    complete(null, op);
                 } else {
-                    return false;
+                    final Channel conn = connPool.lease();
+                    if (conn == null) {
+                        return false;
+                    }
+                    conn.attr(ATTR_KEY_IOTASK).set(op);
+                    op.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
+                    op.startRequest();
+                    sendRequest(conn, conn.newPromise().addListener(new RequestSentCallback(op)), op);
                 }
-            } else {
-                final Channel conn = connPool.lease();
-                if (conn == null) {
-                    return false;
+            } catch (final ConnectException e) {
+                LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the load operation");
+                op.setStatus(IoTask.Status.FAIL_IO);
+                complete(null, op);
+            } catch (final Throwable thrown) {
+                if (thrown instanceof InterruptedException) {
+                    throw thrown;
                 }
-                conn.attr(ATTR_KEY_IOTASK).set(ioTask);
-                ioTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
-                ioTask.startRequest();
-                sendRequest(
-                        conn, conn.newPromise().addListener(new RequestSentCallback(ioTask)), ioTask
-                );
+                LogUtil.exception(Level.WARN, thrown, "Failed to submit the load operation");
+                op.setStatus(IoTask.Status.FAIL_UNKNOWN);
+                complete(null, op);
             }
-        } catch (final IllegalStateException e) {
-            LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
-        } catch (final ConnectException e) {
-            LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
-            ioTask.setStatus(IoTask.Status.FAIL_IO);
-            complete(null, ioTask);
+            return true;
+        } else {
+            return false;
         }
-        return true;
-
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    protected int submit(final List<O> ioTasks, final int from, final int to)
+    protected int submit(final List<O> ops, final int from, final int to)
             throws IllegalStateException {
+
+        if (ops.size() == 0) {
+            return 0;
+        }
+        final int needed = to - from;
+        if (needed == 0) {
+            return 0;
+        }
+        int permits = concurrencyThrottle.drainPermits();
+        if (permits == 0) {
+            return 0;
+        }
+        if (permits > needed) {
+            concurrencyThrottle.release(permits - needed);
+            permits = needed;
+        }
 
         ThreadContext.put(KEY_TEST_STEP_ID, stepId);
         ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
 
         Channel conn;
-        O nextIoTask;
+        O nextOp = null;
+        int n = 0;
         try {
-            for (int i = from; i < to && isStarted(); i++) {
-                nextIoTask = ioTasks.get(i);
-                if (IoType.NOOP.equals(nextIoTask.getIoType())) {
-                    if (concurrencyThrottle.tryAcquire()) {
-                        nextIoTask.startRequest();
-                        sendRequest(null, null, nextIoTask);
-                        nextIoTask.finishRequest();
-                        concurrencyThrottle.release();
-                        nextIoTask.setStatus(SUCC);
-                        nextIoTask.startResponse();
-                        complete(null, nextIoTask);
-                    } else {
-                        return i - from;
-                    }
+            while (n < permits && isStarted()) {
+                nextOp = ops.get(from + n);
+                if (IoType.NOOP.equals(nextOp.getIoType())) {
+                    nextOp.startRequest();
+                    sendRequest(null, null, nextOp);
+                    nextOp.finishRequest();
+                    concurrencyThrottle.release();
+                    nextOp.setStatus(SUCC);
+                    nextOp.startResponse();
+                    complete(null, nextOp);
                 } else {
                     conn = connPool.lease();
                     if (conn == null) {
-                        return i - from;
+                        return n;
                     }
-                    conn.attr(ATTR_KEY_IOTASK).set(nextIoTask);
-                    nextIoTask.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
-                    nextIoTask.startRequest();
-                    sendRequest(
-                            conn, conn.newPromise().addListener(new RequestSentCallback(nextIoTask)),
-                            nextIoTask
-                    );
+                    conn.attr(ATTR_KEY_IOTASK).set(nextOp);
+                    nextOp.setNodeAddr(conn.attr(ATTR_KEY_NODE).get());
+                    nextOp.startRequest();
+                    sendRequest(conn, conn.newPromise().addListener(new RequestSentCallback(nextOp)), nextOp);
                 }
+                n++;
             }
-        } catch (final IllegalStateException e) {
-            LogUtil.exception(Level.WARN, e, "Submit the I/O task in the invalid state");
-        } catch (final RejectedExecutionException e) {
-            if (!isInterrupted()) {
-                LogUtil.exception(Level.WARN, e, "Failed to submit the I/O task");
-            }
-        } catch (final ConnectException e) {
+        }  catch (final ConnectException e) {
             wasExc = true;
             LogUtil.exception(Level.WARN, e, "Failed to lease the connection for the I/O task");
-            for (int i = from; i < to; i++) {
-                nextIoTask = ioTasks.get(i);
-                nextIoTask.setStatus(IoTask.Status.FAIL_IO);
-                complete(null, nextIoTask);
+            if (nextOp != null) {
+                nextOp.setStatus(IoTask.Status.FAIL_IO);
+                complete(null, nextOp);
+            }
+            if (permits - n > 1) {
+                concurrencyThrottle.release(permits - n - 1);
+            }
+       } catch (final Throwable thrown) {
+            if (thrown instanceof InterruptedException) {
+                throw thrown;
+            }
+            LogUtil.exception(Level.WARN, thrown, "Failed to submit the load operations");
+            nextOp.setStatus(IoTask.Status.FAIL_UNKNOWN);
+            complete(null, nextOp);
+            if (permits - n > 1) {
+                concurrencyThrottle.release(permits - n - 1);
             }
         }
-        return to - from;
+        return n;
     }
 
     @Override
@@ -561,21 +579,21 @@ public abstract class NetStorageDriverBase<I extends Item, O extends IoTask<I>>
     }
 
     @Override
-    public void complete(final Channel channel, final O ioTask) {
+    public void complete(final Channel channel, final O op) {
 
         ThreadContext.put(KEY_CLASS_NAME, CLS_NAME);
         ThreadContext.put(KEY_TEST_STEP_ID, stepId);
 
         try {
-            ioTask.finishResponse();
+            op.finishResponse();
         } catch (final IllegalStateException e) {
-            LogUtil.exception(Level.DEBUG, e, "{}: invalid I/O task state", ioTask.toString());
+            LogUtil.exception(Level.DEBUG, e, "{}: invalid I/O task state", op.toString());
         }
         concurrencyThrottle.release();
         if (channel != null) {
             connPool.release(channel);
         }
-        ioTaskCompleted(ioTask);
+        ioTaskCompleted(op);
     }
 
     @Override
