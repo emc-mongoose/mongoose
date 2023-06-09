@@ -39,7 +39,7 @@
 				{
 					"name" : "msgFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}messages.log",
+					//"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}messages.log",
 					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}messages.log",
 					"StepIdTriggeringPolicy" : {
 					},
@@ -52,7 +52,7 @@
 				{
 					"name" : "3rdPartyFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}3rdparty.log",
+					//"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}3rdparty.log",
 					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}3rdparty.log",
 					"StepIdTriggeringPolicy" : {
 					},
@@ -74,7 +74,7 @@
 				{
 					"name" : "errFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}errors.log",
+					//"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}errors.log",
 					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}errors.log",
 					"StepIdTriggeringPolicy" : {
 					},
@@ -96,7 +96,7 @@
 				{
 					"name" : "metricsFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}metrics.csv",
+					//"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}metrics.csv",
 					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}metrics.csv",
 					"StepIdTriggeringPolicy" : {
 					},
@@ -110,7 +110,7 @@
 				{
 					"name" : "metricsThresholdFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}metrics.threshold.csv",
+					//"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}metrics.threshold.csv",
 					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}metrics.threshold.csv",
 					"StepIdTriggeringPolicy" : {
 					},
@@ -124,7 +124,7 @@
 				{
 					"name" : "metricsFileTotal",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}metrics.total.csv",
+					//"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}metrics.total.csv",
 					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}metrics.total.csv",
 					"StepIdTriggeringPolicy" : {
 					},
@@ -138,7 +138,7 @@
 				{
 					"name" : "metricsThresholdFileTotal",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}metrics.threshold.total.csv",
+					//"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}metrics.threshold.total.csv",
 					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}metrics.threshold.total.csv",
 					"StepIdTriggeringPolicy" : {
 					},
@@ -152,7 +152,7 @@
 				{
 					"name" : "ioTraceFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}io.trace.csv",
+					//"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}io.trace.csv",
 					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}io.trace.csv",
 					"StepIdTriggeringPolicy" : {
 					},
@@ -166,7 +166,7 @@
 				{
 					"name" : "cliFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}cli.args.log",
+					//"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}cli.args.log",
 					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}cli.args.log",
 					"StepIdTriggeringPolicy" : {
 					},
@@ -179,7 +179,7 @@
 				{
 					"name" : "cfgFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}config.json",
+					//"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}config.json",
 					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}config.json",
 					"StepIdTriggeringPolicy" : {
 					},
@@ -192,7 +192,7 @@
 				{
 					"name" : "scenarioFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}scenario.json",
+					//"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}scenario.json",
 					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}scenario.json",
 					"StepIdTriggeringPolicy" : {
 					},
@@ -205,7 +205,7 @@
 				{
 					"name" : "partsUploadFile",
 					"type" : "RollingRandomAccessFile",
-					"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}parts.upload.csv",
+					//"fileName" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}${ctx:stepId}${sys:file.separator}parts.upload.csv",
 					"filePattern" : "${ctx:baseDir}${sys:file.separator}log${sys:file.separator}$${ctx:stepId}${sys:file.separator}parts.upload.csv",
 					"StepIdTriggeringPolicy" : {
 					},
