@@ -42,7 +42,7 @@ implements DataInput {
 	public void close()
 	throws IOException {
 		if(inputBuff != null) {
-			DirectMemUtil.free(inputBuff);
+			closeDirectBuffer(inputBuff);
 			inputBuff = null;
 		}
 	}

@@ -72,7 +72,7 @@ extends DataInputBase {
 					layer = layersCache.remove(i);
 					if(layer != null) {
 						layersCountToFree --;
-						DirectMemUtil.free(layer);
+						closeDirectBuffer(layer);
 						if(layersCountToFree == 0) {
 							break;
 						}
@@ -98,7 +98,7 @@ extends DataInputBase {
 			layersCache = thrLocLayersCache.get();
 		if(layersCache != null) {
 			for(final MappedByteBuffer layer : layersCache.values()) {
-				DirectMemUtil.free(layer);
+				closeDirectBuffer(layer);
 			}
 			layersCache.clear();
 			thrLocLayersCache.set(null);

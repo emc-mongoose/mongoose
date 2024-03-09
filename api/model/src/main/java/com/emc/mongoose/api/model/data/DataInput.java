@@ -7,6 +7,8 @@ import java.io.Closeable;
 import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -96,5 +98,41 @@ extends Closeable, Externalizable {
 		for(i = 0; i < countTailBytes; i ++) {
 			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
 		}
+	}
+
+	// https://stackoverflow.com/questions/2972986/how-to-unmap-a-file-from-memory-mapped-using-filechannel-in-java
+	default void closeDirectBuffer(ByteBuffer cb) {
+		if (cb == null || !cb.isDirect()) {
+			return;
+		}
+
+		boolean isOldJDK = System.getProperty("java.specification.version", "99").startsWith("1.");
+		try {
+			if (isOldJDK) {
+				Method cleaner = cb.getClass().getMethod("cleaner");
+				cleaner.setAccessible(true);
+				Method clean = Class.forName("sun.misc.Cleaner").getMethod("clean");
+				clean.setAccessible(true);
+				clean.invoke(cleaner.invoke(cb));
+			} else {
+				Class unsafeClass;
+				try {
+					unsafeClass = Class.forName("sun.misc.Unsafe");
+				} catch (Exception ex) {
+					unsafeClass = Class.forName("jdk.internal.misc.Unsafe");
+				}
+
+				Method clean = unsafeClass.getMethod("invokeCleaner", ByteBuffer.class);
+				clean.setAccessible(true);
+				Field theUnsafeField = unsafeClass.getDeclaredField("theUnsafe");
+				theUnsafeField.setAccessible(true);
+				Object theUnsafe = theUnsafeField.get(null);
+				clean.invoke(theUnsafe, cb);
+			}
+		} catch (Exception e) {
+			e.printStackTrace(System.err);
+		}
+
+		cb = null;
 	}
 }
